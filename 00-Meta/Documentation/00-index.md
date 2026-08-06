@@ -25,7 +25,7 @@ Read [reference/style-reference.md](reference/style-reference.md) before writing
 | 04 | [04-frontend-building-blocks.md](notes/04-frontend-building-blocks.md) | `src/ui/`, `src/i18n/` — components, rendering, event binding, localisation | empty |
 | 05 | [05-game-core-building-blocks.md](notes/05-game-core-building-blocks.md) | `src/core/` — board topology, movement, capture, dice card pool, skill cards | empty |
 | 06 | [06-state-and-turn-flow.md](notes/06-state-and-turn-flow.md) | `src/state/` — the seam between core and ui, turn flow, state transitions | empty |
-| 07 | [07-tooling.md](notes/07-tooling.md) | npm scripts, package management, ESLint, Prettier, Vite dev/prod build, deployment | empty |
+| 07 | [07-tooling.md](notes/07-tooling.md) | npm scripts, package management, ESLint, Prettier, Vite dev/prod build, deployment | target state only; local access findings recorded |
 | 08 | [08-quality.md](notes/08-quality.md) | Unit tests, coverage, E2E, CI/CD, code comments | empty |
 | 09 | [09-source-code-overview.md](notes/09-source-code-overview.md) | Size and metrics — **the only chapter where numbers live** | empty |
 | 10 | [10-ai-driven-engineering.md](notes/10-ai-driven-engineering.md) | How AI was used in the workflow, what it was good and bad at | empty |

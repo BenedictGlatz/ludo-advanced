@@ -104,7 +104,21 @@ drops those slides and the report explains why. This is a decision to take now, 
     project visibility, so the HTML payload route is the only unauthenticated one. It depends on
     GitHub's internal page structure and will break without notice — fine for a one-off reading,
     not something to build tooling on.
-- Still missing for durable access: the `gh` CLI plus a token with the `project` scope.
+- 2026-08-06, third finding — **authenticated *writes* were available all along.** Pushing `dev`
+  succeeded, which proves a credential existed; `git credential fill` against `host=github.com`
+  returns the Git Credential Manager's stored token (`credential.helper=manager`). It authenticates
+  as `lbolender` with scopes `gist, repo, workflow`, which is enough to comment on and close issues
+  through the REST API. The earlier conclusion that *no* authenticated GitHub automation was possible
+  was wrong: what was missing was not a token but the knowledge that one was already there. See the
+  correction in [07-tooling.md](07-tooling.md).
+- **The one scope that is missing is `read:project`.** With the stored token, a Projects v2 GraphQL
+  query returns `INSUFFICIENT_SCOPES`, naming `read:project` explicitly. So the board field values —
+  the one thing the `memex-*` HTML route is needed for — remain the only part of GitHub that has no
+  stable access path. Adding `read:project` to the existing token at
+  <https://github.com/settings/tokens> is a smaller change than installing the `gh` CLI and replaces
+  the HTML-parsing route entirely.
+- Durable access therefore needs **one scope added to an existing token**, not new tooling. The `gh`
+  CLI stays optional convenience rather than a prerequisite.
 
 ### Branching and review
 
@@ -113,7 +127,11 @@ drops those slides and the report explains why. This is a decision to take now, 
   releases.
 - Feature branches: `feature/<issue>-<slug>` or `fix/<issue>-<slug>`, branched off `dev`.
 - Pull requests need at least one review approval and are merged with **Squash and Merge**.
-- `Closes #<n>` in the commit body auto-closes the issue and moves the board card.
+- `Closes #<n>` in the commit body auto-closes the issue and moves the board card — but **only when
+  the commit lands on the default branch (`main`)**. On feature branches and on `dev` the trailer is
+  recorded and does nothing until the release merge. Verified 2026-08-06. Consequence: an issue
+  finished mid-sprint has to be closed explicitly, or it stays open until the next release even though
+  the work is merged into `dev`.
 - Conventional Commits, English, imperative mood.
 
 ### Documentation process
@@ -124,6 +142,16 @@ drops those slides and the report explains why. This is a decision to take now, 
   non-obvious decision gets a block in [project-journal.md](../project-journal.md). Reason: the
   sample report this project models on names late documentation as its own biggest weakness.
   See the decision block of the same date in the journal.
+- 2026-08-06 — **`dev` created on `origin`.** Until this push the remote had only `main`; the four
+  documentation commits existed locally only. `main` is deliberately left at `96109df` — the
+  branching policy forbids direct pushes to it, so these commits reach `main` through a `dev` → `main`
+  pull request, not a push.
+- 2026-08-06 — **First two issues closed:** #4 *Create a Claude.md* and #2 *Github Setup +
+  Documentation*, each with a closing comment naming the evidence. Note that closing was done through
+  the REST API, **not** by a `Closes #<n>` commit trailer: GitHub only honours that trailer when the
+  commit reaches the **default branch**, so a trailer on a `dev` commit does nothing until the release
+  merge. This matters for the policy in *Branching and review* below — on this branching model,
+  `Closes #<n>` closes issues at release time, not at commit time.
 
 ## Decisions
 

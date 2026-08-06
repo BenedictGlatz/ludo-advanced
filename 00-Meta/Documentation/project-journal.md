@@ -30,6 +30,10 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   development environment. 46 issues, 50 board items, 16 fields and 3 views transcribed into
   Ch. 01 and Ch. 02. Sprint calendar dates recovered and filled into `sprint-log.md`. Four negative
   findings recorded about board configuration. Sprint 0.
+- **2026-08-06** — `dev` pushed to `origin` for the first time (four documentation commits; the remote
+  had only `main` until now). Issues #4 *Create a Claude.md* and #2 *Github Setup + Documentation*
+  closed with closing comments. An earlier negative finding corrected: an authenticated GitHub token
+  was available all along, in the Git Credential Manager. Sprint 0.
 
 ---
 
@@ -119,6 +123,31 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
 - **Also learned:** MCP servers are registered **per client**, not per editor. The GitHub MCP server
   was installed into VS Code's own registry and was therefore invisible to Claude Code running inside
   the same editor. See Ch. 07.
+- → Ch. 02, Ch. 07, Ch. 10
+
+### 2026-08-06 — Addendum to the decision above: the rejected option was cheaper than it looked
+
+This does not replace the block above — it records that one of its premises was wrong, which is
+exactly the kind of thing this file exists to keep visible.
+
+- **What the earlier block assumed:** that authenticating "needs a token per team member and per
+  machine", which is why the `gh` CLI route was rejected in favour of making the project public.
+- **What is actually the case:** a working GitHub token was already on the machine, stored by the Git
+  Credential Manager (`credential.helper=manager`) — the same credential that authorises `git push`.
+  It carries `gist, repo, workflow` scopes and was enough to comment on and close issues through the
+  REST API immediately, with nothing installed.
+- **Why the premise was wrong:** the check for a token looked at the environment (`GITHUB_TOKEN`,
+  `GH_TOKEN`), and on Windows the credential is not there — it is in the credential manager. The right
+  question is not "is a token exported" but "does the credential helper have one".
+- **What still holds:** the board itself remains out of reach. GraphQL answers `INSUFFICIENT_SCOPES`
+  and names `read:project`, which the stored token does not have. So the split is: **repository data
+  is properly accessible, board field data is not.**
+- **Revised recommendation:** add `read:project` to the existing token rather than installing the
+  `gh` CLI. That is one checkbox, it retires the unstable `memex-*` HTML-parsing route, and it is what
+  a velocity or burn-down generator would need.
+- **The pattern worth carrying into Ch. 10 and Ch. 11:** twice in one day a capability that existed
+  was reported as missing because the wrong location was checked — the MCP server in the wrong
+  client's registry, the token in the wrong store. Both times the diagnosis, not the fix, was the work.
 - → Ch. 02, Ch. 07, Ch. 10
 
 ---

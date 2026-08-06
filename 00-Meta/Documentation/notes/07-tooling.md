@@ -61,11 +61,25 @@ Declared in [CLAUDE.md](../../../CLAUDE.md) as the binding specification for `pa
 - No deployment target has been chosen. `Brainstorming.md` floats GitHub Pages or itch.io for
   playable build artifacts; nothing is decided.
 - Whether JSDoc is enforced through ESLint is undecided.
-- The `gh` CLI is not installed on the development machine and no GitHub token is configured, so no
-  *authenticated* GitHub automation (board writes, issue creation, release notes) can run locally.
-  Verified 2026-08-06. Reads work only because the repository and project were made public — see
-  [02-project-management.md](02-project-management.md#board-access-from-the-development-environment)
-  for the routes that do and do not work, and why the Projects v2 GraphQL API is not one of them.
+- ~~The `gh` CLI is not installed on the development machine and no GitHub token is configured, so no
+  *authenticated* GitHub automation can run locally.~~ **Half of this was wrong — corrected
+  2026-08-06.** The `gh` CLI is indeed absent, but a token was already present and neither
+  `GITHUB_TOKEN` nor `GH_TOKEN` was the place to look for it:
+  - `credential.helper` is set to `manager` (Git Credential Manager). `git credential fill` against
+    `host=github.com` returns its stored token, which authenticates as `lbolender` with scopes
+    `gist, repo, workflow`.
+  - That is sufficient for **authenticated repository writes** — issues were commented on and closed
+    through the REST API with it on 2026-08-06, with no new tooling installed.
+  - It is **not** sufficient for the Projects v2 board: GraphQL answers `INSUFFICIENT_SCOPES` and
+    names `read:project` as the missing scope. Adding that one scope to the existing token removes the
+    need for the unstable `memex-*` HTML-parsing route described in
+    [02-project-management.md](02-project-management.md#board-access-from-the-development-environment).
+  - **The generalisable lesson**, and the reason this is written down rather than quietly fixed: the
+    absence of an environment variable was read as the absence of a credential. On Windows the
+    credential normally lives in the credential manager, not the environment, so "no token" should be
+    tested by asking the credential helper, not by checking `env`. The same mistake in the opposite
+    direction as the MCP finding below — both times an integration that was present looked absent
+    because the wrong location was checked.
 - **MCP servers are per-client, not per-editor.** The GitHub MCP server was installed into
   `%APPDATA%\Code\User\mcp.json` — VS Code's own registry, used by Copilot. Claude Code reads
   `.mcp.json` in the project root, `mcpServers` in `~/.claude.json`, or entries added via

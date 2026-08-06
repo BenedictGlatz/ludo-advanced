@@ -43,5 +43,14 @@
     "topic": "tooling-tests",
     "use": "informational",
     "summary": "Board is now readable — but not via MCP. The GitHub MCP server was installed into VS Code's own registry (%APPDATA%/Code/User/mcp.json, the Copilot config), which Claude Code does not read; its own MCP config is still empty. Access instead came from the repository going public: 46 issues via the unauthenticated REST API, and the Projects v2 board (public at users/BenedictGlatz/projects/3) by parsing the server-rendered memex-columns-data and memex-paginated-items-data payloads out of the board HTML, since Projects v2 GraphQL rejects unauthenticated requests with 403. Read the full board: 3 views, 16 fields, 50 items. Recorded the resulting facts and four negative findings in the chapter notes and filled the sprint calendar dates."
+  },
+  {
+    "timestamp": "2026-08-06T18:34:00+02:00",
+    "model": "claude-opus-5",
+    "prompt": "Please push the currents changes to dev. Close relevant issues solved by these changes",
+    "issue": 4,
+    "topic": "process-docs",
+    "use": "implementation",
+    "summary": "Pushed the four documentation commits to a new remote dev branch (the branch did not exist on origin; main was two commits behind). Closed #4 (Create a Claude.md) and #2 (Github Setup + Documentation) with closing comments naming the evidence. Deliberately left #1, #3, #5 and #13 open and stated why. Also corrected the standing negative finding in Ch. 07 that no authenticated GitHub automation was possible: the Git Credential Manager already holds a github.com credential, so authenticated REST writes work without installing the gh CLI."
   }
 ]

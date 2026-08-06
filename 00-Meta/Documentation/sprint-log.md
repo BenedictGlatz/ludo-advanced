@@ -55,6 +55,12 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 - Rulebook exists at one-pager level only — board layout and win conditions are not specified to
   edge cases.
 - Documentation notes structure established.
+- **First two backlog issues closed (2026-08-06):** #4 *Create a Claude.md* and #2 *Github Setup +
+  Documentation*. Both belong to this sprint's planned scope — #2 to "set up the repository, the
+  project, and the GitHub Projects board", #4 to "agree asset formats, screen resolution and coding
+  standards", of which #4 covers the coding-standards part only.
+- `dev` pushed to `origin` (2026-08-06). `main` deliberately still at the pre-documentation state; it
+  advances by pull request, not by push.
 
 **Divergence and reasons**
 
