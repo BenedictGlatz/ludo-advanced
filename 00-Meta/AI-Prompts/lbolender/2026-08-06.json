@@ -1,0 +1,9 @@
+[
+  {
+    "timestamp": "2026-08-06T17:30:16+02:00",
+    "model": "claude-opus-5",
+    "prompt": "/init — Ich möchte mit dir eine Claude.md für dieses Projekt erstellen. Folgende einige Anforderungen:\n- Alle Anforderungen aus den bestehenden .md Dateien sind Pflicht\n- Wir wollen Javascript verwenden, kein Typescripts\n- Wir wollen Jquery verwenden, ansonsten keine neue Bibliotheken außer der Nutzer bittet darum, wenn nötig frage den Nutzer\n- Keine Dateien über 300 Zeilen Länge\n- Lokalisierung nach i18n\n- Wir wollen nach einen Changelog nach gängigen Konvetionen (Keep a Changelog)\n- Wir wollen eine Readme nach gängigen öffentlichen Konvetionen\n- Wir nutzen folgende Branches: main, dev und feature-branches die sich von dev abspalten\n- Commits sollten immer dem format conventional commits entsprechen\n- Bitte erstelle und aktualisiere Commits automatisch wenn ein Feature implementiert wird, pushe nur wenn der Nutzer dich explizit darum bittet\n- Wir wollen ein Prompt/AI-Verzeichnis führen. Jeder Prompt wird abhängig vom Nutzer (Ordner) und Abhängig vom Tag (Datei) im format json gespeichert. Es muss hinterlegt werden welchen Modell genutzt wurde und was der Prompt war. Und falls möglich: Welches issue der Prompt behandelt\n- Wenn ein du ein commit erstellst dass ein issue löst, schließe das issue mit close #\n- Verwende einen geeignete Linter und Formatter\n- Wir benötigen Unit Tests und E2E Tests mit einer hohen Testabdeckung\n- Design und UI wird generell mit Claude Design entwickelt. Claude Design hat Zugriff auf diesen Ordner. Es ist nicht nötig dass du Design Regeln selbst entwirfst",
+    "issue": null,
+    "summary": "Created CLAUDE.md, README.md and CHANGELOG.md. Decided stack: JavaScript + jQuery + Vite + i18next, Vitest for unit tests, Playwright for E2E, ESLint + Prettier. Resolved the branching contradiction in Brainstorming.md in favour of main/dev/feature. Established this AI prompt log."
+  }
+]
