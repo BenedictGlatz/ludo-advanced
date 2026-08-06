@@ -61,5 +61,9 @@ Declared in [CLAUDE.md](../../../CLAUDE.md) as the binding specification for `pa
 - No deployment target has been chosen. `Brainstorming.md` floats GitHub Pages or itch.io for
   playable build artifacts; nothing is decided.
 - Whether JSDoc is enforced through ESLint is undecided.
+- The `gh` CLI is not installed on the development machine and no GitHub token is configured, so no
+  GitHub automation (board queries, issue creation, release notes) can run locally. Verified
+  2026-08-06 — see the board section of
+  [02-project-management.md](02-project-management.md#board) for the full check and its consequence.
 - Before submission, `npm run lint` and the formatter check must be demonstrably green, and the run
   commands in the README must actually work. Record the evidence here when that is verified.

@@ -46,6 +46,14 @@ than they do in the sample report, where the same material was compressed into a
 - Planned custom fields (from [Brainstorming.md](../../../Brainstorming.md)): Iteration (2-week
   sprints), Story Points (Fibonacci 1/2/3/5/8), Category (Gameplay, UI, Art/Audio, Bug, Mechanics).
 - Planned columns: Backlog → Ready for Sprint → In Progress → In Review → Done.
+- 2026-08-06 — **Negative finding: the board is not readable from the development environment.**
+  A capability check for reading board items programmatically failed on all four available paths: no
+  GitHub MCP server is configured (neither user- nor project-scoped), the `gh` CLI is not installed,
+  no `GITHUB_TOKEN`/`GH_TOKEN` is present, and the repository is private so the unauthenticated REST
+  API answers `404`. Consequence: issue numbers, MoSCoW labels and sprint assignments have to be
+  transcribed into these notes by hand instead of being read from the board, which is a plausible
+  source of drift between board and report. Fixing this needs the `gh` CLI plus a token with the
+  `project` scope — Projects v2 is GraphQL-only, so a REST-based workaround does not exist.
 
 ### Branching and review
 
