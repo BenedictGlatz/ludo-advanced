@@ -25,6 +25,20 @@ The repository contains documentation only — no source code, no `package.json`
 commands and directory layout below are the **binding target state**. Whoever bootstraps the npm project implements
 exactly this; do not substitute alternatives.
 
+## Mandatory per-change steps
+
+Every change carries these five, in this order. They are not optional and not "when there is time" — steps 1 and 2
+are the ones that cannot be reconstructed afterwards, which is exactly why they are first.
+
+1. **AI prompt log** — append the prompt to `00-Meta/AI-Prompts/<github-username>/YYYY-MM-DD.json` **before
+   replying**. See [AI prompt log](#ai-prompt-log).
+2. **Documentation notes** — append facts to the chapter note the change belongs to, add a decision block to
+   `00-Meta/Documentation/project-journal.md` for any non-obvious decision, and a challenge bullet for anything
+   that cost more than ~30 min of unplanned work. See [Documentation notes](#documentation-notes).
+3. **Changelog** — user-visible changes under `## [Unreleased]` in `CHANGELOG.md`.
+4. **Tests** — write them, or state plainly which coverage is still outstanding. Do not skip silently.
+5. **Commit** — Conventional Commits, with steps 1–4 in the *same* commit. Push only when explicitly asked.
+
 ## Tech stack and hard constraints
 
 - **JavaScript only — no TypeScript.** No `.ts` files, no build-time type checking.
@@ -50,6 +64,7 @@ npm test               # Vitest, single run
 npm run test:watch     # Vitest, watch mode
 npm run test:coverage  # Vitest with v8 coverage
 npm run test:e2e       # Playwright, all browsers
+npm run docs:ai-index  # Generate the AI index chapter from the AI prompt log
 ```
 
 Running a single test:
@@ -97,6 +112,52 @@ High test coverage is a project requirement, not a nice-to-have.
 - Every rule change in `core/` ships with its unit test in the same commit.
 - Every player-facing flow (take a turn, pick a dice card, play a skill card, capture a pawn, win) has an E2E test.
 - Coverage target: **≥ 80 % lines in `src/core/` and `src/state/`**. `ui/` is covered through E2E instead.
+
+## Documentation notes
+
+This project is assessed on a written project and architecture documentation. That report is written **alongside**
+development, not afterwards — the sample report the team models on names late documentation as its own biggest
+weakness, and reversing that is worth a paragraph in the retrospective on its own.
+
+What every change owes is **facts, not prose**. The report text is written once, near the end, from these notes.
+Drafting paragraphs now means rewriting them every time the code moves.
+
+Notes live under `00-Meta/Documentation/` — see [00-index.md](00-Meta/Documentation/00-index.md) for the full
+chapter table, the status of each chapter, and the standing list of open questions.
+
+| You changed… | Append facts to |
+| --- | --- |
+| `src/core/` — rules, board, movement, capture, card pools | `notes/05-game-core-building-blocks.md` |
+| `src/state/` — transitions, turn manager, intents | `notes/06-state-and-turn-flow.md` |
+| `src/ui/`, `src/i18n/` — rendering, events, locales | `notes/04-frontend-building-blocks.md` |
+| `package.json`, ESLint, Prettier, Vite config | `notes/07-tooling.md` |
+| tests, coverage, CI workflow | `notes/08-quality.md` |
+| added, rejected or replaced a dependency | `notes/03-tech-stack.md` |
+| scope, user stories, MoSCoW labels | `notes/01-requirements-and-goals.md` |
+| sprint, board, process or role change | `notes/02-project-management.md` **and** `sprint-log.md` |
+| anything with a non-obvious *why* | `project-journal.md` **as well as** the chapter note |
+
+Five rules apply at commit time:
+
+- **No claim without a reason.** A note recording *what* without *why* is not finished. The reason is the expensive
+  part to reconstruct later, and the part the report is actually graded on.
+- **Record rejected alternatives.** A decision with no visible alternative reads as an accident, not a choice.
+- **Negative findings stay.** Missing coverage, a cut feature, an overrun sprint — write it down and explain it.
+  The sample report printed a 12.67 % coverage figure and a missing formatter, explained both, and scored well.
+- **Numbers live only in `notes/09-source-code-overview.md`**, next to the command that regenerates them, and only
+  after that command has actually been run. Never a line count, test count or coverage figure from memory, and
+  never in any other note — a number goes stale silently, a command does not.
+- **The 300-line limit does not apply under `00-Meta/Documentation/`.** A chapter note may be long and must not be
+  split into fragments.
+
+Before writing any report *prose*, read [reference/style-reference.md](00-Meta/Documentation/reference/style-reference.md).
+
+> The module's actual requirements are unknown — no chapter catalogue, page count or deadline exists anywhere in
+> this repository. The 13-chapter structure is adapted from a sample report for a **different module with a
+> different professor**, weighted toward project management because that is this module's focus. Keeping the notes
+> prose-free is what makes a later re-map a re-sort rather than a rewrite. See
+> [reference/report-checklist.md](00-Meta/Documentation/reference/report-checklist.md), which is explicitly
+> non-binding.
 
 ## Design and UI
 
@@ -155,12 +216,27 @@ One file per user **per day**, containing a JSON array. Append new entries; neve
   "model": "claude-opus-5",
   "prompt": "<verbatim user prompt>",
   "issue": 37,
+  "topic": "game-logic",
+  "use": "implementation",
   "summary": "Short description of what was produced"
 }
 ```
 
-`issue` is the GitHub issue number the prompt relates to, or `null` when there is no identifiable issue. Commit the
-log entry together with the work it produced, or as `chore(ai-log): ...` when there is no other change.
+- `issue` — the GitHub issue number the prompt relates to, or `null` when there is no identifiable issue.
+- `prompt` — verbatim. Pasted material and attachments are marked in square brackets rather than inlined, e.g.
+  `[CLAUDE.md of another project, pasted as reference]`. Long multi-turn exchanges may be condensed with `…`,
+  keeping the decisive turns.
+- `topic` — one of `concept-architecture`, `game-logic`, `frontend-ui`, `debugging`, `tooling-tests`,
+  `process-docs`. These are the six subsections of the AI index chapter.
+- `use` — one of `informational`, `research`, `implementation`, `adopted`, `revised`. Omitted means
+  `implementation`. Mark the two informational values explicitly; they are the minority, and they are what shows
+  an answer was weighed rather than simply accepted.
+
+The AI index chapter (`00-Meta/Documentation/notes/13-ai-index.md`) is **generated** from these files by
+`npm run docs:ai-index` and is never hand-maintained. Log every prompt, including trivial ones — completeness is
+the point, and a curated selection is worth less because the reader cannot tell what was left out.
+
+Commit the log entry together with the work it produced, or as `chore(ai-log): ...` when there is no other change.
 
 ## Project management
 

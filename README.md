@@ -75,7 +75,10 @@ src/
 tests/
   unit/    Vitest
   e2e/     Playwright
-00-Meta/   Project management documents and the AI prompt log
+00-Meta/
+  Project-Management/  Rulebook, sprint plan and meeting notes
+  Documentation/       Living notes for the final project report
+  AI-Prompts/          The AI prompt log
 ```
 
 Game rules live in `core/` and never touch the DOM, which keeps them testable without a browser.
@@ -109,6 +112,9 @@ and register the locale in the i18next setup in `src/i18n/`.
   `Closes #<n>` when a commit resolves an issue.
 - Pull requests need at least one review approval and are merged with **Squash and Merge**.
 - Record user-visible changes under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md) in the same commit.
+- Append the facts your change produced to the matching chapter note in
+  [00-Meta/Documentation/](00-Meta/Documentation/00-index.md), also in the same commit. The project report is
+  written alongside development, not at the end.
 
 Full conventions, including the architecture rules and the AI prompt log, are documented in [CLAUDE.md](CLAUDE.md).
 

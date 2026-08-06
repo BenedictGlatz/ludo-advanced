@@ -4,6 +4,26 @@
     "model": "claude-opus-5",
     "prompt": "/init — Ich möchte mit dir eine Claude.md für dieses Projekt erstellen. Folgende einige Anforderungen:\n- Alle Anforderungen aus den bestehenden .md Dateien sind Pflicht\n- Wir wollen Javascript verwenden, kein Typescripts\n- Wir wollen Jquery verwenden, ansonsten keine neue Bibliotheken außer der Nutzer bittet darum, wenn nötig frage den Nutzer\n- Keine Dateien über 300 Zeilen Länge\n- Lokalisierung nach i18n\n- Wir wollen nach einen Changelog nach gängigen Konvetionen (Keep a Changelog)\n- Wir wollen eine Readme nach gängigen öffentlichen Konvetionen\n- Wir nutzen folgende Branches: main, dev und feature-branches die sich von dev abspalten\n- Commits sollten immer dem format conventional commits entsprechen\n- Bitte erstelle und aktualisiere Commits automatisch wenn ein Feature implementiert wird, pushe nur wenn der Nutzer dich explizit darum bittet\n- Wir wollen ein Prompt/AI-Verzeichnis führen. Jeder Prompt wird abhängig vom Nutzer (Ordner) und Abhängig vom Tag (Datei) im format json gespeichert. Es muss hinterlegt werden welchen Modell genutzt wurde und was der Prompt war. Und falls möglich: Welches issue der Prompt behandelt\n- Wenn ein du ein commit erstellst dass ein issue löst, schließe das issue mit close #\n- Verwende einen geeignete Linter und Formatter\n- Wir benötigen Unit Tests und E2E Tests mit einer hohen Testabdeckung\n- Design und UI wird generell mit Claude Design entwickelt. Claude Design hat Zugriff auf diesen Ordner. Es ist nicht nötig dass du Design Regeln selbst entwirfst",
     "issue": null,
+    "topic": "concept-architecture",
+    "use": "implementation",
     "summary": "Created CLAUDE.md, README.md and CHANGELOG.md. Decided stack: JavaScript + jQuery + Vite + i18next, Vitest for unit tests, Playwright for E2E, ESLint + Prettier. Resolved the branching contradiction in Brainstorming.md in favour of main/dev/feature. Established this AI prompt log."
+  },
+  {
+    "timestamp": "2026-08-06T17:47:06+02:00",
+    "model": "claude-opus-5",
+    "prompt": "I want to expand the claude.md with you. I need to create documentation for this university project, it would be helpful if you kept up to date notes on relevant chapters for this documentation. The goal is to have up to date notes on every step on the project, so I can write the final documentation based on these notes.\n\nThis is the claude.md of another project that Im using, please use this as a reference for this topic: [CLAUDE.md of the Boids Survival Runner project, pasted in full as reference]",
+    "issue": null,
+    "topic": "process-docs",
+    "use": "implementation",
+    "summary": "Established the living documentation-notes system under 00-Meta/Documentation/: steering index, 13 chapter notes, project journal, sprint log, abbreviations and two adapted reference transcripts. Extended CLAUDE.md with a Documentation notes section and a Mandatory per-change steps list, and extended this log's schema with topic and use."
+  },
+  {
+    "timestamp": "2026-08-06T17:52:00+02:00",
+    "model": "claude-opus-5",
+    "prompt": "[Answers to clarification questions] Notes in English; located under 00-Meta/Documentation/; facts only, no prose chapters; no hour tracking, dated log only; extend the AI prompt log with topic and use; copy and adapt both reference transcripts. On the chapter structure: \"Please take the chapters from this example project I did in the past\" [muster-referenz.md of the FitFuel Mobile sample report, pasted in full]. On the examination conditions found in the sibling project: \"Its a different module with a different professor. Only keep that chapters that make sense for this project. This module is more focused on project management.\" Architecture chapters: core/ + state/ fill the engine and integration slots.",
+    "issue": null,
+    "topic": "process-docs",
+    "use": "implementation",
+    "summary": "Fixed the chapter catalogue for the report notes: 13 chapters adapted from the FitFuel sample, with project management split into its own chapter (02) separate from the retrospective project report (11), because this module is project-management focused. Confirmed the Boids examination conditions are not binding here."
   }
 ]
