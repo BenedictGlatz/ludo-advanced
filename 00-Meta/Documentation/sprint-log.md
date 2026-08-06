@@ -10,20 +10,34 @@ a reason is a finding.
 
 **Planned scope is taken from** [01-Github-Project.md](../Project-Management/01-Github-Project.md).
 
-> **Dates are missing.** The sprint plan defines only relative week numbers, with no calendar
-> boundaries anywhere in the repository. Week 1 began on or around 2026-08-06 (repository creation),
-> which puts the buffer sprint at roughly the start of October, but this has not been confirmed.
-> Fix this before the first sprint closes — plan-versus-actual with no planned dates shows nothing.
+**Planned dates are taken from the board** — four draft issues on
+[GitHub project *Ludo Advanced*](https://github.com/users/BenedictGlatz/projects/3) act as sprint
+markers and carry `Start Date` / `End Date`. Read 2026-08-06:
+
+| Board marker | Start | End | Length |
+| --- | --- | --- | --- |
+| Sprint 0 | 2026-07-23 | 2026-08-09 | 2½ weeks |
+| Sprint 1 | 2026-08-10 | 2026-08-23 | 2 weeks |
+| Sprint 2 | 2026-08-24 | 2026-09-06 | 2 weeks |
+| Sprint 3 | 2026-09-07 | 2026-09-17 | 1½ weeks |
+
+> **Two contradictions with the written plan, both unresolved.** The board has **no buffer sprint** —
+> it defines Sprint 0–3 and stops, while the plan is 3 sprints of 2 weeks plus a 1-week buffer. Board
+> `Sprint 3` is 1½ weeks and sits where the buffer would, so it may *be* the buffer under a different
+> name; nothing says so. And board `Sprint 0` runs 2½ weeks against the planned 1 week, starting
+> 2026-07-23 — two weeks before the repository was created. Total span 2026-07-23 → 2026-09-17 is
+> ~8 weeks, which does match the plan's 8-week total. Decide which numbering is authoritative and
+> record it here; the tables below use the board dates in the meantime.
 
 ---
 
-## Sprint 0 — Planning and prototyping (week 1)
+## Sprint 0 — Planning and prototyping (board: 2026-07-23 → 2026-08-09)
 
 | | |
 | --- | --- |
-| **Planned start** | 2026-08-06 |
-| **Planned end** | *TBD* |
-| **Actual start** | 2026-08-06 |
+| **Planned start** | 2026-07-23 (board) |
+| **Planned end** | 2026-08-09 (board) |
+| **Actual start** | 2026-08-06 (repository creation) |
 | **Actual end** | *open* |
 
 **Planned scope**
@@ -49,12 +63,12 @@ a reason is a finding.
 
 ---
 
-## Sprint 1 — Core gameplay and board MVP (weeks 2–3)
+## Sprint 1 — Core gameplay and board MVP (board: 2026-08-10 → 2026-08-23)
 
 | | |
 | --- | --- |
-| **Planned start** | *TBD* |
-| **Planned end** | *TBD* |
+| **Planned start** | 2026-08-10 (board) |
+| **Planned end** | 2026-08-23 (board) |
 | **Actual start** | *open* |
 | **Actual end** | *open* |
 
@@ -71,12 +85,12 @@ a reason is a finding.
 
 ---
 
-## Sprint 2 — Skill cards, dice mechanics, multiplayer (weeks 4–5)
+## Sprint 2 — Skill cards, dice mechanics, multiplayer (board: 2026-08-24 → 2026-09-06)
 
 | | |
 | --- | --- |
-| **Planned start** | *TBD* |
-| **Planned end** | *TBD* |
+| **Planned start** | 2026-08-24 (board) |
+| **Planned end** | 2026-09-06 (board) |
 | **Actual start** | *open* |
 | **Actual end** | *open* |
 
@@ -96,12 +110,12 @@ a reason is a finding.
 
 ---
 
-## Sprint 3 — Polish, art, audio, fixes (weeks 6–7)
+## Sprint 3 — Polish, art, audio, fixes (board: 2026-09-07 → 2026-09-17)
 
 | | |
 | --- | --- |
-| **Planned start** | *TBD* |
-| **Planned end** | *TBD* |
+| **Planned start** | 2026-09-07 (board) |
+| **Planned end** | 2026-09-17 (board) |
 | **Actual start** | *open* |
 | **Actual end** | *open* |
 
@@ -119,10 +133,14 @@ a reason is a finding.
 
 ## Buffer sprint — Playtesting and presentation (week 8)
 
+> **Not present on the board.** The board defines Sprint 0–3 only. Either board `Sprint 3`
+> (2026-09-07 → 2026-09-17) doubles as this sprint, or the buffer was dropped when the board was
+> laid out. Unresolved — see the note at the top of this file.
+
 | | |
 | --- | --- |
-| **Planned start** | *TBD* |
-| **Planned end** | *TBD* |
+| **Planned start** | *not on board* |
+| **Planned end** | *not on board* |
 | **Actual start** | *open* |
 | **Actual end** | *open* |
 
@@ -140,3 +158,8 @@ a reason is a finding.
 
 > Velocity and burn-down charts need real board data to exist. If story points are never recorded,
 > those slides cannot be produced — decide early, not in week 8.
+>
+> **Confirmed 2026-08-06: as the board stands, neither chart can be produced.** There is no story
+> point field and no Iteration field, and `Status` and `Sprint` are unset on all 50 items — so there
+> is no estimate to sum and no dated status history to burn down against. See the negative findings
+> in [notes/02-project-management.md](notes/02-project-management.md#board).

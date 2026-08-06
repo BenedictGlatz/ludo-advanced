@@ -19,8 +19,8 @@ Read [reference/style-reference.md](reference/style-reference.md) before writing
 
 | #   | Note | Covers | Status |
 | --- | ---- | ------ | ------ |
-| 01 | [01-requirements-and-goals.md](notes/01-requirements-and-goals.md) | Target players, the problem, MVP scope, MoSCoW, what is deliberately out of scope | empty |
-| 02 | [02-project-management.md](notes/02-project-management.md) | Scrum setup, roles, sprints, GitHub Projects board, ceremonies, definition of done | empty |
+| 01 | [01-requirements-and-goals.md](notes/01-requirements-and-goals.md) | Target players, the problem, MVP scope, MoSCoW, what is deliberately out of scope | backlog and MoSCoW transcribed |
+| 02 | [02-project-management.md](notes/02-project-management.md) | Scrum setup, roles, sprints, GitHub Projects board, ceremonies, definition of done | board configuration transcribed |
 | 03 | [03-tech-stack.md](notes/03-tech-stack.md) | Languages, libraries, versions, why each was chosen, what was rejected | empty |
 | 04 | [04-frontend-building-blocks.md](notes/04-frontend-building-blocks.md) | `src/ui/`, `src/i18n/` — components, rendering, event binding, localisation | empty |
 | 05 | [05-game-core-building-blocks.md](notes/05-game-core-building-blocks.md) | `src/core/` — board topology, movement, capture, dice card pool, skill cards | empty |
@@ -109,8 +109,15 @@ Standing list. Resolve and delete, or move into the chapter that answers it.
   no dedicated Scrum Master. [01-Github-Project.md](../Project-Management/01-Github-Project.md) has
   an unnamed Developer A/B/C table that *does* include a Scrum Master. Which one holds needs
   deciding, and the outcome belongs in Chapter 02.
-- **No calendar dates exist for the sprints** — only relative week numbers. `sprint-log.md` needs
-  real start and end dates before it can show plan against actual.
+- ~~**No calendar dates exist for the sprints.**~~ **Resolved 2026-08-06** — recovered from the
+  board's sprint markers and filled into [sprint-log.md](sprint-log.md). Two contradictions came with
+  them and are open: the board has no buffer sprint, and its Sprint 0 is 2½ weeks against the planned
+  1 week.
+- **Velocity and burn-down charts cannot currently be produced.** The board has no story point field
+  and no Iteration field, and `Status` and `Sprint` are unset on all 50 items. Both charts are named
+  as buffer-sprint presentation content. Add and back-fill the fields before Sprint 1 closes, or drop
+  the slides and explain why in Chapter 11 — see
+  [02-project-management.md](notes/02-project-management.md#board).
 - **No CI/CD pipeline and no deployment target** have been decided. Both are normal report chapters;
   if they stay absent, Chapter 08 says so and explains why rather than omitting the topic.
 - **Licence is undetermined** (`README.md` says "To be determined").

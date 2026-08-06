@@ -62,8 +62,15 @@ Declared in [CLAUDE.md](../../../CLAUDE.md) as the binding specification for `pa
   playable build artifacts; nothing is decided.
 - Whether JSDoc is enforced through ESLint is undecided.
 - The `gh` CLI is not installed on the development machine and no GitHub token is configured, so no
-  GitHub automation (board queries, issue creation, release notes) can run locally. Verified
-  2026-08-06 — see the board section of
-  [02-project-management.md](02-project-management.md#board) for the full check and its consequence.
+  *authenticated* GitHub automation (board writes, issue creation, release notes) can run locally.
+  Verified 2026-08-06. Reads work only because the repository and project were made public — see
+  [02-project-management.md](02-project-management.md#board-access-from-the-development-environment)
+  for the routes that do and do not work, and why the Projects v2 GraphQL API is not one of them.
+- **MCP servers are per-client, not per-editor.** The GitHub MCP server was installed into
+  `%APPDATA%\Code\User\mcp.json` — VS Code's own registry, used by Copilot. Claude Code reads
+  `.mcp.json` in the project root, `mcpServers` in `~/.claude.json`, or entries added via
+  `claude mcp add`, and saw nothing. Both tools run in the same editor, which is exactly why the
+  mistake is easy to make. If the team wants the server available to Claude Code as well, adding it
+  to a committed `.mcp.json` makes it work for all three members at once rather than per machine.
 - Before submission, `npm run lint` and the formatter check must be demonstrably green, and the run
   commands in the README must actually work. Record the evidence here when that is verified.

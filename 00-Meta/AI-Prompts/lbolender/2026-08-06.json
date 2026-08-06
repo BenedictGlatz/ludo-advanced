@@ -34,5 +34,14 @@
     "topic": "tooling-tests",
     "use": "informational",
     "summary": "Capability check: negative result. No GitHub MCP server is configured (neither user- nor project-scoped), the gh CLI is not installed, no GITHUB_TOKEN/GH_TOKEN is present, and the repository BenedictGlatz/ludo-advanced is private (unauthenticated API returns 404). Claude Code therefore has no read access to the GitHub Projects v2 board."
+  },
+  {
+    "timestamp": "2026-08-06T18:16:00+02:00",
+    "model": "claude-opus-5",
+    "prompt": "Ive installed the github mcp tools and made the project public, please try again",
+    "issue": null,
+    "topic": "tooling-tests",
+    "use": "informational",
+    "summary": "Board is now readable — but not via MCP. The GitHub MCP server was installed into VS Code's own registry (%APPDATA%/Code/User/mcp.json, the Copilot config), which Claude Code does not read; its own MCP config is still empty. Access instead came from the repository going public: 46 issues via the unauthenticated REST API, and the Projects v2 board (public at users/BenedictGlatz/projects/3) by parsing the server-rendered memex-columns-data and memex-paginated-items-data payloads out of the board HTML, since Projects v2 GraphQL rejects unauthenticated requests with 403. Read the full board: 3 views, 16 fields, 50 items. Recorded the resulting facts and four negative findings in the chapter notes and filled the sprint calendar dates."
   }
 ]

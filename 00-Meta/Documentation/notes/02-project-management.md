@@ -46,14 +46,65 @@ than they do in the sample report, where the same material was compressed into a
 - Planned custom fields (from [Brainstorming.md](../../../Brainstorming.md)): Iteration (2-week
   sprints), Story Points (Fibonacci 1/2/3/5/8), Category (Gameplay, UI, Art/Audio, Bug, Mechanics).
 - Planned columns: Backlog → Ready for Sprint → In Progress → In Review → Done.
-- 2026-08-06 — **Negative finding: the board is not readable from the development environment.**
-  A capability check for reading board items programmatically failed on all four available paths: no
-  GitHub MCP server is configured (neither user- nor project-scoped), the `gh` CLI is not installed,
-  no `GITHUB_TOKEN`/`GH_TOKEN` is present, and the repository is private so the unauthenticated REST
-  API answers `404`. Consequence: issue numbers, MoSCoW labels and sprint assignments have to be
-  transcribed into these notes by hand instead of being read from the board, which is a plausible
-  source of drift between board and report. Fixing this needs the `gh` CLI plus a token with the
-  `project` scope — Projects v2 is GraphQL-only, so a REST-based workaround does not exist.
+
+#### Board as actually configured — observed 2026-08-06
+
+Read from the live board at `https://github.com/users/BenedictGlatz/projects/3` (a **user-level**
+project, not repository-level). 50 items: the 46 issues plus 4 draft issues used as sprint markers.
+
+- **Views (3), matching the plan:** `Roadmap` (roadmap layout), `Backlog` (table), `Kanban Board`
+  (board layout, grouped by Status).
+- **`Status` field options are `Todo` / `In Progress` / `Done`** — the GitHub default triple, *not*
+  the five planned columns. `Ready for Sprint` and `In Review` do not exist, so the review step of
+  the branching policy has no board representation.
+- **`Sprint` field options:** `Sprint 0` / `Sprint 1` / `Sprint 2` / `Sprint 3`. It is a plain
+  single-select, **not** a GitHub *Iteration* field. Iteration fields carry date ranges and drive
+  burn-down charts natively; a single-select does not.
+- **Custom date fields:** `Start Date`, `End Date`. Populated on all 50 items.
+- Remaining fields are GitHub built-ins: Title, Assignees, Labels, Linked pull requests, Milestone,
+  Repository, Reviewers, Parent issue, Sub-issues progress, Created, Updated, Closed.
+- **Four negative findings, all as of 2026-08-06:**
+  1. **`Status` is unset on all 50 items.** Every card sits in the Kanban board's no-status lane, so
+     the board currently shows no progress at all.
+  2. **`Sprint` is unset on all 50 items.** Sprint membership exists only as the 4 draft-issue
+     markers and the per-item date fields, not as a queryable field value.
+  3. **No `Story Points` field exists**, and no estimation field of any kind. The Fibonacci
+     estimation planned in [Brainstorming.md](../../../Brainstorming.md) was never configured.
+  4. **No `Category` field exists.** Its role is filled by free labels (`gameplay`, `ui`, `audio`,
+     `documentation`) instead.
+- **No milestones are defined** in the repository (`/milestones` returns an empty list).
+- Assignees are set on only 3 of 46 issues (#2, #4, #5 to all three members; #1 to BenedictGlatz;
+  #3 to lbolender). The remaining 41 are unassigned.
+- **Third GitHub account observed:** `CreativeName06`, alongside `BenedictGlatz` and `lbolender`.
+  By elimination this is Fabian Gemming, but that mapping is not written down anywhere and should be
+  confirmed before the report names it.
+
+**Consequence for the report:** velocity and burn-down charts are named as buffer-sprint
+presentation content in [sprint-log.md](../sprint-log.md), and as the board stands **neither can be
+produced** — burn-down needs an Iteration field or dated status transitions, velocity needs story
+points. Both fields have to be added and back-filled *before* Sprint 1 closes, or the presentation
+drops those slides and the report explains why. This is a decision to take now, not in week 8.
+
+#### Board access from the development environment
+
+- 2026-08-06, first attempt — **not readable.** No GitHub MCP server configured for Claude Code,
+  no `gh` CLI installed, no `GITHUB_TOKEN`/`GH_TOKEN`, and the repository was private, so the
+  unauthenticated REST API answered `404`.
+- 2026-08-06, second attempt — **readable, but not through MCP.** The GitHub MCP server was
+  installed into `%APPDATA%\Code\User\mcp.json`, which is **VS Code's own (Copilot) MCP registry**.
+  Claude Code reads a different set of locations (`.mcp.json` in the project root, `mcpServers` in
+  `~/.claude.json`, or `claude mcp add`) and its config was still empty. Installing an MCP server in
+  one client does not expose it to another client running in the same editor — worth stating plainly
+  in the report, because it looks like it should.
+- What actually made the board readable was **making the repository and project public**:
+  - Issues, labels and milestones — unauthenticated GitHub REST API.
+  - Board structure and item values — parsed out of the board page's server-rendered
+    `memex-columns-data` and `memex-paginated-items-data` JSON payloads.
+  - The **Projects v2 GraphQL API rejects unauthenticated requests with `403`** regardless of
+    project visibility, so the HTML payload route is the only unauthenticated one. It depends on
+    GitHub's internal page structure and will break without notice — fine for a one-off reading,
+    not something to build tooling on.
+- Still missing for durable access: the `gh` CLI plus a token with the `project` scope.
 
 ### Branching and review
 
@@ -82,10 +133,21 @@ than they do in the sample report, where the same material was compressed into a
 
 - Which ceremonies actually take place, and whether they are minuted. Only one meeting note exists
   so far ([20260806.md](../../Project-Management/Meeting%20Notes/20260806.md), one sentence).
-- Whether Story Points and the Fibonacci estimation from `Brainstorming.md` were actually
-  configured on the board, or only planned. Velocity and burn-down charts are named as presentation
-  content and need real data to exist.
-- No calendar dates for sprint boundaries — only relative weeks. Needed for `sprint-log.md`.
+- ~~Whether Story Points and the Fibonacci estimation were actually configured on the board.~~
+  **Answered 2026-08-06: they were not.** See the four negative findings above. What is still open is
+  the *decision* — add the fields and back-fill, or drop velocity and burn-down from the
+  presentation and say so.
+- ~~No calendar dates for sprint boundaries.~~ **Answered 2026-08-06** from the board's sprint
+  markers; see [sprint-log.md](../sprint-log.md). Two contradictions surfaced with it and are open:
+  - The board has **no buffer sprint**. The plan is 3 sprints plus a buffer; the board has Sprint 0–3
+    and stops. Either board `Sprint 3` *is* the buffer sprint under another name, or the buffer was
+    dropped. Decide and record which.
+  - Board `Sprint 0` runs 2026-07-23 → 2026-08-09, i.e. **2½ weeks**, against the planned 1 week.
+    It also starts two weeks before the repository existed.
+- Whether the board's `Status` triple (`Todo`/`In Progress`/`Done`) replaces the five planned columns
+  deliberately, or was simply never changed from the GitHub default. The report needs one or the
+  other, and the branching policy's review step currently has no column.
+- Whether `CreativeName06` is Fabian Gemming. Assumed by elimination, confirmed nowhere.
 - Definition of Done has not been written down anywhere.
 - Whether a CI build-validation workflow (`build-check.yml`, planned in `Brainstorming.md`) gets
   implemented. If not, say so in Chapter 08 with a reason.

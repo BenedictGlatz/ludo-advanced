@@ -25,14 +25,59 @@
   decision each turn becomes *which die to roll* and *which skill to play*, not only *which pawn to
   move*.
 
+### Backlog and prioritisation as actually labelled — read 2026-08-06
+
+46 issues, all `open`, read from the now-public repository. Phase labels split
+`1-initialization` 5, `2-definition` 7, `3-planning` 9, `4-implementation` 21, `5-completion` 4.
+Note that `1-initialization` is in use on the board but is **absent from the phase-label list in
+[CLAUDE.md](../../../CLAUDE.md)**, which names only `2-definition` through `5-completion`.
+
+**MoSCoW is applied to 9 of 46 issues (20 %).** The other 37 — including all 24 `documentation`
+issues and every fine-grained implementation task (#26–#35, #40, #41) — carry no MoSCoW label:
+
+| Label | Issues |
+| --- | --- |
+| `must have` | #36 Core Game Engine & Board, #37 Enhanced Dice Pool System, #38 Skill Cards Mechanics, #39 UI / UX, Audio & Game State |
+| `should have` | #42 Online Multiplayer & Lobby System |
+| `could have` | #43 LLM-Powered Bot API Integration, #44 Expanded Skill Card Set, #45 Trap Card System & Tile Trigger Logic, #46 Classic vs. Custom Game Modes (Rule Toggles) |
+
+Read structurally this is coherent rather than incomplete: **the four `must have` issues are epics
+with real GitHub sub-issue links.** Verified 2026-08-06 against the `/sub_issues` API, not inferred
+from titles:
+
+| Epic (`must have`) | Sub-issues |
+| --- | --- |
+| #36 Core Game Engine & Board | #26, #27, #28, #29 |
+| #37 Enhanced Dice Pool System | #30, #31 |
+| #38 Skill Cards Mechanics | #32, #33, #34 |
+| #39 UI / UX, Audio & Game State | #35, #40, #41 |
+
+That accounts for every unlabelled implementation issue: **the MoSCoW labels sit at epic level, and
+the sub-issues inherit priority through the link.** So the 20 % label rate is a deliberate structure,
+not a gap, and the report can say so with evidence. Worth stating, because the raw figure reads as an
+omission.
+
+**MVP by this reading:** #36–#39 and their 12 sub-issues. **Explicitly outside it:** multiplayer
+(`should have`), and the LLM bot, expanded card set, trap cards and rule toggles (`could have`) —
+matching the one-pager's framing of multiplayer and AI opponents as extensions.
+
+**Negative finding:** all four epics have an **empty issue body**, as do their sub-issues. The
+backlog is titles and labels only — there is not one acceptance criterion anywhere in the 46 issues.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
 
 ## Open / to verify
 
-- MoSCoW prioritisation exists as GitHub labels (`must have` / `should have` / `could have`) but no
-  requirement has been written against them yet — the actual backlog is not in this repository.
+- ~~MoSCoW prioritisation exists as labels but no requirement has been written against them; the
+  backlog is not in this repository.~~ **Superseded 2026-08-06** — the backlog is now readable and
+  transcribed above. What remains open: no issue has an acceptance criterion or a written
+  requirement in its body, so the MoSCoW labels still prioritise titles rather than specifications.
+- ~~Whether the epic → task decomposition is recorded in GitHub or only implied by titles.~~
+  **Verified 2026-08-06:** real sub-issue links, table above.
+- Phase label `1-initialization` is used on the board but missing from `CLAUDE.md`'s phase-label list.
+  Add it there, or rename the 5 issues that use it.
 - Win condition is stated informally ("first player home wins") and has not been specified against
   edge cases: overshooting the goal with a high die, what happens on an exact-count requirement.
 - No user stories exist yet. Whether the module expects them in the report is unknown.
