@@ -52,6 +52,12 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   "can we learn the engine" to "can we finish the rules".
 - **Source:** [Meeting Notes 20260806](../Project-Management/Meeting%20Notes/20260806.md),
   [00-One-Pager.md](../Project-Management/00-One-Pager.md).
+- **Addendum (2026-08-09):** formalized as a weighted-criteria Nutzwertanalyse covering all three
+  visual approaches (2D, 2.5D, 3D), not just the original 2D-vs-3D pair — see
+  [Utility-Value-Analysis.md](../Project-Management/Utility-Value-Analysis.md). It confirms
+  2D as the winner (4.20/5.00) and adds one finding not visible in the original prose reasoning:
+  2.5D (2.75) also outscores full 3D (2.30), because 2.5D inherits 3D's C#/Unity risk without
+  buying back most of its visual payoff.
 - → Ch. 03, Ch. 11
 
 ### 2026-08-06 — Branching model is main/dev/feature, not GitHub Flow

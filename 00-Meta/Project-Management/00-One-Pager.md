@@ -36,5 +36,5 @@ The Skill Card Pool includes cards with different effect types:
 
 ### INITIAL PLAN
 Evaluation of 2 options (Risk Assessment):
-1)	2D approach (Pygame): Less possibilites for extensibility, Multiplayer
+1)	2D approach (Web): Less possibilites for extensibility, Multiplayer
 2)	3D approach (Unity): New programming language for 2/3 people, Asset creation, Multiplayer

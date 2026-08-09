@@ -38,6 +38,7 @@ Status values: `empty` → `partial` → `ready`. Update the row when a chapter'
 **Supporting files**, not chapters:
 
 - [project-journal.md](project-journal.md) — dated log, decision blocks, challenges.
+- [Project-Management/Utility-Value-Analysis.md](../Project-Management/Utility-Value-Analysis.md) — weighted-criteria comparison of 2D/2.5D/3D backing the engine-choice decision.
 - [sprint-log.md](sprint-log.md) — planned scope vs delivered scope, per sprint.
 - [abbreviations.md](abbreviations.md) — feeds the report's abbreviation list.
 
