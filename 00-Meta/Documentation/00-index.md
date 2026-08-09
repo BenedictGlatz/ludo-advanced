@@ -39,6 +39,7 @@ Status values: `empty` → `partial` → `ready`. Update the row when a chapter'
 
 - [project-journal.md](project-journal.md) — dated log, decision blocks, challenges.
 - [Project-Management/Utility-Value-Analysis.md](../Project-Management/Utility-Value-Analysis.md) — weighted-criteria comparison of 2D/2.5D/3D backing the engine-choice decision.
+- [Project-Management/Requirements-Specification.md](../Project-Management/Requirements-Specification.md) — 45 functional and 12 non-functional requirements with acceptance criteria, the MoSCoW analysis, and the open Product Owner decisions.
 - [sprint-log.md](sprint-log.md) — planned scope vs delivered scope, per sprint.
 - [abbreviations.md](abbreviations.md) — feeds the report's abbreviation list.
 

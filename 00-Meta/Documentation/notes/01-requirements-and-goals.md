@@ -64,6 +64,49 @@ matching the one-pager's framing of multiplayer and AI opponents as extensions.
 **Negative finding:** all four epics have an **empty issue body**, as do their sub-issues. The
 backlog is titles and labels only — there is not one acceptance criterion anywhere in the 46 issues.
 
+### Requirements specification — written 2026-08-09, issue #13
+
+[Requirements-Specification.md](../../Project-Management/Requirements-Specification.md) turns the
+goal catalogue into **45 functional (`FR-nn`) and 12 non-functional (`NFR-nn`) requirements**, each
+with an **acceptance criterion**, a MoSCoW priority and a trace to a goal or a backlog issue. It is
+the first place in the project where a requirement is stated in a form that can be checked as passed
+or failed.
+
+- **MoSCoW distribution:** 39 must, 10 should, 7 could, 1 won't (of 57).
+- **22 requirements are marked `†` — not derivable from any existing document.** They were added
+  because the rules are incomplete without them, and each is a proposal pending Product Owner
+  confirmation.
+
+**Findings, all of them things the specification exposed rather than created:**
+
+- **The rulebook never says how a player acquires a skill card.** No draw rule, no hand size, no
+  discard rule (FR-22, FR-27). The Skill Card Pool therefore has no defined behaviour at all. This
+  is the largest single hole found so far and blocks Sprint 2 planning.
+- **Three core movement rules do not exist anywhere:** landing on one's own pawn (FR-12), exact
+  count to enter home (FR-13), and what happens when a roll produces no legal move (FR-14). FR-14
+  is not an edge case here — with dice up to D20 in the pool it fires regularly.
+- **The Dice Card Pool composition is undefined** (FR-17). "D2–D20" does not say which denominations
+  or how many copies of each, and that choice drives the probability argument the report is built on.
+- **Reactions are a requirement on the turn manager, not on the cards** (FR-25). They are the only
+  mechanic that interrupts the turn sequence, so the interruption window has to be designed before
+  the turn manager is built in Sprint 1.
+- **Sprint plan inconsistency:** Sprint 1 in
+  [01-Github-Project.md](../../Project-Management/01-Github-Project.md) plans a "standard 1–6 dice
+  roll", but the leaving-start rule depends on the *chosen* die's maximum. Building Sprint 1 against
+  a fixed D6 means writing that rule twice.
+- **The must-have share is ~68 %**, which is high for MoSCoW. Structural, not sloppy: a game missing
+  one movement rule is unplayable rather than partially playable. The consequence — that the
+  schedule buffer sits almost entirely in the should/could tail and in online multiplayer — is
+  stated in the specification rather than smoothed over.
+- **The resource/energy system is priorised `W` (won't have this time)** on the grounds that an
+  unspecified mechanic cannot be built. Note that issue #35 is titled *Game HUD & Resource Display*,
+  so the backlog assumes it exists. Resolving the open question below now has a concrete owner and a
+  concrete cost.
+
+**Still true after writing it:** the acceptance criteria live in this document, not on the issues.
+All 47 backlog issues still have empty bodies, so the board continues to prioritise titles until the
+criteria are copied onto the issues or the issues link here.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -78,9 +121,20 @@ backlog is titles and labels only — there is not one acceptance criterion anyw
   **Verified 2026-08-06:** real sub-issue links, table above.
 - Phase label `1-initialization` is used on the board but missing from `CLAUDE.md`'s phase-label list.
   Add it there, or rename the 5 issues that use it.
-- Win condition is stated informally ("first player home wins") and has not been specified against
-  edge cases: overshooting the goal with a high die, what happens on an exact-count requirement.
+- ~~Win condition is stated informally ("first player home wins") and has not been specified against
+  edge cases: overshooting the goal with a high die, what happens on an exact-count requirement.~~
+  **Proposed 2026-08-09** as FR-13 (exact count required, overshoot illegal). Still open as a
+  *decision* — the alternative is bouncing back from the home square, and the Product Owner has not
+  confirmed either.
 - No user stories exist yet. Whether the module expects them in the report is unknown.
 - Energy/resource system is listed in the Sprint 2 plan
   ([01-Github-Project.md](../../Project-Management/01-Github-Project.md)) but appears in neither the
-  one-pager nor the README — its status as MVP or stretch goal is undecided.
+  one-pager nor the README — its status as MVP or stretch goal is undecided. **2026-08-09:** carried
+  into the specification as FR-37 with priority `W`, because an unspecified mechanic cannot be built.
+  Reversing that needs rules, not a re-prioritisation.
+- **How a player acquires skill cards is undefined** (FR-22, FR-27) — no draw rule, no hand size, no
+  discard rule anywhere in the sources. Blocks Sprint 2. Raised 2026-08-09.
+- **Three movement rules are undefined** (FR-12 own-pawn collision, FR-13 exact count, FR-14 no legal
+  move). Proposals exist in the specification; none is confirmed. Raised 2026-08-09.
+- **Dice pool composition is undefined** (FR-17) — which denominations, how many copies of each.
+  Raised 2026-08-09.

@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scope, an abbreviation list, and two adapted reference documents on report structure and writing style
 - Mandatory per-change steps in `CLAUDE.md`, making the prompt log, documentation notes, changelog and tests part
   of the same commit as the change itself
+- `00-Meta/Project-Management/Requirements-Specification.md` — 45 functional and 12 non-functional requirements,
+  each with an acceptance criterion and a MoSCoW priority, plus the MoSCoW analysis with a drop order agreed in
+  advance and the eight gameplay decisions still owed by the Product Owner
 
 ### Changed
 
