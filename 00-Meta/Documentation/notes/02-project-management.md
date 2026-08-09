@@ -152,6 +152,11 @@ drops those slides and the report explains why. This is a decision to take now, 
   commit reaches the **default branch**, so a trailer on a `dev` commit does nothing until the release
   merge. This matters for the policy in *Branching and review* below — on this branching model,
   `Closes #<n>` closes issues at release time, not at commit time.
+- 2026-08-09 — **The board's sprint end dates now also serve as goal deadlines.** Issue #9 formulated
+  the project goals SMART against them; the facts are in
+  [01-requirements-and-goals.md](01-requirements-and-goals.md), the document is
+  [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md). Consequence for this chapter: a
+  change to the sprint boundaries is no longer only a planning change.
 
 ## Decisions
 
@@ -176,6 +181,9 @@ drops those slides and the report explains why. This is a decision to take now, 
   deliberately, or was simply never changed from the GitHub default. The report needs one or the
   other, and the branching policy's review step currently has no column.
 - Whether `CreativeName06` is Fabian Gemming. Assumed by elimination, confirmed nowhere.
-- Definition of Done has not been written down anywhere.
+- Definition of Done has not been written down anywhere. Since 2026-08-09 this blocks a measurable
+  criterion rather than only a convention: all four SMART sub-goals check "epic closed", and without a
+  Definition of Done that is not comparable between the three of us. Listed with a proposed date
+  (2026-08-23) in [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md).
 - Whether a CI build-validation workflow (`build-check.yml`, planned in `Brainstorming.md`) gets
   implemented. If not, say so in Chapter 08 with a reason.

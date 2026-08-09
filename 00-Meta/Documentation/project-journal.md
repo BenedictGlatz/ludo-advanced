@@ -34,6 +34,9 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   had only `main` until now). Issues #4 *Create a Claude.md* and #2 *Github Setup + Documentation*
   closed with closing comments. An earlier negative finding corrected: an authenticated GitHub token
   was available all along, in the Git Credential Manager. Sprint 0.
+- **2026-08-09** — SMART analysis written for issue #9: one overall project goal plus four sub-goals,
+  one per `must have` epic (#36–#39), with deadlines taken from the board sprint markers.
+  `00-Meta/Project-Management/SMART-Analysis.md`; facts in Ch. 01. Sprint 0.
 
 ---
 
@@ -155,6 +158,40 @@ exactly the kind of thing this file exists to keep visible.
   was reported as missing because the wrong location was checked — the MCP server in the wrong
   client's registry, the token in the wrong store. Both times the diagnosis, not the fix, was the work.
 - → Ch. 02, Ch. 07, Ch. 10
+
+### 2026-08-09 — Project goals anchored to the board's sprint dates, not to the module deadline
+
+- **Chosen:** formulate the goals SMART now, taking every date from the four sprint markers on the
+  GitHub board (2026-07-23 → 2026-09-17), and state in the document that the anchor is provisional.
+- **Rejected:** *waiting for the real module submission date before formulating any goal.* That date
+  is unknown and has been a standing open question since 2026-08-06. Waiting would have left issues
+  #10, #13 and #23 without a goal to build on for an unbounded period, and it treats the `T` criterion
+  as the expensive one when in fact it is the cheapest to substitute later — the other four criteria
+  are the work.
+- **Also rejected:** *cutting the sub-goals per sprint* rather than per epic. Sprint-shaped sub-goals
+  would have created a second breakdown of the same scope competing with the MoSCoW epics, and the
+  epics are the structure the board already prioritises. The sprint dates are still used — as the
+  epics' deadlines, which keeps one breakdown and one calendar rather than two of each.
+- **Also rejected:** *auditing the existing goal statements against SMART* instead of formulating new
+  ones. An audit of the one-pager would have produced a list of deficiencies and still no usable goal;
+  this is a definition-phase issue, so it owes a definition.
+- **Also rejected:** *velocity as a measurable criterion.* It is named as buffer-sprint presentation
+  content, but the board has no story point field and no Iteration field, so a goal depending on it
+  would be unmeasurable by construction. Recorded as an exclusion with its reason rather than silently
+  omitted.
+- **Why:** a goal that cannot be checked is not a goal, and three of the five criteria (S, A, R) were
+  already derivable from documents written before this one. What was missing was a date and a set of
+  checks — and a provisional date that is named as provisional costs less than no date at all.
+- **Consequence:** if the real deadline differs, every `T` value re-anchors to it and the sub-goal
+  dates move with the sprint boundaries. That is a date substitution, not a rewrite, which is why the
+  dates were taken from a single named source ([sprint-log.md](sprint-log.md)) instead of being spread
+  through the text. Second consequence: the sprint boundaries are no longer only a planning artefact,
+  so moving one now moves a goal.
+- **Finding worth carrying into Ch. 11:** the tightest sub-goal is the *first*, not the last. SG1
+  (#36) has the most sub-issues, everything else builds on it, and its sprint starts 2026-08-10 with
+  no source code, no `package.json` and no tooling in the repository — so Sprint 1 contains its own
+  bootstrap, which is not in its planned scope.
+- → Ch. 01, Ch. 02, Ch. 11
 
 ---
 

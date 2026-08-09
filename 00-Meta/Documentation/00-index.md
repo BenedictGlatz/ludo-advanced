@@ -19,7 +19,7 @@ Read [reference/style-reference.md](reference/style-reference.md) before writing
 
 | #   | Note | Covers | Status |
 | --- | ---- | ------ | ------ |
-| 01 | [01-requirements-and-goals.md](notes/01-requirements-and-goals.md) | Target players, the problem, MVP scope, MoSCoW, what is deliberately out of scope | backlog and MoSCoW transcribed |
+| 01 | [01-requirements-and-goals.md](notes/01-requirements-and-goals.md) | Target players, the problem, MVP scope, MoSCoW, what is deliberately out of scope | backlog, MoSCoW and SMART goals transcribed |
 | 02 | [02-project-management.md](notes/02-project-management.md) | Scrum setup, roles, sprints, GitHub Projects board, ceremonies, definition of done | board configuration transcribed |
 | 03 | [03-tech-stack.md](notes/03-tech-stack.md) | Languages, libraries, versions, why each was chosen, what was rejected | empty |
 | 04 | [04-frontend-building-blocks.md](notes/04-frontend-building-blocks.md) | `src/ui/`, `src/i18n/` — components, rendering, event binding, localisation | empty |
@@ -41,6 +41,12 @@ Status values: `empty` → `partial` → `ready`. Update the row when a chapter'
 - [Project-Management/Utility-Value-Analysis.md](../Project-Management/Utility-Value-Analysis.md) — weighted-criteria comparison of 2D/2.5D/3D backing the engine-choice decision.
 - [sprint-log.md](sprint-log.md) — planned scope vs delivered scope, per sprint.
 - [abbreviations.md](abbreviations.md) — feeds the report's abbreviation list.
+
+**Analysis documents outside this directory.** These are deliverables of their own backlog issues, not
+notes. They live in `00-Meta/Project-Management/` and are cited from the chapter that uses them:
+
+- [SMART-Analysis.md](../Project-Management/SMART-Analysis.md) — the project goal and four epic-level
+  sub-goals, formulated SMART (issue #9). Feeds Ch. 01 and the plan-versus-actual comparison in Ch. 11.
 
 ---
 
