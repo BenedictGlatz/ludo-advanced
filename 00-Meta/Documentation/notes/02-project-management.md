@@ -153,6 +153,25 @@ drops those slides and the report explains why. This is a decision to take now, 
   merge. This matters for the policy in *Branching and review* below — on this branching model,
   `Closes #<n>` closes issues at release time, not at commit time.
 
+### First deviation from the branching policy — 2026-08-09
+
+- Issue #47 (Nutzwertanalyse) followed the policy: branch `feature/47-nutzwertanalyse`, pull request
+  #48 into `dev`, squash-merged.
+- Issue #10 (this goal catalogue) did **not**. Both its commits were made straight onto `dev`, which
+  the policy does not permit for issue work.
+- **Caught and corrected the same day, before either commit was pushed.** The commits were moved onto
+  `feature/10-functional-non-functional-goals`, `dev` was reset to `origin/dev`, and pull request #49
+  was opened against `dev`. No force-push and no rewriting of history anyone else had.
+- **Why it happened, which is the reportable part:** the branch was never checked. The instruction
+  followed was "commit as soon as a feature is implemented", and the commit landed on whatever branch
+  happened to be checked out. Nothing prevented it — the policy exists only as prose in
+  [CLAUDE.md](../../../CLAUDE.md), and `dev` has no branch protection rule, so a direct commit
+  succeeds silently exactly the way a compliant one does.
+- **Consequence to decide:** enable branch protection on `dev` (and on `main`, where the policy is
+  stricter and equally unenforced), or accept that the model depends on discipline and say so in the
+  report. The cheap version is a GitHub ruleset requiring a pull request for both branches; the cost
+  is that it applies to the repository owner too.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
