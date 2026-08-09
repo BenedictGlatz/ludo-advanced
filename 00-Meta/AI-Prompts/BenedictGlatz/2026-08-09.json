@@ -16,5 +16,14 @@
     "topic": "process-docs",
     "use": "implementation",
     "summary": "Translated the remaining German terms in Utility-Value-Analysis.md (title, criteria names, closing paragraph) and the matching journal addendum to English"
+  },
+  {
+    "timestamp": "2026-08-09T13:25:00+02:00",
+    "model": "claude-opus-5",
+    "prompt": "It looks good now. How do I create the pull request?",
+    "issue": 47,
+    "topic": "process-docs",
+    "use": "informational",
+    "summary": "Explained how to open the PR for feature/47-nutzwertanalyse against dev via the GitHub web UI (gh CLI is not installed on this machine) and noted the unpushed commit"
   }
 ]
