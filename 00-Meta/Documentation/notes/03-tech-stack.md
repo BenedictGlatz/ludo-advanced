@@ -56,6 +56,32 @@ fill it when the decision is made or reconstructed, and add the version once `pa
 - Any additional runtime dependency requires asking the user first. Approved so far: `jquery`,
   `i18next`. Approved dev dependencies: Vite, ESLint, Prettier, Vitest, Playwright.
 
+### The stack assessed for feasibility — 2026-08-09, issue #12
+
+Full document: [Feasibility-Study.md](../../Project-Management/Feasibility-Study.md). Facts only:
+
+- **Technical verdict: feasible, without conditions.** The reasons, each of them a property of the
+  stack rather than of the team: the MVP mechanics reduce to data and pure functions (the Dice Card
+  Pool is a draw over a finite set, skill card effects are functions over game state); no physics, no
+  real-time loop, no server and no networking, because multiplayer is outside the MVP and the MVP is
+  local hot-seat; the Vite output is a static `dist/` deployable to GitHub Pages or itch.io with no
+  infrastructure to operate.
+- **The layering is what makes the goal measurable, not only what makes the code tidy.** `core/`
+  being free of the DOM is the reason the ≥ 80 % coverage criterion of issue #9 can be read at all —
+  interleaved rules and rendering would have left the same goal unmeasurable in practice. Worth
+  stating in this chapter because it is an architecture consequence of a *goal* decision.
+- **Second, feasibility-side justification for rejecting Unity 3D and 2.5D**, alongside the
+  one-pager's risk assessment already recorded above: the two criteria that decided the
+  Nutzwertanalyse — C# competence and available time — are exactly the two dimensions a feasibility
+  study assesses. 3D lost on feasibility grounds, not on preference.
+- **Licence check outstanding.** The licences of the chosen packages are to be verified against each
+  package's own `LICENSE` file once `package.json` exists. Recorded in the study as a task, not
+  asserted as a finding — no dependency licence is claimed anywhere from memory.
+- **Open technical points named in the study**, none of which blocks the MVP: the win condition has
+  no rule for overshooting the goal with a high die (a D20 makes this concrete); the energy/resource
+  system is undecided; no CI workflow and no deployment target chosen; multiplayer has no chosen
+  networking technology.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -64,6 +90,8 @@ fill it when the decision is made or reconstructed, and add the version once `pa
 
 - No `package.json` exists yet, so no version is pinned. The stack above is the binding target
   state declared in [CLAUDE.md](../../../CLAUDE.md), not an observed fact.
+- Dependency licences are unverified until `package.json` exists — see the licence check in the
+  feasibility facts above.
 - Why jQuery specifically, over plain DOM APIs or a component framework, is unrecorded.
 - Why Vite over other bundlers is unrecorded.
 - Multiplayer is named in the Sprint 2 plan but no networking technology has been chosen. If the

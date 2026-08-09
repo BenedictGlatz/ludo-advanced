@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scope, an abbreviation list, and two adapted reference documents on report structure and writing style
 - Mandatory per-change steps in `CLAUDE.md`, making the prompt log, documentation notes, changelog and tests part
   of the same commit as the change itself
+- Feasibility study in `00-Meta/Project-Management/Feasibility-Study.md` — technical, schedule,
+  personnel/organisational, economic and legal feasibility, each with its own verdict, and a conditional Go whose
+  conditions and precondition (the AI toolchain) are named explicitly
 
 ### Changed
 
