@@ -1,0 +1,11 @@
+[
+  {
+    "timestamp": "2026-08-09T12:00:00+02:00",
+    "model": "claude-opus-5",
+    "prompt": "Functional vs. Non-Functional Goals:\nCreate a new markdown under Project-Management, which describes these goals for the project. Use the documentation that is already there.",
+    "issue": null,
+    "topic": "process-docs",
+    "use": "implementation",
+    "summary": "Created 00-Meta/Project-Management/Functional-and-Non-Functional-Goals.md: 21 functional goals (FG-01–FG-21) grouped along the four must-have backlog epics plus the explicitly out-of-scope should/could items, and 8 non-functional goals (NFG-01–NFG-08) derived from CLAUDE.md's hard constraints, each with source, reason and verification route. Added a traceability table epic → goals and a gaps section naming six goals that do not exist yet (no acceptance criteria, no performance target, no browser matrix, no accessibility goal, unspecified win-condition edge cases, no licence)."
+  }
+]

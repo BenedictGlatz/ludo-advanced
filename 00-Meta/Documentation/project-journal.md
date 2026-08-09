@@ -34,10 +34,43 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   had only `main` until now). Issues #4 *Create a Claude.md* and #2 *Github Setup + Documentation*
   closed with closing comments. An earlier negative finding corrected: an authenticated GitHub token
   was available all along, in the Git Credential Manager. Sprint 0.
+- **2026-08-09** — Goal catalogue written:
+  [Functional-and-Non-Functional-Goals.md](../Project-Management/Functional-and-Non-Functional-Goals.md),
+  21 functional goals traced to the four `must have` epics and 8 non-functional goals derived from the
+  hard constraints in `CLAUDE.md`, plus a traceability table and a gaps section. Five gaps recorded in
+  Ch. 01 that were not previously written down anywhere. Sprint 0.
 
 ---
 
 ## Decisions
+
+### 2026-08-09 — Goals are catalogued in Project-Management, not in the chapter note
+
+- **Chosen:** one standing document,
+  [Functional-and-Non-Functional-Goals.md](../Project-Management/Functional-and-Non-Functional-Goals.md),
+  holding every functional and non-functional goal with an ID, a source and a reason. Ch. 01 keeps a
+  summary and the findings; the catalogue itself is the single place a goal is edited.
+- **Rejected:** *writing the goals directly into
+  [01-requirements-and-goals.md](notes/01-requirements-and-goals.md).* That note is a report chapter
+  note — read once, near the end, when the report is written. Goals are consulted continuously during
+  sprint planning and review, by people who are not writing the report at that moment, so burying
+  them in a chapter note puts them where nobody looks. Also rejected: *stating goals as issue
+  acceptance criteria on GitHub*, which is the more orthodox place — but all 46 issues currently have
+  empty bodies, so this would have meant editing 46 issues before a single goal could be written down,
+  and the board is the one part of GitHub this project has no stable write path to.
+- **Why the catalogue is derived rather than authored:** every goal carries a Source line pointing at
+  the one-pager, `CLAUDE.md`, the README or a backlog issue, and goals that are a reading of a source
+  rather than a quotation say so explicitly. This keeps the document a *restatement* — so it cannot
+  quietly become a second, competing rulebook that drifts from the one-pager.
+- **Consequence:** a goal change edits the catalogue first and appends the fact to Ch. 01 in the same
+  commit. Chapter 08 reports measured coverage against NFG-05, and Chapter 11 reports goals not met.
+- **The finding worth carrying into Ch. 01 and Ch. 11:** writing the goals down produced five gaps
+  that nobody had noticed while the same information was spread over four documents — no performance
+  target, no browser support matrix, no accessibility goal, no enforcement for the 300-line limit, and
+  a Resource/Energy System that appears in the Sprint 2 plan and in no rulebook. The exercise found
+  more by being *collected* than by being *written*, which is an argument for doing it in week 1 of a
+  project rather than in week 8.
+- → Ch. 01, Ch. 08, Ch. 11
 
 ### 2026-08-06 — 2D web build instead of Unity 3D or Pygame
 
