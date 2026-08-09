@@ -1,36 +1,4 @@
 # Functional and Non-Functional Goals
-
-The goals this project is measured against, split into **functional goals** (what the software must
-*do*) and **non-functional goals** (the qualities it must *have* while doing it).
-
-This file exists because the two kinds of goal are currently scattered across four documents and one
-issue backlog: gameplay rules sit in [00-One-Pager.md](00-One-Pager.md), quality and architecture
-constraints sit in [CLAUDE.md](../../CLAUDE.md), priorities sit in the GitHub backlog, and the
-reasoning behind the technical choices sits in
-[project-journal.md](../Documentation/project-journal.md). Nothing here is new: every goal below is
-traced to one of those sources. What is new is that they are stated as *checkable* goals with a
-reason each, which is what Chapter 01 of the report needs.
-
-## Method and scope
-
-- **Derived, not invented.** Every goal carries a **Source** line pointing at the document or issue
-  it comes from. Where a goal is a reasonable reading of a source rather than a quotation, the
-  Source line says so.
-- **Every goal carries a reason.** A goal with no *why* cannot be traded away sensibly when the
-  schedule gets tight, which — given a fixed 8-week plan — is the situation this project should
-  expect. This follows the house rule in
-  [00-index.md](../Documentation/00-index.md#house-rules).
-- **No numbers are quoted from memory.** Where a goal has a measurable threshold, the threshold is
-  the one written in [CLAUDE.md](../../CLAUDE.md); measured values belong in
-  [notes/09-source-code-overview.md](../Documentation/notes/09-source-code-overview.md), never here.
-- **Priority** uses the project's MoSCoW labels (`must have`, `should have`, `could have`) as
-  applied on the backlog and transcribed in
-  [notes/01-requirements-and-goals.md](../Documentation/notes/01-requirements-and-goals.md).
-- Goals are identified `FG-nn` (functional) and `NFG-nn` (non-functional) so the report, the backlog
-  and the test suite can reference the same item.
-
----
-
 ## 1 Functional goals
 
 What a player must be able to do. Grouped along the four `must have` epics on the backlog (#36–#39),
