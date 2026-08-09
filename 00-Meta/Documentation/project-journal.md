@@ -39,6 +39,10 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   21 functional goals traced to the four `must have` epics and 8 non-functional goals derived from the
   hard constraints in `CLAUDE.md`, plus a traceability table and a gaps section. Five gaps recorded in
   Ch. 01 that were not previously written down anywhere. Sprint 0.
+- **2026-08-09** — Goal catalogue reviewed and edited by Benedict Glatz; the introduction and the
+  *Method and scope* section were cut, so the file opens directly on the functional goals. Committed
+  against issue #10 *Functional vs. Non-Functional Goals* (labels `documentation`, `2-definition`),
+  which is the first `2-definition` issue to be worked. Sprint 0.
 
 ---
 
