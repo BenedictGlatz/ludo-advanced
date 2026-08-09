@@ -35,9 +35,32 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   closed with closing comments. An earlier negative finding corrected: an authenticated GitHub token
   was available all along, in the Git Credential Manager. Sprint 0.
 
+- **2026-08-09** — Appendix started: the board's Kanban view captured as *Figure 1* and registered in
+  Ch. 12. Two negative findings from 2026-08-06 resolved (`Status` and `Sprint` back-filled), three
+  new board facts recorded, including a WIP limit of 5 on `In Progress` that appears in no planning
+  document. Sprint 0.
+
 ---
 
 ## Decisions
+
+### 2026-08-09 — Board evidence is captured as dated screenshots, not described from memory
+
+- **Chosen:** capture the board as a dated image in the appendix and cite it by figure number from
+  Ch. 02.
+- **Rejected:** *describing the board's state in prose only*, which is what the notes did until now.
+  It works until the board changes — and the board is live, overwrites its own history and keeps no
+  audit trail, so a prose description of it becomes unfalsifiable the moment someone drags a card.
+  Also rejected: *regenerating board state from the API at report time*, which cannot work — the API
+  returns the board as it is then, not as it was during Sprint 0, and the Projects v2 endpoint still
+  has no stable read path from this environment anyway.
+- **Why:** this module is graded on how the project was run, so the evidence has to show the process
+  *while it was running*. A screenshot from week 1 is worth more than a perfect description written
+  in week 8, because it is the only artefact that can still contradict the report.
+- **Consequence:** each significant board change is captured as a numbered figure with the date it
+  was taken and the fact that it was read from an image rather than the API. Figures are stated as
+  partial observations where only part of the board is visible.
+- → Ch. 02, Ch. 12
 
 ### 2026-08-06 — 2D web build instead of Unity 3D or Pygame
 
@@ -52,6 +75,12 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   "can we learn the engine" to "can we finish the rules".
 - **Source:** [Meeting Notes 20260806](../Project-Management/Meeting%20Notes/20260806.md),
   [00-One-Pager.md](../Project-Management/00-One-Pager.md).
+- **Addendum (2026-08-09):** formalized as a weighted-criteria Nutzwertanalyse covering all three
+  visual approaches (2D, 2.5D, 3D), not just the original 2D-vs-3D pair — see
+  [Utility-Value-Analysis.md](../Project-Management/Utility-Value-Analysis.md). It confirms
+  2D as the winner (4.20/5.00) and adds one finding not visible in the original prose reasoning:
+  2.5D (2.75) also outscores full 3D (2.30), because 2.5D inherits 3D's C#/Unity risk without
+  buying back most of its visual payoff.
 - → Ch. 03, Ch. 11
 
 ### 2026-08-06 — Branching model is main/dev/feature, not GitHub Flow

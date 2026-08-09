@@ -43,10 +43,22 @@ Likely candidates as the project runs:
 
 ## Figures
 
-*(none yet)*
+| # | Title | File | Referenced from |
+| --- | --- | --- | --- |
+| 1 | GitHub Projects Kanban Board | [Figure-01-Github-Project-Kanban-Board.png](../../Project-Management/Appendix/Figure-01-Github-Project-Kanban-Board.png) | Ch. 02, *Board* |
 
-Likely candidates: the board topology and its indexing, the component hierarchy of the most complex
-view, the turn cycle as a flow.
+**Figure 1**, captured 2026-08-09, is the board's Kanban view grouped by Sprint. It is the evidence
+for the board facts in Chapter 02 and the only record of the board's state at that date — the board
+itself is live and overwrites its own history, so a dated screenshot is the only way this chapter can
+show what the process actually looked like mid-project rather than at the end.
+
+Likely further candidates: the board topology and its indexing, the component hierarchy of the most
+complex view, the turn cycle as a flow.
+
+**Note on where figures live.** Image files are under
+[00-Meta/Project-Management/Appendix/](../../Project-Management/Appendix/), not beside this note.
+The split is worth removing before the appendix grows — two appendix locations in different trees
+will drift — but it is deliberate for now rather than accidental.
 
 ## Listings
 

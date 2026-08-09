@@ -85,6 +85,47 @@ produced** — burn-down needs an Iteration field or dated status transitions, v
 points. Both fields have to be added and back-filled *before* Sprint 1 closes, or the presentation
 drops those slides and the report explains why. This is a decision to take now, not in week 8.
 
+#### Board as at 2026-08-09 — see *Figure 1: GitHub Projects Kanban Board*
+
+Source: [Figure 1](../../Project-Management/Appendix/Figure-01-Github-Project-Kanban-Board.png), a
+screenshot of the Kanban view grouped by Sprint, captured 2026-08-09. Read from the image, not from
+the API — the Projects v2 board still has no stable read path (see *Board access* below).
+
+**Two of the four negative findings above are now resolved:**
+
+- **Finding 1 — `Status` unset — resolved.** The three columns carry counts: `Todo` 45,
+  `In Progress` 5, `Done` 4. Every item now has a status.
+- **Finding 2 — `Sprint` unset — partly resolved.** The board groups into a populated `Sprint 0`
+  swimlane of 12 items and a `No Sprint` group of 42. Sprint membership is now a real field value
+  for the Sprint 0 items; the remaining 42 are still unassigned.
+- Findings 3 and 4 stand: no story point field, no `Category` field.
+
+**New facts the screenshot shows:**
+
+- **The `In Progress` column has a WIP limit of 5**, displayed as `5 / 5` — so the column is at its
+  limit. This is the first evidence of a Kanban WIP constraint being used at all; it is configured on
+  the board and written down in no planning document.
+- `Sprint 0` holds 12 items: `Todo` #1 One Pager, #9 SMART Analysis, #13 Requirements Specification,
+  #12 Feasibility Study, #8 Stakeholder Analysis; `In Progress` #7 Kickoff, #10 Functional vs.
+  Non-Functional Goals, #11 Risk Analysis, #6 RACI-Matrix; `Done` #4 Create a Claude.md, #5 Role
+  Setup and Process Model, #2 Github Setup + Documentation.
+- **`Done` reads 4 but only 3 cards are visible in the Sprint 0 swimlane**, so one closed item sits
+  outside Sprint 0 — consistent with #47 *Utility Value Analysis*, which is closed on the board but
+  was still open on the REST API the same day.
+- Cards carry assignee avatars, so assignment is now in use beyond the 3 issues recorded on
+  2026-08-06.
+
+**Negative finding, new:** the board and the repository disagree at this date. #10 shows
+`In Progress` and #13 shows `Todo`, while pull requests #49 and #50 for exactly those two issues were
+already open. Status is being maintained by hand and lags the actual work — which is the failure mode
+the `In Review` column, planned in [Brainstorming.md](../../../Brainstorming.md) and never created,
+exists to prevent. Worth stating in the report: a WIP limit is enforced on a column whose values are
+updated manually, so the limit constrains the board rather than the work.
+
+**Consequence for velocity and burn-down:** back-filling `Status` and `Sprint` closes part of the gap
+recorded above, but not the measurable part. Burn-down still needs an Iteration field or dated status
+transitions, and velocity still needs story points. Neither exists.
+
 #### Board access from the development environment
 
 - 2026-08-06, first attempt — **not readable.** No GitHub MCP server configured for Claude Code,

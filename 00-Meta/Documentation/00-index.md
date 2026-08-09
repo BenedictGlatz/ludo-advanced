@@ -30,7 +30,7 @@ Read [reference/style-reference.md](reference/style-reference.md) before writing
 | 09 | [09-source-code-overview.md](notes/09-source-code-overview.md) | Size and metrics — **the only chapter where numbers live** | empty |
 | 10 | [10-ai-driven-engineering.md](notes/10-ai-driven-engineering.md) | How AI was used in the workflow, what it was good and bad at | empty |
 | 11 | [11-project-report.md](notes/11-project-report.md) | Plan vs actual, challenges, lessons learned | empty |
-| 12 | [12-appendix.md](notes/12-appendix.md) | Tables, figures and code excerpts moved out of the running text | empty |
+| 12 | [12-appendix.md](notes/12-appendix.md) | Tables, figures and code excerpts moved out of the running text | partial — Figure 1 registered |
 | 13 | [13-ai-index.md](notes/13-ai-index.md) | The AI index — **generated**, never hand-maintained | empty |
 
 Status values: `empty` → `partial` → `ready`. Update the row when a chapter's note becomes usable.
@@ -38,6 +38,7 @@ Status values: `empty` → `partial` → `ready`. Update the row when a chapter'
 **Supporting files**, not chapters:
 
 - [project-journal.md](project-journal.md) — dated log, decision blocks, challenges.
+- [Project-Management/Utility-Value-Analysis.md](../Project-Management/Utility-Value-Analysis.md) — weighted-criteria comparison of 2D/2.5D/3D backing the engine-choice decision.
 - [sprint-log.md](sprint-log.md) — planned scope vs delivered scope, per sprint.
 - [abbreviations.md](abbreviations.md) — feeds the report's abbreviation list.
 
@@ -114,7 +115,9 @@ Standing list. Resolve and delete, or move into the chapter that answers it.
   them and are open: the board has no buffer sprint, and its Sprint 0 is 2½ weeks against the planned
   1 week.
 - **Velocity and burn-down charts cannot currently be produced.** The board has no story point field
-  and no Iteration field, and `Status` and `Sprint` are unset on all 50 items. Both charts are named
+  and no Iteration field. (`Status` and `Sprint` *were* also unset on all 50 items; both were
+  back-filled by 2026-08-09 — see *Figure 1* in Ch. 02 — which does not change the conclusion,
+  because the missing part is the measurable one.) Both charts are named
   as buffer-sprint presentation content. Add and back-fill the fields before Sprint 1 closes, or drop
   the slides and explain why in Chapter 11 — see
   [02-project-management.md](notes/02-project-management.md#board).

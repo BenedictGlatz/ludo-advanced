@@ -1,0 +1,11 @@
+[
+  {
+    "timestamp": "2026-08-09T14:10:00+02:00",
+    "model": "claude-opus-5",
+    "prompt": "I created a new Appendix folder for pictures. How would you commit it? … Yes",
+    "issue": null,
+    "topic": "process-docs",
+    "use": "adopted",
+    "summary": "Committed the board screenshot on its own branch off dev rather than onto the open feature/13 branch, renamed it Figure-01-Github-Project-Kanban-Board.png, registered it in notes/12-appendix.md as Figure 1 with a figure table, and referenced it from Ch. 02. Reading the screenshot resolved two recorded negative findings (Status and Sprint were back-filled) and produced three new facts: a WIP limit of 5 on the In Progress column that no planning document mentions, the Sprint 0 membership of 12 items, and a board that lags the repository — #10 shows In Progress and #13 Todo while pull requests for both were already open."
+  }
+]
