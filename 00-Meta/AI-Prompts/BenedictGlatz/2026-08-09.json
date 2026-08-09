@@ -25,5 +25,14 @@
     "topic": "process-docs",
     "use": "revised",
     "summary": "Process correction. The two goal-catalogue commits had been made directly onto dev, bypassing the feature-branch and pull-request policy in CLAUDE.md that issue #47 had followed. Since neither commit was pushed, they were moved onto feature/10-functional-non-functional-goals and dev was reset to origin/dev; the branch was pushed and pull request #49 opened against dev with Closes #10."
+  },
+  {
+    "timestamp": "2026-08-09T11:06:00+02:00",
+    "model": "claude-opus-5",
+    "prompt": "[screenshot of the VS Code git graph] We accidently merged Nutzwertanalyse already. Can you somehow make it open again and set the remaining branches from it under the same branch? We want to then review the changes together and merge the pull request to dev. … We have the feature branch exactly for this case right? Why do we need a review branch now?",
+    "issue": 47,
+    "topic": "process-docs",
+    "use": "revised",
+    "summary": "Recovery from pull request #48 having been merged into dev without review. Established that GitHub cannot reopen a merged pull request, so the only route was rewriting published history. origin/dev was force-reset to e12f3a7; the four branches cut from the merge commit (feature/10, feature/12, feature/13, docs/appendix-board-screenshot) were re-parented onto aba7ec0 with git rebase --onto, verified byte-identical to their old remote state, and force-pushed. An initial suggestion to collect the branches into a new combined review branch was rejected by the user on the grounds that feature/47-nutzwertanalyse already is that branch, which was correct. Recorded as the second branching-policy deviation in Ch. 02 and as a challenge in the journal."
   }
 ]

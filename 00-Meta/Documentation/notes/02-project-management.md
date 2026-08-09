@@ -172,6 +172,33 @@ drops those slides and the report explains why. This is a decision to take now, 
   report. The cheap version is a GitHub ruleset requiring a pull request for both branches; the cost
   is that it applies to the repository owner too.
 
+### Second deviation — pull request #48 merged without review — 2026-08-09
+
+- Pull request #48 (`feature/47-nutzwertanalyse` → `dev`) was merged **without the review approval the
+  policy requires**. The merge was noticed only afterwards, from the commit graph.
+- **Why it is worse than the first deviation:** the first was caught before anything was pushed and
+  cost nothing. This one was already on `origin/dev`, and four further branches — `feature/10`,
+  `feature/12`, `feature/13`, `docs/appendix-board-screenshot` — had been cut from the merge commit
+  586bcc6, so every one of them carried the unreviewed Nutzwertanalyse commit in its history. An
+  unreviewed merge does not stay contained; it becomes the base of everything branched after it.
+- **Pull request #48 could not be reopened.** GitHub closes merged pull requests permanently. Restoring
+  the review therefore meant rewriting published history, not flipping a state on the platform.
+- **How it was corrected:** `origin/dev` was force-reset to e12f3a7, the commit before the merge. The
+  four descendant branches were re-parented onto `aba7ec0` (the Nutzwertanalyse commit itself) with
+  `git rebase --onto aba7ec0 586bcc6 <branch>`, so they now stack on the branch under review instead of
+  on a merge commit that no longer exists. A new pull request was opened for the review that was skipped.
+- **Why the re-parenting was safe rather than a gamble:** 586bcc6 was a merge of `e12f3a7` with its own
+  direct descendant `aba7ec0`, so the merge commit's tree is byte-identical to `aba7ec0`'s. Replaying the
+  four branches across that boundary changes parent pointers and nothing else. This was verified after
+  the rebase — `git diff <branch> origin/<branch>` was empty for all four before anything was pushed.
+- **What it cost the team, which the report should not omit:** five force-pushes to shared branches.
+  Anyone holding `dev` or one of the four feature branches has to re-fetch and hard-reset. Rewriting
+  shared history is normally the thing a branching policy exists to avoid, and here the policy's own
+  violation is what made it the least-bad option.
+- **Consequence to decide, and it is the same one as above:** a GitHub ruleset on `dev` requiring a
+  pull request *and* at least one approving review would have prevented this outright. Two deviations
+  in one day, from the same absent control, is the argument.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

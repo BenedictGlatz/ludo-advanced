@@ -48,6 +48,14 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   `feature/10-functional-non-functional-goals` before either was pushed, `dev` reset to `origin/dev`,
   pull request #49 opened. Recorded in Ch. 02 together with the reason nothing prevented it —
   neither `dev` nor `main` has a branch protection rule. Sprint 0.
+- **2026-08-09** — Second deviation the same day, and the expensive one: pull request #48 was merged
+  into `dev` without the required review. Because four branches had already been cut from the merge
+  commit, they all carried the unreviewed commit. GitHub cannot reopen a merged pull request, so the
+  correction was a history rewrite: `origin/dev` force-reset to `e12f3a7`, the four branches
+  re-parented onto the Nutzwertanalyse commit itself, a fresh pull request opened for the review.
+  Chosen over a revert commit because a revert leaves both the merge and its undo in `dev`'s history
+  and needs a revert-of-the-revert to land the work later — the rewrite was judged the smaller cost
+  while only three people hold the branches. Recorded in Ch. 02. Sprint 0.
 
 ---
 
@@ -213,6 +221,20 @@ exactly the kind of thing this file exists to keep visible.
   a public project. Cost: roughly 30–40 minutes, most of it in the diagnosis rather than the fix.
   The lesson worth carrying into the report is that "the integration is installed" and "this
   particular client can see it" are different claims, and only the second one is testable.
+
+- **2026-08-09 — Undoing an unreviewed merge cost far more than the review would have.** Pull request
+  #48 was merged into `dev` without approval. Reopening it was impossible — GitHub closes merged pull
+  requests permanently — and by the time it was noticed, four branches had been cut from the merge
+  commit and all four carried the unreviewed work. The recovery was a rewrite of published history:
+  `dev` force-reset one commit back, the four branches re-parented with `git rebase --onto`, five
+  force-pushes, and every teammate obliged to re-fetch. What made it tractable at all was a property
+  of the graph rather than any tooling — the merge commit's tree was identical to the commit it
+  merged, so re-parenting could not change file content, and `git diff` against the old remote refs
+  proved it before anything was pushed. The lesson for Chapter 11 is the asymmetry: the review that
+  was skipped would have cost minutes, the undo cost an hour and a coordinated reset across three
+  people. It is also the concrete argument for the branch-protection ruleset left open in Ch. 02 —
+  the control was absent twice in one day, and the second absence is what turned a process slip into
+  a history rewrite.
 
 Log anything that cost more than roughly 30 minutes of unplanned work: what happened, what it cost,
 how it was resolved. These become the running prose of Chapter 11, so a sentence of context is worth
