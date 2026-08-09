@@ -43,6 +43,11 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   *Method and scope* section were cut, so the file opens directly on the functional goals. Committed
   against issue #10 *Functional vs. Non-Functional Goals* (labels `documentation`, `2-definition`),
   which is the first `2-definition` issue to be worked. Sprint 0.
+- **2026-08-09** — First deviation from the branching policy, caught and corrected the same day: the
+  #10 commits had gone straight onto `dev` instead of a feature branch. Moved onto
+  `feature/10-functional-non-functional-goals` before either was pushed, `dev` reset to `origin/dev`,
+  pull request #49 opened. Recorded in Ch. 02 together with the reason nothing prevented it —
+  neither `dev` nor `main` has a branch protection rule. Sprint 0.
 
 ---
 
