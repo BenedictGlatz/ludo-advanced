@@ -1,0 +1,3 @@
+# AI prompt logs are kept locally per machine/user, not version-controlled.
+# See CLAUDE.md "AI prompt log" and the 2026-08-10 decision in project-journal.md.
+00-Meta/AI-Prompts/
