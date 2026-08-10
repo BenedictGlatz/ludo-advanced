@@ -61,5 +61,10 @@ We implement a Github project with
 - Presentation Deck: Prepare slides highlighting Scrum velocity, burn-down charts, architecture decisions, and mechanic tradeoffs.
 
 ## Documentation
-- 2026.08.06: Creation of repository and project in github
-- We used 
+
+The running record moved to [00-Meta/Documentation/](../Documentation/00-index.md) on 2026-08-06.
+
+- Dated log of what was done: [project-journal.md](../Documentation/project-journal.md)
+- Decisions with their rejected alternatives: same file, `## Decisions`
+- Planned versus delivered scope per sprint: [sprint-log.md](../Documentation/sprint-log.md)
+- Chapter notes for the final report: [00-index.md](../Documentation/00-index.md)

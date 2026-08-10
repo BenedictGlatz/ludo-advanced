@@ -1,0 +1,227 @@
+# 02 Project management and process
+
+> **Covers:** how the work was organised — process model, roles, sprints, the GitHub board,
+> ceremonies, branching and review policy, definition of done.
+> **Does not cover:** how it actually went. Plan-versus-actual, challenges and lessons learned are
+> Chapter 11. This chapter is the *plan*; that one is the *retrospective*.
+
+This module is project-management focused, so this chapter and Chapter 11 carry more weight here
+than they do in the sample report, where the same material was compressed into a single section.
+
+## What this chapter must answer
+
+- Which process model, and why that one.
+- Who did what — roles, both Scrum roles and technical ownership.
+- Sprint structure: how many, how long, what each was for.
+- How the backlog was managed: board, columns, custom fields, estimation, prioritisation.
+- Which ceremonies actually happened (planning, review, retro) and at what cadence.
+- Branching model, review policy, definition of done.
+- How AI assistance was integrated into the process — cross-reference Chapter 10.
+
+## Facts
+
+### Process model
+
+- Scrum, 3 sprints of 2 weeks, preceded by a 1-week Sprint 0 and followed by a 1-week buffer sprint
+  — 8 weeks total. Source: [00-One-Pager.md](../../Project-Management/00-One-Pager.md),
+  [01-Github-Project.md](../../Project-Management/01-Github-Project.md).
+- No dedicated Scrum Master. The one-pager states the Scrum Members also do the Scrum Master work,
+  "defining how to implement (Workflows etc.)".
+
+### Roles
+
+- Product Owner — Fabian Gemming (defines *what* and *why*).
+- Scrum Member, implementation — Lars Bolender.
+- Scrum Member, implementation — Benedict Glatz.
+- **Contradiction, unresolved:** [01-Github-Project.md](../../Project-Management/01-Github-Project.md)
+  carries a second, unnamed Developer A/B/C table that assigns a Scrum Master and a Quality & UX
+  Lead, and pairs each Scrum role with a technical lead role. The two tables disagree on whether a
+  Scrum Master exists. Needs deciding; whichever holds, the report states which and why.
+
+### Board
+
+- GitHub Projects v2, board named *Ludo Advanced*, with Roadmap, Backlog and Kanban views.
+- Phase labels: `2-definition`, `3-planning`, `4-implementation`, `5-completion`.
+- MoSCoW labels: `must have`, `should have`, `could have`.
+- Planned custom fields (from [Brainstorming.md](../../../Brainstorming.md)): Iteration (2-week
+  sprints), Story Points (Fibonacci 1/2/3/5/8), Category (Gameplay, UI, Art/Audio, Bug, Mechanics).
+- Planned columns: Backlog → Ready for Sprint → In Progress → In Review → Done.
+
+#### Board as actually configured — observed 2026-08-06
+
+Read from the live board at `https://github.com/users/BenedictGlatz/projects/3` (a **user-level**
+project, not repository-level). 50 items: the 46 issues plus 4 draft issues used as sprint markers.
+
+- **Views (3), matching the plan:** `Roadmap` (roadmap layout), `Backlog` (table), `Kanban Board`
+  (board layout, grouped by Status).
+- **`Status` field options are `Todo` / `In Progress` / `Done`** — the GitHub default triple, *not*
+  the five planned columns. `Ready for Sprint` and `In Review` do not exist, so the review step of
+  the branching policy has no board representation.
+- **`Sprint` field options:** `Sprint 0` / `Sprint 1` / `Sprint 2` / `Sprint 3`. It is a plain
+  single-select, **not** a GitHub *Iteration* field. Iteration fields carry date ranges and drive
+  burn-down charts natively; a single-select does not.
+- **Custom date fields:** `Start Date`, `End Date`. Populated on all 50 items.
+- Remaining fields are GitHub built-ins: Title, Assignees, Labels, Linked pull requests, Milestone,
+  Repository, Reviewers, Parent issue, Sub-issues progress, Created, Updated, Closed.
+- **Four negative findings, all as of 2026-08-06:**
+  1. **`Status` is unset on all 50 items.** Every card sits in the Kanban board's no-status lane, so
+     the board currently shows no progress at all.
+  2. **`Sprint` is unset on all 50 items.** Sprint membership exists only as the 4 draft-issue
+     markers and the per-item date fields, not as a queryable field value.
+  3. **No `Story Points` field exists**, and no estimation field of any kind. The Fibonacci
+     estimation planned in [Brainstorming.md](../../../Brainstorming.md) was never configured.
+  4. **No `Category` field exists.** Its role is filled by free labels (`gameplay`, `ui`, `audio`,
+     `documentation`) instead.
+- **No milestones are defined** in the repository (`/milestones` returns an empty list).
+- Assignees are set on only 3 of 46 issues (#2, #4, #5 to all three members; #1 to BenedictGlatz;
+  #3 to lbolender). The remaining 41 are unassigned.
+- **Third GitHub account observed:** `CreativeName06`, alongside `BenedictGlatz` and `lbolender`.
+  By elimination this is Fabian Gemming, but that mapping is not written down anywhere and should be
+  confirmed before the report names it.
+
+**Consequence for the report:** velocity and burn-down charts are named as buffer-sprint
+presentation content in [sprint-log.md](../sprint-log.md), and as the board stands **neither can be
+produced** — burn-down needs an Iteration field or dated status transitions, velocity needs story
+points. Both fields have to be added and back-filled *before* Sprint 1 closes, or the presentation
+drops those slides and the report explains why. This is a decision to take now, not in week 8.
+
+#### Board access from the development environment
+
+- 2026-08-06, first attempt — **not readable.** No GitHub MCP server configured for Claude Code,
+  no `gh` CLI installed, no `GITHUB_TOKEN`/`GH_TOKEN`, and the repository was private, so the
+  unauthenticated REST API answered `404`.
+- 2026-08-06, second attempt — **readable, but not through MCP.** The GitHub MCP server was
+  installed into `%APPDATA%\Code\User\mcp.json`, which is **VS Code's own (Copilot) MCP registry**.
+  Claude Code reads a different set of locations (`.mcp.json` in the project root, `mcpServers` in
+  `~/.claude.json`, or `claude mcp add`) and its config was still empty. Installing an MCP server in
+  one client does not expose it to another client running in the same editor — worth stating plainly
+  in the report, because it looks like it should.
+- What actually made the board readable was **making the repository and project public**:
+  - Issues, labels and milestones — unauthenticated GitHub REST API.
+  - Board structure and item values — parsed out of the board page's server-rendered
+    `memex-columns-data` and `memex-paginated-items-data` JSON payloads.
+  - The **Projects v2 GraphQL API rejects unauthenticated requests with `403`** regardless of
+    project visibility, so the HTML payload route is the only unauthenticated one. It depends on
+    GitHub's internal page structure and will break without notice — fine for a one-off reading,
+    not something to build tooling on.
+- 2026-08-06, third finding — **authenticated *writes* were available all along.** Pushing `dev`
+  succeeded, which proves a credential existed; `git credential fill` against `host=github.com`
+  returns the Git Credential Manager's stored token (`credential.helper=manager`). It authenticates
+  as `lbolender` with scopes `gist, repo, workflow`, which is enough to comment on and close issues
+  through the REST API. The earlier conclusion that *no* authenticated GitHub automation was possible
+  was wrong: what was missing was not a token but the knowledge that one was already there. See the
+  correction in [07-tooling.md](07-tooling.md).
+- **The one scope that is missing is `read:project`.** With the stored token, a Projects v2 GraphQL
+  query returns `INSUFFICIENT_SCOPES`, naming `read:project` explicitly. So the board field values —
+  the one thing the `memex-*` HTML route is needed for — remain the only part of GitHub that has no
+  stable access path. Adding `read:project` to the existing token at
+  <https://github.com/settings/tokens> is a smaller change than installing the `gh` CLI and replaces
+  the HTML-parsing route entirely.
+- Durable access therefore needs **one scope added to an existing token**, not new tooling. The `gh`
+  CLI stays optional convenience rather than a prerequisite.
+
+### Branching and review
+
+- `main` always holds a working, playable build; no direct pushes or commits.
+- `dev` is the integration branch; feature branches merge into it, and `dev` merges into `main` for
+  releases.
+- Feature branches: `feature/<issue>-<slug>` or `fix/<issue>-<slug>`, branched off `dev`.
+- Pull requests need at least one review approval and are merged with **Squash and Merge**.
+- `Closes #<n>` in the commit body auto-closes the issue and moves the board card — but **only when
+  the commit lands on the default branch (`main`)**. On feature branches and on `dev` the trailer is
+  recorded and does nothing until the release merge. Verified 2026-08-06. Consequence: an issue
+  finished mid-sprint has to be closed explicitly, or it stays open until the next release even though
+  the work is merged into `dev`.
+- Conventional Commits, English, imperative mood.
+
+### Documentation process
+
+- 2026-08-06 — Repository and GitHub project created.
+- 2026-08-06 — Documentation notes established under `00-Meta/Documentation/`. The report is written
+  *alongside* development: every commit appends facts to the chapter note it touches, and any
+  non-obvious decision gets a block in [project-journal.md](../project-journal.md). Reason: the
+  sample report this project models on names late documentation as its own biggest weakness.
+  See the decision block of the same date in the journal.
+- 2026-08-06 — **`dev` created on `origin`.** Until this push the remote had only `main`; the four
+  documentation commits existed locally only. `main` is deliberately left at `96109df` — the
+  branching policy forbids direct pushes to it, so these commits reach `main` through a `dev` → `main`
+  pull request, not a push.
+- 2026-08-06 — **First two issues closed:** #4 *Create a Claude.md* and #2 *Github Setup +
+  Documentation*, each with a closing comment naming the evidence. Note that closing was done through
+  the REST API, **not** by a `Closes #<n>` commit trailer: GitHub only honours that trailer when the
+  commit reaches the **default branch**, so a trailer on a `dev` commit does nothing until the release
+  merge. This matters for the policy in *Branching and review* below — on this branching model,
+  `Closes #<n>` closes issues at release time, not at commit time.
+
+### First deviation from the branching policy — 2026-08-09
+
+- Issue #47 (Nutzwertanalyse) followed the policy: branch `feature/47-nutzwertanalyse`, pull request
+  #48 into `dev`, squash-merged.
+- Issue #10 (this goal catalogue) did **not**. Both its commits were made straight onto `dev`, which
+  the policy does not permit for issue work.
+- **Caught and corrected the same day, before either commit was pushed.** The commits were moved onto
+  `feature/10-functional-non-functional-goals`, `dev` was reset to `origin/dev`, and pull request #49
+  was opened against `dev`. No force-push and no rewriting of history anyone else had.
+- **Why it happened, which is the reportable part:** the branch was never checked. The instruction
+  followed was "commit as soon as a feature is implemented", and the commit landed on whatever branch
+  happened to be checked out. Nothing prevented it — the policy exists only as prose in
+  [CLAUDE.md](../../../CLAUDE.md), and `dev` has no branch protection rule, so a direct commit
+  succeeds silently exactly the way a compliant one does.
+- **Consequence to decide:** enable branch protection on `dev` (and on `main`, where the policy is
+  stricter and equally unenforced), or accept that the model depends on discipline and say so in the
+  report. The cheap version is a GitHub ruleset requiring a pull request for both branches; the cost
+  is that it applies to the repository owner too.
+
+### Second deviation — pull request #48 merged without review — 2026-08-09
+
+- Pull request #48 (`feature/47-nutzwertanalyse` → `dev`) was merged **without the review approval the
+  policy requires**. The merge was noticed only afterwards, from the commit graph.
+- **Why it is worse than the first deviation:** the first was caught before anything was pushed and
+  cost nothing. This one was already on `origin/dev`, and four further branches — `feature/10`,
+  `feature/12`, `feature/13`, `docs/appendix-board-screenshot` — had been cut from the merge commit
+  586bcc6, so every one of them carried the unreviewed Nutzwertanalyse commit in its history. An
+  unreviewed merge does not stay contained; it becomes the base of everything branched after it.
+- **Pull request #48 could not be reopened.** GitHub closes merged pull requests permanently. Restoring
+  the review therefore meant rewriting published history, not flipping a state on the platform.
+- **How it was corrected:** `origin/dev` was force-reset to e12f3a7, the commit before the merge. The
+  four descendant branches were re-parented onto `aba7ec0` (the Nutzwertanalyse commit itself) with
+  `git rebase --onto aba7ec0 586bcc6 <branch>`, so they now stack on the branch under review instead of
+  on a merge commit that no longer exists. A new pull request was opened for the review that was skipped.
+- **Why the re-parenting was safe rather than a gamble:** 586bcc6 was a merge of `e12f3a7` with its own
+  direct descendant `aba7ec0`, so the merge commit's tree is byte-identical to `aba7ec0`'s. Replaying the
+  four branches across that boundary changes parent pointers and nothing else. This was verified after
+  the rebase — `git diff <branch> origin/<branch>` was empty for all four before anything was pushed.
+- **What it cost the team, which the report should not omit:** five force-pushes to shared branches.
+  Anyone holding `dev` or one of the four feature branches has to re-fetch and hard-reset. Rewriting
+  shared history is normally the thing a branching policy exists to avoid, and here the policy's own
+  violation is what made it the least-bad option.
+- **Consequence to decide, and it is the same one as above:** a GitHub ruleset on `dev` requiring a
+  pull request *and* at least one approving review would have prevented this outright. Two deviations
+  in one day, from the same absent control, is the argument.
+
+## Decisions
+
+<!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
+
+## Open / to verify
+
+- Which ceremonies actually take place, and whether they are minuted. Only one meeting note exists
+  so far ([20260806.md](../../Project-Management/Meeting%20Notes/20260806.md), one sentence).
+- ~~Whether Story Points and the Fibonacci estimation were actually configured on the board.~~
+  **Answered 2026-08-06: they were not.** See the four negative findings above. What is still open is
+  the *decision* — add the fields and back-fill, or drop velocity and burn-down from the
+  presentation and say so.
+- ~~No calendar dates for sprint boundaries.~~ **Answered 2026-08-06** from the board's sprint
+  markers; see [sprint-log.md](../sprint-log.md). Two contradictions surfaced with it and are open:
+  - The board has **no buffer sprint**. The plan is 3 sprints plus a buffer; the board has Sprint 0–3
+    and stops. Either board `Sprint 3` *is* the buffer sprint under another name, or the buffer was
+    dropped. Decide and record which.
+  - Board `Sprint 0` runs 2026-07-23 → 2026-08-09, i.e. **2½ weeks**, against the planned 1 week.
+    It also starts two weeks before the repository existed.
+- Whether the board's `Status` triple (`Todo`/`In Progress`/`Done`) replaces the five planned columns
+  deliberately, or was simply never changed from the GitHub default. The report needs one or the
+  other, and the branching policy's review step currently has no column.
+- Whether `CreativeName06` is Fabian Gemming. Assumed by elimination, confirmed nowhere.
+- Definition of Done has not been written down anywhere.
+- Whether a CI build-validation workflow (`build-check.yml`, planned in `Brainstorming.md`) gets
+  implemented. If not, say so in Chapter 08 with a reason.
