@@ -82,13 +82,32 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   "can we learn the engine" to "can we finish the rules".
 - **Source:** [Meeting Notes 20260806](../Project-Management/Meeting%20Notes/20260806.md),
   [00-One-Pager.md](../Project-Management/00-One-Pager.md).
-- **Addendum (2026-08-09):** formalized as a weighted-criteria Nutzwertanalyse covering all three
+- **Addendum (2026-08-09):** formalized as a weighted-criteria utility value analysis covering all three
   visual approaches (2D, 2.5D, 3D), not just the original 2D-vs-3D pair — see
   [Utility-Value-Analysis.md](../Project-Management/Utility-Value-Analysis.md). It confirms
   2D as the winner (4.20/5.00) and adds one finding not visible in the original prose reasoning:
   2.5D (2.75) also outscores full 3D (2.30), because 2.5D inherits 3D's C#/Unity risk without
   buying back most of its visual payoff.
 - → Ch. 03, Ch. 11
+
+### 2026-08-10 — AI prompt logs are gitignored, kept locally instead of committed
+
+- **Chosen:** `00-Meta/AI-Prompts/` added to `.gitignore`; the two existing tracked files
+  (`BenedictGlatz/2026-08-09.json`, `lbolender/2026-08-06.json`) untracked with `git rm --cached`
+  but kept on disk. `CLAUDE.md` step 1 of the mandatory per-change steps is no longer part of the
+  commit.
+- **Rejected:** the original rule in `CLAUDE.md` — log entries committed together with steps 2–4 in
+  the same commit, before replying.
+- **Why:** the working tree could not be used for anything else while a prompt-log entry sat as an
+  uncommitted change, since the log is written *before* replying but the actual work (docs, code,
+  tests) is what should be reviewed and committed together as one unit. Requiring the log file itself
+  to be committed forced an extra commit cycle any time work was still in progress.
+- **Consequence:** `npm run docs:ai-index` can no longer read every contributor's log straight from a
+  fresh clone — logs now live only on each contributor's machine. Whoever regenerates the AI index
+  chapter has to collect the other contributors' `00-Meta/AI-Prompts/<github-username>/` folders out
+  of band first (chat, shared drive) and place them locally. This is a real loss of the
+  "one `git pull` has everything" property the log used to have, traded for not blocking other work.
+- → Ch. 07, Ch. 13
 
 ### 2026-08-06 — Branching model is main/dev/feature, not GitHub Flow
 

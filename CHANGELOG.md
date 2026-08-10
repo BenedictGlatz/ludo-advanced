@@ -28,3 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from the log rather than sorted by hand
 - The truncated `## Documentation` section in `00-Meta/Project-Management/01-Github-Project.md` now points at the
   project journal instead of ending mid-sentence
+- `00-Meta/AI-Prompts/` is now gitignored and kept locally per contributor instead of being committed; `CLAUDE.md`
+  updated so the AI prompt log step is no longer part of the same commit as documentation notes, changelog and
+  tests

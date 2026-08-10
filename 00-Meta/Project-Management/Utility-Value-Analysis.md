@@ -1,10 +1,4 @@
-# Nutzwertanalyse: 2D vs. 2.5D vs. 3D
-
-Formal weighted-criteria comparison of the three possible engine/visual approaches for Ludo
-Advanced, done to make the choice recorded in
-[project-journal.md](../Documentation/project-journal.md) (decision block "2D web build instead of
-Unity 3D or Pygame") reproducible rather than asserted.
-
+# Utility Value Analysis: 2D vs. 2.5D vs. 3D
 ## Method
 
 Six criteria, each weighted by importance to this project (weights sum to 100 %). Each option is
@@ -28,24 +22,24 @@ frames the 3D-style options this way.
 
 | Criterion | Weight | Why this weight |
 | --- | --- | --- |
-| Team-Kompetenz (C#-Einarbeitung) | 25 % | 2 of 3 team members do not know C#; Scrum members also act as their own Scrum Master, so there is no slack to absorb a steep learning curve. |
-| Zeitaufwand (fits the sprint plan) | 25 % | Fixed timeline: 3 sprints à 2 weeks plus a buffer sprint (~8 weeks total, see [01-Github-Project.md](01-Github-Project.md)). No calendar slack to recover from an underestimate. |
-| Visuelle Qualität / Optik | 15 % | Presentation and playtesting quality matter, but are explicitly traded off against delivery risk per the "magical triangle" reasoning already recorded in the journal. |
-| Multiplayer- & Web-Deployment-Fähigkeit | 15 % | One-pager names multiplayer as a risk criterion for both original options; deployment target (GitHub Pages / itch.io, browser-based) is assumed elsewhere in the docs. |
-| Erweiterbarkeit | 10 % | Named explicitly in the one-pager's initial risk assessment as a differentiator between the options. |
-| Technisches Risiko | 10 % | General project risk of the approach failing to be finishable at all in the available time. |
+| Team competence (C# ramp-up) | 25 % | 2 of 3 team members do not know C#; Scrum members also act as their own Scrum Master, so there is no slack to absorb a steep learning curve. |
+| Time effort (fits the sprint plan) | 25 % | Fixed timeline: 3 sprints à 2 weeks plus a buffer sprint (~8 weeks total, see [01-Github-Project.md](01-Github-Project.md)). No calendar slack to recover from an underestimate. |
+| Visual quality | 15 % | Presentation and playtesting quality matter, but are explicitly traded off against delivery risk per the "magical triangle" reasoning already recorded in the journal. |
+| Multiplayer & web deployment capability | 15 % | One-pager names multiplayer as a risk criterion for both original options; deployment target (GitHub Pages / itch.io, browser-based) is assumed elsewhere in the docs. |
+| Extensibility | 10 % | Named explicitly in the one-pager's initial risk assessment as a differentiator between the options. |
+| Technical risk | 10 % | General project risk of the approach failing to be finishable at all in the available time. |
 | **Total** | **100 %** | |
 
 ## Scoring
 
 | Criterion | Weight | 2D | 2.5D | 3D |
 | --- | --- | --- | --- | --- |
-| Team-Kompetenz | 25 % | **5** — whole team already works in JS | **2** — same C# gap as full 3D | **1** — 2 of 3 members must learn C# from scratch |
-| Zeitaufwand | 25 % | **5** — no engine overhead, fits the 8-week plan | **3** — less asset work than full 3D, but still Unity ramp-up | **1** — modeling, lighting, camera and asset pipeline on top of the C# gap |
-| Optik | 15 % | **2** — flat board, limited visual polish | **3** — reads as more "produced" than 2D without full 3D cost | **5** — best possible visual result |
+| Team competence | 25 % | **5** — whole team already works in JS | **2** — same C# gap as full 3D | **1** — 2 of 3 members must learn C# from scratch |
+| Time effort | 25 % | **5** — no engine overhead, fits the 8-week plan | **3** — less asset work than full 3D, but still Unity ramp-up | **1** — modeling, lighting, camera and asset pipeline on top of the C# gap |
+| Visual quality | 15 % | **2** — flat board, limited visual polish | **3** — reads as more "produced" than 2D without full 3D cost | **5** — best possible visual result |
 | Multiplayer/Deployment | 15 % | **4** — plain web stack, straightforward browser deployment | **3** — Unity networking works but a WebGL build adds friction | **3** — same Unity networking/WebGL friction as 2.5D |
-| Erweiterbarkeit | 10 % | **3** — one-pager flags this as 2D's weak point, but web tooling is still flexible | **4** — Unity's component system | **5** — Unity component system plus full 3D asset ecosystem |
-| Risiko | 10 % | **5** — team stays in a language it knows | **2** — still carries the C# + timeline risk | **1** — highest combined risk (new language, most work, fixed deadline) |
+| Extensibility | 10 % | **3** — one-pager flags this as 2D's weak point, but web tooling is still flexible | **4** — Unity's component system | **5** — Unity component system plus full 3D asset ecosystem |
+| Technical risk | 10 % | **5** — team stays in a language it knows | **2** — still carries the C# + timeline risk | **1** — highest combined risk (new language, most work, fixed deadline) |
 
 ## Weighted totals
 
@@ -72,7 +66,7 @@ ever gets renegotiated mid-project — 2.5D is not the safe fallback it might so
 
 ## Conclusion
 
-The Nutzwertanalyse confirms the 2D web approach as the correct choice given this team's C#
+The utility value analysis confirms the 2D web approach as the correct choice given this team's C#
 familiarity and the fixed 8-week sprint plan. See
 [project-journal.md](../Documentation/project-journal.md) for the original decision record and
 rejected alternatives (Unity 3D, Pygame); this file is the supporting weighted-criteria evidence for
