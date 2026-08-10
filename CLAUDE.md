@@ -27,17 +27,19 @@ exactly this; do not substitute alternatives.
 
 ## Mandatory per-change steps
 
-Every change carries these five, in this order. They are not optional and not "when there is time" — steps 1 and 2
-are the ones that cannot be reconstructed afterwards, which is exactly why they are first.
+Every change carries these five, in this order. They are not optional and not "when there is time" — step 1 is
+local-only and not part of the commit (see [AI prompt log](#ai-prompt-log)); step 2 is the one that cannot be
+reconstructed afterwards, which is exactly why it comes first among the committed steps.
 
 1. **AI prompt log** — append the prompt to `00-Meta/AI-Prompts/<github-username>/YYYY-MM-DD.json` **before
-   replying**. See [AI prompt log](#ai-prompt-log).
+   replying**. This directory is gitignored and kept locally per machine, not committed. See
+   [AI prompt log](#ai-prompt-log).
 2. **Documentation notes** — append facts to the chapter note the change belongs to, add a decision block to
    `00-Meta/Documentation/project-journal.md` for any non-obvious decision, and a challenge bullet for anything
    that cost more than ~30 min of unplanned work. See [Documentation notes](#documentation-notes).
 3. **Changelog** — user-visible changes under `## [Unreleased]` in `CHANGELOG.md`.
 4. **Tests** — write them, or state plainly which coverage is still outstanding. Do not skip silently.
-5. **Commit** — Conventional Commits, with steps 1–4 in the *same* commit. Push only when explicitly asked.
+5. **Commit** — Conventional Commits, with steps 2–4 in the *same* commit. Push only when explicitly asked.
 
 ## Tech stack and hard constraints
 
@@ -207,6 +209,13 @@ Every prompt is recorded under:
 ```
 00-Meta/AI-Prompts/<github-username>/YYYY-MM-DD.json
 ```
+
+**This directory is gitignored — it is not committed and not pushed.** It is kept locally per machine so that
+work-in-progress never has to be committed just to satisfy the logging step. Before running
+`npm run docs:ai-index`, whoever generates the AI index chapter must first collect the other contributors'
+`00-Meta/AI-Prompts/<github-username>/` folders out of band (e.g. a zip shared in chat) and place them locally
+alongside their own, since git no longer does that collection automatically. See the 2026-08-10 decision in
+[project-journal.md](00-Meta/Documentation/project-journal.md) for why.
 
 One file per user **per day**, containing a JSON array. Append new entries; never rewrite existing ones. Entry schema:
 
