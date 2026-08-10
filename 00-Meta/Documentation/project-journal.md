@@ -34,6 +34,8 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   had only `main` until now). Issues #4 *Create a Claude.md* and #2 *Github Setup + Documentation*
   closed with closing comments. An earlier negative finding corrected: an authenticated GitHub token
   was available all along, in the Git Credential Manager. Sprint 0.
+- **2026-08-10** — Risk register in `03-Risk-Analysis.md` expanded from 3 to 16 risks, all traced to
+  facts already recorded in the project's own documentation. Issue #11, Sprint 0.
 
 ---
 
@@ -155,6 +157,29 @@ exactly the kind of thing this file exists to keep visible.
   was reported as missing because the wrong location was checked — the MCP server in the wrong
   client's registry, the token in the wrong store. Both times the diagnosis, not the fix, was the work.
 - → Ch. 02, Ch. 07, Ch. 10
+
+### 2026-08-10 — Risk register expanded from the project's own documentation, not invented
+
+- **Chosen:** mine `project-journal.md`, `sprint-log.md`, `01-Github-Project.md` and `CLAUDE.md` for
+  risks that were already stated as facts or open questions elsewhere, and turn
+  [03-Risk-Analysis.md](../Project-Management/03-Risk-Analysis.md) into a register with a Category
+  and a Mitigation/Response column per risk, not just a Likelihood/Impact/Priority rating.
+- **Rejected:** brainstorming generic software-project risks (budget overrun, key-person illness in
+  the abstract, "requirements change") without grounding each one in something this project's own
+  documentation already says. A generic list reads as filler and duplicates risks the docs already
+  describe under a different name (e.g. "Sickness" already covers the abstract team-availability
+  risk).
+- **Why:** a risk register a reader cannot trace back to a concrete project fact is not evidence of
+  risk *management*, just of a template being filled in. Every added row cites the source document it
+  came from, matching the "no claim without a reason" rule this documentation process already runs
+  on.
+- **Consequence:** 13 new risks added (16 total), grouped into Category values not previously used
+  here (Schedule, Scope, Process/Quality, Team, Technical/Tooling, Compliance/Academic,
+  Presentation). Two of them are already-known open questions from `sprint-log.md` given a
+  Likelihood/Impact rating for the first time (the sprint-date contradiction, the missing
+  velocity/burn-down data) — rating them doesn't resolve them, it just makes their priority visible
+  next to every other risk.
+- → Ch. 02
 
 ---
 

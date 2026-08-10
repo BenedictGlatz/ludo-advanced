@@ -153,6 +153,23 @@ drops those slides and the report explains why. This is a decision to take now, 
   merge. This matters for the policy in *Branching and review* below — on this branching model,
   `Closes #<n>` closes issues at release time, not at commit time.
 
+### Risk management
+
+- Risk register lives at
+  [03-Risk-Analysis.md](../../Project-Management/03-Risk-Analysis.md): a 3×3 Likelihood×Impact
+  matrix (Priority 1–5) plus a Risk Ratings table with Category, Likelihood, Impact, Priority and a
+  Mitigation/Response column.
+- **2026-08-10:** extended from 3 unrated-mitigation rows (Multiplayer, Complexity, Sickness) to 16,
+  by mining the risks already implied elsewhere in the documentation rather than inventing new ones
+  — e.g. the sprint-plan/board-date contradiction and missing velocity data from `sprint-log.md`, the
+  unstable `memex-*` board-parsing route and the public-repository decision from `project-journal.md`,
+  and the role-concentration and external-playtester dependency from
+  [01-Github-Project.md](../../Project-Management/01-Github-Project.md). Categories used: Schedule,
+  Scope, Process/Quality, Team, Technical/Tooling, Compliance/Academic, Presentation.
+- Every row added on 2026-08-10 traces to a fact already recorded elsewhere in this repository (no
+  speculative risks) — see [03-Risk-Analysis.md](../../Project-Management/03-Risk-Analysis.md) for
+  the full table and per-row mitigation.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
