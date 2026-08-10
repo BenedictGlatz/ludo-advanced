@@ -172,6 +172,25 @@ drops those slides and the report explains why. This is a decision to take now, 
   report. The cheap version is a GitHub ruleset requiring a pull request for both branches; the cost
   is that it applies to the repository owner too.
 
+### Third deviation from the branching policy — 2026-08-10
+
+- Pull request #55, carrying `feature/10-functional-non-functional-goals` (commits `7566a93`,
+  `efc2731`, `236bc76`), was opened and merged against `main` instead of `dev`. The branching policy
+  requires feature branches to merge into `dev` first; `main` only receives content through a
+  `dev` → `main` release merge.
+- **Consequence at the time it was caught:** `main` already carried the merge commit
+  (`c54bbd5`), pushed and shared. Rewriting `main`'s history to remove it was rejected for the same
+  reason a revert was rejected in the #48 incident above — `main` is the branch the policy protects
+  hardest, and a force-push there is a worse deviation than the one being corrected.
+- **Correction applied:** the three commits were cherry-picked onto `dev` (`5996cb0`, `4cf5983`,
+  `4f7e088`), bringing its content back in line with `main` byte-for-byte. `main`'s history was left
+  untouched.
+- **Why it happened:** the same absent control as the first deviation — neither `dev` nor `main` has
+  a branch protection rule, so choosing the wrong base branch when opening a pull request in the
+  GitHub UI succeeds exactly as silently as choosing the right one. This is the second and third
+  branching-policy deviation traced to that one missing ruleset; see the *Consequence to decide*
+  above, still open.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

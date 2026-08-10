@@ -48,6 +48,12 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   `feature/10-functional-non-functional-goals` before either was pushed, `dev` reset to `origin/dev`,
   pull request #49 opened. Recorded in Ch. 02 together with the reason nothing prevented it —
   neither `dev` nor `main` has a branch protection rule. Sprint 0.
+- **2026-08-10** — Third branching-policy deviation, caught after the fact: pull request #55
+  (`feature/10-functional-non-functional-goals`) had been opened and merged against `main` instead of
+  `dev`, so `dev` never received the goal-catalogue commits. `main`'s history was left as-is (already
+  pushed and shared); the three commits (`7566a93`, `efc2731`, `236bc76`) were cherry-picked onto
+  `dev` instead, bringing both branches back in line. Recorded in Ch. 02 alongside the first two
+  deviations, all three traced to the same absent branch protection rule. Sprint 0.
 
 ---
 
