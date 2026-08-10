@@ -64,6 +64,40 @@ matching the one-pager's framing of multiplayer and AI opponents as extensions.
 **Negative finding:** all four epics have an **empty issue body**, as do their sub-issues. The
 backlog is titles and labels only — there is not one acceptance criterion anywhere in the 46 issues.
 
+### Goal catalogue — written 2026-08-09
+
+The requirements above existed only as rules prose, hard constraints and issue titles spread over
+four documents. They are now stated as a checkable goal catalogue in
+[Functional-and-Non-Functional-Goals.md](../../Project-Management/Functional-and-Non-Functional-Goals.md):
+
+- **FG-01 – FG-16** — functional goals for the MVP, grouped along the four `must have` epics
+  (#36–#39) so the goal list and the board decompose the same way.
+- **FG-17 – FG-21** — the `should have` / `could have` items, named explicitly as *outside* the MVP.
+- **NFG-01 – NFG-08** — non-functional goals derived from the hard constraints in
+  [CLAUDE.md](../../../CLAUDE.md): layering, the 300-line limit, full i18n, the restricted dependency
+  set, the ≥ 80 % coverage target for `core/` and `state/`, static browser deployment, per-commit
+  documentation, and comprehensible game state.
+- Section 3 of that file is the **traceability table** epic → FG → constraining NFG.
+
+Each goal carries a **Source** line and a reason; goals derived rather than quoted say so. Nothing in
+the catalogue is a new requirement — it is a restatement of existing sources in checkable form, which
+is why it lives in Project-Management rather than here.
+
+**Negative findings surfaced by writing it, none of them previously recorded:**
+
+- **No performance goal exists** — no frame rate, load time or input latency anywhere. Defensible for
+  a turn-based board game, but it needs to be named as a deliberate omission rather than left blank.
+- **No browser support matrix** — no minimum versions, and no statement on whether mobile or tablet
+  is in scope. Relevant because the board is a wide layout.
+- **No accessibility goal** — and colour is the primary means of distinguishing players in Ludo, so
+  colour-blind accessibility is a foreseeable question for this game specifically, not a generic one.
+  Per [CLAUDE.md](../../../CLAUDE.md) *Design and UI* this is a Claude Design decision and was not
+  invented in the catalogue.
+- **NFG-02 (300-line limit) has no automated enforcement.** The rule is stated in `CLAUDE.md` and
+  nothing checks it; an ESLint `max-lines` rule would close the gap and is not configured.
+- The **Resource/Energy System** has deliberately *no* goal ID, because assigning one would decide an
+  open question by accident. It is listed as undecided in section 1.5 of the catalogue.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

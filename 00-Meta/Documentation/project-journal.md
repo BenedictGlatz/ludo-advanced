@@ -41,6 +41,34 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
 
 ## Decisions
 
+### 2026-08-09 — Goals are catalogued in Project-Management, not in the chapter note
+
+- **Chosen:** one standing document,
+  [Functional-and-Non-Functional-Goals.md](../Project-Management/Functional-and-Non-Functional-Goals.md),
+  holding every functional and non-functional goal with an ID, a source and a reason. Ch. 01 keeps a
+  summary and the findings; the catalogue itself is the single place a goal is edited.
+- **Rejected:** *writing the goals directly into
+  [01-requirements-and-goals.md](notes/01-requirements-and-goals.md).* That note is a report chapter
+  note — read once, near the end, when the report is written. Goals are consulted continuously during
+  sprint planning and review, by people who are not writing the report at that moment, so burying
+  them in a chapter note puts them where nobody looks. Also rejected: *stating goals as issue
+  acceptance criteria on GitHub*, which is the more orthodox place — but all 46 issues currently have
+  empty bodies, so this would have meant editing 46 issues before a single goal could be written down,
+  and the board is the one part of GitHub this project has no stable write path to.
+- **Why the catalogue is derived rather than authored:** every goal carries a Source line pointing at
+  the one-pager, `CLAUDE.md`, the README or a backlog issue, and goals that are a reading of a source
+  rather than a quotation say so explicitly. This keeps the document a *restatement* — so it cannot
+  quietly become a second, competing rulebook that drifts from the one-pager.
+- **Consequence:** a goal change edits the catalogue first and appends the fact to Ch. 01 in the same
+  commit. Chapter 08 reports measured coverage against NFG-05, and Chapter 11 reports goals not met.
+- **The finding worth carrying into Ch. 01 and Ch. 11:** writing the goals down produced five gaps
+  that nobody had noticed while the same information was spread over four documents — no performance
+  target, no browser support matrix, no accessibility goal, no enforcement for the 300-line limit, and
+  a Resource/Energy System that appears in the Sprint 2 plan and in no rulebook. The exercise found
+  more by being *collected* than by being *written*, which is an argument for doing it in week 1 of a
+  project rather than in week 8.
+- → Ch. 01, Ch. 08, Ch. 11
+
 ### 2026-08-06 — 2D web build instead of Unity 3D or Pygame
 
 - **Chosen:** a 2D board game running in the browser.
@@ -196,6 +224,20 @@ exactly the kind of thing this file exists to keep visible.
   a public project. Cost: roughly 30–40 minutes, most of it in the diagnosis rather than the fix.
   The lesson worth carrying into the report is that "the integration is installed" and "this
   particular client can see it" are different claims, and only the second one is testable.
+
+- **2026-08-09 — Undoing an unreviewed merge cost far more than the review would have.** Pull request
+  #48 was merged into `dev` without approval. Reopening it was impossible — GitHub closes merged pull
+  requests permanently — and by the time it was noticed, four branches had been cut from the merge
+  commit and all four carried the unreviewed work. The recovery was a rewrite of published history:
+  `dev` force-reset one commit back, the four branches re-parented with `git rebase --onto`, five
+  force-pushes, and every teammate obliged to re-fetch. What made it tractable at all was a property
+  of the graph rather than any tooling — the merge commit's tree was identical to the commit it
+  merged, so re-parenting could not change file content, and `git diff` against the old remote refs
+  proved it before anything was pushed. The lesson for Chapter 11 is the asymmetry: the review that
+  was skipped would have cost minutes, the undo cost an hour and a coordinated reset across three
+  people. It is also the concrete argument for the branch-protection ruleset left open in Ch. 02 —
+  the control was absent twice in one day, and the second absence is what turned a process slip into
+  a history rewrite.
 
 Log anything that cost more than roughly 30 minutes of unplanned work: what happened, what it cost,
 how it was resolved. These become the running prose of Chapter 11, so a sentence of context is worth

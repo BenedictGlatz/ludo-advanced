@@ -39,6 +39,7 @@ Status values: `empty` → `partial` → `ready`. Update the row when a chapter'
 
 - [project-journal.md](project-journal.md) — dated log, decision blocks, challenges.
 - [Project-Management/Utility-Value-Analysis.md](../Project-Management/Utility-Value-Analysis.md) — weighted-criteria comparison of 2D/2.5D/3D backing the engine-choice decision.
+- [Project-Management/Functional-and-Non-Functional-Goals.md](../Project-Management/Functional-and-Non-Functional-Goals.md) — the goal catalogue (FG-01–FG-21, NFG-01–NFG-08) feeding Chapter 01, with a traceability table to the backlog epics.
 - [sprint-log.md](sprint-log.md) — planned scope vs delivered scope, per sprint.
 - [abbreviations.md](abbreviations.md) — feeds the report's abbreviation list.
 
