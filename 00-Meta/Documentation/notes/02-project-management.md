@@ -153,43 +153,22 @@ drops those slides and the report explains why. This is a decision to take now, 
   merge. This matters for the policy in *Branching and review* below — on this branching model,
   `Closes #<n>` closes issues at release time, not at commit time.
 
-### First deviation from the branching policy — 2026-08-09
+### Risk management
 
-- Issue #47 (Nutzwertanalyse) followed the policy: branch `feature/47-nutzwertanalyse`, pull request
-  #48 into `dev`, squash-merged.
-- Issue #10 (this goal catalogue) did **not**. Both its commits were made straight onto `dev`, which
-  the policy does not permit for issue work.
-- **Caught and corrected the same day, before either commit was pushed.** The commits were moved onto
-  `feature/10-functional-non-functional-goals`, `dev` was reset to `origin/dev`, and pull request #49
-  was opened against `dev`. No force-push and no rewriting of history anyone else had.
-- **Why it happened, which is the reportable part:** the branch was never checked. The instruction
-  followed was "commit as soon as a feature is implemented", and the commit landed on whatever branch
-  happened to be checked out. Nothing prevented it — the policy exists only as prose in
-  [CLAUDE.md](../../../CLAUDE.md), and `dev` has no branch protection rule, so a direct commit
-  succeeds silently exactly the way a compliant one does.
-- **Consequence to decide:** enable branch protection on `dev` (and on `main`, where the policy is
-  stricter and equally unenforced), or accept that the model depends on discipline and say so in the
-  report. The cheap version is a GitHub ruleset requiring a pull request for both branches; the cost
-  is that it applies to the repository owner too.
-
-### Third deviation from the branching policy — 2026-08-10
-
-- Pull request #55, carrying `feature/10-functional-non-functional-goals` (commits `7566a93`,
-  `efc2731`, `236bc76`), was opened and merged against `main` instead of `dev`. The branching policy
-  requires feature branches to merge into `dev` first; `main` only receives content through a
-  `dev` → `main` release merge.
-- **Consequence at the time it was caught:** `main` already carried the merge commit
-  (`c54bbd5`), pushed and shared. Rewriting `main`'s history to remove it was rejected for the same
-  reason a revert was rejected in the #48 incident above — `main` is the branch the policy protects
-  hardest, and a force-push there is a worse deviation than the one being corrected.
-- **Correction applied:** the three commits were cherry-picked onto `dev` (`5996cb0`, `4cf5983`,
-  `4f7e088`), bringing its content back in line with `main` byte-for-byte. `main`'s history was left
-  untouched.
-- **Why it happened:** the same absent control as the first deviation — neither `dev` nor `main` has
-  a branch protection rule, so choosing the wrong base branch when opening a pull request in the
-  GitHub UI succeeds exactly as silently as choosing the right one. This is the second and third
-  branching-policy deviation traced to that one missing ruleset; see the *Consequence to decide*
-  above, still open.
+- Risk register lives at
+  [03-Risk-Analysis.md](../../Project-Management/03-Risk-Analysis.md): a 3×3 Likelihood×Impact
+  matrix (Priority 1–5) plus a Risk Ratings table with Category, Likelihood, Impact, Priority and a
+  Mitigation/Response column.
+- **2026-08-10:** extended from 3 unrated-mitigation rows (Multiplayer, Complexity, Sickness) to 16,
+  by mining the risks already implied elsewhere in the documentation rather than inventing new ones
+  — e.g. the sprint-plan/board-date contradiction and missing velocity data from `sprint-log.md`, the
+  unstable `memex-*` board-parsing route and the public-repository decision from `project-journal.md`,
+  and the role-concentration and external-playtester dependency from
+  [01-Github-Project.md](../../Project-Management/01-Github-Project.md). Categories used: Schedule,
+  Scope, Process/Quality, Team, Technical/Tooling, Compliance/Academic, Presentation.
+- Every row added on 2026-08-10 traces to a fact already recorded elsewhere in this repository (no
+  speculative risks) — see [03-Risk-Analysis.md](../../Project-Management/03-Risk-Analysis.md) for
+  the full table and per-row mitigation.
 
 ## Decisions
 

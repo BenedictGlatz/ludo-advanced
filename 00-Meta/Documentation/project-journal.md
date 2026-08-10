@@ -34,26 +34,8 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   had only `main` until now). Issues #4 *Create a Claude.md* and #2 *Github Setup + Documentation*
   closed with closing comments. An earlier negative finding corrected: an authenticated GitHub token
   was available all along, in the Git Credential Manager. Sprint 0.
-- **2026-08-09** — Goal catalogue written:
-  [Functional-and-Non-Functional-Goals.md](../Project-Management/Functional-and-Non-Functional-Goals.md),
-  21 functional goals traced to the four `must have` epics and 8 non-functional goals derived from the
-  hard constraints in `CLAUDE.md`, plus a traceability table and a gaps section. Five gaps recorded in
-  Ch. 01 that were not previously written down anywhere. Sprint 0.
-- **2026-08-09** — Goal catalogue reviewed and edited by Benedict Glatz; the introduction and the
-  *Method and scope* section were cut, so the file opens directly on the functional goals. Committed
-  against issue #10 *Functional vs. Non-Functional Goals* (labels `documentation`, `2-definition`),
-  which is the first `2-definition` issue to be worked. Sprint 0.
-- **2026-08-09** — First deviation from the branching policy, caught and corrected the same day: the
-  #10 commits had gone straight onto `dev` instead of a feature branch. Moved onto
-  `feature/10-functional-non-functional-goals` before either was pushed, `dev` reset to `origin/dev`,
-  pull request #49 opened. Recorded in Ch. 02 together with the reason nothing prevented it —
-  neither `dev` nor `main` has a branch protection rule. Sprint 0.
-- **2026-08-10** — Third branching-policy deviation, caught after the fact: pull request #55
-  (`feature/10-functional-non-functional-goals`) had been opened and merged against `main` instead of
-  `dev`, so `dev` never received the goal-catalogue commits. `main`'s history was left as-is (already
-  pushed and shared); the three commits (`7566a93`, `efc2731`, `236bc76`) were cherry-picked onto
-  `dev` instead, bringing both branches back in line. Recorded in Ch. 02 alongside the first two
-  deviations, all three traced to the same absent branch protection rule. Sprint 0.
+- **2026-08-10** — Risk register in `03-Risk-Analysis.md` expanded from 3 to 16 risks, all traced to
+  facts already recorded in the project's own documentation. Issue #11, Sprint 0.
 
 ---
 
@@ -223,6 +205,29 @@ exactly the kind of thing this file exists to keep visible.
   client's registry, the token in the wrong store. Both times the diagnosis, not the fix, was the work.
 - → Ch. 02, Ch. 07, Ch. 10
 
+### 2026-08-10 — Risk register expanded from the project's own documentation, not invented
+
+- **Chosen:** mine `project-journal.md`, `sprint-log.md`, `01-Github-Project.md` and `CLAUDE.md` for
+  risks that were already stated as facts or open questions elsewhere, and turn
+  [03-Risk-Analysis.md](../Project-Management/03-Risk-Analysis.md) into a register with a Category
+  and a Mitigation/Response column per risk, not just a Likelihood/Impact/Priority rating.
+- **Rejected:** brainstorming generic software-project risks (budget overrun, key-person illness in
+  the abstract, "requirements change") without grounding each one in something this project's own
+  documentation already says. A generic list reads as filler and duplicates risks the docs already
+  describe under a different name (e.g. "Sickness" already covers the abstract team-availability
+  risk).
+- **Why:** a risk register a reader cannot trace back to a concrete project fact is not evidence of
+  risk *management*, just of a template being filled in. Every added row cites the source document it
+  came from, matching the "no claim without a reason" rule this documentation process already runs
+  on.
+- **Consequence:** 13 new risks added (16 total), grouped into Category values not previously used
+  here (Schedule, Scope, Process/Quality, Team, Technical/Tooling, Compliance/Academic,
+  Presentation). Two of them are already-known open questions from `sprint-log.md` given a
+  Likelihood/Impact rating for the first time (the sprint-date contradiction, the missing
+  velocity/burn-down data) — rating them doesn't resolve them, it just makes their priority visible
+  next to every other risk.
+- → Ch. 02
+
 ---
 
 ## Challenges
@@ -238,6 +243,20 @@ exactly the kind of thing this file exists to keep visible.
   a public project. Cost: roughly 30–40 minutes, most of it in the diagnosis rather than the fix.
   The lesson worth carrying into the report is that "the integration is installed" and "this
   particular client can see it" are different claims, and only the second one is testable.
+
+- **2026-08-09 — Undoing an unreviewed merge cost far more than the review would have.** Pull request
+  #48 was merged into `dev` without approval. Reopening it was impossible — GitHub closes merged pull
+  requests permanently — and by the time it was noticed, four branches had been cut from the merge
+  commit and all four carried the unreviewed work. The recovery was a rewrite of published history:
+  `dev` force-reset one commit back, the four branches re-parented with `git rebase --onto`, five
+  force-pushes, and every teammate obliged to re-fetch. What made it tractable at all was a property
+  of the graph rather than any tooling — the merge commit's tree was identical to the commit it
+  merged, so re-parenting could not change file content, and `git diff` against the old remote refs
+  proved it before anything was pushed. The lesson for Chapter 11 is the asymmetry: the review that
+  was skipped would have cost minutes, the undo cost an hour and a coordinated reset across three
+  people. It is also the concrete argument for the branch-protection ruleset left open in Ch. 02 —
+  the control was absent twice in one day, and the second absence is what turned a process slip into
+  a history rewrite.
 
 Log anything that cost more than roughly 30 minutes of unplanned work: what happened, what it cost,
 how it was resolved. These become the running prose of Chapter 11, so a sentence of context is worth
