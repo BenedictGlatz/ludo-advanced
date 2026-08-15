@@ -1,7 +1,7 @@
 # 12 Appendix
 
 > **Covers:** the tables, figures and code excerpts that are moved out of the running text.
-> **Does not cover:** anything that is only referenced once in passing — that stays inline.
+> **Does not cover:** anything that is only referenced once in passing: that stays inline.
 
 ## Why this chapter is large
 
@@ -20,7 +20,7 @@ Everything is numbered and captioned:
 - `Figure n: Title`
 - `Listing n: Title`
 
-Every item is referenced at least once from the running text, by number **and** title — never a
+Every item is referenced at least once from the running text, by number **and** title: never a
 bare "see above". An appendix item nothing points at should not exist.
 
 Figures are drawn as plain text trees where a tree is what is needed. The sample report draws its
@@ -32,11 +32,11 @@ component hierarchy with `└─` characters and no graphics software at all, an
 
 Likely candidates as the project runs:
 
-- Stack table — layer, technology, version, purpose (feeds Chapter 03).
-- Component overview — component, responsibility (feeds Chapter 04).
-- Dice card pool distribution — die, probability of leaving the start area, expected move
+- Stack table: layer, technology, version, purpose (feeds Chapter 03).
+- Component overview: component, responsibility (feeds Chapter 04).
+- Dice card pool distribution: die, probability of leaving the start area, expected move
   (feeds Chapter 05).
-- Skill card catalogue — card, type, effect (feeds Chapter 05).
+- Skill card catalogue: card, type, effect (feeds Chapter 05).
 - npm script table if it grows past what fits in Chapter 07.
 - Coverage per directory (feeds Chapters 08 and 09).
 - Sprint plan versus actual (feeds Chapter 11).

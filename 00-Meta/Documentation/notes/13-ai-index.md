@@ -5,7 +5,7 @@
 > Source: `00-Meta/AI-Prompts/<github-username>/YYYY-MM-DD.json`
 > Command: `npm run docs:ai-index` *(not implemented yet)*
 
-Every prompt sent to an AI system during this project, listed in full. Completeness is the point —
+Every prompt sent to an AI system during this project, listed in full. Completeness is the point:
 trivial prompts belong in here too. A curated selection looks better and is worth less, because the
 reader cannot tell what was left out.
 
@@ -27,11 +27,11 @@ Each subsection is a three-column table:
 | System | Prompt | Use |
 | --- | --- | --- |
 
-- **System** — the concrete model including version, e.g. `claude-opus-5`.
-- **Prompt** — the prompt verbatim. Long multi-turn exchanges are condensed with `…`, keeping the
+- **System**: the concrete model including version, e.g. `claude-opus-5`.
+- **Prompt**: the prompt verbatim. Long multi-turn exchanges are condensed with `…`, keeping the
   decisive turns. Pasted material and attachments are marked in square brackets, e.g.
   `[CLAUDE.md of another project, pasted as reference]`.
-- **Use** — how the answer was used, from the `use` field:
+- **Use**: how the answer was used, from the `use` field:
 
   | `use` | Renders as |
   | --- | --- |
@@ -46,7 +46,7 @@ Each subsection is a three-column table:
 The script must read every `00-Meta/AI-Prompts/*/*.json`, sort entries by timestamp, group them by
 `topic`, and emit the six tables. An entry with no `use` field counts as `implementation`.
 
-It should fail loudly on an unknown `topic` or `use` value rather than silently dropping the entry —
+It should fail loudly on an unknown `topic` or `use` value rather than silently dropping the entry:
 a missing prompt is the one defect this chapter cannot afford.
 
 ## Open

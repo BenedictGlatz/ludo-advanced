@@ -1,7 +1,7 @@
 # Abbreviations
 
 Every abbreviation used in the report gets a row here. Add it when it first appears in a note, not
-at the end — an abbreviation list assembled at submission time always misses some.
+at the end: an abbreviation list assembled at submission time always misses some.
 
 Alphabetical. Keep it to abbreviations that actually appear in the notes; an entry nothing uses is
 noise.
@@ -36,7 +36,7 @@ Not abbreviations, but terms the report uses in a specific sense and should defi
 | Reaction card | A skill card playable in response to another player's action |
 | Dice Card Pool | The pool of dice cards, D2 through D20, drawn from each turn |
 | Skill Card Pool | The pool of Action and Reaction cards |
-| Dn | A die with *n* faces — D2 through D20 |
+| Dn | A die with *n* faces: D2 through D20 |
 | Capture | Sending an opponent's pawn back to its start area by landing exactly on it |
 | Pawn | One of a player's four pieces |
 | Track | The shared path pawns move along |

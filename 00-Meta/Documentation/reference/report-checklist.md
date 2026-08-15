@@ -1,4 +1,4 @@
-# Report checklist — what a project report is normally expected to cover
+# Report checklist: what a project report is normally expected to cover
 
 > ## ⚠ Not binding for this module
 >
@@ -6,7 +6,7 @@
 > different professor**, and those conditions were themselves marked *"ENTWURF — Änderungen
 > erwartbar"* (draft, changes expected). Nothing here is a requirement for Ludo Advanced.
 >
-> **No requirements for this module exist in this repository at all** — no chapter catalogue, no
+> **No requirements for this module exist in this repository at all**: no chapter catalogue, no
 > page count, no deadline, no grading breakdown, no required front matter. Until they do, this file
 > is the best available guess at what a software project report is normally asked for, nothing more.
 >
@@ -31,7 +31,7 @@ forgotten.
 
 The sample report demonstrates this directly. It states that no dedicated formatter is integrated,
 that no production build was ever generated, that TypeScript was deliberately not used, and that its
-overall coverage is 12.67 % — each with a reason — and it was graded well. Those are not
+overall coverage is 12.67 %, each with a reason, and it was graded well. Those are not
 oversights that survived review; they are the reason the report is credible.
 
 ---
@@ -44,12 +44,12 @@ here, because…".
 ### Requirements and goals
 
 - [ ] Who the users are, what the core process is, what problem is being solved.
-- [ ] The solution, and the MVP boundary — what is in, what is deferred.
+- [ ] The solution, and the MVP boundary: what is in, what is deferred.
 - [ ] Development focus: what the work was optimised for.
 
 ### Project management and process
 
-*Weighted heavily here — this module is project-management focused.*
+*Weighted heavily here: this module is project-management focused.*
 
 - [ ] Process model and why it was chosen.
 - [ ] Roles and responsibilities.
@@ -60,7 +60,7 @@ here, because…".
 
 ### Tech stack
 
-- [ ] Stack overview — layer, technology, version, purpose.
+- [ ] Stack overview: layer, technology, version, purpose.
 - [ ] Constraints that drove the choices.
 - [ ] Architecture decisions, including what deliberately does *not* exist.
 
@@ -71,8 +71,8 @@ here, because…".
 - [ ] **One** significant component shown in depth, with its internal structure.
 - [ ] Modularisation: how the logic is split across files, and along which seams.
 - [ ] State management.
-- [ ] Routing — or a stated reason there is none.
-- [ ] Persistence — or a stated reason there is none.
+- [ ] Routing: or a stated reason there is none.
+- [ ] Persistence: or a stated reason there is none.
 - [ ] Implementation of the domain logic.
 
 ### Tooling
@@ -82,7 +82,7 @@ here, because…".
 - [ ] Linter.
 - [ ] Formatter.
 - [ ] Documentation enforcement (JSDoc or equivalent).
-- [ ] TypeScript — used, or deliberately not, with a reason.
+- [ ] TypeScript: used, or deliberately not, with a reason.
 - [ ] Dev build.
 - [ ] Production build.
 - [ ] Deployment.
@@ -93,7 +93,7 @@ here, because…".
 - [ ] E2E tests set up, report produced.
 - [ ] CI/CD: build, test, lint, format, deploy.
 - [ ] Code comments and visual structuring of the source.
-- [ ] Performance or accessibility audit, if applicable — and if not, why not.
+- [ ] Performance or accessibility audit, if applicable: and if not, why not.
 
 ### Source code overview
 
@@ -104,7 +104,7 @@ here, because…".
 
 - [ ] Plan versus actual: what was planned, what was actually delivered.
 - [ ] Challenges encountered.
-- [ ] Lessons learned — what the team carries forward.
+- [ ] Lessons learned: what the team carries forward.
 
 ### AI index
 
@@ -115,7 +115,7 @@ here, because…".
 - [ ] Table of contents.
 - [ ] List of tables.
 - [ ] List of abbreviations.
-- [ ] Appendix holding the substantial working results — tables, figures, code excerpts — each
+- [ ] Appendix holding the substantial working results (tables, figures, code excerpts), each
       referenced from the running text.
 
 ---
@@ -130,5 +130,5 @@ These are worth noting because they are easy to leave until the last day and can
 - Meaningful test coverage.
 
 Record the evidence in [../notes/07-tooling.md](../notes/07-tooling.md) and
-[../notes/08-quality.md](../notes/08-quality.md) once it has been verified — not from memory, from a
+[../notes/08-quality.md](../notes/08-quality.md) once it has been verified: not from memory, from a
 command that was run.

@@ -1,6 +1,6 @@
 # 07 Tooling
 
-> **Covers:** the developer toolchain — npm scripts, package management, linter, formatter, builds,
+> **Covers:** the developer toolchain: npm scripts, package management, linter, formatter, builds,
 > deployment.
 > **Does not cover:** tests and coverage, which are Chapter 08, even though they are run through
 > npm scripts listed here.
@@ -12,12 +12,12 @@
   that governs adding one.
 - Linter: which one, where configured, which plugins, which classes of error it catches.
 - Formatter: which one, what it owns, and how the split with the linter is kept clean.
-- JSDoc or equivalent documentation enforcement — whether it exists, and if not, why not.
-- TypeScript — deliberately absent here, so it needs a stated reason.
+- JSDoc or equivalent documentation enforcement: whether it exists, and if not, why not.
+- TypeScript: deliberately absent here, so it needs a stated reason.
 - Dev build, production build, deployment. If there is no deployment, name that and say what the
   path would be.
 
-Every one of these points appears even when the answer is "not used" — a deliberate omission with a
+Every one of these points appears even when the answer is "not used": a deliberate omission with a
 reason reads as a decision, a silent gap reads as a miss.
 
 ## Facts
@@ -44,7 +44,7 @@ Declared in [CLAUDE.md](../../../CLAUDE.md) as the binding specification for `pa
 
 - **JavaScript only, no TypeScript.** No `.ts` files and no build-time type checking. The reason is
   not yet recorded and must be.
-- **No file longer than 300 lines** — source, tests and config alike. When a file approaches the
+- **No file longer than 300 lines**: source, tests and config alike. When a file approaches the
   limit it is split along a real seam, not compressed by stripping whitespace or comments. This
   constraint is what makes the strict `core`/`state`/`ui` layering necessary rather than decorative,
   which is a point worth making in the report.
@@ -62,13 +62,13 @@ Declared in [CLAUDE.md](../../../CLAUDE.md) as the binding specification for `pa
   playable build artifacts; nothing is decided.
 - Whether JSDoc is enforced through ESLint is undecided.
 - ~~The `gh` CLI is not installed on the development machine and no GitHub token is configured, so no
-  *authenticated* GitHub automation can run locally.~~ **Half of this was wrong — corrected
+  *authenticated* GitHub automation can run locally.~~ **Half of this was wrong: corrected
   2026-08-06.** The `gh` CLI is indeed absent, but a token was already present and neither
   `GITHUB_TOKEN` nor `GH_TOKEN` was the place to look for it:
   - `credential.helper` is set to `manager` (Git Credential Manager). `git credential fill` against
     `host=github.com` returns its stored token, which authenticates as `lbolender` with scopes
     `gist, repo, workflow`.
-  - That is sufficient for **authenticated repository writes** — issues were commented on and closed
+  - That is sufficient for **authenticated repository writes**: issues were commented on and closed
     through the REST API with it on 2026-08-06, with no new tooling installed.
   - It is **not** sufficient for the Projects v2 board: GraphQL answers `INSUFFICIENT_SCOPES` and
     names `read:project` as the missing scope. Adding that one scope to the existing token removes the
@@ -78,10 +78,10 @@ Declared in [CLAUDE.md](../../../CLAUDE.md) as the binding specification for `pa
     absence of an environment variable was read as the absence of a credential. On Windows the
     credential normally lives in the credential manager, not the environment, so "no token" should be
     tested by asking the credential helper, not by checking `env`. The same mistake in the opposite
-    direction as the MCP finding below — both times an integration that was present looked absent
+    direction as the MCP finding below: both times an integration that was present looked absent
     because the wrong location was checked.
 - **MCP servers are per-client, not per-editor.** The GitHub MCP server was installed into
-  `%APPDATA%\Code\User\mcp.json` — VS Code's own registry, used by Copilot. Claude Code reads
+  `%APPDATA%\Code\User\mcp.json`: VS Code's own registry, used by Copilot. Claude Code reads
   `.mcp.json` in the project root, `mcpServers` in `~/.claude.json`, or entries added via
   `claude mcp add`, and saw nothing. Both tools run in the same editor, which is exactly why the
   mistake is easy to make. If the team wants the server available to Claude Code as well, adding it

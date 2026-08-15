@@ -1,16 +1,16 @@
-# Sprint log — planned versus delivered
+# Sprint log: planned versus delivered
 
 Plan-versus-actual evidence for Chapter 11, tracked as **scope and dates** rather than hours. The
 team decided against hour-level effort tracking; see the decision of 2026-08-06 in
 [project-journal.md](project-journal.md).
 
 Fill the *Delivered* and *Actual* columns when a sprint closes, not before. A sprint that overran or
-dropped scope is recorded as it happened — an unexplained divergence is a problem, a divergence with
+dropped scope is recorded as it happened: an unexplained divergence is a problem, a divergence with
 a reason is a finding.
 
 **Planned scope is taken from** [01-Github-Project.md](../Project-Management/01-Github-Project.md).
 
-**Planned dates are taken from the board** — four draft issues on
+**Planned dates are taken from the board**: four draft issues on
 [GitHub project *Ludo Advanced*](https://github.com/users/BenedictGlatz/projects/3) act as sprint
 markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 
@@ -21,17 +21,17 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 | Sprint 2 | 2026-08-24 | 2026-09-06 | 2 weeks |
 | Sprint 3 | 2026-09-07 | 2026-09-17 | 1½ weeks |
 
-> **Two contradictions with the written plan, both unresolved.** The board has **no buffer sprint** —
+> **Two contradictions with the written plan, both unresolved.** The board has **no buffer sprint**:
 > it defines Sprint 0–3 and stops, while the plan is 3 sprints of 2 weeks plus a 1-week buffer. Board
 > `Sprint 3` is 1½ weeks and sits where the buffer would, so it may *be* the buffer under a different
 > name; nothing says so. And board `Sprint 0` runs 2½ weeks against the planned 1 week, starting
-> 2026-07-23 — two weeks before the repository was created. Total span 2026-07-23 → 2026-09-17 is
+> 2026-07-23: two weeks before the repository was created. Total span 2026-07-23 → 2026-09-17 is
 > ~8 weeks, which does match the plan's 8-week total. Decide which numbering is authoritative and
 > record it here; the tables below use the board dates in the meantime.
 
 ---
 
-## Sprint 0 — Planning and prototyping (board: 2026-07-23 → 2026-08-09)
+## Sprint 0: Planning and prototyping (board: 2026-07-23 → 2026-08-09)
 
 | | |
 | --- | --- |
@@ -52,11 +52,11 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 
 - Repository and GitHub project created (2026-08-06).
 - Coding standards and conventions fixed in `CLAUDE.md`; stack decided.
-- Rulebook exists at one-pager level only — board layout and win conditions are not specified to
+- Rulebook exists at one-pager level only: board layout and win conditions are not specified to
   edge cases.
 - Documentation notes structure established.
 - **First two backlog issues closed (2026-08-06):** #4 *Create a Claude.md* and #2 *Github Setup +
-  Documentation*. Both belong to this sprint's planned scope — #2 to "set up the repository, the
+  Documentation*. Both belong to this sprint's planned scope: #2 to "set up the repository, the
   project, and the GitHub Projects board", #4 to "agree asset formats, screen resolution and coding
   standards", of which #4 covers the coding-standards part only.
 - `dev` pushed to `origin` (2026-08-06). `main` deliberately still at the pre-documentation state; it
@@ -64,12 +64,12 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 
 **Divergence and reasons**
 
-- *open — record when the sprint closes.*
+- *open: record when the sprint closes.*
 - Not yet done: dice pool balance prototyping, asset formats, screen resolution.
 
 ---
 
-## Sprint 1 — Core gameplay and board MVP (board: 2026-08-10 → 2026-08-23)
+## Sprint 1: Core gameplay and board MVP (board: 2026-08-10 → 2026-08-23)
 
 | | |
 | --- | --- |
@@ -85,13 +85,13 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 - Turn manager (Player 1 → Player 2 → Player 3 → Player 4 / AI).
 - Basic knockout/capture mechanic on landing on an opponent token.
 
-**Delivered** — *open*
+**Delivered**: *open*
 
-**Divergence and reasons** — *open*
+**Divergence and reasons**: *open*
 
 ---
 
-## Sprint 2 — Skill cards, dice mechanics, multiplayer (board: 2026-08-24 → 2026-09-06)
+## Sprint 2: Skill cards, dice mechanics, multiplayer (board: 2026-08-24 → 2026-09-06)
 
 | | |
 | --- | --- |
@@ -106,17 +106,17 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 - Skill cards: deck system, hand UI, action system (shield token, swap positions, reroll).
 - Resource/energy system for buying or using cards and enhanced dice.
 
-**Delivered** — *open*
+**Delivered**: *open*
 
-**Divergence and reasons** — *open*
+**Divergence and reasons**: *open*
 
 > The resource/energy system appears only in this sprint plan, not in the one-pager or the README.
-> Whether it is in scope is undecided — see [notes/01-requirements-and-goals.md](notes/01-requirements-and-goals.md).
+> Whether it is in scope is undecided: see [notes/01-requirements-and-goals.md](notes/01-requirements-and-goals.md).
 > Multiplayer has no chosen technology and may end up local hot-seat only.
 
 ---
 
-## Sprint 3 — Polish, art, audio, fixes (board: 2026-09-07 → 2026-09-17)
+## Sprint 3: Polish, art, audio, fixes (board: 2026-09-07 → 2026-09-17)
 
 | | |
 | --- | --- |
@@ -131,17 +131,17 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 - Sound effects (dice rolls, card play, victory) and background music.
 - Main menu, pause menu, win/loss screens, restart flow.
 
-**Delivered** — *open*
+**Delivered**: *open*
 
-**Divergence and reasons** — *open*
+**Divergence and reasons**: *open*
 
 ---
 
-## Buffer sprint — Playtesting and presentation (week 8)
+## Buffer sprint: Playtesting and presentation (week 8)
 
 > **Not present on the board.** The board defines Sprint 0–3 only. Either board `Sprint 3`
 > (2026-09-07 → 2026-09-17) doubles as this sprint, or the buffer was dropped when the board was
-> laid out. Unresolved — see the note at the top of this file.
+> laid out. Unresolved: see the note at the top of this file.
 
 | | |
 | --- | --- |
@@ -158,14 +158,14 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 - Presentation deck covering Scrum velocity, burn-down charts, architecture decisions and mechanic
   trade-offs.
 
-**Delivered** — *open*
+**Delivered**: *open*
 
-**Divergence and reasons** — *open*
+**Divergence and reasons**: *open*
 
 > Velocity and burn-down charts need real board data to exist. If story points are never recorded,
-> those slides cannot be produced — decide early, not in week 8.
+> those slides cannot be produced: decide early, not in week 8.
 >
 > **Confirmed 2026-08-06: as the board stands, neither chart can be produced.** There is no story
-> point field and no Iteration field, and `Status` and `Sprint` are unset on all 50 items — so there
+> point field and no Iteration field, and `Status` and `Sprint` are unset on all 50 items: so there
 > is no estimate to sum and no dated status history to burn down against. See the negative findings
 > in [notes/02-project-management.md](notes/02-project-management.md#board).
