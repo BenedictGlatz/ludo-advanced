@@ -34,6 +34,10 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   had only `main` until now). Issues #4 *Create a Claude.md* and #2 *Github Setup + Documentation*
   closed with closing comments. An earlier negative finding corrected: an authenticated GitHub token
   was available all along, in the Git Credential Manager. Sprint 0.
+- **2026-08-09** — Feasibility study written for issue #12, assessing the chosen 2D option across
+  five dimensions (technical, schedule, personnel/organisational, economic, legal). Verdict: a
+  conditional Go, with the AI toolchain named as the precondition it rests on.
+  `00-Meta/Project-Management/Feasibility-Study.md`; facts in Ch. 03 and Ch. 10. Sprint 0.
 - **2026-08-10** — Risk register in `03-Risk-Analysis.md` expanded from 3 to 16 risks, all traced to
   facts already recorded in the project's own documentation. Issue #11, Sprint 0.
 
@@ -205,28 +209,39 @@ exactly the kind of thing this file exists to keep visible.
   client's registry, the token in the wrong store. Both times the diagnosis, not the fix, was the work.
 - → Ch. 02, Ch. 07, Ch. 10
 
-### 2026-08-10 — Risk register expanded from the project's own documentation, not invented
+### 2026-08-09 — Feasibility is affirmed conditionally, with the AI toolchain named as the condition
 
-- **Chosen:** mine `project-journal.md`, `sprint-log.md`, `01-Github-Project.md` and `CLAUDE.md` for
-  risks that were already stated as facts or open questions elsewhere, and turn
-  [03-Risk-Analysis.md](../Project-Management/03-Risk-Analysis.md) into a register with a Category
-  and a Mitigation/Response column per risk, not just a Likelihood/Impact/Priority rating.
-- **Rejected:** brainstorming generic software-project risks (budget overrun, key-person illness in
-  the abstract, "requirements change") without grounding each one in something this project's own
-  documentation already says. A generic list reads as filler and duplicates risks the docs already
-  describe under a different name (e.g. "Sickness" already covers the abstract team-availability
-  risk).
-- **Why:** a risk register a reader cannot trace back to a concrete project fact is not evidence of
-  risk *management*, just of a template being filled in. Every added row cites the source document it
-  came from, matching the "no claim without a reason" rule this documentation process already runs
-  on.
-- **Consequence:** 13 new risks added (16 total), grouped into Category values not previously used
-  here (Schedule, Scope, Process/Quality, Team, Technical/Tooling, Compliance/Academic,
-  Presentation). Two of them are already-known open questions from `sprint-log.md` given a
-  Likelihood/Impact rating for the first time (the sprint-date contradiction, the missing
-  velocity/burn-down data) — rating them doesn't resolve them, it just makes their priority visible
-  next to every other risk.
-- → Ch. 02
+- **Chosen:** a *conditional* Go. The feasibility study assesses five dimensions, gives each its own
+  verdict, and makes the overall verdict explicitly dependent on continued AI assistance — Claude
+  Design for UI and 2D assets, Claude Code for implementation and documentation.
+- **Rejected:** *an unconditional "feasible".* It would have been the more comfortable sentence and
+  the less useful one. The scope in issue #9 was proposed on the assumption of that leverage; a study
+  that recorded the verdict without the assumption would leave a later overrun unexplainable, and
+  Chapter 11 would have no recorded premise to measure against.
+- **Also rejected:** *treating AI use as one accelerator among many inside the technical section.*
+  That is how it would normally be written, and it would understate it. Two implementers carry four
+  epics with twelve sub-issues across three two-week sprints, plus 24 documentation issues and a
+  per-commit documentation obligation. The honest description is a precondition, not a tool choice.
+- **Also rejected:** *re-running the 2D/2.5D/3D comparison.* Issue #47 scored it a few hours earlier
+  and merged; the study cites it and assesses the winning option in absolute terms instead.
+- **Also rejected:** *putting capacity figures in* — hours per person per week, a person-day budget.
+  The team decided against hour tracking on 2026-08-06, so there would be no actuals to compare an
+  estimate against, and effort estimation is its own backlog item (#16). A number nobody can check is
+  worse than a stated gap.
+- **Why:** the value of a feasibility study is not the verdict, which was never seriously in doubt
+  once the option was chosen. It is the record of *what the verdict assumed*. The assumption that
+  matters here is not the stack — it is the leverage.
+- **Consequence:** the project has a documented single-toolchain dependency. Its risk treatment
+  belongs to issue #11, and this decision hands it over rather than absorbing it. Second consequence:
+  the study lists six conditions, four of which are decisions the team has been deferring anyway
+  (Definition of Done, buffer sprint, Sprint 2 scope, repository licence) — so the study doubles as a
+  deadline for them.
+- **Two findings worth carrying into Ch. 11:** first, the 2D decision converted the project's risk
+  rather than removing it — from "can two of us learn C#" (competence) to "can two of us finish four
+  epics in eight weeks" (schedule). Second, with generation cheap, the binding constraint is **review**
+  capacity, which argues for keeping the 300-line limit, the layering and the per-change notes exactly
+  when deadline pressure would suggest dropping them.
+- → Ch. 03, Ch. 10, Ch. 11
 
 ---
 

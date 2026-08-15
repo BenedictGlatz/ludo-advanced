@@ -152,6 +152,17 @@ drops those slides and the report explains why. This is a decision to take now, 
   commit reaches the **default branch**, so a trailer on a `dev` commit does nothing until the release
   merge. This matters for the policy in *Branching and review* below — on this branching model,
   `Closes #<n>` closes issues at release time, not at commit time.
+- 2026-08-09 — **Feasibility assessed and affirmed conditionally** (issue #12,
+  [Feasibility-Study.md](../../Project-Management/Feasibility-Study.md)). Two of its five verdicts
+  land in this chapter's territory and are conditions on the *process*, not on the technology:
+  - **Schedule.** Sprint 1 starts 2026-08-10 and has to bootstrap the toolchain before it can
+    implement anything, which is not in its planned scope; the board has no buffer sprint although the
+    written plan does; and the Sprint 2 plan still lists multiplayer and the energy system, neither of
+    which is in the `must have` set — reconciling it releases schedule rather than costing it.
+  - **Personnel.** Two people implement four epics, because the Product Owner does not implement.
+    The conditions attached are the ones already listed under *Prerequisites for measurability* in
+    [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md) — Definition of Done, role
+    contradiction, board fields — referenced there rather than repeated.
 
 ### Risk management
 

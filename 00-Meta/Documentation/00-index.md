@@ -21,14 +21,14 @@ Read [reference/style-reference.md](reference/style-reference.md) before writing
 | --- | ---- | ------ | ------ |
 | 01 | [01-requirements-and-goals.md](notes/01-requirements-and-goals.md) | Target players, the problem, MVP scope, MoSCoW, what is deliberately out of scope | backlog and MoSCoW transcribed |
 | 02 | [02-project-management.md](notes/02-project-management.md) | Scrum setup, roles, sprints, GitHub Projects board, ceremonies, definition of done | board configuration transcribed |
-| 03 | [03-tech-stack.md](notes/03-tech-stack.md) | Languages, libraries, versions, why each was chosen, what was rejected | empty |
+| 03 | [03-tech-stack.md](notes/03-tech-stack.md) | Languages, libraries, versions, why each was chosen, what was rejected | rejected options and the technical feasibility verdict recorded; reasons for the chosen stack still missing |
 | 04 | [04-frontend-building-blocks.md](notes/04-frontend-building-blocks.md) | `src/ui/`, `src/i18n/` — components, rendering, event binding, localisation | empty |
 | 05 | [05-game-core-building-blocks.md](notes/05-game-core-building-blocks.md) | `src/core/` — board topology, movement, capture, dice card pool, skill cards | empty |
 | 06 | [06-state-and-turn-flow.md](notes/06-state-and-turn-flow.md) | `src/state/` — the seam between core and ui, turn flow, state transitions | empty |
 | 07 | [07-tooling.md](notes/07-tooling.md) | npm scripts, package management, ESLint, Prettier, Vite dev/prod build, deployment | target state only; local access findings recorded |
 | 08 | [08-quality.md](notes/08-quality.md) | Unit tests, coverage, E2E, CI/CD, code comments | empty |
 | 09 | [09-source-code-overview.md](notes/09-source-code-overview.md) | Size and metrics — **the only chapter where numbers live** | empty |
-| 10 | [10-ai-driven-engineering.md](notes/10-ai-driven-engineering.md) | How AI was used in the workflow, what it was good and bad at | empty |
+| 10 | [10-ai-driven-engineering.md](notes/10-ai-driven-engineering.md) | How AI was used in the workflow, what it was good and bad at | conventions, tool split and the precondition finding recorded; the honest assessment waits for real experience |
 | 11 | [11-project-report.md](notes/11-project-report.md) | Plan vs actual, challenges, lessons learned | empty |
 | 12 | [12-appendix.md](notes/12-appendix.md) | Tables, figures and code excerpts moved out of the running text | empty |
 | 13 | [13-ai-index.md](notes/13-ai-index.md) | The AI index — **generated**, never hand-maintained | empty |
@@ -39,6 +39,9 @@ Status values: `empty` → `partial` → `ready`. Update the row when a chapter'
 
 - [project-journal.md](project-journal.md) — dated log, decision blocks, challenges.
 - [Project-Management/Utility-Value-Analysis.md](../Project-Management/Utility-Value-Analysis.md) — weighted-criteria comparison of 2D/2.5D/3D backing the engine-choice decision.
+- [Project-Management/Feasibility-Study.md](../Project-Management/Feasibility-Study.md) — five
+  feasibility dimensions with a verdict each, and the conditional Go that rests on the AI toolchain
+  (issue #12). Feeds Ch. 03 and Ch. 10; its conditions feed Ch. 11.
 - [Project-Management/Functional-and-Non-Functional-Goals.md](../Project-Management/Functional-and-Non-Functional-Goals.md) — the goal catalogue (FG-01–FG-21, NFG-01–NFG-08) feeding Chapter 01, with a traceability table to the backlog epics.
 - [sprint-log.md](sprint-log.md) — planned scope vs delivered scope, per sprint.
 - [abbreviations.md](abbreviations.md) — feeds the report's abbreviation list.
@@ -122,4 +125,9 @@ Standing list. Resolve and delete, or move into the chapter that answers it.
   [02-project-management.md](notes/02-project-management.md#board).
 - **No CI/CD pipeline and no deployment target** have been decided. Both are normal report chapters;
   if they stay absent, Chapter 08 says so and explains why rather than omitting the topic.
-- **Licence is undetermined** (`README.md` says "To be determined").
+- **Licence is undetermined** (`README.md` says "To be determined"). Since 2026-08-09 this is a named
+  condition of the feasibility verdict rather than a loose end: the repository is already public and
+  the deployment candidates assume it stays that way.
+- **Whether the module requires an explicit declaration of AI use** beyond the prompt log is unknown.
+  Part of the same gap as the unknown module requirements above; raised in
+  [Feasibility-Study.md](../Project-Management/Feasibility-Study.md).
