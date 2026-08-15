@@ -85,6 +85,25 @@ produced**: burn-down needs an Iteration field or dated status transitions, velo
 points. Both fields have to be added and back-filled *before* Sprint 1 closes, or the presentation
 drops those slides and the report explains why. This is a decision to take now, not in week 8.
 
+#### Board update: 2026-08-09, from a screenshot of the Backlog view
+
+Partial observation, not a full re-read: the source is a screenshot of backlog rows 27–35 supplied by
+Benedict Glatz, not the board itself. Recorded with that limitation because it revises an earlier
+negative finding.
+
+- **`Status` is no longer unset.** Every row visible in the screenshot (#36–#39 and #42–#46) shows
+  `Todo`. Negative finding 1 above is therefore **at least partly resolved**: how many of the 50
+  items were back-filled is not observable from the excerpt and needs a full read to confirm.
+- **Sub-issue progress bars read 0 %** on all four epics, consistent with no implementation issue
+  being closed yet.
+- **The repository now has 47 issues, not 46.** #47 *Utility Value Analysis* was added on 2026-08-09
+  and is labelled `documentation`, `1-initialization`. It is still open although its pull request
+  (#48) is merged.
+- **#46 *Classic vs. Custom Game Modes* has gained a `question` label**, the only issue carrying it.
+  Consistent with rule toggles being genuinely undecided rather than merely deprioritised.
+- Still not observable and still open: `Sprint` field values, story points (no such field), and the
+  five planned Kanban columns.
+
 #### Board access from the development environment
 
 - 2026-08-06, first attempt: **not readable.** No GitHub MCP server configured for Claude Code,
