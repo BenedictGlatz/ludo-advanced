@@ -41,6 +41,11 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
 - **2026-08-10**: Risk register in `03-Risk-Analysis.md` expanded from 3 to 16 risks, all traced to
   facts already recorded in the project's own documentation. Issue #11, Sprint 0.
 
+- **2026-08-09**: Requirements specification written on `feature/13-requirements-specification`
+  (issue #13): 45 functional and 12 non-functional requirements with acceptance criteria and MoSCoW
+  priorities, a drop order agreed in advance, and eight gameplay decisions handed to the Product
+  Owner. Six previously unrecorded holes in the rules found in the process. Sprint 0.
+
 ---
 
 ## Decisions
@@ -72,6 +77,39 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   more by being *collected* than by being *written*, which is an argument for doing it in week 1 of a
   project rather than in week 8.
 - → Ch. 01, Ch. 08, Ch. 11
+
+### 2026-08-09: Acceptance criteria live in the specification, not on the issues
+
+- **Chosen:** one specification document holding every requirement with its acceptance criterion,
+  referenced from the backlog.
+- **Rejected:** *writing the acceptance criteria into the 47 issue bodies*, which is where a Scrum
+  team would normally put them and where the board would surface them during sprint planning. It lost
+  on two counts: all 47 bodies are currently empty, so this means editing 47 issues before the first
+  criterion exists; and the criteria cross-reference each other constantly (FR-14 depends on FR-09
+  through FR-13), which issue bodies represent badly.
+- **Consequence, stated as a negative finding rather than resolved:** the board still prioritises
+  titles. A reviewer looking at issue #29 sees *Knockout & Capture Rules Logic* and no criterion. The
+  gap closes only when the criteria are copied onto the issues or each issue links here: that is
+  still owed, and it is recorded in Ch. 01 as owed rather than quietly dropped.
+- **Why the document came first anyway:** writing all 57 requirements in one pass is what surfaced
+  the holes. Six rules that do not exist anywhere, most importantly that **the rulebook never says
+  how a player acquires a skill card**, were found only because the requirements were written
+  *together*, where a gap between two of them is visible. Filling 47 issue bodies one at a time
+  would not have exposed a single one of them.
+- → Ch. 01, Ch. 02, Ch. 11
+
+### 2026-08-09: An unspecified mechanic is prioritised `W`, not deferred quietly
+
+- **Chosen:** the resource/energy system is written into the specification as FR-37 with priority
+  **`W`, won't have this time**, and the reason is given: no rule for it exists in any document.
+- **Rejected:** *omitting it*, which would have been tidier since it has no rules, so there is nothing
+  to specify. But issue #35 is titled *Game HUD & Resource Display* and the Sprint 2 plan lists the
+  mechanic, so an omission would read as an oversight and would quietly leave two artefacts pointing
+  at something the specification does not contain.
+- **Why:** a `W` with a reason is a decision that can be reversed on purpose. A silent omission is a
+  discrepancy someone rediscovers in Sprint 2.
+- **Consequence:** if the Product Owner wants the mechanic, the blocker is rules, not priority.
+- → Ch. 01, Ch. 11
 
 ### 2026-08-06: 2D web build instead of Unity 3D or Pygame
 

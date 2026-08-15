@@ -24,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `00-Meta/Project-Management/Functional-and-Non-Functional-Goals.md`: the project's goal catalogue, 21 functional
   goals traced to the backlog epics and 8 non-functional goals derived from the hard constraints, each with its
   source, its reason and how it is verified
+- `00-Meta/Project-Management/Requirements-Specification.md`: 45 functional and 12 non-functional requirements,
+  each with an acceptance criterion and a MoSCoW priority, plus the MoSCoW analysis with a drop order agreed in
+  advance and the eight gameplay decisions still owed by the Product Owner
 
 ### Changed
 
