@@ -56,8 +56,6 @@ fill it when the decision is made or reconstructed, and add the version once `pa
 - Any additional runtime dependency requires asking the user first. Approved so far: `jquery`,
   `i18next`. Approved dev dependencies: Vite, ESLint, Prettier, Vitest, Playwright.
 
-<<<<<<< Updated upstream
-=======
 ### The stack assessed for feasibility: 2026-08-09, issue #12
 
 Full document: [Feasibility-Study.md](../../Project-Management/Feasibility-Study.md). Facts only:
@@ -84,7 +82,6 @@ Full document: [Feasibility-Study.md](../../Project-Management/Feasibility-Study
   system is undecided; no CI workflow and no deployment target chosen; multiplayer has no chosen
   networking technology.
 
->>>>>>> Stashed changes
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -93,11 +90,8 @@ Full document: [Feasibility-Study.md](../../Project-Management/Feasibility-Study
 
 - No `package.json` exists yet, so no version is pinned. The stack above is the binding target
   state declared in [CLAUDE.md](../../../CLAUDE.md), not an observed fact.
-<<<<<<< Updated upstream
-=======
 - Dependency licences are unverified until `package.json` exists: see the licence check in the
   feasibility facts above.
->>>>>>> Stashed changes
 - Why jQuery specifically, over plain DOM APIs or a component framework, is unrecorded.
 - Why Vite over other bundlers is unrecorded.
 - Multiplayer is named in the Sprint 2 plan but no networking technology has been chosen. If the

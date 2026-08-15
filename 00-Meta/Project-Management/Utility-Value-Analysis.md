@@ -34,21 +34,12 @@ frames the 3D-style options this way.
 
 | Criterion | Weight | 2D | 2.5D | 3D |
 | --- | --- | --- | --- | --- |
-<<<<<<< Updated upstream
-| Team competence | 25 % | **5** — whole team already works in JS | **2** — same C# gap as full 3D | **1** — 2 of 3 members must learn C# from scratch |
-| Time effort | 25 % | **5** — no engine overhead, fits the 8-week plan | **3** — less asset work than full 3D, but still Unity ramp-up | **1** — modeling, lighting, camera and asset pipeline on top of the C# gap |
-| Visual quality | 15 % | **2** — flat board, limited visual polish | **3** — reads as more "produced" than 2D without full 3D cost | **5** — best possible visual result |
-| Multiplayer/Deployment | 15 % | **4** — plain web stack, straightforward browser deployment | **3** — Unity networking works but a WebGL build adds friction | **3** — same Unity networking/WebGL friction as 2.5D |
-| Extensibility | 10 % | **3** — one-pager flags this as 2D's weak point, but web tooling is still flexible | **4** — Unity's component system | **5** — Unity component system plus full 3D asset ecosystem |
-| Technical risk | 10 % | **5** — team stays in a language it knows | **2** — still carries the C# + timeline risk | **1** — highest combined risk (new language, most work, fixed deadline) |
-=======
-| Team-Kompetenz | 25 % | **5**: whole team already works in JS | **2**: same C# gap as full 3D | **1**: 2 of 3 members must learn C# from scratch |
-| Zeitaufwand | 25 % | **5**: no engine overhead, fits the 8-week plan | **3**: less asset work than full 3D, but still Unity ramp-up | **1**: modeling, lighting, camera and asset pipeline on top of the C# gap |
-| Optik | 15 % | **2**: flat board, limited visual polish | **3**: reads as more "produced" than 2D without full 3D cost | **5**: best possible visual result |
+| Team competence | 25 % | **5**: whole team already works in JS | **2**: same C# gap as full 3D | **1**: 2 of 3 members must learn C# from scratch |
+| Time effort | 25 % | **5**: no engine overhead, fits the 8-week plan | **3**: less asset work than full 3D, but still Unity ramp-up | **1**: modeling, lighting, camera and asset pipeline on top of the C# gap |
+| Visual quality | 15 % | **2**: flat board, limited visual polish | **3**: reads as more "produced" than 2D without full 3D cost | **5**: best possible visual result |
 | Multiplayer/Deployment | 15 % | **4**: plain web stack, straightforward browser deployment | **3**: Unity networking works but a WebGL build adds friction | **3**: same Unity networking/WebGL friction as 2.5D |
-| Erweiterbarkeit | 10 % | **3**: one-pager flags this as 2D's weak point, but web tooling is still flexible | **4**: Unity's component system | **5**: Unity component system plus full 3D asset ecosystem |
-| Risiko | 10 % | **5**: team stays in a language it knows | **2**: still carries the C# + timeline risk | **1**: highest combined risk (new language, most work, fixed deadline) |
->>>>>>> Stashed changes
+| Extensibility | 10 % | **3**: one-pager flags this as 2D's weak point, but web tooling is still flexible | **4**: Unity's component system | **5**: Unity component system plus full 3D asset ecosystem |
+| Technical risk | 10 % | **5**: team stays in a language it knows | **2**: still carries the C# + timeline risk | **1**: highest combined risk (new language, most work, fixed deadline) |
 
 ## Weighted totals
 

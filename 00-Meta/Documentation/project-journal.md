@@ -34,22 +34,18 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   had only `main` until now). Issues #4 *Create a Claude.md* and #2 *Github Setup + Documentation*
   closed with closing comments. An earlier negative finding corrected: an authenticated GitHub token
   was available all along, in the Git Credential Manager. Sprint 0.
-<<<<<<< Updated upstream
-- **2026-08-10** — Risk register in `03-Risk-Analysis.md` expanded from 3 to 16 risks, all traced to
-  facts already recorded in the project's own documentation. Issue #11, Sprint 0.
-=======
 - **2026-08-09**: Feasibility study written for issue #12, assessing the chosen 2D option across
   five dimensions (technical, schedule, personnel/organisational, economic, legal). Verdict: a
   conditional Go, with the AI toolchain named as the precondition it rests on.
   `00-Meta/Project-Management/Feasibility-Study.md`; facts in Ch. 03 and Ch. 10. Sprint 0.
->>>>>>> Stashed changes
+- **2026-08-10**: Risk register in `03-Risk-Analysis.md` expanded from 3 to 16 risks, all traced to
+  facts already recorded in the project's own documentation. Issue #11, Sprint 0.
 
 ---
 
 ## Decisions
 
-<<<<<<< Updated upstream
-### 2026-08-09 — Goals are catalogued in Project-Management, not in the chapter note
+### 2026-08-09: Goals are catalogued in Project-Management, not in the chapter note
 
 - **Chosen:** one standing document,
   [Functional-and-Non-Functional-Goals.md](../Project-Management/Functional-and-Non-Functional-Goals.md),
@@ -57,30 +53,27 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   summary and the findings; the catalogue itself is the single place a goal is edited.
 - **Rejected:** *writing the goals directly into
   [01-requirements-and-goals.md](notes/01-requirements-and-goals.md).* That note is a report chapter
-  note — read once, near the end, when the report is written. Goals are consulted continuously during
+  note: read once, near the end, when the report is written. Goals are consulted continuously during
   sprint planning and review, by people who are not writing the report at that moment, so burying
   them in a chapter note puts them where nobody looks. Also rejected: *stating goals as issue
-  acceptance criteria on GitHub*, which is the more orthodox place — but all 46 issues currently have
+  acceptance criteria on GitHub*, which is the more orthodox place, but all 46 issues currently have
   empty bodies, so this would have meant editing 46 issues before a single goal could be written down,
   and the board is the one part of GitHub this project has no stable write path to.
 - **Why the catalogue is derived rather than authored:** every goal carries a Source line pointing at
   the one-pager, `CLAUDE.md`, the README or a backlog issue, and goals that are a reading of a source
-  rather than a quotation say so explicitly. This keeps the document a *restatement* — so it cannot
+  rather than a quotation say so explicitly. This keeps the document a *restatement*, so it cannot
   quietly become a second, competing rulebook that drifts from the one-pager.
 - **Consequence:** a goal change edits the catalogue first and appends the fact to Ch. 01 in the same
   commit. Chapter 08 reports measured coverage against NFG-05, and Chapter 11 reports goals not met.
 - **The finding worth carrying into Ch. 01 and Ch. 11:** writing the goals down produced five gaps
-  that nobody had noticed while the same information was spread over four documents — no performance
+  that nobody had noticed while the same information was spread over four documents: no performance
   target, no browser support matrix, no accessibility goal, no enforcement for the 300-line limit, and
   a Resource/Energy System that appears in the Sprint 2 plan and in no rulebook. The exercise found
   more by being *collected* than by being *written*, which is an argument for doing it in week 1 of a
   project rather than in week 8.
 - → Ch. 01, Ch. 08, Ch. 11
 
-### 2026-08-06 — 2D web build instead of Unity 3D or Pygame
-=======
 ### 2026-08-06: 2D web build instead of Unity 3D or Pygame
->>>>>>> Stashed changes
 
 - **Chosen:** a 2D board game running in the browser.
 - **Rejected:** a 3D approach in Unity: a new programming language for two of the three team
@@ -93,43 +86,34 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   "can we learn the engine" to "can we finish the rules".
 - **Source:** [Meeting Notes 20260806](../Project-Management/Meeting%20Notes/20260806.md),
   [00-One-Pager.md](../Project-Management/00-One-Pager.md).
-<<<<<<< Updated upstream
-- **Addendum (2026-08-09):** formalized as a weighted-criteria utility value analysis covering all three
-  visual approaches (2D, 2.5D, 3D), not just the original 2D-vs-3D pair — see
-=======
 - **Addendum (2026-08-09):** formalized as a weighted-criteria Nutzwertanalyse covering all three
   visual approaches (2D, 2.5D, 3D), not just the original 2D-vs-3D pair: see
->>>>>>> Stashed changes
   [Utility-Value-Analysis.md](../Project-Management/Utility-Value-Analysis.md). It confirms
   2D as the winner (4.20/5.00) and adds one finding not visible in the original prose reasoning:
   2.5D (2.75) also outscores full 3D (2.30), because 2.5D inherits 3D's C#/Unity risk without
   buying back most of its visual payoff.
 - → Ch. 03, Ch. 11
 
-<<<<<<< Updated upstream
-### 2026-08-10 — AI prompt logs are gitignored, kept locally instead of committed
+### 2026-08-10: AI prompt logs are gitignored, kept locally instead of committed
 
 - **Chosen:** `00-Meta/AI-Prompts/` added to `.gitignore`; the two existing tracked files
   (`BenedictGlatz/2026-08-09.json`, `lbolender/2026-08-06.json`) untracked with `git rm --cached`
   but kept on disk. `CLAUDE.md` step 1 of the mandatory per-change steps is no longer part of the
   commit.
-- **Rejected:** the original rule in `CLAUDE.md` — log entries committed together with steps 2–4 in
+- **Rejected:** the original rule in `CLAUDE.md`: log entries committed together with steps 2–4 in
   the same commit, before replying.
 - **Why:** the working tree could not be used for anything else while a prompt-log entry sat as an
   uncommitted change, since the log is written *before* replying but the actual work (docs, code,
   tests) is what should be reviewed and committed together as one unit. Requiring the log file itself
   to be committed forced an extra commit cycle any time work was still in progress.
 - **Consequence:** `npm run docs:ai-index` can no longer read every contributor's log straight from a
-  fresh clone — logs now live only on each contributor's machine. Whoever regenerates the AI index
+  fresh clone: logs now live only on each contributor's machine. Whoever regenerates the AI index
   chapter has to collect the other contributors' `00-Meta/AI-Prompts/<github-username>/` folders out
   of band first (chat, shared drive) and place them locally. This is a real loss of the
   "one `git pull` has everything" property the log used to have, traded for not blocking other work.
 - → Ch. 07, Ch. 13
 
-### 2026-08-06 — Branching model is main/dev/feature, not GitHub Flow
-=======
 ### 2026-08-06: Branching model is main/dev/feature, not GitHub Flow
->>>>>>> Stashed changes
 
 - **Chosen:** `main` (always playable, no direct pushes) ← `dev` (integration) ← `feature/<issue>-<slug>`.
 - **Rejected:** the GitHub Flow variant originally proposed in
@@ -225,30 +209,6 @@ exactly the kind of thing this file exists to keep visible.
   client's registry, the token in the wrong store. Both times the diagnosis, not the fix, was the work.
 - → Ch. 02, Ch. 07, Ch. 10
 
-<<<<<<< Updated upstream
-### 2026-08-10 — Risk register expanded from the project's own documentation, not invented
-
-- **Chosen:** mine `project-journal.md`, `sprint-log.md`, `01-Github-Project.md` and `CLAUDE.md` for
-  risks that were already stated as facts or open questions elsewhere, and turn
-  [03-Risk-Analysis.md](../Project-Management/03-Risk-Analysis.md) into a register with a Category
-  and a Mitigation/Response column per risk, not just a Likelihood/Impact/Priority rating.
-- **Rejected:** brainstorming generic software-project risks (budget overrun, key-person illness in
-  the abstract, "requirements change") without grounding each one in something this project's own
-  documentation already says. A generic list reads as filler and duplicates risks the docs already
-  describe under a different name (e.g. "Sickness" already covers the abstract team-availability
-  risk).
-- **Why:** a risk register a reader cannot trace back to a concrete project fact is not evidence of
-  risk *management*, just of a template being filled in. Every added row cites the source document it
-  came from, matching the "no claim without a reason" rule this documentation process already runs
-  on.
-- **Consequence:** 13 new risks added (16 total), grouped into Category values not previously used
-  here (Schedule, Scope, Process/Quality, Team, Technical/Tooling, Compliance/Academic,
-  Presentation). Two of them are already-known open questions from `sprint-log.md` given a
-  Likelihood/Impact rating for the first time (the sprint-date contradiction, the missing
-  velocity/burn-down data) — rating them doesn't resolve them, it just makes their priority visible
-  next to every other risk.
-- → Ch. 02
-=======
 ### 2026-08-09: Feasibility is affirmed conditionally, with the AI toolchain named as the condition
 
 - **Chosen:** a *conditional* Go. The feasibility study assesses five dimensions, gives each its own
@@ -282,7 +242,6 @@ exactly the kind of thing this file exists to keep visible.
   capacity, which argues for keeping the 300-line limit, the layering and the per-change notes exactly
   when deadline pressure would suggest dropping them.
 - → Ch. 03, Ch. 10, Ch. 11
->>>>>>> Stashed changes
 
 ---
 

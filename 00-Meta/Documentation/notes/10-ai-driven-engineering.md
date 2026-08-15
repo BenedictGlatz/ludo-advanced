@@ -34,8 +34,6 @@
 - Documentation is written alongside development rather than afterwards: see
   [02-project-management.md](02-project-management.md) and the journal.
 
-<<<<<<< Updated upstream
-=======
 ### AI assistance as a precondition of the scope: 2026-08-09, issue #12
 
 Established while writing [Feasibility-Study.md](../../Project-Management/Feasibility-Study.md), where
@@ -68,7 +66,6 @@ it carries its own section because the study's overall verdict is conditional on
 - **Open:** whether the module requires an explicit declaration of AI use beyond the prompt log is
   unknown, as the module's requirements are unknown.
 
->>>>>>> Stashed changes
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

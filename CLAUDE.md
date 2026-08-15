@@ -27,33 +27,19 @@ exactly this; do not substitute alternatives.
 
 ## Mandatory per-change steps
 
-<<<<<<< Updated upstream
-Every change carries these five, in this order. They are not optional and not "when there is time" — step 1 is
+Every change carries these five, in this order. They are not optional and not "when there is time": step 1 is
 local-only and not part of the commit (see [AI prompt log](#ai-prompt-log)); step 2 is the one that cannot be
 reconstructed afterwards, which is exactly why it comes first among the committed steps.
 
-1. **AI prompt log** — append the prompt to `00-Meta/AI-Prompts/<github-username>/YYYY-MM-DD.json` **before
+1. **AI prompt log**: append the prompt to `00-Meta/AI-Prompts/<github-username>/YYYY-MM-DD.json` **before
    replying**. This directory is gitignored and kept locally per machine, not committed. See
    [AI prompt log](#ai-prompt-log).
-2. **Documentation notes** — append facts to the chapter note the change belongs to, add a decision block to
-   `00-Meta/Documentation/project-journal.md` for any non-obvious decision, and a challenge bullet for anything
-   that cost more than ~30 min of unplanned work. See [Documentation notes](#documentation-notes).
-3. **Changelog** — user-visible changes under `## [Unreleased]` in `CHANGELOG.md`.
-4. **Tests** — write them, or state plainly which coverage is still outstanding. Do not skip silently.
-5. **Commit** — Conventional Commits, with steps 2–4 in the *same* commit. Push only when explicitly asked.
-=======
-Every change carries these five, in this order. They are not optional and not "when there is time": steps 1 and 2
-are the ones that cannot be reconstructed afterwards, which is exactly why they are first.
-
-1. **AI prompt log**: append the prompt to `00-Meta/AI-Prompts/<github-username>/YYYY-MM-DD.json` **before
-   replying**. See [AI prompt log](#ai-prompt-log).
 2. **Documentation notes**: append facts to the chapter note the change belongs to, add a decision block to
    `00-Meta/Documentation/project-journal.md` for any non-obvious decision, and a challenge bullet for anything
    that cost more than ~30 min of unplanned work. See [Documentation notes](#documentation-notes).
 3. **Changelog**: user-visible changes under `## [Unreleased]` in `CHANGELOG.md`.
 4. **Tests**: write them, or state plainly which coverage is still outstanding. Do not skip silently.
-5. **Commit**: Conventional Commits, with steps 1–4 in the *same* commit. Push only when explicitly asked.
->>>>>>> Stashed changes
+5. **Commit**: Conventional Commits, with steps 2–4 in the *same* commit. Push only when explicitly asked.
 
 ## Tech stack and hard constraints
 
