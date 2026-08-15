@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scope, an abbreviation list, and two adapted reference documents on report structure and writing style
 - Mandatory per-change steps in `CLAUDE.md`, making the prompt log, documentation notes, changelog and tests part
   of the same commit as the change itself
+- SMART analysis of the project goals in `00-Meta/Project-Management/SMART-Analysis.md` — one overall goal plus one
+  sub-goal per must-have epic (#36–#39), each with a deadline taken from the board's sprint markers and measurable
+  criteria stated as checks against artefacts, plus a section naming what still has to exist before those criteria
+  can be read
 - Feasibility study in `00-Meta/Project-Management/Feasibility-Study.md`: technical, schedule,
   personnel/organisational, economic and legal feasibility, each with its own verdict, and a conditional Go whose
   conditions and precondition (the AI toolchain) are named explicitly

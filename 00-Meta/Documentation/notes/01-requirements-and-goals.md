@@ -141,6 +141,36 @@ or failed.
 All 47 backlog issues still have empty bodies, so the board continues to prioritise titles until the
 criteria are copied onto the issues or the issues link here.
 
+### Project goals formulated SMART — 2026-08-09, issue #9
+
+Full document: [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md). Facts, not the
+argument:
+
+- **One overall goal plus four sub-goals**, one sub-goal per `must have` epic. The sub-goal cut
+  follows the epic structure rather than the sprint structure, because the epics are what the MoSCoW
+  labels already prioritise — a sprint-shaped cut would have introduced a second, competing breakdown.
+- The overall goal binds five checks: a full game completed by 2–4 players; #36–#39 closed; ≥ 80 %
+  line coverage in `src/core/` and `src/state/`; complete `de` and `en` locales with no hardcoded
+  user-facing string; no source file over 300 lines. The last four are the rules already fixed in
+  [CLAUDE.md](../../../CLAUDE.md) — no new requirement was invented for the goal.
+- **Sub-goal deadlines, taken from the board sprint markers** in [sprint-log.md](../sprint-log.md):
+  SG1 #36 → 2026-08-23, SG2 #37 → 2026-09-06, SG3 #38 → 2026-09-06, SG4 #39 → 2026-09-17.
+- **The `T` anchor is 2026-09-17**, the board's end of Sprint 3 — the only calendar date in the
+  repository. The module's real submission date is unknown, so every date in the analysis is
+  explicitly re-anchorable; that is why they were taken from one named source instead of being spread
+  through the text.
+- **Scope excluded by the goal, by design:** #42 (`should have`) and #43–#46 (`could have`). The goal
+  is the `must have` set exactly.
+- **Velocity and burn-down are deliberately not measurable criteria.** The board carries no story
+  point field and no Iteration field, so a goal depending on them would be unmeasurable by
+  construction. See [02-project-management.md](02-project-management.md).
+- **Boundary against the neighbouring definition-phase issues:** non-functional goals beyond
+  localisation and the coverage/300-line rules stay with #10, the requirements specification and the
+  MoSCoW rationale with #13, risks with #11, feasibility with #12.
+- The analysis carries its own *Prerequisites for measurability* section listing what has to exist
+  before the M criteria can be read at all: acceptance criteria in #36–#39, a written Definition of
+  Done, a runnable test setup, and board `Status`/`Sprint` values.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -151,6 +181,10 @@ criteria are copied onto the issues or the issues link here.
   backlog is not in this repository.~~ **Superseded 2026-08-06**: the backlog is now readable and
   transcribed above. What remains open: no issue has an acceptance criterion or a written
   requirement in its body, so the MoSCoW labels still prioritise titles rather than specifications.
+  Named as the first entry in *Prerequisites for measurability* in
+  [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md), with a proposed owner and the date
+  2026-08-23 — it blocks all four sub-goals, because "epic closed" otherwise means only that someone
+  ticked a box.
 - ~~Whether the epic → task decomposition is recorded in GitHub or only implied by titles.~~
   **Verified 2026-08-06:** real sub-issue links, table above.
 - Phase label `1-initialization` is used on the board but missing from `CLAUDE.md`'s phase-label list.
