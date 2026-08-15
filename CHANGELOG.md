@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Feasibility study in `00-Meta/Project-Management/Feasibility-Study.md` — technical, schedule,
   personnel/organisational, economic and legal feasibility, each with its own verdict, and a conditional Go whose
   conditions and precondition (the AI toolchain) are named explicitly
+- `00-Meta/Project-Management/Functional-and-Non-Functional-Goals.md` — the project's goal catalogue: 21 functional
+  goals traced to the backlog epics and 8 non-functional goals derived from the hard constraints, each with its
+  source, its reason and how it is verified
 
 ### Changed
 
@@ -28,3 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from the log rather than sorted by hand
 - The truncated `## Documentation` section in `00-Meta/Project-Management/01-Github-Project.md` now points at the
   project journal instead of ending mid-sentence
+- `00-Meta/AI-Prompts/` is now gitignored and kept locally per contributor instead of being committed; `CLAUDE.md`
+  updated so the AI prompt log step is no longer part of the same commit as documentation notes, changelog and
+  tests
