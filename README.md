@@ -1,6 +1,6 @@
 # Ludo Advanced
 
-A 2D web remake of Ludo where the single die is replaced by two card pools — draw your dice, play your skills.
+A 2D web remake of Ludo where the single die is replaced by two card pools: draw your dice, play your skills.
 
 ![Status](https://img.shields.io/badge/status-in%20development-orange)
 ![License](https://img.shields.io/badge/license-TBD-lightgrey)
@@ -10,10 +10,10 @@ A 2D web remake of Ludo where the single die is replaced by two card pools — d
 Classic Ludo gives you one die and one decision: which pawn to move. Ludo Advanced adds two layers of choice on top of
 the familiar board:
 
-- **Dice Card Pool** — cards ranging from **D2 to D20**. At the start of your turn you draw 3 cards, pick the die you
-  want to roll, and the 3 cards are shuffled back into the pool. A D20 can carry a pawn across the board — or overshoot
+- **Dice Card Pool**: cards ranging from **D2 to D20**. At the start of your turn you draw 3 cards, pick the die you
+  want to roll, and the 3 cards are shuffled back into the pool. A D20 can carry a pawn across the board: or overshoot
   the goal.
-- **Skill Card Pool** — **Action** cards you play on your own turn and **Reaction** cards you play in response to
+- **Skill Card Pool**: **Action** cards you play on your own turn and **Reaction** cards you play in response to
   another player's move (shield a pawn, swap positions, force a reroll).
 
 Everything else stays true to Ludo: 2–4 players, four pawns each, leave the start area on the highest roll, capture by
@@ -25,7 +25,7 @@ The full rules are in [00-One-Pager.md](00-Meta/Project-Management/00-One-Pager.
 
 | Area          | Choice                            |
 | ------------- | --------------------------------- |
-| Language      | JavaScript (ES modules) — no TypeScript |
+| Language      | JavaScript (ES modules): no TypeScript |
 | DOM / UI      | jQuery                            |
 | Build         | Vite                              |
 | Localization  | i18next (`de`, `en`)              |
@@ -47,7 +47,7 @@ npm install
 npm run dev
 ```
 
-The dev server prints a local URL — open it in your browser to play.
+The dev server prints a local URL: open it in your browser to play.
 
 ## Scripts
 
@@ -68,7 +68,7 @@ The dev server prints a local URL — open it in your browser to play.
 
 ```
 src/
-  core/    Pure game rules — board, movement, capture, turn manager, card pools
+  core/    Pure game rules: board, movement, capture, turn manager, card pools
   state/   Game state and its transitions
   ui/      jQuery rendering and input handling
   i18n/    i18next setup and locale files
@@ -98,7 +98,7 @@ Target coverage is at least 80 % of lines in `src/core/` and `src/state/`; the U
 
 ## Localization
 
-The interface ships in **German (`de`)** and **English (`en`)**. No user-facing string is hardcoded — every one of them
+The interface ships in **German (`de`)** and **English (`en`)**. No user-facing string is hardcoded: every one of them
 is an i18next key.
 
 To add a language, copy `src/i18n/locales/en.json` to `<code>.json`, translate the values (leave the keys untouched),
@@ -135,8 +135,8 @@ Details: [01-Github-Project.md](00-Meta/Project-Management/01-Github-Project.md)
 | Name            | Role                              |
 | --------------- | --------------------------------- |
 | Fabian Gemming  | Product Owner                     |
-| Lars Bolender   | Scrum Member — implementation     |
-| Benedict Glatz  | Scrum Member — implementation     |
+| Lars Bolender   | Scrum Member: implementation     |
+| Benedict Glatz  | Scrum Member: implementation     |
 
 ## License
 

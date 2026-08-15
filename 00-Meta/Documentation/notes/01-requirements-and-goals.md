@@ -8,7 +8,7 @@
 
 - Who plays this, and in what situation.
 - What classic Ludo does badly that this variant addresses.
-- What the MVP is — the minimum that counts as the game working.
+- What the MVP is: the minimum that counts as the game working.
 - What is explicitly *not* in the MVP, and when it would come.
 - How requirements were prioritised, and by whom.
 
@@ -21,19 +21,19 @@
   *Reaction* cards in response to another player).
 - Classic Ludo rules remain underneath: four pawns each, leave the start area on the chosen die's
   highest number, move along the track, capture by landing exactly on an opponent's square.
-- The design intent is stated as giving the player "more options than just rolling dice" — the
+- The design intent is stated as giving the player "more options than just rolling dice": the
   decision each turn becomes *which die to roll* and *which skill to play*, not only *which pawn to
   move*.
 
-### Backlog and prioritisation as actually labelled — read 2026-08-06
+### Backlog and prioritisation as actually labelled: read 2026-08-06
 
 46 issues, all `open`, read from the now-public repository. Phase labels split
 `1-initialization` 5, `2-definition` 7, `3-planning` 9, `4-implementation` 21, `5-completion` 4.
 Note that `1-initialization` is in use on the board but is **absent from the phase-label list in
 [CLAUDE.md](../../../CLAUDE.md)**, which names only `2-definition` through `5-completion`.
 
-**MoSCoW is applied to 9 of 46 issues (20 %).** The other 37 — including all 24 `documentation`
-issues and every fine-grained implementation task (#26–#35, #40, #41) — carry no MoSCoW label:
+**MoSCoW is applied to 9 of 46 issues (20 %).** The other 37 (including all 24 `documentation`
+issues and every fine-grained implementation task, #26–#35, #40, #41) carry no MoSCoW label:
 
 | Label | Issues |
 | --- | --- |
@@ -58,11 +58,11 @@ not a gap, and the report can say so with evidence. Worth stating, because the r
 omission.
 
 **MVP by this reading:** #36–#39 and their 12 sub-issues. **Explicitly outside it:** multiplayer
-(`should have`), and the LLM bot, expanded card set, trap cards and rule toggles (`could have`) —
+(`should have`), and the LLM bot, expanded card set, trap cards and rule toggles (`could have`),
 matching the one-pager's framing of multiplayer and AI opponents as extensions.
 
 **Negative finding:** all four epics have an **empty issue body**, as do their sub-issues. The
-backlog is titles and labels only — there is not one acceptance criterion anywhere in the 46 issues.
+backlog is titles and labels only: there is not one acceptance criterion anywhere in the 46 issues.
 
 ### Goal catalogue — written 2026-08-09
 
@@ -105,7 +105,7 @@ is why it lives in Project-Management rather than here.
 ## Open / to verify
 
 - ~~MoSCoW prioritisation exists as labels but no requirement has been written against them; the
-  backlog is not in this repository.~~ **Superseded 2026-08-06** — the backlog is now readable and
+  backlog is not in this repository.~~ **Superseded 2026-08-06**: the backlog is now readable and
   transcribed above. What remains open: no issue has an acceptance criterion or a written
   requirement in its body, so the MoSCoW labels still prioritise titles rather than specifications.
 - ~~Whether the epic → task decomposition is recorded in GitHub or only implied by titles.~~
@@ -117,4 +117,4 @@ is why it lives in Project-Management rather than here.
 - No user stories exist yet. Whether the module expects them in the report is unknown.
 - Energy/resource system is listed in the Sprint 2 plan
   ([01-Github-Project.md](../../Project-Management/01-Github-Project.md)) but appears in neither the
-  one-pager nor the README — its status as MVP or stretch goal is undecided.
+  one-pager nor the README: its status as MVP or stretch goal is undecided.

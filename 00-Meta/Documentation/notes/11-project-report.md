@@ -1,6 +1,6 @@
 # 11 Project report
 
-> **Covers:** how the project actually went — planned scope against delivered scope, the challenges
+> **Covers:** how the project actually went: planned scope against delivered scope, the challenges
 > that arose, and the lessons learned.
 > **Does not cover:** how the work was *organised*. That is Chapter 02. This chapter is the
 > retrospective; that one is the plan.
@@ -28,21 +28,21 @@ directly.
 
 ### Plan versus actual
 
-Source: [sprint-log.md](../sprint-log.md). Nothing to report yet — no sprint has closed.
+Source: [sprint-log.md](../sprint-log.md). Nothing to report yet: no sprint has closed.
 
 ### Challenges
 
 Source: the `## Challenges` section of [project-journal.md](../project-journal.md). Nothing logged
 yet.
 
-### Lessons learned — candidates
+### Lessons learned: candidates
 
 Collect these as they occur rather than inventing them at the end.
 
 - **Documentation written alongside development.** The sample report this project models on names
   late documentation as its own biggest weakness: it produced time pressure at the end and the
   presentation was cut short for it. This project inverted that from the first week. Whether the
-  inversion actually paid off is an honest question to answer in the retrospective — if the notes
+  inversion actually paid off is an honest question to answer in the retrospective: if the notes
   went stale anyway, say so.
 - **Scope cut early rather than late.** The 3D-to-2D decision was taken on 2026-08-06, before
   implementation began, explicitly framed against the iron triangle. Whether that early cut was

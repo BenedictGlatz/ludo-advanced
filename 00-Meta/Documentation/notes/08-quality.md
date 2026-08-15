@@ -1,6 +1,6 @@
 # 08 Quality
 
-> **Covers:** the test strategy — unit tests, coverage, E2E tests, CI/CD, and code documentation.
+> **Covers:** the test strategy: unit tests, coverage, E2E tests, CI/CD, and code documentation.
 > **Does not cover:** the tools themselves, which are Chapter 07. This chapter is about what the
 > testing *achieves*, not how it is configured.
 
@@ -38,11 +38,11 @@ was executed rather than whether anything works.
 
 ## Open / to verify
 
-- No tests exist yet. No coverage figure has ever been produced. Do not write a number here — write
+- No tests exist yet. No coverage figure has ever been produced. Do not write a number here: write
   the command in Chapter 09 and quote its output once it has actually been run.
 - **No CI/CD pipeline exists.** `Brainstorming.md` proposes a `build-check.yml` build-validation
   workflow on every PR, plus optional playable build artifacts. Nothing is implemented. If the
-  project ships without CI, this chapter says so plainly and gives the reason — the sample report
+  project ships without CI, this chapter says so plainly and gives the reason: the sample report
   scored well doing exactly that with its missing formatter.
 - No decision on whether Playwright runs against the dev server or the production build. Running
   against the production build catches things the dev server hides, such as assets the build forgets
