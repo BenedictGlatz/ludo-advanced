@@ -56,6 +56,12 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   written out with their rejected alternatives, and 13 edge cases settled in a table. Section 5 of
   `Requirements-Specification.md` now points at it; one risk row re-rated. Sprint 1.
 
+- **2026-08-22**: One pager rewritten for issue #1 as a one-page overview: broken heading and
+  typographic bullets fixed, the Product Owner's wording kept where it is still correct, the MVP
+  boundary, the board sprint calendar and a pointer table added, and the rules detail moved to the
+  game design document so that two documents do not hold the same rules. Written third rather than
+  first, so the summary matches the rulebook instead of being rewritten after it. Sprint 1.
+
 - **2026-08-22**: System architecture written for issue #22's neighbour #21 on
   `feature/sprint1-planning`: layer diagram and turn sequence diagram as Mermaid figures, a module
   inventory of 8 modules in `core/`, 4 in `state/` and 7 in `ui/` with the FR ids each owns, the data
@@ -408,6 +414,29 @@ exactly the kind of thing this file exists to keep visible.
   drops because the ambiguity is written down; impact stays high because the rules are unsigned and
   the composition is unplaytested, so the residual risk is real rather than closed.
 - → Ch. 01, Ch. 05, Ch. 11
+
+### 2026-08-22: The one pager stays a summary; the rules move to the game design document
+
+- **Chosen:** the rewritten [00-One-Pager.md](../Project-Management/00-One-Pager.md) keeps the base
+  game in a handful of lines and points at
+  [Game-Design-Document.md](../Project-Management/Game-Design-Document.md) for everything else. The
+  Product Owner's original wording is kept wherever it is still correct.
+- **Rejected:** *expanding the one pager into the rulebook*, which is the direction it was already
+  drifting: it was the only rules source in the project for two weeks. Two documents holding the same
+  rules drift apart, and the one-pager is the document people read first, so it is the worst place for
+  the copy that goes stale.
+- **Also rejected:** *leaving it untouched as a historical artefact* and writing a new overview
+  beside it. It is issue #1 and it is linked from `CLAUDE.md`, the README and six documents; a second
+  overview would have split the front door in two. The original text is recoverable from git history,
+  which is what makes editing in place safe.
+- **Why it was written third, after the game design document and the architecture**, rather than
+  first as the plan's issue order would suggest: a summary written before the rulebook would have been
+  rewritten immediately after it. The cost of the ordering is that issue #1 stayed open two documents
+  longer, which is visible on the board and is the cheaper of the two.
+- **Consequence:** the one-pager now carries three open points on its face (no buffer sprint on the
+  board, Sprint 3 is 1½ weeks, the gameplay scope has no sprint), handed to the project plan, issue
+  #15. A front-door document naming its own open points is the intended effect and not an oversight.
+- → Ch. 01, Ch. 02
 
 ### 2026-08-22: The 300-line file limit is read as applying to code, not to documents
 

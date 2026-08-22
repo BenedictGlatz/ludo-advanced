@@ -141,6 +141,30 @@ or failed.
 All 47 backlog issues still have empty bodies, so the board continues to prioritise titles until the
 criteria are copied onto the issues or the issues link here.
 
+### One pager rewritten as a one-page overview, 2026-08-22, issue #1
+
+[00-One-Pager.md](../../Project-Management/00-One-Pager.md) was the project's first document and its
+only rules source for two weeks. It is now the front door and not a second rulebook.
+
+- **What was mechanically broken and is fixed:** the `TURN` heading was swallowed into body text, so
+  the turn rules read as part of the *Beginning* section, and the bullet lists were typographic `•`
+  characters rather than markdown, so they did not render as lists.
+- **What is kept verbatim:** the Product Owner's original wording for the objective, the base game,
+  the capture rule, the two card pools, the roles and the 2D-against-3D risk assessment. The original
+  is in git history in full, so nothing is lost by editing rather than appending.
+- **What is added:** the MVP boundary in one sentence (rule-complete, 2 to 4 players, one device,
+  hot-seat, German and English, with multiplayer and bots named as outside it), the sprint calendar
+  from the board including which sprints have no board scope yet, and a pointer table from question to
+  document.
+- **What moved out:** the rules detail. The turn sequence, the leaving rule and the capture rule stay
+  as a summary of a few lines and point at
+  [Game-Design-Document.md](../../Project-Management/Game-Design-Document.md) for the rest. Reason:
+  two documents holding the same rules drift, and the one-pager is the one people read first, so it is
+  the worse place for the version that goes stale.
+- **Negative findings kept visible in the document itself** rather than tidied away: the board holds
+  no buffer sprint, board Sprint 3 is 1½ weeks, and the gameplay scope still has no sprint. All three
+  are named as open points for the project plan, issue #15.
+
 ### Game design document: the rulebook written to edge-case level, 2026-08-22, issue #22
 
 Full document: [Game-Design-Document.md](../../Project-Management/Game-Design-Document.md). It is the

@@ -49,6 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `00-Meta/AI-Prompts/` is now gitignored and kept locally per contributor instead of being committed; `CLAUDE.md`
   updated so the AI prompt log step is no longer part of the same commit as documentation notes, changelog and
   tests
+- `00-Meta/Project-Management/00-One-Pager.md` rewritten as a one-page overview: the swallowed `TURN` heading and
+  the typographic bullet characters fixed, the MVP boundary stated in one sentence, the board's sprint calendar and
+  a question-to-document pointer table added, and the rules detail moved to the game design document so that only
+  one document holds the rules
 - The GitHub Projects board is now the single source of truth for sprint membership: `sprint-log.md` takes its
   planned scope from the board's `Sprint` field instead of the prose plan in `01-Github-Project.md`, and the
   Sprint 1 entry records the 13 documentation issues actually assigned to it, with the previously listed gameplay

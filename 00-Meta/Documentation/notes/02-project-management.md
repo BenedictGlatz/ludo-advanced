@@ -146,6 +146,16 @@ negative finding.
   indeed the blocker, but the token that got it was the `gh` one rather than the Git Credential
   Manager's, so the tooling was installed anyway. The `memex-*` HTML-parsing route is now obsolete
   and should not be used again.
+- 2026-08-22, a second scope gap, found while trying to move board cards: **the board can be read and
+  not written.** The `gh` token carries `gist`, `read:org`, `read:project`, `repo`, `workflow`, so
+  `gh project item-edit` fails with `your authentication token is missing required scopes [project]`.
+  Consequence, and it is a process consequence rather than a tooling one: **issue assignees and issue
+  state are automatable** (`gh issue edit` and `gh issue close` need only `repo`, and the eight open
+  Sprint 1 issues were assigned that way on 2026-08-22), while **`Status`, `Sprint`, dates and any new
+  field have to be set by hand in the browser**. So the dated status history that a velocity figure
+  reads from depends on a human moving cards, which is the step most likely to be skipped under
+  deadline pressure. Closing this needs one interactive `gh auth refresh -s project`, the same
+  browser device flow as `read:project` and equally impossible for an agent to grant itself.
 - **`read:project` cannot be added silently.** `gh auth refresh` is an interactive browser device
   flow, so an agent cannot grant it to itself: it is a step the human contributor has to perform
   once per machine. Worth stating in the report, because it is the difference between "automatable"
@@ -199,7 +209,11 @@ auto-added to the board.
 Item #13 appears on the board as *MoSCoW Analysis*; the issue's own title is *Requirements
 Specification + MoSCoW Analysis*.
 
-- 5 Done, 8 Todo, and **all 8 open ones are unassigned** with one day of the sprint left.
+- 5 Done, 8 Todo, and **all 8 open ones are unassigned** with one day of the sprint left. **Corrected
+  the same day:** all eight were assigned to `lbolender` with `gh issue edit` on 2026-08-22, so the
+  assignee count rises from 9 to 17 of 47 issues. The finding stands as a finding: they were
+  unassigned for the whole sprint and were assigned on its last day, which is the fact the
+  retrospective needs, not the current value.
 - **`Sprint 0` membership**, for comparison: #2, #4, #5, #6, #7, #8, #47, all `Done`. The seven
   initialization issues, which matches the sprint-log entry for Sprint 0.
 - **Assignees are still sparse:** set on 9 of 47 issues. Every implementation issue is unassigned.
@@ -223,6 +237,17 @@ is settled in the 2026-08-22 decision in [project-journal.md](../project-journal
   finished mid-sprint has to be closed explicitly, or it stays open until the next release even though
   the work is merged into `dev`.
 - Conventional Commits, English, imperative mood.
+- **Third branch-naming deviation, 2026-08-22:** `feature/sprint1-planning` carries no issue number,
+  against the `feature/<issue>-<slug>` convention, because it carries **eight** issues (#1, #14, #15,
+  #16, #18, #21, #22, #23): the open Sprint 1 planning documents, which cross-reference each other
+  constantly. Eight branches would have meant eight pull requests whose merge order is forced by those
+  cross-references. The cost is that the board cannot link a branch to a single issue, so the per-issue
+  trail lives in the commits instead, one commit per issue with `Closes #<n>` in its body.
+- **Consequence at merge time, decided in advance:** the pull request is merged with a **merge
+  commit** rather than Squash and Merge, which deviates from the policy above. Squashing eight commits
+  into one destroys exactly the per-issue trail that replaces the missing branch-to-issue link, and
+  that trail is what the report's plan-versus-actual comparison reads. Recorded here because a policy
+  deviation nobody wrote down is indistinguishable from a mistake.
 
 ### Documentation process
 

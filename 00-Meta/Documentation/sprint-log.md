@@ -135,6 +135,16 @@ planning chapter describes, so the gap between it and the executed sprint has to
   (obligations book, project plan, effort estimation, Gantt, architecture diagram, game design
   document, test plan). Effort estimation (#16) is a precondition three other documents already defer
   to, so it carries more weight than its position in the list suggests.
+- **2026-08-22, the last working day of the sprint: 3 of the 8 open issues delivered on one branch.**
+  #22 game design document, #21 system architecture and #1 one pager, in that order, on
+  `feature/sprint1-planning`. The order is deliberate and is not the issue order: the rulebook first
+  because it blocks #14, #23 and all implementation, the one-pager third so that the summary is
+  written after the rulebook rather than rewritten after it. All eight open issues were also assigned
+  on this day, having been unassigned for the whole sprint.
+- **The remaining five (#14, #23, #16, #15, #18) do not fit the one day left**, and they are not
+  being backdated to pretend otherwise. Either the sprint end moves or they carry into Sprint 2;
+  whichever happens is recorded here as it happens. Sprint 1 therefore closes with 8 of 13 issues
+  done at the earliest, which is the figure the velocity count uses.
 - **Consequence for Sprint 2** (starts 2026-08-24): it now has to absorb its own scope, the unstarted
   Sprint 1 gameplay scope, the eight open planning documents, and the npm bootstrap. Sprint 2 has no
   board scope assigned yet, which makes assigning it the first thing to do rather than a later one.
