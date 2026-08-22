@@ -8,7 +8,12 @@ Fill the *Delivered* and *Actual* columns when a sprint closes, not before. A sp
 dropped scope is recorded as it happened: an unexplained divergence is a problem, a divergence with
 a reason is a finding.
 
-**Planned scope is taken from** [01-Github-Project.md](../Project-Management/01-Github-Project.md).
+**Planned scope is taken from the board's `Sprint` field**, which is the single source of truth for
+sprint membership as of the 2026-08-22 decision in [project-journal.md](project-journal.md). Where
+the prose plan in [01-Github-Project.md](../Project-Management/01-Github-Project.md) gives a sprint a
+different scope, the board wins and the prose scope is recorded in that sprint's entry as superseded,
+so the difference stays readable. Sprints whose entries below still carry only the prose scope are
+marked as such: their board scope is empty, because no issues have been assigned to them yet.
 
 **Planned dates are taken from the board**: four draft issues on
 [GitHub project *Ludo Advanced*](https://github.com/users/BenedictGlatz/projects/3) act as sprint
@@ -80,14 +85,59 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 
 **Planned scope**
 
-- Board layout and tile grid logic.
-- Standard 1–6 dice roll and basic pawn movement.
-- Turn manager (Player 1 → Player 2 → Player 3 → Player 4 / AI).
-- Basic knockout/capture mechanic on landing on an opponent token.
+Read from the board's `Sprint` field on 2026-08-22, which is the single source of truth for sprint
+membership (see the 2026-08-22 decision in [project-journal.md](project-journal.md)). 13 issues, all
+documentation or planning:
 
-**Delivered**: *open*
+| # | Title | Board status 2026-08-22 |
+| --- | --- | --- |
+| 1 | One Pager | Todo |
+| 9 | SMART Analysis | Done |
+| 10 | Functional vs. Non-Functional Goals | Done |
+| 11 | Risk Analysis | Done |
+| 12 | Feasibility Study | Done |
+| 13 | MoSCoW Analysis (issue title: Requirements Specification + MoSCoW Analysis) | Done |
+| 14 | Obligations Book: System Architecture, GUI, Technology, Platform | Todo |
+| 15 | Project Plan: Time, Ressources, Risks | Todo |
+| 16 | Effort Estimation | Todo |
+| 18 | Gantt Diagram via Roadmap | Todo |
+| 21 | System Architecture Diagram | Todo |
+| 22 | Game Design Document | Todo |
+| 23 | Test Plan and Quality Strategy | Todo |
 
-**Divergence and reasons**: *open*
+**Superseded planned scope.** Until 2026-08-22 this entry carried the scope from
+[01-Github-Project.md](../Project-Management/01-Github-Project.md) instead, "Core gameplay and board
+MVP": board layout and tile grid logic, a standard 1 to 6 dice roll with basic pawn movement, the
+turn manager across four players, and the basic knockout/capture mechanic. **None of it was in the
+sprint on the board and none of it was started.** The four matching issues (#26 Board Grid, #27 Turn
+Manager, #28 Pawn Movement, #29 Knockout, plus #31 Dice Rolling and the epic #36) carry no sprint
+value at all and will be scheduled later. Kept here because the written plan is what the report's
+planning chapter describes, so the gap between it and the executed sprint has to stay visible.
+
+**Delivered**
+
+- 5 of the 13 board issues closed: #9 SMART analysis, #10 goal catalogue, #11 risk analysis (register
+  expanded from 3 to 16 risks), #12 feasibility study, #13 requirements specification with the MoSCoW
+  analysis. All five are documents under `00-Meta/Project-Management/`.
+- Merged in the same window without being board issues of their own: the AI prompt log moved out of
+  version control, the branch layout corrected from stacked feature branches to branches off `dev`,
+  and the unreviewed-merge recovery on `dev`.
+- **No source code.** The repository still has no `package.json`, no `src/` and no tooling on the last
+  day of the sprint.
+
+**Divergence and reasons**
+
+- **The whole gameplay scope is missing**, for the reason above: it was planned in prose but never put
+  on the board, and the board is what the team works from. Not a slip during the sprint, a gap between
+  two artefacts that nobody could see until the `Sprint` field became readable on 2026-08-22.
+- **8 of 13 issues are still Todo one day before the sprint ends, and all 8 are unassigned.** The
+  eight are #1, #14, #15, #16, #18, #21, #22, #23: the one-pager plus the entire planning block
+  (obligations book, project plan, effort estimation, Gantt, architecture diagram, game design
+  document, test plan). Effort estimation (#16) is a precondition three other documents already defer
+  to, so it carries more weight than its position in the list suggests.
+- **Consequence for Sprint 2** (starts 2026-08-24): it now has to absorb its own scope, the unstarted
+  Sprint 1 gameplay scope, the eight open planning documents, and the npm bootstrap. Sprint 2 has no
+  board scope assigned yet, which makes assigning it the first thing to do rather than a later one.
 
 ---
 
@@ -101,6 +151,10 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 | **Actual end** | *open* |
 
 **Planned scope**
+
+> **Board scope is empty**: no issue carries `Sprint 2` as of 2026-08-22, so what follows is the
+> prose plan only and is not yet what the team will work on. It also does not yet contain the
+> unstarted Sprint 1 gameplay scope or the npm bootstrap, both of which have to land here or later.
 
 - Dice pool: special dice and the selection UI.
 - Skill cards: deck system, hand UI, action system (shield token, swap positions, reroll).
@@ -126,6 +180,9 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 | **Actual end** | *open* |
 
 **Planned scope**
+
+> **Board scope is empty**: no issue carries `Sprint 3` as of 2026-08-22, so what follows is the
+> prose plan only.
 
 - 2D sprites, animations, UI skins, particle effects for skills and cards.
 - Sound effects (dice rolls, card play, victory) and background music.
@@ -169,3 +226,10 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 > point field and no Iteration field, and `Status` and `Sprint` are unset on all 50 items: so there
 > is no estimate to sum and no dated status history to burn down against. See the negative findings
 > in [notes/02-project-management.md](notes/02-project-management.md#board).
+>
+> **Partly revised 2026-08-22.** `Status` is now set on all 64 board items and `Sprint` on 20 of
+> them, so a *velocity* count of issues closed per sprint is possible from Sprint 1 onward. Story
+> points and an Iteration field still do not exist, so **story-point velocity and burn-down remain
+> impossible**, and no sprint has dated status transitions recorded. Sprint 0 and Sprint 1 can be
+> counted retroactively (7 and 13 issues); Sprint 2 and Sprint 3 have no board scope yet, so nothing
+> can be counted for them until issues are assigned.

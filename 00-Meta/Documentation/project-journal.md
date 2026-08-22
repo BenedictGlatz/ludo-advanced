@@ -44,6 +44,12 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
 - **2026-08-10**: Risk register in `03-Risk-Analysis.md` expanded from 3 to 16 risks, all traced to
   facts already recorded in the project's own documentation. Issue #11, Sprint 0.
 
+- **2026-08-22**: Board read in full for the first time through the `gh` CLI with the `read:project`
+  scope granted. 64 items, all field values including `Sprint`. Sprint 1 membership is 13
+  documentation and planning issues (5 Done, 8 Todo and unassigned), not the gameplay scope the
+  written plan gave it. Board declared the single source of truth for sprint membership; Ch. 02 and
+  `sprint-log.md` updated against it. Sprint 1.
+
 - **2026-08-09**: Requirements specification written on `feature/13-requirements-specification`
   (issue #13): 45 functional and 12 non-functional requirements with acceptance criteria and MoSCoW
   priorities, a drop order agreed in advance, and eight gameplay decisions handed to the Product
@@ -316,6 +322,48 @@ exactly the kind of thing this file exists to keep visible.
   capacity, which argues for keeping the 300-line limit, the layering and the per-change notes exactly
   when deadline pressure would suggest dropping them.
 - → Ch. 03, Ch. 10, Ch. 11
+
+### 2026-08-22: The board is the single source of truth for sprint membership
+
+- **Chosen:** the `Sprint` field on the GitHub Projects v2 board decides which issues belong to a
+  sprint. Every other document describes the plan and is corrected against the board when the two
+  disagree, never the other way round. Concretely: Sprint 1 is the 13 issues carrying `Sprint 1`
+  (#1, #9 to #16, #18, #21, #22, #23), and the 27 issues with no sprint value, including all of
+  #26 to #46, are simply not scheduled yet. They get their sprint later.
+- **Rejected:** *treating [01-Github-Project.md](../Project-Management/01-Github-Project.md) as
+  authoritative and the board as behind.* That document gives Sprint 1 the scope "Core gameplay and
+  board MVP": board grid, a 1 to 6 dice roll, the turn manager, the capture rule. The board gives
+  Sprint 1 thirteen documentation issues and not one gameplay issue. Keeping the written plan as the
+  reference would mean declaring the sprint a near-total failure on its last day, when in fact 5 of
+  its 13 actual items are Done and the gameplay work was never started because it was never
+  scheduled. That reading would be false rather than merely pessimistic.
+- **Also rejected:** *maintaining both and reconciling them per sprint.* Two sources agree only until
+  the first change, and the 2026-08-06 board read already found four configuration facts that
+  contradicted the written plan (Status triple instead of five columns, single-select instead of
+  Iteration, no story points, no Category). A reconciliation step would run every sprint and be
+  skipped under deadline pressure exactly when it matters.
+- **Also rejected:** *back-filling the board to match the written plan*, i.e. moving #26 to #29, #31
+  and #36 into Sprint 1 now. It would make the two agree and it would falsify the record: those
+  issues were not worked on in Sprint 1, and a board that says they were destroys the plan-versus-
+  actual comparison the sprint log exists for.
+- **Why:** the board is the artefact the team actually operates, the one all three members see, and
+  the only one with per-item state that changes as work happens. A prose plan cannot be queried and
+  goes stale silently. This is the same argument the documentation rules already make for numbers:
+  prefer the thing that can be re-read over the thing that was written down once.
+- **Consequence:** Sprint 1 is a documentation sprint. The gameplay scope the plan put there is
+  unstarted and unscheduled, so it has to land in Sprint 2 or later, and Sprint 2's board scope
+  (currently empty) is now a blocking decision rather than a later one, with the sprint starting
+  2026-08-24. Second consequence: the repository still contains no source code on the day Sprint 1
+  ends, which confirms the finding recorded on 2026-08-09 that the first sub-goal was the tightest
+  one, and moves the bootstrap of the npm project into Sprint 2 on top of Sprint 2's own scope.
+- **Finding worth carrying into Ch. 11:** the divergence was invisible for two weeks because nobody
+  could read the `Sprint` field. The written plan was not wrong when it was written, it was simply
+  never checked against reality, and the reason it was never checked was a missing OAuth scope. A
+  tooling gap silently became a planning gap.
+- **Finding worth carrying into Ch. 02:** all 8 open Sprint 1 issues are unassigned on the last day
+  of the sprint. The board's assignee field is populated on 9 of 47 issues overall, so "who is doing
+  this" is currently not answered by the board at all, only by the RACI matrix and by memory.
+- → Ch. 02, Ch. 11
 
 ---
 

@@ -41,3 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `00-Meta/AI-Prompts/` is now gitignored and kept locally per contributor instead of being committed; `CLAUDE.md`
   updated so the AI prompt log step is no longer part of the same commit as documentation notes, changelog and
   tests
+- The GitHub Projects board is now the single source of truth for sprint membership: `sprint-log.md` takes its
+  planned scope from the board's `Sprint` field instead of the prose plan in `01-Github-Project.md`, and the
+  Sprint 1 entry records the 13 documentation issues actually assigned to it, with the previously listed gameplay
+  scope kept as superseded and unstarted
+- Two negative findings from 2026-08-06 corrected in `notes/02-project-management.md` after the first full board
+  read: `Status` is populated on all 64 items and `Sprint` on 20 of them. Story points and an Iteration field are
+  still missing, so burn-down charts remain impossible and only an issue-count velocity is available

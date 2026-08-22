@@ -138,6 +138,77 @@ negative finding.
   the HTML-parsing route entirely.
 - Durable access therefore needs **one scope added to an existing token**, not new tooling. The `gh`
   CLI stays optional convenience rather than a prerequisite.
+- 2026-08-22: **the board is now fully readable, and the route taken was the other one.** The `gh`
+  CLI was installed after all and authenticates as `lbolender` out of the Windows keyring, and
+  `gh auth refresh -s read:project` added the missing scope to that session's token. `gh project
+  item-list 3 --owner BenedictGlatz --format json` returns every item with all field values,
+  including `Sprint`. The prediction above (one scope, not new tooling) was half right: the scope was
+  indeed the blocker, but the token that got it was the `gh` one rather than the Git Credential
+  Manager's, so the tooling was installed anyway. The `memex-*` HTML-parsing route is now obsolete
+  and should not be used again.
+- **`read:project` cannot be added silently.** `gh auth refresh` is an interactive browser device
+  flow, so an agent cannot grant it to itself: it is a step the human contributor has to perform
+  once per machine. Worth stating in the report, because it is the difference between "automatable"
+  and "automatable after a one-time manual grant".
+
+#### Board read 2026-08-22: full field read, first time `Sprint` values were visible
+
+Read with `gh project item-list 3 --owner BenedictGlatz`. **64 items:** 47 issues, 13 pull requests
+and the 4 sprint-marker draft issues. The item count rose from 50 because pull requests are now
+auto-added to the board.
+
+- **`Status` is populated on all 64 items:** 22 `Done`, 41 `Todo`, 1 `In Progress` (the `Sprint 1`
+  marker). Negative finding 1 of 2026-08-06 is **fully resolved**, and the partial resolution
+  recorded on 2026-08-09 is confirmed.
+- **`Sprint` is populated on 20 of 64 items:** 7 on `Sprint 0`, 13 on `Sprint 1`, none on `Sprint 2`
+  or `Sprint 3`. Negative finding 2 of 2026-08-06 (*`Sprint` unset on all items*) is therefore
+  **corrected, but only for the first two sprints**.
+- The remaining 44 items carry no sprint: the 13 pull requests, the 4 sprint markers, and **27
+  issues**, which include every implementation issue #26 to #46. The team's position as of
+  2026-08-22 is that these will be assigned to their sprints later, so the gap is deliberate
+  sequencing and not a configuration defect.
+- The 4 sprint-marker draft issues carry `Start Date` and `End Date` but **no `Sprint` value of their
+  own**, so a filter on the field does not return its own marker. Dates unchanged from the 2026-08-06
+  read.
+- **`Start Date` / `End Date` are no longer populated on all items.** They are set on the 4 markers
+  and on the 7 `Sprint 0` issues, and empty on all 13 `Sprint 1` issues. The 2026-08-06 statement
+  "populated on all 50 items" no longer holds for the current item set, so per-item dates cannot be
+  used as a sprint-membership proxy any more. The `Sprint` field is now the only complete source.
+- Still absent: `Story Points` or any estimation field, a `Category` field, the `Ready for Sprint`
+  and `In Review` columns, and repository milestones (`milestone` is null on all 47 issues).
+
+**`Sprint 1` membership as configured on the board** (marker: 2026-08-10 → 2026-08-23, status
+`In Progress`), 13 issues, all of them documentation or planning work:
+
+| # | Title | Status | Assignee |
+| --- | --- | --- | --- |
+| 9 | SMART Analysis | Done | lbolender |
+| 10 | Functional vs. Non-Functional Goals | Done | BenedictGlatz |
+| 11 | Risk Analysis | Done | CreativeName06 |
+| 12 | Feasibility Study | Done | lbolender |
+| 13 | MoSCoW Analysis | Done | BenedictGlatz |
+| 1 | One Pager | Todo | none |
+| 14 | Obligations Book: System Architecture, GUI, Technology, Platform | Todo | none |
+| 15 | Project Plan: Time, Ressources, Risks | Todo | none |
+| 16 | Effort Estimation | Todo | none |
+| 18 | Gantt Diagram via Roadmap | Todo | none |
+| 21 | System Architecture Diagram | Todo | none |
+| 22 | Game Design Document | Todo | none |
+| 23 | Test Plan and Quality Strategy | Todo | none |
+
+Item #13 appears on the board as *MoSCoW Analysis*; the issue's own title is *Requirements
+Specification + MoSCoW Analysis*.
+
+- 5 Done, 8 Todo, and **all 8 open ones are unassigned** with one day of the sprint left.
+- **`Sprint 0` membership**, for comparison: #2, #4, #5, #6, #7, #8, #47, all `Done`. The seven
+  initialization issues, which matches the sprint-log entry for Sprint 0.
+- **Assignees are still sparse:** set on 9 of 47 issues. Every implementation issue is unassigned.
+
+**Consequence for the report.** Sprint 1 as executed is a *documentation* sprint, not the
+"Core gameplay and board MVP" sprint that [01-Github-Project.md](../../Project-Management/01-Github-Project.md)
+planned. The written plan and the board diverge on the whole content of the sprint, not on details.
+The divergence and its reason are recorded in [sprint-log.md](../sprint-log.md); which artefact wins
+is settled in the 2026-08-22 decision in [project-journal.md](../project-journal.md).
 
 ### Branching and review
 
