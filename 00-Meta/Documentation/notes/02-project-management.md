@@ -33,10 +33,30 @@ than they do in the sample report, where the same material was compressed into a
 - Product Owner: Fabian Gemming (defines *what* and *why*).
 - Scrum Member, implementation: Lars Bolender.
 - Scrum Member, implementation: Benedict Glatz.
-- **Contradiction, unresolved:** [01-Github-Project.md](../../Project-Management/01-Github-Project.md)
+- ~~**Contradiction, unresolved:**~~ [01-Github-Project.md](../../Project-Management/01-Github-Project.md)
   carries a second, unnamed Developer A/B/C table that assigns a Scrum Master and a Quality & UX
   Lead, and pairs each Scrum role with a technical lead role. The two tables disagree on whether a
-  Scrum Master exists. Needs deciding; whichever holds, the report states which and why.
+  Scrum Master exists. **Resolved 2026-08-22, issue #15**, in section 3.1 of
+  [Project-Plan.md](../../Project-Management/Project-Plan.md): the one-pager table holds and the A/B/C
+  table is superseded. Three reasons, in the order they carried weight:
+  1. The one-pager names real people; the A/B/C table names placeholders and was never filled in,
+     which is an unfinished template rather than a competing decision.
+  2. It matches what happened. Sprint 1's board hygiene, the branch-layout correction and the sprint
+     log were done by the Scrum Members, with nobody holding a Scrum Master role.
+  3. On a question of who holds which role, the Product Owner's own document is the better authority.
+- **Rejected: appointing a Scrum Master now.** It would tidy the process chapter and it would be a
+  fiction: nobody performed that role for two sprints. Describing a role nobody filled is worse for the
+  report than explaining why a team of three did without one.
+- **Negative finding that follows from having no Scrum Master**, and it is the reason the resolution is
+  not cost-free: the board hygiene a Scrum Master would own was skipped for the whole of Sprint 1.
+  `Status` and `Sprint` went unread until 2026-08-22, the eight open issues went unassigned until the
+  second-to-last day, and no ceremony was minuted after the first one.
+- **What survives from the A/B/C table** is pairing each person with a technical area instead of
+  leaving ownership implicit. It does not survive as three lead roles: the table assumes three
+  implementers and there are two. Section 3.2 of the project plan records the two implementers as
+  sharing all three layers, **split per issue at sprint planning rather than per layer**, because the
+  critical path runs through all three layers and a layer split would put one person on it and the
+  other waiting.
 
 ### Board
 
@@ -140,6 +160,55 @@ Full document: [Effort-Estimation.md](../../Project-Management/Effort-Estimation
   one AI session, not from a planning poker round with three. Relative sizing draws most of its value
   from disagreement between estimators, so the totals are the input to a planning conversation rather
   than its result.
+
+#### Schedule and sequencing fixed: 2026-08-22, issue #15
+
+Full document: [Project-Plan.md](../../Project-Management/Project-Plan.md).
+
+- **Four sprints, no fifth.** The board's Sprint 0 to Sprint 3 hold. The buffer sprint of the written
+  plan is **not created**; its scope becomes a dated window inside Sprint 3, 2026-09-14 to 2026-09-17,
+  behind a **feature freeze at the end of 2026-09-11**. Rejected: calling board `Sprint 3` the buffer
+  sprint, which is a label and not a plan because it leaves the building-versus-closing boundary
+  undefined, and adding a fifth sprint after 2026-09-17, which is a date nobody has confirmed exists.
+- **Consequence, and it makes the capacity finding worse:** implementation has **15 weekdays**, not 19.
+  The required rate for the 74 must-have points rises from 3.9 to **4.9 points per weekday**. Recorded
+  in section 5.2 of [Effort-Estimation.md](../../Project-Management/Effort-Estimation.md) next to the
+  original figure rather than overwriting it.
+- **Sprint 0's 2½-week length stays uncorrected**, deliberately. Back-dating board dates to match the
+  prose plan would be editing history to make a plan look kept.
+- **Five milestones, each checkable rather than intended:** M1 toolchain up 2026-08-25, M2 a pawn moves
+  on a real board 2026-08-31, M3 a full turn resolves 2026-09-06, M4 skill cards resolve and features
+  freeze 2026-09-11, M5 closed out 2026-09-17. **M3 is the decision point:** if a full turn does not
+  resolve by 2026-09-06 the scope conversation happens with the Product Owner, not inside a commit.
+- **Critical path: 46 of the 74 must-have points on one chain**, bootstrap → #26 → #28 rule half → #27
+  → #32 → #33 → #34. Only **32 points of work exist off that chain**, so the second implementer runs
+  out of independent work before the first finishes it, and what is left at that point is #33, the item
+  least suited to being split. This is the schedule's real shape and it is invisible from the point
+  total alone.
+- **#27 and #33 are 21 points that do not split**, because each is the integration point the others
+  depend on. The response is pairing rather than parallelising.
+- **The 27 unscheduled implementation issues get a sprint.** The deferral ends: 46 points to Sprint 2,
+  35 to Sprint 3's implementation half, 23 to the closing window, and #42 to #46 (34 points) stay
+  unscheduled. The deferral was defensible while nothing was estimated and stopped being defensible
+  once everything was, because 27 issues with no sprint is the same gap that hid Sprint 1's gameplay
+  scope until 2026-08-22.
+- **35 points against 5 weekdays in Sprint 3's implementation half is 7 per weekday.** The imbalance is
+  printed rather than smoothed: a split that looked achievable would need must-have scope cut first,
+  and that is the Product Owner's decision.
+- **No fixed D6 is ever built.** #30 dice pool is scheduled before #27 turn manager, so the turn manager
+  takes a die from the pool from its first commit. Cost: 3 points brought forward. The alternative
+  costs the FR-09 leaving rule and its tests twice, and the second write happens under more pressure.
+- **#3 design system should move to Sprint 2.** It blocks 15 points of UI work (#31, #34, #41) and is
+  blocked by nothing, which makes it the cheapest unblocking move available. It is currently unscheduled.
+- **Dropped and named as dropped:** UI skins and particle effects. Neither carries a requirement id, so
+  neither is in the requirements specification at all.
+- **Five new risks entered the register**, all created by this plan rather than found in the codebase.
+  The feature-freeze risk is rated **5, the highest in the register**. See the 2026-08-22 block in
+  [03-Risk-Analysis.md](../../Project-Management/03-Risk-Analysis.md).
+- **Board action blocked, same scope as before.** Setting `Sprint` needs the `project` token scope, so
+  the assignment above lives in a document and not in board state.
+- **Written, not adopted.** No planning slot has confirmed the plan, exactly as with the Definition of
+  Done. Both are recorded that way rather than as agreed.
 
 #### Board access from the development environment
 
@@ -365,12 +434,15 @@ is settled in the 2026-08-22 decision in [project-journal.md](../project-journal
   is blocked on the missing `project` token scope rather than on anyone's judgement. Velocity stays in
   the presentation; burn-down does not, because points do not fix the missing dated status history.
 - ~~No calendar dates for sprint boundaries.~~ **Answered 2026-08-06** from the board's sprint
-  markers; see [sprint-log.md](../sprint-log.md). Two contradictions surfaced with it and are open:
-  - The board has **no buffer sprint**. The plan is 3 sprints plus a buffer; the board has Sprint 0–3
-    and stops. Either board `Sprint 3` *is* the buffer sprint under another name, or the buffer was
-    dropped. Decide and record which.
-  - Board `Sprint 0` runs 2026-07-23 → 2026-08-09, i.e. **2½ weeks**, against the planned 1 week.
-    It also starts two weeks before the repository existed.
+  markers; see [sprint-log.md](../sprint-log.md). Two contradictions surfaced with it and **both were
+  decided 2026-08-22, issue #15** (see *Schedule and sequencing fixed* above):
+  - ~~The board has **no buffer sprint**.~~ The buffer sprint is not created. The closing work is a
+    dated window inside Sprint 3, and board `Sprint 3` is explicitly **not** the buffer renamed.
+  - ~~Board `Sprint 0` runs 2½ weeks against the planned 1 week.~~ Left as it is, deliberately, and
+    kept as a Chapter 11 finding rather than corrected.
+  - What is open is no longer the decision but its **adoption**, and one thing the decision cannot
+    settle: **the module's real deadline is unknown**, so every date rests on 2026-09-17 being the last
+    date available. Rated a 4 in the risk register.
 - Whether the board's `Status` triple (`Todo`/`In Progress`/`Done`) replaces the five planned columns
   deliberately, or was simply never changed from the GitHub default. The report needs one or the
   other, and the branching policy's review step currently has no column.

@@ -26,13 +26,29 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 | Sprint 2 | 2026-08-24 | 2026-09-06 | 2 weeks |
 | Sprint 3 | 2026-09-07 | 2026-09-17 | 1½ weeks |
 
-> **Two contradictions with the written plan, both unresolved.** The board has **no buffer sprint**:
-> it defines Sprint 0–3 and stops, while the plan is 3 sprints of 2 weeks plus a 1-week buffer. Board
-> `Sprint 3` is 1½ weeks and sits where the buffer would, so it may *be* the buffer under a different
-> name; nothing says so. And board `Sprint 0` runs 2½ weeks against the planned 1 week, starting
+> **Two contradictions with the written plan.** The board has **no buffer sprint**: it defines
+> Sprint 0–3 and stops, while the plan is 3 sprints of 2 weeks plus a 1-week buffer. Board `Sprint 3`
+> is 1½ weeks and sits where the buffer would, so it may *be* the buffer under a different name;
+> nothing says so. And board `Sprint 0` runs 2½ weeks against the planned 1 week, starting
 > 2026-07-23: two weeks before the repository was created. Total span 2026-07-23 → 2026-09-17 is
-> ~8 weeks, which does match the plan's 8-week total. Decide which numbering is authoritative and
-> record it here; the tables below use the board dates in the meantime.
+> ~8 weeks, which does match the plan's 8-week total.
+>
+> **Resolved 2026-08-22, issue #15.** Section 2.2 of
+> [Project-Plan.md](../Project-Management/Project-Plan.md) decides both:
+>
+> - **The board's four sprints hold and no fifth sprint is created.** Board `Sprint 3` is *not* the
+>   buffer sprint renamed. The closing work is a dated window **inside** Sprint 3, 2026-09-14 to
+>   2026-09-17 (4 weekdays), behind a **feature freeze at the end of 2026-09-11**. The rejected
+>   alternatives are recorded there: calling Sprint 3 the buffer, which is a label and not a plan, and
+>   adding a fifth sprint after 2026-09-17, which is a date nobody has confirmed exists.
+> - **Sprint 0 stays 2½ weeks.** Not corrected, deliberately. The dates are what the board records and
+>   the board is authoritative; back-dating them to match the prose plan would be editing history to
+>   make a plan look kept. It stays a Chapter 11 finding: the first sprint ran over half again its
+>   planned length before any tracking existed to notice.
+>
+> What follows is that implementation has 15 weekdays rather than 19, which is recorded in section 5.2
+> of [Effort-Estimation.md](../Project-Management/Effort-Estimation.md). The decision is written and
+> **not yet adopted**: no planning slot has confirmed it.
 
 ---
 
@@ -181,6 +197,25 @@ planning chapter describes, so the gap between it and the executed sprint has to
 - Skill cards: deck system, hand UI, action system (shield token, swap positions, reroll).
 - Resource/energy system for buying or using cards and enhanced dice.
 
+**Scope decided 2026-08-22, issue #15, and not yet on the board.** Section 4.4 of
+[Project-Plan.md](../Project-Management/Project-Plan.md) assigns **46 points** here: the npm bootstrap,
+the i18n setup, #3 design system, #26 board grid, #28 pawn movement, #29 capture, #30 dice pool, #31
+dice rolling, #27 turn manager. Three differences from the prose scope above, each with a reason:
+
+- **The skill cards move to Sprint 3**, because #32 and #33 depend on the turn manager and #33 is the
+  largest item in the backlog at 13 points.
+- **The dice pool moves forward rather than back.** #30 is scheduled before #27 so that the turn
+  manager takes a die from the pool from its first commit. Building against a fixed D6 first would mean
+  writing the FR-09 leaving rule twice, which section 3.4 of
+  [Requirements-Specification.md](../Project-Management/Requirements-Specification.md) flagged and
+  section 4.2 of the project plan decides against.
+- **The resource and energy system is out**, ruled out of the MVP by section 6.7 of the game design
+  document. It carries no requirement id at all. The prose plan above still lists it and has not been
+  edited, which is why it stays visible here.
+
+Multiplayer also stays out of this sprint: #42 is `should have`, 13 points, and named as the largest
+available cut.
+
 **Delivered**: *open*
 
 **Divergence and reasons**: *open*
@@ -209,24 +244,55 @@ planning chapter describes, so the gap between it and the executed sprint has to
 - Sound effects (dice rolls, card play, victory) and background music.
 - Main menu, pause menu, win/loss screens, restart flow.
 
+**Split and scoped 2026-08-22, issue #15, and not yet on the board.** Section 2.2 of
+[Project-Plan.md](../Project-Management/Project-Plan.md) divides this sprint at the feature freeze:
+
+| Window | Dates | Weekdays | Scope | Points |
+| --- | --- | --- | --- | --- |
+| Implementation half | 2026-09-07 → 2026-09-11 | 5 | #32, #33, #34, #35, #40, #41, the CI workflow | 35 |
+| Closing window | 2026-09-14 → 2026-09-17 | 4 | See the closing-window entry below | 23 |
+
+**35 points against 5 weekdays is 7 per weekday, against a required average of 4.9.** The imbalance is
+recorded rather than smoothed: it is where the must-have set stops fitting, and printing it on the
+board is what makes that visible in early September instead of in the last week.
+
+Two items of the prose scope above are dropped and named as dropped: **UI skins and particle effects**
+carry no requirement id, so they are not in the requirements specification at all and cost nothing to
+cut. **Audio (#40, 3 points) survives only if assets exist**, and no asset has ever been budgeted.
+
 **Delivered**: *open*
 
 **Divergence and reasons**: *open*
 
 ---
 
-## Buffer sprint: Playtesting and presentation (week 8)
+## ~~Buffer sprint~~ Closing window: Playtesting and presentation
 
-> **Not present on the board.** The board defines Sprint 0–3 only. Either board `Sprint 3`
-> (2026-09-07 → 2026-09-17) doubles as this sprint, or the buffer was dropped when the board was
-> laid out. Unresolved: see the note at the top of this file.
+> **Not present on the board, and no longer planned as a sprint.** The board defines Sprint 0–3 only.
+> **Decided 2026-08-22, issue #15** (section 2.2 of
+> [Project-Plan.md](../Project-Management/Project-Plan.md)): the buffer sprint is not created, and this
+> scope becomes a dated window inside Sprint 3 instead. Board `Sprint 3` does **not** double as the
+> buffer sprint; it is split, with implementation up to the feature freeze and the closing work after
+> it. The entry is kept under its old name struck through so the change stays readable.
 
 | | |
 | --- | --- |
-| **Planned start** | *not on board* |
-| **Planned end** | *not on board* |
+| **Planned start** | 2026-09-14 (decided 2026-08-22, inside board Sprint 3) |
+| **Planned end** | 2026-09-17 (board Sprint 3 end) |
+| **Weekdays** | 4 |
 | **Actual start** | *open* |
 | **Actual end** | *open* |
+
+**Board scope assigned by the project plan** (section 4.4), 23 points: #24 usability and playtest
+evaluation, #25 presentation deck and live demo prep, #19 finalization documentation, #20 project
+closure report, #17 PSP. **Not yet on the board**: setting the `Sprint` field needs the `project`
+token scope, so this assignment currently exists in a document only.
+
+**Four weekdays is the finding, not the plan's comfort.** The playtest needs 3 to 5 external people
+who get no instructions, and people found inside a 4-day window will not be found in time. The
+external-playtester risk row therefore stands unchanged in
+[03-Risk-Analysis.md](../Project-Management/03-Risk-Analysis.md), and lining candidates up is Sprint 2
+work rather than closing-window work.
 
 **Planned scope**
 

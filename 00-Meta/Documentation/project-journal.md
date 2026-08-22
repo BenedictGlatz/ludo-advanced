@@ -90,6 +90,18 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   at all were found and sized, 12 points the board does not show. One risk row re-rated 4 to 3; the
   `Story Points` field itself could not be created, for want of the `project` token scope. Sprint 1.
 
+- **2026-08-22**: Project plan written for issue #15 on `feature/sprint1-planning`:
+  [Project-Plan.md](../Project-Management/Project-Plan.md), covering time, resources, dependencies and
+  risks. It is the document that had to decide rather than record, and it settled three contradictions
+  carried across four documents: **no buffer sprint is created** and the closing work becomes a dated
+  window inside Sprint 3 behind a 2026-09-11 feature freeze, **there is no dedicated Scrum Master** and
+  the one-pager's role table supersedes the unfilled Developer A/B/C one, and **the 27 unscheduled
+  implementation issues get a sprint each**, ending a deliberate deferral. Consequence, and it makes the
+  picture worse rather than better: implementation has 15 weekdays instead of 19, so the required rate
+  for the must-have set rises to 4.9 points per weekday. The critical path is 46 of 74 must-have points
+  on one chain with only 32 points of work off it, so the second implementer runs dry before the first
+  finishes. Five new risks entered the register, one of them the highest-rated row in it. Sprint 1.
+
 - **2026-08-09**: Requirements specification written on `feature/13-requirements-specification`
   (issue #13): 45 functional and 12 non-functional requirements with acceptance criteria and MoSCoW
   priorities, a drop order agreed in advance, and eight gameplay decisions handed to the Product
@@ -558,6 +570,61 @@ exactly the kind of thing this file exists to keep visible.
 - **Second consequence:** the estimate found 12 points of `must have` work with no board issue, the npm
   bootstrap and the i18n setup, plus 2 points of CI. A board-derived plan understates the work by that
   much, and the finding came out of estimating rather than out of planning.
+- → Ch. 02, Ch. 11
+
+### 2026-08-22: There is no buffer sprint, and Sprint 3 is not one under another name
+
+- **Chosen:** the board's four sprints hold. No fifth sprint is created. The closing work of the written
+  plan's buffer week becomes a **dated window inside Sprint 3**, 2026-09-14 to 2026-09-17, behind a
+  **feature freeze at the end of 2026-09-11**.
+- **Rejected:** *board `Sprint 3` doubles as the buffer sprint*. This was the reading the sprint log had
+  suggested since 2026-08-06, on the strength of Sprint 3 being 1½ weeks and sitting where the buffer
+  would. It was rejected because it is a label rather than a plan: it leaves the boundary between
+  building and closing undefined, and that boundary is the only thing worth deciding here. Length alone
+  is not evidence of intent.
+- **Rejected:** *adding a fifth sprint to the board after 2026-09-17*. No date after 2026-09-17 is known
+  to be available. The board's last date is 2026-09-17 and the module's real deadline is recorded nowhere
+  in this repository, so planning past it would be planning into a period that may not exist. That
+  unknown is now a rated risk of its own rather than an assumption.
+- **Why a window and not a sprint:** the closing scope is real work with real issues, #24 playtest and
+  #25 deck and video, 10 points between them, plus the report. Dropping the buffer sprint without
+  rehoming its scope would have quietly dropped the usability evidence the report needs and the fallback
+  video that mitigates the live-demo risk.
+- **Consequence, and it is the cost rather than the benefit:** implementation loses 4 weekdays. 15 remain
+  instead of 19, and the required rate for the 74 must-have points rises from 3.9 to 4.9 points per
+  weekday. The estimation document keeps both figures side by side rather than overwriting the first,
+  because the difference between them is exactly what putting the closing work in the calendar costs.
+- **Sprint 0's 2½-week length is deliberately left uncorrected.** Back-dating a board date to match the
+  prose plan would be editing history to make a plan look kept. It stays a Chapter 11 finding: the first
+  sprint ran over half again its planned length before any tracking existed to notice.
+- → Ch. 02, Ch. 11
+
+### 2026-08-22: No dedicated Scrum Master, and the role table that names people wins
+
+- **Chosen:** the role table of [00-One-Pager.md](../Project-Management/00-One-Pager.md) holds. Fabian
+  Gemming is Product Owner, Lars Bolender and Benedict Glatz are Scrum Members who also carry the Scrum
+  Master work. The unnamed Developer A/B/C table in
+  [01-Github-Project.md](../Project-Management/01-Github-Project.md) is superseded and kept in place with
+  a note, not deleted.
+- **Why:** the one-pager names real people, it is the Product Owner's own document, and it matches what
+  actually happened over two sprints. The A/B/C table names placeholders and was never filled in, which
+  is an unfinished template rather than a competing decision.
+- **Rejected:** *appointing one of the three as Scrum Master now*. It would make the report's process
+  chapter tidier and it would be a fiction. Nobody performed that role for two sprints, and describing a
+  role nobody filled is worse for the grade than explaining why a team of three did without one.
+- **Rejected:** *keeping the A/B/C table's three technical lead roles*. They assume three implementers
+  and there are two, because the Product Owner does not implement. What survives is the idea behind it,
+  which is naming a technical area per person instead of leaving ownership implicit.
+- **Rejected:** *splitting the two implementers by layer*, which is the obvious move given that the
+  architecture is layered. The critical path runs through `core/`, `state/` and `ui/` in sequence, so a
+  layer split would put one person on the critical path and the other waiting on it. Work is split per
+  issue at sprint planning instead. Recorded because the layer split looks natural and the architecture
+  is not a work breakdown.
+- **Negative finding that comes with the decision:** the board hygiene a Scrum Master would have owned
+  was skipped for the whole of Sprint 1. `Status` and `Sprint` went unread until 2026-08-22, the eight
+  open issues went unassigned until the second-to-last day, and one ceremony has been minuted in the
+  whole project. Resolving the contradiction does not resolve that, and the plan says so rather than
+  implying the roles are now covered.
 - → Ch. 02, Ch. 11
 
 ---

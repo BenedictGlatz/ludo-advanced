@@ -210,6 +210,14 @@ Two implementers, because the Product Owner does not implement (the personnel fi
 [Feasibility-Study.md](Feasibility-Study.md)). No buffer sprint exists on the board, which is the
 contradiction handed to the project plan, issue #15.
 
+**Revised the same day, issue #15.** The 19 weekdays above assume implementation runs to the last day
+of the board calendar. It does not: section 2.2 of [Project-Plan.md](Project-Plan.md) puts a feature
+freeze on 2026-09-11 and reserves 2026-09-14 to 2026-09-17 for the playtest, the deck, the fallback
+video and the report. **Implementation therefore has 15 weekdays, not 19.** The rates in section 5.3
+are left as they were computed rather than overwritten, and the project plan carries the corrected
+figure of 4.9 points per weekday next to it. Both are printed because the difference between them is
+the cost of putting the closing work in the calendar instead of leaving it implied.
+
 ### 5.3 The required rate
 
 - **Must have alone: 74 points over 19 weekdays** is about **3.9 points per weekday** for the two

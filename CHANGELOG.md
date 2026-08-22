@@ -51,6 +51,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   requirement ids and backlog issue of each, the technology stack with its dependency policy and an empty version
   column until `package.json` exists, the platform committed from NFR-06 and NFR-10, and five known gaps including
   two screens that carry no backlog issue
+- `00-Meta/Project-Management/Project-Plan.md`: the project plan for time, resources and risks. Five
+  checkable milestones, the decision that no buffer sprint is created and that the closing work is a dated
+  window inside Sprint 3 behind a 2026-09-11 feature freeze, the decision that there is no dedicated Scrum
+  Master, a work package dependency graph taken from the architecture, the critical path with the finding
+  that only 32 points of work exist off it, a sprint assignment for the 27 previously unscheduled
+  implementation issues, and the required rate corrected upward to 4.9 points per weekday
+- Five risks created by the project plan added to `00-Meta/Project-Management/03-Risk-Analysis.md` as their
+  own block, including the missed-feature-freeze row, which is the highest-rated risk in the register
 - `00-Meta/Project-Management/Requirements-Specification.md`: 45 functional and 12 non-functional requirements,
   each with an acceptance criterion and a MoSCoW priority, plus the MoSCoW analysis with a drop order agreed in
   advance and the eight gameplay decisions still owed by the Product Owner
@@ -78,6 +86,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mitigation extended, because a written test plan without CI does not lower the likelihood
 - The Definition of Done condition in `Feasibility-Study.md` and its row in `SMART-Analysis.md` marked as met and
   annotated rather than deleted, so the sequence stays readable, with the adoption still named as outstanding
+- Three contradictions carried across four documents resolved and recorded rather than left open: the buffer
+  sprint and Sprint 3's length in `sprint-log.md`, the two disagreeing role tables in `00-index.md` and
+  `notes/02-project-management.md`, and the sprint assignment of the implementation backlog. The superseded
+  role table and prose sprint plan in `00-Meta/Project-Management/01-Github-Project.md` are annotated in
+  place instead of deleted, and its malformed roles table now renders
+- The *Sprint-plan vs. board-date contradiction* risk row re-rated from priority 4 to 3, its mitigation
+  having been carried out, with the residual named as adoption rather than as decision
+- Section 5.2 of `00-Meta/Project-Management/Effort-Estimation.md` revised: implementation has 15 weekdays
+  rather than 19 once the closing window is in the calendar, printed next to the original figure
 - Two negative findings from 2026-08-06 corrected in `notes/02-project-management.md` after the first full board
   read: `Status` is populated on all 64 items and `Sprint` on 20 of them. Story points and an Iteration field are
   still missing, so burn-down charts remain impossible and only an issue-count velocity is available
