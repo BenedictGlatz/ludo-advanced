@@ -82,6 +82,14 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   feasibility verdict and a prerequisite of the SMART analysis. The *test coverage discipline* risk row
   was deliberately not re-rated. Sprint 1.
 
+- **2026-08-22**: Effort estimation written for issue #16 on `feature/sprint1-planning`: 138 story points
+  over the implementation backlog, the extended features and the open documentation issues, on a Fibonacci
+  scale anchored on issue #29 at 2 points, with the epic tree read from the board's own sub-issue graph.
+  The capacity check found that 74 must-have points remain against 19 weekdays and two implementers, so
+  the drop order of the requirements specification is now live. Three work items carrying no board issue
+  at all were found and sized, 12 points the board does not show. One risk row re-rated 4 to 3; the
+  `Story Points` field itself could not be created, for want of the `project` token scope. Sprint 1.
+
 - **2026-08-09**: Requirements specification written on `feature/13-requirements-specification`
   (issue #13): 45 functional and 12 non-functional requirements with acceptance criteria and MoSCoW
   priorities, a drop order agreed in advance, and eight gameplay decisions handed to the Product
@@ -473,7 +481,7 @@ exactly the kind of thing this file exists to keep visible.
 
 ### 2026-08-22: The obligations book names screens and responsibilities, not a design system
 
-- **Chosen:** the GUI section of [Obligations-Book.md](../../Project-Management/Obligations-Book.md)
+- **Chosen:** the GUI section of [Obligations-Book.md](../Project-Management/Obligations-Book.md)
   commits to a screen inventory, each screen's responsibility and the FR ids it serves, and stops
   there. Colour palettes, spacing scales, typography and component looks are not in it.
 - **Rejected:** *specifying the GUI down to its visual appearance*, which is what an obligations book
@@ -496,7 +504,7 @@ exactly the kind of thing this file exists to keep visible.
 ### 2026-08-22: The Definition of Done lives with the quality strategy and has three levels
 
 - **Chosen:** the Definition of Done is written in section 5 of
-  [Test-Plan-and-Quality-Strategy.md](../../Project-Management/Test-Plan-and-Quality-Strategy.md), at
+  [Test-Plan-and-Quality-Strategy.md](../Project-Management/Test-Plan-and-Quality-Strategy.md), at
   three levels: an issue is done, a sprint is done, a release is done. It had never been written down
   anywhere in this repository.
 - **Why it lives there and not in a process document:** most of its clauses are test and coverage
@@ -521,6 +529,36 @@ exactly the kind of thing this file exists to keep visible.
   a planning slot. Writing a definition is not the same as agreeing to one, and the report should not
   let the first stand in for the second.
 - → Ch. 08, Ch. 02
+
+### 2026-08-22: The backlog is the work breakdown structure, and the estimate is in points
+
+- **Chosen:** the work breakdown for the effort estimation is the backlog itself, four epics with their
+  children as read from the board's sub-issue graph, and the estimate is in story points on the
+  Fibonacci scale 1, 2, 3, 5, 8, 13, anchored on issue #29 at 2 points.
+- **Rejected:** *writing the project structure plan first*. #17 PSP is not in Sprint 1 on the board, so
+  it is not this sprint's work, and the estimation is a precondition three other documents already defer
+  to. Waiting for #17 would have blocked #15 and #18 behind an issue nobody scheduled.
+- **Why the backlog is acceptable as the breakdown, and not merely convenient:** the epic-to-child tree
+  matches the requirement blocks of the requirements specification section 4 exactly, and it was read
+  from the board rather than inferred from titles. A separate structure plan would restate the same tree
+  in a second place, where the two would then diverge. The recommendation recorded in the estimation is
+  that #17 adopts this tree instead of inventing another.
+- **Rejected:** *hours*. Already decided on 2026-08-06 and not reopened. Points are also the only unit
+  that makes the buffer sprint's velocity slide producible, since a velocity has to sum estimates and an
+  issue count does not sum to anything.
+- **Rejected:** *estimating Sprint 0 and Sprint 1 retroactively* so that a velocity would exist
+  immediately. Estimating work after it is finished produces a number that flatters whatever it is
+  compared against. The sprint log records instead that story-point velocity starts with Sprint 2.
+- **Consequence, and it is the finding rather than the method:** 74 of the 110 open implementation points
+  are `must have`, and no must-have is droppable without the deliverable ceasing to be a game. Applying
+  the drop order of the requirements specification in full removes 36 points and leaves all 74. So the
+  remaining levers are the calendar and the quality bar, both of which belong to the Product Owner and to
+  the project plan of issue #15. The estimate turned a MoSCoW count into a cost, which is what it was
+  named as missing for.
+- **Second consequence:** the estimate found 12 points of `must have` work with no board issue, the npm
+  bootstrap and the i18n setup, plus 2 points of CI. A board-derived plan understates the work by that
+  much, and the finding came out of estimating rather than out of planning.
+- → Ch. 02, Ch. 11
 
 ---
 

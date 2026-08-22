@@ -135,19 +135,30 @@ planning chapter describes, so the gap between it and the executed sprint has to
   (obligations book, project plan, effort estimation, Gantt, architecture diagram, game design
   document, test plan). Effort estimation (#16) is a precondition three other documents already defer
   to, so it carries more weight than its position in the list suggests.
-- **2026-08-22, the last working day of the sprint: 3 of the 8 open issues delivered on one branch.**
-  #22 game design document, #21 system architecture and #1 one pager, in that order, on
+- **2026-08-22, a Saturday and the second-to-last day of the sprint: 6 of the 8 open issues delivered
+  on one branch.** In order: #22 game design document, #21 system architecture, #1 one pager, #14
+  obligations book, #23 test plan and quality strategy, #16 effort estimation, all on
   `feature/sprint1-planning`. The order is deliberate and is not the issue order: the rulebook first
-  because it blocks #14, #23 and all implementation, the one-pager third so that the summary is
-  written after the rulebook rather than rewritten after it. All eight open issues were also assigned
+  because it blocks #14, #23 and all implementation; the one-pager third so that the summary is
+  written after the rulebook rather than rewritten after it; the estimation after the test plan,
+  because sizing #33 needs the test cases that make it a 13. All eight open issues were also assigned
   on this day, having been unassigned for the whole sprint.
-- **The remaining five (#14, #23, #16, #15, #18) do not fit the one day left**, and they are not
-  being backdated to pretend otherwise. Either the sprint end moves or they carry into Sprint 2;
-  whichever happens is recorded here as it happens. Sprint 1 therefore closes with 8 of 13 issues
-  done at the earliest, which is the figure the velocity count uses.
-- **Consequence for Sprint 2** (starts 2026-08-24): it now has to absorb its own scope, the unstarted
-  Sprint 1 gameplay scope, the eight open planning documents, and the npm bootstrap. Sprint 2 has no
+- **The work landed on a weekend, which is the fact rather than a detail.** Six planning documents on
+  one Saturday is not a sustainable rate and is not offered as one. It is what recovering a sprint that
+  produced nothing for its first eleven days looks like, and the retrospective should read it that way.
+- **The remaining two (#15 project plan, #18 Gantt) are not backdated.** Either the sprint end moves or
+  they carry into Sprint 2; whichever happens is recorded here as it happens. Sprint 1 therefore closes
+  with 11 of 13 issues done at the earliest, which is the figure the velocity count uses. **No story
+  points were recorded for any of them**, so this remains an issue count and cannot be compared to the
+  point estimates that now exist for the open work.
+- **Consequence for Sprint 2** (starts 2026-08-24): it has to absorb its own scope, the unstarted
+  Sprint 1 gameplay scope, the two remaining planning documents, and the npm bootstrap. Sprint 2 has no
   board scope assigned yet, which makes assigning it the first thing to do rather than a later one.
+  **Sized 2026-08-22:** 110 story points of implementation work and 28 of documentation remain against
+  19 weekdays in Sprints 2 and 3 and two implementers, of which 74 points are `must have` and therefore
+  not droppable. See section 5 of [Effort-Estimation.md](../Project-Management/Effort-Estimation.md);
+  the finding there is that the must-have set does not fit as scoped, which makes it a scope
+  conversation for the Product Owner and for the project plan of issue #15.
 
 ---
 
@@ -243,3 +254,18 @@ planning chapter describes, so the gap between it and the executed sprint has to
 > impossible**, and no sprint has dated status transitions recorded. Sprint 0 and Sprint 1 can be
 > counted retroactively (7 and 13 issues); Sprint 2 and Sprint 3 have no board scope yet, so nothing
 > can be counted for them until issues are assigned.
+>
+> **Revised again the same day, issue #16.** Estimates now exist:
+> [Effort-Estimation.md](../Project-Management/Effort-Estimation.md) sizes every open issue in story
+> points. That separates the two charts, which have been treated as one problem until now:
+>
+> - **Story-point velocity is producible from Sprint 2 onward**, as soon as the `Story Points` field is
+>   created and back-filled from that document. Not for Sprint 0 or Sprint 1: their issues were closed
+>   without estimates and estimating them now, after the fact, would produce a number that flatters
+>   whatever it is compared against.
+> - **Burn-down stays impossible, and points do not fix it.** It needs dated status transitions or a
+>   GitHub Iteration field, and the board has a plain single-select `Sprint` field with no dated
+>   history. That is a separate configuration gap from the missing estimate field.
+> - **Both are blocked on the same missing token scope.** Creating the field needs `project`, which the
+>   `gh` token does not carry; `gh project field-create` fails outright. So the outstanding step is a
+>   human one, in the browser or through one interactive `gh auth refresh -s project`.

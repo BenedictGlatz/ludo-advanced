@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an 8-step state machine, the Dice Card Pool composition with its probability arithmetic, an 8-card MVP skill card
   catalogue with ids, the eight open gameplay rules written out with their rejected alternatives and a Product Owner
   sign-off table, and 13 win-condition and movement edge cases resolved
+- `00-Meta/Project-Management/Effort-Estimation.md`: the open work sized in story points on a Fibonacci scale
+  anchored on one named issue, covering the four implementation epics, the five extended features, the open
+  documentation issues and three work items that carry no board issue at all, with totals per epic and per MoSCoW
+  class, a capacity check against the weekdays left in Sprints 2 and 3, and the finding that the must-have set does
+  not fit as scoped
 - `00-Meta/Project-Management/Test-Plan-and-Quality-Strategy.md`: the test strategy across four levels with what
   each level cannot catch, the coverage floor and the reason it excludes `ui/`, 12 end-to-end flows mapped to
   requirement ids, one unit test case per rule edge case settled in the game design document, the injectable RNG as
@@ -67,6 +72,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   planned scope from the board's `Sprint` field instead of the prose plan in `01-Github-Project.md`, and the
   Sprint 1 entry records the 13 documentation issues actually assigned to it, with the previously listed gameplay
   scope kept as superseded and unstarted
+- Two risk rows in `00-Meta/Project-Management/03-Risk-Analysis.md` updated: *No velocity/burn-down data
+  producible* re-rated from priority 4 to 3 now that story point estimates exist, with velocity and burn-down split
+  apart because points fix only the first; *Test coverage discipline slips* deliberately left at 3 with only its
+  mitigation extended, because a written test plan without CI does not lower the likelihood
+- The Definition of Done condition in `Feasibility-Study.md` and its row in `SMART-Analysis.md` marked as met and
+  annotated rather than deleted, so the sequence stays readable, with the adoption still named as outstanding
 - Two negative findings from 2026-08-06 corrected in `notes/02-project-management.md` after the first full board
   read: `Status` is populated on all 64 items and `Sprint` on 20 of them. Story points and an Iteration field are
   still missing, so burn-down charts remain impossible and only an issue-count velocity is available

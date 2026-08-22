@@ -104,6 +104,43 @@ negative finding.
 - Still not observable and still open: `Sprint` field values, story points (no such field), and the
   five planned Kanban columns.
 
+#### Estimation method fixed: 2026-08-22, issue #16
+
+Full document: [Effort-Estimation.md](../../Project-Management/Effort-Estimation.md).
+
+- **Story points on the Fibonacci scale 1, 2, 3, 5, 8, 13**, sized relative to a named anchor: issue #29
+  *Knockout & Capture Rules Logic* at 2 points, chosen because it is the smallest complete item in the
+  backlog and its rule is already stated to edge-case level in the game design document.
+- **Hours stay rejected**, per the 2026-08-06 decision in [project-journal.md](../project-journal.md).
+  The estimation document repeats the reason rather than re-deciding it: points are also what makes a
+  velocity summable, and an issue count is not.
+- **The backlog serves as the work breakdown structure**, because #17 PSP is not in Sprint 1 on the
+  board. The epic-to-child tree was **read from the board's own sub-issue graph** on 2026-08-22 rather
+  than inferred from titles, and it matches the requirement blocks of the requirements specification
+  section 4 exactly: #36 has #26 to #29, #37 has #30 and #31, #38 has #32 to #34, #39 has #35, #40 and
+  #41. #42 to #46 have no parent.
+- **Totals: 110 implementation points and 28 documentation points, 138 open in all.** By MoSCoW class,
+  74 must have, 13 should have, 21 could have, 2 with no requirement id. The droppable work is 36 points
+  of 110, which is the MoSCoW distribution finding expressed as cost instead of as a count.
+- **Epics carry no points of their own**, since an epic is the sum of its children and sizing both would
+  double-count.
+- **Negative finding: none of the 17 implementation child issues carries a MoSCoW label.** Only the four
+  epics and the five extended features do, so a child's priority can only be read by inheritance from
+  its epic.
+- **Negative finding: 12 points of work carry no board issue at all.** The npm bootstrap (5), the i18n
+  setup and locale files (5, and FR-34 is `must have`), and the CI workflow (2). Any plan drawn from the
+  board today understates the remaining work by that much. The estimation document recommends creating
+  the three issues and deliberately does not create them: adding issues to a shared board is the team's
+  decision.
+- **The `Story Points` field still does not exist, and could not be created.** `gh project field-create`
+  fails with `your authentication token is missing required scopes [project]`, the same gap that blocks
+  moving board cards. Until an interactive `gh auth refresh -s project` or a manual creation in the
+  browser, the estimate lives in one document and the board carries none of it.
+- **Single-estimator caveat, recorded in the document itself:** the estimates come from one person and
+  one AI session, not from a planning poker round with three. Relative sizing draws most of its value
+  from disagreement between estimators, so the totals are the input to a planning conversation rather
+  than its result.
+
 #### Board access from the development environment
 
 - 2026-08-06, first attempt: **not readable.** No GitHub MCP server configured for Claude Code,
@@ -321,9 +358,12 @@ is settled in the 2026-08-22 decision in [project-journal.md](../project-journal
 - Which ceremonies actually take place, and whether they are minuted. Only one meeting note exists
   so far ([20260806.md](../../Project-Management/Meeting%20Notes/20260806.md), one sentence).
 - ~~Whether Story Points and the Fibonacci estimation were actually configured on the board.~~
-  **Answered 2026-08-06: they were not.** See the four negative findings above. What is still open is
+  **Answered 2026-08-06: they were not.** See the four negative findings above. ~~What is still open is
   the *decision*: add the fields and back-fill, or drop velocity and burn-down from the
-  presentation and say so.
+  presentation and say so.~~ **Decided 2026-08-22, issue #16: add and back-fill.** The estimates exist
+  (see *Estimation method fixed* above); what is open is no longer a decision but an **action**, and it
+  is blocked on the missing `project` token scope rather than on anyone's judgement. Velocity stays in
+  the presentation; burn-down does not, because points do not fix the missing dated status history.
 - ~~No calendar dates for sprint boundaries.~~ **Answered 2026-08-06** from the board's sprint
   markers; see [sprint-log.md](../sprint-log.md). Two contradictions surfaced with it and are open:
   - The board has **no buffer sprint**. The plan is 3 sprints plus a buffer; the board has Sprint 0–3
