@@ -50,6 +50,12 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   written plan gave it. Board declared the single source of truth for sprint membership; Ch. 02 and
   `sprint-log.md` updated against it. Sprint 1.
 
+- **2026-08-22**: Game design document written for issue #22 on `feature/sprint1-planning`: board
+  topology as exact numbers, the turn sequence as a state machine, the Dice Card Pool composition and
+  its probability arithmetic, an 8-card skill card catalogue, the eight open Product Owner rules
+  written out with their rejected alternatives, and 13 edge cases settled in a table. Section 5 of
+  `Requirements-Specification.md` now points at it; one risk row re-rated. Sprint 1.
+
 - **2026-08-09**: Requirements specification written on `feature/13-requirements-specification`
   (issue #13): 45 functional and 12 non-functional requirements with acceptance criteria and MoSCoW
   priorities, a drop order agreed in advance, and eight gameplay decisions handed to the Product
@@ -364,6 +370,57 @@ exactly the kind of thing this file exists to keep visible.
   of the sprint. The board's assignee field is populated on 9 of 47 issues overall, so "who is doing
   this" is currently not answered by the board at all, only by the RACI matrix and by memory.
 - → Ch. 02, Ch. 11
+
+### 2026-08-22: The eight open gameplay rules are decided in the game design document, not left open
+
+- **Chosen:** all eight Product Owner decisions listed in section 5 of
+  [Requirements-Specification.md](../Project-Management/Requirements-Specification.md) are written
+  out as **rules** in [Game-Design-Document.md](../Project-Management/Game-Design-Document.md), each
+  with its reason and its rejected alternatives, plus a sign-off table naming Fabian Gemming as the
+  person who confirms or overrides them. Implementation follows the document provisionally.
+- **Rejected:** *waiting for the sign-off before writing the rulebook.* The eight decisions block the
+  turn manager, the movement rules, the whole Skill Card Pool and every unit test over them. Sprint 1
+  ends 2026-08-23 and the repository still has no `src/`, so waiting would have pushed the rules
+  decision into Sprint 2 implementation, which is precisely the "rule decisions under time pressure"
+  scenario that the priority-4 risk row *Board layout & win conditions underspecified* describes.
+- **Also rejected:** *writing the eight as proposals again, in a second document.* The specification
+  already holds them as proposals. Restating them in that form would have produced two documents
+  saying the same undecided thing, and no rulebook.
+- **Also rejected:** *deciding them silently during implementation*, which is the default outcome of
+  not writing them down. A rule invented in a pull request has no reason attached and no rejected
+  alternative recorded, which is the material Chapter 05 and Chapter 11 are written from.
+- **Why the decisions are safe to take this way:** each of the eight is written as *rule plus reason
+  plus what lost*, so an override is a documented change to one section rather than a rewrite. The two
+  most consequential ones (FR-13 exact count, FR-22/FR-27 the card economy) are the two whose
+  alternatives are named most fully, precisely because they are the most likely to be overturned.
+- **The decision that is deliberately not taken:** the visual form of the non-colour player
+  identifier (NFR-12). The rule states that a stable non-colour identity must exist; which shape,
+  pattern or label carries it is a Claude Design decision and issue #3, and inventing it here would
+  break the rule in `CLAUDE.md` that Claude Code does not invent design rules.
+- **Consequence:** the risk row *Board layout & win conditions underspecified* is re-rated from
+  priority 4 to 3 in [03-Risk-Analysis.md](../Project-Management/03-Risk-Analysis.md). Likelihood
+  drops because the ambiguity is written down; impact stays high because the rules are unsigned and
+  the composition is unplaytested, so the residual risk is real rather than closed.
+- → Ch. 01, Ch. 05, Ch. 11
+
+### 2026-08-22: The 300-line file limit is read as applying to code, not to documents
+
+- **Chosen:** the 300-line limit in [CLAUDE.md](../../CLAUDE.md) is read as binding on source, tests
+  and config, and not on documents under `00-Meta/Project-Management/`. The game design document is
+  longer than 300 lines and is not split.
+- **Rejected:** *splitting the rulebook into several files of under 300 lines each*, for example one
+  per mechanic. A rulebook is consulted by searching for a rule, and the cross-references between
+  rules are dense: the home-entry rule, the pool composition and the track length are one argument in
+  three sections. Splitting it would put the reason for a rule in a different file from the rule.
+- **Why this is a reading and not an exception:** the limit exists so that a unit of code stays small
+  enough to review and test, which is the reason given for it in `CLAUDE.md` alongside the layering.
+  Neither reason transfers to prose. The rule was already being read this way before this entry:
+  `Feasibility-Study.md` is 257 lines and `Requirements-Specification.md` is longer, and
+  `00-Meta/Documentation/` carries the same exemption explicitly.
+- **Consequence:** the exemption now covers both documentation directories, and it is recorded once
+  here instead of being re-argued per document. Code and tests keep the limit unchanged, and it is
+  still unenforced: an ESLint `max-lines` rule remains the open item recorded in Ch. 01.
+- → Ch. 02, Ch. 07
 
 ---
 

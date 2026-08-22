@@ -141,6 +141,58 @@ or failed.
 All 47 backlog issues still have empty bodies, so the board continues to prioritise titles until the
 criteria are copied onto the issues or the issues link here.
 
+### Game design document: the rulebook written to edge-case level, 2026-08-22, issue #22
+
+Full document: [Game-Design-Document.md](../../Project-Management/Game-Design-Document.md). It is the
+layer below the requirements specification: the specification says a rule must exist and how it is
+checked, the game design document says what the rule is.
+
+- **Board topology is stated as exact numbers, derived rather than asserted:** a shared track of
+  **52 squares** (4 × 13, so the four players sit at equal offsets and the board keeps the classic
+  Ludo length), a start area of 4 slots, a home column of **5 squares**, and home. A pawn travels
+  **58 steps** from start area to home (52 shared + 5 home column + home). Entry square of player
+  `p` is `13 × p`; the turn-off square is the square immediately behind it, so a pawn walks a full
+  lap before turning off. Rejected: a shorter track to shorten matches, because it breaks the 4 × 13
+  symmetry and match length is better tuned in the pool composition, which is data.
+- **The turn is specified as an 8-step state machine**, because the reaction window needs a defined
+  place to interrupt it. No extra turn on the die's maximum: with a D2 in the pool that fires on half
+  of all rolls, so the effect is a skill card (`action-reroll`) instead, where it costs a card.
+- **All eight open Product Owner rule decisions are written out as rules** with their rejected
+  alternatives (section 6 of the document, FR-12, FR-13, FR-14, FR-17, FR-22/FR-27, FR-25, FR-37,
+  NFR-12). Section 5 of
+  [Requirements-Specification.md](../../Project-Management/Requirements-Specification.md) now points
+  there instead of saying the decisions are recorded nowhere.
+- **The largest hole in the specification is closed:** the skill card economy now has a rule. Pool of
+  16 cards (2 copies of 8), hand limit 3, one card drawn at the end of the player's own turn, one
+  extra when a pawn of theirs is captured, played cards discarded and the discard reshuffled when the
+  pool empties. The invariant a unit test asserts is that every card is in exactly one of pool, hand
+  or discard.
+- **Dice Card Pool composition is fixed as data:** 20 cards over 7 denominations (D2 ×2, D4 ×3,
+  D6 ×4, D8 ×4, D10 ×3, D12 ×2, D20 ×2), weighted toward the middle. Rejected: all nineteen integers
+  from 2 to 20, because a D11 against a D12 is a distinction without a decision.
+- **The probability argument the report's formula chapter is built on is now written down.**
+  `P(max) = 1/n` for leaving the start area and `E(roll) = (n+1)/2` for the advance move in opposite
+  directions as `n` grows, which is the central trade-off of the design: small dice get pawns out,
+  large dice move them. Two hypergeometric figures follow from the composition above: a hand of 3
+  contains at least one D2 or D4 with probability `137/228 ≈ 0.601`, and at least one D12 or D20 with
+  probability `29/57 ≈ 0.509`. These are arithmetic from the stated composition, not measurements.
+- **The MVP skill card set is a finite list of 8 cards**, four Action and four Reaction, each with a
+  card id that is the contract between the rule in `core/` and the presentation in `ui/` (FR-26).
+- **13 win-condition and movement edge cases are settled in a table**, each traced to the rule it
+  follows from rather than stated as its own rule. Two of them are cases that *cannot occur* and are
+  listed as such: capture inside a home column, and two own pawns on one square. Both follow from the
+  topology plus FR-12, so no exception is needed.
+- **The reaction window is bounded on purpose:** at most one reaction per player per window, and a
+  reaction opens no window of its own. Without both rules two players holding `reaction-cancel-card`
+  could answer each other indefinitely.
+- **Negative findings recorded in the document itself:** all eight rules are unsigned, the pool
+  composition has never been playtested, no expected match length is stated because deriving one
+  honestly needs a simulation that does not exist, and `reaction-mirror` and `reaction-shield` may
+  turn out to be redundant since both answer a capture.
+- **What the document deliberately does not decide:** the visual form of the non-colour player
+  identifier required by NFR-12. It is a Claude Design decision and issue #3, so the rule states that
+  a stable non-colour identity must exist and stops there.
+
 ### Project goals formulated SMART — 2026-08-09, issue #9
 
 Full document: [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md). Facts, not the
@@ -191,18 +243,30 @@ argument:
   Add it there, or rename the 5 issues that use it.
 - ~~Win condition is stated informally ("first player home wins") and has not been specified against
   edge cases: overshooting the goal with a high die, what happens on an exact-count requirement.~~
-  **Proposed 2026-08-09** as FR-13 (exact count required, overshoot illegal). Still open as a
+  **Proposed 2026-08-09** as FR-13 (exact count required, overshoot illegal). ~~Still open as a
   *decision* — the alternative is bouncing back from the home square, and the Product Owner has not
-  confirmed either.
+  confirmed either.~~ **Written as a rule 2026-08-22** in section 6.2 of
+  [Game-Design-Document.md](../../Project-Management/Game-Design-Document.md), with bouncing back
+  named as the rejected alternative and the reason it lost. What remains open is the Product Owner's
+  sign-off, tracked in section 9 of that document, not the rule.
 - No user stories exist yet. Whether the module expects them in the report is unknown.
 - Energy/resource system is listed in the Sprint 2 plan
   ([01-Github-Project.md](../../Project-Management/01-Github-Project.md)) but appears in neither the
   one-pager nor the README: its status as MVP or stretch goal is undecided. **2026-08-09:** carried
   into the specification as FR-37 with priority `W`, because an unspecified mechanic cannot be built.
   Reversing that needs rules, not a re-prioritisation.
-- **How a player acquires skill cards is undefined** (FR-22, FR-27): no draw rule, no hand size, no
-  discard rule anywhere in the sources. Blocks Sprint 2. Raised 2026-08-09.
-- **Three movement rules are undefined** (FR-12 own-pawn collision, FR-13 exact count, FR-14 no legal
-  move). Proposals exist in the specification; none is confirmed. Raised 2026-08-09.
-- **Dice pool composition is undefined** (FR-17): which denominations, how many copies of each.
-  Raised 2026-08-09.
+- ~~**How a player acquires skill cards is undefined** (FR-22, FR-27): no draw rule, no hand size, no
+  discard rule anywhere in the sources. Blocks Sprint 2.~~ Raised 2026-08-09, **ruled 2026-08-22** in
+  section 6.5 of [Game-Design-Document.md](../../Project-Management/Game-Design-Document.md).
+- ~~**Three movement rules are undefined** (FR-12 own-pawn collision, FR-13 exact count, FR-14 no
+  legal move). Proposals exist in the specification; none is confirmed.~~ Raised 2026-08-09,
+  **ruled 2026-08-22** in sections 6.1 to 6.3 of the game design document.
+- ~~**Dice pool composition is undefined** (FR-17): which denominations, how many copies of each.~~
+  Raised 2026-08-09, **ruled 2026-08-22**: 20 cards over 7 denominations, section 5.1 of the game
+  design document.
+- **All eight rule decisions above are unsigned by the Product Owner.** They are written as rules so
+  that implementation is unblocked; the sign-off table is section 9 of the game design document.
+  Raised 2026-08-22. This is now the open item, in place of the four struck through above.
+- **The pool composition and the skill card set are unbalanced by evidence.** The probability
+  arithmetic exists, no playtest does, and no expected match length is stated. First candidate for a
+  simulation over the headless `core/` layer once it exists. Raised 2026-08-22.

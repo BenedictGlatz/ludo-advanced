@@ -204,6 +204,14 @@ Every item below is a **†** requirement that changes how the game plays. They 
 proposals so that implementation is not blocked, but each is a real decision and none of them is
 recorded anywhere in the existing documents.
 
+> **Updated 2026-08-22, issue #22.** All eight are now **written out as rules** in section 6 of
+> [Game-Design-Document.md](Game-Design-Document.md), each with its reason and its rejected
+> alternatives, and the sign-off table in section 9 of that document is where the Product Owner
+> confirms or overrides them. The sentence "none of them is recorded anywhere" above described the
+> state before that document existed and is kept as the record of it. What is still open is the
+> *sign-off*, not the rule: implementation follows the game design document provisionally, and an
+> override changes that document and this section, not the code first.
+
 - **FR-12, landing on your own pawn.** Proposed: illegal. Alternatives in common Ludo variants:
   stacking (two pawns share a square) or blocking (the pair blocks opponents entirely). Blocking is
   the most interesting and the most work, because it changes the legal-move calculation for everyone.
