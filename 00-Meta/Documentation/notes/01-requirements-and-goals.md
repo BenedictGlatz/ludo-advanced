@@ -64,32 +64,32 @@ matching the one-pager's framing of multiplayer and AI opponents as extensions.
 **Negative finding:** all four epics have an **empty issue body**, as do their sub-issues. The
 backlog is titles and labels only: there is not one acceptance criterion anywhere in the 46 issues.
 
-### Goal catalogue — written 2026-08-09
+### Goal catalogue: written 2026-08-09
 
 The requirements above existed only as rules prose, hard constraints and issue titles spread over
 four documents. They are now stated as a checkable goal catalogue in
 [Functional-and-Non-Functional-Goals.md](../../Project-Management/Functional-and-Non-Functional-Goals.md):
 
-- **FG-01 – FG-16** — functional goals for the MVP, grouped along the four `must have` epics
+- **FG-01 – FG-16**: functional goals for the MVP, grouped along the four `must have` epics
   (#36–#39) so the goal list and the board decompose the same way.
-- **FG-17 – FG-21** — the `should have` / `could have` items, named explicitly as *outside* the MVP.
-- **NFG-01 – NFG-08** — non-functional goals derived from the hard constraints in
+- **FG-17 – FG-21**: the `should have` / `could have` items, named explicitly as *outside* the MVP.
+- **NFG-01 – NFG-08**: non-functional goals derived from the hard constraints in
   [CLAUDE.md](../../../CLAUDE.md): layering, the 300-line limit, full i18n, the restricted dependency
   set, the ≥ 80 % coverage target for `core/` and `state/`, static browser deployment, per-commit
   documentation, and comprehensible game state.
 - Section 3 of that file is the **traceability table** epic → FG → constraining NFG.
 
 Each goal carries a **Source** line and a reason; goals derived rather than quoted say so. Nothing in
-the catalogue is a new requirement — it is a restatement of existing sources in checkable form, which
+the catalogue is a new requirement. It is a restatement of existing sources in checkable form, which
 is why it lives in Project-Management rather than here.
 
 **Negative findings surfaced by writing it, none of them previously recorded:**
 
-- **No performance goal exists** — no frame rate, load time or input latency anywhere. Defensible for
+- **No performance goal exists**: no frame rate, load time or input latency anywhere. Defensible for
   a turn-based board game, but it needs to be named as a deliberate omission rather than left blank.
-- **No browser support matrix** — no minimum versions, and no statement on whether mobile or tablet
+- **No browser support matrix**: no minimum versions, and no statement on whether mobile or tablet
   is in scope. Relevant because the board is a wide layout.
-- **No accessibility goal** — and colour is the primary means of distinguishing players in Ludo, so
+- **No accessibility goal**, and colour is the primary means of distinguishing players in Ludo, so
   colour-blind accessibility is a foreseeable question for this game specifically, not a generic one.
   Per [CLAUDE.md](../../../CLAUDE.md) *Design and UI* this is a Claude Design decision and was not
   invented in the catalogue.
@@ -98,7 +98,7 @@ is why it lives in Project-Management rather than here.
 - The **Resource/Energy System** has deliberately *no* goal ID, because assigning one would decide an
   open question by accident. It is listed as undecided in section 1.5 of the catalogue.
 
-### Requirements specification — written 2026-08-09, issue #13
+### Requirements specification: written 2026-08-09, issue #13
 
 [Requirements-Specification.md](../../Project-Management/Requirements-Specification.md) turns the
 goal catalogue into **45 functional (`FR-nn`) and 12 non-functional (`NFR-nn`) requirements**, each
@@ -107,7 +107,7 @@ the first place in the project where a requirement is stated in a form that can 
 or failed.
 
 - **MoSCoW distribution:** 39 must, 10 should, 7 could, 1 won't (of 57).
-- **22 requirements are marked `†` — not derivable from any existing document.** They were added
+- **22 requirements are marked `†`, meaning not derivable from any existing document.** They were added
   because the rules are incomplete without them, and each is a proposal pending Product Owner
   confirmation.
 
@@ -118,7 +118,7 @@ or failed.
   is the largest single hole found so far and blocks Sprint 2 planning.
 - **Three core movement rules do not exist anywhere:** landing on one's own pawn (FR-12), exact
   count to enter home (FR-13), and what happens when a roll produces no legal move (FR-14). FR-14
-  is not an edge case here — with dice up to D20 in the pool it fires regularly.
+  is not an edge case here: with dice up to D20 in the pool it fires regularly.
 - **The Dice Card Pool composition is undefined** (FR-17). "D2–D20" does not say which denominations
   or how many copies of each, and that choice drives the probability argument the report is built on.
 - **Reactions are a requirement on the turn manager, not on the cards** (FR-25). They are the only
@@ -129,8 +129,8 @@ or failed.
   roll", but the leaving-start rule depends on the *chosen* die's maximum. Building Sprint 1 against
   a fixed D6 means writing that rule twice.
 - **The must-have share is ~68 %**, which is high for MoSCoW. Structural, not sloppy: a game missing
-  one movement rule is unplayable rather than partially playable. The consequence — that the
-  schedule buffer sits almost entirely in the should/could tail and in online multiplayer — is
+  one movement rule is unplayable rather than partially playable. The consequence, that the
+  schedule buffer sits almost entirely in the should/could tail and in online multiplayer, is
   stated in the specification rather than smoothed over.
 - **The resource/energy system is priorised `W` (won't have this time)** on the grounds that an
   unspecified mechanic cannot be built. Note that issue #35 is titled *Game HUD & Resource Display*,
@@ -217,21 +217,21 @@ checked, the game design document says what the rule is.
   identifier required by NFR-12. It is a Claude Design decision and issue #3, so the rule states that
   a stable non-colour identity must exist and stops there.
 
-### Project goals formulated SMART — 2026-08-09, issue #9
+### Project goals formulated SMART: 2026-08-09, issue #9
 
 Full document: [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md). Facts, not the
 argument:
 
 - **One overall goal plus four sub-goals**, one sub-goal per `must have` epic. The sub-goal cut
   follows the epic structure rather than the sprint structure, because the epics are what the MoSCoW
-  labels already prioritise — a sprint-shaped cut would have introduced a second, competing breakdown.
+  labels already prioritise. A sprint-shaped cut would have introduced a second, competing breakdown.
 - The overall goal binds five checks: a full game completed by 2–4 players; #36–#39 closed; ≥ 80 %
   line coverage in `src/core/` and `src/state/`; complete `de` and `en` locales with no hardcoded
   user-facing string; no source file over 300 lines. The last four are the rules already fixed in
-  [CLAUDE.md](../../../CLAUDE.md) — no new requirement was invented for the goal.
+  [CLAUDE.md](../../../CLAUDE.md), so no new requirement was invented for the goal.
 - **Sub-goal deadlines, taken from the board sprint markers** in [sprint-log.md](../sprint-log.md):
   SG1 #36 → 2026-08-23, SG2 #37 → 2026-09-06, SG3 #38 → 2026-09-06, SG4 #39 → 2026-09-17.
-- **The `T` anchor is 2026-09-17**, the board's end of Sprint 3 — the only calendar date in the
+- **The `T` anchor is 2026-09-17**, the board's end of Sprint 3, the only calendar date in the
   repository. The module's real submission date is unknown, so every date in the analysis is
   explicitly re-anchorable; that is why they were taken from one named source instead of being spread
   through the text.
@@ -259,7 +259,7 @@ argument:
   requirement in its body, so the MoSCoW labels still prioritise titles rather than specifications.
   Named as the first entry in *Prerequisites for measurability* in
   [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md), with a proposed owner and the date
-  2026-08-23 — it blocks all four sub-goals, because "epic closed" otherwise means only that someone
+  2026-08-23, because it blocks all four sub-goals, because "epic closed" otherwise means only that someone
   ticked a box.
 - ~~Whether the epic → task decomposition is recorded in GitHub or only implied by titles.~~
   **Verified 2026-08-06:** real sub-issue links, table above.
@@ -268,7 +268,7 @@ argument:
 - ~~Win condition is stated informally ("first player home wins") and has not been specified against
   edge cases: overshooting the goal with a high die, what happens on an exact-count requirement.~~
   **Proposed 2026-08-09** as FR-13 (exact count required, overshoot illegal). ~~Still open as a
-  *decision* — the alternative is bouncing back from the home square, and the Product Owner has not
+  *decision*: the alternative is bouncing back from the home square, and the Product Owner has not
   confirmed either.~~ **Written as a rule 2026-08-22** in section 6.2 of
   [Game-Design-Document.md](../../Project-Management/Game-Design-Document.md), with bouncing back
   named as the rejected alternative and the reason it lost. What remains open is the Product Owner's

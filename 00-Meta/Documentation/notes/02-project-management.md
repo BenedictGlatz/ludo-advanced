@@ -407,22 +407,22 @@ is settled in the 2026-08-22 decision in [project-journal.md](../project-journal
   commit reaches the **default branch**, so a trailer on a `dev` commit does nothing until the release
   merge. This matters for the policy in *Branching and review* below: on this branching model,
   `Closes #<n>` closes issues at release time, not at commit time.
-- 2026-08-09 — **The board's sprint end dates now also serve as goal deadlines.** Issue #9 formulated
+- 2026-08-09: **The board's sprint end dates now also serve as goal deadlines.** Issue #9 formulated
   the project goals SMART against them; the facts are in
   [01-requirements-and-goals.md](01-requirements-and-goals.md), the document is
   [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md). Consequence for this chapter: a
   change to the sprint boundaries is no longer only a planning change.
-- 2026-08-09 — **Feasibility assessed and affirmed conditionally** (issue #12,
+- 2026-08-09: **Feasibility assessed and affirmed conditionally** (issue #12,
   [Feasibility-Study.md](../../Project-Management/Feasibility-Study.md)). Two of its five verdicts
   land in this chapter's territory and are conditions on the *process*, not on the technology:
   - **Schedule.** Sprint 1 starts 2026-08-10 and has to bootstrap the toolchain before it can
     implement anything, which is not in its planned scope; the board has no buffer sprint although the
     written plan does; and the Sprint 2 plan still lists multiplayer and the energy system, neither of
-    which is in the `must have` set — reconciling it releases schedule rather than costing it.
+    which is in the `must have` set. Reconciling it releases schedule rather than costing it.
   - **Personnel.** Two people implement four epics, because the Product Owner does not implement.
     The conditions attached are the ones already listed under *Prerequisites for measurability* in
-    [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md) — Definition of Done, role
-    contradiction, board fields — referenced there rather than repeated.
+    [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md): Definition of Done, role
+    contradiction, board fields, referenced there rather than repeated.
 
 ### Risk management
 
@@ -432,13 +432,13 @@ is settled in the 2026-08-22 decision in [project-journal.md](../project-journal
   Mitigation/Response column.
 - **2026-08-10:** extended from 3 unrated-mitigation rows (Multiplayer, Complexity, Sickness) to 16,
   by mining the risks already implied elsewhere in the documentation rather than inventing new ones
-  — e.g. the sprint-plan/board-date contradiction and missing velocity data from `sprint-log.md`, the
+  such as the sprint-plan/board-date contradiction and missing velocity data from `sprint-log.md`, the
   unstable `memex-*` board-parsing route and the public-repository decision from `project-journal.md`,
   and the role-concentration and external-playtester dependency from
   [01-Github-Project.md](../../Project-Management/01-Github-Project.md). Categories used: Schedule,
   Scope, Process/Quality, Team, Technical/Tooling, Compliance/Academic, Presentation.
 - Every row added on 2026-08-10 traces to a fact already recorded elsewhere in this repository (no
-  speculative risks) — see [03-Risk-Analysis.md](../../Project-Management/03-Risk-Analysis.md) for
+  speculative risks). See [03-Risk-Analysis.md](../../Project-Management/03-Risk-Analysis.md) for
   the full table and per-row mitigation.
 - 2026-08-09: **Feasibility assessed and affirmed conditionally** (issue #12,
   [Feasibility-Study.md](../../Project-Management/Feasibility-Study.md)). Two of its five verdicts

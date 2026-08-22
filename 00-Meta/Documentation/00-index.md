@@ -50,7 +50,7 @@ Status values: `empty` → `partial` → `ready`. Update the row when a chapter'
 **Analysis documents outside this directory.** These are deliverables of their own backlog issues, not
 notes. They live in `00-Meta/Project-Management/` and are cited from the chapter that uses them:
 
-- [SMART-Analysis.md](../Project-Management/SMART-Analysis.md) — the project goal and four epic-level
+- [SMART-Analysis.md](../Project-Management/SMART-Analysis.md): the project goal and four epic-level
   sub-goals, formulated SMART (issue #9). Feeds Ch. 01 and the plan-versus-actual comparison in Ch. 11.
 - [Project-Plan.md](../Project-Management/Project-Plan.md): time, resources and risks (issue #15). The
   document that decides the buffer sprint, the role contradiction and the sprint assignment of the

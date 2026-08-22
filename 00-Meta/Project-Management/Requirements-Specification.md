@@ -43,10 +43,10 @@ labels currently prioritise titles.
 | FR-09 | A pawn leaves the start area only when the roll equals the **maximum** of the die chosen that turn. | With a D6 chosen, a roll of 6 permits leaving and 1–5 does not; with a D20, only 20 does. | M | FG-03, #28 |
 | FR-10 | A pawn on the track advances exactly the number of squares rolled. | Pawn at square *s* with roll *r* lands on *s+r* along the track. | M | FG-02, #28 |
 | FR-11 | Landing exactly on a square occupied by an opponent's pawn captures it; the captured pawn returns to its owner's start area and must leave again under FR-09. | After a capture the opponent's pawn is in its start area and the capturing pawn holds the square. | M | FG-04, #29 |
-| FR-12 † | Landing on a square occupied by **one's own pawn** is illegal; the move is not offered. | A move whose target square holds an own pawn is absent from the legal-move set. | M | — |
+| FR-12 † | Landing on a square occupied by **one's own pawn** is illegal; the move is not offered. | A move whose target square holds an own pawn is absent from the legal-move set. | M | none |
 | FR-13 † | Entering home requires an **exact** count; a roll that would overshoot makes that move illegal. | A pawn 3 squares from home cannot move on a roll of 4; it can on a roll of 3. | M | FG-05 |
 | FR-14 † | If the roll produces **no legal move at all**, the turn passes to the next player with an on-screen explanation of why. | With every pawn blocked, the game states the reason and advances the active player without further input. | M | NFG-08 |
-| FR-15 † | The MVP board has **no safe squares**; every track square is capturable. | No square rejects a capture that FR-11 would otherwise permit. | C | — |
+| FR-15 † | The MVP board has **no safe squares**; every track square is capturable. | No square rejects a capture that FR-11 would otherwise permit. | C | none |
 
 ### 1.3 Dice Card Pool
 
@@ -101,7 +101,7 @@ labels currently prioritise titles.
 | FR-42 | Online multiplayer with a lobby. | Two browsers on different machines play one match. | S | FG-17, #42 |
 | FR-43 | LLM-powered bot opponents. | A bot takes a legal turn without human input. | C | FG-18, #43 |
 | FR-44 | Classic-vs-custom game modes as rule toggles. | Toggling a rule changes behaviour without a rebuild. | C | FG-21, #46 |
-| FR-45 † | A match in progress survives a page reload. | Reloading mid-match restores the board, hands and active player. | C | — |
+| FR-45 † | A match in progress survives a page reload. | Reloading mid-match restores the board, hands and active player. | C | none |
 
 ---
 
@@ -120,7 +120,7 @@ labels currently prioritise titles.
 | NFR-09 † | The RNG used for dice rolls and card draws is injectable, so tests are deterministic. | A test supplies a fixed sequence and asserts an exact board state. | M | NFG-05 |
 | NFR-10 † | Supported: current and previous major versions of Chrome, Firefox and Edge on desktop. Mobile and tablet are **out of scope for the MVP**. | The E2E suite passes on the named desktop browsers. | S | NFG-06 |
 | NFR-11 † | A player action produces visible feedback within 100 ms. No frame-rate target is set, since the game is turn-based. | Measured on the reference machine during the buffer-sprint playtest. | S | NFG-08 |
-| NFR-12 † | Players are distinguishable **without relying on colour alone**: shape, pattern or label as well. | A greyscale screenshot still identifies each player's pawns. | S | — |
+| NFR-12 † | Players are distinguishable **without relying on colour alone**: shape, pattern or label as well. | A greyscale screenshot still identifies each player's pawns. | S | none |
 
 ---
 

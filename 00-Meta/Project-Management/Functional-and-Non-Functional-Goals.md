@@ -4,13 +4,13 @@
 What a player must be able to do. Grouped along the four `must have` epics on the backlog (#36–#39),
 so that the goal list and the board decompose the same way.
 
-### 1.1 Board, pawns and movement — epic #36
+### 1.1 Board, pawns and movement: epic #36
 
 | ID | Goal | Priority |
 | --- | --- | --- |
 | FG-01 | A match is playable by **2 to 4 players**, each controlling four pawns from a colour-coded start area. | must have |
 | FG-02 | Pawns move along a shared circular track and into a player's own home area. | must have |
-| FG-03 | A pawn leaves the start area **only on the highest number of the die that was chosen that turn** — not on a fixed 6. | must have |
+| FG-03 | A pawn leaves the start area **only on the highest number of the die that was chosen that turn**, not on a fixed 6. | must have |
 | FG-04 | Landing **exactly** on a square occupied by an opponent's pawn captures it and returns it to its start area. | must have |
 | FG-05 | The match ends when one player has brought all four pawns home; that player wins. | must have |
 | FG-06 | Turn order rotates deterministically between the participating players. | must have |
@@ -20,12 +20,12 @@ so that the goal list and the board decompose the same way.
 - **Why FG-03 is called out separately:** it is the single rule where Ludo Advanced diverges from
   classic Ludo at the *board* level rather than at the card level. Because the chosen die varies from
   D2 to D20, the probability of leaving the start area is no longer a constant 1/6 but 1/n for the
-  chosen die — which makes die choice a real decision instead of a preference. This is the mechanic
+  chosen die, which makes die choice a real decision instead of a preference. This is the mechanic
   the report's probability section is built on (see
   [reference/style-reference.md](../Documentation/reference/style-reference.md), *What to copy from
   the sample directly*).
 
-### 1.2 Dice Card Pool — epic #37
+### 1.2 Dice Card Pool: epic #37
 
 | ID | Goal | Priority |
 | --- | --- | --- |
@@ -39,10 +39,10 @@ so that the goal list and the board decompose the same way.
 - **Why FG-09 matters as its own goal:** returning the cards makes the pool *stateless between
   turns*. That is what keeps the draw probability constant for every player over the whole match, so
   no player gains an advantage from turn order or from an opponent's earlier draws. A depleting pool
-  would need a discard pile, a reshuffle rule and a fairness argument — none of which the one-pager
+  would need a discard pile, a reshuffle rule and a fairness argument, none of which the one-pager
   provides.
 
-### 1.3 Skill Card Pool — epic #38
+### 1.3 Skill Card Pool: epic #38
 
 | ID | Goal | Priority |
 | --- | --- | --- |
@@ -54,11 +54,11 @@ so that the goal list and the board decompose the same way.
   *Architecture* for the id-matching rule in FG-13; backlog epic #38 with sub-issues #32–#34.
 - **Why FG-12 is the expensive one:** a Reaction card is the only mechanic in the design that
   interrupts the turn sequence. Everything else in the rule set happens inside the active player's
-  turn, so the turn manager can be a simple rotation — Reactions force it to support an interruption
+  turn, so the turn manager can be a simple rotation. Reactions force it to support an interruption
   window. This is worth stating as a goal rather than leaving implicit, because it is a
   requirement on the *state machine*, not on the card.
 
-### 1.4 Interface, presentation and game state — epic #39
+### 1.4 Interface, presentation and game state: epic #39
 
 | ID | Goal | Priority |
 | --- | --- | --- |
@@ -87,7 +87,7 @@ exactly the point in the schedule where there is no room for it.
 - **Undecided, not out of scope:** the **Resource/Energy System** appears in the Sprint 2 task list
   in [01-Github-Project.md](01-Github-Project.md) but in neither the one-pager, the README, nor any
   labelled backlog issue. It therefore has no goal ID above. It is either an MVP mechanic that never
-  got written into the rules or a stretch goal that never got labelled — this has to be decided
+  got written into the rules or a stretch goal that never got labelled. This has to be decided
   before Sprint 2 planning, and whichever way it goes, it belongs in this list afterwards.
 
 ---
@@ -95,7 +95,7 @@ exactly the point in the schedule where there is no room for it.
 ## 2 Non-functional goals
 
 Qualities the software must have. Each is stated with the reason it was adopted and, where one
-exists, the mechanism that makes it checkable rather than aspirational — a non-functional goal with
+exists, the mechanism that makes it checkable rather than aspirational. A non-functional goal with
 no verification route is a slogan.
 
 ### NFG-01 Maintainability through strict layering
@@ -108,12 +108,12 @@ mutates state directly but dispatches into `src/state/`, which applies `core/` r
   the coverage goal NFG-05 reachable at all. A rule engine that needs the DOM to run can only be
   tested end-to-end, and end-to-end tests are too slow and too brittle to cover rule edge cases
   exhaustively.
-- **Verification:** unit tests for `core/` execute in Vitest with no DOM environment — an accidental
+- **Verification:** unit tests for `core/` execute in Vitest with no DOM environment, so an accidental
   jQuery import breaks them immediately rather than silently.
 
 ### NFG-02 Reviewability through a file-length limit
 
-**Goal.** No file — source, test or config — exceeds **300 lines**, and a file approaching the limit
+**Goal.** No file (source, test or config) exceeds **300 lines**, and a file approaching the limit
 is split along a real seam rather than compressed.
 
 - **Source:** [CLAUDE.md](../../CLAUDE.md) *Tech stack and hard constraints*.
@@ -135,7 +135,7 @@ English (`en`).
 - **Source:** [CLAUDE.md](../../CLAUDE.md); [README.md](../../README.md) *Localization*.
 - **Why:** retrofitting localisation is a rewrite of every view, because the strings have to be found
   before they can be extracted. Enforcing it from the first component costs a key per string and
-  nothing else. The two-locale requirement follows from the project context — a German university
+  nothing else. The two-locale requirement follows from the project context: a German university
   module documented and coded in English.
 - **Verification:** adding a locale must require only copying `en.json` and registering it; if that
   is not sufficient, a string has been hardcoded somewhere.
@@ -144,7 +144,7 @@ English (`en`).
 
 **Goal.** Runtime dependencies are limited to those explicitly approved (`jquery`, `i18next`);
 anything further requires asking first. Dev dependencies approved: Vite, ESLint, Prettier, Vitest,
-Playwright. **JavaScript only — no TypeScript.**
+Playwright. **JavaScript only, no TypeScript.**
 
 - **Source:** [CLAUDE.md](../../CLAUDE.md) *Tech stack and hard constraints*.
 - **Why:** the fixed 8-week schedule is the binding constraint on this project (see the weighted
@@ -154,7 +154,7 @@ Playwright. **JavaScript only — no TypeScript.**
   bought with build-toolchain and annotation time the schedule does not have.
 - **Rejected alternative, recorded honestly:** TypeScript was excluded by decision, not by oversight.
   The sample report the team models on made the same call and named it in its text with a reason,
-  which is the treatment it gets here — see
+  which is the treatment it gets here: see
   [reference/style-reference.md](../Documentation/reference/style-reference.md), section 4.
 
 ### NFG-05 Test coverage on the logic layers
@@ -168,7 +168,7 @@ player-facing flow has an E2E test.
   satisfied cheapest by testing whatever is easiest, which in a frontend-heavy project is not the
   game rules. Restricting the threshold to the two pure layers points the effort at the code where a
   bug is a wrong game rather than a misplaced pixel. The uneven distribution that results is the
-  intended outcome and is explained rather than hidden — the same treatment the sample report gave
+  intended outcome and is explained rather than hidden, the same treatment the sample report gave
   its own uneven coverage table.
 - **Verification:** `npm run test:coverage`. The measured figure lives only in
   [notes/09-source-code-overview.md](../Documentation/notes/09-source-code-overview.md), next to the
@@ -205,7 +205,7 @@ through `dev` and a reviewed pull request.
   per-change one; that is a project-management goal, not a coding preference. See the decision block
   *Documentation notes are kept per commit* in
   [project-journal.md](../Documentation/project-journal.md).
-- **Verification:** reviewable in the commit itself — the artefacts are either in the diff or they
+- **Verification:** reviewable in the commit itself: the artefacts are either in the diff or they
   are not.
 
 ### NFG-08 Comprehensible and fair game state
@@ -213,10 +213,10 @@ through `dev` and a reviewed pull request.
 **Goal.** The rules the player is subject to are deterministic apart from the die roll and the card
 draw, and the game state that determines legal moves is fully derivable from what is on screen.
 
-- **Source:** derived, not quoted — this is the reading of the design intent stated in
+- **Source:** derived, not quoted. This is the reading of the design intent stated in
   [00-One-Pager.md](00-One-Pager.md) ("more options than just rolling dice") together with the
   external-playtesting requirement in [01-Github-Project.md](01-Github-Project.md).
-- **Why:** the design's whole value proposition is that the player makes a *decision* each turn —
+- **Why:** the design's whole value proposition is that the player makes a *decision* each turn:
   which die, which skill. A decision made without visible information is a guess, and a guess is
   indistinguishable from the classic single-die game the variant is trying to improve on. Hidden
   state would therefore undermine the premise of the project rather than merely inconveniencing the
@@ -235,7 +235,7 @@ draw, and the game state that determines legal moves is fully derivable from wha
 | #37 Enhanced Dice Pool System | FG-07 – FG-10 | NFG-01, NFG-05 |
 | #38 Skill Cards Mechanics | FG-11 – FG-13 | NFG-01, NFG-05 |
 | #39 UI / UX, Audio & Game State | FG-14 – FG-16 | NFG-02, NFG-03, NFG-06, NFG-08 |
-| — (applies to all work) | — | NFG-04, NFG-07 |
+| none (applies to all work) | none | NFG-04, NFG-07 |
 
 Sub-issue decomposition per epic is transcribed in
 [notes/01-requirements-and-goals.md](../Documentation/notes/01-requirements-and-goals.md) and was
@@ -243,27 +243,27 @@ verified against the GitHub sub-issue API on 2026-08-06.
 
 ---
 
-## 4 Gaps — goals that do not exist yet
+## 4 Gaps: goals that do not exist yet
 
 Listed rather than omitted, because an incomplete goal set that says where it is incomplete is more
 useful than one that reads as finished.
 
 - **No acceptance criteria anywhere.** All 46 backlog issues have empty bodies. The MoSCoW labels
   prioritise *titles*. The goals above are therefore derived from the rulebook and the constraint
-  documents, not from written requirements — they are the first place in this repository where a
+  documents, not from written requirements, so they are the first place in this repository where a
   requirement is stated in checkable form.
 - **No performance goal.** No target frame rate, load time or input latency is specified anywhere.
   For a turn-based 2D board game this is defensible, but it should be stated as a deliberate
   omission in the report rather than left blank.
 - **No browser support matrix.** "Runs in a current browser" (NFG-06) is as specific as the sources
-  get. No minimum versions, and no statement on mobile or tablet support — which matters, because the
+  get. No minimum versions, and no statement on mobile or tablet support, which matters, because the
   board is a wide layout and nothing records whether small screens are in scope.
 - **No accessibility goal.** Colour is the primary means of distinguishing players in Ludo, which
   makes colour-blind accessibility a real and foreseeable question for this specific game. Nothing in
   the sources addresses it. A decision belongs to Claude Design per
   [CLAUDE.md](../../CLAUDE.md) *Design and UI*, and is not invented here.
 - **Win condition unspecified at the edges.** FG-05 states the win condition informally. Overshooting
-  the goal with a high die and whether an exact count is required are open — and with dice up to D20
+  the goal with a high die and whether an exact count is required are open, and with dice up to D20
   in the pool, overshoot is a common case rather than a corner case. Already tracked in
   [notes/01-requirements-and-goals.md](../Documentation/notes/01-requirements-and-goals.md).
 - **No licence.** [README.md](../../README.md) says "To be determined", which is in tension with the

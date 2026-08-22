@@ -34,7 +34,7 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   had only `main` until now). Issues #4 *Create a Claude.md* and #2 *Github Setup + Documentation*
   closed with closing comments. An earlier negative finding corrected: an authenticated GitHub token
   was available all along, in the Git Credential Manager. Sprint 0.
-- **2026-08-09** — SMART analysis written for issue #9: one overall project goal plus four sub-goals,
+- **2026-08-09**: SMART analysis written for issue #9: one overall project goal plus four sub-goals,
   one per `must have` epic (#36–#39), with deadlines taken from the board sprint markers.
   `00-Meta/Project-Management/SMART-Analysis.md`; facts in Ch. 01. Sprint 0.
 - **2026-08-09**: Feasibility study written for issue #12, assessing the chosen 2D option across
@@ -89,6 +89,14 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   the drop order of the requirements specification is now live. Three work items carrying no board issue
   at all were found and sized, 12 points the board does not show. One risk row re-rated 4 to 3; the
   `Story Points` field itself could not be created, for want of the `project` token scope. Sprint 1.
+
+- **2026-08-22**: Em dash sweep across the documentation, no issue, `chore` commit. Roughly 100
+  occurrences removed from 10 files, `CLAUDE.md` included, each rewritten into an ordinary sentence, a
+  colon, a comma or a bracketed aside rather than replaced mechanically with a hyphen. Two files are
+  exempt and keep theirs: `reference/style-reference.md`, which quotes a German transcript verbatim, and
+  `reference/report-checklist.md`, which quotes "ENTWURF" from the source it is adapted from. The rule
+  itself predates the sweep and is in `CLAUDE.md`; what this cleared is the backlog of text written
+  before it was enforced. Sprint 1.
 
 - **2026-08-22**: Roadmap and Gantt chart written for issue #18 on `feature/sprint1-planning`:
   [Roadmap-and-Gantt.md](../Project-Management/Roadmap-and-Gantt.md). The Roadmap view was read rather
@@ -319,18 +327,18 @@ exactly the kind of thing this file exists to keep visible.
   client's registry, the token in the wrong store. Both times the diagnosis, not the fix, was the work.
 - → Ch. 02, Ch. 07, Ch. 10
 
-### 2026-08-09 — Project goals anchored to the board's sprint dates, not to the module deadline
+### 2026-08-09: Project goals anchored to the board's sprint dates, not to the module deadline
 
 - **Chosen:** formulate the goals SMART now, taking every date from the four sprint markers on the
   GitHub board (2026-07-23 → 2026-09-17), and state in the document that the anchor is provisional.
 - **Rejected:** *waiting for the real module submission date before formulating any goal.* That date
   is unknown and has been a standing open question since 2026-08-06. Waiting would have left issues
   #10, #13 and #23 without a goal to build on for an unbounded period, and it treats the `T` criterion
-  as the expensive one when in fact it is the cheapest to substitute later — the other four criteria
+  as the expensive one when in fact it is the cheapest to substitute later. The other four criteria
   are the work.
 - **Also rejected:** *cutting the sub-goals per sprint* rather than per epic. Sprint-shaped sub-goals
   would have created a second breakdown of the same scope competing with the MoSCoW epics, and the
-  epics are the structure the board already prioritises. The sprint dates are still used — as the
+  epics are the structure the board already prioritises. The sprint dates are still used, as the
   epics' deadlines, which keeps one breakdown and one calendar rather than two of each.
 - **Also rejected:** *auditing the existing goal statements against SMART* instead of formulating new
   ones. An audit of the one-pager would have produced a list of deficiencies and still no usable goal;
@@ -341,7 +349,7 @@ exactly the kind of thing this file exists to keep visible.
   omitted.
 - **Why:** a goal that cannot be checked is not a goal, and three of the five criteria (S, A, R) were
   already derivable from documents written before this one. What was missing was a date and a set of
-  checks — and a provisional date that is named as provisional costs less than no date at all.
+  checks, and a provisional date that is named as provisional costs less than no date at all.
 - **Consequence:** if the real deadline differs, every `T` value re-anchors to it and the sub-goal
   dates move with the sprint boundaries. That is a date substitution, not a rewrite, which is why the
   dates were taken from a single named source ([sprint-log.md](sprint-log.md)) instead of being spread
@@ -349,7 +357,7 @@ exactly the kind of thing this file exists to keep visible.
   so moving one now moves a goal.
 - **Finding worth carrying into Ch. 11:** the tightest sub-goal is the *first*, not the last. SG1
   (#36) has the most sub-issues, everything else builds on it, and its sprint starts 2026-08-10 with
-  no source code, no `package.json` and no tooling in the repository — so Sprint 1 contains its own
+  no source code, no `package.json` and no tooling in the repository, so Sprint 1 contains its own
   bootstrap, which is not in its planned scope.
 - → Ch. 01, Ch. 02, Ch. 11
 ### 2026-08-09: Feasibility is affirmed conditionally, with the AI toolchain named as the condition
@@ -680,17 +688,17 @@ exactly the kind of thing this file exists to keep visible.
   The lesson worth carrying into the report is that "the integration is installed" and "this
   particular client can see it" are different claims, and only the second one is testable.
 
-- **2026-08-09 — Undoing an unreviewed merge cost far more than the review would have.** Pull request
-  #48 was merged into `dev` without approval. Reopening it was impossible — GitHub closes merged pull
-  requests permanently — and by the time it was noticed, four branches had been cut from the merge
+- **2026-08-09: Undoing an unreviewed merge cost far more than the review would have.** Pull request
+  #48 was merged into `dev` without approval. Reopening it was impossible, since GitHub closes merged pull
+  requests permanently, and by the time it was noticed, four branches had been cut from the merge
   commit and all four carried the unreviewed work. The recovery was a rewrite of published history:
   `dev` force-reset one commit back, the four branches re-parented with `git rebase --onto`, five
   force-pushes, and every teammate obliged to re-fetch. What made it tractable at all was a property
-  of the graph rather than any tooling — the merge commit's tree was identical to the commit it
+  of the graph rather than any tooling: the merge commit's tree was identical to the commit it
   merged, so re-parenting could not change file content, and `git diff` against the old remote refs
   proved it before anything was pushed. The lesson for Chapter 11 is the asymmetry: the review that
   was skipped would have cost minutes, the undo cost an hour and a coordinated reset across three
-  people. It is also the concrete argument for the branch-protection ruleset left open in Ch. 02 —
+  people. It is also the concrete argument for the branch-protection ruleset left open in Ch. 02:
   the control was absent twice in one day, and the second absence is what turned a process slip into
   a history rewrite.
 
