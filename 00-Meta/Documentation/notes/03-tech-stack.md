@@ -82,6 +82,50 @@ Full document: [Feasibility-Study.md](../../Project-Management/Feasibility-Study
   system is undecided; no CI workflow and no deployment target chosen; multiplayer has no chosen
   networking technology.
 
+### Architecture decisions: recorded 2026-08-22, issue #21
+
+Full document: [System-Architecture.md](../../Project-Management/System-Architecture.md). It describes
+the **target state**: no `src/` exists, so every item below is a design commitment and not an
+observation.
+
+- **Five units:** `core/` (pure rules), `state/` (the single writable state object and its
+  transitions), `ui/` (jQuery rendering and event binding), `i18n/` (i18next plus `de` and `en`
+  locales), and `main.js` as the composition root.
+- **The two hard rules are stated as absent import edges** in the layer diagram: `core/` imports
+  nothing from `state/` or `ui/`, and `ui/` never mutates state but dispatches intents into `state/`.
+  Both are requirement NFR-01, whose acceptance criterion is mechanically checkable: unit tests for
+  `core/` run with no DOM environment configured. A layering violation is a failing test rather than a
+  style complaint.
+- **Module inventory derived from the requirement blocks, not invented:** 8 modules in `core/`
+  (`board`, `movement`, `capture`, `dice-pool`, `skill-pool`, `card-effects`, `turn-rules`, `win`),
+  4 in `state/` (`game-state`, `turn-manager`, `intents`, `match`) and 7 in `ui/`. Each carries the FR
+  ids it owns, so a requirement has one obvious home.
+- **The data flow is a single loop with no second path:** DOM event, intent, rule check in `core/`,
+  transition in `state/`, re-render in `ui/`. The check and the write are deliberately separate steps,
+  because the same rule function that validates a move produces the highlighted legal-move set of
+  FR-32; merging them would give one rule two implementations.
+- **Three reasons for the layering, each a consequence the project already owes:** it makes the NFR-05
+  coverage target readable at all, because two layers are browser-free; it makes the 300-line limit of
+  NFR-02 survivable, because a mechanic's rule, transition and view are concerns of very different
+  size; and it keeps a rule change cheap, which matters because the eight gameplay rules are unsigned
+  and some of them will change.
+- **Rejected: game rules inside jQuery event handlers.** The natural shape of a jQuery application and
+  the shortest path to a playable prototype. It loses on all three counts above and additionally
+  duplicates every rule, once for the FR-32 legal-move highlighting and once for validation on commit.
+- **Rejected: a service or use-case layer between `state/` and `core/`.** With four modules in
+  `state/`, no backend, no persistence beyond the session and no networking in the MVP, it would only
+  forward calls. Recorded so that its absence reads as a decision.
+- **The RNG enters `core/` as an argument** (NFR-09). Nothing in `core/` reads `Math.random()`, which
+  is what lets a test supply a fixed sequence and assert an exact board state.
+- **Two figures registered in Ch. 12:** the layer diagram and the turn sequence diagram, both in
+  Mermaid so that GitHub renders them and the report can export them.
+- **Negative finding:** the whole document is unverified by construction. The module inventory is a
+  plan, and the first commit that creates `src/core/board.js` is the first evidence it survives contact
+  with code.
+- **Deliberately not decided there:** how the board is drawn (SVG, CSS grid or `<canvas>`), which is a
+  Claude Design decision and issue #3; the deployment target, which is undecided and named as such;
+  and where a network layer for FR-42 would attach, since no networking technology has been chosen.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

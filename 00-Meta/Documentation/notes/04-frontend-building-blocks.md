@@ -21,7 +21,15 @@
 
 ## Facts
 
-*(Nothing yet: `src/` does not exist.)*
+*(Nothing observed yet: `src/` does not exist.)*
+
+**Planned structure recorded 2026-08-22, issue #21.** The 7 planned modules of `ui/` and the FR ids
+each one owns are in [System-Architecture.md](../../Project-Management/System-Architecture.md)
+section 2.3, with the facts summarised in [03-tech-stack.md](03-tech-stack.md). Two points from it
+belong to this chapter specifically: all jQuery event handlers live in one module, `ui/events.js`, and
+each handler translates a DOM event into exactly one intent and dispatches it; and `ui/` carries no
+line-coverage target, because a coverage number for this layer would measure how much jQuery ran
+rather than whether anything works. This chapter fills from observation once the code exists.
 
 ## Decisions
 

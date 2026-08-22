@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `00-Meta/Project-Management/Functional-and-Non-Functional-Goals.md`: the project's goal catalogue, 21 functional
   goals traced to the backlog epics and 8 non-functional goals derived from the hard constraints, each with its
   source, its reason and how it is verified
+- `00-Meta/Project-Management/System-Architecture.md`: the layer diagram and the turn sequence diagram as Mermaid
+  figures, a module inventory for `core/`, `state/` and `ui/` with the requirement ids each module owns, the data
+  flow from DOM event to re-render, and the reasons for the layering with the rejected alternatives named
 - `00-Meta/Project-Management/Game-Design-Document.md`: the rulebook of Ludo Advanced. Board topology as exact
   numbers (52 shared track squares, 5 home column squares, 58 steps from start area to home), the turn sequence as
   an 8-step state machine, the Dice Card Pool composition with its probability arithmetic, an 8-card MVP skill card

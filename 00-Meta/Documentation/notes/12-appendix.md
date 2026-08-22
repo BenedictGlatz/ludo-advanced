@@ -43,10 +43,25 @@ Likely candidates as the project runs:
 
 ## Figures
 
-*(none yet)*
+| Figure | Title | Source | Referenced from |
+| --- | --- | --- | --- |
+| 1 | The GitHub Projects Kanban board | *reserved*, see the note below | Ch. 02 |
+| 2 | Layer structure of Ludo Advanced and the permitted import directions | [System-Architecture.md](../../Project-Management/System-Architecture.md) section 1, Mermaid | Ch. 03 |
+| 3 | One turn as an interaction between the layers | [System-Architecture.md](../../Project-Management/System-Architecture.md) section 4, Mermaid | Ch. 03, Ch. 06 |
 
-Likely candidates: the board topology and its indexing, the component hierarchy of the most complex
-view, the turn cycle as a flow.
+**Figure 1 is reserved, not written.** Open pull request #51 adds a Kanban board screenshot as
+Figure 1 to this file. The architecture figures were numbered from 2 on 2026-08-22 so that the two
+branches do not both claim the same number, which is cheaper than renumbering afterwards. If #51 is
+closed without merging, the numbering is closed up and this row is deleted.
+
+Both architecture figures are **Mermaid** rather than an image: GitHub renders Mermaid inline, so the
+diagram is readable in the document it belongs to, and it stays a text diff in review. The report
+exports them as images at the end. Deliberate trade-off, the same one the sample report makes when it
+draws its component hierarchy as a text tree with no graphics software at all.
+
+Still likely candidates: the board topology and its indexing (Ch. 05, from the 52-square track and the
+58-step journey), the component hierarchy of the most complex view (Ch. 04), and the Roadmap view as a
+Gantt chart (Ch. 02, issue #18).
 
 ## Listings
 

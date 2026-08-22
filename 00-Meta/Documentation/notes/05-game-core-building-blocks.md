@@ -27,7 +27,18 @@ and the edge cases written into the text, and that is the standard to match here
 
 ## Facts
 
-*(Nothing yet: `src/core/` does not exist.)*
+*(Nothing observed yet: `src/core/` does not exist.)*
+
+**Planned structure recorded 2026-08-22, issues #21 and #22.** The rules this chapter will describe
+are written down, and so is the module structure that will hold them, so this chapter fills from two
+existing documents once the code exists rather than from memory:
+
+- The **rules, the board numbers, the pool composition and the probability arithmetic** are in
+  [Game-Design-Document.md](../../Project-Management/Game-Design-Document.md), with the facts
+  summarised in [01-requirements-and-goals.md](01-requirements-and-goals.md).
+- The **8 planned modules of `core/`** and the FR ids each one owns are in
+  [System-Architecture.md](../../Project-Management/System-Architecture.md) section 2.1, with the
+  facts summarised in [03-tech-stack.md](03-tech-stack.md).
 
 ## Decisions
 
@@ -43,5 +54,9 @@ and the edge cases written into the text, and that is the standard to match here
 - The dice pool balance was to be paper-prototyped or spreadsheet-tested in Sprint 0
   ([01-Github-Project.md](../../Project-Management/01-Github-Project.md)). If that happened, the
   result is a table for the appendix; if it did not, say so.
-- Unresolved rule questions carried over from Chapter 01: overshoot behaviour, and whether the
-  highest-number-to-leave-start rule scales sensibly across D2 through D20.
+- ~~Unresolved rule questions carried over from Chapter 01: overshoot behaviour, and whether the
+  highest-number-to-leave-start rule scales sensibly across D2 through D20.~~ **Ruled 2026-08-22:**
+  overshoot is illegal and the move is not offered (section 6.2 of the game design document); the
+  leaving rule scales by design and the arithmetic is written out, `P(max) = 1/n` against
+  `E(roll) = (n+1)/2`. Still open: Product Owner sign-off, and whether the composition plays well,
+  which only a playtest or a simulation over this layer answers.

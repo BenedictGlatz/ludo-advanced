@@ -56,6 +56,12 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   written out with their rejected alternatives, and 13 edge cases settled in a table. Section 5 of
   `Requirements-Specification.md` now points at it; one risk row re-rated. Sprint 1.
 
+- **2026-08-22**: System architecture written for issue #22's neighbour #21 on
+  `feature/sprint1-planning`: layer diagram and turn sequence diagram as Mermaid figures, a module
+  inventory of 8 modules in `core/`, 4 in `state/` and 7 in `ui/` with the FR ids each owns, the data
+  flow, and the layering justified against jQuery-handler rules as the rejected alternative. Figures
+  registered in Ch. 12 starting at 2, because open pull request #51 claims Figure 1. Sprint 1.
+
 - **2026-08-09**: Requirements specification written on `feature/13-requirements-specification`
   (issue #13): 45 functional and 12 non-functional requirements with acceptance criteria and MoSCoW
   priorities, a drop order agreed in advance, and eight gameplay decisions handed to the Product
