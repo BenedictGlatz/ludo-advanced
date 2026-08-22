@@ -161,6 +161,40 @@ Full document: [Effort-Estimation.md](../../Project-Management/Effort-Estimation
   from disagreement between estimators, so the totals are the input to a planning conversation rather
   than its result.
 
+#### Roadmap view read and the Gantt chart drawn: 2026-08-22, issue #18
+
+Full document: [Roadmap-and-Gantt.md](../../Project-Management/Roadmap-and-Gantt.md).
+
+- **The Roadmap view exists and is view number 1**, layout `ROADMAP_LAYOUT`, filter empty, read with
+  `gh api graphql`. The board has exactly two date fields, `Start Date` and `End Date`, both custom.
+- **Three properties of a roadmap view are not exposed by the GraphQL API:** which date-field pair
+  drives the bars, the zoom level, and the grouping. The API returns a view's layout and filter and
+  nothing else about its configuration. So those three are recommendations in the document rather than
+  observations, and they are labelled as such.
+- **Negative finding, measured: `Start Date` and `End Date` are set on 11 of 64 items.** The 4 sprint
+  markers and the 7 `Sprint 0` issues. **The Roadmap view therefore renders 4 bars and 7 dots out of 64
+  items**, since an item with no dates does not appear on a roadmap layout at all.
+- **All 7 Sprint 0 issues have `Start Date` equal to `End Date`**, so each is a zero-length bar. They
+  record the day something was closed rather than a work span. One, *Role Setup and Process Model*, is
+  dated 2026-08-01, five days before the repository existed.
+- **All 13 `Sprint 1` issues have no dates**, so the sprint whose entire scope was delivered is absent
+  from the chart. This is a regression against the 2026-08-06 read, which found dates populated on all
+  50 items of the smaller item set.
+- **The 4 sprint markers carry no `Sprint` value of their own**, so a view grouped by `Sprint` puts the
+  four bars that define the schedule in a no-sprint lane, away from the issues they contain.
+- **The Gantt chart is drawn in Mermaid in the repository, not screenshotted from the board.** Two
+  reasons: configuring the view needs the `project` token scope, which is the same block as everywhere
+  else, and **a Projects view has no export at all**. A screenshot does not diff, goes stale when a date
+  changes, and has to be retaken by hand. The Mermaid figure renders on GitHub, stays a text diff in
+  review, and exports for the report. Rejected: keeping the schedule only in the board view, which would
+  mean the report has no printable figure and a pull request cannot review a schedule change.
+- **The board stays authoritative.** If the chart and the board disagree, the chart is what gets
+  corrected. Recorded so that drawing the plan in the repository does not quietly create a second source
+  of truth, which is the failure mode the 2026-08-22 sprint-membership decision exists to prevent.
+- **Figure 6 stays reserved** in [12-appendix.md](12-appendix.md) for the board screenshot, because
+  issue #18 asks for the view and not only for a chart. It is a human step by nature, and it is not
+  worth taking until the dates of items 2 and 3 of that document's section 6 are filled in.
+
 #### Schedule and sequencing fixed: 2026-08-22, issue #15
 
 Full document: [Project-Plan.md](../../Project-Management/Project-Plan.md).

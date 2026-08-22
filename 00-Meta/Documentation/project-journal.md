@@ -90,6 +90,17 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   at all were found and sized, 12 points the board does not show. One risk row re-rated 4 to 3; the
   `Story Points` field itself could not be created, for want of the `project` token scope. Sprint 1.
 
+- **2026-08-22**: Roadmap and Gantt chart written for issue #18 on `feature/sprint1-planning`:
+  [Roadmap-and-Gantt.md](../Project-Management/Roadmap-and-Gantt.md). The Roadmap view was read rather
+  than described: it is view 1 with `ROADMAP_LAYOUT` and an empty filter, and three of its properties
+  (date-field binding, zoom, grouping) are not exposed by the API at all, so they are labelled as
+  recommendations. **Measured negative finding: dates are set on 11 of 64 board items, so the view
+  renders 4 bars and 7 dots**, all 13 Sprint 1 issues are absent from it, and the 7 Sprint 0 bars are
+  zero-length because start equals end on every one. The Gantt chart is therefore drawn in Mermaid in
+  the repository, since a Projects view cannot be exported and cannot be configured without the
+  `project` token scope. The board stays authoritative and the chart is what gets corrected if the two
+  disagree. Sprint 1.
+
 - **2026-08-22**: Project plan written for issue #15 on `feature/sprint1-planning`:
   [Project-Plan.md](../Project-Management/Project-Plan.md), covering time, resources, dependencies and
   risks. It is the document that had to decide rather than record, and it settled three contradictions
@@ -571,6 +582,32 @@ exactly the kind of thing this file exists to keep visible.
   bootstrap and the i18n setup, plus 2 points of CI. A board-derived plan understates the work by that
   much, and the finding came out of estimating rather than out of planning.
 - → Ch. 02, Ch. 11
+
+### 2026-08-22: The Gantt chart is drawn in the repository, and the board stays authoritative
+
+- **Chosen:** the Gantt chart lives in [Roadmap-and-Gantt.md](../Project-Management/Roadmap-and-Gantt.md)
+  as a Mermaid `gantt` block, and the board's Roadmap view stays the live tracking surface. The
+  configuration of the view is recorded in the same document.
+- **Rejected:** *the board's Roadmap view as the only deliverable*, which is the literal reading of issue
+  #18 ("Creation in Github"). Two things make it insufficient rather than merely inconvenient. **A
+  Projects view has no export**, so the only artefact is a screenshot: a binary that does not diff, goes
+  stale when any date changes, and has to be retaken by hand. And **the view cannot be configured from
+  here**, because grouping, zoom and the date fields of the 13 Sprint 1 issues all need the `project`
+  token scope the `gh` token does not carry.
+- **Rejected:** *waiting for the token scope before closing the issue*. The scope needs an interactive
+  browser flow that an agent cannot perform, so waiting would have parked the last Sprint 1 issue behind
+  a step nobody had scheduled. What can be produced without it was produced, and what cannot is listed as
+  an outstanding action with the reason.
+- **The risk this creates, and how it is closed:** drawing the plan in the repository creates a second
+  place where the schedule lives, which is exactly the failure mode the sprint-membership decision of the
+  same day exists to prevent. So the precedence is stated in the document itself: **if the chart and the
+  board disagree, the board wins and the chart is corrected.** A second copy with a stated precedence is
+  a mirror; a second copy without one is a fork.
+- **Consequence for the report:** Figure 5 is a text diagram that renders on GitHub and exports at the
+  end, the same trade-off already taken for the two architecture figures. Figure 6 stays reserved for the
+  board screenshot, because issue #18 does ask for the view, and it is not worth taking while the board
+  shows 4 bars and 7 dots out of 64 items.
+- → Ch. 02, Ch. 11, Ch. 12
 
 ### 2026-08-22: There is no buffer sprint, and Sprint 3 is not one under another name
 

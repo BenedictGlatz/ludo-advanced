@@ -51,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   requirement ids and backlog issue of each, the technology stack with its dependency policy and an empty version
   column until `package.json` exists, the platform committed from NFR-06 and NFR-10, and five known gaps including
   two screens that carry no backlog issue
+- `00-Meta/Project-Management/Roadmap-and-Gantt.md`: the project schedule as a Mermaid Gantt chart, with
+  the measured configuration of the board's Roadmap view, the three of its properties the GitHub API does
+  not expose, and the finding that dates are set on 11 of 64 board items so the view renders 4 bars and 7
+  dots. Registered as Figure 5, with Figure 6 reserved for the board screenshot
 - `00-Meta/Project-Management/Project-Plan.md`: the project plan for time, resources and risks. Five
   checkable milestones, the decision that no buffer sprint is created and that the closing work is a dated
   window inside Sprint 3 behind a 2026-09-11 feature freeze, the decision that there is no dedicated Scrum
