@@ -68,6 +68,9 @@ notes. They live in `00-Meta/Project-Management/` and are cited from the chapter
 - [Roadmap-and-Gantt.md](../Project-Management/Roadmap-and-Gantt.md): the schedule as a Mermaid Gantt
   chart plus the measured configuration and limits of the board's Roadmap view (issue #18). Feeds Ch. 02,
   Ch. 11 and Ch. 12.
+- [Project-Structure-Plan.md](../Project-Management/Project-Structure-Plan.md): the complete
+  decomposition into subprojects and work packages, adopting the board's epic tree, structure only
+  with no points, dates or owners (issue #17). Feeds Ch. 02.
 
 ---
 

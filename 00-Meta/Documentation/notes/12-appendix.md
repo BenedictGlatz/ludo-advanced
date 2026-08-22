@@ -51,6 +51,7 @@ Likely candidates as the project runs:
 | 4 | Work package dependencies and the critical path | [Project-Plan.md](../../Project-Management/Project-Plan.md) section 4.1, Mermaid | Ch. 02 |
 | 5 | Ludo Advanced schedule, recorded to 2026-08-23 and planned after it | [Roadmap-and-Gantt.md](../../Project-Management/Roadmap-and-Gantt.md) section 4, Mermaid gantt | Ch. 02, Ch. 11 |
 | 6 | The Roadmap view of the GitHub Projects board as a Gantt chart | *reserved*, see the note below | Ch. 02 |
+| 7 | Project structure plan of Ludo Advanced, to epic level | [Project-Structure-Plan.md](../../Project-Management/Project-Structure-Plan.md) section 2, Mermaid | Ch. 02 |
 
 **Figure 1 is reserved, not written.** Open pull request #51 adds a Kanban board screenshot as
 Figure 1 to this file. The architecture figures were numbered from 2 on 2026-08-22 so that the two

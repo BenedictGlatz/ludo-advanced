@@ -244,6 +244,36 @@ Full document: [Project-Plan.md](../../Project-Management/Project-Plan.md).
 - **Written, not adopted.** No planning slot has confirmed the plan, exactly as with the Definition of
   Done. Both are recorded that way rather than as agreed.
 
+#### Project structure plan written: 2026-08-22, issue #17
+
+Full document: [Project-Structure-Plan.md](../../Project-Management/Project-Structure-Plan.md).
+
+- **#17 was pulled into Sprint 1 on 2026-08-22**, having been left out by oversight; hours earlier,
+  section 4.4 of the project plan had parked it in the Sprint 3 closing window. The board carries
+  `Sprint 1` for it now, and the closing window drops from 23 to 21 points. Delivered the same
+  evening, committed directly on `dev` by the team's instruction: the sprint ends 2026-08-23, and a
+  review round on one self-contained document was judged not worth losing the sprint boundary over.
+  That is a deliberate exception to the feature-branch rule, not a new practice.
+- **The tree adopts the board's epic and sub-issue graph** instead of inventing a structure, which is
+  what section 2 of the effort estimation had already asked of it. Rejected: a freely designed
+  product tree (would drift from the board with the first new issue) and a phase-oriented
+  decomposition along the `2-definition` to `5-completion` labels (labels classify issues by
+  lifecycle stage, they do not structure the product).
+- **The plan carries structure only**: no points, no dates, no owners, no MoSCoW. Each of those
+  lives in exactly one other document, and the PSP names which. Same single-source rule as sprint
+  membership.
+- **Completeness is checked, not asserted**: all 47 board issues placed exactly once, 43 as work
+  packages and 4 as epic structure nodes, plus the three issue-less packages (bootstrap, i18n, CI)
+  the effort estimation found invisible to the board.
+- **Two absences are deliberate and reasoned**: standing process activities are not work packages
+  (a package named "do the process" ends only when the project does), and tests are not a package
+  of their own (the Definition of Done binds them into each implementation package; a separate
+  testing package would license deferring them).
+- **Negative finding, found while placing #6:** the RACI matrix in
+  [02-Stakeholder-Analysis.md](../../Project-Management/02-Stakeholder-Analysis.md) is an **empty
+  table**: four task rows, all blank, though the issue is closed. The report's roles section cannot
+  cite it as it stands.
+
 #### Board access from the development environment
 
 - 2026-08-06, first attempt: **not readable.** No GitHub MCP server configured for Claude Code,

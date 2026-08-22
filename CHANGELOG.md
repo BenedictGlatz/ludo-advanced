@@ -63,6 +63,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation issues, and the required rate corrected upward to 4.9 points per weekday
 - Five risks created by the project plan added to `00-Meta/Project-Management/03-Risk-Analysis.md` as their
   own block, including the missed-feature-freeze row, which is the highest-rated risk in the register
+- `00-Meta/Project-Management/Project-Structure-Plan.md`: the project structure plan (issue #17, pulled into
+  Sprint 1 on 2026-08-22). Eight subprojects and the complete work package inventory, adopting the board's epic
+  and sub-issue graph, placing all 47 board issues exactly once plus the three packages that have no issue, and
+  carrying structure only: points, dates and owners stay in the documents that own them. The tree is registered
+  as Figure 7
 - `00-Meta/Project-Management/Requirements-Specification.md`: 45 functional and 12 non-functional requirements,
   each with an acceptance criterion and a MoSCoW priority, plus the MoSCoW analysis with a drop order agreed in
   advance and the eight gameplay decisions still owed by the Product Owner

@@ -121,6 +121,14 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   on one chain with only 32 points of work off it, so the second implementer runs dry before the first
   finishes. Five new risks entered the register, one of them the highest-rated row in it. Sprint 1.
 
+- **2026-08-22**: Project structure plan written for issue #17, committed directly on `dev`:
+  [Project-Structure-Plan.md](../Project-Management/Project-Structure-Plan.md). #17 had been left out
+  of Sprint 1 by oversight and parked in the closing window by the project plan the same day; the
+  team pulled it into Sprint 1 on the board and it was delivered the same evening. The tree adopts
+  the board's epic and sub-issue graph, places all 47 issues exactly once plus the three issue-less
+  packages (bootstrap, i18n, CI), and carries structure only: points, dates and owners stay in the
+  documents that own them. Found in passing: the RACI matrix of issue #6 is an empty table. Sprint 1.
+
 - **2026-08-09**: Requirements specification written on `feature/13-requirements-specification`
   (issue #13): 45 functional and 12 non-functional requirements with acceptance criteria and MoSCoW
   priorities, a drop order agreed in advance, and eight gameplay decisions handed to the Product
@@ -671,6 +679,32 @@ exactly the kind of thing this file exists to keep visible.
   whole project. Resolving the contradiction does not resolve that, and the plan says so rather than
   implying the roles are now covered.
 - → Ch. 02, Ch. 11
+
+---
+
+### 2026-08-22: The project structure plan is structure only, and it mirrors the board
+
+- **Chosen:** [Project-Structure-Plan.md](../Project-Management/Project-Structure-Plan.md) adopts the
+  board's epic and sub-issue graph as its implementation branch, groups the remaining issues by kind
+  of deliverable, and carries no points, dates, owners or MoSCoW classes. Each of those lives in
+  exactly one other document, which the plan names, and the board wins any disagreement.
+- **Why:** the board is already the team's working structure and the single source of truth for sprint
+  membership since the 2026-08-22 decision above. Every column copied into the PSP is a copy that
+  drifts; the effort estimation had already reserved the cost column for itself and asked #17 to adopt
+  its tree rather than invent another.
+- **Rejected:** *a freely designed product tree*, the textbook approach. It would force every issue to
+  be mapped into a second structure and would diverge from the board with the first new issue.
+- **Rejected:** *a phase-oriented decomposition* along the existing `2-definition` to `5-completion`
+  labels. The labels classify issues by lifecycle stage; a phase tree would tear each epic across
+  three phases and say nothing about what the game consists of.
+- **Rejected:** *work packages for the standing process activities and for testing*. A package named
+  "do the process" is done only when the project is, and a separate testing package would license
+  deferring tests, which the Definition of Done exists to prevent.
+- **Also decided, by the team rather than in the document:** #17 itself moved from the Sprint 3
+  closing window into Sprint 1, and the deliverable was committed directly on `dev` as an exception
+  to the feature-branch rule, because the sprint ends 2026-08-23 and one self-contained document was
+  judged not worth a review round against the sprint boundary.
+- → Ch. 02
 
 ---
 

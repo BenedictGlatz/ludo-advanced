@@ -103,7 +103,7 @@ markers and carry `Start Date` / `End Date`. Read 2026-08-06:
 
 Read from the board's `Sprint` field on 2026-08-22, which is the single source of truth for sprint
 membership (see the 2026-08-22 decision in [project-journal.md](project-journal.md)). 13 issues, all
-documentation or planning:
+documentation or planning; **a 14th, #17, was pulled in on 2026-08-22** (see below the table):
 
 | # | Title | Board status 2026-08-22 |
 | --- | --- | --- |
@@ -120,6 +120,16 @@ documentation or planning:
 | 21 | System Architecture Diagram | Todo |
 | 22 | Game Design Document | Todo |
 | 23 | Test Plan and Quality Strategy | Todo |
+| 17 | PSP: Project Structure Plan | pulled in 2026-08-22, Todo |
+
+**Scope change during the sprint, 2026-08-22.** #17 had been left out of Sprint 1 by oversight; the
+project plan's section 4.4 had parked it in the Sprint 3 closing window the same day. The team set
+its `Sprint` field to `Sprint 1` on 2026-08-22 and it was delivered the same evening as
+[Project-Structure-Plan.md](../Project-Management/Project-Structure-Plan.md), committed directly on
+`dev` by the team's instruction rather than on a feature branch, because the sprint ends 2026-08-23
+and a review round on a single self-contained document was judged not worth losing the sprint
+boundary over. The closing window drops from 23 to 21 points; the revision is recorded in section
+4.4 of [Project-Plan.md](../Project-Management/Project-Plan.md).
 
 **Superseded planned scope.** Until 2026-08-22 this entry carried the scope from
 [01-Github-Project.md](../Project-Management/01-Github-Project.md) instead, "Core gameplay and board
@@ -283,10 +293,11 @@ cut. **Audio (#40, 3 points) survives only if assets exist**, and no asset has e
 | **Actual start** | *open* |
 | **Actual end** | *open* |
 
-**Board scope assigned by the project plan** (section 4.4), 23 points: #24 usability and playtest
-evaluation, #25 presentation deck and live demo prep, #19 finalization documentation, #20 project
-closure report, #17 PSP. **Not yet on the board**: setting the `Sprint` field needs the `project`
-token scope, so this assignment currently exists in a document only.
+**Board scope assigned by the project plan** (section 4.4, as revised the same day), 21 points: #24
+usability and playtest evaluation, #25 presentation deck and live demo prep, #19 finalization
+documentation, #20 project closure report. #17 PSP was in this list for part of one day and was then
+pulled into Sprint 1, where it was delivered. **Not yet on the board**: setting the `Sprint` field
+needs the `project` token scope, so this assignment currently exists in a document only.
 
 **Four weekdays is the finding, not the plan's comfort.** The playtest needs 3 to 5 external people
 who get no instructions, and people found inside a 4-day window will not be found in time. The

@@ -312,8 +312,13 @@ which is the same class of gap that made Sprint 1's whole gameplay scope invisib
 | --- | --- | --- |
 | Sprint 2, 2026-08-24 to 2026-09-06 | Bootstrap, i18n, #3, #26, #28, #29, #30, #31, #27 | 46 |
 | Sprint 3 implementation half, 2026-09-07 to 2026-09-11 | #32, #33, #34, #35, #40, #41, CI | 35 |
-| Sprint 3 closing window, 2026-09-14 to 2026-09-17 | #24, #25, #19, #20, #17 | 23 |
+| Sprint 3 closing window, 2026-09-14 to 2026-09-17 | #24, #25, #19, #20, ~~#17~~ | ~~23~~ 21 |
 | Not scheduled | #42 to #46, the extended features | 34 |
+
+**Revised 2026-08-22, the same day.** #17, the project structure plan, was pulled into Sprint 1 by
+the team and now carries `Sprint 1` on the board, so it leaves the closing window, which drops from
+23 to 21 points. The pull is the right direction: a structure plan written in the last four days of
+the project would document a breakdown after all the work it breaks down is over.
 
 **46 points in 10 weekdays and 35 in 5 is not a balanced split, and the imbalance is the point.**
 Sprint 3's implementation half carries 35 points against 5 weekdays, which is 7 points per weekday
