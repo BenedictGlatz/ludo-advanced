@@ -139,7 +139,7 @@ measuring apparatus is not measurable, it is just phrased as if it were.
 | Missing | Which criterion it blocks | Proposed owner | By |
 | --- | --- | --- | --- |
 | Acceptance criteria in the bodies of #36–#39 | All four sub-goals. Every one of the 46 issues has an empty body, so "epic closed" currently means only that someone ticked a box. | Product Owner, with each epic's implementer | 2026-08-23 |
-| A written **Definition of Done** | All four. It has never been written down anywhere, so "done" is not comparable between the three of us. | Whole team, one sprint-planning slot | 2026-08-23 |
+| A written **Definition of Done** | All four. It has never been written down anywhere, so "done" is not comparable between the three of us. **Written 2026-08-22 (issue #23)** in section 5 of [Test-Plan-and-Quality-Strategy.md](Test-Plan-and-Quality-Strategy.md), at three levels: issue, sprint and release. What is still outstanding is its adoption: no sprint has been closed against it and the team has not confirmed it in a planning slot. | Whole team, one sprint-planning slot | 2026-08-23 |
 | A runnable test and build setup | The ≥ 80 % coverage criterion. No `package.json` and no source code exist yet, so `npm run test:coverage` has never produced a reading — the figure is a target, not a status. | Scrum members, with the first `src/` commit | Sprint 1 |
 | Board `Status` and `Sprint` values | Nothing above directly, but the epics cannot be tracked toward their dates while both fields are unset on all 50 board items. | Whoever owns the board configuration | 2026-08-23 |
 

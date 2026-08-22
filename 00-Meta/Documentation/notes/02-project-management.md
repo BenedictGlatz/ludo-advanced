@@ -335,9 +335,18 @@ is settled in the 2026-08-22 decision in [project-journal.md](../project-journal
   deliberately, or was simply never changed from the GitHub default. The report needs one or the
   other, and the branching policy's review step currently has no column.
 - Whether `CreativeName06` is Fabian Gemming. Assumed by elimination, confirmed nowhere.
-- Definition of Done has not been written down anywhere. Since 2026-08-09 this blocks a measurable
-  criterion rather than only a convention: all four SMART sub-goals check "epic closed", and without a
-  Definition of Done that is not comparable between the three of us. Listed with a proposed date
-  (2026-08-23) in [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md).
+- ~~Definition of Done has not been written down anywhere.~~ **Written 2026-08-22, issue #23**, in
+  section 5 of
+  [Test-Plan-and-Quality-Strategy.md](../../Project-Management/Test-Plan-and-Quality-Strategy.md), one
+  day before the 2026-08-23 date proposed for it in
+  [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md). It lives with the quality strategy
+  rather than in this chapter because most of its clauses are test and coverage clauses; the facts are
+  in [08-quality.md](08-quality.md). Three process points belong here: it is written at **three
+  levels** (issue, sprint, release) because "done" differs between them; the issue-level list is split
+  into a code half and a record half, since the record half is the one skipped under pressure; and its
+  last clause encodes the two mechanics recorded above, that `Closes #<n>` fires only on a merge into
+  the default branch and that moving a board card is manual while the `gh` token lacks the `project`
+  scope. What is still open is not the definition but its **adoption**: no sprint has been closed
+  against it, and the three of us have not confirmed it in a planning slot.
 - Whether a CI build-validation workflow (`build-check.yml`, planned in `Brainstorming.md`) gets
   implemented. If not, say so in Chapter 08 with a reason.

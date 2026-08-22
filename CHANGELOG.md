@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an 8-step state machine, the Dice Card Pool composition with its probability arithmetic, an 8-card MVP skill card
   catalogue with ids, the eight open gameplay rules written out with their rejected alternatives and a Product Owner
   sign-off table, and 13 win-condition and movement edge cases resolved
+- `00-Meta/Project-Management/Test-Plan-and-Quality-Strategy.md`: the test strategy across four levels with what
+  each level cannot catch, the coverage floor and the reason it excludes `ui/`, 12 end-to-end flows mapped to
+  requirement ids, one unit test case per rule edge case settled in the game design document, the injectable RNG as
+  a testability requirement, the CI gates that do not exist yet, and **the project's first written Definition of
+  Done** at issue, sprint and release level
 - `00-Meta/Project-Management/Obligations-Book.md`: what will be built to satisfy the requirements. The system
   architecture cited rather than redrawn, a GUI inventory of nine screens plus two should-have ones with the
   requirement ids and backlog issue of each, the technology stack with its dependency policy and an empty version

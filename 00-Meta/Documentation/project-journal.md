@@ -74,6 +74,14 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   column stays empty because no `package.json` exists; and the platform committed from NFR-06 and NFR-10.
   Two screens were found to carry no backlog issue at all, one of them a `must have`. Sprint 1.
 
+- **2026-08-22**: Test plan and quality strategy written for issue #23 on `feature/sprint1-planning`:
+  four test levels with what each cannot catch, the coverage floor and why it excludes `ui/`, 12
+  end-to-end flows mapped to FR ids, a unit test case per edge case settled in the game design document,
+  and the injectable RNG recorded as a testability requirement. It also carries **the project's first
+  written Definition of Done**, at issue, sprint and release level, which closes a condition of the
+  feasibility verdict and a prerequisite of the SMART analysis. The *test coverage discipline* risk row
+  was deliberately not re-rated. Sprint 1.
+
 - **2026-08-09**: Requirements specification written on `feature/13-requirements-specification`
   (issue #13): 45 functional and 12 non-functional requirements with acceptance criteria and MoSCoW
   priorities, a drop order agreed in advance, and eight gameplay decisions handed to the Product
@@ -484,6 +492,35 @@ exactly the kind of thing this file exists to keep visible.
   gap visible: a section written as visual specification would have described what those screens look
   like without noticing that nobody is scheduled to build them.
 - → Ch. 04, Ch. 03
+
+### 2026-08-22: The Definition of Done lives with the quality strategy and has three levels
+
+- **Chosen:** the Definition of Done is written in section 5 of
+  [Test-Plan-and-Quality-Strategy.md](../../Project-Management/Test-Plan-and-Quality-Strategy.md), at
+  three levels: an issue is done, a sprint is done, a release is done. It had never been written down
+  anywhere in this repository.
+- **Why it lives there and not in a process document:** most of its clauses are test and coverage
+  clauses. Acceptance criteria met, unit tests in the same commit, lint and tests passing, coverage not
+  below the NFR-05 floor. Putting it next to the coverage target it depends on keeps the two from
+  drifting; the process half of it is cross-referenced from Ch. 02 instead of duplicated.
+- **Why three levels:** the same phrase was being used for three different things. All four SMART
+  sub-goals check "epic closed", the sprint log checks a sprint's scope, and the branching policy checks
+  that `main` is playable. One list satisfying all three would have been either too loose to close an
+  issue with or too heavy to close a sprint with.
+- **Rejected:** *one flat checklist*, for the reason above. **Rejected:** *a definition that requires
+  green CI*, which is the version most projects write. There is no CI, so it would have been unmeetable
+  from the day it was written, and an unmeetable definition is worse than a modest one because it gets
+  ignored wholesale rather than in part. The gates a CI workflow would run are named in section 6 of the
+  same document instead, so the definition tightens when the workflow lands.
+- **Rejected:** *adding a review checklist, a performance gate and an accessibility gate*. Each is named
+  in section 5.4 with the reason it is left out: a three-person team will not run a checklist, NFR-11 is
+  measured once in the buffer-sprint playtest, and NFR-12's greyscale check is a per-release check.
+- **Consequence:** condition 4 of the feasibility verdict and the Definition of Done row of the SMART
+  prerequisites are met, and both are annotated rather than deleted so the sequence stays visible. What
+  is not met is **adoption**: no sprint has been closed against it, and the team has not confirmed it in
+  a planning slot. Writing a definition is not the same as agreeing to one, and the report should not
+  let the first stand in for the second.
+- → Ch. 08, Ch. 02
 
 ---
 
