@@ -210,7 +210,7 @@ Every prompt is recorded under:
 00-Meta/AI-Prompts/<github-username>/YYYY-MM-DD.json
 ```
 
-**This directory is gitignored — it is not committed and not pushed.** It is kept locally per machine so that
+**This directory is gitignored: it is not committed and not pushed.** It is kept locally per machine so that
 work-in-progress never has to be committed just to satisfy the logging step. Before running
 `npm run docs:ai-index`, whoever generates the AI index chapter must first collect the other contributors'
 `00-Meta/AI-Prompts/<github-username>/` folders out of band (e.g. a zip shared in chat) and place them locally

@@ -34,7 +34,7 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   had only `main` until now). Issues #4 *Create a Claude.md* and #2 *Github Setup + Documentation*
   closed with closing comments. An earlier negative finding corrected: an authenticated GitHub token
   was available all along, in the Git Credential Manager. Sprint 0.
-- **2026-08-09** — SMART analysis written for issue #9: one overall project goal plus four sub-goals,
+- **2026-08-09**: SMART analysis written for issue #9: one overall project goal plus four sub-goals,
   one per `must have` epic (#36–#39), with deadlines taken from the board sprint markers.
   `00-Meta/Project-Management/SMART-Analysis.md`; facts in Ch. 01. Sprint 0.
 - **2026-08-09**: Feasibility study written for issue #12, assessing the chosen 2D option across
@@ -43,6 +43,83 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   `00-Meta/Project-Management/Feasibility-Study.md`; facts in Ch. 03 and Ch. 10. Sprint 0.
 - **2026-08-10**: Risk register in `03-Risk-Analysis.md` expanded from 3 to 16 risks, all traced to
   facts already recorded in the project's own documentation. Issue #11, Sprint 0.
+
+- **2026-08-22**: Board read in full for the first time through the `gh` CLI with the `read:project`
+  scope granted. 64 items, all field values including `Sprint`. Sprint 1 membership is 13
+  documentation and planning issues (5 Done, 8 Todo and unassigned), not the gameplay scope the
+  written plan gave it. Board declared the single source of truth for sprint membership; Ch. 02 and
+  `sprint-log.md` updated against it. Sprint 1.
+
+- **2026-08-22**: Game design document written for issue #22 on `feature/sprint1-planning`: board
+  topology as exact numbers, the turn sequence as a state machine, the Dice Card Pool composition and
+  its probability arithmetic, an 8-card skill card catalogue, the eight open Product Owner rules
+  written out with their rejected alternatives, and 13 edge cases settled in a table. Section 5 of
+  `Requirements-Specification.md` now points at it; one risk row re-rated. Sprint 1.
+
+- **2026-08-22**: One pager rewritten for issue #1 as a one-page overview: broken heading and
+  typographic bullets fixed, the Product Owner's wording kept where it is still correct, the MVP
+  boundary, the board sprint calendar and a pointer table added, and the rules detail moved to the
+  game design document so that two documents do not hold the same rules. Written third rather than
+  first, so the summary matches the rulebook instead of being rewritten after it. Sprint 1.
+
+- **2026-08-22**: System architecture written for issue #22's neighbour #21 on
+  `feature/sprint1-planning`: layer diagram and turn sequence diagram as Mermaid figures, a module
+  inventory of 8 modules in `core/`, 4 in `state/` and 7 in `ui/` with the FR ids each owns, the data
+  flow, and the layering justified against jQuery-handler rules as the rejected alternative. Figures
+  registered in Ch. 12 starting at 2, because open pull request #51 claims Figure 1. Sprint 1.
+
+- **2026-08-22**: Obligations book written for issue #14 on `feature/sprint1-planning`: the *how* to the
+  requirements specification's *what*, with no requirement restated. A nine-screen GUI inventory plus two
+  `should have` screens, each traced to its FR ids and its backlog issue; a technology table whose version
+  column stays empty because no `package.json` exists; and the platform committed from NFR-06 and NFR-10.
+  Two screens were found to carry no backlog issue at all, one of them a `must have`. Sprint 1.
+
+- **2026-08-22**: Test plan and quality strategy written for issue #23 on `feature/sprint1-planning`:
+  four test levels with what each cannot catch, the coverage floor and why it excludes `ui/`, 12
+  end-to-end flows mapped to FR ids, a unit test case per edge case settled in the game design document,
+  and the injectable RNG recorded as a testability requirement. It also carries **the project's first
+  written Definition of Done**, at issue, sprint and release level, which closes a condition of the
+  feasibility verdict and a prerequisite of the SMART analysis. The *test coverage discipline* risk row
+  was deliberately not re-rated. Sprint 1.
+
+- **2026-08-22**: Effort estimation written for issue #16 on `feature/sprint1-planning`: 138 story points
+  over the implementation backlog, the extended features and the open documentation issues, on a Fibonacci
+  scale anchored on issue #29 at 2 points, with the epic tree read from the board's own sub-issue graph.
+  The capacity check found that 74 must-have points remain against 19 weekdays and two implementers, so
+  the drop order of the requirements specification is now live. Three work items carrying no board issue
+  at all were found and sized, 12 points the board does not show. One risk row re-rated 4 to 3; the
+  `Story Points` field itself could not be created, for want of the `project` token scope. Sprint 1.
+
+- **2026-08-22**: Em dash sweep across the documentation, no issue, `chore` commit. Roughly 100
+  occurrences removed from 10 files, `CLAUDE.md` included, each rewritten into an ordinary sentence, a
+  colon, a comma or a bracketed aside rather than replaced mechanically with a hyphen. Two files are
+  exempt and keep theirs: `reference/style-reference.md`, which quotes a German transcript verbatim, and
+  `reference/report-checklist.md`, which quotes "ENTWURF" from the source it is adapted from. The rule
+  itself predates the sweep and is in `CLAUDE.md`; what this cleared is the backlog of text written
+  before it was enforced. Sprint 1.
+
+- **2026-08-22**: Roadmap and Gantt chart written for issue #18 on `feature/sprint1-planning`:
+  [Roadmap-and-Gantt.md](../Project-Management/Roadmap-and-Gantt.md). The Roadmap view was read rather
+  than described: it is view 1 with `ROADMAP_LAYOUT` and an empty filter, and three of its properties
+  (date-field binding, zoom, grouping) are not exposed by the API at all, so they are labelled as
+  recommendations. **Measured negative finding: dates are set on 11 of 64 board items, so the view
+  renders 4 bars and 7 dots**, all 13 Sprint 1 issues are absent from it, and the 7 Sprint 0 bars are
+  zero-length because start equals end on every one. The Gantt chart is therefore drawn in Mermaid in
+  the repository, since a Projects view cannot be exported and cannot be configured without the
+  `project` token scope. The board stays authoritative and the chart is what gets corrected if the two
+  disagree. Sprint 1.
+
+- **2026-08-22**: Project plan written for issue #15 on `feature/sprint1-planning`:
+  [Project-Plan.md](../Project-Management/Project-Plan.md), covering time, resources, dependencies and
+  risks. It is the document that had to decide rather than record, and it settled three contradictions
+  carried across four documents: **no buffer sprint is created** and the closing work becomes a dated
+  window inside Sprint 3 behind a 2026-09-11 feature freeze, **there is no dedicated Scrum Master** and
+  the one-pager's role table supersedes the unfilled Developer A/B/C one, and **the 27 unscheduled
+  implementation issues get a sprint each**, ending a deliberate deferral. Consequence, and it makes the
+  picture worse rather than better: implementation has 15 weekdays instead of 19, so the required rate
+  for the must-have set rises to 4.9 points per weekday. The critical path is 46 of 74 must-have points
+  on one chain with only 32 points of work off it, so the second implementer runs dry before the first
+  finishes. Five new risks entered the register, one of them the highest-rated row in it. Sprint 1.
 
 - **2026-08-09**: Requirements specification written on `feature/13-requirements-specification`
   (issue #13): 45 functional and 12 non-functional requirements with acceptance criteria and MoSCoW
@@ -250,18 +327,18 @@ exactly the kind of thing this file exists to keep visible.
   client's registry, the token in the wrong store. Both times the diagnosis, not the fix, was the work.
 - → Ch. 02, Ch. 07, Ch. 10
 
-### 2026-08-09 — Project goals anchored to the board's sprint dates, not to the module deadline
+### 2026-08-09: Project goals anchored to the board's sprint dates, not to the module deadline
 
 - **Chosen:** formulate the goals SMART now, taking every date from the four sprint markers on the
   GitHub board (2026-07-23 → 2026-09-17), and state in the document that the anchor is provisional.
 - **Rejected:** *waiting for the real module submission date before formulating any goal.* That date
   is unknown and has been a standing open question since 2026-08-06. Waiting would have left issues
   #10, #13 and #23 without a goal to build on for an unbounded period, and it treats the `T` criterion
-  as the expensive one when in fact it is the cheapest to substitute later — the other four criteria
+  as the expensive one when in fact it is the cheapest to substitute later. The other four criteria
   are the work.
 - **Also rejected:** *cutting the sub-goals per sprint* rather than per epic. Sprint-shaped sub-goals
   would have created a second breakdown of the same scope competing with the MoSCoW epics, and the
-  epics are the structure the board already prioritises. The sprint dates are still used — as the
+  epics are the structure the board already prioritises. The sprint dates are still used, as the
   epics' deadlines, which keeps one breakdown and one calendar rather than two of each.
 - **Also rejected:** *auditing the existing goal statements against SMART* instead of formulating new
   ones. An audit of the one-pager would have produced a list of deficiencies and still no usable goal;
@@ -272,7 +349,7 @@ exactly the kind of thing this file exists to keep visible.
   omitted.
 - **Why:** a goal that cannot be checked is not a goal, and three of the five criteria (S, A, R) were
   already derivable from documents written before this one. What was missing was a date and a set of
-  checks — and a provisional date that is named as provisional costs less than no date at all.
+  checks, and a provisional date that is named as provisional costs less than no date at all.
 - **Consequence:** if the real deadline differs, every `T` value re-anchors to it and the sub-goal
   dates move with the sprint boundaries. That is a date substitution, not a rewrite, which is why the
   dates were taken from a single named source ([sprint-log.md](sprint-log.md)) instead of being spread
@@ -280,7 +357,7 @@ exactly the kind of thing this file exists to keep visible.
   so moving one now moves a goal.
 - **Finding worth carrying into Ch. 11:** the tightest sub-goal is the *first*, not the last. SG1
   (#36) has the most sub-issues, everything else builds on it, and its sprint starts 2026-08-10 with
-  no source code, no `package.json` and no tooling in the repository — so Sprint 1 contains its own
+  no source code, no `package.json` and no tooling in the repository, so Sprint 1 contains its own
   bootstrap, which is not in its planned scope.
 - → Ch. 01, Ch. 02, Ch. 11
 ### 2026-08-09: Feasibility is affirmed conditionally, with the AI toolchain named as the condition
@@ -317,6 +394,284 @@ exactly the kind of thing this file exists to keep visible.
   when deadline pressure would suggest dropping them.
 - → Ch. 03, Ch. 10, Ch. 11
 
+### 2026-08-22: The board is the single source of truth for sprint membership
+
+- **Chosen:** the `Sprint` field on the GitHub Projects v2 board decides which issues belong to a
+  sprint. Every other document describes the plan and is corrected against the board when the two
+  disagree, never the other way round. Concretely: Sprint 1 is the 13 issues carrying `Sprint 1`
+  (#1, #9 to #16, #18, #21, #22, #23), and the 27 issues with no sprint value, including all of
+  #26 to #46, are simply not scheduled yet. They get their sprint later.
+- **Rejected:** *treating [01-Github-Project.md](../Project-Management/01-Github-Project.md) as
+  authoritative and the board as behind.* That document gives Sprint 1 the scope "Core gameplay and
+  board MVP": board grid, a 1 to 6 dice roll, the turn manager, the capture rule. The board gives
+  Sprint 1 thirteen documentation issues and not one gameplay issue. Keeping the written plan as the
+  reference would mean declaring the sprint a near-total failure on its last day, when in fact 5 of
+  its 13 actual items are Done and the gameplay work was never started because it was never
+  scheduled. That reading would be false rather than merely pessimistic.
+- **Also rejected:** *maintaining both and reconciling them per sprint.* Two sources agree only until
+  the first change, and the 2026-08-06 board read already found four configuration facts that
+  contradicted the written plan (Status triple instead of five columns, single-select instead of
+  Iteration, no story points, no Category). A reconciliation step would run every sprint and be
+  skipped under deadline pressure exactly when it matters.
+- **Also rejected:** *back-filling the board to match the written plan*, i.e. moving #26 to #29, #31
+  and #36 into Sprint 1 now. It would make the two agree and it would falsify the record: those
+  issues were not worked on in Sprint 1, and a board that says they were destroys the plan-versus-
+  actual comparison the sprint log exists for.
+- **Why:** the board is the artefact the team actually operates, the one all three members see, and
+  the only one with per-item state that changes as work happens. A prose plan cannot be queried and
+  goes stale silently. This is the same argument the documentation rules already make for numbers:
+  prefer the thing that can be re-read over the thing that was written down once.
+- **Consequence:** Sprint 1 is a documentation sprint. The gameplay scope the plan put there is
+  unstarted and unscheduled, so it has to land in Sprint 2 or later, and Sprint 2's board scope
+  (currently empty) is now a blocking decision rather than a later one, with the sprint starting
+  2026-08-24. Second consequence: the repository still contains no source code on the day Sprint 1
+  ends, which confirms the finding recorded on 2026-08-09 that the first sub-goal was the tightest
+  one, and moves the bootstrap of the npm project into Sprint 2 on top of Sprint 2's own scope.
+- **Finding worth carrying into Ch. 11:** the divergence was invisible for two weeks because nobody
+  could read the `Sprint` field. The written plan was not wrong when it was written, it was simply
+  never checked against reality, and the reason it was never checked was a missing OAuth scope. A
+  tooling gap silently became a planning gap.
+- **Finding worth carrying into Ch. 02:** all 8 open Sprint 1 issues are unassigned on the last day
+  of the sprint. The board's assignee field is populated on 9 of 47 issues overall, so "who is doing
+  this" is currently not answered by the board at all, only by the RACI matrix and by memory.
+- → Ch. 02, Ch. 11
+
+### 2026-08-22: The eight open gameplay rules are decided in the game design document, not left open
+
+- **Chosen:** all eight Product Owner decisions listed in section 5 of
+  [Requirements-Specification.md](../Project-Management/Requirements-Specification.md) are written
+  out as **rules** in [Game-Design-Document.md](../Project-Management/Game-Design-Document.md), each
+  with its reason and its rejected alternatives, plus a sign-off table naming Fabian Gemming as the
+  person who confirms or overrides them. Implementation follows the document provisionally.
+- **Rejected:** *waiting for the sign-off before writing the rulebook.* The eight decisions block the
+  turn manager, the movement rules, the whole Skill Card Pool and every unit test over them. Sprint 1
+  ends 2026-08-23 and the repository still has no `src/`, so waiting would have pushed the rules
+  decision into Sprint 2 implementation, which is precisely the "rule decisions under time pressure"
+  scenario that the priority-4 risk row *Board layout & win conditions underspecified* describes.
+- **Also rejected:** *writing the eight as proposals again, in a second document.* The specification
+  already holds them as proposals. Restating them in that form would have produced two documents
+  saying the same undecided thing, and no rulebook.
+- **Also rejected:** *deciding them silently during implementation*, which is the default outcome of
+  not writing them down. A rule invented in a pull request has no reason attached and no rejected
+  alternative recorded, which is the material Chapter 05 and Chapter 11 are written from.
+- **Why the decisions are safe to take this way:** each of the eight is written as *rule plus reason
+  plus what lost*, so an override is a documented change to one section rather than a rewrite. The two
+  most consequential ones (FR-13 exact count, FR-22/FR-27 the card economy) are the two whose
+  alternatives are named most fully, precisely because they are the most likely to be overturned.
+- **The decision that is deliberately not taken:** the visual form of the non-colour player
+  identifier (NFR-12). The rule states that a stable non-colour identity must exist; which shape,
+  pattern or label carries it is a Claude Design decision and issue #3, and inventing it here would
+  break the rule in `CLAUDE.md` that Claude Code does not invent design rules.
+- **Consequence:** the risk row *Board layout & win conditions underspecified* is re-rated from
+  priority 4 to 3 in [03-Risk-Analysis.md](../Project-Management/03-Risk-Analysis.md). Likelihood
+  drops because the ambiguity is written down; impact stays high because the rules are unsigned and
+  the composition is unplaytested, so the residual risk is real rather than closed.
+- → Ch. 01, Ch. 05, Ch. 11
+
+### 2026-08-22: The one pager stays a summary; the rules move to the game design document
+
+- **Chosen:** the rewritten [00-One-Pager.md](../Project-Management/00-One-Pager.md) keeps the base
+  game in a handful of lines and points at
+  [Game-Design-Document.md](../Project-Management/Game-Design-Document.md) for everything else. The
+  Product Owner's original wording is kept wherever it is still correct.
+- **Rejected:** *expanding the one pager into the rulebook*, which is the direction it was already
+  drifting: it was the only rules source in the project for two weeks. Two documents holding the same
+  rules drift apart, and the one-pager is the document people read first, so it is the worst place for
+  the copy that goes stale.
+- **Also rejected:** *leaving it untouched as a historical artefact* and writing a new overview
+  beside it. It is issue #1 and it is linked from `CLAUDE.md`, the README and six documents; a second
+  overview would have split the front door in two. The original text is recoverable from git history,
+  which is what makes editing in place safe.
+- **Why it was written third, after the game design document and the architecture**, rather than
+  first as the plan's issue order would suggest: a summary written before the rulebook would have been
+  rewritten immediately after it. The cost of the ordering is that issue #1 stayed open two documents
+  longer, which is visible on the board and is the cheaper of the two.
+- **Consequence:** the one-pager now carries three open points on its face (no buffer sprint on the
+  board, Sprint 3 is 1½ weeks, the gameplay scope has no sprint), handed to the project plan, issue
+  #15. A front-door document naming its own open points is the intended effect and not an oversight.
+- → Ch. 01, Ch. 02
+
+### 2026-08-22: The 300-line file limit is read as applying to code, not to documents
+
+- **Chosen:** the 300-line limit in [CLAUDE.md](../../CLAUDE.md) is read as binding on source, tests
+  and config, and not on documents under `00-Meta/Project-Management/`. The game design document is
+  longer than 300 lines and is not split.
+- **Rejected:** *splitting the rulebook into several files of under 300 lines each*, for example one
+  per mechanic. A rulebook is consulted by searching for a rule, and the cross-references between
+  rules are dense: the home-entry rule, the pool composition and the track length are one argument in
+  three sections. Splitting it would put the reason for a rule in a different file from the rule.
+- **Why this is a reading and not an exception:** the limit exists so that a unit of code stays small
+  enough to review and test, which is the reason given for it in `CLAUDE.md` alongside the layering.
+  Neither reason transfers to prose. The rule was already being read this way before this entry:
+  `Feasibility-Study.md` is 257 lines and `Requirements-Specification.md` is longer, and
+  `00-Meta/Documentation/` carries the same exemption explicitly.
+- **Consequence:** the exemption now covers both documentation directories, and it is recorded once
+  here instead of being re-argued per document. Code and tests keep the limit unchanged, and it is
+  still unenforced: an ESLint `max-lines` rule remains the open item recorded in Ch. 01.
+- → Ch. 02, Ch. 07
+
+### 2026-08-22: The obligations book names screens and responsibilities, not a design system
+
+- **Chosen:** the GUI section of [Obligations-Book.md](../Project-Management/Obligations-Book.md)
+  commits to a screen inventory, each screen's responsibility and the FR ids it serves, and stops
+  there. Colour palettes, spacing scales, typography and component looks are not in it.
+- **Rejected:** *specifying the GUI down to its visual appearance*, which is what an obligations book
+  in a traditional waterfall project would do and what the issue title (*System Architecture, GUI,
+  Technology, Platform*) can be read as asking for. It was rejected because [CLAUDE.md](../../CLAUDE.md)
+  assigns design to Claude Design and issue #3 and explicitly forbids inventing design rules here. A
+  palette written in this document would be a rule the design system then has to either obey or
+  contradict.
+- **Rejected:** *leaving the GUI section out until the design system exists*. It would have left the
+  issue unfinishable for a reason that has nothing to do with the issue: what has to be on screen is
+  derivable from FR-31 to FR-41 today, and it is what the architecture and the estimation both need.
+- **The boundary that resulted:** what has to be on screen is a requirement, what it looks like is a
+  design decision. That line is drawn once in section 2.1 and is the reason the section is short.
+- **Consequence:** the inventory found two screens with no backlog issue, the rules screen (FR-35) and
+  the language switch (FR-34, `must have`, with NFR-03). Splitting the work this way is what made the
+  gap visible: a section written as visual specification would have described what those screens look
+  like without noticing that nobody is scheduled to build them.
+- → Ch. 04, Ch. 03
+
+### 2026-08-22: The Definition of Done lives with the quality strategy and has three levels
+
+- **Chosen:** the Definition of Done is written in section 5 of
+  [Test-Plan-and-Quality-Strategy.md](../Project-Management/Test-Plan-and-Quality-Strategy.md), at
+  three levels: an issue is done, a sprint is done, a release is done. It had never been written down
+  anywhere in this repository.
+- **Why it lives there and not in a process document:** most of its clauses are test and coverage
+  clauses. Acceptance criteria met, unit tests in the same commit, lint and tests passing, coverage not
+  below the NFR-05 floor. Putting it next to the coverage target it depends on keeps the two from
+  drifting; the process half of it is cross-referenced from Ch. 02 instead of duplicated.
+- **Why three levels:** the same phrase was being used for three different things. All four SMART
+  sub-goals check "epic closed", the sprint log checks a sprint's scope, and the branching policy checks
+  that `main` is playable. One list satisfying all three would have been either too loose to close an
+  issue with or too heavy to close a sprint with.
+- **Rejected:** *one flat checklist*, for the reason above. **Rejected:** *a definition that requires
+  green CI*, which is the version most projects write. There is no CI, so it would have been unmeetable
+  from the day it was written, and an unmeetable definition is worse than a modest one because it gets
+  ignored wholesale rather than in part. The gates a CI workflow would run are named in section 6 of the
+  same document instead, so the definition tightens when the workflow lands.
+- **Rejected:** *adding a review checklist, a performance gate and an accessibility gate*. Each is named
+  in section 5.4 with the reason it is left out: a three-person team will not run a checklist, NFR-11 is
+  measured once in the buffer-sprint playtest, and NFR-12's greyscale check is a per-release check.
+- **Consequence:** condition 4 of the feasibility verdict and the Definition of Done row of the SMART
+  prerequisites are met, and both are annotated rather than deleted so the sequence stays visible. What
+  is not met is **adoption**: no sprint has been closed against it, and the team has not confirmed it in
+  a planning slot. Writing a definition is not the same as agreeing to one, and the report should not
+  let the first stand in for the second.
+- → Ch. 08, Ch. 02
+
+### 2026-08-22: The backlog is the work breakdown structure, and the estimate is in points
+
+- **Chosen:** the work breakdown for the effort estimation is the backlog itself, four epics with their
+  children as read from the board's sub-issue graph, and the estimate is in story points on the
+  Fibonacci scale 1, 2, 3, 5, 8, 13, anchored on issue #29 at 2 points.
+- **Rejected:** *writing the project structure plan first*. #17 PSP is not in Sprint 1 on the board, so
+  it is not this sprint's work, and the estimation is a precondition three other documents already defer
+  to. Waiting for #17 would have blocked #15 and #18 behind an issue nobody scheduled.
+- **Why the backlog is acceptable as the breakdown, and not merely convenient:** the epic-to-child tree
+  matches the requirement blocks of the requirements specification section 4 exactly, and it was read
+  from the board rather than inferred from titles. A separate structure plan would restate the same tree
+  in a second place, where the two would then diverge. The recommendation recorded in the estimation is
+  that #17 adopts this tree instead of inventing another.
+- **Rejected:** *hours*. Already decided on 2026-08-06 and not reopened. Points are also the only unit
+  that makes the buffer sprint's velocity slide producible, since a velocity has to sum estimates and an
+  issue count does not sum to anything.
+- **Rejected:** *estimating Sprint 0 and Sprint 1 retroactively* so that a velocity would exist
+  immediately. Estimating work after it is finished produces a number that flatters whatever it is
+  compared against. The sprint log records instead that story-point velocity starts with Sprint 2.
+- **Consequence, and it is the finding rather than the method:** 74 of the 110 open implementation points
+  are `must have`, and no must-have is droppable without the deliverable ceasing to be a game. Applying
+  the drop order of the requirements specification in full removes 36 points and leaves all 74. So the
+  remaining levers are the calendar and the quality bar, both of which belong to the Product Owner and to
+  the project plan of issue #15. The estimate turned a MoSCoW count into a cost, which is what it was
+  named as missing for.
+- **Second consequence:** the estimate found 12 points of `must have` work with no board issue, the npm
+  bootstrap and the i18n setup, plus 2 points of CI. A board-derived plan understates the work by that
+  much, and the finding came out of estimating rather than out of planning.
+- → Ch. 02, Ch. 11
+
+### 2026-08-22: The Gantt chart is drawn in the repository, and the board stays authoritative
+
+- **Chosen:** the Gantt chart lives in [Roadmap-and-Gantt.md](../Project-Management/Roadmap-and-Gantt.md)
+  as a Mermaid `gantt` block, and the board's Roadmap view stays the live tracking surface. The
+  configuration of the view is recorded in the same document.
+- **Rejected:** *the board's Roadmap view as the only deliverable*, which is the literal reading of issue
+  #18 ("Creation in Github"). Two things make it insufficient rather than merely inconvenient. **A
+  Projects view has no export**, so the only artefact is a screenshot: a binary that does not diff, goes
+  stale when any date changes, and has to be retaken by hand. And **the view cannot be configured from
+  here**, because grouping, zoom and the date fields of the 13 Sprint 1 issues all need the `project`
+  token scope the `gh` token does not carry.
+- **Rejected:** *waiting for the token scope before closing the issue*. The scope needs an interactive
+  browser flow that an agent cannot perform, so waiting would have parked the last Sprint 1 issue behind
+  a step nobody had scheduled. What can be produced without it was produced, and what cannot is listed as
+  an outstanding action with the reason.
+- **The risk this creates, and how it is closed:** drawing the plan in the repository creates a second
+  place where the schedule lives, which is exactly the failure mode the sprint-membership decision of the
+  same day exists to prevent. So the precedence is stated in the document itself: **if the chart and the
+  board disagree, the board wins and the chart is corrected.** A second copy with a stated precedence is
+  a mirror; a second copy without one is a fork.
+- **Consequence for the report:** Figure 5 is a text diagram that renders on GitHub and exports at the
+  end, the same trade-off already taken for the two architecture figures. Figure 6 stays reserved for the
+  board screenshot, because issue #18 does ask for the view, and it is not worth taking while the board
+  shows 4 bars and 7 dots out of 64 items.
+- → Ch. 02, Ch. 11, Ch. 12
+
+### 2026-08-22: There is no buffer sprint, and Sprint 3 is not one under another name
+
+- **Chosen:** the board's four sprints hold. No fifth sprint is created. The closing work of the written
+  plan's buffer week becomes a **dated window inside Sprint 3**, 2026-09-14 to 2026-09-17, behind a
+  **feature freeze at the end of 2026-09-11**.
+- **Rejected:** *board `Sprint 3` doubles as the buffer sprint*. This was the reading the sprint log had
+  suggested since 2026-08-06, on the strength of Sprint 3 being 1½ weeks and sitting where the buffer
+  would. It was rejected because it is a label rather than a plan: it leaves the boundary between
+  building and closing undefined, and that boundary is the only thing worth deciding here. Length alone
+  is not evidence of intent.
+- **Rejected:** *adding a fifth sprint to the board after 2026-09-17*. No date after 2026-09-17 is known
+  to be available. The board's last date is 2026-09-17 and the module's real deadline is recorded nowhere
+  in this repository, so planning past it would be planning into a period that may not exist. That
+  unknown is now a rated risk of its own rather than an assumption.
+- **Why a window and not a sprint:** the closing scope is real work with real issues, #24 playtest and
+  #25 deck and video, 10 points between them, plus the report. Dropping the buffer sprint without
+  rehoming its scope would have quietly dropped the usability evidence the report needs and the fallback
+  video that mitigates the live-demo risk.
+- **Consequence, and it is the cost rather than the benefit:** implementation loses 4 weekdays. 15 remain
+  instead of 19, and the required rate for the 74 must-have points rises from 3.9 to 4.9 points per
+  weekday. The estimation document keeps both figures side by side rather than overwriting the first,
+  because the difference between them is exactly what putting the closing work in the calendar costs.
+- **Sprint 0's 2½-week length is deliberately left uncorrected.** Back-dating a board date to match the
+  prose plan would be editing history to make a plan look kept. It stays a Chapter 11 finding: the first
+  sprint ran over half again its planned length before any tracking existed to notice.
+- → Ch. 02, Ch. 11
+
+### 2026-08-22: No dedicated Scrum Master, and the role table that names people wins
+
+- **Chosen:** the role table of [00-One-Pager.md](../Project-Management/00-One-Pager.md) holds. Fabian
+  Gemming is Product Owner, Lars Bolender and Benedict Glatz are Scrum Members who also carry the Scrum
+  Master work. The unnamed Developer A/B/C table in
+  [01-Github-Project.md](../Project-Management/01-Github-Project.md) is superseded and kept in place with
+  a note, not deleted.
+- **Why:** the one-pager names real people, it is the Product Owner's own document, and it matches what
+  actually happened over two sprints. The A/B/C table names placeholders and was never filled in, which
+  is an unfinished template rather than a competing decision.
+- **Rejected:** *appointing one of the three as Scrum Master now*. It would make the report's process
+  chapter tidier and it would be a fiction. Nobody performed that role for two sprints, and describing a
+  role nobody filled is worse for the grade than explaining why a team of three did without one.
+- **Rejected:** *keeping the A/B/C table's three technical lead roles*. They assume three implementers
+  and there are two, because the Product Owner does not implement. What survives is the idea behind it,
+  which is naming a technical area per person instead of leaving ownership implicit.
+- **Rejected:** *splitting the two implementers by layer*, which is the obvious move given that the
+  architecture is layered. The critical path runs through `core/`, `state/` and `ui/` in sequence, so a
+  layer split would put one person on the critical path and the other waiting on it. Work is split per
+  issue at sprint planning instead. Recorded because the layer split looks natural and the architecture
+  is not a work breakdown.
+- **Negative finding that comes with the decision:** the board hygiene a Scrum Master would have owned
+  was skipped for the whole of Sprint 1. `Status` and `Sprint` went unread until 2026-08-22, the eight
+  open issues went unassigned until the second-to-last day, and one ceremony has been minuted in the
+  whole project. Resolving the contradiction does not resolve that, and the plan says so rather than
+  implying the roles are now covered.
+- → Ch. 02, Ch. 11
+
 ---
 
 ## Challenges
@@ -333,17 +688,17 @@ exactly the kind of thing this file exists to keep visible.
   The lesson worth carrying into the report is that "the integration is installed" and "this
   particular client can see it" are different claims, and only the second one is testable.
 
-- **2026-08-09 — Undoing an unreviewed merge cost far more than the review would have.** Pull request
-  #48 was merged into `dev` without approval. Reopening it was impossible — GitHub closes merged pull
-  requests permanently — and by the time it was noticed, four branches had been cut from the merge
+- **2026-08-09: Undoing an unreviewed merge cost far more than the review would have.** Pull request
+  #48 was merged into `dev` without approval. Reopening it was impossible, since GitHub closes merged pull
+  requests permanently, and by the time it was noticed, four branches had been cut from the merge
   commit and all four carried the unreviewed work. The recovery was a rewrite of published history:
   `dev` force-reset one commit back, the four branches re-parented with `git rebase --onto`, five
   force-pushes, and every teammate obliged to re-fetch. What made it tractable at all was a property
-  of the graph rather than any tooling — the merge commit's tree was identical to the commit it
+  of the graph rather than any tooling: the merge commit's tree was identical to the commit it
   merged, so re-parenting could not change file content, and `git diff` against the old remote refs
   proved it before anything was pushed. The lesson for Chapter 11 is the asymmetry: the review that
   was skipped would have cost minutes, the undo cost an hour and a coordinated reset across three
-  people. It is also the concrete argument for the branch-protection ruleset left open in Ch. 02 —
+  people. It is also the concrete argument for the branch-protection ruleset left open in Ch. 02:
   the control was absent twice in one day, and the second absence is what turned a process slip into
   a history rewrite.
 

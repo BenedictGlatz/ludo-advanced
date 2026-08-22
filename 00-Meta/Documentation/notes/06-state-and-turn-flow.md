@@ -22,7 +22,19 @@ that shows the layering was a real design decision rather than a folder naming c
 
 ## Facts
 
-*(Nothing yet: `src/state/` does not exist.)*
+*(Nothing observed yet: `src/state/` does not exist.)*
+
+**Planned structure recorded 2026-08-22, issues #21 and #22.** The 4 planned modules of `state/`
+(`game-state`, `turn-manager`, `intents`, `match`), the intent vocabulary and the five-step data flow
+are in [System-Architecture.md](../../Project-Management/System-Architecture.md) sections 2.2 to 4,
+with the facts summarised in [03-tech-stack.md](03-tech-stack.md). The turn sequence itself is
+section 3 of [Game-Design-Document.md](../../Project-Management/Game-Design-Document.md), as eight
+steps, and the architecture document draws the same eight as an interaction between the layers
+(Figure 3). Two points belong to this chapter specifically: the **reaction window is a phase of the
+turn** held by `state/turn-manager.js` rather than an event the cards raise, which follows from FR-25
+being a requirement on the turn manager; and the rule check and the state write are separate steps on
+purpose, so that the FR-32 legal-move highlighting and the validation on commit are one rule
+implementation and not two. This chapter fills from observation once the code exists.
 
 ## Decisions
 
@@ -34,5 +46,7 @@ that shows the layering was a real design decision rather than a folder naming c
   holds the single game-state object and its transitions, is the only writable source of truth,
   imports `core/` and never `ui/`.
 - Multiplayer is planned for Sprint 2. Whether it is local hot-seat or networked changes this
-  chapter substantially: networked play makes state authority a real question. Undecided.
+  chapter substantially: networked play makes state authority a real question. Undecided. **The MVP
+  is hot-seat** (FR-03), and the architecture document states plainly that where a network layer
+  would attach is not answered, rather than guessing at it.
 - No decision yet on whether a game in progress survives a page reload.

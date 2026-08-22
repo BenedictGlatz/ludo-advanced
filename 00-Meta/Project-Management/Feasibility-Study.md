@@ -304,8 +304,11 @@ them are decisions rather than work.
    the `must have` set, and the sprint plan still lists them.
 3. **The buffer-sprint contradiction is decided** and written into
    [sprint-log.md](../Documentation/sprint-log.md).
-4. **A Definition of Done is written**: it is the same prerequisite the SMART analysis names, and
-   without it "epic closed" is not comparable between three people.
+4. ~~**A Definition of Done is written**~~: it is the same prerequisite the SMART analysis names, and
+   without it "epic closed" is not comparable between three people. **Met 2026-08-22 (issue #23):**
+   section 5 of [Test-Plan-and-Quality-Strategy.md](Test-Plan-and-Quality-Strategy.md) states it at
+   issue, sprint and release level. The condition is met as written; adopting it in a planning slot and
+   closing a sprint against it has not happened yet.
 5. **The AI toolchain stays available and the team keeps reviewing what it produces.** This is the
    condition the verdict most depends on and the one the team controls least; the risk side of it
    belongs to **#11**.

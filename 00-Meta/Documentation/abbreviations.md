@@ -23,6 +23,7 @@ noise.
 | npm | Node Package Manager |
 | PO | Product Owner |
 | PR | Pull Request |
+| RNG | Random Number Generator |
 | UI | User Interface |
 | UX | User Experience |
 
@@ -40,3 +41,9 @@ Not abbreviations, but terms the report uses in a specific sense and should defi
 | Capture | Sending an opponent's pawn back to its start area by landing exactly on it |
 | Pawn | One of a player's four pieces |
 | Track | The shared path pawns move along |
+| Start area | The four slots holding a player's pawns before they enter the track and after they are captured |
+| Entry square | The shared-track square a pawn is placed on when it leaves the start area: square 13 × p for player p |
+| Turn-off square | The last shared-track square a pawn stands on before entering its own home column |
+| Home column | The five squares before home, enterable only by their owner |
+| Home | The goal area a pawn reaches at relative position 58 and never leaves |
+| Reaction window | The bounded interruption of a resolving action in which holders of Reaction cards are prompted |

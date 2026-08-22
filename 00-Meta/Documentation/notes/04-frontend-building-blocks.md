@@ -21,7 +21,44 @@
 
 ## Facts
 
-*(Nothing yet: `src/` does not exist.)*
+*(Nothing observed yet: `src/` does not exist.)*
+
+**Planned structure recorded 2026-08-22, issue #21.** The 7 planned modules of `ui/` and the FR ids
+each one owns are in [System-Architecture.md](../../Project-Management/System-Architecture.md)
+section 2.3, with the facts summarised in [03-tech-stack.md](03-tech-stack.md). Two points from it
+belong to this chapter specifically: all jQuery event handlers live in one module, `ui/events.js`, and
+each handler translates a DOM event into exactly one intent and dispatches it; and `ui/` carries no
+line-coverage target, because a coverage number for this layer would measure how much jQuery ran
+rather than whether anything works. This chapter fills from observation once the code exists.
+
+**Screen inventory recorded 2026-08-22, issue #14.** Section 2 of
+[Obligations-Book.md](../../Project-Management/Obligations-Book.md) holds the full table. Facts for this
+chapter:
+
+- **Nine screens and screen regions in the MVP, plus two `should have` ones.** S1 main menu, S2 match
+  setup, S3 board, S4 dice hand, S5 skill hand, S6 move hints and refusal, S7 HUD, S8 pause, S9 win.
+  Should-have: S10 rules screen, S11 audio and language settings.
+- **S3 to S7 are one screen with five regions, not five screens.** The player never navigates between
+  them: FR-31 requires all five to be visible at once. This is also the answer to this chapter's routing
+  question: a single-screen game has no routing, and the reason is a requirement rather than a
+  simplification.
+- **The reaction window is a modal state of S5, not a screen of its own.** It is a phase of the turn
+  held by `state/turn-manager.js`, and in a hot-seat game every prompted player shares one screen
+  (FR-03), so the prompt has nowhere else to happen.
+- **S6 exists because of NFR-08 alone.** A refusal has to carry its reason, which is why the
+  legal-move set is computed in `core/` and handed to the view instead of re-derived while rendering.
+  It is the clearest case of the layering rule doing visible work for a player.
+- **S7, the HUD, shows pawn progress only.** No resource or energy display, because section 6.7 of the
+  game design document rules the mechanic out of the MVP, although issue #35 is titled *Game HUD &
+  Resource Display*.
+- **Negative finding: two screens carry no backlog issue.** S10 (FR-35, `should have`) and the language
+  half of S11 (FR-34, **`must have`**, with NFR-03) appear in no issue on the board. A must-have
+  requirement with no issue means the board understates the remaining work; carried into the effort
+  estimation for issue #16.
+- **No design specification exists yet**, so the screen inventory is the complete GUI commitment for
+  now. Palette, spacing and typography stay with Claude Design and issue #3, and the obligations book
+  draws the boundary explicitly: what has to be on screen is a requirement, what it looks like is a
+  design decision.
 
 ## Decisions
 

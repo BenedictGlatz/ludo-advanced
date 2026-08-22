@@ -20,17 +20,17 @@ Read [reference/style-reference.md](reference/style-reference.md) before writing
 | #   | Note | Covers | Status |
 | --- | ---- | ------ | ------ |
 | 01 | [01-requirements-and-goals.md](notes/01-requirements-and-goals.md) | Target players, the problem, MVP scope, MoSCoW, what is deliberately out of scope | backlog, MoSCoW and SMART goals transcribed |
-| 02 | [02-project-management.md](notes/02-project-management.md) | Scrum setup, roles, sprints, GitHub Projects board, ceremonies, definition of done | board configuration transcribed |
+| 02 | [02-project-management.md](notes/02-project-management.md) | Scrum setup, roles, sprints, GitHub Projects board, ceremonies, definition of done | partial: board, roles, schedule, estimation and Roadmap recorded; ceremonies still unrecorded |
 | 03 | [03-tech-stack.md](notes/03-tech-stack.md) | Languages, libraries, versions, why each was chosen, what was rejected | rejected options and the technical feasibility verdict recorded; reasons for the chosen stack still missing |
-| 04 | [04-frontend-building-blocks.md](notes/04-frontend-building-blocks.md) | `src/ui/`, `src/i18n/`: components, rendering, event binding, localisation | empty |
+| 04 | [04-frontend-building-blocks.md](notes/04-frontend-building-blocks.md) | `src/ui/`, `src/i18n/`: components, rendering, event binding, localisation | partial: the screen inventory recorded; nothing implemented |
 | 05 | [05-game-core-building-blocks.md](notes/05-game-core-building-blocks.md) | `src/core/`: board topology, movement, capture, dice card pool, skill cards | empty |
 | 06 | [06-state-and-turn-flow.md](notes/06-state-and-turn-flow.md) | `src/state/`: the seam between core and ui, turn flow, state transitions | empty |
 | 07 | [07-tooling.md](notes/07-tooling.md) | npm scripts, package management, ESLint, Prettier, Vite dev/prod build, deployment | target state only; local access findings recorded |
-| 08 | [08-quality.md](notes/08-quality.md) | Unit tests, coverage, E2E, CI/CD, code comments | empty |
+| 08 | [08-quality.md](notes/08-quality.md) | Unit tests, coverage, E2E, CI/CD, code comments | partial: strategy and Definition of Done recorded; nothing measured, since no code exists |
 | 09 | [09-source-code-overview.md](notes/09-source-code-overview.md) | Size and metrics: **the only chapter where numbers live** | empty |
 | 10 | [10-ai-driven-engineering.md](notes/10-ai-driven-engineering.md) | How AI was used in the workflow, what it was good and bad at | conventions, tool split and the precondition finding recorded; the honest assessment waits for real experience |
 | 11 | [11-project-report.md](notes/11-project-report.md) | Plan vs actual, challenges, lessons learned | empty |
-| 12 | [12-appendix.md](notes/12-appendix.md) | Tables, figures and code excerpts moved out of the running text | empty |
+| 12 | [12-appendix.md](notes/12-appendix.md) | Tables, figures and code excerpts moved out of the running text | partial: figures 2 to 5 registered, 1 and 6 reserved |
 | 13 | [13-ai-index.md](notes/13-ai-index.md) | The AI index: **generated**, never hand-maintained | empty |
 
 Status values: `empty` → `partial` → `ready`. Update the row when a chapter's note becomes usable.
@@ -50,8 +50,24 @@ Status values: `empty` → `partial` → `ready`. Update the row when a chapter'
 **Analysis documents outside this directory.** These are deliverables of their own backlog issues, not
 notes. They live in `00-Meta/Project-Management/` and are cited from the chapter that uses them:
 
-- [SMART-Analysis.md](../Project-Management/SMART-Analysis.md) — the project goal and four epic-level
+- [SMART-Analysis.md](../Project-Management/SMART-Analysis.md): the project goal and four epic-level
   sub-goals, formulated SMART (issue #9). Feeds Ch. 01 and the plan-versus-actual comparison in Ch. 11.
+- [Project-Plan.md](../Project-Management/Project-Plan.md): time, resources and risks (issue #15). The
+  document that decides the buffer sprint, the role contradiction and the sprint assignment of the
+  implementation backlog, with the critical path and the required rate. Feeds Ch. 02 and Ch. 11.
+- [Effort-Estimation.md](../Project-Management/Effort-Estimation.md): the open work in story points
+  (issue #16), with the capacity check and the finding that the must-have set does not fit. Feeds Ch. 02.
+- [Test-Plan-and-Quality-Strategy.md](../Project-Management/Test-Plan-and-Quality-Strategy.md): test
+  levels, coverage floor, E2E flows and the Definition of Done (issue #23). Feeds Ch. 08 and Ch. 02.
+- [Obligations-Book.md](../Project-Management/Obligations-Book.md): architecture, GUI inventory,
+  technology and platform (issue #14). Feeds Ch. 03 and Ch. 04.
+- [Game-Design-Document.md](../Project-Management/Game-Design-Document.md): the rulebook to edge-case
+  level (issue #22). Feeds Ch. 01 and Ch. 05.
+- [System-Architecture.md](../Project-Management/System-Architecture.md): layer and turn-sequence
+  diagrams, module inventory (issue #21). Feeds Ch. 03, Ch. 05 and Ch. 06.
+- [Roadmap-and-Gantt.md](../Project-Management/Roadmap-and-Gantt.md): the schedule as a Mermaid Gantt
+  chart plus the measured configuration and limits of the board's Roadmap view (issue #18). Feeds Ch. 02,
+  Ch. 11 and Ch. 12.
 
 ---
 
@@ -116,20 +132,33 @@ Standing list. Resolve and delete, or move into the chapter that answers it.
   adapted from a sample report for a *different module with a different professor*, weighted toward
   project management because that is this module's focus. Re-map once the real requirements arrive:
   the notes are facts, so a different catalogue is a re-sort, not a rewrite.
-- **The two role tables contradict each other.** [00-One-Pager.md](../Project-Management/00-One-Pager.md)
-  names Fabian Gemming as Product Owner and Lars Bolender and Benedict Glatz as Scrum Members with
-  no dedicated Scrum Master. [01-Github-Project.md](../Project-Management/01-Github-Project.md) has
-  an unnamed Developer A/B/C table that *does* include a Scrum Master. Which one holds needs
-  deciding, and the outcome belongs in Chapter 02.
+- ~~**The two role tables contradict each other.**~~ **Resolved 2026-08-22, issue #15**, in section 3.1
+  of [Project-Plan.md](../Project-Management/Project-Plan.md): the
+  [00-One-Pager.md](../Project-Management/00-One-Pager.md) table holds (Fabian Gemming Product Owner,
+  Lars Bolender and Benedict Glatz Scrum Members, no dedicated Scrum Master) and the unnamed Developer
+  A/B/C table in [01-Github-Project.md](../Project-Management/01-Github-Project.md) is superseded as an
+  unfinished template. Appointing a Scrum Master was rejected as a fiction, since nobody performed the
+  role for two sprints. The facts are in [02-project-management.md](notes/02-project-management.md),
+  including the negative finding that follows: the board hygiene a Scrum Master would own was skipped
+  for all of Sprint 1.
 - ~~**No calendar dates exist for the sprints.**~~ **Resolved 2026-08-06**: recovered from the
-  board's sprint markers and filled into [sprint-log.md](sprint-log.md). Two contradictions came with
-  them and are open: the board has no buffer sprint, and its Sprint 0 is 2½ weeks against the planned
-  1 week.
-- **Velocity and burn-down charts cannot currently be produced.** The board has no story point field
-  and no Iteration field, and `Status` and `Sprint` are unset on all 50 items. Both charts are named
-  as buffer-sprint presentation content. Add and back-fill the fields before Sprint 1 closes, or drop
-  the slides and explain why in Chapter 11: see
-  [02-project-management.md](notes/02-project-management.md#board).
+  board's sprint markers and filled into [sprint-log.md](sprint-log.md). The two contradictions that
+  came with them were **decided 2026-08-22, issue #15**: no buffer sprint is created and the closing
+  work becomes a dated window inside Sprint 3 behind a 2026-09-11 feature freeze, and Sprint 0's 2½
+  weeks stay uncorrected as a Chapter 11 finding.
+- **The module's real deadline is unknown.** Every date in
+  [Project-Plan.md](../Project-Management/Project-Plan.md) rests on 2026-09-17 because that is the last
+  date the board carries, and nothing confirms it is the actual one. Part of the unknown-module-
+  requirements gap above, separated out because it is one question to one person and it changes every
+  figure in the plan. Rated priority 4 in
+  [03-Risk-Analysis.md](../Project-Management/03-Risk-Analysis.md).
+- **Velocity and burn-down charts cannot currently be produced.** Partly revised 2026-08-22: `Status`
+  is now set on all 64 board items and `Sprint` on 20, and every open issue is estimated in
+  [Effort-Estimation.md](../Project-Management/Effort-Estimation.md). What is still missing is the
+  `Story Points` field itself and an Iteration field, so **velocity becomes producible from Sprint 2
+  once the field exists and burn-down stays impossible**, because it needs dated status transitions the
+  plain single-select `Sprint` field cannot provide. Both are blocked on the same missing `project`
+  token scope: see [02-project-management.md](notes/02-project-management.md#board).
 - **No CI/CD pipeline and no deployment target** have been decided. Both are normal report chapters;
   if they stay absent, Chapter 08 says so and explains why rather than omitting the topic.
 - **Licence is undetermined** (`README.md` says "To be determined"). Since 2026-08-09 this is a named
