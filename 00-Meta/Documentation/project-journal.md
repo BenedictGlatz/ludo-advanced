@@ -68,6 +68,12 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   flow, and the layering justified against jQuery-handler rules as the rejected alternative. Figures
   registered in Ch. 12 starting at 2, because open pull request #51 claims Figure 1. Sprint 1.
 
+- **2026-08-22**: Obligations book written for issue #14 on `feature/sprint1-planning`: the *how* to the
+  requirements specification's *what*, with no requirement restated. A nine-screen GUI inventory plus two
+  `should have` screens, each traced to its FR ids and its backlog issue; a technology table whose version
+  column stays empty because no `package.json` exists; and the platform committed from NFR-06 and NFR-10.
+  Two screens were found to carry no backlog issue at all, one of them a `must have`. Sprint 1.
+
 - **2026-08-09**: Requirements specification written on `feature/13-requirements-specification`
   (issue #13): 45 functional and 12 non-functional requirements with acceptance criteria and MoSCoW
   priorities, a drop order agreed in advance, and eight gameplay decisions handed to the Product
@@ -456,6 +462,28 @@ exactly the kind of thing this file exists to keep visible.
   here instead of being re-argued per document. Code and tests keep the limit unchanged, and it is
   still unenforced: an ESLint `max-lines` rule remains the open item recorded in Ch. 01.
 - → Ch. 02, Ch. 07
+
+### 2026-08-22: The obligations book names screens and responsibilities, not a design system
+
+- **Chosen:** the GUI section of [Obligations-Book.md](../../Project-Management/Obligations-Book.md)
+  commits to a screen inventory, each screen's responsibility and the FR ids it serves, and stops
+  there. Colour palettes, spacing scales, typography and component looks are not in it.
+- **Rejected:** *specifying the GUI down to its visual appearance*, which is what an obligations book
+  in a traditional waterfall project would do and what the issue title (*System Architecture, GUI,
+  Technology, Platform*) can be read as asking for. It was rejected because [CLAUDE.md](../../CLAUDE.md)
+  assigns design to Claude Design and issue #3 and explicitly forbids inventing design rules here. A
+  palette written in this document would be a rule the design system then has to either obey or
+  contradict.
+- **Rejected:** *leaving the GUI section out until the design system exists*. It would have left the
+  issue unfinishable for a reason that has nothing to do with the issue: what has to be on screen is
+  derivable from FR-31 to FR-41 today, and it is what the architecture and the estimation both need.
+- **The boundary that resulted:** what has to be on screen is a requirement, what it looks like is a
+  design decision. That line is drawn once in section 2.1 and is the reason the section is short.
+- **Consequence:** the inventory found two screens with no backlog issue, the rules screen (FR-35) and
+  the language switch (FR-34, `must have`, with NFR-03). Splitting the work this way is what made the
+  gap visible: a section written as visual specification would have described what those screens look
+  like without noticing that nobody is scheduled to build them.
+- → Ch. 04, Ch. 03
 
 ---
 

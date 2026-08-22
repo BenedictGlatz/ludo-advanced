@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an 8-step state machine, the Dice Card Pool composition with its probability arithmetic, an 8-card MVP skill card
   catalogue with ids, the eight open gameplay rules written out with their rejected alternatives and a Product Owner
   sign-off table, and 13 win-condition and movement edge cases resolved
+- `00-Meta/Project-Management/Obligations-Book.md`: what will be built to satisfy the requirements. The system
+  architecture cited rather than redrawn, a GUI inventory of nine screens plus two should-have ones with the
+  requirement ids and backlog issue of each, the technology stack with its dependency policy and an empty version
+  column until `package.json` exists, the platform committed from NFR-06 and NFR-10, and five known gaps including
+  two screens that carry no backlog issue
 - `00-Meta/Project-Management/Requirements-Specification.md`: 45 functional and 12 non-functional requirements,
   each with an acceptance criterion and a MoSCoW priority, plus the MoSCoW analysis with a drop order agreed in
   advance and the eight gameplay decisions still owed by the Product Owner

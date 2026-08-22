@@ -126,6 +126,33 @@ observation.
   Claude Design decision and issue #3; the deployment target, which is undecided and named as such;
   and where a network layer for FR-42 would attach, since no networking technology has been chosen.
 
+### Technology and platform committed: 2026-08-22, issue #14
+
+Full document: [Obligations-Book.md](../../Project-Management/Obligations-Book.md) sections 3 and 4.
+It cites this chapter's material rather than adding to it, so only what is new belongs here:
+
+- **The stack table has an empty version column, on purpose.** No `package.json` exists, so nothing is
+  pinned, and a version written from memory would be a number with no command behind it. It is filled
+  in the same commit that creates `package.json`. This is the numbers rule of `CLAUDE.md` applied to a
+  Project-Management document rather than only to the chapter notes.
+- **Platform commitments, each traced:** the browser with no installation and no plugin (NFR-06,
+  NFG-06); current and previous major Chrome, Firefox and Edge (NFR-10); desktop only, mobile and
+  tablet out of scope (NFR-10); no backend, no database, no account (NFR-06); no networking, hot-seat on
+  one device and one tab (FR-03); a static `dist/` servable as plain files (NFR-06); no persistence
+  beyond the session, since surviving a reload is FR-45 and `could have`.
+- **Desktop-only carries a consequence worth printing:** 52 shared squares, four start areas, four home
+  columns and two card hands on one screen is a layout problem on a phone, and solving it is design work
+  nobody has scheduled. So NFR-10 is a scope decision with a stated reason, not an omission.
+- **The deployment target is still unchosen**, and nothing in the MVP depends on it, because any static
+  host serves a Vite build. That is why it can stay open without blocking work, and it is named as open
+  in the obligations book rather than presented as settled.
+- **The two missing reasons are named as missing in the obligations book too**, why jQuery over plain
+  DOM APIs or a component framework, and why Vite over another bundler. They stay open items in this
+  chapter. A deliberate choice with no recorded reason reads as an accident in a report, which is the
+  reason for naming rather than filling the gap.
+- **Dependency licences remain unverified**, and the obligations book repeats that no licence is claimed
+  from memory anywhere.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
