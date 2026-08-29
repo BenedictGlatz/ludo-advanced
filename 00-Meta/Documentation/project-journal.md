@@ -165,6 +165,11 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   `core/capture.js`. Written **in parallel with Claude Design**, which is the scheduling lever the
   sprint plan named: neither module touches the DOM. Sprint 2.
 
+- **2026-08-29**: Movement, the win condition and the dice seam written for issue #28:
+  `core/movement.js`, `core/win.js` and `core/dice-source.js`. Nine of the thirteen rows of the
+  rulebook's edge-case table are now a test each; the remaining four are skill-card rules and belong
+  to #38. Sprint 2.
+
 ---
 
 ## Decisions
@@ -1059,6 +1064,45 @@ to get wrong later.
   argument is worth nothing here, while the debugging argument is worth a lot.
 - **Cost, stated honestly:** one array copy of at most 16 entries per move.
 - → Ch. 05
+
+### 2026-08-29: A refusal reason is computed with the legal-move set, not afterwards
+
+- **Chosen:** `evaluateTurn` returns the legal moves, a per-pawn refusal reason for every pawn that
+  cannot move, and one turn-level reason when nothing can move at all.
+- **Why:** NFR-08's acceptance criterion is that a playtester can say why a move was refused without
+  being told, and FR-14 requires the reason on screen when the turn passes. A reason derived later,
+  in `ui/`, would have to re-implement the rule that produced it. Two copies of a rule is one copy
+  too many, and the second is the one that drifts.
+- **Rejected: returning only the legal moves and letting the view say "no legal move".** It is less
+  code and it satisfies FR-14 literally. It loses on NFR-08: "no legal move" is not a reason, and a
+  player who cannot tell a refusal from a bug stops trusting the game.
+- **The reasons are i18next keys and not sentences**, because NFR-03 forbids a user-facing string in
+  `src/` outside the locale files, and `core/` is the layer that must not know a language at all.
+- **Negative finding recorded rather than smoothed over:** one of the three reasons section 6.3 of
+  the game design document names, "every target square blocked by an own pawn", cannot occur as a
+  turn-level reason. `r` only counts upward, so the pawn furthest along has nobody in front of it and
+  is never blocked by one of its own; it either moves or overshoots. The key stays, because it is a
+  real per-pawn reason under FR-32, and because FR-12 is unsigned and its rejected alternative
+  (blocking) would break the argument. A test states the finding in place.
+- → Ch. 05, Ch. 08
+
+### 2026-08-29: The dice stub draws a hand of one, and holds no turn state
+
+- **Chosen:** `core/dice-source.js` implements the interface the real Dice Card Pool (#37) will
+  implement, `{ handSize, draw(rng), returnHand(hand) }`, and the stand-in returns a hand of exactly
+  one card.
+- **Why a hand of one and not three identical cards:** three would let a "pick one of three" screen
+  be built against something that never had a choice in it. The missing choice would then surface in
+  #37, in the UI, which is the most expensive place to find it.
+- **Why the `chosen()` method in the plan's sketch was dropped:** which card the player picked is
+  part of the turn, and the turn belongs to the turn manager. A source that remembered it would be a
+  second place where turn state lives, and the two would eventually disagree.
+- **Rejected: writing the real 20-card pool now.** It is issue #37 and 5 points, it is not in this
+  branch's scope, and the state layer cannot be written without something to draw from either way.
+- **What makes the swap cheap rather than wishful:** FR-09 is written as `roll === dieMax` and never
+  as `roll === 6`, so it already works for a D2 and a D20; and the RNG enters from outside (NFR-09),
+  so the swap changes one argument at the composition root.
+- → Ch. 05, Ch. 06
 
 ---
 

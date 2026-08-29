@@ -145,6 +145,40 @@ SMART sub-goal criteria (*epic closed*) were not comparable between three people
   from the rulebook's edge-case table are all still outstanding. This module is the coordinate system
   those rules will be written against, and coverage of it says nothing about them.
 
+### The rulebook's edge-case table becomes a test file: 2026-08-29, issues #28 and #29
+
+Section 8 of the game design document lists thirteen edge cases and how each is resolved. It exists
+so that nobody has to re-derive them under time pressure. **Nine of the thirteen are now a test each**
+in `tests/unit/core/`, and the test names are taken from the table rows rather than invented, so the
+two cannot drift apart without a test name stopping making sense.
+
+| Rulebook row | Test file |
+| --- | --- |
+| Roll would overshoot home | `movement.test.js` |
+| No legal move at all | `movement.test.js` |
+| Target square holds an own pawn | `movement.test.js` |
+| Capture inside a home column | `capture.test.js` |
+| Two own pawns on one square | `movement-edge-cases.test.js` |
+| Entry square blocked by an own pawn on the maximum | `movement-edge-cases.test.js` |
+| Entry square held by an opponent on the maximum | `movement-edge-cases.test.js` |
+| Maximum rolled with an empty start area | `movement-edge-cases.test.js` |
+| Last pawn captured while others are home | `movement-edge-cases.test.js` |
+
+**The remaining four rows are all skill-card rules** (two reactions against one trigger, a reaction
+against an Action card, the pool running out, a player at the hand limit). They belong to issue #38,
+which is not in this branch, and they carry no test yet.
+
+#### Two things tested as properties rather than as examples
+
+- **"Two own pawns can never end up on one square" is checked by construction.** The test takes four
+  starting positions, enumerates *every* legal move for *every* roll from 1 to 6, applies each one,
+  and asserts that no two of the player's own pawns collide afterwards. An example test would prove
+  the rule for the position it happened to pick.
+- **"A pawn moved from `r = 0` to `r = 58`" is a scripted eleven-roll sequence** and asserts the
+  exact position after each one, not just the last. This is one half of acceptance criterion SG1 in
+  [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md). The other half needs the state
+  layer and the view.
+
 ### Shared test fixtures: 2026-08-29, issue #29
 
 #### A shared fixture builder, because a rule is hard to see behind twelve pawn literals

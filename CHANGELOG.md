@@ -123,6 +123,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   square. Capture in a home column, in a start area and at home need no rule, because the topology in
   `board.js` already makes them impossible to express
 - Unit tests for both, including the capture rows of the rulebook's edge-case table
+- **`src/core/movement.js`** (issue #28, FR-09, FR-10, FR-12, FR-13, FR-14). The legal-move set for a roll,
+  and applying a chosen move. It returns the moves, a per-pawn reason for every pawn that cannot move, and
+  one turn-level reason when nothing can move at all, so that a refusal can state its cause on screen
+  (NFR-08). The reasons are i18next keys, never sentences
+- **`src/core/win.js`** (FR-05). A player with all four pawns at `r = 58` has won and the match ends
+  immediately; there is no second place in the MVP
+- **`src/core/dice-source.js`** (FR-20, NFR-09). A die roll from an injected RNG, a seeded generator so the
+  browser and the tests can share one, and a temporary single-card stand-in for the Dice Card Pool behind the
+  interface the real pool (#37) will implement
+- Unit tests for all of the above, including nine of the thirteen rows of the rulebook's edge-case table, one
+  test each. The remaining four rows are skill-card rules and belong to issue #38
 - `tests/helpers/fixtures.js`: a pawn-position builder and a scripted RNG shared by the unit tests, and later
   by the Playwright specs
 

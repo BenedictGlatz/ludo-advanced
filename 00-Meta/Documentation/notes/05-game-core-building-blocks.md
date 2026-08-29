@@ -130,6 +130,87 @@ writing the coordinate system in `board.js` first was worth it:
 the square and raises an error otherwise. A silently ignored second pawn would be a bug that surfaced
 several turns later as a pawn that had vanished, which is the most expensive kind to find.
 
+### The legal-move set, the win condition and the dice seam: 2026-08-29, issue #28
+
+Three more headless modules, again written while Claude Design worked on the board.
+
+| Module | Owns | Requirements |
+| --- | --- | --- |
+| `core/movement.js` | The legal-move set for a roll, and applying a chosen move | FR-09, FR-10, FR-12, FR-13, FR-14 |
+| `core/win.js` | The win condition | FR-05 |
+| `core/dice-source.js` | Rolling a die, the seeded RNG, and the stand-in for the Dice Card Pool | FR-20, NFR-09 |
+
+#### The legal-move set answers "why not" as well as "what"
+
+`evaluateTurn(pawns, player, roll, dieMax)` returns three things at once:
+
+```js
+{ moves: [...], refusals: [{ player, pawn, reason }], reason: null }
+```
+
+- `moves` is what the player may do, and is exactly what `ui/` will highlight (FR-32).
+- `refusals` says per pawn why it stayed put.
+- `reason` is filled only when `moves` is empty, and is the single reason the turn passes (FR-14).
+
+**Why the refusals are computed alongside the moves and not on demand:** a reason worked out later
+would have to re-derive the rule that produced it, and the second copy is the one that drifts.
+NFR-08 asks that a playtester can say why a move was refused without being told, and this is the
+mechanism that makes that possible rather than a hope.
+
+The five reasons are **i18next keys, not sentences** (`move.refused.overshoot` and so on). NFR-03
+forbids a user-facing string anywhere in `src/` outside the locale files, and `core/` is the layer
+that must not know a language at all.
+
+#### Negative finding: one of the three reasons in the rulebook cannot occur
+
+Section 6.3 of the game design document names three reasons a turn passes: no maximum rolled with no
+pawn on the track, **every target square blocked by an own pawn**, and every move overshooting home.
+The second one is unreachable as a *turn-level* reason, and the code proves it in a test.
+
+The argument is short. `r` only ever counts upward, so a player's pawns form a line. The pawn
+furthest along has nobody in front of it, so it is never blocked by one of its own. It therefore
+either has a legal move or overshoots, and in both cases the turn does not pass for the own-pawn
+reason.
+
+The key stays in the code for two reasons. It is a real **per-pawn** reason and is shown on screen
+under FR-32 whenever a player picks a blocked pawn. And FR-12 is still unsigned by the Product Owner:
+if it is overridden toward the blocking mechanic named as its rejected alternative, the arithmetic
+above stops holding.
+
+#### Two more rules that needed no code
+
+The same pattern as the capture section above, and worth listing because it is what the layering was
+supposed to buy:
+
+| Rulebook case | Why no rule was written |
+| --- | --- |
+| Two own pawns on one square | `isSameSquare` reports it and the move is refused; there is one check, not one per rule that reads a square |
+| A pawn passing over occupied squares | Only the landing square is ever inspected, so "no blocking in the MVP" is the absence of code rather than a rule |
+
+#### What fails loudly rather than quietly
+
+Two more deliberate choices to throw instead of returning a defensible-looking value, alongside
+`captureTarget` from issue #29:
+
+- `applyMove` throws when the pawn is not standing where the move says it was. A stale move applied
+  to a moved-on board is the one mistake that would otherwise corrupt the board without a symptom.
+- `hasWon` checks the pawn count as well as the positions. Without it a seat nobody occupies would
+  win, because `[].every(...)` is `true`.
+
+#### The dice stub, and why it is a seam rather than throwaway code
+
+The real Dice Card Pool is issue #37 and does not exist. `core/dice-source.js` holds a stand-in that
+always draws one card of the same die, behind the interface the real pool will implement
+(`handSize`, `draw(rng)`, `returnHand(hand)`). Two things make the later swap cheap:
+
+- The rule for leaving the start area is written as `roll === dieMax` (FR-09), never as `roll === 6`.
+  It already works for a D2 and a D20, so no rule is written twice.
+- The randomness enters from outside (NFR-09), so a test hands in a fixed sequence.
+
+**The stub draws a hand of one, not three identical cards.** Faking a hand of three would let a
+"pick one of three" screen be built against something that never had a choice in it, and the missing
+choice would only surface in #37.
+
 **Planned structure recorded 2026-08-22, issues #21 and #22.** The rules this chapter will describe
 are written down, and so is the module structure that will hold them, so this chapter fills from two
 existing documents once the code exists rather than from memory:
