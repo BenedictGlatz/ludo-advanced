@@ -90,8 +90,14 @@ Three obligations that are easy to miss because they are not screens:
 
 ### 2.4 Not decided here
 
-- How the board is drawn: SVG, a CSS grid or `<canvas>`. Named as undecided in section 6 of
-  [System-Architecture.md](System-Architecture.md) and belonging to issue #3.
+- ~~How the board is drawn: SVG, a CSS grid or `<canvas>`.~~ **Decided 2026-08-29: real DOM elements
+  laid out by CSS Grid**, with SVG and `<canvas>` recorded as the rejected alternatives. The reasoning
+  is the decision block of that date in
+  [project-journal.md](../Documentation/project-journal.md), and section 6 of
+  [System-Architecture.md](System-Architecture.md) carries the correction to its own deferral. The
+  practical consequence for this document: the screen inventory of section 2.2 is now backed by a DOM
+  contract, written into `01-Design/Handoff/01-brief-foundations-and-board.md`, which names the exact
+  elements and data attributes each region of screen S3 consists of.
 - Screen resolution and asset formats. They were Sprint 0 scope in
   [01-Github-Project.md](01-Github-Project.md) and were never agreed; see the Sprint 0 divergence in
   [sprint-log.md](../Documentation/sprint-log.md).

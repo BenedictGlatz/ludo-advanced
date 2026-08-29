@@ -226,9 +226,18 @@ is cut to the size of this application, and the note is here so that the absence
 - **File-level splits inside a layer may change.** The inventory names the seams the requirements
   imply; if `core/movement.js` approaches 300 lines it splits again, along a real seam and not by
   cutting it at line 300.
-- **No presentation decision.** How the board is drawn, in SVG, in a CSS grid or in `<canvas>`, is not
-  settled here. It belongs to Claude Design and issue #3, and picking one in this document would be
-  inventing a design rule that [CLAUDE.md](../../CLAUDE.md) forbids.
+- ~~**No presentation decision.** How the board is drawn, in SVG, in a CSS grid or in `<canvas>`, is
+  not settled here. It belongs to Claude Design and issue #3, and picking one in this document would
+  be inventing a design rule that [CLAUDE.md](../../CLAUDE.md) forbids.~~
+  **Settled 2026-08-29, and this deferral was over-cautious: the board is real DOM elements laid out
+  by CSS Grid.** SVG and `<canvas>` are the named rejected alternatives; the reasoning is the
+  2026-08-29 decision block in
+  [project-journal.md](../Documentation/project-journal.md). The correction worth recording is *why
+  the deferral was wrong*: `CLAUDE.md` forbids inventing colour palettes, spacing scales, typography
+  systems and component looks, and a rendering technology is none of those. It decides what a
+  stylesheet can address, not what anything looks like. It also could not be deferred any further in
+  practice, because the design handoff of issue #3 cannot pass over a DOM contract without first
+  deciding that there is a DOM.
 - **No deployment target.** The build is a static `dist/` (NFR-06), and where it is served from is
   undecided. Named as undecided in the obligations book, issue #14.
 - **No multiplayer architecture.** FR-42 is `should have` and has no chosen networking technology, so

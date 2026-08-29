@@ -102,6 +102,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/unit/core/board.test.js`, mirroring the `src/` layout. Boundary cases at every region edge, plus
   three properties asserted exhaustively over their whole domain rather than at a sample point, because a
   claim about a board's topology is a claim about every position on it
+- **`01-Design/`, the design handoff folder** (issue #3). A `README.md` describing the loop between Claude
+  Code and Claude Design with both document templates, a `Handoff/` directory for numbered brief and spec
+  pairs, and `assets/`. The reasoning lives here; the CSS itself lands in `src/ui/styles/`, because it is
+  production code and every translation step from a design document into a stylesheet is a chance to drift
+- **`01-Design/Handoff/01-brief-foundations-and-board.md`, the first design brief.** Screens S3 (board) and
+  S6 (move hints and refusal) plus the colour, spacing and typography foundations; eight hard constraints
+  each with its reason; the full DOM contract `ui/board-view.js` will produce, including the five states
+  driven by data attributes; the board facts taken from the rulebook; **nine numbered open decisions D1 to
+  D9**, each of which the spec must answer with a reason and a rejected alternative; the deliverables with
+  their paths; and what is out of scope. It contains no colour, size or font of its own, which is the line
+  `CLAUDE.md` draws between a technical interface and a design rule
 - Two board issues that had never existed, both `must have` and both in Sprint 2: **#63 Project Bootstrap**
   (`package.json`, Vite, ESLint, Prettier, Vitest, Playwright, 5 points) and **#64 i18n Setup and the German and
   English Locale Files** (5 points). They are 10 of the 12 points section 3.6 of the effort estimation found
@@ -158,3 +169,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Sprint 2` set on **#26, #27, #28, #29** and on the three issues created the same day, so the epic #36 tree is
   the first one whose children are all in the same sprint as their epic. Sprint 2 now reads 17 issues and 72
   story points on the board
+- **How the board is drawn is decided: real DOM elements laid out by CSS Grid**, with SVG and `<canvas>` as the
+  named rejected alternatives. Section 6 of `System-Architecture.md` and section 2.4 of `Obligations-Book.md`
+  had both deferred this to Claude Design as a design rule; the deferral is corrected in place rather than
+  deleted, because a rendering technology decides what a stylesheet can address, not what anything looks like
+- The version column of the technology table in `00-Meta/Project-Management/Obligations-Book.md` section 3.1 is
+  filled from the real `package.json`, having been deliberately empty since it was written

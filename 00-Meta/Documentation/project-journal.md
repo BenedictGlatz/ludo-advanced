@@ -946,6 +946,83 @@ to get wrong later.
 
 ---
 
+### 2026-08-29: The board is drawn as DOM elements in a CSS Grid, not as SVG or canvas
+
+- **Chosen:** every square, every pawn and every start slot is a real DOM element, laid out by CSS
+  Grid. This is stated as a hard constraint in
+  [01-brief-foundations-and-board.md](../../01-Design/Handoff/01-brief-foundations-and-board.md)
+  section 2.
+- **Why, and all four reasons are "something the project already committed to becomes free":**
+  1. **jQuery is the project's only UI dependency**, and jQuery exists to manipulate DOM elements. In
+     SVG or on a canvas it would have almost nothing to do.
+  2. **Playwright selects a square by data attribute.** `page.locator('[data-square="13"]')` is one
+     line. On a canvas there is nothing to select at all, so every end-to-end assertion would have to
+     go through pixel comparison or through a test-only JavaScript hook, and the 12 flows of the test
+     plan are the project's main evidence that the game works.
+  3. **i18next puts text into an element.** The refusal region of S6 (NFR-08) is text on screen, and
+     text on a canvas is drawn rather than translated.
+  4. **CSS transitions animate a pawn for free.** The pawn's grid position changes and the browser
+     does the movement. In canvas that is an animation loop somebody writes and maintains.
+- **Rejected: SVG.** It is the natural fit for a board of shapes and it scales without pixelation.
+  It loses on the same four counts in weaker form: jQuery's DOM helpers work awkwardly on SVG
+  elements because of namespaces, and CSS Grid does not lay out SVG children, so the geometry would
+  have to be computed in JavaScript instead of declared in a stylesheet. That moves layout out of the
+  design system and into code, which is exactly the seam this project is trying to keep clean.
+- **Rejected: `<canvas>`.** The most capable of the three and the fastest for many moving objects,
+  neither of which this game needs: it is turn-based and moves one pawn at a time. It costs the
+  entire accessibility and testability surface, since a canvas is one element with no internal
+  structure. It would put a rendering loop in `ui/` and make NFR-12's greyscale check, FR-32's
+  highlighting and NFR-08's on-screen reason each into custom drawing work.
+- **This reverses a deferral, and that is worth naming rather than glossing over.** Section 6 of
+  [System-Architecture.md](../Project-Management/System-Architecture.md) said the choice "belongs to
+  Claude Design and issue #3, and picking one in this document would be inventing a design rule that
+  CLAUDE.md forbids". That was over-cautious. `CLAUDE.md` forbids Claude Code from inventing **colour
+  palettes, spacing scales, typography systems and component looks**. A rendering technology is none
+  of those: it decides what a stylesheet can address, not what anything looks like. And the decision
+  could not be deferred any longer in practice, because a brief cannot hand over a DOM contract
+  without first deciding that there is a DOM.
+- **The escape hatch is written into the brief**: it says in as many words that if a constraint makes
+  a design impossible, Claude Design should say so rather than work around it. So the decision is
+  reversible by the person whose territory it borders on.
+- **Consequence:** `ui/board-view.js` renders a fixed set of elements and sets attributes on them,
+  the stylesheet owns every appearance, and movement animation is a CSS token rather than JavaScript.
+  It also means the 300-line limit now applies to CSS files, which is why the brief says so.
+- → Ch. 04, Ch. 03
+
+---
+
+### 2026-08-29: The design handoff is a pair of documents with a fixed shape
+
+- **Chosen:** a top-level `01-Design/` folder, committed to git, holding a numbered brief and spec per
+  round. Claude Code writes a seven-section brief, Claude Design answers with a five-section spec plus
+  the real CSS files in `src/ui/styles/`.
+- **Why the CSS goes straight into `src/ui/styles/` and not into `01-Design/`:** the design system
+  becomes the code instead of being translated into it. Every translation step from a design document
+  into a stylesheet is a chance to drift, and the drift is invisible because both artefacts still look
+  correct on their own.
+- **Why the reasoning stays in `01-Design/` instead:** "what does it look like" belongs with the code
+  and "why does it look like that" belongs where a report author can find it without reading a
+  stylesheet.
+- **Why the spec template forces a rejected alternative per answer:** the project's documentation
+  rules require one for every decision, and this is the one handoff where the rule would otherwise be
+  lost, because a delivered palette looks finished and a finished thing does not invite the question
+  "compared to what". Asking for it in the template costs nothing; reconstructing it in week eight is
+  impossible.
+- **Rejected: keeping the handoff in the issue thread on GitHub**, which is where a design
+  conversation would normally live. It loses because issue bodies in this project are empty by
+  standing habit, a thread cannot be reviewed in a pull request, and the report cannot cite it as an
+  artefact.
+- **Rejected: putting the design documents under `00-Meta/Documentation/`** with the chapter notes.
+  Those notes are report material, read once near the end. A handoff is working material read
+  during the sprint by the other side of the loop, and burying it among 13 chapter notes puts it where
+  nobody looks. Same argument as the 2026-08-09 decision about the goal catalogue.
+- **Consequence:** `01-Design/` is a third documentation directory. The 300-line limit is read as not
+  applying to it, for the reason recorded on 2026-08-22, and both files written so far are under 300
+  lines anyway, so the exemption has not been used.
+- → Ch. 04, Ch. 02
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first
