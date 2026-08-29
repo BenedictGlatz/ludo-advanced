@@ -449,6 +449,93 @@ is settled in the 2026-08-22 decision in [project-journal.md](../project-journal
 - **#3 *Create Design System* is still open and stays undated.** It is the one item in the screenshot
   that is not `Done`.
 
+#### `Story Points` created and back-filled, Sprint 2 scoped: 2026-08-29, Sprint 2
+
+The first board write that uses the `project` scope granted the same day for anything other than dates.
+Read and written with `gh project field-create`, `gh project item-edit` and
+`gh project item-list 3 --owner BenedictGlatz --format json --limit 100`.
+
+- **The `Story Points` field now exists**, type `NUMBER`, id `PVTF_lAHOA5CXeM4BfkU_zhgvtgU`. It was
+  outstanding action 1 of section 6 of
+  [Effort-Estimation.md](../../Project-Management/Effort-Estimation.md), and it had been impossible
+  since 2026-08-22 for want of the token scope. The negative finding *No `Story Points` field exists*,
+  first recorded 2026-08-06, is **closed**.
+- **25 open issues carry a point value**, back-filled from section 3 of the effort estimation. Total on
+  the board: **134 points**. That reconciles exactly with the document's grand total of 138 open points:
+  138 minus #17 (2 points, delivered 2026-08-22) minus the CI workflow (2 points, still has no issue).
+  The reconciliation is worth keeping because it is the cheapest possible check that the back-fill was
+  complete rather than approximately complete.
+- **The four epics deliberately carry no points.** An epic is the sum of its children, so sizing both
+  would double-count. Section 2 of the effort estimation already decided this; the board now shows it.
+- **No closed issue was given points, and that is a decision rather than an omission.** Estimating
+  Sprint 0 and Sprint 1 after the fact was rejected on 2026-08-22, because a number produced after the
+  work flatters whatever it is compared against. #17 is the one closed issue whose estimate genuinely
+  predates its delivery by a few hours, and it was still left blank: filling only #17 would make Sprint 1
+  read as 2 points of velocity across 14 issues, which is a worse figure than no figure.
+  **Consequence: story-point velocity starts with Sprint 2 and there is no earlier data point to compare
+  it against.**
+- **`Sprint 2` set on the four children of epic #36** (#26, #27, #28, #29) and on the three issues
+  created the same day (#62, #63, #64). #36 already carried it.
+
+**Board state of Sprint 2 as measured after the changes: 17 issues, 72 points.** The composition is
+the finding:
+
+| Group | Issues | Points |
+| --- | --- | --- |
+| Epic #36 and its children, plus the split-out renderer | #26, #27, #28, #29, #62 | 23 |
+| The two issues that had none until today | #63 bootstrap, #64 i18n | 10 |
+| Design system | #3 | 5 |
+| The four epics | #36, #37, #38, #39 | 0 by design |
+| **Extended features** | #42, #43, #44, #45, #46 | **34** |
+| **Total** | 17 | **72** |
+
+- **Negative finding: 34 of the 72 Sprint 2 points are #42 to #46**, the extended features. Section 4.4
+  of [Project-Plan.md](../../Project-Management/Project-Plan.md) says these stay **unscheduled**: #42 is
+  `should have` and named as the largest available cut, and #43 to #46 are `could have`. Somebody put
+  them in Sprint 2 on the board between 2026-08-22 and 2026-08-29. Under the 2026-08-22 rule that the
+  board wins, the board's Sprint 2 is therefore **72 points and not the 46 the project plan assigned**,
+  and 34 of those points are work the plan says should not be in this sprint at all. This is a scope
+  conversation for the next planning slot, and it is deliberately **not** corrected here: silently
+  removing five issues from a sprint somebody else scoped would be the same single-handed board edit the
+  sprint-membership decision exists to prevent.
+- **Negative finding: the epics are in Sprint 2 and eight of their children are not.** #37, #38 and #39
+  carry `Sprint 2`, while #30, #31, #32, #33, #34, #35, #40 and #41 carry no sprint. A sub-issue progress
+  bar on an epic in this sprint therefore measures children nobody has scheduled. #36 is now the only
+  epic whose children are all in the same sprint as itself.
+- **Negative finding, unchanged: the 17 implementation child issues still carry no MoSCoW label.** Only
+  the epics and the extended features do. Measured consequence: filtering Sprint 2 by the `must have`
+  label returns **13 points**, all of them on the three issues created today, which are the only child
+  issues that carry the label. Outstanding action 4 of the effort estimation is still open.
+- **The board still has no dated status history and no Iteration field**, so burn-down remains
+  impossible exactly as recorded on 2026-08-22. Points fix the velocity half only.
+
+#### Issues created and #28 split: 2026-08-29, Sprint 2
+
+- **#28 was split**, outstanding action 3 of the effort estimation. It was
+  *Pawn/Token Spawning & Movement Animation* at 8 points, holding a rule and its rendering in one issue.
+  It is now **#28 *Pawn Movement Rules*** at 5 points, and the rendering half is
+  **#62 *Pawn Rendering & Movement Animation*** at 3 points, added as a sub-issue of epic #36 with
+  `addSubIssue`. **The split is point-neutral**, 5 plus 3 against the original 8, which is what makes it
+  a sequencing change rather than a re-estimate.
+- **Why it matters for the schedule:** the rule half blocks #27, #29, #62 and the playable slice. The
+  animation half blocks nothing and needs the design system, which does not exist yet. Held together,
+  the animation sat on the critical path for no reason.
+- **Two issues were created that had never existed**, from section 3.6 of the effort estimation:
+  **#63 Project Bootstrap** (5 points) and **#64 i18n Setup and the German and English Locale Files**
+  (5 points). Both are labelled `4-implementation` and `must have`, both are in Sprint 2, both are
+  assigned to `lbolender` and `BenedictGlatz`.
+- **10 of the 12 points that were invisible to the board are now on it.** The remaining 2 are the CI
+  workflow `build-check.yml`, deliberately left without an issue for now: it carries no requirement id,
+  and creating an issue for work nobody has scheduled would put it in a sprint by accident.
+- **Neither #63 nor #64 has a parent epic**, because none of the four epics covers them. #64 is arguably
+  a child of #39 through FR-34, and it was left unparented anyway, so that the epic point totals in the
+  effort estimation keep meaning what that document says they mean.
+- **The four new issue bodies are the first non-empty ones on this board.** Every one of the 47 original
+  issues has an empty body, which is the standing finding behind *acceptance criteria live in the
+  specification, not on the issues*. The four written today each state their scope and point at the
+  document holding their acceptance criteria, rather than restating it. That does not close the finding,
+  it just stops adding to it.
+
 ### Branching and review
 
 - `main` always holds a working, playable build; no direct pushes or commits.
@@ -473,6 +560,24 @@ is settled in the 2026-08-22 decision in [project-journal.md](../project-journal
   into one destroys exactly the per-issue trail that replaces the missing branch-to-issue link, and
   that trail is what the report's plan-versus-actual comparison reads. Recorded here because a policy
   deviation nobody wrote down is indistinguishable from a mistake.
+- **Fourth branch-naming deviation, 2026-08-29:** `feature/sprint2-core-and-design` also carries no
+  issue number, for the same reason as the third one and with one difference worth naming. It carries
+  **two epics**, #36 *Core Game Engine & Board* and #3 *Create Design System*, which is not a batch of
+  cross-referencing documents but two tracks that genuinely run at the same time: the headless rules in
+  `core/` and `state/` do not depend on the design system, and the design system does not depend on
+  them. They meet once, at the board view. One branch is what lets the design handoff go out while the
+  rules are still being written.
+- **The same merge-commit consequence applies**, and for the same reason: the branch carries one commit
+  per issue with `Closes #<n>` in its body, and Squash and Merge would collapse the lot into one commit
+  covering seven issues. **The decision is deliberately re-taken rather than assumed to carry over**,
+  because Sprint 1 recorded the deviation once and a second silent repetition would read as a habit
+  nobody decided on.
+- **A second deviation on the same branch: the plan file is not committed.**
+  `PLAN-sprint2-core-and-design.md` is listed in `.git/info/exclude`, which is a per-clone ignore file
+  and not a committed `.gitignore` entry. The plan is a working document for one session, so the
+  repository would carry a stale copy of it forever. `PLAN-sprint1.md` was handled the same way. The
+  cost, and it is real: the plan the sprint was executed from is **not** reconstructable from the
+  repository afterwards, so the sprint log and this note are the only record that it existed.
 
 ### Documentation process
 

@@ -194,14 +194,53 @@ planning chapter describes, so the gap between it and the executed sprint has to
 | --- | --- |
 | **Planned start** | 2026-08-24 (board) |
 | **Planned end** | 2026-09-06 (board) |
-| **Actual start** | *open* |
+| **Actual start** | 2026-08-29 (first commit of implementation work) |
 | **Actual end** | *open* |
 
 **Planned scope**
 
-> **Board scope is empty**: no issue carries `Sprint 2` as of 2026-08-22, so what follows is the
-> prose plan only and is not yet what the team will work on. It also does not yet contain the
-> unstarted Sprint 1 gameplay scope or the npm bootstrap, both of which have to land here or later.
+> **Board scope read 2026-08-29: 17 issues, 72 story points.** The sprint no longer has an empty board
+> scope. The table is below; the prose plan and the project plan's assignment are both kept underneath
+> it, because the three disagree and the difference is the finding.
+
+| # | Title | Points | Status 2026-08-29 |
+| --- | --- | --- | --- |
+| 3 | Create Design System | 5 | In Progress |
+| 26 | Board Grid & Tile Navigation System | 5 | Todo |
+| 27 | Turn Manager & Game Loop | 8 | Todo |
+| 28 | Pawn Movement Rules | 5 | Todo |
+| 29 | Knockout & Capture Rules Logic | 2 | Todo |
+| 62 | Pawn Rendering & Movement Animation | 3 | Todo |
+| 63 | Project Bootstrap: package.json, Vite, ESLint, Prettier, Vitest, Playwright | 5 | Todo |
+| 64 | i18n Setup and the German and English Locale Files | 5 | Todo |
+| 36 | Core Game Engine & Board (epic) | 0 by design | In Progress |
+| 37 | Enhanced Dice Pool System (epic) | 0 by design | Todo |
+| 38 | Skill Cards Mechanics (epic) | 0 by design | Todo |
+| 39 | UI / UX, Audio & Game State (epic) | 0 by design | Todo |
+| 42 | Online Multiplayer & Lobby System | 13 | Todo |
+| 43 | LLM-Powered Bot API Integration | 8 | Todo |
+| 44 | Expanded Skill Card Set | 3 | Todo |
+| 45 | Trap Card System & Tile Trigger Logic | 5 | Todo |
+| 46 | Classic vs. Custom Game Modes (Rule Toggles) | 5 | Todo |
+
+**Three things about that table are worth stating before the sprint closes, not after.**
+
+1. **34 of the 72 points are #42 to #46**, which section 4.4 of
+   [Project-Plan.md](../Project-Management/Project-Plan.md) leaves **unscheduled** on purpose: #42 is
+   `should have` and named there as the largest available cut, and #43 to #46 are all `could have`. They
+   were put in Sprint 2 on the board sometime between the 2026-08-22 read and the 2026-08-29 one. The
+   board wins by the 2026-08-22 decision, so this is Sprint 2's scope until a planning slot changes it.
+   It is not corrected unilaterally here.
+2. **The must-have work in this sprint is 38 points**: #3, #26, #27, #28, #29, #62, #63, #64. That is the
+   figure to compare against the calendar, and against a sprint that started 2026-08-24 with its first
+   implementation commit on 2026-08-29.
+3. **Three of the 17 issues did not exist on 2026-08-22.** #62 is the rendering half of #28, split out
+   the same day; #63 and #64 are the bootstrap and the i18n setup, 10 of the 12 points that section 3.6
+   of [Effort-Estimation.md](../Project-Management/Effort-Estimation.md) found invisible to the board.
+
+**Superseded prose scope**, from
+[01-Github-Project.md](../Project-Management/01-Github-Project.md). Kept because the report's planning
+chapter describes it:
 
 - Dice pool: special dice and the selection UI.
 - Skill cards: deck system, hand UI, action system (shield token, swap positions, reroll).
@@ -224,11 +263,30 @@ dice rolling, #27 turn manager. Three differences from the prose scope above, ea
   edited, which is why it stays visible here.
 
 Multiplayer also stays out of this sprint: #42 is `should have`, 13 points, and named as the largest
-available cut.
+available cut. **That is no longer what the board says**, see point 1 above.
 
-**Delivered**: *open*
+**Delivered**: *open, filled as it happens*
 
-**Divergence and reasons**: *open*
+- **2026-08-29:** board hygiene. `Story Points` created and back-filled on 25 open issues, `Sprint 2`
+  set on #26 to #29, #28 split into #28 and #62, #63 and #64 created. Details in
+  [notes/02-project-management.md](notes/02-project-management.md).
+
+**Divergence and reasons**: *open, filled as it happens*
+
+- **Five weekdays of the sprint were spent before any implementation work started.** The sprint opened
+  2026-08-24 and the first commit that is not documentation lands 2026-08-29. Milestone **M1, toolchain
+  up, was due 2026-08-25 and was missed**; M2, a pawn moves on a real board, is due 2026-08-31 and M3,
+  a full turn resolves, on 2026-09-06.
+- **The must-have half of this sprint is 38 points over the 5 weekdays that remain**, 2026-08-31 to
+  2026-09-04, which is 7.6 points per weekday against a required project average of 4.9 and against no
+  measured velocity at all, because every issue closed so far is a document. **This will not fit.** It
+  is written here in advance rather than explained afterwards, and neither the plan nor any board date
+  is being adjusted to hide it. Either the sprint end moves or part of the scope carries into Sprint 3,
+  and whichever happens is recorded here when it happens.
+- **The 34 points of #42 to #46 are counted in the sprint and are not planned to be worked on.** If
+  they are still `Todo` on 2026-09-06 the sprint reads as 38 of 72 points delivered at best, which
+  understates the work. The honest reading is against the 38, and the reason the two figures differ is
+  point 1 of the planned scope above.
 
 > The resource/energy system appears only in this sprint plan, not in the one-pager or the README.
 > Whether it is in scope is undecided: see [notes/01-requirements-and-goals.md](notes/01-requirements-and-goals.md).

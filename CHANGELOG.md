@@ -71,6 +71,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `00-Meta/Project-Management/Requirements-Specification.md`: 45 functional and 12 non-functional requirements,
   each with an acceptance criterion and a MoSCoW priority, plus the MoSCoW analysis with a drop order agreed in
   advance and the eight gameplay decisions still owed by the Product Owner
+- A **`Story Points`** number field on the GitHub Projects board, back-filled on the 25 open issues that
+  `00-Meta/Project-Management/Effort-Estimation.md` sizes, 134 points in all. It was outstanding action 1 of that
+  document and had been blocked since 2026-08-22 by the missing `project` token scope. Story-point velocity
+  becomes producible from Sprint 2 onward; closed issues were deliberately left blank so that no sprint gets a
+  retroactive estimate
+- Two board issues that had never existed, both `must have` and both in Sprint 2: **#63 Project Bootstrap**
+  (`package.json`, Vite, ESLint, Prettier, Vitest, Playwright, 5 points) and **#64 i18n Setup and the German and
+  English Locale Files** (5 points). They are 10 of the 12 points section 3.6 of the effort estimation found
+  invisible to the board; the remaining 2, the CI workflow, still have no issue
 
 ### Changed
 
@@ -116,3 +125,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   states that the readers are 4th semester students, plus *Tone & Readability* and *Structure & Scannability*.
   They govern the register of the prose, while the existing *Writing style* section keeps governing the em dash
   ban. A typo in the *Communication* paragraph was fixed in the same commit
+- Board issue **#28** split into **#28 *Pawn Movement Rules*** (5 points, the legal-move set in `core/`) and the
+  new **#62 *Pawn Rendering & Movement Animation*** (3 points, the view half). The split is point-neutral and
+  was outstanding action 3 of `00-Meta/Project-Management/Effort-Estimation.md`: the rule half blocks four other
+  issues and the animation half blocks nothing, so holding them together put the animation on the critical path
+- `Sprint 2` set on **#26, #27, #28, #29** and on the three issues created the same day, so the epic #36 tree is
+  the first one whose children are all in the same sprint as their epic. Sprint 2 now reads 17 issues and 72
+  story points on the board

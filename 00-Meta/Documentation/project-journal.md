@@ -134,6 +134,30 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   priorities, a drop order agreed in advance, and eight gameplay decisions handed to the Product
   Owner. Six previously unrecorded holes in the rules found in the process. Sprint 0.
 
+- **2026-08-29**: Board hygiene on `feature/sprint2-core-and-design`, the first Sprint 2 work.
+  `Story Points` field created and back-filled on 25 open issues (134 points, reconciled against the
+  effort estimation's 138). #28 split into #28 *Pawn Movement Rules* and the new #62 *Pawn Rendering &
+  Movement Animation*, point-neutral. #63 bootstrap and #64 i18n created, so 10 of the 12 points
+  invisible to the board are now on it. `Sprint 2` set on #26 to #29 and on the three new issues.
+  Measured finding: Sprint 2 holds 72 points, of which 34 are #42 to #46, work the project plan leaves
+  unscheduled. Sprint 2.
+
+- **2026-08-29**: Project bootstrapped on `feature/sprint2-core-and-design`, issue #63. `package.json`
+  with the 11 npm scripts, Vite, ESLint, Prettier, Vitest and Playwright, the `src/` and `tests/` tree,
+  and two ESLint rules that turn architecture prose into failing checks: `max-lines` at 300 for NFR-02
+  and `no-restricted-imports` over `src/core/**` for NFR-01. The repository stops being
+  documentation-only after 23 days. Milestone M1, four days late. Sprint 2.
+
+- **2026-08-29**: Board topology written for issue #26, `src/core/board.js`: the 52-square closed
+  track, entry and turn-off squares per player, the relative-position arithmetic and the region
+  classifier, with 61 unit tests over it. Every number taken from section 2 of the game design
+  document. Sprint 2.
+
+- **2026-08-29**: Design handoff loop established for issue #3: `01-Design/` with a README, the brief
+  and spec templates, and the first brief `01-brief-foundations-and-board.md` covering the board screen
+  S3, the refusal region S6 and the foundations. It hands Claude Design a DOM contract and nine
+  numbered open decisions and no visual rule at all, which is the line `CLAUDE.md` draws. Sprint 2.
+
 ---
 
 ## Decisions
@@ -759,6 +783,53 @@ exactly the kind of thing this file exists to keep visible.
   per-change list. It was committed with both attached before any Sprint 2 work started. The finding
   worth keeping is that the file holding the rules is the file most likely to be edited outside them.
 - → Ch. 02, Ch. 10, Ch. 11
+
+---
+
+### 2026-08-29: #28 is split and the two invisible must-have issues are created
+
+Three of the four board actions section 6 of
+[Effort-Estimation.md](../Project-Management/Effort-Estimation.md) listed as outstanding are carried
+out in one sitting, now that the `project` token scope exists. They are one decision block because
+they answer the same question: what does the board have to show before Sprint 2's numbers mean
+anything.
+
+- **Chosen, action 1:** a `Story Points` number field, back-filled on the **25 open issues** the
+  estimation sizes. Total 134 points, which reconciles with the document's 138 open points once #17
+  (delivered) and the CI workflow (no issue) come off.
+- **Chosen, action 3:** **#28 is split.** It was *Pawn/Token Spawning & Movement Animation* at 8 points
+  and held the movement rule and the pawn rendering in one issue. It is now **#28 *Pawn Movement
+  Rules*** at 5 and **#62 *Pawn Rendering & Movement Animation*** at 3, with #62 attached to epic #36
+  as a sub-issue. The split is point-neutral, which is the point: it is sequencing, not re-estimation.
+- **Why the split is worth doing on the day implementation starts:** #28's rule half blocks #27, #29,
+  #62 and the whole playable slice. Its animation half blocks nothing and cannot start before the
+  design system lands. Held together, the issue is only finishable after the design is in, so an
+  8-point item that four other issues wait on could not be closed for a reason unrelated to any of them.
+- **Chosen, action 2:** **#63 Project Bootstrap** (5) and **#64 i18n Setup** (5) are created, labelled
+  `4-implementation` and `must have`, put in Sprint 2 and assigned to both implementers. 10 of the 12
+  points that were invisible to the board are now on it.
+- **Rejected: creating the CI workflow issue too**, which would have closed all 12 points. It carries no
+  requirement id, nobody has scheduled it, and creating an issue while setting `Sprint 2` on everything
+  else would have put unscheduled work in a sprint by accident. Named as still owed instead.
+- **Rejected: back-filling points onto closed issues.** Estimating Sprint 0 and Sprint 1 after the fact
+  was already rejected on 2026-08-22. The one tempting exception is #17, whose estimate genuinely
+  predates its delivery by a few hours, and it was left blank as well: filling only #17 would make
+  Sprint 1 read as 2 points across 14 issues, which is a more misleading number than a blank.
+  **Consequence: story-point velocity has its first data point at the end of Sprint 2 and nothing to
+  compare it to.**
+- **Rejected: giving the four epics points of their own.** An epic is the sum of its children.
+- **Also rejected, and this is the uncomfortable one: correcting Sprint 2's scope on the board.**
+  #42 to #46 carry `Sprint 2` and section 4.4 of
+  [Project-Plan.md](../Project-Management/Project-Plan.md) says they are unscheduled. That is **34 of
+  the sprint's 72 points**, all of it `should have` or `could have`. Removing them would make the board
+  match the plan, and it would be one person editing a shared sprint's scope out of a session nobody
+  else was in, which is exactly what the 2026-08-22 sprint-membership decision exists to prevent. The
+  board wins, the divergence is written into [sprint-log.md](sprint-log.md), and the correction is a
+  planning-slot decision.
+- **Negative finding that survives all of this:** the 17 implementation child issues still carry no
+  MoSCoW label, so a `must have` filter over Sprint 2 returns 13 points, all of them on issues created
+  today. Action 4 of the estimation is the one still open.
+- → Ch. 02, Ch. 11
 
 ---
 
