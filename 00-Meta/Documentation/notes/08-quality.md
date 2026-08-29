@@ -203,6 +203,47 @@ coordinates and read as strings; `"preserve"` leaves the decision with whoever w
 Rejected: `"consistent"`, which quotes every key in an object only when one of them needs it, so an
 object of purely decimal-looking keys still came out unquoted.
 
+### The state layer under test: 2026-08-29, issue #27
+
+The four state modules are tested from unit tests standing in for the view. That proves the intent
+contract holds; it does not prove a jQuery handler can satisfy it, which is issue #62.
+
+- **A complete match is played end to end on a scripted RNG and asserted to an exact final state.**
+  87 turns, from the first draw to the win. Player 0 walks one pawn home at a time (a 6 to leave,
+  nine 6s along the track, a 3 to land exactly on `r = 58`) while player 1 rolls a 1 every turn and
+  can never leave. The test asserts the winner, the phase, the turn number and the position of all
+  sixteen pawns. This is the other half of acceptance criterion SG1 and it is what NFR-09's
+  injectable RNG exists for: without it, the test would be unwritable.
+- **The "`ui/` cannot write state" rule is asserted three ways**, because it is the layering claim
+  the whole architecture rests on: a rejected intent returns the very same object
+  (`result.state === before`, not a deep-equality check); an assignment to a state field throws; an
+  assignment to a pawn inside the frozen pawn list throws.
+- **Turn rotation is checked for 2, 3 and 4 players**, over two full laps each, so the wrap is tested
+  and not just the increment.
+- **Every phase guard is asserted by calling every step out of order.** A state machine that accepts
+  a transition out of order is not one, and six one-line assertions is a cheap way to say so.
+
+#### The coverage number earned its keep, and the line figure alone would not have
+
+The first measurement after #27 reported 99.53 % of lines and 97.53 % of branches. The line figure
+looked finished. The four missing branches were not decoration:
+
+| Missing branch | What it meant |
+| --- | --- |
+| The freeze path for a move that captures something | No test had ever resolved a capture **through the state layer**, only through `core/` |
+| The refusal of `select-pawn` for a pawn with no move | A highlight could have been shown for a pawn that cannot move, and nothing would have caught it |
+| Two counts of the same two gaps | |
+
+Two tests closed them and the branch figure moved to 99.38 %. **The lesson for the report:** line
+coverage was already at 99.53 % with both gaps open. Reading only the headline number would have
+reported a tested layer and shipped an untested capture path.
+
+**One line and one branch stay uncovered on purpose** and are recorded in
+[09-source-code-overview.md](09-source-code-overview.md): `movement.js` returns a generic refusal
+reason when every pawn of a player is already home, which means the player has won and no turn is
+ever evaluated in that state. The line stays as a guard against reading from an empty array, and it
+is written down rather than deleted or excluded from the measurement.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

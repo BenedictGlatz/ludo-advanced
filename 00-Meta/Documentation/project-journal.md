@@ -170,6 +170,12 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   rulebook's edge-case table are now a test each; the remaining four are skill-card rules and belong
   to #38. Sprint 2.
 
+- **2026-08-29**: State layer written for issue #27, the 8-point integration point everything else
+  waits on: `state/game-state.js`, `state/turn-manager.js`, `state/intents.js` and `state/match.js`.
+  The eight-step turn sequence, the four-intent boundary, and a complete match played end to end on
+  a scripted RNG. The rules are now complete enough to finish a game, and there is still no way to
+  see one: `src/ui/` and `src/i18n/` are empty. Sprint 2.
+
 ---
 
 ## Decisions
@@ -1103,6 +1109,78 @@ to get wrong later.
   as `roll === 6`, so it already works for a D2 and a D20; and the RNG enters from outside (NFR-09),
   so the swap changes one argument at the composition root.
 - → Ch. 05, Ch. 06
+
+### 2026-08-29: The state object is frozen, so `ui/` cannot write to it even by accident
+
+- **Chosen:** every state object is deeply frozen, and every transition builds a new one through the
+  single function `nextState`.
+- **Why:** `CLAUDE.md` says `ui/` never mutates state directly. Freezing turns that from a convention
+  into an error. ES modules run in strict mode, so an assignment to a frozen object **throws** rather
+  than being silently dropped, and a view that writes to the board fails in the line that did it
+  instead of three renders later.
+- **Rejected: a code review convention**, which is what the rule was until now. It is free and it is
+  exactly the kind of rule a three-person team under time pressure stops applying. The same argument
+  produced the two ESLint rules on 2026-08-29.
+- **Rejected: a deep clone on read**, handing `ui/` a copy it may do what it likes with. It costs a
+  clone per render instead of a copy per transition, and it hides the mistake rather than reporting
+  it: a view that writes to its copy simply has no effect, which is harder to debug than a throw.
+- **Cost:** one shallow copy of a small object per transition, in a turn-based game that changes
+  state a few times per turn. The freeze is hand-written for the known state shape rather than a
+  general recursive freeze, because a general one would have to guard against cycles this shape
+  cannot have.
+- → Ch. 06
+
+### 2026-08-29: The intent vocabulary has four entries, and none of them names a target square
+
+- **Chosen:** `ui/` may dispatch `choose-die`, `select-pawn`, `commit-move` and `end-turn`, and
+  nothing else. `commit-move` names a **pawn**, never a destination.
+- **Why:** the destination comes out of the legal-move set that `core/` already produced. If the view
+  could name a square, the rule that decides whether that square is reachable would have to be
+  applied a second time, on the way in, and the two copies would eventually disagree. Section 2 of
+  the architecture document called this out on 2026-08-22 as the reason the rule check and the state
+  write are separate steps.
+- **Rejected: a generic `applyMove(move)` intent** taking the move object. It is more flexible and
+  the flexibility is the problem: the view would be constructing rule output instead of choosing from
+  it.
+- **A rejected intent returns the state object it was given**, identical rather than copied, so a
+  test asserts `result.state === before`. Every check runs before anything is written, so there is
+  never a half-applied intent to undo.
+- **Two intents run two rulebook steps**, because the rulebook has no player input between them:
+  `choose-die` also rolls, and `commit-move` also resolves. `end-turn` also draws the next player's
+  hand, so the board is never in a phase the player can see and cannot act on.
+- → Ch. 06, Ch. 04
+
+### 2026-08-29: `legalMoves` and the refusal reason are cached in state for exactly one turn
+
+- **Chosen:** the legal-move set and the turn's refusal reason are written into the state when the
+  die is rolled, and wiped when the turn ends.
+- **Why this is not the usual "derived state goes stale" mistake:** the lifetime is one turn. They
+  are written once per roll from the pawn positions that produced them, and there is no transition
+  between the write and the wipe that can change those positions. Chapter 06's own brief warns
+  against derived values in state, and this is the answer to that warning rather than an exception
+  to it.
+- **Rejected: recomputing on every render.** It puts a rules call in the render path, and it makes
+  FR-32's highlighting and NFR-08's refusal text two separate calls to the same rule instead of one
+  result used twice.
+- **Deliberately not cached: whether anyone has won.** `core/win.js` answers that from the pawn
+  positions every time a move resolves. `winner` records the outcome after the match is over, which
+  is a fact about a finished match and not a shortcut around a rule.
+- → Ch. 06
+
+### 2026-08-29: The empty per-file coverage table was not a defect, and the earlier note was wrong
+
+- **What was recorded after #26:** `npm run test:coverage` prints correct totals and an empty
+  per-file table, called a measured defect and worked around by reading
+  `coverage/coverage-summary.json`.
+- **What is actually true:** the v8 text reporter omits files that are at 100 %. At #26 there was one
+  measured file and it was at 100 %, so the table had nothing to show. After #27 there are ten, one
+  of them below 100 %, and that row renders.
+- **Why it is worth a decision block rather than a silent edit:** the wrong conclusion was reached
+  confidently, from a sample of one, about a tool nobody had used before. That is a failure mode
+  worth naming in the retrospective, and deleting the claim would delete the evidence for it.
+- **The workaround stays**, because commands 5b and 5c aggregate per directory, which is what NFR-05
+  asks for and what neither the text reporter nor the totals give.
+- → Ch. 08, Ch. 09
 
 ---
 

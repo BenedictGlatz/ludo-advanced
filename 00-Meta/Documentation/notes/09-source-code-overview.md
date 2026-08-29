@@ -22,9 +22,9 @@ history of what was true.
 
 ## Commands
 
-Run from the repository root, in Git Bash. Every command below has been executed; two of the ones
-suggested when this file was first written did not work and were corrected, which is noted under
-each of them.
+Run from the repository root, in Git Bash. Every command below has been executed. Four of the ones
+suggested when this file was first written turned out to be wrong and were corrected, which is
+noted under them.
 
 ```bash
 # 1. Source files and lines, excluding tests
@@ -46,13 +46,21 @@ npx vitest run --reporter=default 2>&1 | grep -E "Test Files|Tests "
 # 5a. Coverage totals
 npm run test:coverage
 
-# 5b. Coverage per file, which command 5a cannot show (see the correction below)
+# 5b. Coverage per file, including the files command 5a leaves out (see the correction below)
 node -e "const j=require('./coverage/coverage-summary.json');
 for (const [k,v] of Object.entries(j))
-  console.log(k.split(/[\\\\/]/).slice(-3).join('/') + ' lines ' + v.lines.pct + '%');"
+  console.log((k === 'total' ? k : 'src' + k.split('src').pop()) + ' lines ' + v.lines.pct + '%');"
+
+# 5c. Coverage per directory, which is what NFR-05 actually asks for
+node -e "const j=require('./coverage/coverage-summary.json'); const a={};
+for (const [k,v] of Object.entries(j)) { if (k === 'total') continue;
+  const d = k.includes('core') ? 'src/core' : 'src/state';
+  a[d] = a[d] || {c:0,t:0,f:0}; a[d].c += v.lines.covered; a[d].t += v.lines.total; a[d].f += 1; }
+for (const [d,x] of Object.entries(a))
+  console.log(d, x.f + ' files', x.c + '/' + x.t, (100*x.c/x.t).toFixed(2) + '%');"
 
 # 6. Longest files: evidence for the 300-line rule
-git ls-files '*.js' | xargs wc -l | sort -rn | sed -n '2,6p'
+git ls-files '*.js' | xargs wc -l | sort -rn | sed -n '2,7p'
 ```
 
 **Two corrections to the commands this file was created with**, both found by running them:
@@ -64,67 +72,92 @@ git ls-files '*.js' | xargs wc -l | sort -rn | sed -n '2,6p'
   **removed in Vitest 4**, and the command fails with `Failed to load custom Reporter from basic`.
   `--reporter=default` plus a `grep` for the summary lines replaces it.
 
-Command 6 uses `sed -n '2,6p'` rather than `head` because `wc -l` puts its `total` line first after
+Command 6 uses `sed -n '2,7p'` rather than `head` because `wc -l` puts its `total` line first after
 the reverse sort, and that total is not a file.
 
-**A third correction, and this one is a measured defect rather than a typo.** `npm run
-test:coverage` prints correct totals and an **empty per-file table**: the header and the separator
-lines render, and there is not one row between them. So the per-directory figure NFR-05 actually
-asks for cannot be read off the terminal at all. The workaround is command 5b: `json-summary` was
-added to the coverage reporters in `vitest.config.js`, and the per-file numbers are read out of
-`coverage/coverage-summary.json`, where they are correct. Worth carrying into the report as a small
-example of the difference between a metric being *produced* and a metric being *readable*.
+**A third correction to command 5b itself.** Its first version split the file path on
+`/[\\\\/]/` and took the last three segments, which left the full Windows path in the output
+untouched. Splitting on the literal string `src` and rebuilding the path from there works and is
+readable, which is all this command has to be.
+
+**A fourth correction, and this one withdraws an earlier claim rather than fixing a typo.** After
+issue #26 this file recorded that `npm run test:coverage` printed an **empty per-file table** and
+called it a measured defect in the tool. **That was wrong, and the cause is worth writing down.**
+The v8 text reporter omits files that are at 100 %. At #26 there was exactly one measured file,
+`board.js`, and it was at 100 %, so its row was omitted and the table looked broken. After #27
+there are ten measured files, one of them below 100 %, and that one row renders correctly. The
+other nine are still omitted, which is the same behaviour and now obviously deliberate.
+
+The workaround stands and is still worth having: `json-summary` is in the coverage reporters in
+`vitest.config.js`, and commands 5b and 5c read `coverage/coverage-summary.json`, which reports
+every file whatever its percentage and can be aggregated per directory the way NFR-05 asks. What
+changes is the reason. It is a reporting default that hides good news, not a defect.
+
+The lesson is worth a sentence in the report on its own: a measurement taken once, against a sample
+of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
 
 | Metric | Command | Value | Taken on |
 | --- | --- | --- | --- |
-| Source lines in `src/` | 1 | **184 lines in 2 files** | 2026-08-29, after #26 |
-| Test lines in `tests/` | 2 | **211 lines in 2 files** | 2026-08-29, after #26 |
-| Lines in `src/core/` | 3 | 158 lines in 1 file (`board.js`) | 2026-08-29, after #26 |
-| Lines in `src/state/` | 3 | 0 files | 2026-08-29, after #26 |
-| Lines in `src/ui/` | 3 | 0 files | 2026-08-29, after #26 |
-| Lines in `src/i18n/` | 3 | 0 files | 2026-08-29, after #26 |
-| Unit tests | 4 | **2 test files, 28 tests, all passing** | 2026-08-29, after #26 |
-| Coverage of `src/core/` and `src/state/`, lines | 5a | **100 % (35/35)** | 2026-08-29, after #26 |
-| Coverage of `src/core/board.js`, lines | 5b | **100 % (35/35)** | 2026-08-29, after #26 |
-| Coverage, branches | 5a | 100 % (28/28) | 2026-08-29, after #26 |
-| Longest JavaScript file | 6 | **201 lines, `tests/unit/core/board.test.js`** | 2026-08-29, after #26 |
+| Source lines in `src/` | 1 | **1215 lines in 11 files** | 2026-08-29, after #27 |
+| Test lines in `tests/` | 2 | **1585 lines in 13 files** | 2026-08-29, after #27 |
+| Lines in `src/core/` | 3 | 656 lines in 6 files | 2026-08-29, after #27 |
+| Lines in `src/state/` | 3 | 533 lines in 4 files | 2026-08-29, after #27 |
+| Lines in `src/ui/` | 3 | 0 files | 2026-08-29, after #27 |
+| Lines in `src/i18n/` | 3 | 0 files | 2026-08-29, after #27 |
+| Unit tests | 4 | **12 test files, 146 tests, all passing** | 2026-08-29, after #27 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | **99.53 % (216/217)** | 2026-08-29, after #27 |
+| Coverage of `src/core/`, lines | 5c | **99.24 % (130/131) over 6 files** | 2026-08-29, after #27 |
+| Coverage of `src/state/`, lines | 5c | **100 % (86/86) over 4 files** | 2026-08-29, after #27 |
+| Coverage, branches | 5a | 99.38 % (161/162) | 2026-08-29, after #27 |
+| The one file below 100 % lines | 5b | `src/core/movement.js`, 97.61 % | 2026-08-29, after #27 |
+| Longest JavaScript file | 6 | **206 lines, `src/core/movement.js`** | 2026-08-29, after #27 |
 
 Longest-file ranking in full, from command 6, same run:
 
 | Lines | File |
 | --- | --- |
+| 206 | `src/core/movement.js` |
+| 203 | `tests/unit/state/turn-manager.test.js` |
 | 201 | `tests/unit/core/board.test.js` |
-| 158 | `src/core/board.js` |
-| 143 | `eslint.config.js` |
-| 131 | `scripts/docs-ai-index.js` |
-| 45 | `playwright.config.js` |
-| 33 | `vitest.config.js` |
+| 186 | `tests/unit/core/movement.test.js` |
+| 178 | `src/state/turn-manager.js` |
+| 160 | `tests/unit/state/intents.test.js` |
 
-For comparison, the same table taken a few hours earlier at the bootstrap commit, before any rules
-existed: 26 source lines in 1 file, 10 test lines in 1 file, 1 test, no coverage measurable at all,
-longest file `eslint.config.js` at 143 lines. It is kept as one sentence rather than a second table,
-because the rule of this chapter is that values are replaced.
+For comparison, the same table taken earlier the same day: at the bootstrap commit, 26 source lines
+in 1 file, 10 test lines in 1 file, 1 test, no coverage measurable at all; after #26, 184 source
+lines in 2 files, 211 test lines in 2 files, 28 tests, 100 % coverage of 35 lines. Kept as one
+sentence rather than three tables, because the rule of this chapter is that values are replaced.
 
 ## Interpretation
 
-- **184 lines of source is still not a game.** One module exists, `core/board.js`, and it is the
-  coordinate system everything else is computed on. What the figure does show is where the project
-  started measuring, which is 2026-08-29, 23 days after the repository was created.
-- **The test file is longer than the code it tests**, 201 lines against 158, and that ratio is
-  expected here rather than a warning sign. `board.js` is arithmetic with sharp boundaries at
-  `r = 0`, `52`, `53`, `57` and `58`, and most of the test file is boundary cases and two exhaustive
-  loops that check a property across all four players rather than at one sample point.
-- **100 % line coverage of `src/core/` against a floor of 80 % (NFR-05).** The number is worth
-  exactly as much as the case list behind it, which is why Chapter 08 keeps that list separately: a
-  module of pure arithmetic reaching 100 % is not evidence of much on its own. What it does prove is
-  that the measurement works, which the bootstrap run could not.
-- **The longest file is 201 lines against the 300-line limit of NFR-02**, and it is a test file. The
-  limit applies to tests as well, which is the constraint most likely to bite first: a rule module
-  with many edge cases produces a test file two or three times its own size.
-- **`src/state/`, `src/ui/` and `src/i18n/` are still empty**, so the coverage figure covers one
-  layer of the two NFR-05 names. Quoting "100 % coverage" without that sentence would be misleading.
+- **1215 lines of source is a playable rule set with no way to play it.** Six modules of rules and
+  four of state exist, and every one of them runs in Node with no browser. `src/ui/` and `src/i18n/`
+  are still empty, so there is nothing on screen at all. Quoting the coverage figure without that
+  sentence would be misleading.
+- **There are more test lines than source lines**, 1585 against 1215. That ratio is expected for this
+  kind of code rather than a warning sign: the rules have sharp boundaries at `r = 0`, `52`, `53`,
+  `57` and `58`, and several tests are exhaustive loops over a whole domain instead of one sample
+  point. The largest single test is a complete scripted match, 87 turns from the first draw to the
+  win.
+- **99.24 % of `src/core/` and 100 % of `src/state/` against a floor of 80 % (NFR-05).** Both
+  directories now have real code in them, which the figure after #26 could not claim.
+- **One line in the whole of `src/` is uncovered, and it is unreachable on purpose.**
+  `movement.js` line 150 returns the generic refusal reason when every one of a player's pawns is
+  already home. That state means the player has won and the match has ended, so no turn is ever
+  evaluated in it. The line stays because it stops `blocked[0]` being read from an empty array, and
+  it is recorded here rather than removed or excluded from the measurement.
+- **The longest file is 206 lines against the 300-line limit of NFR-02**, and for the first time it
+  is a source file rather than a test. `src/core/movement.js` is at 69 % of the limit with the
+  movement rules complete, which is the first real evidence that the limit and the module split are
+  compatible.
+- **Exactly one branch in the whole of `src/` is uncovered, and it is the same unreachable line.**
+  The first measurement after #27 reported four, and the other three turned out to be real gaps
+  rather than unreachable code: the freeze path for a move that captures something, and the refusal
+  of `select-pawn` for a pawn with no move. Two tests were added and the branch figure moved from
+  97.53 % to 99.38 %. That is the coverage number doing the job it is for, which the line figure
+  alone would not have done: lines were already at 99.53 % with all three gaps still open.
 
 The longest-file figure is worth carrying because the 300-line limit is a stated project
 constraint; showing the actual maximum is the cheapest possible proof that it held.

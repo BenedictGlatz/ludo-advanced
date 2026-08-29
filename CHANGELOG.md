@@ -136,6 +136,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   test each. The remaining four rows are skill-card rules and belong to issue #38
 - `tests/helpers/fixtures.js`: a pawn-position builder and a scripted RNG shared by the unit tests, and later
   by the Playwright specs
+- **The state layer** (issue #27, FR-01, FR-04, FR-05, FR-06, FR-07, FR-14, FR-18 to FR-21). `src/state/`
+  with four modules: `game-state.js` holds the single state object and the only function that produces a
+  new one, `turn-manager.js` the eight-step turn sequence from the rulebook, `intents.js` the four things
+  `ui/` may ask for, and `match.js` start, restart and abandon
+- Every state object is **deeply frozen**, so an assignment from `ui/` throws instead of being silently
+  dropped. The layering rule holds even when somebody forgets it
+- The **reaction window exists as a phase of the turn with nothing in it**, so that adding skill cards in
+  issue #38 is filling a phase rather than reshaping the sequence
+- A **complete match played end to end on a scripted RNG** as a unit test: 87 turns from the first draw to
+  the win, asserted to an exact final state. This is the half of acceptance criterion SG1 that needs a
+  whole match
 
 ### Changed
 
