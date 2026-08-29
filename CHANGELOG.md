@@ -112,3 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Roadmap view now renders 4 bars and 21 dots instead of 4 bars and 7 dots. `00-Meta/Project-Management/Roadmap-and-Gantt.md`
   section 2.1 records the measurement and the per-issue dates; the `project` token scope that blocked this, the
   `Story Points` field and the `Sprint` assignment was granted on the same day
+- `CLAUDE.md` now opens with three sections on how answers and documentation are written: *Communication*, which
+  states that the readers are 4th semester students, plus *Tone & Readability* and *Structure & Scannability*.
+  They govern the register of the prose, while the existing *Writing style* section keeps governing the em dash
+  ban. A typo in the *Communication* paragraph was fixed in the same commit

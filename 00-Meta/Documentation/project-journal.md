@@ -732,6 +732,36 @@ exactly the kind of thing this file exists to keep visible.
 
 ---
 
+### 2026-08-29: The reading level of the documentation is written into `CLAUDE.md` as a rule
+
+- **Chosen:** three new sections at the top of [CLAUDE.md](../../CLAUDE.md), *Communication*, *Tone &
+  Readability* and *Structure & Scannability*, stating that the readers are 4th semester students and
+  that answers and documents are written in plain English, broken into short paragraphs, bullets and
+  tables, with the key terms in bold.
+- **Why:** the project's documents are written by an AI assistant and read by three students, and the
+  register drifted upward over Sprint 1. Several planning documents are dense enough that a reader has
+  to re-read a sentence to get the claim out of it. That is a real cost at review time and a real cost
+  in the report, which is graded on being understood.
+- **Rejected:** *leaving the register to be corrected per document.* It was already being corrected that
+  way and it did not hold, because a correction inside one document does not reach the next one. A rule
+  in `CLAUDE.md` is read at the start of every session, which is the only place a standing instruction
+  survives.
+- **Also rejected:** *putting the guidance in the existing `Writing style` section.* That section owns
+  one narrow ban, the em dash and the rhetorical habit behind it. Mixing a general register rule into it
+  would have made the em dash rule look like a matter of taste, when it is a hard constraint that a
+  verification command checks.
+- **Consequence:** the two rules can pull against each other. Plain English wants short sentences, and
+  the em dash ban removes the punctuation mark that usually shortens one. What resolves it is splitting
+  into ordinary sentences rather than reaching for a semicolon, which is what the *Writing style*
+  section already says.
+- **Recorded as a process finding:** the change sat in the working tree as an uncommitted edit with no
+  changelog entry and no journal entry, so it broke steps 2 and 3 of `CLAUDE.md`'s own mandatory
+  per-change list. It was committed with both attached before any Sprint 2 work started. The finding
+  worth keeping is that the file holding the rules is the file most likely to be edited outside them.
+- → Ch. 02, Ch. 10, Ch. 11
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first
