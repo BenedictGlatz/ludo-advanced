@@ -27,7 +27,70 @@ and the edge cases written into the text, and that is the standard to match here
 
 ## Facts
 
-*(Nothing observed yet: `src/core/` does not exist.)*
+### Board topology, the first module in `core/`: 2026-08-29, issue #26
+
+`src/core/board.js` exists. It is the first observed fact in this chapter and the first evidence that
+the architecture of [System-Architecture.md](../../Project-Management/System-Architecture.md) survives
+contact with code. Line counts and the coverage figure are in
+[09-source-code-overview.md](09-source-code-overview.md), never here.
+
+**The design idea the module is built on, and it is the one worth a paragraph in the report:** a
+pawn's position is stored as a **relative position `r`** counted from its own player's viewpoint, not
+as a square on the shared board. `r` runs 0 to 58.
+
+| `r` | Where the pawn is |
+| --- | --- |
+| `0` | Start area |
+| `1` | The player's own entry square |
+| `1` to `52` | Somewhere on the shared 52-square track |
+| `53` to `57` | The player's own home column, steps 1 to 5 |
+| `58` | Home |
+
+**Why it is worth stating:** every player walks the same 58 steps, so a movement rule written against
+`r` is one rule for all four of them instead of four rules with an offset baked in. The offset between
+players appears in exactly one function, `absoluteSquare`, and nowhere else in the codebase. Movement,
+capture and the win condition never need to know which player they are computing for.
+
+**What the module exports:**
+
+| Export | What it is |
+| --- | --- |
+| `TRACK_LENGTH` 52, `MAX_PLAYERS` 4, `PLAYER_OFFSET` 13, `HOME_COLUMN_LENGTH` 5, `PAWNS_PER_PLAYER` 4, `START_R` 0, `HOME_R` 58 | The topology as constants, in one place |
+| `REGION` | The four region names as an object, so a failing test reads as words rather than as numbers |
+| `entrySquare(player)` | `13 * player`, giving 0, 13, 26, 39 |
+| `turnOffSquare(player)` | `(entrySquare(player) + 51) mod 52`, the square immediately behind the entry square |
+| `absoluteSquare(player, r)` | `(entrySquare(player) + r - 1) mod 52`, defined only while `r` is on the track |
+| `region(r)` | `start`, `track`, `home-column` or `home` |
+| `homeColumnStep(r)` | 1 to 5, which the view renders as `data-home-step` |
+| `isSameSquare(pawnA, pawnB)` | Whether two pawns stand on the same physical square |
+
+**Two numbers are derived rather than typed in**, so that the code and the rulebook cannot drift:
+`PLAYER_OFFSET` is `TRACK_LENGTH / MAX_PLAYERS` and `HOME_R` is
+`TRACK_LENGTH + HOME_COLUMN_LENGTH + 1`. The rulebook derives them the same way and for the same
+reason.
+
+**`isSameSquare` is where the topology does real work**, and it is the clearest example in the code so
+far of a rule that did not have to be written because the data structure already says it:
+
+- **On the shared track**, two pawns collide when their absolute squares match. This is the only case
+  in which pawns of *different* players can ever meet, which is why capture (FR-11) can only happen on
+  the track.
+- **In a home column**, a collision needs the same player *and* the same `r`, because a home column is
+  owner-only. So "capture inside a home column" is not forbidden by a rule, it is **inexpressible**.
+  The game design document predicted exactly this in section 4.3 and the code confirms it.
+- **Start areas and homes never collide at all**, not even for two pawns of the same player, because
+  each holds four separate slots. Two pawns there stand next to each other, not on top of each other.
+
+**All three of those properties are asserted exhaustively rather than at a sample point.** The test
+file loops over every pair of players and every home column step (4 x 3 x 5 x 5 comparisons) instead
+of checking one pair, and over every home column position against all 52 track positions. The reason
+is that a topology claim is a claim about *all* positions, and one passing example is not evidence
+for it.
+
+**Positions are validated, and the functions throw `RangeError`.** A player outside 0 to 3, an `r`
+outside 0 to 58, a non-integer, or an `absoluteSquare` call for a pawn that is not on the track are
+all errors rather than silently wrong numbers. This is deliberate for a layer with no UI: a wrong
+number here would surface as a pawn in the wrong place three modules later.
 
 **Planned structure recorded 2026-08-22, issues #21 and #22.** The rules this chapter will describe
 are written down, and so is the module structure that will hold them, so this chapter fills from two
@@ -46,9 +109,11 @@ existing documents once the code exists rather than from memory:
 
 ## Open / to verify
 
-- No source code exists yet. Declared target state from [CLAUDE.md](../../../CLAUDE.md): `core/` is
-  pure: no DOM, no jQuery, no i18next, and no imports from `state/` or `ui/`. It runs and is tested
-  without a browser.
+- ~~No source code exists yet.~~ **One module exists as of 2026-08-29: `core/board.js`.** The purity
+  rule from [CLAUDE.md](../../../CLAUDE.md) is no longer only declared: since the same day it is a
+  **failing lint run**, through `no-restricted-imports` and `no-restricted-globals` scoped to
+  `src/core/**`, and a failing test run, through `environment: "node"` in Vitest. See
+  [07-tooling.md](07-tooling.md). Seven of the eight planned `core/` modules do not exist yet.
 - Card effects live here as pure functions over game state and are matched to their presentation in
   `ui/` by card id.
 - The dice pool balance was to be paper-prototyped or spreadsheet-tested in Sprint 0

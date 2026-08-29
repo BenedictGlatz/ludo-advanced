@@ -95,14 +95,55 @@ SMART sub-goal criteria (*epic closed*) were not comparable between three people
   and `no-restricted-globals` over `src/core/**` were verified by deliberately writing a violating
   file, which produced three restriction errors and exit code 1. Details in
   [07-tooling.md](07-tooling.md).
-- **The coverage threshold is configured at 80 % of lines over `src/core/**` and `src/state/**`.**
-- **Negative finding, and it needs saying before anyone quotes a green run:** with both directories
-  empty, v8 measures `0/0`, prints `Unknown%` and **the threshold does not fire**.
-  `npm run test:coverage` passes today for a reason that has nothing to do with quality. A coverage
-  gate over an empty set is not a gate.
+- **The coverage threshold is configured at 80 % of lines over `src/core/**` and `src/state/**`**,
+  with `all: true`, so a module that no test imports is counted rather than left out of the
+  denominator. Leaving it out is the one way a coverage floor can be met while the code gets worse.
+- **Negative finding recorded at the bootstrap, and now closed:** with both directories empty, v8
+  measured `0/0`, printed `Unknown%` and the threshold did not fire, so `npm run test:coverage`
+  passed for a reason unrelated to quality. **From #26 onward there is real code to measure**, and it
+  does.
+- **Negative finding that is still open: the coverage report's per-file table renders empty.**
+  `npm run test:coverage` prints correct totals and then a table with a header, a separator and no
+  rows, so the per-directory figure NFR-05 asks for cannot be read from the terminal. The workaround
+  is in `vitest.config.js`: `json-summary` is added to the reporters and the per-file numbers are read
+  out of `coverage/coverage-summary.json`, where they are correct. Recorded in
+  [09-source-code-overview.md](09-source-code-overview.md) next to the command.
 - **One test exists and it is a smoke test.** `tests/unit/smoke.test.js` asserts `1 + 1 === 2` and
   proves the runner works. It is called that in its own comment and in the commit that added it,
   rather than being counted toward anything.
+
+### The first real unit tests: 2026-08-29, issue #26
+
+`tests/unit/core/board.test.js`. Counts and the coverage figure are in
+[09-source-code-overview.md](09-source-code-overview.md).
+
+- **The test layout mirrors `src/`**, so `src/core/board.js` is tested by
+  `tests/unit/core/board.test.js`. `CLAUDE.md`'s architecture section asks for the mirror; its
+  example command shows a flat `tests/unit/dice-pool.test.js`. The mirror wins, because it is the
+  binding statement and because a flat directory stops being navigable at about eight modules.
+  `tests/unit/smoke.test.js` stays flat, since it tests nothing in `src/`.
+- **Six groups of cases**, one per export plus one for the constants: the constants against section 2
+  of the rulebook, `entrySquare`, `turnOffSquare`, `absoluteSquare`, `region`, `homeColumnStep` and
+  `isSameSquare`.
+- **Three cases are exhaustive loops rather than samples**, and this is the part worth carrying into
+  the report. A claim about a board's topology is a claim about *every* position, so:
+  - every one of the 52 track positions is checked to be visited exactly once per lap, for all four
+    players;
+  - every pair of distinct players is checked against every pair of home column steps, so "two
+    players' home columns never overlap" is asserted 300 times rather than once;
+  - every home column position is checked against all 52 track positions.
+
+  A sample-point test would pass on a wrong modulo. These do not.
+- **Boundary cases are tested at the boundary**, not near it: `region` is asserted at `r` = 0, 1, 52,
+  53, 57 and 58, which are exactly the five places the four regions meet, and a separate case walks
+  all 59 positions and counts how many fall in each region.
+- **Errors are asserted too.** Every function rejects a player outside 0 to 3 and an `r` outside 0 to
+  58 with a `RangeError`, and `absoluteSquare` rejects a position that is not on the shared track.
+  Testing the refusals is what makes the validation a contract instead of a comment.
+- **What is not covered yet, stated plainly:** nothing in this file tests a *rule*. Movement (#28),
+  capture (#29) and the win condition are not written, so the 16 unit test cases the test plan derives
+  from the rulebook's edge-case table are all still outstanding. This module is the coordinate system
+  those rules will be written against, and coverage of it says nothing about them.
 
 ## Decisions
 

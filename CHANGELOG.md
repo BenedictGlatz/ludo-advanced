@@ -93,6 +93,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   prompt log is per machine and a run here would produce an incomplete chapter
 - A toolchain smoke test, `tests/unit/smoke.test.js`, asserting `1 + 1 === 2`. It proves the runner works and
   nothing else, and it is called that rather than counted as coverage
+- **`src/core/board.js`, the board topology and position arithmetic** (issue #26, FR-02 and FR-08). The
+  52-square closed track, the entry and turn-off square per player, the region classifier over a pawn's
+  58-step journey, the home column step number, and whether two pawns stand on the same physical square.
+  Every number comes from section 2 of the game design document and two of them are derived rather than
+  typed in, so the code and the rulebook cannot drift. Pure functions: no DOM, no state, no imports from
+  any other layer
+- `tests/unit/core/board.test.js`, mirroring the `src/` layout. Boundary cases at every region edge, plus
+  three properties asserted exhaustively over their whole domain rather than at a sample point, because a
+  claim about a board's topology is a claim about every position on it
 - Two board issues that had never existed, both `must have` and both in Sprint 2: **#63 Project Bootstrap**
   (`package.json`, Vite, ESLint, Prettier, Vitest, Playwright, 5 points) and **#64 i18n Setup and the German and
   English Locale Files** (5 points). They are 10 of the 12 points section 3.6 of the effort estimation found

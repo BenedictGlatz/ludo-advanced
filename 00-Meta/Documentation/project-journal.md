@@ -913,6 +913,39 @@ anything.
 
 ---
 
+### 2026-08-29: The board module fails loudly, and its properties are tested exhaustively
+
+Three small decisions taken while writing `core/board.js`, none of them obvious and all three cheap
+to get wrong later.
+
+- **Chosen: the functions validate their arguments and throw `RangeError`.** A player outside 0 to 3,
+  an `r` outside 0 to 58, a non-integer, or an `absoluteSquare` call for a pawn that is not on the
+  track are all errors.
+- **Rejected:** *returning a sensible value anyway*, for example clamping `r` or letting the modulo
+  wrap something meaningless. It is the usual choice for arithmetic helpers and it is wrong here,
+  because this layer has no user interface. A wrong number produced silently in `core/` surfaces as a
+  pawn standing in the wrong place three modules later, and the stack trace by then points at the
+  view. **Rejected also:** returning `null` for an invalid input, which pushes a check into every
+  caller and gets forgotten in one of them.
+- **Chosen: two constants are derived instead of typed in.** `PLAYER_OFFSET` is
+  `TRACK_LENGTH / MAX_PLAYERS` and `HOME_R` is `TRACK_LENGTH + HOME_COLUMN_LENGTH + 1`. The rulebook
+  derives them the same way, so if the track length is ever changed there is one number to edit and
+  not four. **Rejected:** writing `13` and `58` directly, which reads more clearly and is exactly the
+  kind of thing that goes out of sync silently.
+- **Chosen: three of the board's properties are asserted over their whole domain**, not at a sample
+  point: all 52 track positions per player, every pair of players against every pair of home column
+  steps, and every home column position against every track position. **Rejected:** one example per
+  property, which is the normal thing to write. A claim about a board's topology is a claim about
+  every position on it, and a wrong modulo passes a sample test comfortably. The loops cost a few
+  milliseconds and roughly twenty lines.
+- **One export exists that the plan for this issue did not list: `homeColumnStep(r)`**, returning 1
+  to 5. The DOM contract handed to Claude Design uses `data-home-step="1"` to `"5"`, so somebody has
+  to turn `r = 53` into step 1. Putting it in `core/` keeps that derivation next to the constant it
+  depends on, instead of letting a view re-derive `r - 52` on its own.
+- → Ch. 05, Ch. 08
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

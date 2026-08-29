@@ -12,11 +12,19 @@ export default defineConfig({
     exclude: ["node_modules/**", "dist/**", "tests/e2e/**"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "html"],
+      // `json-summary` is in this list because of a measured defect, not for completeness: on this
+      // setup the `text` reporter prints correct totals and an **empty per-file table**, so the
+      // per-directory figure NFR-05 asks for cannot be read off the terminal output. The numbers in
+      // `coverage/coverage-summary.json` are correct and are what Chapter 09 quotes.
+      reporter: ["text", "json-summary", "html"],
       reportsDirectory: "coverage",
       // NFR-05 applies to these two layers only, for the reason given in Chapter 08: a coverage
       // figure for `ui/` would measure how much jQuery ran, not whether anything works.
       include: ["src/core/**/*.js", "src/state/**/*.js"],
+      // `all: true` counts files that no test imports at all. Without it a module nobody tested is
+      // simply absent from the report, and the percentage stays high by leaving work out of the
+      // denominator. That is the one way a coverage floor can be met while getting worse.
+      all: true,
       thresholds: {
         lines: 80,
       },
