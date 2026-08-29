@@ -50,17 +50,163 @@ Declared in [CLAUDE.md](../../../CLAUDE.md) as the binding specification for `pa
   which is a point worth making in the report.
 - **No hardcoded user-facing strings.** Every player-readable string goes through i18next.
 
+### Toolchain bootstrapped: 2026-08-29, issue #63
+
+The first commit in this repository that is not documentation. It lands **23 days after the
+repository was created** and **4 days after milestone M1** (toolchain up, due 2026-08-25).
+
+**All 11 scripts of `CLAUDE.md` exist and were run**, apart from `test:e2e`, which has no spec to run
+yet. Their real implementations:
+
+| Script | Runs |
+| --- | --- |
+| `dev` | `vite` |
+| `build` | `vite build` |
+| `preview` | `vite preview` |
+| `lint` | `eslint .` |
+| `lint:fix` | `eslint . --fix` |
+| `format` | `prettier --write .` |
+| `test` | `vitest run` |
+| `test:watch` | `vitest` |
+| `test:coverage` | `vitest run --coverage` |
+| `test:e2e` | `playwright test` |
+| `docs:ai-index` | `node scripts/docs-ai-index.js` |
+
+**Versions actually installed** (read from `node_modules/<pkg>/package.json`, not from memory):
+
+| Package | Kind | Version |
+| --- | --- | --- |
+| `jquery` | runtime | 4.0.0 |
+| `i18next` | runtime | 26.4.0 |
+| `vite` | dev | 8.2.2 |
+| `eslint` | dev | 10.9.1 |
+| `@eslint/js` | dev | 10.0.1 |
+| `prettier` | dev | 3.9.6 |
+| `vitest` | dev | 4.1.11 |
+| `@vitest/coverage-v8` | dev | 4.1.11 |
+| `@playwright/test` | dev | 1.62.1 |
+
+Environment: Node v24.11.0, npm 11.6.1, Windows 11.
+
+#### The two lint rules that turn architecture prose into a failing build
+
+This is the part of the bootstrap worth a paragraph in the report, because it converts two written
+constraints into machine-checked ones.
+
+- **`max-lines: ["error", { max: 300, skipBlankLines: false, skipComments: false }]`** on every
+  `**/*.js`, which is NFR-02. Blank lines and comments are **counted**, on purpose: `CLAUDE.md` says
+  a file at the limit is split along a real seam and not compressed by deleting whitespace or
+  comments, so a config that skipped them would reward exactly the behaviour the rule forbids. The
+  journal recorded on 2026-08-22 that the limit was unenforced. It is enforced now.
+- **`no-restricted-imports` over `src/core/**`**, which is NFR-01. It bans imports matching
+  `**/state/**`, `**/ui/**` and `**/i18n/**`, plus the packages `jquery` and `i18next` by name. Each
+  ban carries its own message naming NFR-01, so the failure explains itself.
+- **`no-restricted-globals` over `src/core/**` and `src/state/**`**, which is not in the plan and
+  closes a hole in it. The import ban alone still lets a file write `document.querySelector(...)`,
+  because reaching a global needs no import. `document`, `window`, `navigator`, `localStorage`, `$`
+  and `jQuery` are banned by name in both layers.
+- **`src/state/` gets a narrower version of the import ban**: it may import `core/` and may not import
+  `ui/`. Stating that as its own config block keeps the difference between the two layers visible
+  instead of implied.
+
+**Both rules were verified by deliberately breaking them**, which is the only evidence worth having:
+
+- A probe file `src/core/__probe.js` importing `../state/game-state.js` and `jquery` and calling
+  `document.querySelector` produced 3 restriction errors plus a `no-undef`, and `eslint` exited 1.
+- A generated 302-line file produced `File has too many lines (302). Maximum allowed is 300`.
+- Both probes were deleted; `npm run lint` is clean afterwards.
+
+#### Formatter, and the split with the linter
+
+- **Prettier owns layout, ESLint owns correctness.** No formatting rules are configured in ESLint and
+  no correctness rules in Prettier, so the two cannot disagree. No `eslint-config-prettier` is
+  installed, because with no stylistic ESLint rules there is nothing for it to switch off.
+- **`.prettierignore` excludes every markdown file and the whole of `00-Meta/`.** This is deliberate
+  and it is a real trade-off. `prettier --write .` would rewrap the documentation to its own width and
+  reformat every table, producing a diff of thousands of lines in which the actual change is
+  invisible. The documentation is written to hand-chosen wrapping and to the `CLAUDE.md` writing
+  rules, which Prettier knows nothing about. **The cost:** markdown formatting stays a matter of
+  discipline rather than a tool, exactly like the em dash ban.
+- **`.gitattributes` was added with `* text=auto eol=lf`.** Found by running the tools rather than by
+  reasoning: this repository has `core.autocrlf=true` and all three of us are on Windows, so a fresh
+  clone gets CRLF files while `.prettierrc` sets `endOfLine: "lf"`. Without the attributes file,
+  `npx prettier --check .` reports every file as badly formatted on a clone nobody has touched.
+
+#### Test runner configuration
+
+- **`environment: "node"` in `vitest.config.js`** is the second half of NFR-01's acceptance criterion,
+  not a default that happened to be kept. There is no DOM in a unit test run at all, so a `core/` or
+  `state/` module reaching for `document` fails a test run and not only a lint run.
+- **Coverage is scoped to `src/core/**` and `src/state/**`** with a line threshold of 80, per NFR-05.
+  **Negative finding, and it matters before anyone quotes a green run:** with both directories empty,
+  v8 measures `0/0`, prints `Unknown%` and the threshold does not fire. `npm run test:coverage` passes
+  today for a reason unrelated to quality.
+- **Playwright runs against the production build**, not the dev server. This settles the question
+  section 8 of the test plan left open and said would be decided in this file. The `webServer` block
+  runs `npm run build && npm run preview` on port 4173. Reason: the dev server serves modules straight
+  off disk and hides the class of defect a build introduces, such as an asset the build forgets to
+  copy. Rejected: running against `npm run dev`, which is faster and exercises something the player
+  never receives.
+- **Three Playwright projects for NFR-10**: `chromium`, `firefox` and `msedge`. Two limits stated
+  rather than glossed over. Playwright ships one pinned build per engine, so "current **and previous**
+  major versions" is not something the config can assert; and `msedge` uses the system Edge, so that
+  project needs Edge installed on the machine running the suite. Browsers still need
+  `npx playwright install` before the first run.
+
+#### Two things added that the plan for this step did not list
+
+Both are recorded because a deviation nobody wrote down is indistinguishable from a mistake.
+
+- **`scripts/docs-ai-index.js` was written.** `CLAUDE.md` requires `package.json` to provide
+  `docs:ai-index`, and a script pointing at a file that does not exist is a broken script. The
+  generator reads every `00-Meta/AI-Prompts/*/*.json`, sorts by timestamp, groups by `topic` into the
+  six subsections Chapter 13 defines, and fails loudly on an unknown `topic` or `use` instead of
+  dropping the entry. **It has not been run**, because the prompt log is gitignored and per machine,
+  so running it here would generate Chapter 13 from one contributor's folder and overwrite the
+  chapter's own instructions with an incomplete table. It prints a warning when it sees fewer than two
+  contributor folders.
+- **`.gitattributes` was added**, for the line-ending reason above.
+
+#### Dependencies installed beyond the five approved dev tools
+
+`CLAUDE.md` approves Vite, ESLint, Prettier, Vitest and Playwright and says anything else is asked
+for first. Three packages were installed that are not literally on that list, and the reasoning is
+recorded here so the team can overrule it:
+
+| Package | Why it was treated as part of an approved tool |
+| --- | --- |
+| `@playwright/test` | This **is** Playwright's package name. There is no package called `playwright-test` to install instead. |
+| `@vitest/coverage-v8` | Vitest's own v8 coverage provider, published by the Vitest team in the Vitest repository. `CLAUDE.md` names `npm run test:coverage # Vitest with v8 coverage` as a required script, which cannot run without it. |
+| `@eslint/js` | ESLint's own package, published by the ESLint team. It is how flat config reaches `js.configs.recommended`, which is where `no-undef` and `no-unused-vars` come from. |
+
+**One package was deliberately not installed:** `globals`, which is the usual way a flat config
+declares browser and Node globals. It is a third-party package rather than an ESLint one, so the
+globals are declared by hand in `eslint.config.js` instead. The cost is a short list to maintain when
+a new browser global is used.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
 
 ## Open / to verify
 
-- No `package.json`, no ESLint config, no Prettier config and no Vite config exist yet. Everything
-  above is target state, not observation.
+- ~~No `package.json`, no ESLint config, no Prettier config and no Vite config exist yet. Everything
+  above is target state, not observation.~~ **Resolved 2026-08-29, issue #63.** All of them exist and
+  every script except `test:e2e` has been run. See *Toolchain bootstrapped* above.
 - No deployment target has been chosen. `Brainstorming.md` floats GitHub Pages or itch.io for
-  playable build artifacts; nothing is decided.
-- Whether JSDoc is enforced through ESLint is undecided.
+  playable build artifacts; nothing is decided. **Unchanged by the bootstrap**, and it stays cheap to
+  defer: `npm run build` produces a plain static `dist/`, which any static host serves.
+- **Whether JSDoc is enforced through ESLint is undecided, and the bootstrap deliberately did not
+  decide it.** No `eslint-plugin-jsdoc` is installed, because that would be a sixth dev dependency
+  and `CLAUDE.md` requires asking first. What exists instead is a convention rather than a check:
+  every exported function in `src/` carries a block comment saying what it does and, where a number
+  comes from the rulebook, which section of the game design document it comes from. The report should
+  call that a convention and not a gate.
+- **`npm run test:e2e` has never been run.** There is no spec in `tests/e2e/` yet, so the command
+  would report "no tests found", and the Playwright browsers have not been downloaded
+  (`npx playwright install`). Both land with the board view.
+- **`npm run docs:ai-index` has never been run either**, for the reason in *Two things added* above:
+  the prompt log is per machine, so a run here would generate an incomplete Chapter 13.
 - ~~The `gh` CLI is not installed on the development machine and no GitHub token is configured, so no
   *authenticated* GitHub automation can run locally.~~ **Half of this was wrong: corrected
   2026-08-06.** The `gh` CLI is indeed absent, but a token was already present and neither

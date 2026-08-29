@@ -107,18 +107,25 @@ Three obligations that are easy to miss because they are not screens:
 | Layer | Technology | Version | Purpose |
 | --- | --- | --- | --- |
 | Language | JavaScript, ES modules | n/a | The whole application. No TypeScript, no build-time type checking (NFR-04). |
-| DOM and events | jQuery | unpinned | Rendering and event binding in `ui/`. |
-| Localisation | i18next | unpinned | German and English at runtime (FR-34, NFR-03). |
-| Build and dev server | Vite | unpinned | `npm run dev`, and a static `dist/` from `npm run build` (NFR-06). |
-| Unit tests | Vitest | unpinned | `core/` and `state/`, plus the coverage figure (NFR-05). |
-| E2E tests | Playwright | unpinned | The player-facing flows through `ui/`. |
-| Lint and format | ESLint, Prettier | unpinned | Style and static checks. |
+| DOM and events | jQuery | 4.0.0 | Rendering and event binding in `ui/`. |
+| Localisation | i18next | 26.4.0 | German and English at runtime (FR-34, NFR-03). |
+| Build and dev server | Vite | 8.2.2 | `npm run dev`, and a static `dist/` from `npm run build` (NFR-06). |
+| Unit tests | Vitest | 4.1.11 | `core/` and `state/`, plus the coverage figure (NFR-05), through `@vitest/coverage-v8` 4.1.11. |
+| E2E tests | Playwright | 1.62.1 | The player-facing flows through `ui/`, as `@playwright/test`. |
+| Lint and format | ESLint 10.9.1 with `@eslint/js` 10.0.1, Prettier 3.9.6 | see cell | Style and static checks, plus the two rules that enforce NFR-01 and NFR-02. |
 
-**The version column is empty on purpose.** No `package.json` exists, so no version is pinned, and a
-version written from memory here would be a number with no command behind it. It is filled from
-`package.json` in the same commit that creates it. Numbers in this project live only in
-[notes/09-source-code-overview.md](../Documentation/notes/09-source-code-overview.md), next to the
-command that produced them.
+Runtime environment used for the bootstrap: Node v24.11.0, npm 11.6.1.
+
+**The version column was empty until 2026-08-29 and is now filled from the real `package.json`**,
+created in the same commit as the project bootstrap. It is a copy and it will go stale, so the rule
+that applies to every other number applies here as well: the authority is `package.json`, and if this
+table and that file disagree, the file wins. The measured figures with their commands live in
+[notes/09-source-code-overview.md](../Documentation/notes/09-source-code-overview.md).
+
+**One version worth reading twice: jQuery is 4.0.0, not 3.x.** No document in this repository ever
+said which major version, and jQuery 4 removes a set of long-deprecated APIs. Nothing built so far
+uses them, so it costs nothing today. It is written down because an answer or a tutorial written for
+jQuery 3 will not always apply.
 
 ### 3.2 Why this stack
 

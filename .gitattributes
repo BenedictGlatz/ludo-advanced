@@ -1,0 +1,23 @@
+# Line endings.
+#
+# This repository has `core.autocrlf=true`, which stores LF and checks out CRLF on Windows. All
+# three of us are on Windows, and `.prettierrc` sets `endOfLine: "lf"`, so without this file a
+# fresh clone would hand Prettier CRLF files and `npx prettier --check .` would report every single
+# file as badly formatted before anyone had touched it.
+#
+# `eol=lf` overrides `core.autocrlf`, so the working tree matches what the repository stores.
+* text=auto eol=lf
+
+# Anything that is not text and must never be line-ending converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.mp3 binary
+*.ogg binary
+*.wav binary

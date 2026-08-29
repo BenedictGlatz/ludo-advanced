@@ -833,6 +833,86 @@ anything.
 
 ---
 
+### 2026-08-29: Two architecture rules become failing lint runs instead of prose
+
+- **Chosen:** the bootstrap configures ESLint so that the two constraints this project has repeated in
+  five documents are checked by a machine. `max-lines` at 300 over every `**/*.js` for NFR-02, and
+  `no-restricted-imports` over `src/core/**` for NFR-01, banning `state/`, `ui/`, `i18n/`, `jquery`
+  and `i18next` by name, each with its own error message naming the requirement.
+- **Added beyond that, and it closes a hole the plan had:** `no-restricted-globals` over both
+  `src/core/**` and `src/state/**`, banning `document`, `window`, `navigator`, `localStorage`, `$` and
+  `jQuery`. The import ban alone does not stop a file writing `document.querySelector(...)`, because
+  reaching a global needs no import at all.
+- **`max-lines` counts blank lines and comments**, `skipBlankLines: false` and `skipComments: false`.
+  The default skips both. Skipping them would reward exactly the behaviour `CLAUDE.md` forbids, which
+  is getting under the limit by deleting whitespace or comments rather than by splitting the file.
+- **Both rules were verified by breaking them on purpose**, not by reading the config. A probe file
+  in `src/core/` importing `../state/game-state.js` and `jquery` and calling `document.querySelector`
+  produced three restriction errors and exit code 1; a generated 302-line file produced
+  `File has too many lines (302). Maximum allowed is 300`. The probes were then deleted. A rule that
+  has never been seen to fail is a rule nobody knows is wired up.
+- **Rejected: leaving both as review discipline**, which is what they have been since 2026-08-06. The
+  journal already records the limit as unenforced on 2026-08-22, and the feasibility study's finding
+  is the argument: with generation cheap, the binding constraint is **review** capacity. A constraint
+  that only a reviewer can catch is a constraint that lapses first under deadline pressure, and this
+  branch is where deadline pressure starts.
+- **Rejected: a custom ESLint plugin** for the layering, which would express the rule more precisely
+  (it could follow re-exports, for one). It is a second thing to maintain and a sixth dev dependency,
+  and the pattern-based version catches the mistake anyone would actually make.
+- **Consequence, and it is a real one:** `npm run lint` is now a gate that can block a commit for an
+  architectural reason. That is the point, and it will be annoying at some point. The response when it
+  is annoying should be splitting the file, not raising the number.
+- → Ch. 07, Ch. 08, Ch. 03
+
+---
+
+### 2026-08-29: Prettier formats code and not the documentation
+
+- **Chosen:** `.prettierignore` excludes every `*.md` file and the whole of `00-Meta/`. `npm run
+  format` therefore touches JavaScript, JSON, HTML and CSS only.
+- **Rejected:** *letting Prettier format the markdown too*, which is the default and would be one
+  fewer thing to think about. It loses because the documentation is written to a hand-chosen wrap
+  width with tables aligned to be read in the raw file, and Prettier would rewrap all of it. The
+  resulting diff would be thousands of lines in which the actual change is invisible, and a diff
+  nobody can read is a review nobody performs.
+- **Also rejected:** *configuring Prettier's markdown options to match the current style*. Prettier
+  has no setting for the thing that matters, which is the em dash ban of `CLAUDE.md`, and matching the
+  rest by configuration would still rewrite every file once.
+- **The cost, stated plainly:** markdown formatting stays a matter of discipline rather than a tool,
+  in exactly the same way the em dash ban does. Two of this project's writing rules are now enforced
+  by people and one (line length in code) by a machine.
+- **A second thing was needed to make the formatter work at all**, and it was found by running the
+  tools rather than by reasoning about them: `.gitattributes` with `* text=auto eol=lf`. The
+  repository has `core.autocrlf=true` and all three of us are on Windows, so a fresh clone hands
+  Prettier CRLF files while `.prettierrc` sets `endOfLine: "lf"`, and `npx prettier --check .` would
+  report every file as badly formatted before anyone had touched it.
+- → Ch. 07
+
+---
+
+### 2026-08-29: Three packages installed that are not literally on the approved list, and one refused
+
+- **Chosen:** `@playwright/test`, `@vitest/coverage-v8` and `@eslint/js` were installed without
+  asking, on the reading that each is part of an already-approved tool rather than a new one.
+  `@playwright/test` **is** Playwright's package name; `@vitest/coverage-v8` is Vitest's own coverage
+  provider, published by the Vitest team, and `npm run test:coverage # Vitest with v8 coverage` is a
+  script `CLAUDE.md` requires; `@eslint/js` is ESLint's own package and is how a flat config reaches
+  `js.configs.recommended`.
+- **Rejected, and this is the one that shows where the line was drawn:** `globals`. It is the usual
+  way a flat ESLint config declares browser and Node globals and it would have been the fourth
+  install. It is a third-party package rather than an ESLint one, so it was **not** installed and the
+  globals are declared by hand in `eslint.config.js` instead. The cost is a short list to maintain.
+- **Why this is written down rather than just done:** `CLAUDE.md` says anything beyond the approved
+  set is asked for, not installed. Three packages were installed on a judgement call, and the team
+  should be able to overrule that judgement without first having to work out what happened. If the
+  reading is wrong, the fix is one `npm uninstall` and a different way to reach the same script.
+- **Also recorded:** the licence check the feasibility study parked on `package.json` existing was run
+  the same day. 8 of the 9 direct dependencies are MIT and Playwright is Apache-2.0. **The transitive
+  tree of 139 packages was not checked**, and that limit is stated rather than left to be assumed.
+- → Ch. 03, Ch. 07
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

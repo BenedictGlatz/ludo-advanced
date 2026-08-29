@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+playwright-report
+test-results
+package-lock.json
+
+# Every markdown file in this repository is documentation, and it is written to rules Prettier
+# does not know about: a hand-chosen wrap width, tables aligned for reading in the raw file, and
+# the em dash ban of CLAUDE.md. Letting `prettier --write .` rewrap it would produce a diff of
+# thousands of lines that reviews nothing and hides the actual change. Prose is formatted by the
+# writing-style rules; Prettier formats code.
+*.md
+00-Meta/

@@ -87,14 +87,35 @@ SMART sub-goal criteria (*epic closed*) were not comparable between three people
 - **Step 8 encodes two known mechanics, not a formality:** `Closes #<n>` fires only on a merge into the
   default branch, and moving a board card is manual while the `gh` token lacks the `project` scope.
 
+### Test infrastructure in place: 2026-08-29, issue #63
+
+- **Vitest runs with `environment: "node"`**, which is NFR-01's acceptance criterion made real rather
+  than a default that happened to be kept: there is no DOM in a unit test run at all.
+- **The layering rule is now also a lint failure, not only a test failure.** `no-restricted-imports`
+  and `no-restricted-globals` over `src/core/**` were verified by deliberately writing a violating
+  file, which produced three restriction errors and exit code 1. Details in
+  [07-tooling.md](07-tooling.md).
+- **The coverage threshold is configured at 80 % of lines over `src/core/**` and `src/state/**`.**
+- **Negative finding, and it needs saying before anyone quotes a green run:** with both directories
+  empty, v8 measures `0/0`, prints `Unknown%` and **the threshold does not fire**.
+  `npm run test:coverage` passes today for a reason that has nothing to do with quality. A coverage
+  gate over an empty set is not a gate.
+- **One test exists and it is a smoke test.** `tests/unit/smoke.test.js` asserts `1 + 1 === 2` and
+  proves the runner works. It is called that in its own comment and in the commit that added it,
+  rather than being counted toward anything.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
 
 ## Open / to verify
 
-- No tests exist yet. No coverage figure has ever been produced. Do not write a number here: write
-  the command in Chapter 09 and quote its output once it has actually been run.
+- ~~No tests exist yet.~~ **One does, 2026-08-29: a smoke test.** No coverage figure has ever been
+  produced over real code. Do not write a number here: write the command in Chapter 09 and quote its
+  output once it has actually been run.
+- **No end-to-end test exists and Playwright has never been run.** `tests/e2e/` is empty, so
+  `npm run test:e2e` would report no tests found, and the browsers have not been downloaded with
+  `npx playwright install`. Both land with the board view.
 - **No CI/CD pipeline exists.** `Brainstorming.md` proposes a `build-check.yml` build-validation
   workflow on every PR, plus optional playable build artifacts. Nothing is implemented. If the
   project ships without CI, this chapter says so plainly and gives the reason: the sample report
@@ -108,9 +129,17 @@ SMART sub-goal criteria (*epic closed*) were not comparable between three people
   unchanged by writing it down. Only the mitigation column was updated, to point at the plan and the
   Definition of Done. Worth stating in the report as a case of a mitigation recorded without a rating
   change, since the two are usually assumed to move together.
-- No decision on whether Playwright runs against the dev server or the production build. Running
-  against the production build catches things the dev server hides, such as assets the build forgets
-  to copy. Named as undecided in section 8 of the test plan and settled in the commit that adds the
-  Playwright config.
+- ~~No decision on whether Playwright runs against the dev server or the production build.~~
+  **Decided 2026-08-29 in `playwright.config.js`, exactly where the test plan said it would be:
+  against the production build.** The `webServer` block runs `npm run build && npm run preview` on
+  port 4173 and the suite points at that. Reason: the dev server serves modules straight off disk and
+  hides the class of defect a build introduces, such as an asset the build forgets to copy or a path
+  that only resolves in development. Cost: a `vite build` before every E2E run, a few seconds.
+  **Rejected:** running against `npm run dev`, which is faster and exercises something the player
+  never receives.
+- **Three browser projects are configured for NFR-10**, `chromium`, `firefox` and `msedge`, with two
+  limits stated rather than glossed over: Playwright ships one pinned build per engine, so "current
+  **and previous** major versions" is not something the config can assert, and `msedge` drives the
+  system Edge, so that project needs Edge installed on the machine running the suite.
 - Lighthouse or comparable audits: not considered yet. Likely of limited value for a single-screen
   board game, but the report should say that rather than skip it.

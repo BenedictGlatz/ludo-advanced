@@ -76,6 +76,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   document and had been blocked since 2026-08-22 by the missing `project` token scope. Story-point velocity
   becomes producible from Sprint 2 onward; closed issues were deliberately left blank so that no sprint gets a
   retroactive estimate
+- **The npm project.** `package.json` with the 11 scripts `CLAUDE.md` requires, plus `vite.config.js`,
+  `eslint.config.js`, `.prettierrc`, `.prettierignore`, `vitest.config.js`, `playwright.config.js`,
+  `.gitattributes`, `index.html`, the composition root `src/main.js`, and the `src/core`, `src/state`,
+  `src/ui`, `src/ui/styles`, `src/i18n`, `tests/unit` and `tests/e2e` directories. Runtime dependencies are
+  `jquery` 4.0.0 and `i18next` 26.4.0 only. This is the first commit in the repository that is not
+  documentation
+- Two ESLint rules that turn architecture prose into a failing build: `max-lines` at 300 over every
+  JavaScript file (NFR-02, counting blank lines and comments so the limit cannot be met by deleting them),
+  and `no-restricted-imports` plus `no-restricted-globals` over `src/core/**` and `src/state/**`, so a rules
+  module that reaches for `state/`, `ui/`, jQuery, i18next or the DOM fails `npm run lint` rather than a code
+  review. Both were verified by deliberately breaking them
+- `scripts/docs-ai-index.js`, the generator behind `npm run docs:ai-index`. It reads every
+  `00-Meta/AI-Prompts/*/*.json`, groups the entries into the six subsections of the AI index chapter, and
+  fails loudly on an unknown `topic` or `use` instead of dropping the entry. It has not been run, because the
+  prompt log is per machine and a run here would produce an incomplete chapter
+- A toolchain smoke test, `tests/unit/smoke.test.js`, asserting `1 + 1 === 2`. It proves the runner works and
+  nothing else, and it is called that rather than counted as coverage
 - Two board issues that had never existed, both `must have` and both in Sprint 2: **#63 Project Bootstrap**
   (`package.json`, Vite, ESLint, Prettier, Vitest, Playwright, 5 points) and **#64 i18n Setup and the German and
   English Locale Files** (5 points). They are 10 of the 12 points section 3.6 of the effort estimation found
