@@ -1,0 +1,38 @@
+{
+  "app": {
+    "title": "Ludo Advanced"
+  },
+  "player": {
+    "name": "Spieler {{number}}"
+  },
+  "turn": {
+    "prompt": "Spieler {{number}} ist am Zug",
+    "chooseDie": "Wähle eine Würfelkarte",
+    "rolled": "Gewürfelt: {{roll}}",
+    "selectPawn": "Wähle eine Figur",
+    "end": "Zug beenden"
+  },
+  "match": {
+    "won": "Spieler {{number}} hat gewonnen",
+    "abandoned": "Die Partie wurde abgebrochen",
+    "restart": "Neue Partie"
+  },
+  "move": {
+    "refused": {
+      "needs-maximum": "Zum Verlassen des Startfeldes brauchst du die höchste Zahl des Würfels.",
+      "own-pawn": "Auf dem Zielfeld steht schon eine eigene Figur.",
+      "overshoot": "Der Wurf ist zu hoch: ins Ziel geht es nur mit der genauen Zahl.",
+      "already-home": "Diese Figur ist schon im Ziel und wird nicht mehr gezogen.",
+      "none-available": "Mit diesem Wurf ist kein Zug möglich."
+    }
+  },
+  "intent": {
+    "rejected": {
+      "match-over": "Die Partie ist beendet.",
+      "wrong-phase": "Das geht in diesem Schritt des Zuges nicht.",
+      "unknown-intent": "Diese Aktion gibt es nicht.",
+      "card-not-in-hand": "Diese Würfelkarte liegt nicht auf der Hand.",
+      "no-move-for-pawn": "Diese Figur kann mit dem Wurf nicht ziehen."
+    }
+  }
+}

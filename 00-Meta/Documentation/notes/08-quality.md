@@ -244,6 +244,33 @@ reason when every pawn of a player is already home, which means the player has w
 ever evaluated in that state. The line stays as a guard against reading from an empty array, and it
 is written down rather than deleted or excluded from the measurement.
 
+### NFR-03 becomes half a test: 2026-08-29, issue #64
+
+NFR-03's acceptance criterion has two halves: *the two locale files have identical key sets*, and
+*no literal user-facing string exists in `src/`*.
+
+**The first half is a test and passes.** `tests/unit/i18n/locales.test.js` flattens both locale files
+to dotted keys and compares the sets. It also checks three things the criterion does not name and
+which a translator would otherwise get wrong quietly:
+
+- **No translation is an empty string.** An empty string resolves to nothing on screen and looks like
+  a rendering bug rather than a missing translation.
+- **The same interpolation placeholders appear in both languages.** A German string saying
+  `{{number}}` against an English one saying `{{player}}` would leave a gap in one of the two, and
+  nothing else in the project would catch it.
+- **Every key the code can emit has text in both files.** The keys come from `REFUSAL` in
+  `core/movement.js` and `REJECTED` in `state/intents.js`, so a rule that gains a refusal reason and
+  no translation fails this test rather than showing the player a raw key.
+
+**The second half is not checked anywhere and that is a real gap.** "No literal user-facing string in
+`src/`" needs a grep over `src/ui/`, which does not exist yet. The plan's own verification section
+proposes `Select-String -Path src\ui\*.js -Pattern '>[A-Za-z]{3,}<'` with every hit inspected by
+hand. It is outstanding until issue #62.
+
+**One test asserts that a missing key resolves to the key itself** rather than to empty text. That is
+i18next's default and it is worth pinning: while views are being built, a forgotten key is then
+visible on screen instead of invisible.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

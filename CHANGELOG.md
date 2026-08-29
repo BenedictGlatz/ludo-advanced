@@ -147,6 +147,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A **complete match played end to end on a scripted RNG** as a unit test: 87 turns from the first draw to
   the win, asserted to an exact final state. This is the half of acceptance criterion SG1 that needs a
   whole match
+- **i18n** (issue #64, FR-34, NFR-03). `src/i18n/index.js` boots i18next with German as the default and
+  English as the fallback, and `locales/de.json` and `locales/en.json` carry the text. The refusal and
+  rejection keys the rules already produced now resolve to sentences, and the language switches at runtime
+- A test asserting the two locale files have identical key sets, use the same interpolation placeholders,
+  contain no empty translation, and cover every key `core/` and `state/` can emit. That is NFR-03's
+  acceptance criterion turned into a failing test
 
 ### Changed
 

@@ -86,6 +86,58 @@ to Claude Design as a design rule. It is a rendering technology and not an appea
 cannot hand over a DOM contract without first deciding that there is a DOM. The brief tells Claude
 Design to push back if the constraint makes a design impossible, so the reversal is reversible.
 
+### Localisation: 2026-08-29, issue #64
+
+`src/i18n/index.js` plus `locales/de.json` and `locales/en.json`. Counts are in
+[09-source-code-overview.md](09-source-code-overview.md).
+
+**It was written before the first view, and that is the whole point of doing it now.** NFR-03 forbids
+a hardcoded user-facing string anywhere in `src/`. Adding localisation after the views exist means
+going back through every one of them and finding the literals; adding it first means there is never a
+literal to find. Issue #64 did not exist on the board until 2026-08-29, and its absence is recorded
+as a planning finding in [02-project-management.md](02-project-management.md).
+
+#### The rules already spoke in keys before this module existed
+
+`core/movement.js` produces `move.refused.overshoot` and `state/intents.js` produces
+`intent.rejected.wrong-phase`. Neither has ever contained a sentence. The layer that knows the rule
+therefore never knows the language, and the layer that knows the language never knows the rule. That
+split is worth a paragraph in the report, because it is the reason NFR-03 costs nothing here: the
+keys were free at the time they were written and would have been expensive to retrofit.
+
+| Key group | Where the key comes from | How many |
+| --- | --- | --- |
+| `move.refused.*` | `core/movement.js` `REFUSAL` | 5 |
+| `intent.rejected.*` | `state/intents.js` `REJECTED` | 5 |
+| `turn.*`, `match.*`, `player.*`, `app.*` | Written for the views that do not exist yet | the rest |
+
+#### German is the default, English is the fallback
+
+The team, the module and the report are German, so German is the language the game is read in during
+development and at the presentation. English is the fallback, so a key missing from `de.json` shows
+English text instead of a raw key. **That is a safety net and not a plan**: a unit test requires both
+files to be complete, which is NFR-03's acceptance criterion.
+
+Rejected: **English as the default** with German as the fallback, which is the usual convention for a
+codebase written in English. It loses because nobody in the audience of the presentation reads the
+game in English, and a default nobody uses is a default nobody notices is broken.
+
+Rejected: **detecting the browser language**. It is one line of i18next configuration and it makes
+the language the game starts in depend on the machine it is demonstrated on, which is exactly what a
+presentation does not need. FR-34's runtime switch covers the real requirement.
+
+**`escapeValue` is off.** Every string will reach the page through jQuery's `.text()`, which sets
+text content and never interprets markup, so escaping on top of that would show `&amp;` to the
+player. This is a decision taken before the views exist, which means it is a claim to check when
+`ui/` is written rather than an observation.
+
+#### Negative finding: the i18n module is in no build yet
+
+`npm run build` produces well under a kilobyte, because `src/main.js` still imports nothing. The
+locales, the i18next setup and every rule module are absent from `dist/`. Nothing is wrong with them;
+they are simply unreachable until the composition root wires them up in issue #62. Any claim about
+bundle size before then is meaningless.
+
 **Planned structure recorded 2026-08-22, issue #21.** The 7 planned modules of `ui/` and the FR ids
 each one owns are in [System-Architecture.md](../../Project-Management/System-Architecture.md)
 section 2.3, with the facts summarised in [03-tech-stack.md](03-tech-stack.md). Two points from it

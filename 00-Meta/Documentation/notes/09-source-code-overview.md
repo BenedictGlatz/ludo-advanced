@@ -100,19 +100,20 @@ of one, produced a confident and wrong conclusion about a tool.
 
 | Metric | Command | Value | Taken on |
 | --- | --- | --- | --- |
-| Source lines in `src/` | 1 | **1215 lines in 11 files** | 2026-08-29, after #27 |
-| Test lines in `tests/` | 2 | **1585 lines in 13 files** | 2026-08-29, after #27 |
-| Lines in `src/core/` | 3 | 656 lines in 6 files | 2026-08-29, after #27 |
-| Lines in `src/state/` | 3 | 533 lines in 4 files | 2026-08-29, after #27 |
-| Lines in `src/ui/` | 3 | 0 files | 2026-08-29, after #27 |
-| Lines in `src/i18n/` | 3 | 0 files | 2026-08-29, after #27 |
-| Unit tests | 4 | **12 test files, 146 tests, all passing** | 2026-08-29, after #27 |
-| Coverage of `src/core/` and `src/state/`, lines | 5a | **99.53 % (216/217)** | 2026-08-29, after #27 |
-| Coverage of `src/core/`, lines | 5c | **99.24 % (130/131) over 6 files** | 2026-08-29, after #27 |
-| Coverage of `src/state/`, lines | 5c | **100 % (86/86) over 4 files** | 2026-08-29, after #27 |
-| Coverage, branches | 5a | 99.38 % (161/162) | 2026-08-29, after #27 |
-| The one file below 100 % lines | 5b | `src/core/movement.js`, 97.61 % | 2026-08-29, after #27 |
-| Longest JavaScript file | 6 | **206 lines, `src/core/movement.js`** | 2026-08-29, after #27 |
+| Source lines in `src/` | 1 | **1294 lines in 12 files** | 2026-08-29, after #64 |
+| Test lines in `tests/` | 2 | **1717 lines in 14 files** | 2026-08-29, after #64 |
+| Lines in `src/core/` | 3 | 656 lines in 6 files | 2026-08-29, after #64 |
+| Lines in `src/state/` | 3 | 533 lines in 4 files | 2026-08-29, after #64 |
+| Lines in `src/ui/` | 3 | 0 files | 2026-08-29, after #64 |
+| Lines in `src/i18n/` | 3 | 79 lines in 1 file, plus 76 lines of locale JSON | 2026-08-29, after #64 |
+| Unit tests | 4 | **13 test files, 157 tests, all passing** | 2026-08-29, after #64 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | **99.53 % (216/217)** | 2026-08-29, after #64 |
+| Coverage of `src/core/`, lines | 5c | **99.24 % (130/131) over 6 files** | 2026-08-29, after #64 |
+| Coverage of `src/state/`, lines | 5c | **100 % (86/86) over 4 files** | 2026-08-29, after #64 |
+| Coverage, branches | 5a | 99.38 % (161/162) | 2026-08-29, after #64 |
+| The one file below 100 % lines | 5b | `src/core/movement.js`, 97.61 % | 2026-08-29, after #64 |
+| Longest JavaScript file | 6 | **206 lines, `src/core/movement.js`** | 2026-08-29, after #64 |
+| Files measured for coverage | 5b | **10 of the 12 files in `src/`** | 2026-08-29, after #64 |
 
 Longest-file ranking in full, from command 6, same run:
 
@@ -132,17 +133,25 @@ sentence rather than three tables, because the rule of this chapter is that valu
 
 ## Interpretation
 
-- **1215 lines of source is a playable rule set with no way to play it.** Six modules of rules and
-  four of state exist, and every one of them runs in Node with no browser. `src/ui/` and `src/i18n/`
-  are still empty, so there is nothing on screen at all. Quoting the coverage figure without that
-  sentence would be misleading.
-- **There are more test lines than source lines**, 1585 against 1215. That ratio is expected for this
+- **1294 lines of source is a playable rule set with no way to play it.** Six modules of rules, four
+  of state and the i18n setup exist, and every one of them runs in Node with no browser. `src/ui/`
+  is still empty, so there is nothing on screen at all. Quoting the coverage figure without that
+  sentence would be misleading, and so would quoting the build size: `npm run build` produces well
+  under a kilobyte, because `main.js` still imports nothing.
+- **There are more test lines than source lines**, 1717 against 1294. That ratio is expected for this
   kind of code rather than a warning sign: the rules have sharp boundaries at `r = 0`, `52`, `53`,
   `57` and `58`, and several tests are exhaustive loops over a whole domain instead of one sample
   point. The largest single test is a complete scripted match, 87 turns from the first draw to the
   win.
 - **99.24 % of `src/core/` and 100 % of `src/state/` against a floor of 80 % (NFR-05).** Both
   directories now have real code in them, which the figure after #26 could not claim.
+- **Two of the twelve files in `src/` are not measured at all**, and this is the sentence that has to
+  go next to the coverage figure. `vitest.config.js` includes only `src/core/**` and `src/state/**`,
+  because those are the two directories NFR-05 names. `src/main.js` and `src/i18n/index.js` are
+  therefore outside the measurement. `i18n/index.js` **is** tested, by
+  `tests/unit/i18n/locales.test.js`; it simply does not appear in the number. The configuration was
+  left alone rather than widened, because widening it would quietly change what the NFR-05 figure
+  means.
 - **One line in the whole of `src/` is uncovered, and it is unreachable on purpose.**
   `movement.js` line 150 returns the generic refusal reason when every one of a player's pawns is
   already home. That state means the player has won and the match has ended, so no turn is ever

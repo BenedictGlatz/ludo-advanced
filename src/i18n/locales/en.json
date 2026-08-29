@@ -1,0 +1,38 @@
+{
+  "app": {
+    "title": "Ludo Advanced"
+  },
+  "player": {
+    "name": "Player {{number}}"
+  },
+  "turn": {
+    "prompt": "Player {{number}} to move",
+    "chooseDie": "Choose a dice card",
+    "rolled": "Rolled: {{roll}}",
+    "selectPawn": "Choose a pawn",
+    "end": "End turn"
+  },
+  "match": {
+    "won": "Player {{number}} wins",
+    "abandoned": "The match was abandoned",
+    "restart": "New match"
+  },
+  "move": {
+    "refused": {
+      "needs-maximum": "Leaving the start area needs the die's highest number.",
+      "own-pawn": "One of your own pawns is already on that square.",
+      "overshoot": "The roll is too high: getting home needs the exact number.",
+      "already-home": "This pawn is home and does not move again.",
+      "none-available": "No move is possible with this roll."
+    }
+  },
+  "intent": {
+    "rejected": {
+      "match-over": "The match is over.",
+      "wrong-phase": "That is not possible at this step of the turn.",
+      "unknown-intent": "That action does not exist.",
+      "card-not-in-hand": "That dice card is not in the hand.",
+      "no-move-for-pawn": "That pawn cannot move with this roll."
+    }
+  }
+}

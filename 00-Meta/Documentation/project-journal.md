@@ -176,6 +176,12 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   a scripted RNG. The rules are now complete enough to finish a game, and there is still no way to
   see one: `src/ui/` and `src/i18n/` are empty. Sprint 2.
 
+- **2026-08-29**: i18n set up for issue #64: `src/i18n/index.js` and the German and English locale
+  files, with a test asserting identical key sets and text for every key `core/` and `state/` can
+  emit. Written before the first view on purpose, so that no literal ever has to be found and
+  replaced. Steps 4, 5 and 7 of the sprint plan are done, all three in parallel with Claude Design.
+  Sprint 2.
+
 ---
 
 ## Decisions
@@ -1181,6 +1187,38 @@ to get wrong later.
 - **The workaround stays**, because commands 5b and 5c aggregate per directory, which is what NFR-05
   asks for and what neither the text reporter nor the totals give.
 - → Ch. 08, Ch. 09
+
+### 2026-08-29: German is the default language and English is the fallback
+
+- **Chosen:** the game starts in German. A key missing from `de.json` shows the English text.
+- **Why:** the team, the module and the presentation are German, so German is the language the game
+  is actually read in. Nothing in the requirements or the obligations book states a default, so this
+  was open and is now decided rather than left to whichever line was written first.
+- **Rejected: English as the default**, which is the usual convention for a codebase written in
+  English and would have matched every identifier in the project. It loses because nobody in the
+  audience of the presentation reads the game in English, and a default nobody uses is a default
+  nobody notices is broken.
+- **Rejected: detecting the browser language.** One line of i18next configuration, and it makes the
+  language the game starts in depend on the machine it is demonstrated on. FR-34's runtime switch
+  covers the real requirement, and it is tested.
+- **The fallback is a safety net and not a plan.** A unit test requires both files to be complete,
+  which is NFR-03's acceptance criterion, so the fallback should never fire.
+- → Ch. 04
+
+### 2026-08-29: i18n is set up before the first view, not after it
+
+- **Chosen:** issue #64 was done in the same branch as the rules and before any of `ui/` exists.
+- **Why:** NFR-03 forbids a hardcoded user-facing string anywhere in `src/`. Doing this after the
+  views exist means going back through every one of them to find the literals. Doing it first means
+  there is never a literal to find.
+- **It cost almost nothing because the rules already spoke in keys.** `core/movement.js` produces
+  `move.refused.overshoot` and `state/intents.js` produces `intent.rejected.wrong-phase`. Neither has
+  ever held a sentence, so this issue was writing the text and the wiring, not converting anything.
+- **Rejected: leaving it to Sprint 3 with the rest of the polish**, which is where the requirements
+  specification's own sprint mapping puts NFR-03. It loses for the reason above, and because #64 had
+  no board issue at all until 2026-08-29: a `must have` with no issue is work that gets done late by
+  default rather than by decision.
+- → Ch. 04, Ch. 08
 
 ---
 
