@@ -173,13 +173,15 @@ Full document: [Roadmap-and-Gantt.md](../../Project-Management/Roadmap-and-Gantt
   observations, and they are labelled as such.
 - **Negative finding, measured: `Start Date` and `End Date` are set on 11 of 64 items.** The 4 sprint
   markers and the 7 `Sprint 0` issues. **The Roadmap view therefore renders 4 bars and 7 dots out of 64
-  items**, since an item with no dates does not appear on a roadmap layout at all.
+  items**, since an item with no dates does not appear on a roadmap layout at all. **Partly corrected
+  2026-08-29:** 14 more items were dated, so 25 of 64 now render. See *Sprint 1 back-dated on the
+  Roadmap* below.
 - **All 7 Sprint 0 issues have `Start Date` equal to `End Date`**, so each is a zero-length bar. They
   record the day something was closed rather than a work span. One, *Role Setup and Process Model*, is
   dated 2026-08-01, five days before the repository existed.
 - **All 13 `Sprint 1` issues have no dates**, so the sprint whose entire scope was delivered is absent
   from the chart. This is a regression against the 2026-08-06 read, which found dates populated on all
-  50 items of the smaller item set.
+  50 items of the smaller item set. **Corrected 2026-08-29**, see below.
 - **The 4 sprint markers carry no `Sprint` value of their own**, so a view grouped by `Sprint` puts the
   four bars that define the schedule in a no-sprint lane, away from the issues they contain.
 - **The Gantt chart is drawn in Mermaid in the repository, not screenshotted from the board.** Two
@@ -326,6 +328,12 @@ Full document: [Project-Structure-Plan.md](../../Project-Management/Project-Stru
   reads from depends on a human moving cards, which is the step most likely to be skipped under
   deadline pressure. Closing this needs one interactive `gh auth refresh -s project`, the same
   browser device flow as `read:project` and equally impossible for an agent to grant itself.
+- 2026-08-29: **that gap is closed.** `gh auth refresh -s project` was run by hand and
+  `gh project item-edit` now writes. Elapsed time from finding the block to clearing it: seven days,
+  and the fix took under a minute once someone typed the command. That ratio is the finding worth
+  keeping, not the command: the blocker was never technical difficulty, it was that the one step an
+  agent cannot take had no owner. Every board field is now automatable, so the manual-card-moving
+  dependency recorded above no longer holds.
 - **`read:project` cannot be added silently.** `gh auth refresh` is an interactive browser device
   flow, so an agent cannot grant it to itself: it is a step the human contributor has to perform
   once per machine. Worth stating in the report, because it is the difference between "automatable"
@@ -393,6 +401,53 @@ Specification + MoSCoW Analysis*.
 planned. The written plan and the board diverge on the whole content of the sprint, not on details.
 The divergence and its reason are recorded in [sprint-log.md](../sprint-log.md); which artefact wins
 is settled in the 2026-08-22 decision in [project-journal.md](../project-journal.md).
+
+#### Sprint 1 back-dated on the Roadmap: 2026-08-29, and the `project` scope finally granted
+
+- **The write block is gone.** `gh auth refresh -s project` was run by the human contributor on
+  2026-08-29, the interactive browser device flow that no agent can perform for itself. `gh project
+  item-edit` now succeeds. This closes the second scope gap recorded under *Board access from the
+  development environment* and unblocks the two actions that were parked on it: creating the
+  `Story Points` field and back-filling it, and setting `Sprint` on the 27 unscheduled issues.
+- **14 items were dated**, every closed issue that still had empty date fields: #1, #9, #10, #11, #12,
+  #13, #14, #15, #16, #17, #18, #21, #22, #23. That is the whole of `Sprint 1` plus #17, which was
+  pulled into the sprint on 2026-08-22. Written with `gh project item-edit --date`, two calls per item.
+- **Each date is the day the delivering commit was authored**, read out of `git log` per document
+  rather than taken from the issue's `closedAt`:
+
+  | Date | Issues | Commit |
+  | --- | --- | --- |
+  | 2026-08-09 | #9, #10, #13 | `4fa444e`, `4cf5983`, `89fd4d3` |
+  | 2026-08-10 | #11 | `5b52990` |
+  | 2026-08-15 | #12 | `571eafb` |
+  | 2026-08-22 | #1, #14, #15, #16, #17, #18, #21, #22, #23 | `07d26f2`, `6ea9239`, `2b2b515`, `72753f4`, `3234eff`, `efe5432`, `265edf9`, `f4aab10`, `3e55101` |
+
+- **Why the commit date and not the close date**, which differs for #9, #12 and #13 (authored 08-09 or
+  earlier, merged into `dev` and closed 08-15): the seven `Sprint 0` items already on the board use the
+  commit date. #6 and #47 are dated 2026-08-09 and were closed 2026-08-10. Choosing the close date now
+  would have produced a board where the same field means two different things depending on when the row
+  was filled in, which is worse for a chart than either choice on its own.
+- **Rejected: the merge-into-`dev` date.** It is the date the work became visible to the team and it is
+  also an artefact of when somebody got round to clicking merge. For #13 the gap is six days, all of it
+  the recovery from the unreviewed-merge history rewrite of 2026-08-09, which is a process event and not
+  work on the requirements specification.
+- **The sweeping commit `ade75f7` (em-dash removal) was excluded deliberately.** It is the newest commit
+  touching most of these documents, so "last commit that touched the file" would have dated nine issues
+  to 2026-08-22 that were finished up to two weeks earlier. A `git log` per document was read instead.
+- **`Start Date` was set equal to `End Date`** on all 14. The request was for an end date only; a
+  roadmap layout renders nothing for an item with just one of the pair, so an end-date-only fill would
+  have left the sprint as invisible as it already was. Zero-length bars also match what the 7 `Sprint 0`
+  items already do.
+- **Negative finding, and it is the same one the 2026-08-22 roadmap read made:** these dates record the
+  day a document was committed, not a work span. The board still cannot answer how long anything took,
+  so no cycle-time or burn-down figure can be derived from it. Fixing that needs dated status
+  transitions, which the board has never captured.
+- **Negative finding: the back-fill is itself late.** The dates were reconstructed from `git log` six
+  days after the sprint closed, which worked only because every deliverable is a document in this
+  repository. The same reconstruction is not available for implementation work whose progress lives in
+  board state rather than in commits.
+- **#3 *Create Design System* is still open and stays undated.** It is the one item in the screenshot
+  that is not `Done`.
 
 ### Branching and review
 
@@ -497,6 +552,8 @@ is settled in the 2026-08-22 decision in [project-journal.md](../project-journal
   (see *Estimation method fixed* above); what is open is no longer a decision but an **action**, and it
   is blocked on the missing `project` token scope rather than on anyone's judgement. Velocity stays in
   the presentation; burn-down does not, because points do not fix the missing dated status history.
+  ~~Blocked on the token scope.~~ **Unblocked 2026-08-29**: the scope was granted, so creating and
+  back-filling the field is now an unowned action rather than an impossible one.
 - ~~No calendar dates for sprint boundaries.~~ **Answered 2026-08-06** from the board's sprint
   markers; see [sprint-log.md](../sprint-log.md). Two contradictions surfaced with it and **both were
   decided 2026-08-22, issue #15** (see *Schedule and sequencing fixed* above):

@@ -107,3 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Two negative findings from 2026-08-06 corrected in `notes/02-project-management.md` after the first full board
   read: `Status` is populated on all 64 items and `Sprint` on 20 of them. Story points and an Iteration field are
   still missing, so burn-down charts remain impossible and only an issue-count velocity is available
+- `Start Date` and `End Date` back-filled on the 14 closed board items that carried none (the 13 Sprint 1 issues
+  plus #17), each set to the day its delivering commit was authored rather than to the issue's close date, so the
+  Roadmap view now renders 4 bars and 21 dots instead of 4 bars and 7 dots. `00-Meta/Project-Management/Roadmap-and-Gantt.md`
+  section 2.1 records the measurement and the per-issue dates; the `project` token scope that blocked this, the
+  `Story Points` field and the `Sprint` assignment was granted on the same day

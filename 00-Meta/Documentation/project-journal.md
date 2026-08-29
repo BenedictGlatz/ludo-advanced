@@ -708,6 +708,30 @@ exactly the kind of thing this file exists to keep visible.
 
 ---
 
+### 2026-08-29: Board dates come from the commit, not from the issue closure
+
+- **Chosen:** the 14 closed board items that had no dates were filled in with the day their delivering
+  commit was authored, read per document out of `git log`. `Start Date` was set equal to `End Date`.
+- **Why:** the seven `Sprint 0` items already on the board are dated that way. #6 and #47 carry
+  2026-08-09 and were closed 2026-08-10. Filling the rest by close date would have made a single field
+  mean the commit day for some rows and the closure day for others, and nothing on the board would say
+  which row is which. Consistency inside one field beats picking the more defensible definition for
+  half of it.
+- **Rejected:** *the merge-into-`dev` or issue-close date*. It is partly a record of when somebody got
+  round to clicking merge. For #13 the two differ by six days, and all six are the recovery from the
+  2026-08-09 unreviewed-merge history rewrite rather than work on the document.
+- **Rejected:** *the last commit that touched the file*. That is `ade75f7`, the em-dash sweep of
+  2026-08-22, which touches most of these documents and would have dated nine issues to a day up to two
+  weeks after they were finished.
+- **Rejected:** *setting `End Date` alone*, which is literally what was asked for. A roadmap layout
+  renders nothing for an item carrying one date of the pair, so the sprint would have stayed as absent
+  from the chart as it was before. The pair is what makes the request's actual goal work.
+- **Consequence, and it is the honest limit:** the dates are commit days, not work spans. Every bar is
+  zero-length, so the Roadmap still shows when things landed and never how long they took.
+- → Ch. 02
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

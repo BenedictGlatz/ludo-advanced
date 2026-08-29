@@ -61,6 +61,37 @@ Three specific gaps behind that number:
    the repository was created. Useful as a record of when something was ticked off, not useful as a
    Gantt bar.
 
+### 2.1 Update 2026-08-29: gaps 1 and the token block are closed
+
+`gh auth refresh -s project` was run by hand on 2026-08-29, so `gh project item-edit` writes. The 14
+closed items that had no dates were filled in: the 13 `Sprint 1` issues plus #17, which was pulled
+into the sprint on 2026-08-22.
+
+| Items with dates | Count | What the Roadmap draws |
+| --- | --- | --- |
+| The 4 sprint-marker draft issues | 4 | Four bars, 2026-07-23 to 2026-09-17. |
+| The 7 `Sprint 0` issues | 7 | Seven zero-length bars. |
+| The 13 `Sprint 1` issues plus #17 | 14 | Fourteen zero-length bars on four days: 2026-08-09 (#9, #10, #13), 2026-08-10 (#11), 2026-08-15 (#12) and 2026-08-22 (#1, #14, #15, #16, #17, #18, #21, #22, #23). |
+| Everything else | 39 | Nothing. |
+
+**The Roadmap view now shows 4 bars and 21 dots, out of 64 items.** Gap 1 above is closed and gap 2
+is not; gap 3 now applies to 21 items rather than 7, because the new dates are single-day for the same
+reason the Sprint 0 ones are.
+
+Each date is the day the delivering commit was authored, read per document from `git log`, not the
+issue's `closedAt`. For #9, #12 and #13 those differ by up to six days, and the six days are the
+recovery from the 2026-08-09 unreviewed-merge history rewrite rather than work on the documents. The
+commit date was chosen because the 7 Sprint 0 items already on the board use it: #6 and #47 are dated
+2026-08-09 and were closed 2026-08-10. The reasoning, and the alternatives rejected, are in the
+2026-08-29 decision block of
+[project-journal.md](../Documentation/project-journal.md).
+
+The em-dash sweep `ade75f7` was excluded deliberately. It is the newest commit touching most of these
+documents, so dating by "last commit that touched the file" would have put nine issues on 2026-08-22
+that were finished up to two weeks earlier.
+
+**#3 *Create Design System* stays undated**: it is still open.
+
 ## 3 Why the chart below exists as well
 
 **The board view cannot be configured from here, and it cannot be exported at all.**
@@ -165,12 +196,13 @@ the 32 points that can run beside it, which is the whole of the schedule's slack
 
 ## 6 Outstanding actions
 
-1. **One interactive `gh auth refresh -s project`.** It unblocks four things: the `Story Points`
-   field, the `Sprint` assignment, moving board cards, and everything in the next two items.
-2. **Fill `Start Date` and `End Date` on the 13 Sprint 1 issues**, retroactively and honestly: the
-   sprint's start for the five closed early in it, and 2026-08-22 for the six delivered on that day.
-   Six issues sharing one date is the fact and should be visible on the chart, not smoothed into a
-   plausible spread.
+1. ~~**One interactive `gh auth refresh -s project`.**~~ **Done 2026-08-29.** It unblocked four
+   things: the `Story Points` field, the `Sprint` assignment, moving board cards, and items 2 and 3
+   below. The first two are now unowned actions rather than blocked ones.
+2. ~~**Fill `Start Date` and `End Date` on the 13 Sprint 1 issues.**~~ **Done 2026-08-29**, for those
+   13 plus #17: see section 2.1. Nine issues share 2026-08-22, and that is left visible on the chart
+   rather than smoothed into a plausible spread, because nine documents finishing on the sprint's
+   second-to-last day is the fact the retrospective needs.
 3. **Set the Roadmap view's grouping to `Sprint` and its zoom to month**, and record the values here
    once they can be read back rather than assumed.
 4. **Take one screenshot of the Roadmap view** once items 2 and 3 are done, and register it as
