@@ -145,6 +145,30 @@ SMART sub-goal criteria (*epic closed*) were not comparable between three people
   from the rulebook's edge-case table are all still outstanding. This module is the coordinate system
   those rules will be written against, and coverage of it says nothing about them.
 
+### Shared test fixtures: 2026-08-29, issue #29
+
+#### A shared fixture builder, because a rule is hard to see behind twelve pawn literals
+
+`tests/helpers/fixtures.js` holds two builders and no tests. `pawnsAt(2, { "0.0": 52, "1.1": 13 })`
+says which pawns are where and leaves the other six in their start areas.
+
+`rngForRolls([6, 3, 6], 6)` is the injectable RNG required by NFR-09, written in terms of the rolls
+the test wants instead of the raw floats behind them. **It throws when it runs out**: a test that
+rolls more often than it scripted has stopped testing what it says it tests, and wrapping around
+silently would hide that.
+
+It sits in `tests/helpers/` rather than `tests/unit/helpers/` so the Playwright specs can use the
+same builders later. Vitest only collects `*.test.js`, so nothing in it runs on its own.
+
+#### A formatter setting changed because of these tests
+
+`quoteProps` in `.prettierrc` is now `"preserve"`. Prettier's default strips quotes from an object
+key when the key survives the round trip, which turned the fixture coordinate `"0.1"` into `0.1` in
+some objects and left `"0.0"` quoted in others, because `0.0` would have become `"0"`. The keys are
+coordinates and read as strings; `"preserve"` leaves the decision with whoever wrote the line.
+Rejected: `"consistent"`, which quotes every key in an object only when one of them needs it, so an
+object of purely decimal-looking keys still came out unquoted.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

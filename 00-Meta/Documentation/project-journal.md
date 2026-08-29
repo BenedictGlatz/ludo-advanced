@@ -150,13 +150,20 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
 
 - **2026-08-29**: Board topology written for issue #26, `src/core/board.js`: the 52-square closed
   track, entry and turn-off squares per player, the relative-position arithmetic and the region
-  classifier, with 61 unit tests over it. Every number taken from section 2 of the game design
-  document. Sprint 2.
+  classifier, with unit tests over it. Every number taken from section 2 of the game design document.
+  The test count and the coverage figure are in
+  [notes/09-source-code-overview.md](notes/09-source-code-overview.md) next to the command that
+  produced them; an earlier version of this entry carried a figure from memory, which is exactly what
+  that rule exists to stop. Sprint 2.
 
 - **2026-08-29**: Design handoff loop established for issue #3: `01-Design/` with a README, the brief
   and spec templates, and the first brief `01-brief-foundations-and-board.md` covering the board screen
   S3, the refusal region S6 and the foundations. It hands Claude Design a DOM contract and nine
   numbered open decisions and no visual rule at all, which is the line `CLAUDE.md` draws. Sprint 2.
+
+- **2026-08-29**: Capture written for issue #29, with the pawn record it needs: `core/pawns.js` and
+  `core/capture.js`. Written **in parallel with Claude Design**, which is the scheduling lever the
+  sprint plan named: neither module touches the DOM. Sprint 2.
 
 ---
 
@@ -1020,6 +1027,38 @@ to get wrong later.
   applying to it, for the reason recorded on 2026-08-22, and both files written so far are under 300
   lines anyway, so the exemption has not been used.
 - → Ch. 04, Ch. 02
+
+### 2026-08-29: The rules take a pawn list, not the state object
+
+- **Chosen:** every function in `core/` takes a plain array of `{ player, pawn, r }` records. The
+  plan sketched `legalMoves(state, playerId, roll, dieMax)`; what was built is
+  `evaluateTurn(pawns, playerId, roll, dieMax)`.
+- **Why:** NFR-01 says `core/` imports nothing from `state/`. Passing the state object would keep the
+  letter of that rule and break its point, because `core/` would then know the state object's shape
+  and every change to that shape would reach into the rules. A list of pawns is the smallest thing
+  the rules actually need.
+- **Second reason, and the one felt every day:** a test builds a position out of four literals. With
+  the state object, every movement test would have to construct a whole match first.
+- **Rejected: passing the state object and reading only `state.pawns` from it.** It works and it is
+  one less argument at the call site. It loses because "we only read one field" is a convention, and
+  a convention is exactly what the ESLint rule for NFR-01 was added to stop relying on.
+- **Consequence:** `state/` does the unwrapping. That is one line per call and it is where the
+  knowledge of the state shape belongs.
+- → Ch. 05, Ch. 06
+
+### 2026-08-29: The rules return new pawn lists and write to none
+
+- **Chosen:** `withPawnAt`, `resolveCapture` and `applyMove` all copy. Nothing in `core/` assigns to
+  a pawn it was given.
+- **Why:** a test can compare the position before and after a move without having taken a deep copy
+  first, which is what makes the "two own pawns can never share a square" property test readable at
+  all. And a stale reference held by `ui/` cannot corrupt the board, which is the layering rule
+  (NFR-01) holding even when somebody forgets it.
+- **Rejected: mutating in place**, which is the obvious choice for a 16-element array and is faster.
+  It loses because the game is turn-based and moves at most one pawn per turn, so the performance
+  argument is worth nothing here, while the debugging argument is worth a lot.
+- **Cost, stated honestly:** one array copy of at most 16 entries per move.
+- → Ch. 05
 
 ---
 

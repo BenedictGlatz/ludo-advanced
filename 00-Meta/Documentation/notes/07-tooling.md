@@ -131,6 +131,13 @@ constraints into machine-checked ones.
   reasoning: this repository has `core.autocrlf=true` and all three of us are on Windows, so a fresh
   clone gets CRLF files while `.prettierrc` sets `endOfLine: "lf"`. Without the attributes file,
   `npx prettier --check .` reports every file as badly formatted on a clone nobody has touched.
+- **`quoteProps: "preserve"` was added on 2026-08-29**, again found by running the tool. Prettier's
+  default strips quotes from an object key when the key survives the round trip. In the movement
+  tests that turned the fixture coordinate `"0.1"` into `0.1` while leaving `"0.0"` quoted, because
+  `0.0` would have become `"0"`. The keys are coordinates and read as strings, so the setting hands
+  the decision back to whoever wrote the line. **Rejected: `"consistent"`**, which quotes every key
+  in an object only when at least one of them needs it, so an object of purely decimal-looking keys
+  still came out unquoted.
 
 #### Test runner configuration
 

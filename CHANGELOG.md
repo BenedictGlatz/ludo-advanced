@@ -117,8 +117,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`package.json`, Vite, ESLint, Prettier, Vitest, Playwright, 5 points) and **#64 i18n Setup and the German and
   English Locale Files** (5 points). They are 10 of the 12 points section 3.6 of the effort estimation found
   invisible to the board; the remaining 2, the CI workflow, still have no issue
+- **`src/core/pawns.js` and `src/core/capture.js`** (issue #29, FR-11). The pawn record
+  `{ player, pawn, r }` and the queries over a list of them, plus capture resolution: landing exactly on a
+  shared-track square held by an opponent sends that pawn back to `r = 0` and the arriving pawn holds the
+  square. Capture in a home column, in a start area and at home need no rule, because the topology in
+  `board.js` already makes them impossible to express
+- Unit tests for both, including the capture rows of the rulebook's edge-case table
+- `tests/helpers/fixtures.js`: a pawn-position builder and a scripted RNG shared by the unit tests, and later
+  by the Playwright specs
 
 ### Changed
+
+- Prettier now uses `"quoteProps": "preserve"`, so an object key written with quotes keeps them. The default
+  stripped the quotes from test fixture keys such as `"0.1"` while keeping them on `"0.0"`, which made
+  coordinate keys read inconsistently
 
 - AI prompt log entries now carry a `topic` and a `use` field, so the report's AI index chapter can be generated
   from the log rather than sorted by hand

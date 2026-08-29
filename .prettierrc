@@ -6,5 +6,6 @@
   "useTabs": false,
   "trailingComma": "es5",
   "arrowParens": "always",
+  "quoteProps": "preserve",
   "endOfLine": "lf"
 }

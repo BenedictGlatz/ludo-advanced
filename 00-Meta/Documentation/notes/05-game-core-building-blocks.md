@@ -92,6 +92,44 @@ outside 0 to 58, a non-integer, or an `absoluteSquare` call for a pawn that is n
 all errors rather than silently wrong numbers. This is deliberate for a layer with no UI: a wrong
 number here would surface as a pawn in the wrong place three modules later.
 
+### The pawn record and capture: 2026-08-29, issue #29
+
+The first two rule modules, `core/pawns.js` and `core/capture.js`. Written the same day the design
+brief went out, deliberately: neither touches the DOM, so both were written while Claude Design
+worked on the look of the board. Counts and coverage are in
+[09-source-code-overview.md](09-source-code-overview.md).
+
+#### A pawn is three numbers, and only one of them ever changes
+
+`{ player, pawn, r }`. `player` and `pawn` together are the identity and never change; `r` is the
+relative position from `board.js` and is the only thing a move writes. That is why a move can be
+described as a before and an after without copying the board.
+
+**Every function in `core/` returns a new pawn list and writes to none.** Two reasons, and the second
+is the one that matters for the report: a test can compare before and after without having taken a
+deep copy first, and a stale reference held by `ui/` cannot corrupt the board. The cost is one array
+copy of at most 16 entries per move.
+
+#### Capture needed twenty lines, because the topology had already done the work
+
+The whole of FR-11 is: landing exactly on a shared-track square that holds an opponent's pawn sends
+that pawn back to `r = 0`, and the arriving pawn holds the square. There are no safe squares in the
+MVP (FR-15 is a `could have` and is not built), so all 52 track squares are capturable and there is
+no exception list.
+
+Three cases that would normally each need a rule need none, and this is the clearest evidence that
+writing the coordinate system in `board.js` first was worth it:
+
+| Rulebook case | Why no rule was written |
+| --- | --- |
+| Capture inside a home column | A home column is owner-only, so `isSameSquare` can only ever report a collision there between two pawns of the *same* player |
+| Capture in a start area or at home | Both hold four separate slots, so `isSameSquare` reports no collision at all; a pawn sent back to `r = 0` therefore never captures on arrival |
+| Two opponents on one square | It cannot happen, because whoever arrived second would have captured the first |
+
+**The third one throws rather than assuming.** `captureTarget` checks that at most one opponent is on
+the square and raises an error otherwise. A silently ignored second pawn would be a bug that surfaced
+several turns later as a pawn that had vanished, which is the most expensive kind to find.
+
 **Planned structure recorded 2026-08-22, issues #21 and #22.** The rules this chapter will describe
 are written down, and so is the module structure that will hold them, so this chapter fills from two
 existing documents once the code exists rather than from memory:
