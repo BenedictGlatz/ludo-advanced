@@ -203,16 +203,16 @@ planning chapter describes, so the gap between it and the executed sprint has to
 > scope. The table is below; the prose plan and the project plan's assignment are both kept underneath
 > it, because the three disagree and the difference is the finding.
 
-| # | Title | Points | Status 2026-08-29 |
+| # | Title | Points | Status, latest read 2026-08-29 evening |
 | --- | --- | --- | --- |
-| 3 | Create Design System | 5 | In Progress |
-| 26 | Board Grid & Tile Navigation System | 5 | Todo |
-| 27 | Turn Manager & Game Loop | 8 | Todo |
-| 28 | Pawn Movement Rules | 5 | Todo |
-| 29 | Knockout & Capture Rules Logic | 2 | Todo |
+| 3 | Create Design System | 5 | In Progress, brief sent |
+| 26 | Board Grid & Tile Navigation System | 5 | In Progress, committed |
+| 27 | Turn Manager & Game Loop | 8 | In Progress, committed |
+| 28 | Pawn Movement Rules | 5 | In Progress, committed |
+| 29 | Knockout & Capture Rules Logic | 2 | In Progress, committed |
 | 62 | Pawn Rendering & Movement Animation | 3 | Todo |
-| 63 | Project Bootstrap: package.json, Vite, ESLint, Prettier, Vitest, Playwright | 5 | Todo |
-| 64 | i18n Setup and the German and English Locale Files | 5 | Todo |
+| 63 | Project Bootstrap: package.json, Vite, ESLint, Prettier, Vitest, Playwright | 5 | In Progress, committed |
+| 64 | i18n Setup and the German and English Locale Files | 5 | In Progress, committed |
 | 36 | Core Game Engine & Board (epic) | 0 by design | In Progress |
 | 37 | Enhanced Dice Pool System (epic) | 0 by design | Todo |
 | 38 | Skill Cards Mechanics (epic) | 0 by design | Todo |
@@ -270,8 +270,39 @@ available cut. **That is no longer what the board says**, see point 1 above.
 - **2026-08-29:** board hygiene. `Story Points` created and back-filled on 25 open issues, `Sprint 2`
   set on #26 to #29, #28 split into #28 and #62, #63 and #64 created. Details in
   [notes/02-project-management.md](notes/02-project-management.md).
+- **2026-08-29:** #63 project bootstrap (5). npm project, Vite, ESLint, Prettier, Vitest, Playwright,
+  and the two architecture rules turned into failing lint runs.
+- **2026-08-29:** #26 board topology (5). `core/board.js`, the coordinate system everything else is
+  computed on.
+- **2026-08-29:** the first Claude Design handoff. `01-Design/` and
+  `Handoff/01-brief-foundations-and-board.md`, with nine numbered open decisions. #3 stays open until
+  the spec comes back.
+- **2026-08-29:** #29 capture (2) and #28 pawn movement rules (5). `core/pawns.js`,
+  `core/capture.js`, `core/movement.js`, `core/win.js`, `core/dice-source.js`.
+- **2026-08-29:** #27 turn manager and game loop (8). The four `state/` modules, the eight-step turn
+  sequence, the four-intent boundary, and a complete match played end to end on a scripted RNG.
+- **2026-08-29:** #64 i18n setup (5). i18next with the German and English locales.
+
+**30 of the sprint's 38 must-have points are committed**, all on one day and all on the branch
+`feature/sprint2-core-and-design`. **None of it is merged, reviewed or pushed**, so by the project's
+own Definition of Done not one of these issues is done: the board shows them as `In Progress`.
+What is left of the must-have half is #3 (5, waiting on Claude Design) and #62 (3, the board view).
 
 **Divergence and reasons**: *open, filled as it happens*
+
+- **The plan's Step 4 was committed in the reverse of the order it names.** It asks for
+  `feat(movement)` closing #28 and then `feat(capture)` closing #29. `movement.js` imports
+  `capture.js`, so committing movement first would have left an intermediate commit whose tree does
+  not run. The two commits are in dependency order instead, and both issues still get their own
+  commit, which is what the plan asked the two commits *for*.
+- **The rules and the state layer take a pawn list, not the state object**, which is a deviation from
+  the function signature the plan sketched. The reason is in the 2026-08-29 decision block in
+  [project-journal.md](project-journal.md): passing the state object would keep the letter of NFR-01
+  and lose its point.
+- **Nothing was measured about how long any of this took**, because the project records no hours by
+  the 2026-08-06 decision. So the 30 committed points cannot be checked against the estimates that
+  produced them, and the retrospective will have story points delivered and no effort to compare them
+  against. That is the known cost of that decision, showing up for the first time.
 
 - **Five weekdays of the sprint were spent before any implementation work started.** The sprint opened
   2026-08-24 and the first commit that is not documentation lands 2026-08-29. Milestone **M1, toolchain
