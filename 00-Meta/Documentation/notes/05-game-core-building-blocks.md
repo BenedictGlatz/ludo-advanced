@@ -364,12 +364,18 @@ finish inside 600 turns. So the gap costs turns and does not deadlock the game.
   `core/card-effects.js`, both issue #38.
 - Card effects live here as pure functions over game state and are matched to their presentation in
   `ui/` by card id.
-- The dice pool balance was to be paper-prototyped or spreadsheet-tested in Sprint 0
-  ([01-Github-Project.md](../../Project-Management/01-Github-Project.md)). If that happened, the
-  result is a table for the appendix; if it did not, say so. **Still open after #30:** the
-  composition shipped as specified, and the arithmetic in section 5 of the game design document is
-  still derived against the old 58-step journey. Re-deriving it against 44 is the remaining half of
-  the paper work, not a code change.
+- ~~The dice pool balance was to be paper-prototyped or spreadsheet-tested in Sprint 0
+  ([01-Github-Project.md](../../Project-Management/01-Github-Project.md)).~~ **Closed 2026-08-30 with
+  issue #30, and not by a spreadsheet.** Section 5.2 of the game design document is re-derived
+  against the 44-step journey by `npm run docs:dice-balance`, which solves the journey exactly as a
+  recurrence and then plays 1200 matches through the shipped rules to check the result. The
+  composition needed no change. The table for the appendix is that command's output. Still open: a
+  **human** playtest, because the simulation says a match is 127 turns and cannot say whether that is
+  enjoyable.
+- **Negative finding carried forward from that measurement:** one turn in three has no legal move at
+  all. It is partly an artefact of the simulation's no-skill policy and partly structural, and it is
+  the first thing to re-measure once the dice hand of issue #31 exists. Recorded in section 5.2.3 of
+  the game design document.
 - ~~Unresolved rule questions carried over from Chapter 01: overshoot behaviour, and whether the
   highest-number-to-leave-start rule scales sensibly across D2 through D20.~~ **Ruled 2026-08-22:**
   overshoot is illegal and the move is not offered (section 6.2 of the game design document); the

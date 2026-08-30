@@ -93,10 +93,11 @@ and 4 house squares. A player wins when all four of their pawns stand in the hou
 the paragraph in section 2.2 means exactly `r = 41, 42, 43, 44`, one pawn each (FR-05).
 
 **The consequence worth stating.** The mean roll of a D20 is 10.5, so a pawn that only ever moved on
-D20 rolls would cover 44 steps in roughly four moves. The pool composition in section 5 is what
-prevents a match from being decided in a handful of turns, and the exact-count rule of section 6.2 is
-what stops the last stretch from being trivial. Track length, pool composition and the home-entry
-rule are one design, not three independent choices.
+D20 rolls would cross the 40 track squares in roughly four moves. It would then take **another 19
+turns on average** to cover the last four, because a roll that overshoots `r = 44` is illegal and the
+pawn does not move at all. The exact figures are in section 5.2.1. Track length, pool composition and
+the home-entry rule are one design and not three independent choices, and that 4-against-19 split is
+the clearest single piece of evidence for it.
 
 ### 2.4 Why the track went from 52 squares to 40
 
@@ -125,11 +126,17 @@ next arm's inner row. That shared corner field is the hinge that closes the ring
 cross shows seven, which is not the board this game is named after.
 
 **The cost, stated rather than absorbed.** The journey is 44 steps instead of 58, roughly a quarter
-shorter, so a D20 now covers close to half a lap in one roll. The trade-off in section 5.2 between
-exit probability and speed was derived against 58 steps and **is now out of date**. Section 5 should
-be re-derived against 44 rather than adjusted, and that belongs to issue #37 where the real pool is
-built. Until then the dice pool in this document is known to be untuned, which is a smaller problem
-than it sounds because the MVP runs on a single stand-in die.
+shorter, and a D20's mean roll of 10.5 is now a quarter of a lap rather than a fifth. The trade-off
+in section 5.2 between exit probability and speed had been derived against 58 steps and went out of
+date the moment this change landed.
+
+**Settled 2026-08-30 with issue #30.** Section 5.2 is re-derived against 44 and is now produced by
+`npm run docs:dice-balance` rather than worked out by hand. The re-derivation changed one conclusion
+and left the composition alone: the cheapest die for crossing the track moved from the D10 down to
+the **D8**, and the cheapest die for a whole journey is the D6 at either track length. Since D6 and
+D8 are already the two most common cards in the pool, the composition in section 5.1 needed no
+change. What the re-derivation did surface was something the old arithmetic never mentioned at all,
+namely how much the exact-count rule of section 6.2 costs a large die. See section 5.2.1.
 
 **Rejected: keeping 52 and living with seven fields per outer row.** It costs no rulebook change and
 no re-derivation of section 5, and it was the answer this document already held. It was rejected
@@ -233,18 +240,21 @@ Two choices are made here and both are reversible in data:
 - **Weighted toward the middle.** D6 and D8 are the most common cards, D2, D12 and D20 the rarest.
   The reason is section 5.2: the extremes are the interesting cards, and a hand that offers an
   extreme *sometimes* is a decision, while a hand that offers one *every turn* is a routine.
+  **Confirmed by arithmetic on 2026-08-30**, which was not the reason it was chosen: the D6 is the
+  cheapest single die for a pawn's whole journey and the D8 is the cheapest for the travelling part,
+  so the two cards with four copies each are also the two the maths picks. See section 5.2.1.
 
 ### 5.2 The trade-off the pool creates
 
 This is the central arithmetic of the design, and the whole reason the Dice Card Pool exists.
 
-> **Out of date as of 2026-08-30, and knowingly left standing.** The balance judgements in this
-> section and in section 5.1 were derived against a 58-step journey. The journey is now 44 steps
-> (section 2.4), so a D20 covers close to half a lap rather than roughly a third of one, and the
-> trade-off below is sharper than the numbers suggest. The formulas themselves are unaffected; the
-> conclusions drawn from them are. Section 5 should be **re-derived** against 44 rather than adjusted,
-> and that work belongs to issue #37, where the real pool replaces the single stand-in die. Nothing
-> in the MVP depends on it, because the MVP runs on one fixed die.
+> **Re-derived on 2026-08-30 against the 44-step journey, issue #30.** This section previously
+> carried judgements worked out by hand against 58 steps and a note saying they were out of date. The
+> numbers below are now produced by `npm run docs:dice-balance`, which solves the recurrence exactly
+> and then plays 1200 real matches through the shipped rules to check it. **Do not edit the tables by
+> hand: re-run the command.** The reason this is a script rather than a paragraph is the same lesson
+> the seeds taught, recorded in `00-Meta/Documentation/project-journal.md`: a conclusion written down
+> without the calculation that produced it expires silently.
 
 For a die with `n` faces:
 
@@ -261,6 +271,85 @@ advances 1.5 squares on average; a D20 leaves on one roll in twenty and advances
 each turn is therefore a real one, and it is different depending on the state of the board: a player
 with three pawns still in the start area wants small dice, a player with three pawns on the track
 wants large ones.
+
+#### 5.2.1 What one die costs a lone pawn, exactly
+
+Two formulas are not enough on their own, because they say nothing about the end of the journey.
+FR-13 makes a roll that would overshoot `r = 44` illegal, so a pawn near the house does not move at
+all on a roll that is too big. The table below is the exact expected number of turns, solved as a
+recurrence rather than sampled, so there is no sampling error in it.
+
+| Die | Turns to leave the yard | Turns to travel | Whole journey | Travel if home took any count | Turns lost to FR-13 |
+| --- | --- | --- | --- | --- | --- |
+| D2 | 2.0 | 29.6 | **31.6** | 28.7 | 0.9 |
+| D4 | 4.0 | 20.0 | **24.0** | 17.2 | 2.8 |
+| D6 | 6.0 | 17.0 | **23.0** | 12.3 | 4.8 |
+| D8 | 8.0 | 16.3 | **24.3** | 9.6 | 6.7 |
+| D10 | 10.0 | 16.5 | **26.5** | 7.8 | 8.7 |
+| D12 | 12.0 | 17.3 | **29.3** | 6.6 | 10.7 |
+| D20 | 20.0 | 22.8 | **42.8** | 4.1 | 18.7 |
+
+Legend: leaving the yard is a geometric wait on `P = 1/n`, so it costs `n` turns and lands the pawn
+on `r = 1`. Travel is from `r = 1` to `r = 44` with FR-13 applied. The last column is the difference
+between the two travel figures, which is the price of the exact-count rule.
+
+**Three things follow, and none of them was visible in the old derivation.**
+
+1. **The exact-count rule is the real tax on large dice, and it is enormous.** A D20 spends 18.7 of
+   its 22.8 travel turns unable to move, which is 82 % of its journey. The formula `E(roll) =
+   (n+1)/2` says a D20 should cross the track in four moves, and it does; then it sits at the mouth
+   of the house waiting for a number it rolls one time in twenty. **The pool and the home-entry rule
+   are one design, and section 2.3 already said so. This is the measurement behind that sentence.**
+
+2. **Shortening the track moved the sweet spot down one denomination.** On the old 58-step journey
+   the cheapest die for travel alone was the D10 at 19.1 turns. On 44 steps it is the **D8 at 16.3**.
+   For the whole journey, including leaving the yard, the cheapest single die is the **D6** at both
+   lengths, because the `n` turns spent waiting to leave dominate everything else.
+
+3. **The composition in section 5.1 is validated rather than assumed.** D6 and D8 are the two most
+   common cards in the pool, four copies each, and they are exactly the best whole-journey die and
+   the best travel die. That weighting was chosen for a design reason before this was computed, and
+   it turns out to be the arithmetic answer as well.
+
+#### 5.2.2 Why a mixed hand beats any single die
+
+The table is for a pawn that only ever uses one denomination, which no player is forced into. Read
+down the last column and the strategy the pool is built to reward falls out:
+
+- **Leaving the yard:** small. A D2 costs 2 turns, a D20 costs 20.
+- **Crossing the track:** large. A D20 covers 10.5 squares a turn against a D2's 1.5.
+- **The last four squares:** small again, because FR-13 punishes anything big.
+
+**A pawn's life has three phases and they want three different cards.** That is the decision FR-18
+and FR-19 put in front of the player three times a turn, and it is why the pool is worth having at
+all rather than being a single die with extra steps.
+
+#### 5.2.3 Measured: what real matches actually cost
+
+Played through the shipped rules, 400 seeds per player count:
+
+| Players | Finished | Shortest | Median | Mean | Longest | Turns with no legal move |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2 | 400/400 | 80 | 127 | 128 | 209 | 32.9 % |
+| 3 | 400/400 | 103 | 186 | 188 | 344 | 33.3 % |
+| 4 | 400/400 | 157 | 252 | 256 | 401 | 34.8 % |
+
+**These are worst cases, not expected play.** The simulation uses the no-skill policy the tests
+click: take the first drawn card without looking at the other two, move the lowest-numbered movable
+pawn. A player who chooses does better on both counts.
+
+Two findings worth carrying:
+
+- **A two-player match takes about 127 turns, so each player takes about 64 turns to bring four pawns
+  home, or 16 turns per pawn.** The single-die table says 23 turns for the best case, a D6. Four
+  pawns are cheaper per pawn than one, because a turn where the leading pawn is stuck waiting for an
+  exact count is not wasted: another pawn moves instead. **The exact-count tax is mostly paid by
+  players who bring their pawns out one at a time.**
+- **Negative finding: one turn in three has no legal move at all.** Roughly 33 % across all three
+  player counts. Part of that is the no-skill policy, which cannot pick the small die it needs to
+  leave the yard, and part of it is structural, because FR-09 requires the maximum. It is the number
+  to re-measure once the dice hand of issue #31 lets a player choose, and if it stays near a third
+  with real choices then FR-09 or the composition needs revisiting rather than the interface.
 
 ### 5.3 What a hand of three offers
 
@@ -287,6 +376,12 @@ So roughly three hands in five offer a good exit card and roughly one hand in tw
 mover. Neither is guaranteed, which is what makes the choice a choice, and neither is rare, which is
 what stops a player being stuck. These two figures are the numbers to re-check first if playtesting
 finds the game too slow or too fast, and they move by editing the copy counts in section 5.1 only.
+
+**This section survived the track shortening untouched, and it is worth saying why.** A hypergeometric
+draw depends on the composition of the pool and on nothing else. Track length, house length and the
+exact-count rule do not appear in it. So when the journey went from 58 steps to 44 in 2026-08-30,
+section 5.2 had to be re-derived and section 5.3 did not. That is a small piece of evidence that the
+two sections are cut along the right seam: one is about the pool, the other is about the board.
 
 `C(20,3) = 1140`, `C(16,3) = 560` and `C(15,3) = 455` are binomial coefficients of the pool size and
 the non-favourable subsets. All three follow from the 20-card composition; change the pool and all
@@ -538,16 +633,27 @@ decisions for the Product Owner, which is why this row records the question rath
 
 - **All eight rules of section 6 are unsigned.** They are decided in this document so that work is
   not blocked, not decided by the person whose decision they are.
-- **The pool composition is untested.** The figures in section 5.3 are arithmetic, not playtest
-  results. Whether a match finishes in a satisfying number of turns is a question only the
-  buffer-sprint playtest answers, and the composition is data so that the answer can be acted on.
-- **Match length is unestimated.** No expected turn count is stated, because deriving one honestly
-  needs a simulation that does not exist yet. It is the natural first use of the headless `core/`
-  layer once it exists.
+- **The pool composition is untested by humans.** The figures in sections 5.2 and 5.3 are arithmetic
+  and simulation, not playtest results. Whether a match *feels* like a satisfying length is a
+  question only the buffer-sprint playtest answers, and the composition is data so that the answer
+  can be acted on.
+- ~~**Match length is unestimated.**~~ **Measured 2026-08-30, issue #30.** A two-player match takes a
+  median of 127 turns, three players 186, four players 252, over 400 seeds each. The simulation is
+  `npm run docs:dice-balance` and it was indeed the first use of the headless `core/` layer. **The
+  figures are a worst case**, because the simulation plays with no skill: it takes the first drawn
+  card without looking at the other two. What it needs next is a re-run once issue #31 lets a real
+  player choose, and a human playtest to say whether 127 turns is enjoyable or merely finite.
+- **Open, and new from that measurement: one turn in three has no legal move at all.** Roughly 33 %
+  at every player count. Some of that is the no-skill policy, which cannot pick the small die it
+  needs to leave the yard. If it stays near a third once players choose properly, then FR-09 or the
+  composition needs revisiting, and the interface does not.
 - **Balance of the skill card set is unassessed.** Eight cards with two copies each is a starting
   point chosen for testability, not a balanced set demonstrated to be one. `reaction-mirror` and
   `reaction-shield` both answer a capture and may turn out to be redundant.
 - **No rule covers a player leaving mid-match.** Hot-seat play makes this a menu question rather than
   a rules question (FR-07 pause and abandon), so it is left to the screen flow.
-- **Nothing here is verified.** Every rule above is a rule the code does not yet implement, in a
-  repository that still has no `src/`.
+- ~~**Nothing here is verified.** Every rule above is a rule the code does not yet implement, in a
+  repository that still has no `src/`.~~ **Out of date since 2026-08-29.** Sections 2, 3, 4, 5, 6.1,
+  6.2, 6.3, 6.4 and 8 are implemented and under test. Sections 6.5, 6.6 and 7, the skill cards, are
+  not, and section 7's catalogue is additionally contradicted by the card artwork handoff, which
+  holds 29 cards under different names. That contradiction is issue #38's to settle.

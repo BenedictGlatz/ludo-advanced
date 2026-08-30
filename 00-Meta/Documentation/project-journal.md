@@ -1515,6 +1515,34 @@ to get wrong later.
   is a lint run people learn to ignore, and that is the failure mode being avoided here.
 - → Ch. 07
 
+### 2026-08-30: The dice balance is a script, and section 5.2 quotes it
+
+- **Chosen:** `scripts/dice-balance.js`, run by `npm run docs:dice-balance`, derives the balance of
+  the Dice Card Pool and measures it against real matches. Section 5.2 of the game design document
+  carries its output and says not to edit the tables by hand.
+- **Why now:** section 5.2 had been marked "out of date, knowingly left standing" since the track
+  went from 52 squares to 40, because re-deriving it by hand was work nobody wanted to repeat. That
+  is the same failure the seeds had a day later, and the same fix applies.
+- **Why exact and not simulated:** the journey is solved backwards as a recurrence,
+  `T(r) = n/m + (1/m)·Σ T(r+k)`, so the figures have no sampling error. A simulation would need
+  millions of runs to separate a D8 at 16.3 turns from a D10 at 16.5.
+- **Why a measurement as well:** the theory is for a lone pawn and a player has four. The two
+  disagree by a lot, 23 turns per pawn against a measured 16, and the reason is the finding: a turn
+  where the leading pawn is stuck waiting for an exact count is not wasted, because another pawn
+  moves instead.
+- **What the re-derivation actually changed:** one conclusion, not the composition. The cheapest die
+  for crossing the track moved from D10 to **D8**, matching the shorter journey. D6 and D8 already
+  have four copies each, so the pool was already weighted the way the arithmetic says.
+- **The thing the old derivation never mentioned at all:** what FR-13 costs a large die. A D20 spends
+  18.7 of its 22.8 travel turns unable to move, which is 82 %. Two formulas about `P(max)` and
+  `E(roll)` cannot show that, because neither of them knows the house is four squares deep.
+- **Rejected: adjusting the old numbers instead of re-deriving them.** Section 2.4 had already said
+  re-derive rather than adjust, and this is why it was right: adjusting would have preserved the
+  omission, since there was nothing in the old working to adjust the exact-count tax *into*.
+- **A negative finding it produced:** one turn in three has no legal move at all, at every player
+  count. Recorded in section 5.2.3 rather than smoothed over.
+- → Ch. 05, Ch. 01
+
 ---
 
 ## Challenges

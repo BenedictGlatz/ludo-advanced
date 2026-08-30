@@ -190,6 +190,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `npm run test:seeds`, which replays matches headlessly and prints the seeds the end-to-end suite plays on.
   The seeds used to be found by hand and the script that found them was never kept, so the first change to what
   the random generator is spent on made all five of them expire with no way to reproduce the search
+- `npm run docs:dice-balance`, which derives how many turns a pawn needs per die, exactly, and then measures
+  1200 real matches through the shipped rules to check the derivation. Section 5.2 of the game design document
+  is now this command's output rather than arithmetic done by hand
 
 ### Changed
 
@@ -285,3 +288,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ESLint ignores `01-Design/`. Claude Design delivers a generated canvas runtime with every handoff, marked
   "do not edit" by the tool that wrote it, and the card artwork handoff took `npm run lint` from clean to 306
   errors none of which were in project code. Nothing under `01-Design/` is built or shipped
+- **Section 5.2 of the game design document is re-derived against the 44-step journey** and no longer carries
+  its "out of date, knowingly left standing" banner. The composition did not change. What changed is one
+  conclusion, that the cheapest die for crossing the track is the D8 rather than the D10, and one omission that
+  is now filled: the exact-count rule of section 6.2 costs a D20 **18.7 of its 22.8 travel turns**, which the
+  old two-formula derivation could not show because neither formula knows how deep the house is. Sections
+  2.3, 2.4, 5.1, 5.3 and 10 were updated to match, and section 5.3 was left alone on purpose, because a
+  hypergeometric draw does not depend on how long the track is
+- Section 10 of the game design document no longer claims that nothing in it is verified, which stopped being
+  true on 2026-08-29. It now names which sections are implemented and under test and which are not
