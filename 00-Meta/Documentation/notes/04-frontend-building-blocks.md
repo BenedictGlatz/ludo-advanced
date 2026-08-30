@@ -275,6 +275,39 @@ existed: `--color-app-bg` was in `tokens.css` and nothing had used it, so the de
 decided what sits behind the board. Inventing no value is the rule it keeps. Centring the board is
 still a layout decision, and it is a placeholder that belongs in handoff 02.
 
+### Handoff 02 sent, and the round is open: 2026-08-30, issue #3
+
+[02-brief-board-review.md](../../../01-Design/Handoff/02-brief-board-review.md) went out the same day
+the board started rendering. **The design has now met real code, and the brief is a list of what that
+contact produced** rather than a request to review everything.
+
+**Everything in it is measured.** That is the difference between this brief and the first one: brief
+01 could only state requirements, because there was nothing to measure. Brief 02 states the board
+resolves to 684 px at 1440 by 900, that the legal-target fill is a contrast ratio of 1.186 against a
+plain square while its ring is 4.002, that red and blue are ten greyscale levels apart, and that the
+four movable rings in a yard overlap by about 7 px because the pawns are 62 px apart and the rings
+are 69 px across. A review round asking "does this look right" gets an opinion. One asking "the fill
+carries a ratio of 1.186, is that intended" gets a decision.
+
+It asks **nine numbered questions, D16 to D24**, continuing the spec's own numbering so that an
+answer can be cited without ambiguity. The two that matter most:
+
+- **D16, NFR-12.** The only one that blocks a requirement rather than a preference.
+- **D17, whether the legal-target set has to read as one group.** Two of Claude Design's own rules
+  work against each other here: D7 says the highlighted squares should group, and D7's own
+  entry-square exception keeps the owner's colour, so two squares come out pale lilac and one comes
+  out saturated blue. Neither rule is wrong on its own. Finding that they collide needed three
+  squares lit at the same time in a real match, which is exactly what section 5 of the spec said it
+  could not check.
+
+**One question is new work rather than a revision.** D21 asks whether a legal target that *captures*
+should look different from one that does not. FR-32 shows a player where a pawn can go; it does not
+show that landing there sends an opponent back to their yard, which is the biggest single swing in
+the game. It came out of looking at a screenshot, not out of a requirement.
+
+**The round is open and this branch does not close it.** Applying `02-spec-board-revisions.md` is
+step 9.2 of the sprint plan and has not happened.
+
 ### Localisation: 2026-08-29, issue #64
 
 `src/i18n/index.js` plus `locales/de.json` and `locales/en.json`. Counts are in

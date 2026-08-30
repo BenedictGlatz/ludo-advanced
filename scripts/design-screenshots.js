@@ -48,6 +48,74 @@ async function open(page, query) {
   await page.waitForTimeout(SETTLE_MS);
 }
 
+/**
+ * Play turns until at least `wanted` squares carry the legal-move highlight at the same time.
+ *
+ * **The policy here is not the one the end-to-end suite uses, and it cannot be.** The tests always
+ * activate the lowest-numbered pawn, which walks one pawn all the way round before starting the
+ * next. That is what makes a match hand-checkable, and it is also why it almost never lights more
+ * than one square: with a single die every pawn has at most one move, so the number of highlighted
+ * squares is the number of *distinct* targets, and pawns still in the yard all target the same entry
+ * field.
+ *
+ * So this plays the **least advanced** movable pawn instead, which spreads the four pawns out across
+ * the track and produces the situation the design spec asked to see. It is still fully determined by
+ * the seed, so the picture is reproducible.
+ *
+ * It stops **before** committing the move that produces the situation, because the situation is what
+ * is being photographed.
+ */
+async function playUntilManyTargets(page, wanted, maxTurns = 200) {
+  const board = page.locator(".board");
+
+  for (let turn = 0; turn < maxTurns; turn += 1) {
+    const lit = await board.locator('.square[data-legal-target="true"]').count();
+    if (lit >= wanted) return lit;
+
+    if ((await board.getAttribute("data-status")) !== "running") break;
+
+    if ((await board.getAttribute("data-phase")) === "act") {
+      const leastAdvanced = await board
+        .locator('.pawn[data-movable="true"]')
+        .evaluateAll((pawns) =>
+          pawns
+            .map((pawn) => Number(pawn.getAttribute("data-r")))
+            .reduce((lowest, r) => Math.min(lowest, r), Number.POSITIVE_INFINITY)
+        );
+
+      const pawn = board.locator(`.pawn[data-movable="true"][data-r="${leastAdvanced}"]`).first();
+      const before = await board.getAttribute("data-turn");
+
+      await pawn.click();
+      await pawn.waitFor({ state: "attached" });
+      await page.waitForFunction(
+        () => document.querySelector('.pawn[data-selected="true"]') !== null,
+        undefined,
+        { timeout: 10_000 }
+      );
+      await pawn.click();
+
+      // The turn number, or the match ending. A winning move never reaches `endTurn`, so on that
+      // one turn the counter does not move and waiting only on it would hang.
+      await page.waitForFunction(
+        (previous) => {
+          const element = document.querySelector(".board");
+          return (
+            element.getAttribute("data-status") !== "running" ||
+            element.getAttribute("data-turn") !== previous
+          );
+        },
+        before,
+        { timeout: 10_000 }
+      );
+    } else {
+      await page.waitForTimeout(30);
+    }
+  }
+
+  throw new Error(`never saw ${wanted} legal targets lit at once`);
+}
+
 async function main() {
   mkdirSync(OUT_DIR, { recursive: true });
 
@@ -73,8 +141,18 @@ async function main() {
   await page.waitForTimeout(SETTLE_MS);
   await page.screenshot({ path: join(OUT_DIR, "board-greyscale.png"), fullPage: true });
 
+  // Section 5 of the design spec names this as the first question of the review round: the
+  // legal-target highlight has never been seen with several squares lit at once on a real board.
+  // The mockup showed it and the mockup chose its own six. This plays until the game produces the
+  // situation by itself.
+  await page.goto(`${BASE_URL}/?seed=7&players=4&fast=1`);
+  await page.locator(".board").waitFor();
+  await playUntilManyTargets(page, 3);
+  await page.waitForTimeout(SETTLE_MS);
+  await page.screenshot({ path: join(OUT_DIR, "board-many-legal-targets.png"), fullPage: true });
+
   await browser.close();
-  console.log(`wrote ${SHOTS.length + 2} screenshots to ${OUT_DIR}`);
+  console.log(`wrote ${SHOTS.length + 3} screenshots to ${OUT_DIR}`);
 }
 
 main().catch((error) => {
