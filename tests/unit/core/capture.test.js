@@ -8,13 +8,13 @@ import { pawnsAt } from "../../helpers/fixtures.js";
 describe("captureTarget on the shared track (FR-11)", () => {
   it("finds the opponent standing on the square the mover would reach", () => {
     // Player 1's entry square is absolute 10. Player 0 reaches absolute 10 at r = 11.
-    const pawns = pawnsAt(2, { "1.0": 1 });
+    const pawns = pawnsAt(4, { "1.0": 1 });
 
     expect(captureTarget(pawns, 0, 11)).toEqual({ player: 1, pawn: 0, r: 1 });
   });
 
   it("returns null for an empty square", () => {
-    expect(captureTarget(pawnsAt(2, { "1.0": 1 }), 0, 20)).toBeNull();
+    expect(captureTarget(pawnsAt(4, { "1.0": 1 }), 0, 20)).toBeNull();
   });
 
   it("returns null when the mover's own pawn is there, because that is a block and not a capture", () => {
@@ -76,14 +76,14 @@ describe("captureTarget off the shared track", () => {
 
 describe("resolveCapture", () => {
   it("sends the captured pawn back to its start area (FR-11)", () => {
-    const before = pawnsAt(2, { "1.0": 1, "1.1": 30 });
+    const before = pawnsAt(4, { "1.0": 1, "1.1": 30 });
     const after = resolveCapture(before, { player: 1, pawn: 0 });
 
     expect(findPawn(after, { player: 1, pawn: 0 }).r).toBe(START_R);
   });
 
   it("touches no other pawn", () => {
-    const before = pawnsAt(2, { "0.0": 14, "1.0": 1, "1.1": 30 });
+    const before = pawnsAt(4, { "0.0": 14, "1.0": 1, "1.1": 30 });
     const after = resolveCapture(before, { player: 1, pawn: 0 });
 
     expect(findPawn(after, { player: 0, pawn: 0 }).r).toBe(14);
@@ -91,7 +91,7 @@ describe("resolveCapture", () => {
   });
 
   it("never writes to the list it was given", () => {
-    const before = pawnsAt(2, { "1.0": 1 });
+    const before = pawnsAt(4, { "1.0": 1 });
     const snapshot = JSON.stringify(before);
 
     resolveCapture(before, { player: 1, pawn: 0 });

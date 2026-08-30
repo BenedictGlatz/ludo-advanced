@@ -520,7 +520,17 @@ overridden here changes this document and its requirement.
 | 5 | FR-22, FR-27 | Hand limit 3; one card at end of own turn; one card when a pawn is captured; discard and reshuffle | | |
 | 6 | FR-25 | Explicit window at a capture and at an Action card; one reaction per player; no nesting | | |
 | 7 | FR-37 | No energy or resource system in the MVP | | |
-| 8 | NFR-12 | A non-colour identifier per player; which one is a Claude Design decision | | |
+| 8 | NFR-12 | **Answered as a question, not a rule.** Design handoff 01 (D2) delivers colour only and no second identifier. Confirm NFR-12 as met by pawn lightness alone, or require a non-colour identifier to be reinstated | | |
+
+**Row 8 is the one row that changed on 2026-08-30, and it did not get an answer.** Claude Design was
+asked for a non-colour player identifier, first delivered one as a per-seat pawn silhouette, and then
+removed it on request in favour of colour alone. What is left is lightness: the four seat colours
+rank yellow, green, red, blue in oklch lightness, and three of the four sit within 0.08 of each
+other. That may or may not satisfy NFR-12's acceptance criterion, which is that a greyscale
+screenshot still identifies whose pawns are whose, and **it has not been measured yet**: the
+Playwright check is written but cannot run until the board renders. D2 of the spec names the two ways
+out in order of cost, nudging green and blue apart or reinstating a second identifier. Both are
+decisions for the Product Owner, which is why this row records the question rather than a rule.
 
 ---
 

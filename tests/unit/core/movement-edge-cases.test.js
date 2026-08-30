@@ -34,7 +34,7 @@ describe("entry square held by an opponent when the maximum is rolled", () => {
     // Player 1 at r = 31 stands on absolute square 0, which is player 0's entry square.
     expect(absoluteSquare(1, 31)).toBe(absoluteSquare(0, 1));
 
-    const pawns = pawnsAt(2, { "1.0": 31 });
+    const pawns = pawnsAt(4, { "1.0": 31 });
     const move = evaluateTurn(pawns, 0, 6, 6).moves[0];
 
     expect(move.kind).toBe(MOVE_KIND.LEAVE_START);
@@ -90,7 +90,7 @@ describe("a pawn captured while the player's others are in the house", () => {
   const underAttack = { "0.0": 11, "0.1": 42, "0.2": 43, "0.3": 44 };
 
   it("restarts at r = 0 and has to leave again under FR-09", () => {
-    const pawns = pawnsAt(2, underAttack);
+    const pawns = pawnsAt(4, underAttack);
     const capturing = evaluateTurn(pawns, 1, 6, 6).moves[0];
 
     expect(capturing.captures).toEqual({ player: 0, pawn: 0 });
@@ -109,7 +109,7 @@ describe("a pawn captured while the player's others are in the house", () => {
   });
 
   it("leaves the pawns that are already in the house where they are", () => {
-    const pawns = pawnsAt(2, underAttack);
+    const pawns = pawnsAt(4, underAttack);
     const after = applyMove(pawns, evaluateTurn(pawns, 1, 6, 6).moves[0]);
 
     expect([1, 2, 3].map((pawn) => findPawn(after, { player: 0, pawn }).r)).toEqual([42, 43, 44]);
@@ -128,7 +128,7 @@ describe("a pawn captured while the player's others are in the house", () => {
 
 describe("applyMove", () => {
   it("never writes to the list it was given", () => {
-    const before = pawnsAt(2, { "1.0": 31 });
+    const before = pawnsAt(4, { "1.0": 31 });
     const snapshot = JSON.stringify(before);
 
     applyMove(before, evaluateTurn(before, 0, 6, 6).moves[0]);

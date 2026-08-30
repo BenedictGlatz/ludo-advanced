@@ -1,0 +1,138 @@
+/* Ludo Advanced design tokens.
+   Every value the UI layer is allowed to use lives here, on :root, so that
+   core/ and state/ never see a colour, a size or a font (NFR-01).
+   Reasoning is in 01-Design/Handoff/01-spec-foundations-and-board.md.
+
+   Tone (D14): friend-slop party game. Flat fills, a 3px ink outline on every
+   card, pill and pawn, hard offset shadows that are never blurred, big radii.
+   No gradients, no soft shading. Two skins (D13): Picnic (light) and
+   Night In (dark plum), switched by color-scheme / data-theme on <html>. */
+
+:root {
+  color-scheme: light dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root {
+  /* --- Surfaces and text (D1, D13) --- */
+  --color-app-bg: light-dark(#e9d3ae, #2a1e3f);
+  --color-board-bg: light-dark(#fffcf3, #3b2c53);
+  --color-board-edge: light-dark(#3a2b55, #1c1230);
+  --color-square: light-dark(#fffefa, #4d3c65);
+  --color-square-edge: light-dark(#3a2b55, #1c1230);
+  --color-panel: light-dark(#fffcf3, #3b2c53);
+  --color-surface: light-dark(#ffffff, #453659);
+  --color-text: light-dark(#3a2b55, #f6efff);
+  --color-text-muted: light-dark(#7a6b93, #b3a6cc);
+  --color-dormant: light-dark(#c9bfae, #5d5273);
+  --color-dormant-soft: light-dark(#f1e9da, #342a4a);
+
+  /* --- Ink and the hard shadow (D14) --- */
+  --color-ink: light-dark(#3a2b55, #1c1230);
+  --ink-dim: light-dark(rgb(58 43 85 / 0.22), rgb(0 0 0 / 0.38));
+
+  /* --- Player colours (D1, D2), from the layout template verbatim. --- */
+  --color-p0: #ff5d5d;
+  --color-p1: #ffc93c;
+  --color-p2: #2fbf71;
+  --color-p3: #4c86f9;
+  --color-p0-soft: light-dark(#ffe3e0, #593048);
+  --color-p1-soft: light-dark(#ffefcd, #5c4a3f);
+  --color-p2-soft: light-dark(#dcf3e5, #2f4a50);
+  --color-p3-soft: light-dark(#dfe9fe, #3a3a6e);
+
+  /* --- Signal colours (D7, D9). Violet and orange are outside the
+         player hue set, so a highlight can never be read as a player. --- */
+  --color-hint: light-dark(#a35de0, #c08bf2);
+  --color-hint-soft: light-dark(#f3e6fd, #4f3a6e);
+  --color-warn: light-dark(#e07038, #f2955c);
+  --color-warn-soft: light-dark(#fdeadb, #55391f);
+  --color-focus: light-dark(#a35de0, #c08bf2);
+
+  /* --- Spacing (D4). A 4 px base in rem, so it follows browser zoom. --- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* --- Typography (D5), from the layout template: Baloo 2 for headings and
+         buttons, Nunito for names, body and labels. The page loads them;
+         production self-hosts them (see the spec). --- */
+  --font-display: "Baloo 2", "Nunito", system-ui, sans-serif;
+  --font-ui: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-num: "Nunito", ui-monospace, Menlo, Consolas, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --leading-tight: 1.2;
+  --leading-body: 1.5;
+  --weight-regular: 600;
+  --weight-medium: 700;
+  --weight-strong: 800;
+  --tracking-wide: 0.08em;
+
+  /* --- Board geometry (D6). No fixed target resolution; one fluid unit. --- */
+  --board-size: clamp(28rem, min(76vh, 56vw), 66rem);
+  --cell: calc(var(--board-size) / 11);
+  --pawn-size: calc(var(--cell) * 0.78);
+  --pawn-scale: 1;
+  --slot-size: calc(var(--cell) * 0.8);
+  --board-min-width: 80rem;
+  --board-min-height: 45rem;
+
+  /* --- Radii and edges. Template chrome radii are 16 / 18 / 28 px; inside
+         the board they scale with the cell instead. --- */
+  --radius-sm: calc(var(--cell) * 0.22);
+  --radius-md: calc(var(--cell) * 0.32);
+  --radius-lg: calc(var(--cell) * 0.5);
+  --radius-card: 1.125rem;
+  --radius-pill: 999px;
+  --border-hair: max(2px, calc(var(--cell) * 0.055));
+  --border-thick: max(2px, calc(var(--cell) * 0.06));
+  --border-ink: max(3px, calc(var(--cell) * 0.07));
+  --border-board: max(4px, calc(var(--cell) * 0.13));
+  --border-card: 3px;
+
+  /* --- Hard offset shadows (D14). Never blurred. --- */
+  --shadow-board: 0 calc(var(--cell) * 0.18) 0 var(--ink-dim);
+  --shadow-piece: 0 calc(var(--cell) * 0.09) 0 var(--ink-dim);
+  --shadow-region: 0 calc(var(--cell) * 0.12) 0 var(--ink-dim);
+  --shadow-lift: 0 calc(var(--cell) * 0.18) 0 var(--ink-dim);
+  --shadow-card: 0 0.4rem 0 var(--ink-dim);
+
+  /* --- Motion (D8). --motion-feedback is the NFR-11 budget. --- */
+  --motion-feedback: 90ms;
+  --motion-move: 240ms;
+  --motion-capture: 320ms;
+  --motion-pulse: 1200ms;
+  --ease-ui: cubic-bezier(0.2, 0, 0, 1);
+  --ease-move: cubic-bezier(0.34, 1.1, 0.64, 1);
+  --ease-capture: cubic-bezier(0.55, 0, 0.85, 0.3);
+
+  /* --- Layering --- */
+  --layer-square: 1;
+  --layer-region: 2;
+  --layer-pawn: 3;
+  --layer-pawn-active: 4;
+  --layer-refusal: 5;
+}
+
+/* D12: loops stop, feedback stays. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-move: 1ms;
+    --motion-capture: 1ms;
+    --motion-pulse: 0ms;
+  }
+}

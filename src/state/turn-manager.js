@@ -144,7 +144,7 @@ export function resolveReactions(state) {
   assertPhase(state, TURN_PHASE.REACTION);
 
   const pawns = applyMove(state.pawns, state.pendingMove);
-  const winner = findWinner(pawns, state.playerCount);
+  const winner = findWinner(pawns);
 
   if (winner !== null) {
     return nextState(state, {
@@ -171,8 +171,19 @@ export function endTurn(state, deps) {
 
   return nextState(state, {
     ...clearedTurnFields(),
-    activePlayer: (state.activePlayer + 1) % state.playerCount,
+    activePlayer: nextSeat(state),
     turnNumber: state.turnNumber + 1,
     phase: TURN_PHASE.DRAW,
   });
+}
+
+/**
+ * The seat that takes the next turn (FR-04).
+ *
+ * Turn order is the order of `state.seats`, not `activePlayer + 1`. In a two-player match the seats
+ * are 0 and 2, so counting upward would hand the turn to seat 1, which nobody is sitting in.
+ */
+function nextSeat(state) {
+  const index = state.seats.indexOf(state.activePlayer);
+  return state.seats[(index + 1) % state.seats.length];
 }

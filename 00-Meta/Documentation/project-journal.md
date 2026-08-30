@@ -190,6 +190,15 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   put to the user before any code was written, because the design spec named them as Product Owner
   territory. All 164 unit tests pass again on the new numbers. Sprint 2.
 
+- **2026-08-30**: Design handoff 01 landed for issue #3. Five stylesheets in `src/ui/styles/` and the
+  spec in `01-Design/Handoff/`. The five landing checks from the sprint plan were run: sixteen
+  decisions all carry a reason and a rejected alternative, no user-facing string is baked into a CSS
+  `content:`, every state in the DOM contract is styled, and the 300-line check **failed on arrival**
+  because Prettier expanded `board.css` from 248 lines to 407, so the track placements were split
+  into `board-track.css`. Two stale comments in the delivery were corrected and no rule was touched.
+  Row 8 of the sign-off table was filled in as a question, because D2 no longer answers NFR-12.
+  Sprint 2.
+
 ---
 
 ## Decisions
@@ -1288,6 +1297,53 @@ to get wrong later.
   house forbids that. It is kept as a guard rather than deleted, because removing it would make the
   function read `blocked[0]` of an empty array. It is the one uncovered line in `src/core/`.
 - → Ch. 05, Ch. 08
+
+### 2026-08-30: A player number is a seat number, so two players sit on seats 0 and 2
+
+- **Chosen:** `core/board.js` gained `seatsFor(playerCount)`, returning `[0, 2]` for two players,
+  `[0, 1, 2]` for three and `[0, 1, 2, 3]` for four. `createPawns` builds from that list, the state
+  object stores `seats`, and `endTurn` rotates through it instead of counting upward.
+- **Why:** D3 of the design spec seats two players opposite each other, and `board.css` implements it
+  by draining seats 1 and 3 in a two-player match. The state layer numbered players 0 and 1, so a
+  two-player game would have rendered pawns standing in a yard the CSS had greyed out. It is also the
+  better rule on its own terms: on a 40-square track opposite seats are 20 squares apart and adjacent
+  seats only 10, so seating two players side by side makes the board lopsided.
+- **`player` is the seat and there is no second numbering.** The alternative was to keep players
+  `0..n-1` in the rules and map player to seat in `ui/`. **Rejected**, and it is worth saying why it
+  is not merely uglier: an entry square is a *rule*, `E(p) = 10p`, so if player 1 sits on seat 2 then
+  their entry square is 20 and not 10. A view-only mapping would have had to relabel the whole board
+  consistently, and the first thing to break would have been capture.
+- **Also rejected: asking Claude Design to drain seats 2 and 3 instead**, which is one CSS block
+  against four source files and a test sweep. It makes a two-player match use adjacent corners, which
+  is the worse game, and it would have blocked the UI work on a second handoff round.
+- **`findWinner` lost its `playerCount` argument** and now reads the seats off the pawn list. With
+  seats 0 and 2, a loop from 0 to `playerCount - 1` checks seat 1, which nobody is in, and misses
+  seat 2, which somebody is. Deriving it removes the way to be wrong instead of documenting it.
+- **One test was found to have been passing vacuously.** `pawnsOf(pawns, 1)` for an empty seat
+  returns `[]`, and `[].every(...)` is `true`, so the end-to-end match test asserted the opponent's
+  pawns were all home while looking at a seat that had none. It now asserts the pawn count first.
+- → Ch. 04, Ch. 05, Ch. 06
+
+### 2026-08-30: Prettier pushed a delivered stylesheet over the 300-line limit, and it was split
+
+- **Chosen:** the 40 track field grid placements were moved out of `board.css` into
+  `board-track.css`, and the index-to-cell table moved with them.
+- **Why:** `board.css` arrived at 248 lines and inside NFR-02. `npm run format` expanded every
+  single-line rule such as `.square[data-square="0"] { grid-area: 5 / 1; }` into three lines and took
+  the file to 407. Prettier has no option to keep a one-declaration rule on one line, so the choice
+  was to split the file or to stop formatting the delivery.
+- **This is the project's own toolchain breaking the project's own constraint**, which is the part
+  worth carrying into the report. Two rules that are each individually sensible, "format everything"
+  and "no file over 300 lines", disagree on a file that was compliant when it was written.
+- **Rejected: adding `src/ui/styles/` to a Prettier ignore list.** One line, no split, and it makes
+  the delivered CSS the only code in the repository nobody formats. The formatter would then be
+  something the project applies where it happens to be convenient, which is worse than a split.
+- **Rejected: splitting the square states out instead**, which is what section 1 of the spec had
+  preferred. It separates `.square` from `.square[data-legal-target="true"]`, which is not a seam in
+  any direction. The spec's objection to splitting the placements, that they must be read next to the
+  geometry they implement, was answered by moving the geometry table into the new file rather than by
+  overruling it.
+- → Ch. 04, Ch. 07
 
 ---
 

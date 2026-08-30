@@ -12,10 +12,15 @@ import { createPawns } from "../../src/core/pawns.js";
  * A pawn list for `playerCount` players with some pawns moved off their start squares.
  *
  * ```js
- * pawnsAt(2, { "0.0": 40, "1.1": 13 })
+ * pawnsAt(4, { "0.0": 40, "1.1": 13 })
  * // player 0's pawn 0 sits on its turn-off square, player 1's pawn 1 is 13 steps in,
- * // and the other six pawns are still in their start areas.
+ * // and the other fourteen pawns are still in their start areas.
  * ```
+ *
+ * **`playerCount` picks the seats, it does not number them.** A two-player fixture holds seats 0
+ * and **2**, and has no seat 1 at all, because `seatsFor` seats two players opposite each other. A
+ * rules test that just needs a second player is therefore easier to read as a four-player fixture:
+ * the idle seats stay in their start areas, where nothing can collide with them.
  *
  * The `"player.pawn"` key is a string because it reads as a coordinate at the call site, which is
  * the only place it has to be readable.

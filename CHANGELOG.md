@@ -154,6 +154,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   contain no empty translation, and cover every key `core/` and `state/` can emit. That is NFR-03's
   acceptance criterion turned into a failing test
 
+- **The design system** (issue #3, NFR-10, NFR-11, NFR-12). Design handoff 01 landed as five stylesheets in
+  `src/ui/styles/`: `tokens.css` with every colour, size, font and duration as a CSS custom property on `:root`,
+  `board.css` and `board-track.css` for the 11 by 11 grid and the 40 track fields, `pawn.css` for the pawn and its
+  five states, and `refusal.css` for the move-refusal strip. Two skins, Picnic and Night In, follow the operating
+  system or a `data-theme` attribute on `<html>`
+- The reasoning behind the design system in `01-Design/Handoff/01-spec-foundations-and-board.md`: sixteen numbered
+  decisions covering colour, the player identifier, board geometry, spacing, typography, board size, the five pawn
+  and square states, motion, the refusal region, pawn positioning, keyboard focus, reduced motion, contrast and
+  dark mode, each with its reason and at least one named rejected alternative
+- Two players now sit **opposite each other, on seats 0 and 2**, rather than side by side. `core/board.js` gained
+  `seatsFor(playerCount)`, and a player number is a seat number everywhere: a two-player match has no seat 1
+
 ### Changed
 
 - **The board topology changed from 52 track squares to 40** (issues #3 and #26), following the first design
@@ -167,6 +179,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The dice pool composition and balance arithmetic in section 5 of the game design document are **knowingly out of
   date**: they were derived against a 58-step journey. The section carries a note saying so and pointing at issue
   #37, where the pool should be re-derived against 44 rather than adjusted
+- Row 8 of the Product Owner sign-off table in the game design document now records a **question rather than a
+  rule**: design handoff 01 tells players apart by colour alone, so NFR-12's "second, non-colour identifier" is not
+  answered as written and only its narrower greyscale acceptance criterion is being aimed at
+- The 40 track field grid placements were split out of `src/ui/styles/board.css` into `board-track.css`. The
+  delivered file was 248 lines and inside the 300-line limit; running the project's own Prettier over it expanded
+  every single-line rule and took it to 407
+- Section 5 of `00-Meta/Project-Management/Obligations-Book.md` no longer says "No design specification exists",
+  and points at `01-Design/` and `src/ui/styles/` instead. Screens S4, S5, S7 and the menus still have no design
 - Prettier now uses `"quoteProps": "preserve"`, so an object key written with quotes keeps them. The default
   stripped the quotes from test fixture keys such as `"0.1"` while keeping them on `"0.0"`, which made
   coordinate keys read inconsistently

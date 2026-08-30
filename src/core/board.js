@@ -43,6 +43,9 @@ export const TRACK_LENGTH = 40;
 /** 2 to 4 players play, but the board always has four fixed seats (FR-01). */
 export const MAX_PLAYERS = 4;
 
+/** Fewest players a match can have (FR-01). */
+export const MIN_PLAYERS = 2;
+
 /**
  * 40 = 4 x 10, which is what makes the board symmetric: every player sits exactly 10 squares from
  * the next one, so everybody meets everybody at the same relative distances.
@@ -80,6 +83,42 @@ export const REGION = {
   TRACK: "track",
   HOME_COLUMN: "home-column",
 };
+
+/**
+ * Which of the board's four seats a match of `playerCount` players uses.
+ *
+ * **Two players sit opposite each other, on seats 0 and 2**, not side by side on seats 0 and 1. On a
+ * 40-square track opposite seats are 20 squares apart and adjacent seats only 10, so seating two
+ * players next to each other puts one player's entry square a third of a lap ahead of the other's
+ * and makes the board lopsided. It is also how the printed board is played, and it is what the
+ * design draws: `board.css` drains seats 1 and 3 in a two-player match.
+ *
+ * **Three players use seats 0, 1 and 2.** No arrangement of three seats on a four-seat board is
+ * symmetric, so the empty seat is simply the last one, and the design draws it drained rather than
+ * removing it.
+ *
+ * The values are a table and not arithmetic on purpose. `MAX_PLAYERS / playerCount` happens to give
+ * the right stride for 2 and 4 and nothing sensible for 3, and a formula with one exception in it is
+ * harder to check against the board than three lists are.
+ */
+const SEATS_BY_COUNT = {
+  2: [0, 2],
+  3: [0, 1, 2],
+  4: [0, 1, 2, 3],
+};
+
+/** The seats a match of `playerCount` players occupies, in turn order (FR-01, FR-04). */
+export function seatsFor(playerCount) {
+  // The integer check is not redundant. Object keys are strings, so a lookup with the string "2"
+  // would find the entry for 2 and let a value that is not a player count through.
+  const seats = Number.isInteger(playerCount) ? SEATS_BY_COUNT[playerCount] : undefined;
+  if (seats === undefined) {
+    throw new RangeError(
+      `playerCount must be an integer ${MIN_PLAYERS}..${MAX_PLAYERS}, got ${playerCount}`
+    );
+  }
+  return seats.slice();
+}
 
 function assertPlayer(player) {
   if (!Number.isInteger(player) || player < 0 || player >= MAX_PLAYERS) {

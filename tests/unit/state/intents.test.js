@@ -56,7 +56,8 @@ describe("the four intents `ui/` may dispatch", () => {
     const result = dispatch(rolled, { type: INTENT.END_TURN }, d);
 
     expect(result.accepted).toBe(true);
-    expect(result.state.activePlayer).toBe(1);
+    // Seat 2, not seat 1: a two-player match seats its players opposite each other.
+    expect(result.state.activePlayer).toBe(2);
     expect(result.state.turnNumber).toBe(2);
     // Never a phase the player can see and cannot act on.
     expect(result.state.phase).toBe(TURN_PHASE.CHOOSE);

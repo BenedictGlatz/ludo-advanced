@@ -209,8 +209,14 @@ Printed rather than smoothed over, because each one is a real obligation this do
   (FR-34, `must have`, with NFR-03) appear in no issue on the board. FR-34 being a must-have
   requirement with no issue is the more serious of the two: the board understates the remaining work
   by that much. Carried into the effort estimation, issue #16.
-- **No design specification exists.** No colour palette, spacing scale or typography is recorded
-  anywhere in this repository, so the screen inventory above is the complete GUI commitment for now.
-  When the design system lands under issue #3, this document points at it and does not absorb it.
+- ~~**No design specification exists.**~~ **Closed on 2026-08-30.** Design handoff 01 landed under
+  issue #3. The reasoning is in
+  [01-Design/Handoff/01-spec-foundations-and-board.md](../../01-Design/Handoff/01-spec-foundations-and-board.md),
+  which answers sixteen numbered decisions covering colour, spacing, typography, board geometry,
+  motion, the two skins and every state in the DOM contract. The design system itself is not a
+  document: it is `src/ui/styles/tokens.css`, `board.css`, `board-track.css`, `pawn.css` and
+  `refusal.css`, which is what the build ships. **This document points at both and absorbs neither.**
+  It covers screens S3 and S6 only; S4, S5, S7 and the menus still have no design and belong to
+  issues #37, #38 and #39.
 - **Nothing here is verified**, as stated at the top. The first commit that creates `src/` is the first
   evidence that any of it survives contact with code.

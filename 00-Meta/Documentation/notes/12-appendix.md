@@ -52,6 +52,15 @@ Likely candidates as the project runs:
 | 5 | Ludo Advanced schedule, recorded to 2026-08-23 and planned after it | [Roadmap-and-Gantt.md](../../Project-Management/Roadmap-and-Gantt.md) section 4, Mermaid gantt | Ch. 02, Ch. 11 |
 | 6 | The Roadmap view of the GitHub Projects board as a Gantt chart | *reserved*, see the note below | Ch. 02 |
 | 7 | Project structure plan of Ludo Advanced, to epic level | [Project-Structure-Plan.md](../../Project-Management/Project-Structure-Plan.md) section 2, Mermaid | Ch. 02 |
+| 8 | The board as an 11 by 11 grid: which cell holds which of the 40 track fields | [01-spec-foundations-and-board.md](../../../01-Design/Handoff/01-spec-foundations-and-board.md) D3, reproduced in the header of `src/ui/styles/board-track.css` | Ch. 04, Ch. 05 |
+| 9 | The design token reference | [01-spec-foundations-and-board.md](../../../01-Design/Handoff/01-spec-foundations-and-board.md) section 3 | Ch. 04 |
+
+**Figures 8 and 9 registered on 2026-08-30**, both from design handoff 01. Figure 8 is a table and
+not a drawing on purpose: the board's geometry is 40 index-to-cell mappings, and a picture of the
+cross says less than the table does about which index sits where. It exists twice, once in the spec
+and once in the header of the stylesheet that implements it, and the two were emitted from the same
+arithmetic. If they ever disagree, the stylesheet is what the browser renders and the spec is what
+gets corrected.
 
 **Figure 1 is reserved, not written.** Open pull request #51 adds a Kanban board screenshot as
 Figure 1 to this file. The architecture figures were numbered from 2 on 2026-08-22 so that the two

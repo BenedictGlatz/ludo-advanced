@@ -56,7 +56,7 @@ describe("advancing (FR-10)", () => {
 
   it("passes over occupied squares freely, because only the landing square is checked", () => {
     // Player 1's pawn sits on absolute square 10, which player 0 crosses at r = 11.
-    const pawns = pawnsAt(2, { "0.0": 10, "1.0": 1 });
+    const pawns = pawnsAt(4, { "0.0": 10, "1.0": 1 });
     const move = legalMoves(pawns, 0, 6, 6).find((entry) => entry.pawn === 0);
 
     expect(move.to).toBe(16);

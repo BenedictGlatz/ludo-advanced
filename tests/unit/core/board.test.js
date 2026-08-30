@@ -14,6 +14,7 @@ import {
   region,
   homeColumnStep,
   isFinished,
+  seatsFor,
   isSameSquare,
 } from "../../../src/core/board.js";
 
@@ -40,6 +41,33 @@ describe("the constants match section 2 of the game design document", () => {
   it("makes a pawn's whole journey 44 steps", () => {
     expect(START_R).toBe(0);
     expect(HOME_R).toBe(44);
+  });
+});
+
+describe("seatsFor", () => {
+  it("seats two players opposite each other, on 0 and 2", () => {
+    expect(seatsFor(2)).toEqual([0, 2]);
+  });
+
+  it("puts three players on 0, 1 and 2 and four on every seat", () => {
+    expect(seatsFor(3)).toEqual([0, 1, 2]);
+    expect(seatsFor(4)).toEqual([0, 1, 2, 3]);
+  });
+
+  it("puts the two-player seats half a lap apart, which is the whole point of the rule", () => {
+    const [a, b] = seatsFor(2).map(entrySquare);
+    expect(Math.abs(a - b)).toBe(TRACK_LENGTH / 2);
+  });
+
+  it("returns a fresh array, so a caller cannot edit the table", () => {
+    seatsFor(2).push(1);
+    expect(seatsFor(2)).toEqual([0, 2]);
+  });
+
+  it("refuses a player count that is not 2, 3 or 4", () => {
+    for (const bad of [0, 1, 5, 2.5, -1, "3", null, undefined]) {
+      expect(() => seatsFor(bad)).toThrow(RangeError);
+    }
   });
 });
 

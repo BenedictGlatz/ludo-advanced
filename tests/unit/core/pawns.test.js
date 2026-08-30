@@ -1,27 +1,38 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_PLAYERS, PAWNS_PER_PLAYER, START_R } from "../../../src/core/board.js";
+import { MAX_PLAYERS, PAWNS_PER_PLAYER, START_R, seatsFor } from "../../../src/core/board.js";
 import {
   MIN_PLAYERS,
   createPawns,
   findPawn,
   pawnsOf,
   playerCountOf,
+  seatsIn,
   withPawnAt,
 } from "../../../src/core/pawns.js";
 
 describe("createPawns", () => {
-  it("gives every player four pawns, all in the start area (FR-01)", () => {
+  it("gives every seated player four pawns, all in the start area (FR-01)", () => {
     for (let playerCount = MIN_PLAYERS; playerCount <= MAX_PLAYERS; playerCount += 1) {
       const pawns = createPawns(playerCount);
 
       expect(pawns).toHaveLength(playerCount * PAWNS_PER_PLAYER);
       expect(pawns.every((entry) => entry.r === START_R)).toBe(true);
 
-      for (let player = 0; player < playerCount; player += 1) {
+      for (const player of seatsFor(playerCount)) {
         expect(pawnsOf(pawns, player)).toHaveLength(PAWNS_PER_PLAYER);
       }
     }
+  });
+
+  it("seats two players opposite each other, on seats 0 and 2 (D3 of the design spec)", () => {
+    expect(seatsIn(createPawns(2))).toEqual([0, 2]);
+    expect(pawnsOf(createPawns(2), 1)).toEqual([]);
+  });
+
+  it("seats three players on 0, 1 and 2, and four on all of them", () => {
+    expect(seatsIn(createPawns(3))).toEqual([0, 1, 2]);
+    expect(seatsIn(createPawns(4))).toEqual([0, 1, 2, 3]);
   });
 
   it("numbers each player's pawns 0 to 3", () => {

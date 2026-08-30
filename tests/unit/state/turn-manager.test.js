@@ -78,14 +78,15 @@ describe("the eight-step sequence (section 3 of the game design document)", () =
   });
 
   it("sends a captured pawn back to its start area when the move resolves (FR-11)", () => {
-    // Player 1 at r = 31 stands on absolute square 0, which is player 0's entry square.
-    const { state } = afterRoll(pawnsAt(2, { "1.0": 31 }), [6]);
+    // A two-player match seats the opponent on seat 2, and player 2 at r = 21 stands on absolute
+    // square 0, which is player 0's entry square.
+    const { state } = afterRoll(pawnsAt(2, { "2.0": 21 }), [6]);
 
-    expect(state.legalMoves[0].captures).toEqual({ player: 1, pawn: 0 });
+    expect(state.legalMoves[0].captures).toEqual({ player: 2, pawn: 0 });
 
     const resolved = resolveReactions(commitMove(state, 0));
 
-    expect(findPawn(resolved.pawns, { player: 1, pawn: 0 }).r).toBe(START_R);
+    expect(findPawn(resolved.pawns, { player: 2, pawn: 0 }).r).toBe(START_R);
     expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(1);
   });
 
@@ -102,11 +103,18 @@ describe("the eight-step sequence (section 3 of the game design document)", () =
 });
 
 describe("turn order (FR-04)", () => {
-  it("rotates in a fixed order and wraps, for 2, 3 and 4 players", () => {
+  it("rotates through the seated players and wraps, for 2, 3 and 4 players", () => {
+    // The seats are not 0..playerCount-1. Two players sit opposite each other, on 0 and 2, so a
+    // rotation that counted upward would hand the turn to an empty seat.
+    const seatOrder = { 2: [0, 2], 3: [0, 1, 2], 4: [0, 1, 2, 3] };
+
     for (const playerCount of [2, 3, 4]) {
+      const seats = seatOrder[playerCount];
       const d = deps(Array.from({ length: playerCount * 2 }, () => 3));
       let state = createGameState(playerCount);
       const seen = [];
+
+      expect(state.seats).toEqual(seats);
 
       for (let turn = 0; turn < playerCount * 2; turn += 1) {
         seen.push(state.activePlayer);
@@ -114,8 +122,7 @@ describe("turn order (FR-04)", () => {
         state = endTurn(state, d);
       }
 
-      const expected = Array.from({ length: playerCount * 2 }, (_, i) => i % playerCount);
-      expect(seen).toEqual(expected);
+      expect(seen).toEqual([...seats, ...seats]);
       expect(state.turnNumber).toBe(playerCount * 2 + 1);
     }
   });

@@ -14,7 +14,7 @@
  */
 
 import { PAWNS_PER_PLAYER, REGION, region } from "./board.js";
-import { pawnsOf } from "./pawns.js";
+import { pawnsOf, seatsIn } from "./pawns.js";
 
 /**
  * Has `player` got all four pawns into the house?
@@ -35,9 +35,14 @@ export function hasWon(pawns, player) {
  * Only one player can ever satisfy this at a time, because the match ends the moment the condition
  * is met and no further move is applied. The loop therefore returns the first hit rather than
  * collecting a set.
+ *
+ * **The seats come from the pawn list rather than from a player count**, which is what makes this
+ * correct for a two-player match. Two players sit on seats 0 and 2, so counting from 0 to
+ * `playerCount - 1` would check seat 1, which nobody is in, and miss seat 2, which somebody is.
+ * A seat with no pawns cannot win anyway, because `hasWon` checks the pawn count first.
  */
-export function findWinner(pawns, playerCount) {
-  for (let player = 0; player < playerCount; player += 1) {
+export function findWinner(pawns) {
+  for (const player of seatsIn(pawns)) {
     if (hasWon(pawns, player)) {
       return player;
     }

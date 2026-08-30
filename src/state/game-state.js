@@ -30,8 +30,8 @@
  * once the match is over, which is a record of the outcome and not a shortcut around the rule.
  */
 
-import { MAX_PLAYERS } from "../core/board.js";
-import { MIN_PLAYERS, createPawns } from "../core/pawns.js";
+import { seatsFor } from "../core/board.js";
+import { createPawns } from "../core/pawns.js";
 
 /**
  * The turn as a state machine, matching the eight steps in section 3 of the game design document.
@@ -71,6 +71,7 @@ export const MATCH_STATUS = {
 function freezeState(state) {
   for (const pawn of state.pawns) Object.freeze(pawn);
   Object.freeze(state.pawns);
+  Object.freeze(state.seats);
 
   for (const move of state.legalMoves) {
     if (move.captures !== null) Object.freeze(move.captures);
@@ -88,20 +89,23 @@ function freezeState(state) {
 }
 
 /**
- * A fresh match: `playerCount` players, four pawns each in their start areas, player 0 to move, and
- * nothing drawn yet (FR-01).
+ * A fresh match: `playerCount` players, four pawns each in their start areas, the first seat to
+ * move, and nothing drawn yet (FR-01).
+ *
+ * **`seats` is stored, and `playerCount` alone is not enough.** `core/board.js` seats two players
+ * opposite each other, on seats 0 and 2, so the seats in play are not `0` to `playerCount - 1` and
+ * cannot be recomputed from a count without repeating that rule here. Storing the list means
+ * `state/` asks `core/` once, at the start of the match, and every later question about turn order
+ * reads the answer instead of deriving it again.
  */
 export function createGameState(playerCount) {
-  if (!Number.isInteger(playerCount) || playerCount < MIN_PLAYERS || playerCount > MAX_PLAYERS) {
-    throw new RangeError(
-      `playerCount must be an integer ${MIN_PLAYERS}..${MAX_PLAYERS}, got ${playerCount}`
-    );
-  }
+  const seats = seatsFor(playerCount);
 
   return freezeState({
     playerCount,
+    seats,
     status: MATCH_STATUS.RUNNING,
-    activePlayer: 0,
+    activePlayer: seats[0],
     turnNumber: 1,
     phase: TURN_PHASE.DRAW,
     pawns: createPawns(playerCount),

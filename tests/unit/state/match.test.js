@@ -146,7 +146,14 @@ describe("a complete match, played end to end on a scripted RNG (NFR-09)", () =>
     expect(state.turnNumber).toBe(65);
 
     expect(pawnsOf(state.pawns, 0).map((pawn) => pawn.r)).toEqual([HOME_R, 43, 42, 41]);
-    expect(pawnsOf(state.pawns, 1).every((pawn) => pawn.r === START_R)).toBe(true);
+
+    // The opponent is on seat 2, not seat 1. Asserting the count as well as the positions matters
+    // here: `pawnsOf` for an empty seat returns [], and `[].every(...)` is true, so the seat number
+    // could be wrong and this check would still pass.
+    const opponent = pawnsOf(state.pawns, 2);
+    expect(opponent).toHaveLength(4);
+    expect(opponent.every((pawn) => pawn.r === START_R)).toBe(true);
+    expect(pawnsOf(state.pawns, 1)).toEqual([]);
   });
 
   it("refuses every intent once it is won", () => {

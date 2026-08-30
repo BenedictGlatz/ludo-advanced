@@ -25,24 +25,23 @@
  * a bug in `ui/` cannot corrupt the board by holding on to an old reference.
  */
 
-import { MAX_PLAYERS, PAWNS_PER_PLAYER, START_R } from "./board.js";
+import { MIN_PLAYERS, PAWNS_PER_PLAYER, START_R, seatsFor } from "./board.js";
 
-/** Fewest players a match can have (FR-01). */
-export const MIN_PLAYERS = 2;
+export { MIN_PLAYERS };
 
 /**
- * All pawns for a fresh match: `playerCount` players, four pawns each, every one in its start area.
- * The order is stable, player 0's four pawns first, so a failing test prints a readable array.
+ * All pawns for a fresh match: four pawns per seated player, every one in its start area.
+ *
+ * **`player` is the seat number, not the position in the turn order.** A two-player match therefore
+ * produces pawns for players 0 and **2**, because `seatsFor` seats two players opposite each other.
+ * Everything downstream keys on the seat, so entry squares, capture and rendering all agree without
+ * a second numbering to translate between.
+ *
+ * The order is stable, the first seat's four pawns first, so a failing test prints a readable array.
  */
 export function createPawns(playerCount) {
-  if (!Number.isInteger(playerCount) || playerCount < MIN_PLAYERS || playerCount > MAX_PLAYERS) {
-    throw new RangeError(
-      `playerCount must be an integer ${MIN_PLAYERS}..${MAX_PLAYERS}, got ${playerCount}`
-    );
-  }
-
   const pawns = [];
-  for (let player = 0; player < playerCount; player += 1) {
+  for (const player of seatsFor(playerCount)) {
     for (let pawn = 0; pawn < PAWNS_PER_PLAYER; pawn += 1) {
       pawns.push({ player, pawn, r: START_R });
     }
@@ -83,7 +82,17 @@ export function withPawnAt(pawns, ref, r) {
   return next;
 }
 
+/**
+ * The seats that appear in a pawn list, in the order they first appear, which is seat order.
+ *
+ * This is the answer to "who is playing" that cannot be wrong, because it is read off the board
+ * rather than passed in. A two-player match returns `[0, 2]`.
+ */
+export function seatsIn(pawns) {
+  return [...new Set(pawns.map((entry) => entry.player))];
+}
+
 /** How many distinct players appear in a pawn list. Used to check a state object against itself. */
 export function playerCountOf(pawns) {
-  return new Set(pawns.map((entry) => entry.player)).size;
+  return seatsIn(pawns).length;
 }
