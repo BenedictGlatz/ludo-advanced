@@ -323,6 +323,40 @@ the game. It came out of looking at a screenshot, not out of a requirement.
 **The round is open and this branch does not close it.** Applying `02-spec-board-revisions.md` is
 step 9.2 of the sprint plan and has not happened.
 
+### Handoff 03 sent, and it is the first one with a real blocker behind it: 2026-08-30, issues #31 and #34
+
+`01-Design/Handoff/03-brief-cards-and-hands.md` asks for the card component, the dice hand (S4), the
+skill hand at rest (S5), the skill square on the board (S3) and the page shell. Nine open decisions,
+**D25 to D33**, continuing the numbering from handoff 02.
+
+**Handoff 02 deliberately did not ask for any of this**, on the grounds that "a brief that asks for
+them gets a design nobody can build yet". Two things changed that on the same day:
+
+- The real Dice Card Pool exists (issue #30), so a turn now deals three different cards and there is
+  a genuine choice to put on screen.
+- The Product Owner chose the card set: all 29 cards from the card artwork canvas, artboards `6a` and
+  `4a`, plus the seven dice cards on `5a`.
+
+**What makes this brief different from the first two: it is unblocking a measured defect, not filling
+a blank.** `game-loop.js` picks `hand[0]` for the player, and over 400 measured matches one turn in
+three has no legal move at all. Part of that is the view picking a D20 when the player needed a D2 to
+leave the yard. So the design round is not cosmetic work queued behind the rules; it is the fix.
+
+Three of the nine decisions are worth naming here because they are not "what colour":
+
+- **D27 is a collision, not a choice.** Skill squares are described as purple and `--color-hint` is
+  already purple for a legal target. A field can be both at once, so one of the two has to give.
+- **D28 is a contradiction inside the artwork.** Artboard `6a` labels a card by type and sub-kind,
+  artboard `4a` by category and sub-kind. A hand holds both, so a player sees two labelling systems
+  unless the design reconciles them.
+- **D33 is rules-adjacent and the brief says so.** Hot-seat means one screen, and a skill hand is
+  private in a way a dice hand is not. The brief explicitly allows "this needs the Product Owner" as
+  an answer rather than forcing a design decision onto a rules question.
+
+**The handoff folder is committed with the brief.** `01-Design/Handoff/Card artwork design planning/`
+is 2.7 MB, mostly illustration uploads. It is the only record of what the 29 cards are, and the brief
+references it by path, so leaving it untracked would have left the brief pointing at nothing.
+
 ### Localisation: 2026-08-29, issue #64
 
 `src/i18n/index.js` plus `locales/de.json` and `locales/en.json`. Counts are in

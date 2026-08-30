@@ -193,6 +193,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `npm run docs:dice-balance`, which derives how many turns a pawn needs per die, exactly, and then measures
   1200 real matches through the shipped rules to check the derivation. Section 5.2 of the game design document
   is now this command's output rather than arithmetic done by hand
+- **Design handoff 03** (`01-Design/Handoff/03-brief-cards-and-hands.md`), asking for the card component, the
+  dice hand (S4), the skill hand at rest (S5), the skill square on the board and the page shell that holds
+  them all without scrolling (FR-31). Nine open decisions, D25 to D33
+- The card artwork handoff, `01-Design/Handoff/Card artwork design planning/`. It is the only record of what
+  the 29 cards are, the Product Owner picked the set out of it, and design handoff 03 references it by path
 
 ### Changed
 
