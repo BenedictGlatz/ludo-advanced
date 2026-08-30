@@ -8,18 +8,19 @@
  * Landing exactly on a shared-track square that holds an opponent's pawn sends that pawn back to its
  * owner's start area, and the arriving pawn holds the square. That is section 4.3 of the game design
  * document, and there is nothing else to it in the MVP: there are no safe squares (FR-15 is a
- * `could have` and is not built), so every one of the 52 track squares is capturable.
+ * `could have` and is not built), so every one of the 40 track squares is capturable.
  *
  * ## Why this file is two pages of comment and twenty lines of code
  *
  * Three cases that usually need their own rule need none here, because `board.js` already made them
  * impossible to express:
  *
- * - **Capture in a home column.** A home column belongs to one player, so `isSameSquare` can only
- *   ever report a collision there between two pawns of the *same* player. An opponent is not
- *   reachable, so there is no case to write.
- * - **Capture in a start area or in home.** Both hold four separate slots, so `isSameSquare` reports
- *   no collision at all. A pawn sent back to `r = 0` therefore never captures anything on arrival.
+ * - **Capture in a house.** A house belongs to one player, so `isSameSquare` can only ever report a
+ *   collision there between two pawns of the *same* player. An opponent is not reachable, so there
+ *   is no case to write. This covers the deepest house square too, which is where a finished pawn
+ *   stands: there is no separate home area that would need a rule of its own.
+ * - **Capture in a start area.** It holds four separate slots, so `isSameSquare` reports no
+ *   collision at all. A pawn sent back to `r = 0` therefore never captures anything on arrival.
  * - **Two opponents on one square.** It cannot happen, because whoever arrived second would have
  *   captured the first. `captureTarget` checks this rather than assuming it, and throws if the
  *   invariant is ever broken, since a silently ignored second pawn would be a bug that only shows up

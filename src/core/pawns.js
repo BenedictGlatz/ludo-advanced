@@ -11,7 +11,7 @@
  *
  * - `player` is the seat, 0 to 3.
  * - `pawn` is which of that player's four pawns it is, 0 to 3. It never changes.
- * - `r` is the relative position from `board.js`, 0 to 58.
+ * - `r` is the relative position from `board.js`, 0 to 44.
  *
  * `player` and `pawn` together are the pawn's **identity**, and the pair is what every function here
  * matches on. `r` is the only thing that ever changes, which is why a move can be described as a

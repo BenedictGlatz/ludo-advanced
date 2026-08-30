@@ -12,7 +12,7 @@ import { createPawns } from "../../src/core/pawns.js";
  * A pawn list for `playerCount` players with some pawns moved off their start squares.
  *
  * ```js
- * pawnsAt(2, { "0.0": 52, "1.1": 13 })
+ * pawnsAt(2, { "0.0": 40, "1.1": 13 })
  * // player 0's pawn 0 sits on its turn-off square, player 1's pawn 1 is 13 steps in,
  * // and the other six pawns are still in their start areas.
  * ```

@@ -3,23 +3,30 @@
  *
  * Pure functions over a pawn list, no DOM, no state object (NFR-01).
  *
- * **The rule:** a player with all four pawns at `r = 58` has won, and the match ends immediately.
- * Remaining players are not ranked. There is no second place in the MVP, because ranking needs a
- * rule for what happens after the win and nothing in the sources asks for one.
+ * **The rule:** a player whose four pawns fill their four house squares has won, and the match ends
+ * immediately. Remaining players are not ranked. There is no second place in the MVP, because
+ * ranking needs a rule for what happens after the win and nothing in the sources asks for one.
+ *
+ * **Why "in the house" and not "at `r = 44`".** The house has exactly as many squares as the player
+ * has pawns, and `board.js` makes two pawns of one player collide on a house square, so a full house
+ * is the only way four pawns can all be inside it. Testing the region rather than one number means
+ * this file states the rule once and does not repeat the arithmetic that produced 44.
  */
 
-import { HOME_R, PAWNS_PER_PLAYER } from "./board.js";
+import { PAWNS_PER_PLAYER, REGION, region } from "./board.js";
 import { pawnsOf } from "./pawns.js";
 
 /**
- * Has `player` got all four pawns home?
+ * Has `player` got all four pawns into the house?
  *
  * The pawn count is checked as well as the positions. Without it, a player with no pawns in the list
  * at all would win: `[].every(...)` is `true`, which is correct for arrays and wrong for Ludo.
  */
 export function hasWon(pawns, player) {
   const own = pawnsOf(pawns, player);
-  return own.length === PAWNS_PER_PLAYER && own.every((entry) => entry.r === HOME_R);
+  return (
+    own.length === PAWNS_PER_PLAYER && own.every((entry) => region(entry.r) === REGION.HOME_COLUMN)
+  );
 }
 
 /**

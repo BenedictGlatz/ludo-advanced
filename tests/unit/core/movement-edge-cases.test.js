@@ -4,6 +4,9 @@
  *
  * The table exists so that nobody has to re-derive these under time pressure during implementation.
  * Testing it row by row is what stops the table and the code from drifting apart.
+ *
+ * Positions were re-derived on 2026-08-30 for the 40-square track and the four-square house. The
+ * rules being tested did not change; the numbers they are expressed in did.
  */
 
 import { describe, expect, it } from "vitest";
@@ -28,10 +31,10 @@ describe("entry square blocked by an own pawn when the maximum is rolled", () =>
 
 describe("entry square held by an opponent when the maximum is rolled", () => {
   it("makes the entering pawn capture it, because entry squares are not safe (FR-15)", () => {
-    // Player 1 at r = 40 stands on absolute square 0, which is player 0's entry square.
-    expect(absoluteSquare(1, 40)).toBe(absoluteSquare(0, 1));
+    // Player 1 at r = 31 stands on absolute square 0, which is player 0's entry square.
+    expect(absoluteSquare(1, 31)).toBe(absoluteSquare(0, 1));
 
-    const pawns = pawnsAt(2, { "1.0": 40 });
+    const pawns = pawnsAt(2, { "1.0": 31 });
     const move = evaluateTurn(pawns, 0, 6, 6).moves[0];
 
     expect(move.kind).toBe(MOVE_KIND.LEAVE_START);
@@ -45,12 +48,12 @@ describe("entry square held by an opponent when the maximum is rolled", () => {
 
 describe("the maximum rolled with no pawn in the start area", () => {
   it("is not wasted: it becomes an ordinary move", () => {
-    const pawns = pawnsAt(2, { "0.0": 10, "0.1": 20, "0.2": 30, "0.3": 40 });
+    const pawns = pawnsAt(2, { "0.0": 5, "0.1": 12, "0.2": 19, "0.3": 26 });
     const result = evaluateTurn(pawns, 0, 6, 6);
 
     expect(result.moves).toHaveLength(4);
     expect(result.moves.every((move) => move.kind === MOVE_KIND.ADVANCE)).toBe(true);
-    expect(result.moves.map((move) => move.to)).toEqual([16, 26, 36, 46]);
+    expect(result.moves.map((move) => move.to)).toEqual([11, 18, 25, 32]);
   });
 });
 
@@ -58,8 +61,8 @@ describe("two own pawns on one square", () => {
   it("cannot happen after any legal move, from any of these positions", () => {
     const positions = [
       { "0.0": 1, "0.1": 7, "0.2": 13, "0.3": 19 },
-      { "0.0": 46, "0.1": 50, "0.2": 53, "0.3": 55 },
-      { "0.0": 52, "0.1": 57, "0.2": HOME_R },
+      { "0.0": 30, "0.1": 34, "0.2": 38, "0.3": 41 },
+      { "0.0": 40, "0.1": 43, "0.2": HOME_R },
       { "0.1": 1, "0.2": 2 },
     ];
 
@@ -81,10 +84,13 @@ describe("two own pawns on one square", () => {
   });
 });
 
-describe("a pawn captured while the player's others are home", () => {
+describe("a pawn captured while the player's others are in the house", () => {
+  // Player 0 has three pawns in the house and one on absolute square 10, which is player 1's entry
+  // square. Player 1 rolls the maximum and leaves the start area straight onto it.
+  const underAttack = { "0.0": 11, "0.1": 42, "0.2": 43, "0.3": 44 };
+
   it("restarts at r = 0 and has to leave again under FR-09", () => {
-    // Player 0 has three pawns home and one on the track. Player 1 leaves the start area onto it.
-    const pawns = pawnsAt(2, { "0.0": 14, "0.1": HOME_R, "0.2": HOME_R, "0.3": HOME_R });
+    const pawns = pawnsAt(2, underAttack);
     const capturing = evaluateTurn(pawns, 1, 6, 6).moves[0];
 
     expect(capturing.captures).toEqual({ player: 0, pawn: 0 });
@@ -93,22 +99,23 @@ describe("a pawn captured while the player's others are home", () => {
     expect(findPawn(after, { player: 0, pawn: 0 }).r).toBe(START_R);
     expect(hasWon(after, 0)).toBe(false);
 
-    // Back at r = 0, only the die's maximum gets it out again.
-    expect(evaluateTurn(after, 0, 5, 6).moves).toEqual([]);
-    expect(evaluateTurn(after, 0, 5, 6).reason).toBe(REFUSAL.NEEDS_MAXIMUM);
+    // Back at r = 0, only the die's maximum gets it out again. The turn-level reason is
+    // none-available rather than needs-maximum, because the three pawns in the house overshoot,
+    // so the per-pawn reason is the one that carries the rule.
+    const stuck = evaluateTurn(after, 0, 5, 6);
+    expect(stuck.moves).toEqual([]);
+    expect(stuck.refusals.find((entry) => entry.pawn === 0).reason).toBe(REFUSAL.NEEDS_MAXIMUM);
     expect(evaluateTurn(after, 0, 6, 6).moves).toHaveLength(1);
   });
 
-  it("leaves the pawns that are already home where they are", () => {
-    const pawns = pawnsAt(2, { "0.0": 14, "0.1": HOME_R, "0.2": HOME_R, "0.3": HOME_R });
+  it("leaves the pawns that are already in the house where they are", () => {
+    const pawns = pawnsAt(2, underAttack);
     const after = applyMove(pawns, evaluateTurn(pawns, 1, 6, 6).moves[0]);
 
-    for (const pawn of [1, 2, 3]) {
-      expect(findPawn(after, { player: 0, pawn }).r).toBe(HOME_R);
-    }
+    expect([1, 2, 3].map((pawn) => findPawn(after, { player: 0, pawn }).r)).toEqual([42, 43, 44]);
   });
 
-  it("never offers a move for a pawn that is home", () => {
+  it("never offers a move for a pawn that has finished", () => {
     const pawns = pawnsAt(2, { "0.0": HOME_R });
 
     for (let roll = 1; roll <= 6; roll += 1) {
@@ -121,7 +128,7 @@ describe("a pawn captured while the player's others are home", () => {
 
 describe("applyMove", () => {
   it("never writes to the list it was given", () => {
-    const before = pawnsAt(2, { "1.0": 40 });
+    const before = pawnsAt(2, { "1.0": 31 });
     const snapshot = JSON.stringify(before);
 
     applyMove(before, evaluateTurn(before, 0, 6, 6).moves[0]);
@@ -138,10 +145,10 @@ describe("applyMove", () => {
   });
 });
 
-describe("one pawn from the start area to home (acceptance criterion SG1)", () => {
-  it("walks the full 58 steps on a scripted sequence of D6 rolls", () => {
-    const rolls = [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3];
-    const expected = [1, 7, 13, 19, 25, 31, 37, 43, 49, 55, HOME_R];
+describe("one pawn from the start area into the house (acceptance criterion SG1)", () => {
+  it("walks the full 44 steps on a scripted sequence of D6 rolls", () => {
+    const rolls = [6, 6, 6, 6, 6, 6, 6, 6, 1];
+    const expected = [1, 7, 13, 19, 25, 31, 37, 43, HOME_R];
 
     let pawns = pawnsAt(2);
     for (let turn = 0; turn < rolls.length; turn += 1) {

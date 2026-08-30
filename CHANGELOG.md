@@ -156,6 +156,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The board topology changed from 52 track squares to 40** (issues #3 and #26), following the first design
+  handoff. The player offset is 10 instead of 13, entry squares are 0 / 10 / 20 / 30, turn-off squares are
+  39 / 9 / 19 / 29, and a pawn's journey is 44 steps instead of 58. Section 2 of the game design document was
+  rewritten in the same commit and gained a section 2.4 explaining why the earlier decision, which had explicitly
+  rejected a 40-square track, was overturned
+- **A player's home column is now a four-square house with no separate home area** (FR-05). It holds exactly one
+  pawn per square, so a player wins when the house is full. `REGION.HOME` was removed, and the rule that stops two
+  pawns sharing a house square is FR-12, which already existed
+- The dice pool composition and balance arithmetic in section 5 of the game design document are **knowingly out of
+  date**: they were derived against a 58-step journey. The section carries a note saying so and pointing at issue
+  #37, where the pool should be re-derived against 44 rather than adjusted
 - Prettier now uses `"quoteProps": "preserve"`, so an object key written with quotes keeps them. The default
   stripped the quotes from test fixture keys such as `"0.1"` while keeping them on `"0.0"`, which made
   coordinate keys read inconsistently

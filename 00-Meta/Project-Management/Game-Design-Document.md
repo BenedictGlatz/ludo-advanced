@@ -38,36 +38,43 @@ The numbers below are derived rather than asserted, because FR-13 (exact count t
 D20 in the pool interact with the track length directly: a long journey plus a large die makes
 overshooting the home square a routine event rather than an edge case.
 
+> **Rewritten on 2026-08-30.** This section said 52 track squares at an offset of 13, a 5-square home
+> column and a 58-step journey until the first design handoff was implemented. It now says 40, 10, 4
+> and 44. Section 2.4 records why, and keeps the earlier reasoning visible instead of deleting it.
+> The code in `src/core/board.js` and this section were changed together.
+
 ### 2.1 The shared track
 
-- The shared track has **52 squares**, indexed `0` to `51`, and closes on itself: square `51` is
+- The shared track has **40 squares**, indexed `0` to `39`, and closes on itself: square `39` is
   followed by square `0` (FR-08).
-- **52 = 4 × 13.** The four players sit at a fixed offset of 13 squares from one another, which is
+- **40 = 4 × 10.** The four players sit at a fixed offset of 10 squares from one another, which is
   what makes the board symmetric: every player walks the same distance and meets the others at the
-  same relative positions. This is also the classic Ludo track length, so the board stays
-  recognisable to a player who has played Ludo before.
-- **Rejected: a shorter track**, for example 40 squares, to make matches finish faster now that the
-  pool contains dice up to D20. It was rejected because it breaks the 4 × 13 symmetry, and because
-  match length is better tuned through the pool composition (section 5), which is data and can be
-  changed without touching the board.
+  same relative positions.
+- **40 is the track length of the printed *Mensch ärgere Dich nicht* board**, which is the game this
+  project is named after and the board the design is drawn from. 52 is the British Ludo figure.
 
 ### 2.2 Per-player regions
 
-Each player `p` (numbered `0` to `3`) owns three regions outside the shared track (FR-02):
+Each player `p` (numbered `0` to `3`) owns two regions outside the shared track (FR-02):
 
 | Region | Size | Rule |
 | --- | --- | --- |
-| Start area | 4 slots | Holds the player's pawns before they enter the track and after they are captured. Not part of the track, so it has no square index. |
-| Home column | 5 squares | Enterable only by its owner. No other player's pawn can ever stand on it. |
-| Home | 4 slots | The goal. A pawn that reaches it never moves again. |
+| Start area | 4 slots | Holds the player's pawns before they enter the track and after they are captured. Not part of the track, so it has no square index. Called the *yard* on the board. |
+| House | 4 squares | Enterable only by its owner. No other player's pawn can ever stand on it, and no two of the owner's pawns can share one of its squares. |
+
+**There is no separate home area.** The house has exactly as many squares as the player has pawns, so
+a pawn that has arrived stands on an ordinary house square and the house being full *is* the win.
+This is how the printed board works, and it means FR-12 (landing on your own pawn is illegal) does
+the work: a player cannot stack pawns at the end, so all four house squares have to be filled.
 
 Two fixed squares per player, both on the shared track:
 
-- **Entry square** `E(p) = 13 × p`: the square a pawn is placed on when it leaves the start area.
-  So `E(0) = 0`, `E(1) = 13`, `E(2) = 26`, `E(3) = 39`.
-- **Turn-off square** `T(p) = (E(p) + 51) mod 52`: the last shared square a pawn of player `p`
-  stands on before its home column. It is the square immediately *behind* its own entry square, so a
-  pawn walks a full lap of the track before turning off.
+- **Entry square** `E(p) = 10 × p`: the square a pawn is placed on when it leaves the start area.
+  So `E(0) = 0`, `E(1) = 10`, `E(2) = 20`, `E(3) = 30`.
+- **Turn-off square** `T(p) = (E(p) + 39) mod 40`: the last shared square a pawn of player `p`
+  stands on before its house. It is the square immediately *behind* its own entry square, so a pawn
+  walks a full lap of the track before turning off. So `T(0) = 39`, `T(1) = 9`, `T(2) = 19`,
+  `T(3) = 29`.
 
 ### 2.3 The journey, as one number
 
@@ -78,19 +85,58 @@ exact-count rule are computed on:
 | --- | --- |
 | `0` | Start area |
 | `1` | Entry square `E(p)` |
-| `1` … `52` | On the shared track; absolute index is `(E(p) + r - 1) mod 52` |
-| `53` … `57` | Home column, squares 1 to 5 |
-| `58` | Home |
+| `1` … `40` | On the shared track; absolute index is `(E(p) + r - 1) mod 40` |
+| `41` … `44` | House, squares 1 to 4 |
 
-**A pawn therefore travels 58 steps from its start area to home**: 52 shared squares, 5 home column
-squares, and the home square itself. All four pawns of a player must reach `r = 58` for that player
-to win (FR-05).
+**A pawn therefore travels 44 steps from its start area to the back of the house**: 40 shared squares
+and 4 house squares. A player wins when all four of their pawns stand in the house, which because of
+the paragraph in section 2.2 means exactly `r = 41, 42, 43, 44`, one pawn each (FR-05).
 
 **The consequence worth stating.** The mean roll of a D20 is 10.5, so a pawn that only ever moved on
-D20 rolls would cover 58 steps in roughly six moves. The pool composition in section 5 is what
+D20 rolls would cover 44 steps in roughly four moves. The pool composition in section 5 is what
 prevents a match from being decided in a handful of turns, and the exact-count rule of section 6.2 is
 what stops the last stretch from being trivial. Track length, pool composition and the home-entry
 rule are one design, not three independent choices.
+
+### 2.4 Why the track went from 52 squares to 40
+
+**This section is kept because the earlier decision was written down with a reason, and replacing it
+without saying why would make the current numbers look like they were never considered.**
+
+Until 2026-08-30 this document said 52 squares at an offset of 13, and it explicitly rejected 40:
+
+> **Rejected: a shorter track**, for example 40 squares, to make matches finish faster now that the
+> pool contains dice up to D20. It was rejected because it breaks the 4 × 13 symmetry, and because
+> match length is better tuned through the pool composition (section 5), which is data and can be
+> changed without touching the board.
+
+**The first half of that reason was simply wrong.** 40 = 4 × 10 is exactly as symmetric as
+52 = 4 × 13. There is no symmetry to break. The second half still stands and is not contradicted:
+match length is indeed better tuned through the pool, which is why section 5 now has to be re-derived
+rather than carried over.
+
+**What actually forced the change** was the board design, not the arithmetic. An arm of the printed
+board shows **five fields in its outer row**, and the design handoff of 2026-08-29
+([01-spec-foundations-and-board.md](../../01-Design/Handoff/01-spec-foundations-and-board.md), D3a)
+established that this is a topology property and not a sizing one: an arm's outer row does not stop
+at the centre, it *turns* there, and the corner field of the centre belongs to both that row and the
+next arm's inner row. That shared corner field is the hinge that closes the ring. Counting it gives
+`4 × (4 + 1 + 4 + 1) = 40` fields per lap and five fields per outer row. A 52-field board on the same
+cross shows seven, which is not the board this game is named after.
+
+**The cost, stated rather than absorbed.** The journey is 44 steps instead of 58, roughly a quarter
+shorter, so a D20 now covers close to half a lap in one roll. The trade-off in section 5.2 between
+exit probability and speed was derived against 58 steps and **is now out of date**. Section 5 should
+be re-derived against 44 rather than adjusted, and that belongs to issue #37 where the real pool is
+built. Until then the dice pool in this document is known to be untuned, which is a smaller problem
+than it sounds because the MVP runs on a single stand-in die.
+
+**Rejected: keeping 52 and living with seven fields per outer row.** It costs no rulebook change and
+no re-derivation of section 5, and it was the answer this document already held. It was rejected
+because the board stops looking like the reference the whole design is oriented on, and the design is
+the part a player sees first. **Also rejected: 44 squares on a 13 × 13 grid**, which is closer to 52
+and therefore the smaller change. It cannot show five fields per outer row without deleting the
+centre corner fields, and deleting those breaks the ring into four unconnected arms.
 
 ---
 
@@ -142,9 +188,9 @@ a skill card instead (`action-reroll`), where it costs a card.
 - A pawn on the track advances exactly the number of squares rolled: `r` becomes `r + roll` (FR-10).
 - A pawn passes over occupied squares freely. Only the square it **lands on** matters. There is no
   blocking in the MVP, which follows from section 6.1 rather than being a separate rule.
-- A move whose target `r` exceeds `58` is illegal (section 6.2).
+- A move whose target `r` exceeds `44` is illegal (section 6.2).
 - A move whose target square holds one of the player's own pawns is illegal (section 6.1). This
-  includes home column squares; two of a player's own pawns cannot share a home column square.
+  includes house squares; two of a player's own pawns cannot share a house square.
 
 ### 4.3 Capture
 
@@ -152,7 +198,7 @@ a skill card instead (`action-reroll`), where it costs a card.
   pawn returns to its owner's start area, `r = 0`, and must leave again under FR-09 (FR-11).
 - The capturing pawn holds the square.
 - A capture opens a reaction window (section 6.6) before it takes effect.
-- **Capture inside a home column is impossible**, because a home column is enterable only by its
+- **Capture inside a house is impossible**, because a house is enterable only by its
   owner (section 2.2) and an owner cannot land on its own pawn (section 6.1). The rule needs no
   exception; it follows from the topology.
 - The MVP has no safe squares (FR-15, `could have`): every shared-track square is capturable.
@@ -191,6 +237,14 @@ Two choices are made here and both are reversible in data:
 ### 5.2 The trade-off the pool creates
 
 This is the central arithmetic of the design, and the whole reason the Dice Card Pool exists.
+
+> **Out of date as of 2026-08-30, and knowingly left standing.** The balance judgements in this
+> section and in section 5.1 were derived against a 58-step journey. The journey is now 44 steps
+> (section 2.4), so a D20 covers close to half a lap rather than roughly a third of one, and the
+> trade-off below is sharper than the numbers suggest. The formulas themselves are unaffected; the
+> conclusions drawn from them are. Section 5 should be **re-derived** against 44 rather than adjusted,
+> and that work belongs to issue #37, where the real pool replaces the single stand-in die. Nothing
+> in the MVP depends on it, because the MVP runs on one fixed die.
 
 For a die with `n` faces:
 
@@ -271,12 +325,12 @@ advancing then depends on the whole path rather than the target square. Named as
 if the MVP finishes early, since it needs no new UI.
 
 **Consequence.** There is no blocking mechanic in the MVP, and two pawns of the same colour can never
-occupy one square, on the track or in a home column.
+occupy one square, on the track or in a house.
 
 ### 6.2 FR-13: entering home requires an exact count
 
-**Rule.** A pawn enters home only on a roll that lands it exactly on `r = 58`. A move that would take
-`r` past 58 is illegal and is not offered.
+**Rule.** A pawn enters a house square only on a roll that lands it exactly on that square, and the
+last one is `r = 44`. A move that would take `r` past 44 is illegal and is not offered.
 
 **Why.** With dice up to D20 this rule fires constantly rather than occasionally, so it is a core
 mechanic here and not an edge case. It gives the last stretch of the board its own decision: a player
@@ -331,7 +385,7 @@ card, so the Skill Card Pool had no defined behaviour at all.
 
 **Why one card per turn.** It ties card income to turns taken rather than to luck, so the economy
 cannot run away, and it makes the hand limit bite: a player at 3 cards has to spend before earning.
-**Why the capture compensation.** A captured pawn loses up to 57 steps of progress, which is the
+**Why the capture compensation.** A captured pawn loses up to 43 steps of progress, which is the
 harshest event in the game; the compensating card keeps a player who is behind in the match without
 adding a comeback mechanic that fires on its own.
 
@@ -408,7 +462,7 @@ import each other (FR-26).
 | --- | --- | --- |
 | `action-extra-card` | Action | Draw a fourth dice card before choosing which die to roll; all four return to the pool at the end of the turn. |
 | `action-reroll` | Action | Reroll the chosen die once. The second result replaces the first, whether it is better or not. |
-| `action-swap-pawns` | Action | Swap the track positions of one of your pawns and one opponent pawn. Neither may be in a start area, a home column or home. |
+| `action-swap-pawns` | Action | Swap the track positions of one of your pawns and one opponent pawn. Neither may be in a start area or a house. |
 | `action-step-one` | Action | Move one of your pawns exactly one square, in addition to this turn's move. Subject to sections 6.1 and 6.2 like any other move. |
 | `reaction-shield` | Reaction | Cancel a capture of one of your pawns. The capturing pawn returns to the square it started this move from. |
 | `reaction-slow` | Reaction | Halve the acting player's roll, rounded down, before the move resolves. The legal-move set is recomputed on the reduced roll. |
@@ -425,7 +479,7 @@ resolution engine.
 
 ## 8 Win condition and edge cases
 
-**Win condition.** A player who has all four pawns at `r = 58` wins, and the match ends immediately
+**Win condition.** A player whose four pawns fill the four house squares wins, and the match ends immediately
 (FR-05). Remaining players are not ranked in the MVP: there is no second place. Reason: ranking needs
 a rule for what happens after the win, and nothing in the sources asks for one.
 
@@ -438,7 +492,7 @@ re-derive them.
 | Roll would overshoot home | Move is illegal and is not offered | 6.2 |
 | No legal move at all | Turn passes with the reason shown | 6.3 |
 | Target square holds an own pawn | Move is illegal | 6.1 |
-| Capture inside a home column | Cannot occur: home columns are owner-only | 2.2, 6.1 |
+| Capture inside a house | Cannot occur: houses are owner-only | 2.2, 6.1 |
 | Two own pawns on one square | Cannot occur | 6.1 |
 | Entry square blocked by an own pawn when the maximum is rolled | Leaving the start area is illegal that turn | 4.1 |
 | Entry square held by an opponent when the maximum is rolled | The entering pawn captures it | 4.1, 4.3 |

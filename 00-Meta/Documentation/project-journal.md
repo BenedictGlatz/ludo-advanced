@@ -182,6 +182,14 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   replaced. Steps 4, 5 and 7 of the sprint plan are done, all three in parallel with Claude Design.
   Sprint 2.
 
+- **2026-08-30**: The first design handoff landed, and it changed the rulebook rather than following
+  it. `src/core/` was re-topologised from a 52-square track to 40, from an offset of 13 to 10, and
+  from a 5-square home column plus a separate home area to a 4-square house holding one pawn per
+  square. Section 2 of [Game-Design-Document.md](../Project-Management/Game-Design-Document.md) was
+  rewritten in the same commit and gained a section 2.4 explaining the reversal. Both questions were
+  put to the user before any code was written, because the design spec named them as Product Owner
+  territory. All 164 unit tests pass again on the new numbers. Sprint 2.
+
 ---
 
 ## Decisions
@@ -1220,6 +1228,67 @@ to get wrong later.
   default rather than by decision.
 - → Ch. 04, Ch. 08
 
+### 2026-08-30: The track is 40 squares and not 52, and the rulebook changed to follow the design
+
+- **Chosen:** `TRACK_LENGTH = 40`, `PLAYER_OFFSET = 10`, entry squares 0 / 10 / 20 / 30, turn-off
+  squares 39 / 9 / 19 / 29. Section 2 of the game design document was rewritten the same day, in the
+  same commit as `src/core/board.js`.
+- **Why:** the first design handoff came back with a board built on a different topology. An arm of
+  the printed *Mensch ärgere Dich nicht* board shows five fields in its outer row, and D3a of
+  [01-spec-foundations-and-board.md](../../01-Design/Handoff/01-spec-foundations-and-board.md)
+  established that this is a property of the topology and not of the field size: an arm's outer row
+  turns at the centre rather than stopping there, and the corner field it turns on belongs to two
+  arms at once. Counting that shared field closes the ring at `4 × (4 + 1 + 4 + 1) = 40`.
+- **The decision was put to the user before anything was written**, because the design spec named it
+  as Product Owner territory and because it invalidates committed, passing code. Both this and the
+  house question below were answered on 2026-08-30 before implementation continued.
+- **This overturns a decision that was already written down with a reason**, which is the part worth
+  recording. Section 2.1 of the game design document had explicitly rejected 40 squares on two
+  grounds. One of them, that 40 "breaks the 4 × 13 symmetry", was **simply wrong**: 40 = 4 × 10 is
+  exactly as symmetric. The other, that match length is better tuned through the pool than through
+  the track, still stands and is not contradicted by this change.
+- **Rejected: keeping 52 and sending `board.css` back for a re-geometry round.** It preserves the
+  rulebook and every committed test, and it costs a second design handoff before any of the UI work
+  can start, in a sprint that already had five weekdays left. It also throws away the one thing the
+  design round was for.
+- **Rejected: 44 squares on a 13 × 13 grid**, which is a smaller change from 52. It cannot show five
+  fields per outer row without deleting the centre corner fields, and deleting those breaks the ring
+  into four unconnected arms. The spec records this as its own second wrong attempt.
+- **The cost is real and is written down rather than absorbed.** The journey drops from 58 steps to
+  44, so the pool balance derived in section 5 of the game design document is out of date. Section 5
+  carries a note saying so and pointing at issue #37. Nothing in the MVP depends on it, because the
+  MVP runs on a single stand-in die.
+- → Ch. 01, Ch. 04, Ch. 05
+
+### 2026-08-30: The house holds one pawn per square and there is no separate home area
+
+- **Chosen:** four house squares per player, `r = 41` to `44`, one pawn each. `REGION.HOME` was
+  removed. A player wins when all four pawns are in the house, which can only mean one on each
+  square.
+- **Why:** it is how the printed board works, and it makes FR-05 fall out of a rule that already
+  existed instead of needing one of its own. `isSameSquare` already reports a collision between two
+  pawns of the same player inside a house, so FR-12 refuses the second arrival, and the four pawns
+  are forced onto the four squares with no code written for it.
+- **The design forced the question but did not answer it.** The delivered CSS has no `.home` element,
+  so a separate home area had nowhere to render. The spec then contradicted itself, saying both "one
+  field per pawn" and "the win condition becomes all four pawns at `r = 44`". Those cannot both be
+  true, so it was put to the user rather than guessed.
+- **Rejected: keeping a shared home area** that all four pawns occupy, which is what the committed
+  `win.js`, `region()` and `isSameSquare` already implemented and would have changed no rule code.
+  It needs a `.home` element the design does not have, and on an 11 × 11 grid the only free cell is
+  the single centre square.
+- **One earlier negative finding is overturned by this**, and the test that recorded it now records
+  the reversal instead. On 2026-08-29 it was found that "every target square blocked by an own pawn"
+  could never be a *turn-level* refusal reason, because `r` only counts upward so the leading pawn
+  always has somewhere to go. That held only while home was a shared area no own pawn could block.
+  With the four-square house the leader can sit on `r = 44`, report `ALREADY_HOME`, drop out of the
+  vote, and leave the three behind it agreeing on `OWN_PAWN`.
+- **A new negative finding replaces it.** `turnLevelReason`'s `blocked.length === 0` branch is now
+  unreachable in any legal board state, because it needs all four pawns on `r = 44` at once and the
+  house forbids that. It is kept as a guard rather than deleted, because removing it would make the
+  function read `blocked[0]` of an empty array. It is the one uncovered line in `src/core/`.
+- → Ch. 05, Ch. 08
+
 ---
 
 ## Challenges
@@ -1249,6 +1318,28 @@ to get wrong later.
   people. It is also the concrete argument for the branch-protection ruleset left open in Ch. 02:
   the control was absent twice in one day, and the second absence is what turned a process slip into
   a history rewrite.
+
+- **2026-08-30: The first design handoff invalidated a whole day of finished, passing rules code.**
+  Issue #26 closed on 2026-08-29 with `src/core/board.js` and 40 passing tests built on a 52-square
+  track, because that is what section 2 of the game design document said and the plan for the sprint
+  explicitly said no number in that file was to be invented. The design handoff that arrived the next
+  morning was built on a 40-square track, and the two could not both ship. The plan had no step for
+  this: it assumed the design would be drawn against the rulebook, so it scheduled the rules and the
+  design in parallel precisely because they were not expected to interact. What made the recovery
+  cheap in the source and expensive in the tests was the layering. `board.js` exports the topology as
+  four constants and every other module derives from them, so `movement.js`, `capture.js`, `win.js`
+  and `pawns.js` needed **comment changes only**. The tests were the opposite: roughly 30 assertions
+  hold literal positions, because a test that recomputes the number it is checking is not a test. The
+  end-to-end scripted match was the worst of them, since the roll sequence had to be re-derived by
+  hand against the new house rule, which changes which pawn the strategy picks and where each one
+  stops: 33 rolls instead of 44, and the four pawns finishing on four different squares instead of
+  all on one. Cost: roughly an hour and a half, most of it in the test re-derivation. Two lessons for
+  Chapter 11. The first is that the layering paid for itself here in a way no test could have proved
+  in advance: a topology change that touched one file is the whole argument for `core/` having a
+  single source for its numbers. The second is about the handoff itself: the brief told Claude Design
+  that the numbers in section 4 were non-negotiable, and it changed them anyway and said so clearly.
+  The spec being explicit about the contradiction, rather than quietly emitting CSS for a board
+  nobody had agreed to, is what made this an hour and not a week.
 
 Log anything that cost more than roughly 30 minutes of unplanned work: what happened, what it cost,
 how it was resolved. These become the running prose of Chapter 11, so a sentence of context is worth

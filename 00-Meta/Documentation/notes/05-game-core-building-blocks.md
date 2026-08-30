@@ -222,6 +222,68 @@ existing documents once the code exists rather than from memory:
   [System-Architecture.md](../../Project-Management/System-Architecture.md) section 2.1, with the
   facts summarised in [03-tech-stack.md](03-tech-stack.md).
 
+### The board was re-topologised after the first design handoff: 2026-08-30, issues #3 and #26
+
+**The numbers changed, the rules did not.** Issue #26 closed on 2026-08-29 with a 52-square track.
+The design handoff that arrived the next morning was drawn on a 40-square board, and the two could
+not both ship. The user chose the design. Section 2 of the game design document and
+`src/core/board.js` were rewritten in the same commit.
+
+| Constant | Was | Now |
+| --- | --- | --- |
+| `TRACK_LENGTH` | 52 | **40** |
+| `PLAYER_OFFSET` | 13 | **10** |
+| Entry squares `E(p)` | 0, 13, 26, 39 | **0, 10, 20, 30** |
+| Turn-off squares `T(p)` | 51, 12, 25, 38 | **39, 9, 19, 29** |
+| `HOME_COLUMN_LENGTH` | 5 | **4** |
+| `HOME_R` | 58 | **44** |
+| `REGION` members | start, track, home-column, home | **start, track, home-column** |
+
+#### The layering is what made this an hour instead of a week
+
+`board.js` is the only file in `core/` that holds a topology number. Everything else derives from its
+exports. The measured consequence: **`movement.js`, `capture.js`, `win.js` and `pawns.js` needed
+comment changes only.** No rule was rewritten, and the four modules passed on the new numbers as soon
+as `board.js` changed.
+
+The tests were the opposite, and deliberately so. Roughly 30 assertions hold literal positions,
+because a test that recomputes the number it is checking has stopped checking anything. Every one of
+them had to be re-derived by hand. That asymmetry is the honest summary of what "one source for the
+numbers" buys: it protects the code, not the tests, and the tests are where the cost lands.
+
+#### The house replaced the home area, and one rule disappeared
+
+The house has **four squares and the player has four pawns**, so a full house is the win. There is no
+separate home area any more, and `REGION.HOME` was deleted.
+
+This removed code rather than adding it. `isSameSquare` already reported a collision between two
+pawns of the same player inside a house, so FR-12 refuses a second pawn arriving on an occupied house
+square, and the four pawns are forced onto the four squares **with no rule written for it**. The win
+condition in `win.js` stopped testing one number and started testing a region:
+
+```js
+own.every((entry) => region(entry.r) === REGION.HOME_COLUMN)
+```
+
+`isFinished(r)` was added for the one thing that genuinely needed a number: a pawn on `r = 44` can
+never move again, which is a refusal reason and not a win condition.
+
+#### Negative finding, reversed: "blocked by an own pawn" is now reachable as a turn reason
+
+Recorded on 2026-08-29 as unreachable, and it is no longer. The old argument was that `r` only counts
+upward, so the pawn furthest along always has somewhere to go and can never report `OWN_PAWN`. That
+held only while home was a shared area no own pawn could block. With the four-square house the leader
+can sit on `r = 44`, report `ALREADY_HOME`, drop out of the turn-level vote, and leave the three
+pawns behind it agreeing on `OWN_PAWN`. The test that recorded the original finding now records the
+reversal, with the old reasoning quoted in it.
+
+#### Negative finding, new: one line in `core/` is unreachable and is kept anyway
+
+`turnLevelReason` in `movement.js` returns `NONE_AVAILABLE` when every refusal was `ALREADY_HOME`.
+That needs all four pawns on `r = 44` at once, which the house forbids. **It is the single uncovered
+line in `src/core/`.** It stays, because deleting it would make the next line read `blocked[0]` of an
+empty array, and a guard that is unreachable by construction is cheaper than a crash that is not.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

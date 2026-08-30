@@ -7,10 +7,10 @@ import { pawnsAt } from "../../helpers/fixtures.js";
 
 describe("captureTarget on the shared track (FR-11)", () => {
   it("finds the opponent standing on the square the mover would reach", () => {
-    // Player 1's entry square is absolute 13. Player 0 reaches absolute 13 at r = 14.
+    // Player 1's entry square is absolute 10. Player 0 reaches absolute 10 at r = 11.
     const pawns = pawnsAt(2, { "1.0": 1 });
 
-    expect(captureTarget(pawns, 0, 14)).toEqual({ player: 1, pawn: 0, r: 1 });
+    expect(captureTarget(pawns, 0, 11)).toEqual({ player: 1, pawn: 0, r: 1 });
   });
 
   it("returns null for an empty square", () => {
@@ -23,7 +23,7 @@ describe("captureTarget on the shared track (FR-11)", () => {
   });
 
   it("finds the right opponent for every pair of players at every point on the track", () => {
-    // The exhaustive version of the first test: 12 ordered player pairs x 52 squares.
+    // The exhaustive version of the first test: 12 ordered player pairs x 40 squares.
     for (let attacker = 0; attacker < 4; attacker += 1) {
       for (let victim = 0; victim < 4; victim += 1) {
         if (attacker === victim) continue;
@@ -45,11 +45,11 @@ describe("captureTarget on the shared track (FR-11)", () => {
   });
 
   it("throws if two opponents somehow share one square, which FR-11 makes impossible", () => {
-    // Player 1 at r = 1 and player 2 at r = 40 both stand on absolute square 13.
-    const pawns = pawnsAt(3, { "1.0": 1, "2.0": 40 });
-    expect(absoluteSquare(1, 1)).toBe(absoluteSquare(2, 40));
+    // Player 1 at r = 1 and player 2 at r = 31 both stand on absolute square 10.
+    const pawns = pawnsAt(3, { "1.0": 1, "2.0": 31 });
+    expect(absoluteSquare(1, 1)).toBe(absoluteSquare(2, 31));
 
-    expect(() => captureTarget(pawns, 0, 14)).toThrow(/two opponents/);
+    expect(() => captureTarget(pawns, 0, 11)).toThrow(/two opponents/);
   });
 });
 
@@ -58,15 +58,17 @@ describe("captureTarget off the shared track", () => {
     expect(captureTarget(pawnsAt(4), 0, START_R)).toBeNull();
   });
 
-  it("never captures in a home column, because a home column is owner-only", () => {
-    const pawns = pawnsAt(4, { "1.0": 53, "2.0": 53, "3.0": 53 });
+  it("never captures inside a house, because a house is owner-only", () => {
+    const pawns = pawnsAt(4, { "1.0": 41, "2.0": 41, "3.0": 41 });
 
-    for (let step = 53; step <= 57; step += 1) {
+    for (let step = 41; step <= HOME_R; step += 1) {
       expect(captureTarget(pawns, 0, step)).toBeNull();
     }
   });
 
-  it("never captures at home, because home holds four separate slots", () => {
+  it("never captures on the deepest house square either, which is where a pawn finishes", () => {
+    // Since 2026-08-30 this square is an ordinary house square rather than a shared home area, so
+    // it needs no rule of its own: the owner-only argument above already covers it.
     const pawns = pawnsAt(4, { "1.0": HOME_R, "2.0": HOME_R });
     expect(captureTarget(pawns, 0, HOME_R)).toBeNull();
   });

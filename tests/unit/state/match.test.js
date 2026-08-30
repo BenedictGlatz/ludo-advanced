@@ -94,14 +94,25 @@ function furthestMovablePawn(state) {
 
 describe("a complete match, played end to end on a scripted RNG (NFR-09)", () => {
   it("reaches an exact final state", () => {
-    // Player 0 walks one pawn home at a time: a 6 to leave, nine 6s along the track, then a 3 to
-    // land exactly on r = 58 (FR-13). Player 1 rolls a 1 every turn and can never leave (FR-09).
+    // Player 0 walks one pawn into the house at a time, furthest pawn first. Because the house
+    // holds one pawn per square, the four squares fill from the back: pawn 0 takes r = 44, pawn 1
+    // r = 43, pawn 2 r = 42 and pawn 3 r = 41. So the four walks are different lengths, and only
+    // two of them need a final exact roll (FR-13); the other two land on their square on a 6.
+    // Player 1 rolls a 1 every turn and can never leave the start area (FR-09).
+    const walks = [
+      { sixes: 7, last: 1 }, // pawn 0: leave, then 1 -> 43 in seven 6s, then a 1 onto r = 44
+      { sixes: 7, last: null }, // pawn 1: leave, then seven 6s land it exactly on r = 43
+      { sixes: 6, last: 5 }, // pawn 2: leave, then six 6s to r = 37, then a 5 onto r = 42
+      { sixes: 6, last: 4 }, // pawn 3: leave, then six 6s to r = 37, then a 4 onto r = 41
+    ];
+
     const playerZeroRolls = [];
-    for (let pawn = 0; pawn < 4; pawn += 1) {
-      playerZeroRolls.push(6);
-      for (let step = 0; step < 9; step += 1) playerZeroRolls.push(6);
-      playerZeroRolls.push(3);
+    for (const walk of walks) {
+      playerZeroRolls.push(6); // the maximum, to leave the start area
+      for (let step = 0; step < walk.sixes; step += 1) playerZeroRolls.push(6);
+      if (walk.last !== null) playerZeroRolls.push(walk.last);
     }
+    expect(playerZeroRolls).toHaveLength(33);
 
     const rolls = [];
     for (const roll of playerZeroRolls) rolls.push(roll, 1);
@@ -129,12 +140,12 @@ describe("a complete match, played end to end on a scripted RNG (NFR-09)", () =>
     expect(state.phase).toBe(TURN_PHASE.MATCH_OVER);
     expect(state.winner).toBe(0);
 
-    // 44 rolls take player 0 home, one for each of the 11 steps of each of the four pawns, and
-    // player 1 takes a turn between every pair of them.
-    expect(turns).toBe(87);
-    expect(state.turnNumber).toBe(87);
+    // 33 rolls take player 0's four pawns into the house, and player 1 takes a turn between every
+    // pair of them, so the match ends on turn 2 x 33 - 1.
+    expect(turns).toBe(65);
+    expect(state.turnNumber).toBe(65);
 
-    expect(pawnsOf(state.pawns, 0).map((pawn) => pawn.r)).toEqual([HOME_R, HOME_R, HOME_R, HOME_R]);
+    expect(pawnsOf(state.pawns, 0).map((pawn) => pawn.r)).toEqual([HOME_R, 43, 42, 41]);
     expect(pawnsOf(state.pawns, 1).every((pawn) => pawn.r === START_R)).toBe(true);
   });
 

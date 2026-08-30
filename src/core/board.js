@@ -11,56 +11,74 @@
  * ## The one idea worth understanding first
  *
  * A pawn's position is stored as a **relative position `r`**, counted from its own player's point of
- * view, never as a square on the board. It runs from 0 to 58:
+ * view, never as a square on the board. It runs from 0 to 44:
  *
- * | `r`      | Where the pawn is                                              |
- * | -------- | -------------------------------------------------------------- |
- * | `0`      | The start area                                                  |
- * | `1`      | The player's entry square                                        |
- * | `1`..`52`| Somewhere on the shared 52-square track                          |
- * | `53`..`57`| The player's own home column, steps 1 to 5                      |
- * | `58`     | Home                                                             |
+ * | `r`       | Where the pawn is                                              |
+ * | --------- | -------------------------------------------------------------- |
+ * | `0`       | The start area, called the yard on the board                    |
+ * | `1`       | The player's entry square                                       |
+ * | `1`..`40` | Somewhere on the shared 40-square track                         |
+ * | `41`..`44`| The player's own home column, called the house, steps 1 to 4    |
  *
- * Why relative and not absolute: every player walks the same 58 steps, so a movement rule written
+ * Why relative and not absolute: every player walks the same 44 steps, so a movement rule written
  * against `r` is the same rule for all four of them. Turning `r` into the physical square everyone
  * shares is one function, `absoluteSquare`, and it is the only place the offset between players
  * appears at all.
+ *
+ * ## There is no separate home area
+ *
+ * The house has exactly four squares and a player has exactly four pawns, so **one pawn per house
+ * square is the win condition** and no fifth "home" place exists. This is how the printed
+ * *Mensch ärgere Dich nicht* board works, and it is what makes `isSameSquare` do the work by itself:
+ * two pawns of the same player collide inside a house, so FR-12 stops a player from stacking pawns
+ * there without any rule being written for it.
+ *
+ * Decided 2026-08-30 together with the 40-square track. See the decision block of that date in
+ * `00-Meta/Documentation/project-journal.md`.
  */
 
-/** Squares on the shared track, indexed 0 to 51, closing on itself (FR-08). */
-export const TRACK_LENGTH = 52;
+/** Squares on the shared track, indexed 0 to 39, closing on itself (FR-08). */
+export const TRACK_LENGTH = 40;
 
 /** 2 to 4 players play, but the board always has four fixed seats (FR-01). */
 export const MAX_PLAYERS = 4;
 
 /**
- * 52 = 4 x 13, which is what makes the board symmetric: every player sits exactly 13 squares from
+ * 40 = 4 x 10, which is what makes the board symmetric: every player sits exactly 10 squares from
  * the next one, so everybody meets everybody at the same relative distances.
  */
 export const PLAYER_OFFSET = TRACK_LENGTH / MAX_PLAYERS;
 
-/** Home column squares per player, enterable only by their owner. */
-export const HOME_COLUMN_LENGTH = 5;
-
-/** Pawns per player, and also slots in a start area and in a home. */
+/** Pawns per player, and also slots in a start area. */
 export const PAWNS_PER_PLAYER = 4;
+
+/**
+ * House squares per player, enterable only by their owner.
+ *
+ * Equal to `PAWNS_PER_PLAYER` on purpose rather than by coincidence: the house is full exactly when
+ * every pawn has arrived, which is the win condition of FR-05.
+ */
+export const HOME_COLUMN_LENGTH = PAWNS_PER_PLAYER;
 
 /** A pawn waiting in the start area. It has no square index, because the start area is not a square. */
 export const START_R = 0;
 
 /**
- * The last position: home. Derived rather than asserted, so that the "58 steps" figure in the
- * rulebook and the one in the code cannot drift apart. 52 track squares, 5 home column squares,
- * and home itself.
+ * The last position: the deepest house square. Derived rather than asserted, so that the "44 steps"
+ * figure in the rulebook and the one in the code cannot drift apart.
  */
-export const HOME_R = TRACK_LENGTH + HOME_COLUMN_LENGTH + 1;
+export const HOME_R = TRACK_LENGTH + HOME_COLUMN_LENGTH;
 
-/** The four regions a pawn can be in. String values, so a failing test reads as words. */
+/**
+ * The three regions a pawn can be in. String values, so a failing test reads as words.
+ *
+ * There is no `HOME` member. A pawn that has arrived is on a house square like any other, which is
+ * the point of the section above.
+ */
 export const REGION = {
   START: "start",
   TRACK: "track",
   HOME_COLUMN: "home-column",
-  HOME: "home",
 };
 
 function assertPlayer(player) {
@@ -77,7 +95,7 @@ function assertRelative(r) {
 
 /**
  * The square a pawn of `player` is placed on when it leaves the start area.
- * E(p) = 13 x p, so 0, 13, 26 and 39.
+ * E(p) = 10 x p, so 0, 10, 20 and 30.
  */
 export function entrySquare(player) {
   assertPlayer(player);
@@ -85,8 +103,8 @@ export function entrySquare(player) {
 }
 
 /**
- * The last shared square a pawn of `player` stands on before turning into its home column.
- * T(p) = (E(p) + 51) mod 52, which is the square immediately *behind* the player's own entry
+ * The last shared square a pawn of `player` stands on before turning into its house.
+ * T(p) = (E(p) + 39) mod 40, which is the square immediately *behind* the player's own entry
  * square. A pawn therefore walks one full lap before it can turn off.
  */
 export function turnOffSquare(player) {
@@ -94,8 +112,8 @@ export function turnOffSquare(player) {
 }
 
 /**
- * The physical square index, 0 to 51, that relative position `r` means for `player`.
- * Only defined while the pawn is on the shared track, so `r` must be 1 to 52.
+ * The physical square index, 0 to 39, that relative position `r` means for `player`.
+ * Only defined while the pawn is on the shared track, so `r` must be 1 to 40.
  */
 export function absoluteSquare(player, r) {
   assertRelative(r);
@@ -110,13 +128,12 @@ export function region(r) {
   assertRelative(r);
   if (r === START_R) return REGION.START;
   if (r <= TRACK_LENGTH) return REGION.TRACK;
-  if (r < HOME_R) return REGION.HOME_COLUMN;
-  return REGION.HOME;
+  return REGION.HOME_COLUMN;
 }
 
 /**
- * Which home column square, 1 to 5, relative position `r` means. The view renders this as
- * `data-home-step`. Throws for any `r` outside a home column.
+ * Which house square, 1 to 4, relative position `r` means. The view renders this as
+ * `data-home-step`. Throws for any `r` outside a house.
  */
 export function homeColumnStep(r) {
   if (region(r) !== REGION.HOME_COLUMN) {
@@ -126,18 +143,28 @@ export function homeColumnStep(r) {
 }
 
 /**
+ * Is this pawn finished, meaning it stands on the deepest house square and no roll can ever move it
+ * again? Every other house square still has somewhere to go.
+ */
+export function isFinished(r) {
+  assertRelative(r);
+  return r === HOME_R;
+}
+
+/**
  * Do these two pawns stand on the same physical square?
  *
  * A pawn is `{ player, r }`. The answer follows from the topology rather than from a rule:
  *
- * - **Start areas and homes never collide**, not even between two pawns of the same player. Each
- *   holds 4 separate slots, so two pawns there are next to each other and not on top of each other.
+ * - **Start areas never collide**, not even between two pawns of the same player. Each holds 4
+ *   separate slots, so two pawns there are next to each other and not on top of each other.
  * - **On the shared track**, two pawns collide when their absolute squares match. This is the only
  *   case where pawns of *different* players can meet, which is why capture (FR-11) can only ever
  *   happen on the track.
- * - **In a home column**, only the owner can ever stand there, so a collision needs the same player
- *   and the same `r`. This is why "capture inside a home column" needs no special rule anywhere:
- *   it cannot be expressed.
+ * - **In a house**, only the owner can ever stand there, so a collision needs the same player and
+ *   the same `r`. Two things follow at once and neither needs a rule of its own: "capture inside a
+ *   house" cannot be expressed, and a player cannot stack two pawns on one house square, which is
+ *   what forces all four house squares to be filled before the match is won.
  */
 export function isSameSquare(pawnA, pawnB) {
   const regionA = region(pawnA.r);
@@ -153,6 +180,6 @@ export function isSameSquare(pawnA, pawnB) {
     return pawnA.player === pawnB.player && pawnA.r === pawnB.r;
   }
 
-  // START and HOME: separate slots, so never the same square.
+  // START: separate slots, so never the same square.
   return false;
 }

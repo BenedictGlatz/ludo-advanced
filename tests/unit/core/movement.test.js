@@ -55,7 +55,7 @@ describe("advancing (FR-10)", () => {
   });
 
   it("passes over occupied squares freely, because only the landing square is checked", () => {
-    // Player 1's pawn sits on absolute square 13, which player 0 crosses at r = 14.
+    // Player 1's pawn sits on absolute square 10, which player 0 crosses at r = 11.
     const pawns = pawnsAt(2, { "0.0": 10, "1.0": 1 });
     const move = legalMoves(pawns, 0, 6, 6).find((entry) => entry.pawn === 0);
 
@@ -63,9 +63,9 @@ describe("advancing (FR-10)", () => {
     expect(move.captures).toBeNull();
   });
 
-  it("carries the pawn into its own home column and then home", () => {
-    const pawns = pawnsAt(2, { "0.0": 52 });
-    const move = legalMoves(pawns, 0, 6, 6).find((entry) => entry.pawn === 0);
+  it("carries the pawn off the track and into its own house", () => {
+    const pawns = pawnsAt(2, { "0.0": 40 });
+    const move = legalMoves(pawns, 0, 4, 6).find((entry) => entry.pawn === 0);
 
     expect(move.to).toBe(HOME_R);
   });
@@ -79,37 +79,47 @@ describe("an own pawn on the target square (FR-12)", () => {
     expect(moves.find((entry) => entry.pawn === 0)).toBeUndefined();
   });
 
-  it("blocks in the home column too", () => {
-    const pawns = pawnsAt(2, { "0.0": 53, "0.1": 55 });
+  it("blocks inside the house too", () => {
+    const pawns = pawnsAt(2, { "0.0": 41, "0.1": 43 });
     const moves = legalMoves(pawns, 0, 2, 6);
 
     expect(moves.find((entry) => entry.pawn === 0)).toBeUndefined();
   });
 
-  it("does not block at home, which holds four separate slots", () => {
-    const pawns = pawnsAt(2, { "0.0": 52, "0.1": HOME_R });
-    const move = legalMoves(pawns, 0, 6, 6).find((entry) => entry.pawn === 0);
+  it("blocks on the deepest house square as well, because the house holds one pawn per square", () => {
+    // Under the 52-square board this square was a shared "home" with four separate slots, so this
+    // move used to be legal. The 40-square board of 2026-08-30 removed that separate home area, and
+    // the block here is exactly what forces all four house squares to be filled for FR-05.
+    const pawns = pawnsAt(2, { "0.0": 40, "0.1": HOME_R });
+    const moves = legalMoves(pawns, 0, 4, 6);
 
-    expect(move.to).toBe(HOME_R);
+    expect(moves.find((entry) => entry.pawn === 0)).toBeUndefined();
   });
 
   it("marks each blocked pawn with its own reason, which is what the screen shows (FR-32)", () => {
-    const pawns = pawnsAt(2, { "0.0": 40, "0.1": 46, "0.2": 52, "0.3": HOME_R });
+    const pawns = pawnsAt(2, { "0.0": 26, "0.1": 32, "0.2": 38, "0.3": HOME_R });
     const result = evaluateTurn(pawns, 0, 6, 6);
     const blocked = result.refusals.filter((entry) => entry.reason === REFUSAL.OWN_PAWN);
 
-    expect(blocked.map((entry) => entry.pawn)).toEqual([0, 1]);
+    expect(blocked.map((entry) => entry.pawn)).toEqual([0, 1, 2]);
+    expect(result.refusals.find((entry) => entry.pawn === 3).reason).toBe(REFUSAL.ALREADY_HOME);
   });
 
-  it("can never be the turn-level reason, because the pawn furthest along is never blocked", () => {
-    // The tightest chain the board allows: every pawn six steps behind the next one. Three pawns
-    // are blocked by their own, and the leader overshoots instead. There is no arrangement where
-    // all four are blocked by an own pawn, because r only ever counts upward, so the leader has
-    // nobody in front of it. Section 6.3 of the game design document names "every target square
-    // blocked by an own pawn" as one of three reasons a turn passes, and this is the negative
-    // finding: as a *turn-level* reason it is unreachable. It stays in REFUSAL because it is a real
-    // per-pawn reason, and because FR-12 is still unsigned by the Product Owner.
-    const pawns = pawnsAt(2, { "0.0": 39, "0.1": 45, "0.2": 51, "0.3": 57 });
+  it("can be the turn-level reason once a pawn has finished, which the 52-square board made impossible", () => {
+    // The finding recorded here on 2026-08-29 was that "every target blocked by an own pawn" could
+    // never be a *turn-level* reason, because `r` only counts upward and the leading pawn therefore
+    // has nobody in front of it. That held while home was a shared area no own pawn could block.
+    // With the four-square house it no longer does: the leader sits on the deepest square, reports
+    // ALREADY_HOME, and drops out of the vote, so the three behind it agree.
+    const pawns = pawnsAt(2, { "0.0": 26, "0.1": 32, "0.2": 38, "0.3": HOME_R });
+    const result = evaluateTurn(pawns, 0, 6, 6);
+
+    expect(result.moves).toEqual([]);
+    expect(result.reason).toBe(REFUSAL.OWN_PAWN);
+  });
+
+  it("still falls back to none-available when the leader overshoots instead of finishing", () => {
+    const pawns = pawnsAt(2, { "0.0": 25, "0.1": 31, "0.2": 37, "0.3": 43 });
     const result = evaluateTurn(pawns, 0, 6, 6);
 
     expect(result.refusals.map((entry) => entry.reason)).toEqual([
@@ -122,24 +132,24 @@ describe("an own pawn on the target square (FR-12)", () => {
   });
 });
 
-describe("the exact count into home (FR-13)", () => {
-  it("refuses any move that would pass r = 58", () => {
-    const pawns = pawnsAt(2, { "0.0": 55 });
+describe("the exact count into the house (FR-13)", () => {
+  it("refuses any move that would pass r = 44", () => {
+    const pawns = pawnsAt(2, { "0.0": 41 });
 
     for (let roll = 4; roll <= 6; roll += 1) {
       expect(legalMoves(pawns, 0, roll, 6).find((entry) => entry.pawn === 0)).toBeUndefined();
     }
   });
 
-  it("allows the roll that lands exactly on 58", () => {
-    const pawns = pawnsAt(2, { "0.0": 55 });
+  it("allows the roll that lands exactly on 44", () => {
+    const pawns = pawnsAt(2, { "0.0": 41 });
     const move = legalMoves(pawns, 0, 3, 6).find((entry) => entry.pawn === 0);
 
     expect(move.to).toBe(HOME_R);
   });
 
   it("names the reason when every pawn would overshoot", () => {
-    const pawns = pawnsAt(2, { "0.0": 57, "0.1": 56, "0.2": 55, "0.3": 54 });
+    const pawns = pawnsAt(2, { "0.0": 43, "0.1": 42, "0.2": 41, "0.3": 40 });
     const result = evaluateTurn(pawns, 0, 6, 6);
 
     expect(result.moves).toEqual([]);
@@ -154,16 +164,16 @@ describe("the turn-level reason (FR-14)", () => {
 
   it("falls back to none-available when the pawns are stuck for different reasons", () => {
     // Pawn 0 waits in the start area on a non-maximum roll, the other three all overshoot.
-    const pawns = pawnsAt(2, { "0.1": 55, "0.2": 56, "0.3": 57 });
+    const pawns = pawnsAt(2, { "0.1": 41, "0.2": 42, "0.3": 43 });
     const result = evaluateTurn(pawns, 0, 4, 6);
 
     expect(result.moves).toEqual([]);
     expect(result.reason).toBe(REFUSAL.NONE_AVAILABLE);
   });
 
-  it("ignores pawns that are already home when picking the reason", () => {
-    // Three pawns home, one overshooting. The reason must still be the overshoot.
-    const pawns = pawnsAt(2, { "0.0": 57, "0.1": HOME_R, "0.2": HOME_R, "0.3": HOME_R });
+  it("ignores a pawn that has finished when picking the reason", () => {
+    // Three pawns overshoot, one is on the deepest house square. The reason must be the overshoot.
+    const pawns = pawnsAt(2, { "0.0": 40, "0.1": 42, "0.2": 43, "0.3": HOME_R });
     const result = evaluateTurn(pawns, 0, 6, 6);
 
     expect(result.moves).toEqual([]);

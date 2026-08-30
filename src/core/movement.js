@@ -33,7 +33,7 @@
  * view can warn before the player commits, and so that `applyMove` stays a mechanical write.
  */
 
-import { HOME_R, REGION, START_R, isSameSquare, region } from "./board.js";
+import { HOME_R, START_R, isFinished, isSameSquare } from "./board.js";
 import { captureTarget, resolveCapture } from "./capture.js";
 import { findPawn, pawnsOf, withPawnAt } from "./pawns.js";
 
@@ -59,9 +59,9 @@ export const REFUSAL = {
   NEEDS_MAXIMUM: "move.refused.needs-maximum",
   /** The target square holds one of the mover's own pawns (FR-12). */
   OWN_PAWN: "move.refused.own-pawn",
-  /** The target would take the pawn past `r = 58` (FR-13). */
+  /** The target would take the pawn past the deepest house square, `r = 44` (FR-13). */
   OVERSHOOT: "move.refused.overshoot",
-  /** Already home. Not blocked, finished. */
+  /** Standing on the deepest house square. Not blocked, finished. */
   ALREADY_HOME: "move.refused.already-home",
   /** The pawns are blocked for different reasons, so no single one describes the turn (FR-14). */
   NONE_AVAILABLE: "move.refused.none-available",
@@ -79,8 +79,9 @@ function assertRoll(roll, dieMax) {
 /**
  * Another pawn of the same player standing where this one wants to land, or `null`.
  *
- * `isSameSquare` does the real work, which is why home (`r = 58`) needs no exception: it reports no
- * collision there, because home holds four separate slots.
+ * `isSameSquare` does the real work, and it is what makes the house behave correctly with no rule
+ * of its own. Two pawns of one player collide on a house square, so FR-12 refuses the second
+ * arrival, and the four pawns are forced onto the four separate house squares that FR-05 asks for.
  */
 function ownPawnBlocking(pawns, mover, targetR) {
   const arriving = { player: mover.player, r: targetR };
@@ -117,7 +118,7 @@ function moveOnto(pawns, mover, targetR, kind) {
 
 /** What one pawn can do with this roll: at most one move, or exactly one reason it cannot. */
 function evaluatePawn(pawns, mover, roll, dieMax) {
-  if (region(mover.r) === REGION.HOME) {
+  if (isFinished(mover.r)) {
     return { pawn: mover.pawn, move: null, reason: REFUSAL.ALREADY_HOME };
   }
 

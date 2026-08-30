@@ -78,8 +78,8 @@ describe("the eight-step sequence (section 3 of the game design document)", () =
   });
 
   it("sends a captured pawn back to its start area when the move resolves (FR-11)", () => {
-    // Player 1 at r = 40 stands on absolute square 0, which is player 0's entry square.
-    const { state } = afterRoll(pawnsAt(2, { "1.0": 40 }), [6]);
+    // Player 1 at r = 31 stands on absolute square 0, which is player 0's entry square.
+    const { state } = afterRoll(pawnsAt(2, { "1.0": 31 }), [6]);
 
     expect(state.legalMoves[0].captures).toEqual({ player: 1, pawn: 0 });
 
@@ -89,9 +89,10 @@ describe("the eight-step sequence (section 3 of the game design document)", () =
     expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(1);
   });
 
-  it("ends the match the moment the fourth pawn arrives home (FR-05)", () => {
-    const pawns = pawnsAt(2, { "0.0": 55, "0.1": HOME_R, "0.2": HOME_R, "0.3": HOME_R });
-    const { state } = afterRoll(pawns, [3]);
+  it("ends the match the moment the fourth pawn reaches the house (FR-05)", () => {
+    // Three pawns already fill the back of the house, so the last one only needs r = 41.
+    const pawns = pawnsAt(2, { "0.0": 40, "0.1": 42, "0.2": 43, "0.3": HOME_R });
+    const { state } = afterRoll(pawns, [1]);
     const resolved = resolveReactions(commitMove(state, 0));
 
     expect(resolved.status).toBe(MATCH_STATUS.WON);
