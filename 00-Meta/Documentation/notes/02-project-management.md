@@ -642,6 +642,40 @@ the finding:
     [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md): Definition of Done, role
     contradiction, board fields, referenced there rather than repeated.
 
+### What the first implementation sprint said about the process: 2026-08-30
+
+Sprint 2 is the first sprint that produced code rather than documents, so it is the first one that
+can say anything about whether the process works. Four findings, and two of them are uncomfortable.
+
+**The register gained two rows, and both had already happened.** *A design handoff overrules the
+rulebook and invalidates committed work* and *a `must have` requirement ships visibly unmet* were
+written on 2026-08-30 describing events of the same day. Two rows were re-rated down and two were
+deliberately left where they were. **The two that did not move are the more interesting pair**,
+because both had evidence pointing at a lower rating and both were held: *test coverage discipline
+slips* stays at 3 because no CI workflow runs the gates, exactly as the 2026-08-22 entry said it
+would, and *the story point scale is wrong* stays at 3 because the check it asked for finally became
+possible and **still could not be read**.
+
+**The velocity this sprint produces is not a planning input, and saying so is the finding.** All 38
+must-have points landed over two days. The board can compute a story-point velocity from that for the
+first time in the project. It would be meaningless: the estimates were built for people writing the
+code, and nothing here measures how long that would take. The project records no hours by the
+2026-08-06 decision, so there is no second number to calibrate against either. **Sprint 3 is planned
+from the estimates, not from this velocity.**
+
+**The parallel-track plan worked and had one blind spot.** Running the headless rules alongside the
+design was the right scheduling move: three issues closed while the design was being drawn, and none
+of them waited. What the plan did not anticipate is that the two tracks would **contradict** each
+other, because it treated them as independent by construction. They were not: the design changed the
+board's topology, and a day of finished, passing rules code had to be re-derived. The fix is a
+process step rather than a schedule change, and it is written up in the register.
+
+**Two decisions went to the user rather than into a commit**, and both were the kind that a
+reasonable person could have guessed wrong on: whether to adopt the 40-square board, and what to do
+about the four undesigned controls the slice needed. Neither is recorded as a blocker in the log,
+because neither blocked for long. Both are recorded as decisions in
+[project-journal.md](../project-journal.md), which is what makes them visible to the report at all.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

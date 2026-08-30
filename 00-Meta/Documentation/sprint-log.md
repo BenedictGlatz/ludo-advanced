@@ -282,11 +282,25 @@ available cut. **That is no longer what the board says**, see point 1 above.
 - **2026-08-29:** #27 turn manager and game loop (8). The four `state/` modules, the eight-step turn
   sequence, the four-intent boundary, and a complete match played end to end on a scripted RNG.
 - **2026-08-29:** #64 i18n setup (5). i18next with the German and English locales.
+- **2026-08-30:** the design handoff came back, and it changed the rulebook. The board went from a
+  52-square track to 40, from a 5-square home column plus a separate home area to a 4-square house
+  holding one pawn per square, and two players now sit opposite each other on seats 0 and 2. Section
+  2 of the game design document was rewritten in the same commit as `core/board.js`. **This carries
+  no story points and was not in anybody's estimate.**
+- **2026-08-30:** #3 create design system (5). Five stylesheets in `src/ui/styles/` and the spec in
+  `01-Design/Handoff/`. The five landing checks from the sprint plan were run before merging the
+  delivery; one of them failed on arrival and is recorded below.
+- **2026-08-30:** #62 pawn rendering and movement animation (3). Five modules in `src/ui/`, the
+  composition root, and seven Playwright specs run against the production build in Chromium, Firefox
+  and Edge. **The game is playable.** Milestones M2 and M3 are both met.
+- **2026-08-30:** handoff 02 sent, `01-Design/Handoff/02-brief-board-review.md`, with nine numbered
+  questions and six screenshots taken from the running build. The round is open.
 
-**30 of the sprint's 38 must-have points are committed**, all on one day and all on the branch
+**All 38 of the sprint's must-have points are committed**, over two days, all on the branch
 `feature/sprint2-core-and-design`. **None of it is merged, reviewed or pushed**, so by the project's
-own Definition of Done not one of these issues is done: the board shows them as `In Progress`.
-What is left of the must-have half is #3 (5, waiting on Claude Design) and #62 (3, the board view).
+own Definition of Done not one of these issues is done: the board still shows them as `In Progress`.
+That gap between "committed" and "done" is the whole remaining risk in this sprint, and it is one
+review away.
 
 **Divergence and reasons**: *open, filled as it happens*
 
@@ -318,6 +332,51 @@ What is left of the must-have half is #3 (5, waiting on Claude Design) and #62 (
   they are still `Todo` on 2026-09-06 the sprint reads as 38 of 72 points delivered at best, which
   understates the work. The honest reading is against the 38, and the reason the two figures differ is
   point 1 of the planned scope above.
+
+- **The "this will not fit" prediction above was wrong, and it is left standing.** It was written on
+  2026-08-29 against 38 points over 5 remaining weekdays. All 38 were committed on the second of
+  those days. The prediction is kept rather than deleted because the reason it was wrong is the
+  finding, not the arithmetic: the estimate was built for a team writing the code, and the work was
+  done at a rate that says nothing about how long it would take anybody to do it by hand. **The
+  velocity figure this sprint produces is therefore not a planning input for Sprint 3.** Using it as
+  one would be the single most misleading number this project could put in its report.
+
+- **A whole day of finished, tested work was invalidated by the design handoff.** #26 closed on
+  2026-08-29 against a 52-square board, because that is what the rulebook said and the sprint plan
+  explicitly forbade inventing a number that was not in it. The handoff arrived the next morning
+  built on 40. The plan had no step for this: it scheduled the rules and the design **in parallel**
+  precisely because they were not expected to interact. See the challenge entry of 2026-08-30 in
+  [project-journal.md](project-journal.md) for what it cost and why the recovery was cheap in the
+  source and expensive in the tests.
+
+- **The plan's step 8 needed a decision it did not anticipate.** Handoff 01 designed the board and
+  the refusal region and nothing around them, so there was no designed way to pick a die, hand over
+  or see who won. `CLAUDE.md` forbids Claude Code from inventing what a component looks like, so the
+  question went to the team rather than into the code, and the answer was that the pawn click is the
+  only control. That is a real reduction in what the slice does, taken deliberately.
+
+- **The seating rule reached the rules layer, which no estimate covered.** D3 of the design spec
+  seats two players opposite each other. The state layer numbered players 0 and 1, so a two-player
+  match would have put pawns in a yard the stylesheet had greyed out. `core/board.js` gained
+  `seatsFor`, `findWinner` lost an argument, and a second round of test re-derivation followed.
+
+- **One of the five landing checks failed on arrival, and the cause was our own toolchain.**
+  `board.css` was delivered at 248 lines and inside NFR-02. `npm run format` expanded every
+  single-line rule and took it to 407. Two rules that are each sensible on their own, "format
+  everything" and "no file over 300 lines", disagreed on a file that was compliant when it was
+  written.
+
+- **NFR-12 is not met, and the sprint closes with it not met.** The design tells players apart by
+  colour alone after the non-colour identifier was removed on request. Red and blue are ten
+  greyscale levels apart out of 255. `greyscale.spec.js` measures it, fails, and is marked as
+  expected to fail so the suite reports a known failure rather than going green. Row 8 of the
+  Product Owner sign-off table carries the question. **This is a `must have` requirement that is
+  visibly unsatisfied and is being carried, not closed.**
+
+- **The dice pool balance in section 5 of the game design document is knowingly out of date**,
+  because it was derived against a 58-step journey and the journey is now 44. It is flagged in the
+  document and belongs to issue #37. Nothing in the MVP depends on it, because the MVP runs on one
+  fixed die.
 
 > The resource/energy system appears only in this sprint plan, not in the one-pager or the README.
 > Whether it is in scope is undecided: see [notes/01-requirements-and-goals.md](notes/01-requirements-and-goals.md).
