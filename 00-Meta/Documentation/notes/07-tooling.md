@@ -191,6 +191,32 @@ declares browser and Node globals. It is a third-party package rather than an ES
 globals are declared by hand in `eslint.config.js` instead. The cost is a short list to maintain when
 a new browser global is used.
 
+### What the toolchain looked like once there was a front end: 2026-08-30, issue #62
+
+Three small findings, all of them from running the tools rather than from configuring them.
+
+**Prettier broke NFR-02 on a file that was compliant when it was written.** The delivered
+`board.css` was 248 lines. `npm run format` expands a rule such as
+`.square[data-square="0"] { grid-area: 5 / 1; }` into three lines, and there is no option to keep it
+on one, so the file came out at 407. The 40 track placements were split into `board-track.css` to get
+back under the limit. **Two rules that are each sensible on their own, "format everything" and "no
+file over 300 lines", disagreed on a real file**, and that is worth a sentence in the report: the
+formatter is not neutral with respect to the other constraints.
+
+**The 300-line check had been counting the wrong files.** The command in
+[09-source-code-overview.md](09-source-code-overview.md) listed `*.js` only. NFR-02 says source,
+tests and config, and a stylesheet is source. The command now lists `*.css` too, and the longest file
+in the project turns out to be one.
+
+**One ESLint entry was added, for one file by name.** `scripts/design-screenshots.js` runs in Node
+but hands callbacks to `page.evaluate`, which Playwright serialises and runs inside the browser, so
+`document` is genuinely in scope there. It is listed by name rather than by directory, so an ordinary
+Node script under `scripts/` still fails if it reaches for a DOM. The rule was loosened for the one
+file that has a reason, not for the folder.
+
+**Vite needed no configuration for the stylesheets.** `main.js` imports the six CSS files and the
+build bundles them into one asset. Nothing was added to `vite.config.js`.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -1,0 +1,35 @@
+/* The page the board sits on. Written by Claude Code on 2026-08-30, not by Claude Design.
+
+   Handoff 01 designed the board and the refusal strip. It did not design a page,
+   because the page is FR-31's five-region layout and that needs the dice hand,
+   the skill hand and the HUD to exist first, none of which do. Section 5 of the
+   spec says so: "The five-region layout is asserted, not built."
+
+   So this file is the minimum needed to put a designed component on a screen,
+   and it is deliberately the shortest file in src/ui/styles/.
+
+   THE RULE IT KEEPS: every value here is a token from tokens.css. No colour, no
+   size, no font and no radius is invented. --color-app-bg exists and nothing
+   else used it, so the design had already decided what is behind the board.
+
+   THE RULE IT DOES NOT KEEP: centring the board is a layout decision, and this
+   file makes it. It is a placeholder for the real layout and belongs in the
+   handoff 02 brief as an open decision, not in the delivery. */
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: var(--space-6) var(--space-4);
+  font-family: var(--font-ui);
+  color: var(--color-text);
+  background: var(--color-app-bg);
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - var(--space-8));
+}

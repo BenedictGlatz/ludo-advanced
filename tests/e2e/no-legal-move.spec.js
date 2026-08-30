@@ -1,0 +1,79 @@
+/**
+ * A roll with no legal move passes the turn and says why. Requirements FR-14 and NFR-08.
+ *
+ * NFR-08's acceptance criterion is that a playtester can say why a move was refused **without being
+ * told**. That is a question about attention, so it cannot be fully automated: what a test can check
+ * is that the reason is on screen, in the player's own language, in the region D9 put it in, and for
+ * long enough to read. Whether a person actually reads it is a playtest, and it is still outstanding.
+ *
+ * Seed 1 with four players has no legal move on turn 1, so the refusal is the first thing the board
+ * ever shows. This spec runs with the real pauses rather than with `?fast=1`, because the four-second
+ * minimum of D9 is part of what is being tested.
+ */
+
+import { expect, test } from "@playwright/test";
+
+import { SEEDS, boardState, openMatch } from "./helpers.js";
+
+test.describe("a turn with no legal move", () => {
+  test("shows a reason in the region under the board and then passes the turn", async ({
+    page,
+  }) => {
+    const board = await openMatch(page, SEEDS.passesOnTurnOne, { fast: false });
+    const message = page.locator(".move-refusal");
+
+    // The turn went straight from rolling to its end, with no `act` phase in between.
+    await expect(board).toHaveAttribute("data-phase", "turn-end");
+
+    await expect(message).toHaveAttribute("data-message-kind", "refusal");
+    await expect(message).toBeVisible();
+    await expect(message).not.toHaveText("");
+
+    // FR-09 is the reason here: four pawns in the yard and a roll that was not the maximum.
+    await expect(message).toHaveAttribute("data-reason-key", "move.refused.needs-maximum");
+
+    // No pawn is offered, because there is nothing to offer.
+    await expect(board.locator('.pawn[data-movable="true"]')).toHaveCount(0);
+    await expect(board.locator('.square[data-legal-target="true"]')).toHaveCount(0);
+  });
+
+  test("says it in German, which is the default language", async ({ page }) => {
+    const board = await openMatch(page, SEEDS.passesOnTurnOne, { fast: false });
+    await expect(board).toHaveAttribute("data-phase", "turn-end");
+
+    // NFR-03: the text comes from the locale file, never from the rules and never from a stylesheet.
+    // The rules produced the key `move.refused.needs-maximum` and knew no language at all.
+    await expect(page.locator(".move-refusal")).toHaveText(
+      "Zum Verlassen des Startfeldes brauchst du die höchste Zahl des Würfels."
+    );
+  });
+
+  test("leaves the reason on screen long enough to read, then hands over", async ({ page }) => {
+    const board = await openMatch(page, SEEDS.passesOnTurnOne, { fast: false });
+    const message = page.locator(".move-refusal");
+
+    const { activePlayer } = await boardState(board);
+    await expect(message).toBeVisible();
+
+    // D9: the strip stays for at least four seconds. Still there after three.
+    await page.waitForTimeout(3000);
+    await expect(message).toBeVisible();
+    await expect(board).toHaveAttribute("data-active-player", String(activePlayer));
+
+    // And the turn does move on afterwards rather than sticking.
+    await expect(board).not.toHaveAttribute("data-active-player", String(activePlayer), {
+      timeout: 15_000,
+    });
+  });
+
+  test("clears the reason once the next player has something to do", async ({ page }) => {
+    const board = await openMatch(page, SEEDS.passesOnTurnOne);
+    const message = page.locator(".move-refusal");
+
+    // With ?fast=1 the turns run on. Sooner or later somebody can move, and at that moment the
+    // refusal must be gone: a reason belonging to a turn that is over is worse than no reason.
+    await expect(board).toHaveAttribute("data-phase", "act", { timeout: 20_000 });
+    await expect(message).not.toHaveAttribute("data-message-kind", "refusal");
+    await expect(message).toHaveText("");
+  });
+});

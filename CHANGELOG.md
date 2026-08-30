@@ -165,6 +165,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dark mode, each with its reason and at least one named rejected alternative
 - Two players now sit **opposite each other, on seats 0 and 2**, rather than side by side. `core/board.js` gained
   `seatsFor(playerCount)`, and a player number is a seat number everywhere: a two-player match has no seat 1
+- **The game is playable** (issue #62). `src/ui/board-view.js` renders the board out of state, `move-hints.js`
+  highlights the legal moves and shows the refusal reason, `events.js` turns clicks into intents, `game-loop.js`
+  drives the turn, and `main.js` wires it all together. 2 to 4 players take turns hot-seat, pawns leave the yard
+  on the die's maximum, move along the 40-square track, capture opponents and fill their house to win
+- **The pawn click is the only control.** Picking a dice card happens automatically, because the stand-in pool
+  holds one card, and the turn hands over by itself once the move has animated or the refusal has been read.
+  The first click on a pawn selects it and shows where it would land; the second plays the move
+- `?seed=42` fixes the dice so a match replays identically, `?players=2` picks the seat count and `?fast=1`
+  shortens the pauses between turns. All three are read only by the composition root
+- Seven Playwright end-to-end specs covering the board, leaving the start area, advancing, capture, a turn with
+  no legal move, a complete match ending in a win, and the NFR-12 greyscale check. They run against the
+  production build in Chromium, Firefox and Edge
+- `scripts/design-screenshots.js`, which captures the board at 2, 3 and 4 players, in the dark skin and in
+  greyscale, into `01-Design/assets/` for the design handoff briefs
 
 ### Changed
 

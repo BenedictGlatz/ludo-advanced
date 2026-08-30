@@ -59,9 +59,20 @@ for (const [k,v] of Object.entries(j)) { if (k === 'total') continue;
 for (const [d,x] of Object.entries(a))
   console.log(d, x.f + ' files', x.c + '/' + x.t, (100*x.c/x.t).toFixed(2) + '%');"
 
-# 6. Longest files: evidence for the 300-line rule
-git ls-files '*.js' | xargs wc -l | sort -rn | sed -n '2,7p'
+# 6. Longest files: evidence for the 300-line rule. CSS counts, so it is in the pattern.
+git ls-files '*.js' '*.css' | xargs wc -l | sort -rn | sed -n '2,7p'
+
+# 7. Stylesheet lines. Added 2026-08-30, when src/ui/styles/ stopped being empty.
+git ls-files 'src/*.css' | xargs wc -l | sort -rn
+
+# 8. End-to-end test count, per browser. The suite runs three, so the total run is three times this.
+npx playwright test --list --project=chromium 2>&1 | tail -1
 ```
+
+**Command 6 changed on 2026-08-30** and the change matters. It used to list `*.js` only. NFR-02
+applies to "source, tests and config", and a stylesheet is source: the delivered `board.css` was the
+first file in the project to come near the limit, and a JavaScript-only command would not have seen
+it.
 
 **Two corrections to the commands this file was created with**, both found by running them:
 
@@ -100,67 +111,89 @@ of one, produced a confident and wrong conclusion about a tool.
 
 | Metric | Command | Value | Taken on |
 | --- | --- | --- | --- |
-| Source lines in `src/` | 1 | **1294 lines in 12 files** | 2026-08-29, after #64 |
-| Test lines in `tests/` | 2 | **1717 lines in 14 files** | 2026-08-29, after #64 |
-| Lines in `src/core/` | 3 | 656 lines in 6 files | 2026-08-29, after #64 |
-| Lines in `src/state/` | 3 | 533 lines in 4 files | 2026-08-29, after #64 |
-| Lines in `src/ui/` | 3 | 0 files | 2026-08-29, after #64 |
-| Lines in `src/i18n/` | 3 | 79 lines in 1 file, plus 76 lines of locale JSON | 2026-08-29, after #64 |
-| Unit tests | 4 | **13 test files, 157 tests, all passing** | 2026-08-29, after #64 |
-| Coverage of `src/core/` and `src/state/`, lines | 5a | **99.53 % (216/217)** | 2026-08-29, after #64 |
-| Coverage of `src/core/`, lines | 5c | **99.24 % (130/131) over 6 files** | 2026-08-29, after #64 |
-| Coverage of `src/state/`, lines | 5c | **100 % (86/86) over 4 files** | 2026-08-29, after #64 |
-| Coverage, branches | 5a | 99.38 % (161/162) | 2026-08-29, after #64 |
-| The one file below 100 % lines | 5b | `src/core/movement.js`, 97.61 % | 2026-08-29, after #64 |
-| Longest JavaScript file | 6 | **206 lines, `src/core/movement.js`** | 2026-08-29, after #64 |
-| Files measured for coverage | 5b | **10 of the 12 files in `src/`** | 2026-08-29, after #64 |
+| JavaScript lines in `src/` | 1 | **2228 lines in 17 files** | 2026-08-30, after #62 |
+| Stylesheet lines in `src/` | 7 | **821 lines in 6 files** | 2026-08-30, after #62 |
+| Test lines in `tests/` | 2 | **2810 lines in 23 files** | 2026-08-30, after #62 |
+| Lines in `src/core/` | 3 | 745 lines in 6 files | 2026-08-30, after #62 |
+| Lines in `src/state/` | 3 | 548 lines in 4 files | 2026-08-30, after #62 |
+| Lines in `src/ui/` | 3 | **748 lines in 5 files**, plus the 821 lines of CSS | 2026-08-30, after #62 |
+| Lines in `src/i18n/` | 3 | 79 lines in 1 file, plus 76 lines of locale JSON | 2026-08-30, after #62 |
+| Unit tests | 4 | **14 test files, 186 tests, all passing** | 2026-08-30, after #62 |
+| End-to-end tests | 8 | **24 tests in 7 files per browser, 72 across the three** | 2026-08-30, after #62 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | **99.55 % (224/225)** | 2026-08-30, after #62 |
+| Coverage of `src/core/`, lines | 5c | **99.27 % (136/137) over 6 files** | 2026-08-30, after #62 |
+| Coverage of `src/state/`, lines | 5c | **100 % (88/88) over 4 files** | 2026-08-30, after #62 |
+| Coverage, branches | 5a | 99.35 % (153/154) | 2026-08-30, after #62 |
+| The one file below 100 % lines | 5b | `src/core/movement.js`, 97.61 %, line 151 | 2026-08-30, after #62 |
+| Longest file of any kind | 6 | **288 lines, `src/ui/styles/board.css`** | 2026-08-30, after #62 |
+| Longest JavaScript file | 6 | 254 lines, `tests/unit/core/board.test.js` | 2026-08-30, after #62 |
+| Files measured for coverage | 5b | **10 of the 17 JavaScript files in `src/`** | 2026-08-30, after #62 |
 
 Longest-file ranking in full, from command 6, same run:
 
 | Lines | File |
 | --- | --- |
-| 206 | `src/core/movement.js` |
-| 203 | `tests/unit/state/turn-manager.test.js` |
-| 201 | `tests/unit/core/board.test.js` |
-| 186 | `tests/unit/core/movement.test.js` |
-| 178 | `src/state/turn-manager.js` |
-| 160 | `tests/unit/state/intents.test.js` |
+| 288 | `src/ui/styles/board.css` |
+| 254 | `tests/unit/core/board.test.js` |
+| 224 | `src/core/board.js` |
+| 211 | `tests/unit/state/turn-manager.test.js` |
+| 208 | `src/ui/board-geometry.js` |
+| 207 | `src/core/movement.js` |
 
-For comparison, the same table taken earlier the same day: at the bootstrap commit, 26 source lines
-in 1 file, 10 test lines in 1 file, 1 test, no coverage measurable at all; after #26, 184 source
-lines in 2 files, 211 test lines in 2 files, 28 tests, 100 % coverage of 35 lines. Kept as one
-sentence rather than three tables, because the rule of this chapter is that values are replaced.
+Stylesheets in full, from command 7, same run:
+
+| Lines | File |
+| --- | --- |
+| 288 | `src/ui/styles/board.css` |
+| 167 | `src/ui/styles/pawn.css` |
+| 155 | `src/ui/styles/board-track.css` |
+| 138 | `src/ui/styles/tokens.css` |
+| 38 | `src/ui/styles/refusal.css` |
+| 35 | `src/ui/styles/app.css` |
+
+For comparison, the same table at three earlier points: at the bootstrap commit, 26 source lines in
+1 file, 10 test lines in 1 file, 1 test, no coverage measurable at all; after #26, 184 source lines
+in 2 files, 211 test lines in 2 files, 28 tests; after #64 on 2026-08-29, 1294 source lines in 12
+files, 1717 test lines in 14 files, 157 tests and nothing on screen. Kept as one sentence rather
+than four tables, because the rule of this chapter is that values are replaced.
 
 ## Interpretation
 
-- **1294 lines of source is a playable rule set with no way to play it.** Six modules of rules, four
-  of state and the i18n setup exist, and every one of them runs in Node with no browser. `src/ui/`
-  is still empty, so there is nothing on screen at all. Quoting the coverage figure without that
-  sentence would be misleading, and so would quoting the build size: `npm run build` produces well
-  under a kilobyte, because `main.js` still imports nothing.
-- **There are more test lines than source lines**, 1717 against 1294. That ratio is expected for this
-  kind of code rather than a warning sign: the rules have sharp boundaries at `r = 0`, `52`, `53`,
-  `57` and `58`, and several tests are exhaustive loops over a whole domain instead of one sample
-  point. The largest single test is a complete scripted match, 87 turns from the first draw to the
-  win.
-- **99.24 % of `src/core/` and 100 % of `src/state/` against a floor of 80 % (NFR-05).** Both
-  directories now have real code in them, which the figure after #26 could not claim.
-- **Two of the twelve files in `src/` are not measured at all**, and this is the sentence that has to
-  go next to the coverage figure. `vitest.config.js` includes only `src/core/**` and `src/state/**`,
-  because those are the two directories NFR-05 names. `src/main.js` and `src/i18n/index.js` are
-  therefore outside the measurement. `i18n/index.js` **is** tested, by
-  `tests/unit/i18n/locales.test.js`; it simply does not appear in the number. The configuration was
-  left alone rather than widened, because widening it would quietly change what the NFR-05 figure
-  means.
-- **One line in the whole of `src/` is uncovered, and it is unreachable on purpose.**
-  `movement.js` line 150 returns the generic refusal reason when every one of a player's pawns is
-  already home. That state means the player has won and the match has ended, so no turn is ever
-  evaluated in it. The line stays because it stops `blocked[0]` being read from an empty array, and
-  it is recorded here rather than removed or excluded from the measurement.
-- **The longest file is 206 lines against the 300-line limit of NFR-02**, and for the first time it
-  is a source file rather than a test. `src/core/movement.js` is at 69 % of the limit with the
-  movement rules complete, which is the first real evidence that the limit and the module split are
-  compatible.
+- **The game is playable, and 748 lines of `src/ui/` plus 821 of CSS is what that cost.** Every
+  earlier version of this section had to say there was nothing on screen. There now is: `npm run
+  test:e2e` plays a complete match through the browser, clicking pawns, in each of three engines.
+- **`src/ui/` is now the largest layer by line count**, 748 against 745 for `src/core/` and 548 for
+  `src/state/`, and with its stylesheets counted it is more than twice either of them. That is worth
+  stating plainly next to the coverage figure, because **none of those 1569 lines is in the coverage
+  measurement** (see below). The layer that is hardest to be sure about is the one that grew fastest.
+- **There are more test lines than source lines**, 2810 against 2228 of JavaScript. That ratio is
+  expected for this kind of code rather than a warning sign: the rules have sharp boundaries at
+  `r = 0`, `40`, `41` and `44`, and several tests are exhaustive loops over a whole domain instead of
+  one sample point. The largest single unit test is a complete scripted match, 65 turns from the
+  first draw to the win, and the largest end-to-end test plays another one through the real interface
+  in about 45 seconds per browser.
+- **99.27 % of `src/core/` and 100 % of `src/state/` against a floor of 80 % (NFR-05).**
+- **Seven of the seventeen JavaScript files in `src/` are not measured at all**, and this is the
+  sentence that has to go next to the coverage figure. `vitest.config.js` includes only `src/core/**`
+  and `src/state/**`, because those are the two directories NFR-05 names. `src/main.js`,
+  `src/i18n/index.js` and all five files of `src/ui/` are therefore outside the measurement. Two of
+  the seven **are** tested and simply do not appear in the number: `i18n/index.js` by
+  `tests/unit/i18n/locales.test.js`, and `ui/board-geometry.js` by `tests/unit/ui/board-geometry.test.js`.
+  The rest are covered by Playwright, which produces no percentage. The configuration was left alone
+  rather than widened, because widening it would quietly change what the NFR-05 figure means.
+- **One line in the measured code is uncovered, and it is unreachable by construction.**
+  `movement.js` line 151 returns the generic refusal reason when every one of a player's pawns
+  reports `ALREADY_HOME`. Since 2026-08-30 that needs all four pawns on `r = 44` at once, which the
+  four-square house forbids, so it cannot happen in any legal board state. The line stays because it
+  stops `blocked[0]` being read from an empty array, and it is recorded here rather than removed or
+  excluded from the measurement.
+- **The longest file in the project is now a stylesheet at 288 lines**, `src/ui/styles/board.css`,
+  which is **96 % of the NFR-02 limit**. It got there without anybody writing 288 lines: the file was
+  delivered at 248, and `npm run format` expanded every single-line rule into three. The 40 track
+  placements were split out into `board-track.css` to bring it back under the limit, and what is left
+  is still the closest any file has come. This is the number to watch: the next design revision that
+  adds a state to a square pushes it over.
+- **The longest JavaScript file is 254 lines**, a test. No source file is above 224.
 - **Exactly one branch in the whole of `src/` is uncovered, and it is the same unreachable line.**
   The first measurement after #27 reported four, and the other three turned out to be real gaps
   rather than unreachable code: the freeze path for a move that captures something, and the refusal

@@ -199,6 +199,14 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   Row 8 of the sign-off table was filled in as a question, because D2 no longer answers NFR-12.
   Sprint 2.
 
+- **2026-08-30**: The game became playable, issue #62. `src/ui/` went from empty to five modules plus
+  a 35-line page shell, and `main.js` became a real composition root reading `?seed`, `?players` and
+  `?fast` out of the address bar. Seven Playwright specs run against the production build in
+  Chromium, Firefox and Edge, and one of them plays a complete two-player match by clicking pawns.
+  The team decided that the pawn click is the only control, because handoff 01 designed no dice hand,
+  no turn bar and no win screen. Milestones M2 and M3 are met, five days after M1 was missed.
+  Sprint 2.
+
 ---
 
 ## Decisions
@@ -1344,6 +1352,94 @@ to get wrong later.
   geometry they implement, was answered by moving the geometry table into the new file rather than by
   overruling it.
 - → Ch. 04, Ch. 07
+
+### 2026-08-30: The pawn click is the only control, and the turn advances by itself
+
+- **Chosen:** no dice hand, no turn bar, no win screen. Picking a die happens automatically and the
+  turn hands over on a timer. The player clicks a pawn and nothing else.
+- **Why:** handoff 01 designed the board and the refusal region, and `CLAUDE.md` forbids Claude Code
+  from inventing what a component looks like. Building a turn bar would have meant deciding what a
+  button looks like in this game, which is the line that rule draws. The question was put to the team
+  rather than answered in code, and this is what came back.
+- **Automatic is honest here rather than a shortcut**, because the stand-in dice pool holds exactly
+  one card. There is no choice being hidden. Issue #37 brings the real three-card hand, and that is
+  the line in `game-loop.js` that changes.
+- **Rejected: a placeholder turn bar built only from existing tokens**, no new colour, size or font,
+  every control marked as provisional and sent to handoff 02. It is the option that makes the game
+  feel finished soonest. It still means Claude Code deciding what three components look like, and a
+  placeholder that works is the hardest kind of placeholder to get replaced.
+- **Rejected: stopping and asking Claude Design first.** It is the cleanest answer and it costs the
+  playable slice, milestone M3, in a sprint with five weekdays left.
+- **What it costs, said plainly.** The hot-seat handover is on a clock rather than on a click, so a
+  player cannot take their time. The roll is not shown anywhere. And the win message has nowhere
+  designed to go, so it borrows the refusal strip and comes out in warning orange.
+- → Ch. 04
+
+### 2026-08-30: The first click selects a pawn and the second commits it
+
+- **Chosen:** two clicks per move. The first dispatches `select-pawn`, the second `commit-move`.
+- **Why:** a capture costs the other player most of a lap and cannot be undone, so a misclick is
+  expensive. It also makes FR-32 literal rather than approximate: with nothing selected every legal
+  move is lit, which is the whole choice, and once a pawn is picked exactly one square stays lit, so
+  the second click has one visible consequence.
+- **Rejected: one click.** Half the clicks, and it makes `select-pawn` dead vocabulary in the intent
+  boundary, so the `data-selected` state the design specified would never be reached either.
+- **Rejected: hover to preview, click to commit.** It reads better and it is not an intent: hovering
+  is not something the player asks the game to do, so it would have put a rule-adjacent decision in a
+  jQuery handler.
+- → Ch. 04
+
+### 2026-08-30: Four attributes were added to the DOM contract for the tests, not for the design
+
+- **Chosen:** `.board` carries `data-phase`, `data-status`, `data-turn` and `data-roll`. No
+  stylesheet reads them.
+- **Why:** an end-to-end test that waits a fixed number of milliseconds is either slow or flaky, and
+  usually both in turn. Waiting for a state the application publishes is neither.
+- **`data-turn` was added after a race rather than before one**, and that is the part worth keeping.
+  The helpers first waited for the phase or the active seat to change. With the pauses collapsed for
+  a test run, a turn nobody can move in passes itself inside one tick, so the board could go from
+  `act` through two seats and back to `act` between two polls with both signals reading unchanged.
+  A counter that only goes up cannot hide a turn that has already happened.
+- **Rejected: exposing the state object on `window` and asserting against that.** It is less markup
+  and it stops the test being an end-to-end test: it would assert what the rules computed, which the
+  unit suite already covers, rather than what the browser rendered.
+- **The line this does not cross:** naming an attribute is a technical interface, and the brief
+  already established that. None of the four carries a colour, a size or a font, and no rule in
+  `src/ui/styles/` matches any of them.
+- → Ch. 04, Ch. 08
+
+### 2026-08-30: One module in `ui/` is unit tested, against the stylesheet
+
+- **Chosen:** `tests/unit/ui/board-geometry.test.js` exists, and it reads `board-track.css` and
+  compares it to the JavaScript table index for index.
+- **Why:** `vitest.config.js` says `ui/` is covered by Playwright instead, because a coverage figure
+  for a rendering layer measures how much jQuery ran. `board-geometry.js` is not a rendering layer.
+  It is a lookup table with no DOM, and it is the one place in `ui/` where a mistake is **silent**: a
+  wrong cell does not throw and does not fail to render, it draws a pawn next to the square it should
+  be standing on.
+- **The table exists twice on purpose**, once for JavaScript and once for CSS, because CSS cannot
+  compute a grid placement from an index and JavaScript cannot position an element without knowing
+  one. The test is the price of that duplication, and it is cheaper than the duplication is.
+- **Rejected: generating the CSS from the JavaScript table** at build time, which removes the
+  duplication properly. It adds a build step, and it puts a generated file in `src/ui/styles/` where
+  Claude Design writes by hand.
+- → Ch. 04, Ch. 08
+
+### 2026-08-30: `greyscale.spec.js` is written to fail, and marked as expected to fail
+
+- **Chosen:** the NFR-12 test asserts a 1.30 minimum contrast ratio between every pair of seat
+  colours in greyscale, currently measures 1.146 at worst, and carries `test.fail()`.
+- **Why:** the requirement is not met and the suite must not go green over that. `test.fail()` makes
+  Playwright report a known failure, and report an **unexpected pass** the day somebody widens the
+  palette, which is the signal that is actually wanted.
+- **The threshold is derived rather than picked.** Four values spread evenly in contrast-ratio terms
+  across the range these hues already span, blue at 0.2543 to yellow at 0.6336 relative luminance,
+  gives three equal steps of the cube root of 2.246, which is 1.31. So 1.30 is very nearly the best
+  this palette can do without changing which colours it uses.
+- **Rejected: setting the threshold where the palette passes.** It is one number and it turns the
+  test into decoration. **Also rejected: deleting the test until the palette is fixed**, which loses
+  the measurement and leaves NFR-12 with nothing but an opinion attached to it.
+- → Ch. 04, Ch. 08
 
 ---
 

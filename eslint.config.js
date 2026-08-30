@@ -140,4 +140,13 @@ export default [
     files: ["*.config.js", "scripts/**/*.js"],
     languageOptions: { globals: nodeGlobals },
   },
+
+  {
+    // A script that drives Playwright runs in Node, but the callback it passes to `page.evaluate`
+    // is serialised and executed inside the browser, so `document` and `window` are legitimately in
+    // scope there. Both global sets apply to these files. Listed by name rather than by directory,
+    // so that an ordinary Node script under `scripts/` still fails if it reaches for a DOM.
+    files: ["scripts/design-screenshots.js"],
+    languageOptions: { globals: { ...nodeGlobals, ...browserGlobals } },
+  },
 ];

@@ -1,0 +1,138 @@
+/**
+ * Shared driving code for the end-to-end suite. Not a spec file: Playwright collects `*.spec.js`.
+ *
+ * ## How a test plays a turn
+ *
+ * The slice has exactly one control, the pawn click, decided on 2026-08-30 because handoff 01
+ * designed the board and nothing around it. So a test plays by clicking pawns and by waiting for the
+ * board's own attributes, never by sleeping. `data-phase` and `data-status` were added to the DOM
+ * contract for precisely this.
+ *
+ * ## Why every spec passes a seed
+ *
+ * `?seed=N` fixes the RNG (NFR-09), so the same URL plays the same match every time. The seeds below
+ * were not guessed: they were found by replaying matches headlessly with the same policy these
+ * helpers use, always activating the lowest-numbered pawn that can move. That is what makes "seed
+ * 120 captures on turn 11" a fact rather than a hope.
+ *
+ * `?fast=1` collapses the two pauses in the turn loop to zero. It changes the waiting and nothing
+ * else: the same intents run in the same order.
+ */
+
+import { expect } from "@playwright/test";
+
+/** Seeds chosen for what they produce, with the turn each situation first happens on. */
+export const SEEDS = {
+  /** 4 players. A pawn leaves the start area on turn 1. */
+  leavesStartAtOnce: { seed: 4, players: 4 },
+  /** 2 players. Leaves on turn 1, first ordinary advance on turn 3. */
+  advancesEarly: { seed: 4, players: 2 },
+  /** 2 players. First capture on turn 11. */
+  capturesEarly: { seed: 120, players: 2 },
+  /** 4 players. Turn 1 has no legal move at all, so the first thing on screen is a refusal. */
+  passesOnTurnOne: { seed: 1, players: 4 },
+  /** 2 players. Seat 0 fills its house and wins on turn 101. */
+  winsQuickest: { seed: 120, players: 2 },
+};
+
+/** Open a match. `fast` is on unless a test explicitly wants the real pauses. */
+export async function openMatch(page, { seed, players }, { fast = true } = {}) {
+  const query = `?seed=${seed}&players=${players}${fast ? "&fast=1" : ""}`;
+  await page.goto(`/${query}`);
+
+  const board = page.locator(".board");
+  await expect(board).toHaveAttribute("data-players", String(players));
+  return board;
+}
+
+/** The board's current phase, status, turn number and roll, read in one go. */
+export async function boardState(board) {
+  return {
+    phase: await board.getAttribute("data-phase"),
+    status: await board.getAttribute("data-status"),
+    activePlayer: Number(await board.getAttribute("data-active-player")),
+    turnNumber: Number(await board.getAttribute("data-turn")),
+    roll: Number(await board.getAttribute("data-roll")),
+  };
+}
+
+/** Where every pawn stands, keyed `"seat.pawn"`. */
+export async function pawnPositions(board) {
+  return board
+    .locator(".pawn")
+    .evaluateAll((pawns) =>
+      Object.fromEntries(
+        pawns.map((pawn) => [
+          `${pawn.getAttribute("data-player")}.${pawn.getAttribute("data-pawn")}`,
+          Number(pawn.getAttribute("data-r")),
+        ])
+      )
+    );
+}
+
+/** The lowest-numbered pawn that can move this turn. Always the same one, so a match is repeatable. */
+export function firstMovablePawn(board) {
+  return board.locator('.pawn[data-movable="true"]').first();
+}
+
+/**
+ * Wait until the turn number has moved past `turnNumber`, or the match has ended.
+ *
+ * **Always wait on the turn number, never on the phase or the active seat.** With `?fast=1` a turn
+ * nobody can move in passes itself in the same tick, so between two polls the board can leave `act`,
+ * hand over, pass, hand back and be in `act` again. The phase and the seat would both read unchanged.
+ * The turn number only counts upward, so it cannot hide a turn that has already happened.
+ */
+async function waitPastTurn(board, turnNumber) {
+  await expect
+    .poll(
+      async () => {
+        const now = await boardState(board);
+        return now.status !== "running" || now.turnNumber > turnNumber;
+      },
+      { timeout: 15_000 }
+    )
+    .toBe(true);
+}
+
+/**
+ * Play one turn: select a pawn, then commit it, then wait for the turn to be over.
+ *
+ * Two clicks on the same pawn, which is the interaction the game loop implements. The pawn stays
+ * `data-movable` between the two, so the locator resolves to the same element both times.
+ */
+export async function playTurn(board) {
+  const { turnNumber } = await boardState(board);
+  const pawn = firstMovablePawn(board);
+
+  await pawn.click();
+  await expect(pawn).toHaveAttribute("data-selected", "true");
+  await pawn.click();
+
+  await waitPastTurn(board, turnNumber);
+}
+
+/**
+ * Play until `done(board)` returns true, or until the match ends, or until the turn cap is reached.
+ *
+ * The cap is a real bound and not a formality: a bug that leaves the loop in `act` forever would
+ * otherwise hang the suite instead of failing it.
+ */
+export async function playUntil(board, done, maxTurns = 400) {
+  for (let turn = 0; turn < maxTurns; turn += 1) {
+    if (await done(board)) return true;
+
+    const { status, phase, turnNumber } = await boardState(board);
+    if (status !== "running") return await done(board);
+
+    if (phase === "act") {
+      await playTurn(board);
+    } else {
+      // A turn nobody can move in. The loop passes it on by itself; wait for that rather than for
+      // the clock, so the test runs at whatever speed the browser manages.
+      await waitPastTurn(board, turnNumber);
+    }
+  }
+
+  throw new Error(`the match did not reach the wanted situation within ${maxTurns} turns`);
+}

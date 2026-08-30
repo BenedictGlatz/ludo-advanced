@@ -271,18 +271,85 @@ hand. It is outstanding until issue #62.
 i18next's default and it is worth pinning: while views are being built, a forgotten key is then
 visible on screen instead of invisible.
 
+### The end-to-end suite: 2026-08-30, issue #62
+
+Seven spec files, run against the production build in Chromium, Firefox and Edge. Counts are in
+[09-source-code-overview.md](09-source-code-overview.md).
+
+| Spec | The flow it proves | Requirements |
+| --- | --- | --- |
+| `board-renders.spec.js` | The board on screen is the board the rulebook describes | FR-02, FR-08 |
+| `pawn-leaves-start.spec.js` | A pawn leaves the yard on the die's maximum | FR-09, FR-32 |
+| `pawn-moves.spec.js` | A pawn advances exactly the number rolled and nothing else moves | FR-10 |
+| `capture.spec.js` | Landing on an opponent sends it home and takes its square | FR-11 |
+| `no-legal-move.spec.js` | The turn passes and the reason is on screen, in German | FR-14, NFR-08, NFR-03 |
+| `win.spec.js` | A whole match, clicked through, ends with a full house and names the winner | FR-05, SG1 |
+| `greyscale.spec.js` | The four seats told apart without colour | NFR-12 |
+
+#### Every spec fixes the RNG, and the seeds were measured rather than guessed
+
+`?seed=N` is read only by the composition root and makes the match repeatable (NFR-09). Choosing the
+seeds was a small piece of work in itself: a script replayed matches headlessly using **exactly the
+policy the tests use**, always activating the lowest-numbered pawn that can move, and recorded which
+turn each situation first happened on. That is what makes "seed 120 captures on turn 11" a fact. Seed
+120 also produces the quickest win found in seeds 1 to 400, on turn 101.
+
+#### Two things the suite does not do, and why
+
+**It does not sleep.** Every wait is on a board attribute. `?fast=1` collapses the two pauses in the
+turn loop to zero, which changes the waiting and nothing else: the same intents run in the same
+order. The one spec that does use a real clock is `no-legal-move.spec.js`, because D9's four-second
+minimum is part of what it is testing.
+
+**It does not watch `data-captured`.** That attribute is transient by design, cleared once the return
+animation has run, so waiting for it would be a race. A pawn going from the track back to `r = 0` is
+the rule itself and is not transient at all.
+
+#### Negative finding: `greyscale.spec.js` fails, and is marked as expected to fail
+
+NFR-12 asks for a second, non-colour identifier per player. D2 of design handoff 01 delivers colour
+alone. The measurement, taken 2026-08-30 from the live tokens:
+
+| Seat | Colour | Greyscale value, 0 to 255 |
+| --- | --- | --- |
+| 1 | yellow `#FFC93C` | 207 |
+| 2 | green `#2FBF71` | 166 |
+| 0 | red `#FF5D5D` | 147 |
+| 3 | blue `#4C86F9` | 137 |
+
+**Red and blue are ten levels apart out of 255**, a contrast ratio of 1.146. Red against green is
+1.263. `01-Design/assets/board-greyscale.png` shows what that looks like: three of the four yards are
+the same grey.
+
+The threshold the test asserts is **1.30 for every pair**, and it is not an arbitrary number. Four
+values spread evenly, in contrast-ratio terms, across the range these four hues already span, from
+blue at 0.2543 to yellow at 0.6336 relative luminance, gives three equal steps of the cube root of
+2.246, which is 1.31. So 1.30 is very nearly the best this palette can do without changing which
+colours it uses, and falling short of it is a fact about the palette rather than about the threshold.
+
+The test is marked `test.fail()`. The suite therefore reports a known failure rather than going green
+over a requirement that is not met, and **if somebody widens the palette Playwright reports an
+unexpected pass**, which is exactly the signal wanted. Row 8 of the Product Owner sign-off table
+records the question.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
 
 ## Open / to verify
 
-- ~~No tests exist yet.~~ **One does, 2026-08-29: a smoke test.** No coverage figure has ever been
-  produced over real code. Do not write a number here: write the command in Chapter 09 and quote its
-  output once it has actually been run.
-- **No end-to-end test exists and Playwright has never been run.** `tests/e2e/` is empty, so
-  `npm run test:e2e` would report no tests found, and the browsers have not been downloaded with
-  `npx playwright install`. Both land with the board view.
+- ~~No tests exist yet.~~ **One did on 2026-08-29, a smoke test.** As of 2026-08-30 there is a full
+  unit suite and a full end-to-end suite; the figures are in Chapter 09 next to the commands.
+- ~~**No end-to-end test exists and Playwright has never been run.**~~ **Closed 2026-08-30.** Seven
+  spec files run in three browsers. One wrinkle worth recording: the first full three-browser run
+  failed all 24 Firefox tests with `Executable doesn't exist`, because `npx playwright install` had
+  only ever fetched Chromium. Nothing was wrong with the code. It is the kind of failure that reads
+  as a cross-browser defect for the first minute and is a missing download, and the lesson is that a
+  suite is not proven on an engine until it has actually run on it.
+- **NFR-08 is only half testable.** Its criterion is that a playtester can say why a move was refused
+  *without being told*. A test can check that the text is on screen, in the right region, in the right
+  language and for long enough to read. Whether a person reads it is a playtest, and the playtest has
+  not happened.
 - **No CI/CD pipeline exists.** `Brainstorming.md` proposes a `build-check.yml` build-validation
   workflow on every PR, plus optional playable build artifacts. Nothing is implemented. If the
   project ships without CI, this chapter says so plainly and gives the reason: the sample report

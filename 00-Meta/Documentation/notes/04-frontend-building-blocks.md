@@ -181,6 +181,100 @@ green and blue apart, or reinstate a non-colour identifier. Both are Product Own
 of the sign-off table in the game design document is therefore filled in as a question rather than as
 an answer**, because recording it as answered would misreport what was delivered.
 
+### The board on screen, and the one component in depth: 2026-08-30, issue #62
+
+`src/ui/` went from empty to five modules. This section is this chapter's **one component described
+in depth**, and the component is the board renderer. Its element tree is registered as Figure 10 in
+[12-appendix.md](12-appendix.md).
+
+| Module | Owns | Never does |
+| --- | --- | --- |
+| `board-geometry.js` | Which of the 121 grid cells a position is | Touch the DOM |
+| `board-view.js` | Building the markup once, then writing attributes onto it | Decide what is legal |
+| `move-hints.js` | `data-legal-target`, `data-movable`, `data-selected` and the message text | Hold a colour or a size |
+| `events.js` | Turning a DOM event into one call | Read state or check a rule |
+| `game-loop.js` | Holding the state, dispatching intents, advancing the turn | Write into a state object |
+
+#### Built once and updated after that, because the animation depends on it
+
+`renderBoard` produces the whole DOM contract in one pass and runs once. `updateBoard` then only
+writes attributes and two custom properties per pawn. **Nothing is ever destroyed and rebuilt**, and
+that is not an optimisation. D10 of the design spec is the reason: a CSS transition needs the same
+element to change position over time, so a pawn re-parented into its target square would move
+instantly and invisibly no matter what the stylesheet said. The whole DOM-in-a-grid decision was
+taken to get movement animation for free, and re-parenting would have thrown that away.
+
+The pawn therefore stays a direct child of `.board` for its whole life, and the view writes
+`--pawn-col` and `--pawn-row`, the fractional cell coordinates of its centre. `pawn.css` turns those
+into a `transform`, which is what transitions.
+
+#### The geometry table exists twice, and a test is what makes that acceptable
+
+`TRACK_CELLS` in `board-geometry.js` and the 40 rules in `board-track.css` are the same table, once
+for JavaScript and once for CSS. **If they drift, nothing throws**: pawns simply walk over the board
+next to the squares instead of onto them, and only a person looking at the screen notices.
+
+So `tests/unit/ui/board-geometry.test.js` reads the stylesheet and compares the two tables index for
+index. It is the **only unit test in `ui/`**, and the exception is deliberate: that module is a
+lookup table with no DOM, and it is the one place in the layer where a mistake is silent. The same
+file also checks properties the table has to have rather than examples: the 40 cells form a
+continuous ring, each seat's house starts next to that seat's own turn-off field, and no cell is used
+twice.
+
+#### The turn advances by itself, because there is nothing designed to press
+
+Handoff 01 covers the board (S3) and the refusal region (S6). It covers no dice hand, no turn bar and
+no win screen, and `CLAUDE.md` forbids Claude Code from inventing what a component looks like. The
+question was put to the team on 2026-08-30 and answered: **the pawn click is the only control.**
+
+- Choosing a die is automatic, because the stand-in pool holds one card and there is no choice to
+  hide. Issue #37 brings the real three-card hand and the screen that picks from it.
+- The turn hands over on its own, after the move has finished animating or after the refusal has been
+  on screen long enough to read.
+
+**The two pauses are the design's numbers rather than the view's.** The pause after a move is read
+back out of `--motion-capture` with `getComputedStyle`, so the turn changes when the pawn has
+actually arrived and the stylesheet stays the single source. The pause after a refused turn is D9's
+four seconds, and that one **is** a number in a JavaScript file, because `tokens.css` has no token
+for it. That is a design decision living outside the design, and it goes to handoff 02.
+
+#### The first click selects and the second commits
+
+One click would be fewer clicks. It would also mean a misclick captures an opponent with no way back,
+in a game where a capture costs the other player most of a lap. Selecting first is also what makes
+FR-32 literal: with nothing selected every legal move is lit, which is the whole choice, and once a
+pawn is picked the set narrows to that pawn's one target, so the second click has an unambiguous
+consequence.
+
+#### Three attributes were added to the DOM contract, for tests rather than for CSS
+
+`data-phase`, `data-status`, `data-turn` and `data-roll` on `.board`. No stylesheet reads them and
+none is expected to. They exist so that a Playwright test can wait for the turn to reach a state
+instead of waiting for a number of milliseconds and hoping.
+
+**`data-turn` was added after a race, not before one.** The first version of the end-to-end helpers
+waited for the phase or the active seat to change. With the pauses collapsed for a test run, a turn
+nobody can move in passes itself within the same tick, so the board could go from `act` through two
+seats and back to `act` between two polls, and both signals read unchanged. The turn number only
+counts upward, so it cannot hide a turn that has already happened.
+
+#### Negative finding: the win message is in the wrong place and looks wrong
+
+There is no designed place for "you won", so it shares the refusal region, which `refusal.css`
+styles in the warning orange of D9. That is right for "that move is not allowed" and wrong for "you
+won". The two are told apart by `data-message-kind`, an attribute that exists only so that handoff 02
+can split them with a selector and no change to `move-hints.js`. **It is a known defect, recorded as
+one rather than quietly shipped.**
+
+#### Negative finding: `app.css` is 35 lines of design written by Claude Code
+
+The delivery styles a board and a strip. It does not style a page, because the page is FR-31's
+five-region layout and that needs the dice hand, the skill hand and the HUD to exist first. So
+`src/ui/styles/app.css` centres the board and paints the background, using only tokens that already
+existed: `--color-app-bg` was in `tokens.css` and nothing had used it, so the design had already
+decided what sits behind the board. Inventing no value is the rule it keeps. Centring the board is
+still a layout decision, and it is a placeholder that belongs in handoff 02.
+
 ### Localisation: 2026-08-29, issue #64
 
 `src/i18n/index.js` plus `locales/de.json` and `locales/en.json`. Counts are in
