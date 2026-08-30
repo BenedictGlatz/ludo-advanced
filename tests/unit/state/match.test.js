@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { HOME_R, START_R } from "../../../src/core/board.js";
-import { fixedDieSource } from "../../../src/core/dice-source.js";
+import { createSeededRng, fixedDieSource } from "../../../src/core/dice-source.js";
 import { findPawn, pawnsOf } from "../../../src/core/pawns.js";
 import { MATCH_STATUS, TURN_PHASE } from "../../../src/state/game-state.js";
 import { INTENT, dispatch } from "../../../src/state/intents.js";
@@ -9,10 +9,22 @@ import { abandonMatch, matchDeps, restartMatch, startMatch } from "../../../src/
 import { movablePawns } from "../../../src/state/turn-manager.js";
 import { rngForRolls } from "../../helpers/fixtures.js";
 
+/**
+ * Dependencies for a match that is about the turn machinery and not about the Dice Card Pool.
+ *
+ * The pool is the default since issue #30, and it spends the injected RNG on picking cards as well
+ * as on rolling them. That is right for a real match and useless for a test that scripts an exact
+ * sequence of rolls, so these tests hand in the single-card stand-in and keep every RNG value for
+ * the die. What the pool itself does is `tests/unit/core/dice-pool.test.js`.
+ */
+function scripted(rolls) {
+  return matchDeps(rngForRolls(rolls, 6), fixedDieSource(6));
+}
+
 describe("startMatch (FR-01)", () => {
   it("starts 2, 3 and 4 player matches with the first hand already drawn", () => {
     for (const playerCount of [2, 3, 4]) {
-      const state = startMatch(playerCount, matchDeps(rngForRolls([6], 6)));
+      const state = startMatch(playerCount, scripted([6]));
 
       expect(state.playerCount).toBe(playerCount);
       expect(state.phase).toBe(TURN_PHASE.CHOOSE);
@@ -32,7 +44,7 @@ describe("startMatch (FR-01)", () => {
 
 describe("restartMatch (FR-06)", () => {
   it("gives a fresh match with every field reset, and never reloads anything", () => {
-    const deps = matchDeps(rngForRolls([6, 6], 6));
+    const deps = scripted([6, 6]);
     const started = startMatch(2, deps);
     const played = dispatch(started, { type: INTENT.CHOOSE_DIE, faces: 6 }, deps).state;
     const moved = dispatch(played, { type: INTENT.COMMIT_MOVE, pawn: 0 }, deps).state;
@@ -51,7 +63,7 @@ describe("restartMatch (FR-06)", () => {
 
 describe("abandonMatch (FR-07)", () => {
   it("stops the match and leaves the pawns where they stood", () => {
-    const deps = matchDeps(rngForRolls([6], 6));
+    const deps = scripted([6]);
     const started = startMatch(2, deps);
     const moved = dispatch(
       dispatch(started, { type: INTENT.CHOOSE_DIE, faces: 6 }, deps).state,
@@ -69,11 +81,20 @@ describe("abandonMatch (FR-07)", () => {
 });
 
 describe("matchDeps", () => {
-  it("defaults to the single-die stand-in pool, and has no default RNG", () => {
-    const deps = matchDeps(rngForRolls([6], 6));
+  it("defaults to the real twenty-card pool, and has no default RNG", () => {
+    const deps = matchDeps(createSeededRng(1));
+    const hand = deps.diceSource.draw(deps.rng);
 
-    expect(deps.diceSource.draw()).toEqual([6]);
+    expect(deps.diceSource.handSize).toBe(3);
+    expect(hand).toHaveLength(3);
+
+    // No default RNG on purpose: the default would have to be Math.random, and NFR-09 exists to
+    // keep that out of the rules.
     expect(matchDeps(undefined).rng).toBeUndefined();
+  });
+
+  it("takes the stand-in die when a caller wants a predictable one", () => {
+    expect(scripted([6]).diceSource.draw()).toEqual([6]);
   });
 });
 
@@ -117,7 +138,7 @@ describe("a complete match, played end to end on a scripted RNG (NFR-09)", () =>
     const rolls = [];
     for (const roll of playerZeroRolls) rolls.push(roll, 1);
 
-    const deps = matchDeps(rngForRolls(rolls, 6));
+    const deps = scripted(rolls);
     let state = startMatch(2, deps);
     let turns = 0;
 
@@ -157,7 +178,7 @@ describe("a complete match, played end to end on a scripted RNG (NFR-09)", () =>
   });
 
   it("refuses every intent once it is won", () => {
-    const deps = matchDeps(rngForRolls([6], 6));
+    const deps = scripted([6]);
     const won = abandonMatch(startMatch(2, deps));
 
     expect(dispatch(won, { type: INTENT.END_TURN }, deps).accepted).toBe(false);

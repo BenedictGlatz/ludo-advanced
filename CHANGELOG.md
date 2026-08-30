@@ -179,6 +179,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   production build in Chromium, Firefox and Edge
 - `scripts/design-screenshots.js`, which captures the board at 2, 3 and 4 players, in the dark skin and in
   greyscale, into `01-Design/assets/` for the design handoff briefs
+- **The real Dice Card Pool** (issue #30): twenty cards over seven denominations, two D2, three D4, four D6,
+  four D8, three D10, two D12 and two D20. Three are drawn per turn without replacement, one is kept, and all
+  three go back and are reshuffled at the end of the turn. There is no discard pile, so the pool is stationary.
+  The composition is a single data table the rules read (FR-17), and the randomness is still injected from
+  outside, so `?seed=42` replays a match card for card
+- `data-die` on the board, holding the face count of the chosen card. It is what lets a test assert the rule
+  FR-09 actually states, that leaving the start area needs the die's maximum, now that the maximum is no longer
+  always six
+- `npm run test:seeds`, which replays matches headlessly and prints the seeds the end-to-end suite plays on.
+  The seeds used to be found by hand and the script that found them was never kept, so the first change to what
+  the random generator is spent on made all five of them expire with no way to reproduce the search
 
 ### Changed
 
@@ -260,3 +271,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   deleted, because a rendering technology decides what a stylesheet can address, not what anything looks like
 - The version column of the technology table in `00-Meta/Project-Management/Obligations-Book.md` section 3.1 is
   filled from the real `package.json`, having been deliberately empty since it was written
+- **A match now runs on the twenty-card Dice Card Pool instead of one fixed six-sided die** (issue #30). The
+  swap was one default argument in `state/match.js` and one call in `src/main.js`, because every rule was
+  already written against the die's maximum rather than against a six. `fixedDieSource` stays in the code for
+  tests that need a predictable die
+- **All five end-to-end seeds were re-derived**, because the pool draws from the same random generator the die
+  rolls from, so every seed played a different match than the specs were written against. `leavesStartAtOnce`
+  4 → 1, `advancesEarly` 4 → 1, `capturesEarly` 120 → 9, `passesOnTurnOne` 1 → 2, `winsQuickest` 120 → 200.
+  The quickest win is now turn 80 instead of turn 101, and it is seat 2 rather than seat 0
+- Two end-to-end specs stopped asserting the stand-in and started asserting the rule. `pawn-leaves-start.spec.js`
+  checked `roll === 6`, which was only true while the die was always a D6, and now checks that the roll equals
+  the chosen die's maximum. `win.spec.js` assumed seat 0 wins, which was a property of the old seed
+- ESLint ignores `01-Design/`. Claude Design delivers a generated canvas runtime with every handoff, marked
+  "do not edit" by the tool that wrote it, and the card artwork handoff took `npm run lint` from clean to 306
+  errors none of which were in project code. Nothing under `01-Design/` is built or shipped

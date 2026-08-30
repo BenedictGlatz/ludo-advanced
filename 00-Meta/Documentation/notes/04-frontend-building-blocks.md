@@ -232,6 +232,14 @@ question was put to the team on 2026-08-30 and answered: **the pawn click is the
 - The turn hands over on its own, after the move has finished animating or after the refusal has been
   on screen long enough to read.
 
+**The first of those two stopped being true on 2026-08-30, with issue #30.** The pool now deals three
+different cards and the loop still takes `hand[0]`, so a choice FR-19 gives the player is made for
+them. It is visible in play: a hand whose first card is a D20 needs a twenty to get a pawn out of the
+yard, and the turn usually passes. The pick stays `hand[0]` rather than becoming a "take the most
+useful die" rule, because a clever rule would be a second player living in the view and would have to
+be unwritten again in issue #31. The gap is measured rather than guessed: `npm run test:seeds`
+replays 400 two-player matches and all 400 finish, so it costs turns and does not deadlock the game.
+
 **The two pauses are the design's numbers rather than the view's.** The pause after a move is read
 back out of `--motion-capture` with `getComputedStyle`, so the turn changes when the pawn has
 actually arrived and the stylesheet stays the single source. The pause after a refused turn is D9's
@@ -246,11 +254,18 @@ FR-32 literal: with nothing selected every legal move is lit, which is the whole
 pawn is picked the set narrows to that pawn's one target, so the second click has an unambiguous
 consequence.
 
-#### Three attributes were added to the DOM contract, for tests rather than for CSS
+#### Four attributes were added to the DOM contract, for tests rather than for CSS
 
 `data-phase`, `data-status`, `data-turn` and `data-roll` on `.board`. No stylesheet reads them and
 none is expected to. They exist so that a Playwright test can wait for the turn to reach a state
 instead of waiting for a number of milliseconds and hoping.
+
+**A fifth joined them on 2026-08-30 with issue #30: `data-die`, the chosen card's face count.** It
+was added because a test could not otherwise say what the rule says. `pawn-leaves-start.spec.js`
+asserted `expect(roll).toBe(6)` for "the maximum was rolled", which was true only while the stand-in
+was a D6. FR-09 is "the die's maximum", and with seven denominations in play the view had to expose
+which die was in play before the assertion could be written as `expect(roll).toBe(die)`. The dice
+hand in issue #31 needs the same value on screen for the player, so this is early rather than extra.
 
 **`data-turn` was added after a race, not before one.** The first version of the end-to-end helpers
 waited for the phase or the active seat to change. With the pauses collapsed for a test run, a turn

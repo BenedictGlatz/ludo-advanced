@@ -19,14 +19,15 @@
  *
  * ## What is still stubbed
  *
- * `fixedDieSource()` is a one-card pool standing in for the twenty-card Dice Card Pool of issue #37.
- * Swapping it is this one argument, because the rule for leaving the start area is written against
- * the die's maximum and not against a six.
+ * The dice source is the real twenty-card pool as of issue #30. Which of the three drawn cards gets
+ * rolled is still picked for the player by `ui/game-loop.js`, because the hand has no design yet and
+ * therefore nothing to click. That is the last piece of issue #37 and it is issue #31.
  */
 
 import $ from "jquery";
 
-import { fixedDieSource, createSeededRng } from "./core/dice-source.js";
+import { createDicePool } from "./core/dice-pool.js";
+import { createSeededRng } from "./core/dice-source.js";
 import { initI18n } from "./i18n/index.js";
 import { matchDeps, startMatch } from "./state/match.js";
 import { renderBoard } from "./ui/board-view.js";
@@ -82,7 +83,7 @@ export async function boot(root = "#app", search = window.location.search) {
 
   await initI18n();
 
-  const deps = matchDeps(createSeededRng(options.seed), fixedDieSource());
+  const deps = matchDeps(createSeededRng(options.seed), createDicePool());
   const state = startMatch(options.playerCount, deps);
 
   const $board = renderBoard(state);

@@ -12,9 +12,13 @@
  * looks like. So the slice was built with **the pawn click as its only control**, decided on
  * 2026-08-30, and everything else happens on its own:
  *
- * - **Choosing a die is automatic**, because the stand-in pool holds one card. There is no choice to
- *   hide. Issue #37 brings the real three-card hand and the screen that picks from it, and this is
- *   the line that changes.
+ * - **Choosing a die is still automatic, and since issue #30 that is a real gap.** The pool now deals
+ *   three different cards and the loop takes the first one, so a choice the rulebook gives the player
+ *   (FR-19) is currently made for them. It shows: a hand whose first card is a D20 needs a twenty to
+ *   get a pawn out of the yard, and the turn usually passes. The fix is the hand screen in issue #31,
+ *   which needs a design that does not exist yet, and `CLAUDE.md` forbids inventing one. Until then
+ *   the pick stays `hand[0]` rather than becoming a clever rule, because a clever rule would be a
+ *   second player hiding in the view.
  * - **The turn hands over on its own**, after the move has finished animating, or after the refusal
  *   has been on screen long enough to read.
  *

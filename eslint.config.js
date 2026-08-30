@@ -74,6 +74,12 @@ export default [
       "playwright-report/**",
       "test-results/**",
       "00-Meta/AI-Prompts/**",
+      // Design deliverables, not project source. Claude Design drops a generated canvas runtime
+      // (`support.js`, `_ds_bundle.js`) next to every `.dc.html` board, several thousand lines of
+      // it, and those files are marked "do not edit" by the tool that wrote them. Nothing here is
+      // built or shipped: `01-Design/README.md` says the CSS lands in `src/ui/styles/` instead. So
+      // linting them only ever reports on somebody else's code.
+      "01-Design/**",
     ],
   },
 

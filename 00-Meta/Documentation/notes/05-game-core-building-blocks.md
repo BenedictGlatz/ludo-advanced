@@ -284,6 +284,71 @@ That needs all four pawns on `r = 44` at once, which the house forbids. **It is 
 line in `src/core/`.** It stays, because deleting it would make the next line read `blocked[0]` of an
 empty array, and a guard that is unreachable by construction is cheaper than a crash that is not.
 
+### The Dice Card Pool replaced the stand-in: 2026-08-30, issue #30
+
+`core/dice-pool.js` is the seventh module in `core/` and the first half of issue #37. It implements
+the interface `core/dice-source.js` documented, so the stand-in is no longer wired into a match but
+stays in the file for tests that want a predictable die.
+
+| What | Value | Requirement |
+| --- | --- | --- |
+| Cards in the pool | 20 | FR-16 |
+| Denominations | D2, D4, D6, D8, D10, D12, D20 | FR-16 |
+| Copies, in that order | 2, 3, 4, 4, 3, 2, 2 | FR-17 |
+| Drawn per turn | 3, without replacement | FR-18 |
+| Kept | 1 | FR-19 |
+| Returned at end of turn | all 3, reshuffled | FR-21 |
+| Discard pile | none, the pool is stationary | FR-21 |
+
+**There is no shuffle function, and that is a choice rather than an omission.** `draw` picks a
+uniformly random index out of what is left and swaps the last card into the gap. Twenty of those
+picks in a row *is* a Fisher-Yates shuffle, so the distribution is identical and there is one code
+path instead of two. **Rejected: shuffling the whole array on every `returnHand`.** It would be a
+second source of randomness with its own tests, doing work no rule can observe, because the pool is
+face down.
+
+**This is the only module in `core/` that holds mutable state.** Which cards are on the table is not
+a rule, it is the pool's own bookkeeping, and the part that matters to the turn is already stored by
+the turn manager as `state.hand`. Keeping the twenty cards inside a closure means no other layer can
+reach in and take one. The closure is built once per match by the composition root, so two matches
+never share a pool.
+
+#### The seam held, and the measurement is two lines
+
+Swapping the stand-in for the real pool changed **one default argument in `state/match.js` and one
+call in `src/main.js`**. Nothing in `core/movement.js`, `state/turn-manager.js` or `state/intents.js`
+moved. That is the payoff of the two decisions recorded on 2026-08-29: FR-09 written as
+`roll === dieMax` rather than `roll === 6`, and the RNG injected from outside.
+
+#### Negative finding: every end-to-end seed became worthless, and the replay had never been committed
+
+The pool draws from **the same generator the die rolls from**. So the moment it was wired in, every
+`?seed=N` played a different match and all five seeds in `tests/e2e/helpers.js` were wrong. Two of
+the seven specs failed on facts that were true only for a fixed D6.
+
+The seeds had originally been found by replaying matches headlessly, and **that replay was never
+committed**, so there was no way to find new ones except to redo undocumented work. It is a script
+now: `scripts/find-seeds.js`, run by `npm run test:seeds`. It imports the real `startMatch` and
+`dispatch` and uses the same policy the Playwright helpers click with, so its output is a fact about
+the shipped code and not about a model of it.
+
+The cost of not having written it the first time was the whole of that second search. The
+[08-quality.md](08-quality.md) note carries the same finding from the testing side.
+
+#### Negative finding: the view now hides a choice the rulebook gives the player
+
+FR-19 says the player picks one of the three drawn cards. `ui/game-loop.js` still takes `hand[0]`,
+because the hand has no design yet and therefore nothing to click. Before #30 that was honest, since
+the stand-in dealt one card and there was no choice to hide; now it is a real gap and it is visible
+in play, because a hand whose first card is a D20 needs a twenty to get a pawn out of the yard and
+the turn usually passes.
+
+It stays as `hand[0]` rather than becoming a "pick the most useful die" rule. A clever rule would be
+a second player living in the view, and it would have to be unwritten again in issue #31.
+
+**Measured, not assumed:** `npm run test:seeds` replays 400 two-player matches, and 400 of them
+finish inside 600 turns. So the gap costs turns and does not deadlock the game.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -294,12 +359,17 @@ empty array, and a guard that is unreachable by construction is cheaper than a c
   rule from [CLAUDE.md](../../../CLAUDE.md) is no longer only declared: since the same day it is a
   **failing lint run**, through `no-restricted-imports` and `no-restricted-globals` scoped to
   `src/core/**`, and a failing test run, through `environment: "node"` in Vitest. See
-  [07-tooling.md](07-tooling.md). Seven of the eight planned `core/` modules do not exist yet.
+  [07-tooling.md](07-tooling.md). ~~Seven of the eight planned `core/` modules do not exist yet.~~
+  **Seven of the eight exist as of 2026-08-30.** Missing: `core/skill-pool.js` and
+  `core/card-effects.js`, both issue #38.
 - Card effects live here as pure functions over game state and are matched to their presentation in
   `ui/` by card id.
 - The dice pool balance was to be paper-prototyped or spreadsheet-tested in Sprint 0
   ([01-Github-Project.md](../../Project-Management/01-Github-Project.md)). If that happened, the
-  result is a table for the appendix; if it did not, say so.
+  result is a table for the appendix; if it did not, say so. **Still open after #30:** the
+  composition shipped as specified, and the arithmetic in section 5 of the game design document is
+  still derived against the old 58-step journey. Re-deriving it against 44 is the remaining half of
+  the paper work, not a code change.
 - ~~Unresolved rule questions carried over from Chapter 01: overshoot behaviour, and whether the
   highest-number-to-leave-start rule scales sensibly across D2 through D20.~~ **Ruled 2026-08-22:**
   overshoot is illegal and the move is not offered (section 6.2 of the game design document); the

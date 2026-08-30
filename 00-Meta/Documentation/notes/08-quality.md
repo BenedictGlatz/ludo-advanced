@@ -291,8 +291,9 @@ Seven spec files, run against the production build in Chromium, Firefox and Edge
 `?seed=N` is read only by the composition root and makes the match repeatable (NFR-09). Choosing the
 seeds was a small piece of work in itself: a script replayed matches headlessly using **exactly the
 policy the tests use**, always activating the lowest-numbered pawn that can move, and recorded which
-turn each situation first happened on. That is what makes "seed 120 captures on turn 11" a fact. Seed
-120 also produces the quickest win found in seeds 1 to 400, on turn 101.
+turn each situation first happened on. That is what makes "seed 9 captures on turn 8" a fact.
+
+**Superseded on 2026-08-30 by issue #30, and the way it was superseded is the finding.** See below.
 
 #### Two things the suite does not do, and why
 
@@ -331,6 +332,51 @@ The test is marked `test.fail()`. The suite therefore reports a known failure ra
 over a requirement that is not met, and **if somebody widens the palette Playwright reports an
 unexpected pass**, which is exactly the signal wanted. Row 8 of the Product Owner sign-off table
 records the question.
+
+### The seeds went stale on the first rule change, because the replay was never committed: 2026-08-30, issue #30
+
+Replacing the stand-in die with the twenty-card Dice Card Pool made **all five seeds worthless in one
+commit**. The pool draws from the same injected generator the die rolls from, so every `?seed=N`
+played a different match from the one the specs were written against. Two of the twenty-four Chromium
+tests failed immediately.
+
+The seeds had been found by a replay script that was **used and then thrown away**, so re-deriving
+them meant redoing work nobody could see. That is the cost, and it was entirely avoidable: the script
+is 150 lines and the note above already called its output "a fact".
+
+It is committed now as `scripts/find-seeds.js`, behind `npm run test:seeds`. Three properties make it
+worth keeping rather than a convenience:
+
+- **It imports the shipped modules.** `startMatch`, `dispatch` and `createDicePool` are the same
+  functions the page loads, so its output is a fact about the code and not about a model of it.
+- **It states its own policy in one place.** Choosing `hand[0]` and clicking the lowest-numbered
+  movable pawn are written down next to the warning that changing either invalidates the seeds.
+- **It reports a bound, not only seeds.** 400 of 400 two-player matches finish inside 600 turns,
+  which is the evidence that the auto-choice gap in `ui/game-loop.js` costs turns and does not
+  deadlock the game.
+
+| Seed | Was | Now | What it produces |
+| --- | --- | --- | --- |
+| `leavesStartAtOnce` | 4 | **1** | 4 players, a pawn leaves on turn 1 |
+| `advancesEarly` | 4 | **1** | 2 players, first advance on turn 3 |
+| `capturesEarly` | 120 | **9** | 2 players, first capture on turn 8 |
+| `passesOnTurnOne` | 1 | **2** | 4 players, no legal move on turn 1 |
+| `winsQuickest` | 120 | **200** | 2 players, seat 2 wins on turn 80 |
+
+#### Two specs were asserting the stand-in rather than the rule
+
+`pawn-leaves-start.spec.js` asserted `expect(roll).toBe(6)` for "the maximum was rolled". That was
+only ever true because the stand-in was a D6. **The view had no way to say which die was in play**, so
+the test could not express FR-09 as written. `data-die` was added to the board's attributes and the
+assertion is now `expect(roll).toBe(die)`, which is the rule. The dice hand in issue #31 needs the
+same attribute anyway.
+
+`win.spec.js` asserted that seat 0 wins and that the message reads "Spieler 1 hat gewonnen". Under
+seed 200 seat 2 wins. Which seat wins is a property of the seed and never was a rule, so the spec now
+names seat 2 with a comment saying why, instead of quietly assuming the first player.
+
+The general lesson for the report: **a test that hard-codes a value the rules derive will pass for
+the wrong reason until the derivation changes.** Both of these did.
 
 ## Decisions
 

@@ -12,3 +12,9 @@ package-lock.json
 # writing-style rules; Prettier formats code.
 *.md
 00-Meta/
+
+# Design deliverables, for the same reason ESLint ignores them: Claude Design ships a generated
+# canvas runtime and a `.dc.html` board with every handoff, marked "do not edit" by the tool that
+# wrote them. Nothing here is built or shipped, and reformatting somebody else's generated output
+# produces a diff that reviews nothing.
+01-Design/

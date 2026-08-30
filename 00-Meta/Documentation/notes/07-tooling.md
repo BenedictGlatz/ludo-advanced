@@ -40,6 +40,12 @@ Declared in [CLAUDE.md](../../../CLAUDE.md) as the binding specification for `pa
 | `npm run test:e2e` | Playwright, all browsers |
 | `npm run docs:ai-index` | Generate Chapter 13 from the AI prompt log |
 
+One script exists that this list does not name, added 2026-08-30 with issue #30:
+
+| Script | Purpose |
+| --- | --- |
+| `npm run test:seeds` | Replay matches headlessly and print the seeds `tests/e2e/helpers.js` pins |
+
 ### Constraints that shape the toolchain
 
 - **JavaScript only, no TypeScript.** No `.ts` files and no build-time type checking. The reason is
@@ -216,6 +222,30 @@ file that has a reason, not for the folder.
 
 **Vite needed no configuration for the stylesheets.** `main.js` imports the six CSS files and the
 build bundles them into one asset. Nothing was added to `vite.config.js`.
+
+### One script added and one directory ignored: 2026-08-30, issue #30
+
+**`npm run test:seeds` is a twelfth script, and it is not in CLAUDE.md's binding list.** It runs
+`scripts/find-seeds.js`, which replays matches headlessly to find the seeds the end-to-end suite
+plays on. It is in `package.json` rather than left as a `node scripts/...` invocation for one reason:
+the seeds go stale whenever a change alters what the injected RNG is spent on, and a command nobody
+can find is a command nobody re-runs. The reasoning behind the script is in
+[08-quality.md](08-quality.md).
+
+The binding list in CLAUDE.md is a **minimum** and this adds to it rather than replacing anything, so
+no negotiation was needed. Worth noting in the report all the same: the specification was written
+before the project had a script that generates test inputs, and this is the first script whose output
+is committed data rather than a build artefact.
+
+**`01-Design/**` is now ignored by ESLint, and the reason matters more than the line.** Claude Design
+drops a generated canvas runtime next to every `.dc.html` board it delivers, `support.js` and
+`_ds_bundle.js`, several thousand lines each and marked "do not edit" by the tool that wrote them.
+The card artwork handoff arrived with three of them, and `npm run lint` went from clean to **306
+errors, none of them in project code**. Nothing under `01-Design/` is built or shipped:
+`01-Design/README.md` is explicit that the CSS lands in `src/ui/styles/` instead.
+
+The general point for the report: **a lint run that reports on somebody else's generated code is a
+lint run people learn to ignore**, and that is the failure mode worth avoiding, not the 306 errors.
 
 ## Decisions
 

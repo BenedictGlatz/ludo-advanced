@@ -11,7 +11,7 @@
  * functions and means the menus have something to call instead of reaching into the state object.
  */
 
-import { fixedDieSource } from "../core/dice-source.js";
+import { createDicePool } from "../core/dice-pool.js";
 import { MATCH_STATUS, TURN_PHASE, createGameState, nextState } from "./game-state.js";
 import { drawHand } from "./turn-manager.js";
 
@@ -65,12 +65,16 @@ export function abandonMatch(state) {
 }
 
 /**
- * The dependency pair for a match, with the temporary single-die pool.
+ * The dependency pair for a match: the randomness and the Dice Card Pool.
  *
- * This is the seam issue #37 replaces: swapping in the real Dice Card Pool changes the
- * `diceSource` argument at the composition root and nothing else. `rng` has no default on purpose,
- * because a default would be `Math.random` and NFR-09 exists to keep that out of the rules.
+ * This was the seam issue #37 replaced. The single-card stand-in that used to be the default is now
+ * the real twenty-card pool, and the change was this one default argument, because every rule was
+ * already written against the die's maximum rather than against a six.
+ *
+ * `rng` has no default on purpose: a default would be `Math.random`, and NFR-09 exists to keep that
+ * out of the rules. `diceSource` does have one, because a match with no pool is not a thing anybody
+ * wants; a test that needs a predictable die passes `fixedDieSource()` instead.
  */
-export function matchDeps(rng, diceSource = fixedDieSource()) {
+export function matchDeps(rng, diceSource = createDicePool()) {
   return { rng, diceSource };
 }

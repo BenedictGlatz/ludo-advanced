@@ -1,7 +1,7 @@
 /**
  * Leaving the start area on the die's maximum. Requirement FR-09, and FR-32 for the highlight.
  *
- * Seed 4 with four players rolls the maximum on turn 1, so this is the first thing that happens.
+ * Seed 1 with four players rolls the maximum on turn 1, so this is the first thing that happens.
  */
 
 import { expect, test } from "@playwright/test";
@@ -13,8 +13,11 @@ test.describe("a pawn leaves the start area", () => {
     const board = await openMatch(page, SEEDS.leavesStartAtOnce);
 
     await expect(board).toHaveAttribute("data-phase", "act");
-    const { activePlayer, roll } = await boardState(board);
-    expect(roll).toBe(6);
+    const { activePlayer, roll, die } = await boardState(board);
+
+    // FR-09 is "the die's maximum", not "a six". Which die that is depends on the card the turn
+    // drew, so the test asserts the rule and not the number a fixed D6 used to produce.
+    expect(roll).toBe(die);
 
     const before = await pawnPositions(board);
     expect(before[`${activePlayer}.0`]).toBe(0);

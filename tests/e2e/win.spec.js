@@ -5,9 +5,14 @@
  * This is the test that makes the slice a vertical one rather than a demo. It plays a complete
  * two-player match through the real interface, clicking pawns, and stops when somebody has won.
  *
- * Seed 120 finishes on turn 101, which is the quickest win found while searching seeds 1 to 400.
- * Every act turn is two clicks, so the run is a few hundred interactions and needs a raised timeout;
- * that is the honest cost of testing a whole match instead of asserting a state object.
+ * Seed 200 finishes on turn 80, which is the quickest win `npm run test:seeds` found while searching
+ * seeds 1 to 400 against the twenty-card pool. Every act turn is two clicks, so the run is a few
+ * hundred interactions and needs a raised timeout; that is the honest cost of testing a whole match
+ * instead of asserting a state object.
+ *
+ * **The winner here is seat 2, not seat 0.** In a two-player match the seats are 0 and 2, because
+ * `seatsFor` sits two players opposite each other. Whichever seat wins is a property of the seed, so
+ * the assertions below name seat 2 deliberately rather than assuming the first player always wins.
  */
 
 import { expect, test } from "@playwright/test";
@@ -30,12 +35,12 @@ test.describe("winning a match", () => {
 
     const message = page.locator(".move-refusal");
     await expect(message).toHaveAttribute("data-message-kind", "win");
-    await expect(message).toHaveText("Spieler 1 hat gewonnen");
+    await expect(message).toHaveText("Spieler 3 hat gewonnen");
 
-    // The winner is seat 0, which the message calls player 1.
+    // The winner is seat 2, which the message calls player 3.
     const positions = await pawnPositions(board);
     const winnerPositions = [0, 1, 2, 3]
-      .map((index) => positions[`0.${index}`])
+      .map((index) => positions[`2.${index}`])
       .sort((a, b) => a - b);
 
     // A full house is one pawn on each of the four house squares. Not four pawns on one square:

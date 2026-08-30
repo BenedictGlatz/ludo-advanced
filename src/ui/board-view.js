@@ -167,10 +167,17 @@ export function updateBoard($board, state) {
   //
   // The roll is not shown to the player anywhere, and that is deliberate rather than forgotten. What
   // a player needs is where the pawn will land, and the legal-target highlight of D7 says that
-  // directly. The number itself belongs to the dice hand, which is issue #37.
+  // directly. The number itself belongs to the dice hand, which is issue #31.
+  //
+  // `data-die` joined them with issue #30, when the pool started dealing seven different
+  // denominations. Before that the die was always a six and a test could write `expect(roll).toBe(6)`
+  // for "the maximum was rolled". Now the maximum depends on which card was picked, so the rule
+  // FR-09 actually states, that leaving the start area needs the die's maximum, is only checkable if
+  // the view says which die is in play.
   $board.attr("data-phase", state.phase);
   $board.attr("data-status", state.status);
   $board.attr("data-roll", state.roll ?? "");
+  $board.attr("data-die", state.chosenDie ?? "");
 
   // `data-turn` only ever counts upward, and that is the point of it. A test that waits for the
   // phase or the active seat to change can miss the change entirely: with the pauses collapsed, a
