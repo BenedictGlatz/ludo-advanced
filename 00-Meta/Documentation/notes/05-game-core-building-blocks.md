@@ -549,6 +549,111 @@ always and the extra draws do nothing. 5 is a guess at "enough room that a draw 
 something". Neither number has been playtested. It is one constant, and it is flagged in the plan, in
 section 4.2 of design handoff 03, and now in section 10 of the game design document.
 
+### The rules substrate the skill cards needed: 2026-08-31, issue #38
+
+Before a single card effect could be written, five things had to exist that the game had no concept of.
+All five are `core/`, all five are pure, and none of them mentions a card by name. That separation is
+deliberate: a card is data, an effect is a function, and this layer is what both of them stand on.
+
+| New module | What it owns |
+| --- | --- |
+| `core/roll.js` | The roll as an ordered chain of modifiers rather than one number |
+| `core/statuses.js` | States that outlive the card that caused them, measured in turns |
+| `core/path.js` | The squares a move steps on, relative in and absolute out |
+| `core/traps.js` | Objects that sit on a square: three traps and two blockers |
+| `core/move-rules.js` | The per-pawn movement rules, split out of `movement.js` |
+
+#### The roll stopped being one line, and the order had to be written down
+
+Four of the ten cards of artboard `6a` change the number that comes off the die, and they do not
+commute. A 3 doubled and then given a +5 is 11; the same 3 given a +5 and then doubled is 16. That is a
+difference of a full lap, so the order is written once, in the module's own table, and obeyed nowhere
+else: named number, then advantage or disadvantage, then extra dice, then multiplier, then a floor at
+zero.
+
+**Advantage and disadvantage cancel out.** The alternatives all need a written rule about which card was
+played first. Cancelling needs none, and "the two effects undo each other" is what a player would guess.
+The test proves the second roll is never even spent: the scripted RNG throws when it is asked for a
+number it was not given.
+
+#### Two rules had to change, and both are in the journal
+
+1. **Leaving the start area became `roll >= dieMax`** (FR-09). Angel Die adds a D8, and under the old
+   `roll === dieMax` a **buff would have made leaving the yard impossible**. Without card modifiers a
+   roll can never exceed the maximum, so every match played before the change plays identically. That
+   compatibility claim is asserted, not argued: the movement tests from issue #28 pass untouched.
+2. **A roll of zero is now a legal outcome.** Devil Die can subtract more than the die produced.
+   `movement.js` used to throw a `RangeError` for anything outside 1 to `dieMax`, which would have
+   turned one card into a crash. Zero now has its own refusal reason, `move.refused.no-steps`, and is
+   answered once for the turn rather than four times, once per pawn.
+
+#### A duration is normalised before it is stored
+
+The artwork measures time in two units. Some cards say "for 2 rounds", some say "for 3 turns". Those are
+not comparable: one round is four turns at a full table and two at a small one. So `turnsForRounds` is
+the single conversion and everything downstream is in turns. Without it the same card would quietly mean
+something different at a different table size.
+
+A status stores an **absolute deadline** and not a countdown. A missed decrement would leave a pawn
+frozen forever with no error; a missed filter shows up immediately as a status that will not go away.
+
+#### A broader status answers a narrower question
+
+`hasStatus(statuses, kind, { player, pawn })` matches loosely upwards: an entry with `pawn: null`
+belongs to a whole player, and one with both fields `null` belongs to the whole board. That is what lets
+The Purge be **one** entry rather than sixteen. It never matches downwards, so a status on pawn 1 cannot
+answer a question about pawn 2.
+
+#### Rock is a status on a pawn, Big Ah Rock is an entry on a square
+
+Both block passage, and they are stored differently because of what they are attached to. A Big Ah Rock
+is dropped on a square and stays there. **A Rock turns one of your own pawns into a blocker**, so the
+blocked square moves when the pawn moves. Storing that square would be storing a copy of a pawn position
+that goes stale the moment the pawn walks, which is exactly the quiet duplication the frozen state object
+exists to prevent. `blockedSquares(pawns, board)` therefore reads one from the list and derives the other
+from the pawns, every time it is asked.
+
+#### The one rule that had to look at the whole walk
+
+Everything in this project checks the destination square, and `movement.js` says why in its own comment:
+a pawn jumping over three opponents is classic Ludo working correctly. Rocks and traps are the exception,
+and they are the **only** exception. `squaresCrossed` exists for them alone, and an ordinary move still
+never calls it.
+
+#### Why `movement.js` was split, and where the seam is
+
+The file was at 207 of its 300 lines and had two jobs in it: deciding what a single pawn can do, and
+collecting four of those decisions into an answer for the turn. Every skill card lands on the first job.
+So that half moved to `move-rules.js`, and `movement.js` kept the public API, the turn-level collection
+and `applyMove`.
+
+The seam is a real one and not a line count: **everything in `move-rules.js` takes one pawn, everything
+left in `movement.js` takes a player's four.** `MOVE_KIND` and `REFUSAL` are re-exported from the old
+place, so every caller and test written before the split imports them unchanged.
+
+#### Ragebait is the one card that could not be a per-pawn rule
+
+"If the taunted pawn can move, you must move it" is a statement about the **relationship** between a
+player's moves. Asking one pawn "may I move" cannot answer "is a different pawn obliged to". So it is a
+filter over the finished move list, `applyRagebait`, and it stands down when the taunted pawn has no move
+at all. Without that, a taunt on a pawn that is already home would end its owner's turn for them, which
+is not what a taunt is.
+
+#### Built Different became a refusal rather than a spent shield
+
+The artwork reads as "survives one capture". Implemented literally, the capture is refused and the
+mover's pawn still arrives on the square, which puts two pawns on one square. So the rule is: **a pawn
+that cannot be captured cannot be landed on either**, and the move is refused with
+`move.refused.protected`. The duration replaces the "once" in the card text. Recorded as a deviation
+rather than a transcription.
+
+#### Negative finding: nothing yet reads three of these five modules
+
+`path.js`, `traps.js` and half of `statuses.js` are complete and tested and **no card uses them yet**.
+They were written first on purpose, because writing nineteen card effects against a substrate that does
+not exist is how the substrate ends up shaped by whichever card was written first. The cost is that
+their tests are the only callers until the artboard `4a` commits land.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

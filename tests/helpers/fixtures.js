@@ -63,3 +63,28 @@ export function rngForRolls(rolls, faces) {
     return (roll - 1) / faces;
   };
 }
+
+/**
+ * The same thing for a chain that rolls dice of **different sizes**, which is issue #38's roll.
+ *
+ * `rngForRolls` takes one face count for every roll, and that stopped being enough the moment Angel
+ * Die added a D8 on top of whichever dice card was chosen. Written as pairs so the intent survives:
+ *
+ * ```js
+ * rngForDice([[6, 20], [5, 8]])  // a 6 on the D20, then a 5 on the added D8
+ * ```
+ *
+ * Kept as a second helper rather than replacing the first, because most tests roll one die and
+ * `rngForRolls([6, 3], 6)` reads better than the pair form for those.
+ */
+export function rngForDice(pairs) {
+  let index = 0;
+  return () => {
+    if (index >= pairs.length) {
+      throw new Error(`scripted RNG exhausted after ${pairs.length} rolls`);
+    }
+    const [roll, faces] = pairs[index];
+    index += 1;
+    return (roll - 1) / faces;
+  };
+}

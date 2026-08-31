@@ -251,8 +251,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   English. The rules sentence of each card is deliberately absent and arrives with the card's effect
 - Section 2.5 of the game design document, the skill fields as a board rule: where they start, why the
   layout is symmetric, why landing counts and crossing does not, and what a respawn excludes
+- **The rules the skill cards stand on** (issue #38), five new modules in `src/core/`, none of which
+  mentions a card by name. The roll is now an ordered chain of modifiers rather than a single number, so
+  a card can add a die, subtract one, roll twice for the better or worse of two, multiply the result or
+  name it outright, and the order those apply in is fixed and tested. Statuses last a number of turns,
+  with "2 rounds" converted to turns once so a card cannot quietly mean something different at a
+  different table size. Traps and blockers sit on the shared squares. And movement can now be asked
+  about the squares a move **passes over**, which it never needed before
 
 ### Changed
+
+- **Leaving the start area now needs the die's highest number or better, not exactly that number**
+  (FR-09, issue #38). Nothing changes for a match played without skill cards, because a plain roll can
+  never go above the maximum. It changes everything for a card that adds to the roll: under the old
+  wording a buff made leaving the start area **impossible**, so a card meant to help was a trap
+- **A roll can now come out at 0**, which happens when a card subtracts more than the die produced.
+  Nobody moves that turn and the board says so. The roll used to be rejected as an invalid number, which
+  would have turned one card into a crash
+- The per-pawn movement rules moved out of `src/core/movement.js` into `src/core/move-rules.js`.
+  `movement.js` keeps the public API and everything that looks at a player's four pawns at once, and
+  still exports the move kinds and refusal reasons from the same place, so no caller changed
 
 - **The board topology changed from 52 track squares to 40** (issues #3 and #26), following the first design
   handoff. The player offset is 10 instead of 13, entry squares are 0 / 10 / 20 / 30, turn-off squares are

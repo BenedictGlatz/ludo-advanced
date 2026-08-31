@@ -37,10 +37,27 @@
  * `skillSquares` is stored and belongs to the match rather than the turn, because a used-up skill
  * square moves and stays moved (FR-22). It is the first field that neither describes the pawns nor is
  * wiped at the end of a turn, and `core/skill-squares.js` owns the rules for changing it.
+ *
+ * ## The three lifetimes a field can have, since issue #38
+ *
+ * Skill cards added enough fields that "stored or derived" stopped being the useful distinction.
+ * What matters now is **how long a field lives**, and there are exactly three answers:
+ *
+ * | Lives for | Fields | Cleared by |
+ * | --- | --- | --- |
+ * | The match | `pawns`, `seats`, `skillSquares`, `skillPool`, `skillDiscard`, `skillHands` | nothing |
+ * | Several turns | `statuses`, `traps` | their own deadline, or being used up |
+ * | One turn | `hand`, `chosenDie`, `roll`, `modifiers`, `cardsPlayed`, `reactionWindow`, ... | `clearedTurnFields` |
+ *
+ * The middle row is the new one and it is the one worth naming. A status has a deadline in turns and
+ * a trap sits on a square until something steps on it, so neither can be wiped at the end of a turn
+ * and neither lasts the whole match. `core/statuses.js` and `core/traps.js` own the rules for
+ * shortening them; this module only stores the lists.
  */
 
 import { seatsFor } from "../core/board.js";
 import { createPawns } from "../core/pawns.js";
+import { createModifiers } from "../core/roll.js";
 import { INITIAL_SKILL_SQUARES } from "../core/skill-squares.js";
 import { deepFreeze } from "./freeze.js";
 
@@ -54,13 +71,22 @@ export const TURN_PHASE = {
   DRAW: "draw",
   /** Step 3. Three dice cards are on the table and the player must pick one (FR-18, FR-19). */
   CHOOSE: "choose",
-  /** Step 4. A card is picked and the die has not been rolled yet. */
+  /**
+   * Step 4. The dice card is picked and the active player may play one Action card (FR-23).
+   *
+   * This is the phase issue #38 added, and it sits here rather than before the dice card because the
+   * Product Owner's rule is that skill cards come after the die is known. Half the Action cards
+   * change the roll, and choosing whether to buff a D20 or a D4 is the decision that makes them
+   * interesting.
+   */
+  ACTION: "action",
+  /** Step 5. A card is picked, cards are played, and the die has not been rolled yet. */
   ROLL: "roll",
-  /** Steps 5 and 6. The roll is known, the legal moves are computed, the player must pick one. */
+  /** Steps 6 and 7. The roll is known, the legal moves are computed, the player must pick one. */
   ACT: "act",
-  /** Step 7. A move is committed and the reaction window is open. Empty until issue #38. */
+  /** Step 8. A move is committed and the reaction window is open (FR-24, FR-25). */
   REACTION: "reaction",
-  /** Step 8. The move is resolved and the turn can be handed on. */
+  /** Step 9. The move is resolved and the turn can be handed on. */
   TURN_END: "turn-end",
   /** Nothing more happens in this match. */
   MATCH_OVER: "match-over",
@@ -110,14 +136,23 @@ export function createGameState(playerCount, skillSquares = INITIAL_SKILL_SQUARE
     // Match-level and not turn-level: the board rearranges itself over the whole match (FR-22).
     skillSquares: [...skillSquares],
 
+    /**
+     * The skill card pool, the discard pile and one hand per seat (FR-27).
+     *
+     * The pool starts **empty** and `match.js` fills it, because shuffling needs the injected RNG and
+     * this function deliberately has none. Keeping `createGameState` free of randomness means a test
+     * can build a starting board with no `deps` at all, which about half of them do.
+     */
+    skillPool: [],
+    skillDiscard: [],
+    skillHands: Object.fromEntries(seats.map((seat) => [seat, []])),
+
+    // Longer than a turn, shorter than the match: both carry their own end condition.
+    statuses: [],
+    traps: [],
+
     // Everything below is cleared at the end of every turn.
-    hand: [],
-    chosenDie: null,
-    roll: null,
-    legalMoves: [],
-    selectedPawn: null,
-    pendingMove: null,
-    refusalReason: null,
+    ...clearedTurnFields(),
 
     winner: null,
   });
@@ -139,15 +174,35 @@ export function nextState(state, changes) {
  *
  * A function and not a constant, so that no two states ever share the same empty array. A shared
  * array would be harmless while it stayed empty and a very confusing bug on the day it did not.
+ *
+ * **Every field a skill card writes is in here except the four that outlive a turn.** A card's roll
+ * modifier, the budget it spent, the window it opened: all gone at the handover. The four that stay
+ * are `statuses`, `traps`, `skillHands` and `skillDiscard`, and each of those has its own rule for
+ * when it shrinks. Listing the turn-level ones in one function is what makes that split checkable:
+ * `game-state.test.js` asserts that a state after `endTurn` differs from a fresh one only in the
+ * fields that are supposed to survive.
  */
 export function clearedTurnFields() {
   return {
     hand: [],
     chosenDie: null,
     roll: null,
+    rollSteps: [],
     legalMoves: [],
     selectedPawn: null,
     pendingMove: null,
     refusalReason: null,
+
+    /** The roll modifiers played this turn (`core/roll.js`). */
+    modifiers: createModifiers(),
+    /** How many cards each seat has played this turn, and how many it is allowed (FR-23). */
+    cardsPlayed: {},
+    cardBudget: {},
+    /** True once No Take-Backsies has shut the remaining windows of this turn. */
+    reactionsLocked: false,
+    /** The open reaction window, or `null` (`state/reaction-window.js`). */
+    reactionWindow: null,
+    /** The card that opened the current window and has not resolved yet. */
+    pendingCard: null,
   };
 }

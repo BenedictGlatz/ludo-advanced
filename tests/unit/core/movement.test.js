@@ -182,10 +182,25 @@ describe("the turn-level reason (FR-14)", () => {
 });
 
 describe("input checks", () => {
-  it("refuses a roll outside 1 to dieMax", () => {
-    for (const roll of [0, 7, -1, 2.5, "3"]) {
+  /**
+   * The check was `1 <= roll <= dieMax` until issue #38 loosened it, and both ends were loosened for
+   * a card:
+   *
+   * - **Zero is now a legal roll**, because Devil Die can subtract more than the die produced. It is
+   *   an ordinary outcome with its own refusal reason, tested separately below.
+   * - **A roll above the maximum is now legal**, because Angel Die adds a D8 on top.
+   *
+   * What is left is what was always a programming error rather than a game situation.
+   */
+  it("refuses a roll that is not a whole number of at least zero", () => {
+    for (const roll of [-1, 2.5, "3"]) {
       expect(() => legalMoves(pawnsAt(2), 0, roll, 6)).toThrow(RangeError);
     }
+  });
+
+  it("accepts a roll of zero and a roll above the die's maximum", () => {
+    expect(() => legalMoves(pawnsAt(2), 0, 0, 6)).not.toThrow();
+    expect(() => legalMoves(pawnsAt(2), 0, 14, 6)).not.toThrow();
   });
 
   it("refuses a die with fewer than two faces", () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { PAWNS_PER_PLAYER, START_R } from "../../../src/core/board.js";
+import { createModifiers } from "../../../src/core/roll.js";
 import {
   MATCH_STATUS,
   TURN_PHASE,
@@ -123,10 +124,33 @@ describe("clearedTurnFields", () => {
       hand: [],
       chosenDie: null,
       roll: null,
+      rollSteps: [],
       legalMoves: [],
       selectedPawn: null,
       pendingMove: null,
       refusalReason: null,
+      modifiers: createModifiers(),
+      cardsPlayed: {},
+      cardBudget: {},
+      reactionsLocked: false,
+      reactionWindow: null,
+      pendingCard: null,
     });
+  });
+
+  /**
+   * The list above is exhaustive by assertion rather than by review.
+   *
+   * Issue #38 added six turn-level fields at once, and the failure mode is not a wrong value: it is a
+   * field that a card writes and nothing clears, which leaks a roll modifier or a spent budget into
+   * the next player's turn. That is invisible in every other test, because every other test looks at
+   * one turn. Comparing against a fresh match is what catches it.
+   */
+  it("leaves nothing behind that a fresh match does not have", () => {
+    const fresh = createGameState(4);
+
+    for (const [field, value] of Object.entries(clearedTurnFields())) {
+      expect({ field, value }).toEqual({ field, value: fresh[field] });
+    }
   });
 });

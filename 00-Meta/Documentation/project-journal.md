@@ -1930,6 +1930,82 @@ to get wrong later.
   plainly in the parameter name and in the error message rather than left for a reader to work out.
 - → Ch. 08
 
+### 2026-08-31: Leaving the start area became "the maximum or better", not "exactly the maximum"
+
+- **Chosen:** FR-09's rule in `core/move-rules.js` is now `roll >= dieMax`.
+- **Why:** Angel Die adds a D8 to the roll. Under `roll === dieMax` a pawn in the yard with a buffed
+  roll would have been **less** able to leave than an unbuffed one, so a card whose whole purpose is to
+  help would have been a trap. The same applies to Speedrun's multiplier.
+- **Why it is safe for everything already built:** without a card modifier a roll can never exceed the
+  die's maximum, so the two wordings are identical for every match played before this change. That is
+  not an argument, it is a test result: the movement tests written for issue #28 pass untouched.
+- **Rejected: leaving the rule alone and clamping the roll to `dieMax`.** It keeps FR-09 literal and it
+  throws away the whole point of a buff, which is to move further.
+- **Rejected: a special case saying a buffed roll also leaves the yard.** Two rules where one will do,
+  and the second one only exists to undo the first.
+- → Ch. 05
+
+### 2026-08-31: A roll of zero is an outcome, not an invalid input
+
+- **Chosen:** `evaluateTurn` accepts a roll of 0 and answers with one turn-level reason,
+  `move.refused.no-steps`.
+- **Why:** Devil Die subtracts a D8, and on a D6 that goes below one more often than not. The old input
+  check threw a `RangeError` for anything outside 1 to `dieMax`, which would have turned one card into
+  a crash rather than into a bad turn.
+- **Why it is turn-level and not per pawn.** Asking each of four pawns produces four copies of the same
+  sentence and buries the one fact that matters. Zero distance is a property of the roll, and the
+  refusal list stays empty so no pawn is described as blocked by something.
+- **Rejected: a floor of 1 instead of 0**, so that a bad roll always moves one square. It reads as
+  kinder and it makes Devil Die nearly worthless, because one square forward is what most turns want
+  anyway.
+- → Ch. 05
+
+### 2026-08-31: Built Different protects rather than absorbing
+
+- **Chosen:** a pawn with the armoured status cannot be **landed on** at all, for a duration. The move
+  is refused with `move.refused.protected`.
+- **Why:** the artwork reads "survives one capture". Taken literally, the capture is cancelled and the
+  mover still arrives, which puts two pawns on one square and breaks the board's most basic invariant.
+  Every honest reading has to answer "so where does the mover end up", and "it does not move" is the
+  same as refusing the move.
+- **Rejected: the mover stops one square short.** It keeps the capture attempt meaningful and it invents
+  a movement rule that exists nowhere else in the game, for one card.
+- **Rejected: the capture happens and the shield sends the mover home instead.** That is a different
+  card, and a much stronger one.
+- **What was lost:** the "once" in the card text. A duration replaced it, because a status that is spent
+  by an event nobody can see would leave a player unable to tell a protected pawn from an unprotected
+  one.
+- → Ch. 05
+
+### 2026-08-31: `movement.js` was split by argument count, not by line count
+
+- **Chosen:** everything that takes **one** pawn moved to `core/move-rules.js`. Everything that takes a
+  player's four stayed in `core/movement.js`, along with the public API and `applyMove`.
+- **Why:** the file was at 207 of 300 lines and blockers plus backward moves would have burst it, so a
+  split was coming either way. Choosing the seam by what the functions take rather than by where 300
+  lines fell means the two halves have a describable difference, and `REFUSAL` lives with the rules that
+  produce it.
+- **Rejected: splitting off the refusal reasons and the constants.** It gets under the limit with the
+  smallest diff and leaves two files neither of which can be described in a sentence.
+- **The re-export is deliberate.** `movement.js` still exports `MOVE_KIND`, `REFUSAL` and `EMPTY_BOARD`,
+  so no existing import changed. A refactor that also touches thirty call sites is a refactor whose
+  diff nobody can read.
+- → Ch. 05
+
+### 2026-08-31: Advantage and disadvantage cancel out
+
+- **Chosen:** both modifiers on the same roll means one ordinary roll.
+- **Why:** every other resolution needs a written rule about which card was played first, and the game
+  has no concept of card order. Cancelling needs no such rule, and it is what a player would guess.
+- **Rejected: advantage wins**, on the grounds that the Action card is played before the Reaction. It
+  makes Critical Failure unplayable against Critical Success, which is exactly the matchup the two cards
+  are for.
+- **Rejected: roll twice and take the second.** Arbitrary, and it hides a rule inside an implementation
+  detail.
+- **The test asserts the saving, not just the answer.** The scripted RNG is given exactly one number, so
+  a second roll would fail the test with "scripted RNG exhausted" rather than passing quietly.
+- → Ch. 05
+
 ---
 
 ## Challenges
