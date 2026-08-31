@@ -198,6 +198,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   them all without scrolling (FR-31). Nine open decisions, D25 to D33
 - The card artwork handoff, `01-Design/Handoff/Card artwork design planning/`. It is the only record of what
   the 29 cards are, the Product Owner picked the set out of it, and design handoff 03 references it by path
+- **The eight skill fields** (issue #38, FR-22): four, seven, fourteen, seventeen, twenty-four, twenty-seven,
+  thirty-four and thirty-seven of the forty shared track fields. A pawn that **lands** on one earns its owner
+  an extra skill card; crossing one does nothing, because otherwise a D20 would collect several in a move and
+  "take the biggest card" would be the only sensible choice. The field is then used up and reappears on a
+  random other field, never on a player's entry field, never on a field another skill field is on, and never
+  where it just was. The layout is generated from two offsets per player quarter, so every player meets a
+  skill field at exactly the same points of their own journey. **Nothing is visible yet**: skill fields are
+  meant to be purple and purple already marks a legal target field, which is open decision D27 of design
+  handoff 03
+- `data-skill-square` on the eight track fields that currently hand out a card, and `data-winner` on the
+  board, holding the seat that won. Both are for the tests, and `data-winner` exists because the win spec had
+  twice been repaired by copying a new seat number into it after a seed regeneration
+- `src/state/freeze.js`, a generic deep freeze replacing the field-by-field one in `game-state.js`. The card
+  work adds nine state fields, two of them nested two levels deep, and a freeze list that has to be edited
+  for every new field leaves an array writable with no symptom the day somebody forgets a line
+- The locale text split into `locales/<code>/ui.json` and `locales/<code>/cards.json`, merged into one
+  i18next namespace at boot so that every existing `t("turn.end")` call is unchanged. Done ahead of the 29
+  card titles and rules sentences, which are roughly four times as much text as the whole interface
 
 ### Changed
 
@@ -302,3 +320,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hypergeometric draw does not depend on how long the track is
 - Section 10 of the game design document no longer claims that nothing in it is verified, which stopped being
   true on 2026-08-29. It now names which sections are implemented and under test and which are not
+- **All five end-to-end seeds were re-derived for the second time in a week** (issue #38), because a used-up
+  skill field draws from the same random generator the die rolls from. `capturesEarly` 9 → 95 and
+  `winsQuickest` 200 → 225; the other three are unchanged. The quickest win is now turn 79 and it is seat 0.
+  This time the fix was one command, `npm run test:seeds`, instead of rebuilding the script that finds them
+- **`win.spec.js` no longer names the winning seat.** Which seat wins is a property of the seed, and the spec
+  had failed twice for that reason. It now reads `data-winner` off the board and asserts the rule instead:
+  the winner's four pawns fill the four house fields and the message names that seat
+- `resolveReactions` and the `commit-move` intent take `deps`, because using up a skill field needs the
+  injected randomness. `createGameState` and `startMatch` accept the skill field layout, defaulting to the
+  real one, so a test that scripts an exact sequence of rolls can pin an empty board

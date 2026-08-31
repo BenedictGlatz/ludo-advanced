@@ -32,6 +32,9 @@
  * - `choose-die` picks the card **and rolls it** (steps 3 to 5). The player chose; the roll follows.
  * - `commit-move` commits **and resolves** (steps 6 and 7). The reaction window in between is empty
  *   until issue #38 puts cards in it, and it is `turn-manager.js` that owns the seam.
+ *
+ * `commit-move` needs `deps` since issue #38, because resolving a move can use up a skill square and
+ * a respawn draws from `deps.rng`.
  */
 
 import { MATCH_STATUS, TURN_PHASE } from "./game-state.js";
@@ -89,11 +92,11 @@ function handleSelectPawn(state, intent) {
   return accept(selectPawn(state, intent.pawn));
 }
 
-function handleCommitMove(state, intent) {
+function handleCommitMove(state, intent, deps) {
   if (state.phase !== TURN_PHASE.ACT) return reject(state, REJECTED.WRONG_PHASE);
   if (moveForPawn(state, intent.pawn) === null) return reject(state, REJECTED.NO_MOVE_FOR_PAWN);
 
-  return accept(resolveReactions(commitMove(state, intent.pawn)));
+  return accept(resolveReactions(commitMove(state, intent.pawn), deps));
 }
 
 /**
@@ -121,7 +124,7 @@ export function dispatch(state, intent, deps) {
     case INTENT.SELECT_PAWN:
       return handleSelectPawn(state, intent);
     case INTENT.COMMIT_MOVE:
-      return handleCommitMove(state, intent);
+      return handleCommitMove(state, intent, deps);
     case INTENT.END_TURN:
       return handleEndTurn(state, deps);
     default:

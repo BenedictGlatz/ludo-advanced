@@ -349,6 +349,78 @@ a second player living in the view, and it would have to be unwritten again in i
 **Measured, not assumed:** `npm run test:seeds` replays 400 two-player matches, and 400 of them
 finish inside 600 turns. So the gap costs turns and does not deadlock the game.
 
+### The skill squares, the first board feature that changes during a match: 2026-08-31, issue #38
+
+`src/core/skill-squares.js`. Eight of the forty shared track squares hand out an extra skill card to
+whoever **lands** on one. The square is then used up: it disappears and reappears on a random other
+square, so the board rearranges itself over the course of a match.
+
+#### The starting layout is built, not typed
+
+Each player's quarter of the ring gets a square at `entry + 4` and one at `entry + 7`, which produces
+4, 7, 14, 17, 24, 27, 34 and 37. Building it from the offsets rather than writing the eight numbers
+out means the symmetry is a property of the code, and a test can assert what the symmetry buys:
+**every player meets a skill square at exactly the same points of their own journey**, relative
+positions 5, 8, 15, 18, 25, 28, 35 and 38.
+
+Why that matters: FR-04 fixes turn order at the start of the match and does not compensate for going
+first. A board that also gave one seat an earlier first card would stack a second advantage on top of
+the first, and no rule in the game balances it.
+
+The offsets 4 and 7 themselves are a playtesting question, not a derivation. What can be said for them
+is that 4 is far enough from the entry square that a pawn cannot reach a skill square straight out of
+the start area even with the smallest die, and 4 and 7 are far enough apart that one move rarely covers
+both. Both of those are tests.
+
+#### Landing counts, crossing does not
+
+Only the square a pawn finishes its move on triggers anything.
+
+The reason is the dice pool. If crossing counted, a D20 would collect several squares in a single move
+and a D2 almost none, so the answer to "which of these three cards should I take" would always be "the
+biggest", and the choice FR-19 is built around would stop being a choice. It also matches capture,
+which already only looks at the target square, so a player learns one rule instead of two.
+
+#### The respawn, and what it excludes
+
+`consumeSkillSquare(squares, absolute, rng)` returns a **new**, sorted list. Sorting is not cosmetic:
+without it, two boards holding the same eight squares would compare unequal depending on the order the
+squares happened to be used in, and every test would have to sort first.
+
+Three exclusions, each for its own reason:
+
+- **The four entry squares**, 0, 10, 20 and 30. Not for fairness: the entry square is the busiest
+  square a player has, since every one of their pawns starts on it and passes over it. A skill square
+  there would pay out far more often than one anywhere else, and always to the same player.
+- **The squares the other seven skill squares are on**, because two on one square cannot be told apart.
+- **The square just used.** Having it reappear under the same pawn would read as nothing having
+  happened, and a player could not tell that from a bug.
+
+That leaves 28 candidates, and the test asserts the number rather than trusting the arithmetic in this
+paragraph. A further test checks that all 28 are actually reachable over 2000 respawns, because a
+respawn that only ever used half the board would pass every other test here.
+
+**Houses need no exclusion at all.** A house is not a track square, so an absolute square index never
+refers to one. Same for start areas, which is also why a captured pawn cannot trigger a skill square:
+it goes back to its start area, and `skillSquareLandedOn` answers `null` there.
+
+#### Negative finding: the skill squares are in no requirement
+
+FR-22 is the closest fit and it does not mention them: *"How a player acquires skill cards is defined:
+when a draw happens, how many, and the maximum hand size."* The skill squares are one of the two draw
+triggers, so they are implementing FR-22, but the requirement text names neither them nor the draw at
+the start of a turn.
+
+FR-08 has the same gap on the board side: *"The board is a closed track shared by all players, plus one
+home path per player."* No special square type. Neither does the game design document, and neither does
+the obligations book's screen inventory.
+
+This is a consequence of where the rule came from. The skill squares and their respawn are the team's
+own decision, taken on 2026-08-30 in answer to a question Claude Code asked, and the requirements
+specification has not caught up. **The code is ahead of the requirement, which is the wrong direction.**
+Recorded rather than fixed silently, because FR-22 carries a † (needs a decision) and rewriting it is a
+requirements change that belongs with the rest of the skill card set.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -478,6 +478,32 @@ it: one asserts the shipped files own disjoint top-level keys, one asserts the t
 `D{{faces}}` in English. A dice card's name is not a number the view can format itself, because the
 letter in front of it is language.
 
+### Two attributes joined the DOM contract, and one of them is invisible on purpose: 2026-08-31, issue #38
+
+**`data-skill-square="true"`** on the eight `.square--track` elements that currently hand out a card. It
+is rewritten on every board update rather than only when the set changes, because a used-up square moves
+and the work is one attribute on 40 elements. Tracking what changed would be more code than it saves.
+
+**Nothing on screen shows it yet, and that is the blocker rather than an omission.** Decision D27 of
+design handoff 03 is open: skill squares are meant to be purple, and `--color-hint` already uses purple
+for a legal target square. A square can be both at once, so which reading wins is a design decision and
+`CLAUDE.md` forbids this side from taking it. The attribute is in the DOM contract of the brief, so the
+markup can be ready while the stylesheet waits.
+
+**`data-winner`**, the seat that won, empty while the match is running. This one was added for a reason
+worth recording in full, because it is a testing lesson and not a design one.
+
+The win spec used to assert the literal text "Spieler 3 hat gewonnen" and read the winner's pawns out of
+`positions["2.<index>"]`. Which seat wins is a property of the seed, not of any rule, and the seeds had
+to be regenerated twice in one week: once for issue #30 and once for issue #38. Both times that spec
+failed for a reason that had nothing to do with what it was testing, and both times it was "fixed" by
+copying a new seat number into it.
+
+So the view now says who won, and the spec reads it and asserts the **rule** instead: the winner's four
+pawns fill the four house squares, and the message names that seat. It cannot go stale on the next seed
+change. This is the same argument that added `data-die` for issue #30, and it is now clearly a pattern:
+when a spec has to hard-code a value that the seed decides, the view is missing an attribute.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

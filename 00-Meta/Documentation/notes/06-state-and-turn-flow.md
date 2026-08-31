@@ -171,6 +171,55 @@ Two limits are deliberate:
 `nextState` and `createGameState` are the only callers, so there is still exactly one line to read to
 know that no state is ever written in place.
 
+### The state gained its first match-level field, and `resolveReactions` gained a reason to take `deps`: 2026-08-31, issue #38
+
+`skillSquares` joined the state object. Every field before it was either a description of the pawns or
+something wiped at the end of the turn; this one is neither. A used-up skill square moves and stays
+moved, so it belongs to the match.
+
+`core/skill-squares.js` owns every rule about it. `state/` asks and writes the answer, which is the same
+division the pawn positions already follow.
+
+#### Where the square is used up, and why there
+
+In `resolveReactions`, the step that applies the committed move. Not in `commitMove`, which only records
+the intention: a skill square counts only if the pawn actually finished there, and a reaction card will
+be able to cancel a committed move once the cards exist. Putting it in the resolve step means it is
+already in the right place for that.
+
+**The win branch returns early, so the move that wins the match does not use up a square.** Deliberate,
+and tested as such: nothing happens after the match ends, so a card earned on the winning move would
+have nowhere to go.
+
+#### `resolveReactions` now takes `deps`, and `commit-move` forwards it
+
+A respawn needs randomness, and randomness in this project is injected (NFR-09). So the signature changed
+from `resolveReactions(state)` to `resolveReactions(state, deps)`, and `handleCommitMove` in `intents.js`
+passes it through.
+
+**The consequence is worth writing down: `deps.rng` is now drawn from twice in a turn**, once for the
+roll and once for a possible respawn. Anything that scripted an exact sequence of rolls silently played a
+different match from the moment a pawn landed on a skill square. That hit the same two places it hit for
+issue #30, the exact-final-state unit test and all five Playwright seeds, and it is written up as a
+challenge in the journal.
+
+#### `createGameState` gained a `skillSquares` parameter
+
+The board's skill squares can be pinned when a match is created, defaulting to the real eight-square
+layout so that no production caller passes anything.
+
+It exists because of the `rng` consequence above. A test that scripts rolls hands in an empty list, which
+says "this test is about movement and turn order" rather than encoding a rule it is not testing. The
+alternative, interleaving dummy respawn draws into the roll script at the right points, would make that
+test depend on the exact rule it is not testing, and it would break again on the next rule that draws.
+
+The second caller is the one this will really pay for: a Playwright spec needs a skill square in a place
+its pawn actually reaches, and a random layout cannot promise that.
+
+**A restart does not carry the arrangement over.** `restartMatch` rebuilds from the default, because a
+restart is a fresh match and a board that kept where the last match had wandered to would start the
+second match from a position nobody chose.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

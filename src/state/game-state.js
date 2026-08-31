@@ -33,10 +33,15 @@
  * Not stored at all: whether a player has won. `core/win.js` answers that from the pawn positions,
  * and a stored copy would be a second source of truth for the same fact. `winner` holds the answer
  * once the match is over, which is a record of the outcome and not a shortcut around the rule.
+ *
+ * `skillSquares` is stored and belongs to the match rather than the turn, because a used-up skill
+ * square moves and stays moved (FR-22). It is the first field that neither describes the pawns nor is
+ * wiped at the end of a turn, and `core/skill-squares.js` owns the rules for changing it.
  */
 
 import { seatsFor } from "../core/board.js";
 import { createPawns } from "../core/pawns.js";
+import { INITIAL_SKILL_SQUARES } from "../core/skill-squares.js";
 import { deepFreeze } from "./freeze.js";
 
 /**
@@ -77,8 +82,20 @@ export const MATCH_STATUS = {
  * cannot be recomputed from a count without repeating that rule here. Storing the list means
  * `state/` asks `core/` once, at the start of the match, and every later question about turn order
  * reads the answer instead of deriving it again.
+ *
+ * **`skillSquares` is a parameter and not simply the constant**, because the skill squares are the one
+ * part of the board that a match can be set up differently with. Two callers want that:
+ *
+ * - A test that scripts an exact sequence of rolls. `deps.rng` is drawn from twice per turn now, once
+ *   for the roll and once for a skill square respawn, so a script written as a list of rolls silently
+ *   shifts as soon as a pawn lands on a skill square. Handing in an empty list says "this test is
+ *   about movement and turn order" instead of encoding a rule it is not testing.
+ * - A Playwright spec that needs a skill square in a place its pawn will actually reach.
+ *
+ * The default is the real layout, so no production caller passes anything and there is no way to start
+ * a match with an accidentally empty board.
  */
-export function createGameState(playerCount) {
+export function createGameState(playerCount, skillSquares = INITIAL_SKILL_SQUARES) {
   const seats = seatsFor(playerCount);
 
   return deepFreeze({
@@ -89,6 +106,9 @@ export function createGameState(playerCount) {
     turnNumber: 1,
     phase: TURN_PHASE.DRAW,
     pawns: createPawns(playerCount),
+
+    // Match-level and not turn-level: the board rearranges itself over the whole match (FR-22).
+    skillSquares: [...skillSquares],
 
     // Everything below is cleared at the end of every turn.
     hand: [],

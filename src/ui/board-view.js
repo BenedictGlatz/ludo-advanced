@@ -179,14 +179,47 @@ export function updateBoard($board, state) {
   $board.attr("data-roll", state.roll ?? "");
   $board.attr("data-die", state.chosenDie ?? "");
 
+  // `data-winner` joined them with issue #38, for the same kind of reason `data-die` did. The win
+  // spec used to name seat 2 and the text "Spieler 3", because that was what the seed happened to
+  // produce. Two seed regenerations later, in one week, that had to be corrected twice. Which seat
+  // wins is a property of the seed and not a rule, so the spec now reads the winner off the board and
+  // asserts the rule instead: the winner's four pawns fill the four house squares, and the message
+  // names that seat.
+  $board.attr("data-winner", state.winner ?? "");
+
   // `data-turn` only ever counts upward, and that is the point of it. A test that waits for the
   // phase or the active seat to change can miss the change entirely: with the pauses collapsed, a
   // turn that nobody can move in passes itself immediately, so the board can go from seat 0 through
   // seat 2 and back to seat 0 between two polls. The turn number cannot go back.
   $board.attr("data-turn", state.turnNumber);
 
+  markSkillSquares($board, state.skillSquares);
+
   const captured = state.pawns.filter((entry) => placePawn($board, entry));
   markCaptured($board, captured);
+}
+
+/**
+ * Put `data-skill-square="true"` on the eight squares that hand out a card, and take it off the ones
+ * that no longer do (FR-22).
+ *
+ * Rewritten on every update rather than only when the set changes, because a used-up square moves and
+ * the two writes are one attribute each on 40 elements. Tracking what changed would be more code than
+ * the work it saves.
+ *
+ * **Nothing on screen shows this yet.** The attribute is in the DOM contract of design handoff 03 and
+ * the stylesheet that reads it does not exist: decision D27 of that brief is open, because skill
+ * squares are meant to be purple and `--color-hint` already uses purple for a legal target square. A
+ * square can be both at once, so which one wins is a design decision and not one this file may take.
+ */
+function markSkillSquares($board, skillSquares) {
+  $board.find(".square--track").each(function markSquare() {
+    const $square = $(this);
+    const isSkillSquare = skillSquares.includes(Number($square.attr("data-square")));
+
+    if (isSkillSquare) $square.attr("data-skill-square", "true");
+    else $square.removeAttr("data-skill-square");
+  });
 }
 
 /**

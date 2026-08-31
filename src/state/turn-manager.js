@@ -12,7 +12,7 @@
  * | 3 Choose | `chooseDie` | `roll` |
  * | 4 Roll, 5 Compute legal moves | `rollChosenDie` | `act`, or `turn-end` when nothing can move |
  * | 6 Act | `commitMove` | `reaction` |
- * | 7 Resolve | `resolveReactions` | `turn-end`, or `match-over` |
+ * | 7 Resolve | `resolveReactions` | `turn-end`, or `match-over`. Uses up a skill square (FR-22) |
  * | 8 End of turn | `endTurn` | `draw` for the next player |
  *
  * ## Why the reaction window is a phase and not a special case
@@ -26,11 +26,17 @@
  *
  * `{ diceSource, rng }`, both injected and never constructed here. `rng` is NFR-09's injectable
  * randomness, so a test hands in a fixed sequence and asserts an exact board state. `diceSource` is
- * the stand-in from `core/dice-source.js` today and the real Dice Card Pool after issue #37.
+ * the real twenty-card Dice Card Pool since issue #30, and `core/dice-source.js` still provides a
+ * fixed stand-in for tests that need to script an exact roll.
+ *
+ * **`rng` is now spent in two places per turn**, the roll and a skill square respawn, so a test that
+ * scripts an exact sequence of rolls has to account for the respawn draw as well. That is why
+ * `fixedDieSource` exists and why the tests that assert exact boards use it.
  */
 
 import { rollDie } from "../core/dice-source.js";
 import { applyMove, evaluateTurn } from "../core/movement.js";
+import { consumeSkillSquare, skillSquareLandedOn } from "../core/skill-squares.js";
 import { findWinner } from "../core/win.js";
 import { MATCH_STATUS, TURN_PHASE, clearedTurnFields, nextState } from "./game-state.js";
 
@@ -139,11 +145,16 @@ export function commitMove(state, pawn) {
  *
  * Nothing can be played into the window yet, which is issue #38. The phase exists so that adding
  * cards later is filling it rather than reshaping the sequence.
+ *
+ * This is also where a skill square is used up (FR-22), and it is the right place for one reason: the
+ * square only counts if the pawn **finished** here. Doing it any earlier would mean looking at a move
+ * that a reaction card can still cancel.
  */
-export function resolveReactions(state) {
+export function resolveReactions(state, deps) {
   assertPhase(state, TURN_PHASE.REACTION);
 
-  const pawns = applyMove(state.pawns, state.pendingMove);
+  const move = state.pendingMove;
+  const pawns = applyMove(state.pawns, move);
   const winner = findWinner(pawns);
 
   if (winner !== null) {
@@ -156,7 +167,34 @@ export function resolveReactions(state) {
     });
   }
 
-  return nextState(state, { pawns, pendingMove: null, phase: TURN_PHASE.TURN_END });
+  return nextState(state, {
+    pawns,
+    pendingMove: null,
+    ...skillSquareChanges(state, move, deps),
+    phase: TURN_PHASE.TURN_END,
+  });
+}
+
+/**
+ * The skill-square part of resolving a move: nothing, or the square used up and moved elsewhere.
+ *
+ * Reads the move rather than searching the new pawn list, because `move.player` and `move.to` already
+ * say which pawn ended where.
+ *
+ * **A captured pawn cannot trigger this.** It goes back to its start area, and a start area is not a
+ * track square, so `skillSquareLandedOn` answers `null` for it. That falls out of the topology and
+ * needs no rule.
+ *
+ * Drawing the card the square earns is the next commit: the skill card pool does not exist yet. The
+ * square moving is the half of FR-22 that stands on its own, and separating the two keeps the pool out
+ * of a commit that is about the board.
+ */
+function skillSquareChanges(state, move, deps) {
+  const landedOn = skillSquareLandedOn(state.skillSquares, { player: move.player, r: move.to });
+
+  if (landedOn === null) return {};
+
+  return { skillSquares: consumeSkillSquare(state.skillSquares, landedOn, deps.rng) };
 }
 
 /**

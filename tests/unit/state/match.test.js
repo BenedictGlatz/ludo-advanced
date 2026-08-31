@@ -138,8 +138,11 @@ describe("a complete match, played end to end on a scripted RNG (NFR-09)", () =>
     const rolls = [];
     for (const roll of playerZeroRolls) rolls.push(roll, 1);
 
+    // No skill squares: `deps.rng` is drawn from for a skill square respawn as well as for the roll,
+    // so a script written as a list of rolls would shift the moment a pawn landed on one. This test is
+    // about movement and turn order, and `skill-squares.test.js` covers the respawn.
     const deps = scripted(rolls);
-    let state = startMatch(2, deps);
+    let state = startMatch(2, deps, []);
     let turns = 0;
 
     while (state.status === MATCH_STATUS.RUNNING) {

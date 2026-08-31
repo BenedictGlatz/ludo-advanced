@@ -37,10 +37,13 @@ function assertDeps(deps) {
  * The hand is drawn here rather than left to the first intent so that the state handed to `ui/` is
  * always one a player can act on. There is no moment where the board is on screen and the only
  * legal thing to do is a step the player cannot see.
+ *
+ * `skillSquares` is forwarded to `createGameState`, which carries the reason it exists. No production
+ * caller passes it.
  */
-export function startMatch(playerCount, deps) {
+export function startMatch(playerCount, deps, skillSquares) {
   assertDeps(deps);
-  return drawHand(createGameState(playerCount), deps);
+  return drawHand(createGameState(playerCount, skillSquares), deps);
 }
 
 /**
@@ -48,6 +51,10 @@ export function startMatch(playerCount, deps) {
  *
  * Everything is rebuilt from `createGameState`, so no field can survive by being forgotten. That is
  * the whole acceptance criterion: "a fresh match with all state reset".
+ *
+ * **The skill squares go back to their starting layout, they are not carried over.** A restart is a
+ * fresh match, and a board that kept the arrangement the last match had wandered into would make the
+ * second match start from a position nobody chose.
  */
 export function restartMatch(state, deps) {
   return startMatch(state.playerCount, deps);

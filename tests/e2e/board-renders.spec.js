@@ -46,6 +46,31 @@ test.describe("the board renders out of state", () => {
     }
   });
 
+  test("marks the eight skill fields, symmetrically and never on an entry field (FR-22)", async ({
+    page,
+  }) => {
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+
+    // Nothing is visible here yet: decision D27 of design handoff 03 is open, because skill fields are
+    // meant to be purple and purple already marks a legal target field. So this checks the attribute
+    // and the layout, which is the part that is a rule rather than a look.
+    await expect(board.locator("[data-skill-square]")).toHaveCount(8);
+
+    for (const square of [4, 7, 14, 17, 24, 27, 34, 37]) {
+      await expect(board.locator(`.square[data-square="${square}"]`)).toHaveAttribute(
+        "data-skill-square",
+        "true"
+      );
+    }
+
+    for (const entry of [0, 10, 20, 30]) {
+      await expect(board.locator(`.square[data-square="${entry}"]`)).not.toHaveAttribute(
+        "data-skill-square",
+        "true"
+      );
+    }
+  });
+
   test("starts every pawn in its own yard", async ({ page }) => {
     const board = await openMatch(page, SEEDS.leavesStartAtOnce);
 

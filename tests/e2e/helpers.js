@@ -16,10 +16,11 @@
  * can move, and prints this block. That is what makes "seed 9 captures on turn 8" a fact rather than
  * a hope.
  *
- * **Re-run that script whenever something changes what the RNG is spent on.** Issue #30 is the
- * example: replacing the single stand-in die with the twenty-card pool meant the pool now draws from
- * the same generator the die rolls from, every previous seed played a different match, and all five
- * entries below had to be found again.
+ * **Re-run that script whenever something changes what the RNG is spent on.** It has happened twice
+ * already. Issue #30 replaced the single stand-in die with the twenty-card pool, so the pool began
+ * drawing from the same generator the die rolls from. Issue #38 added the skill squares, and a
+ * used-up square draws from it again to decide where it reappears. Both times every previous seed
+ * played a different match. Both times the fix was one command.
  *
  * `?fast=1` collapses the two pauses in the turn loop to zero. It changes the waiting and nothing
  * else: the same intents run in the same order.
@@ -37,12 +38,12 @@ export const SEEDS = {
   leavesStartAtOnce: { seed: 1, players: 4 },
   /** 2 players. Leaves on turn 1, first ordinary advance on turn 3. */
   advancesEarly: { seed: 1, players: 2 },
-  /** 2 players. First capture on turn 8. */
-  capturesEarly: { seed: 9, players: 2 },
+  /** 2 players. First capture on turn 10. */
+  capturesEarly: { seed: 95, players: 2 },
   /** 4 players. Turn 1 has no legal move at all, so the first thing on screen is a refusal. */
   passesOnTurnOne: { seed: 2, players: 4 },
-  /** 2 players. Seat 2 fills its house and wins on turn 80. */
-  winsQuickest: { seed: 200, players: 2 },
+  /** 2 players. Seat 0 fills its house and wins on turn 79. */
+  winsQuickest: { seed: 225, players: 2 },
 };
 
 /** Open a match. `fast` is on unless a test explicitly wants the real pauses. */

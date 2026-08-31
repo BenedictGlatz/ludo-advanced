@@ -426,6 +426,54 @@ The cycle guard has its own test, even though the game state cannot contain a cy
 hand-written freeze named that guard as its reason for not being generic, so the claim that it costs
 four lines is worth pinning down rather than asserting.
 
+### The seeds went stale a second time, and one spec was rebuilt so it cannot happen to it again: 2026-08-31, issue #38
+
+The skill square respawn draws from `deps.rng`, the same generator the die rolls from. Every seed in
+`tests/e2e/helpers.js` therefore played a different match, and two specs in `capture.spec.js` failed
+across all three browsers. Exactly the failure recorded here for issue #30, five days later, for a
+different rule.
+
+Two things were done about it, and only the second one is new.
+
+**The routine fix:** `npm run test:seeds` regenerated the block. That is the whole point of having
+committed that script rather than leaving it in a scratch file, and this time it cost one command
+instead of an afternoon. `capturesEarly` moved from seed 9 to seed 95, `winsQuickest` from seed 200 to
+seed 225.
+
+**The fix that stops it recurring in one place:** `win.spec.js` used to assert the literal text "Spieler
+3 hat gewonnen" and read the winner's pawns out of `positions["2.<index>"]`, because seed 200 happened to
+be won by seat 2. Seed 225 is won by seat 0. That spec had now failed twice for a reason unrelated to
+what it tests, and had twice been repaired by copying a new seat number into it.
+
+The view now exposes `data-winner`, and the spec reads it. What it asserts is the rule: the winner's four
+pawns fill the four house squares, and the message names that seat. It is seed-independent from here on.
+
+**The general lesson, and it is the second time it has come up:** when a spec hard-codes a value that the
+seed decides rather than a rule, the view is missing an attribute. `data-die` was added for the same
+reason for issue #30. Worth checking the remaining specs against before the next rule that spends
+randomness.
+
+**One new spec, deliberately thin.** `board-renders.spec.js` checks that eight fields carry
+`data-skill-square`, that they are the eight the layout says, and that no entry field is one of them. It
+asserts no appearance, because there is none: D27 of design handoff 03 is unanswered.
+
+### The unit tests for the skill squares state the rule, because no document does: 2026-08-31, issue #38
+
+The respawn is the team's own rule, decided 2026-08-30 in answer to a question. There was no worked
+example to check against and no requirement text either (see the negative finding in Chapter 05). So the
+tests are written as invariants over 200 uses rather than as one expected board:
+
+- the count on the board never changes, and no two squares ever coincide;
+- no square ever lands on an entry square;
+- a used square never comes back where it was;
+- the returned list is always sorted, so the same board is the same array;
+- the same seed produces the same sequence of boards and a different seed does not.
+
+Two of them are worth singling out. The **28 candidates** test asserts the number the module comment
+claims, so the arithmetic in that comment is checked rather than trusted. The **reachability** test plays
+2000 respawns and requires all 28 to appear at least once, because a respawn that only ever used half the
+board would satisfy every other test in the file.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

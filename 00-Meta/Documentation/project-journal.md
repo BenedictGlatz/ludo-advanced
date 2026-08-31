@@ -217,8 +217,14 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   decisions below but not into the session log.)*
 
 - **2026-08-31**: Design handoff 03 went to Claude Design, so the visible card work is waiting on a
-  spec. The locale text was split into `ui.json` plus `cards.json` per language ahead of the 29 card
-  titles and rules sentences that are about to arrive. Sprint 2.
+  spec. Three commits that need no design decision landed instead: the locale text was split into
+  `ui.json` plus `cards.json` per language ahead of the 29 card titles about to arrive; the
+  hand-written freeze list in `game-state.js` was replaced by a generic deep freeze in
+  `state/freeze.js`; and the eight skill squares arrived as `core/skill-squares.js`, wired into the
+  state and into the resolve step of the turn. The Playwright seeds went stale for the second time in
+  a week, for the same reason and with a one-command fix this time. A negative finding: the skill
+  squares are implementing FR-22 and appear in no requirement text, so the code is ahead of the
+  requirement. Sprint 2.
 
 ---
 
@@ -1614,6 +1620,97 @@ to get wrong later.
   transition is written, for a state object that is copied a few times per turn.
 - → Ch. 06, Ch. 08
 
+### 2026-08-31: A skill square triggers on landing only, and not on being crossed
+
+- **Chosen:** only the square a pawn **finishes** its move on hands out a card. Passing over one does
+  nothing.
+- **Why:** the dice pool is the reason, not simplicity. If crossing counted, a D20 would collect several
+  skill squares in one move and a D2 almost none, so the answer to "which of these three cards should I
+  take" would always be "the biggest one". FR-19's choice is the centre of the whole dice pool design,
+  and this rule is what keeps it a choice.
+- **Rejected: crossing counts too.** It is the more generous reading and it is what "reaching a skill
+  field" could be taken to mean. It was rejected on the balance argument above, and secondarily because
+  capture already only looks at the target square, so landing-only means a player learns one rule instead
+  of two.
+- **Falls out for free:** a captured pawn cannot trigger a skill square, because it goes back to its
+  start area and a start area is not a track square. Nothing had to be written for that.
+- → Ch. 05
+
+### 2026-08-31: The skill square layout is generated from two offsets, not written out
+
+- **Chosen:** `entry + 4` and `entry + 7` per player quarter, which produces 4, 7, 14, 17, 24, 27, 34
+  and 37. Built in code from the offsets.
+- **Why generated:** it makes the symmetry a property of the code rather than a claim in a comment, and
+  it lets a test assert what the symmetry is *for*: every player meets a skill square at the same points
+  of their own journey, relative positions 5, 8, 15, 18, 25, 28, 35 and 38.
+- **Why symmetry at all:** FR-04 fixes turn order at the start of the match and nothing compensates for
+  going first. A board that also gave one seat an earlier first card would stack a second advantage on
+  top, and no rule in the game balances it.
+- **Rejected: hand-picked interesting positions**, for example clustering squares near the house
+  entrances. It would make the board more interesting and it would make one seat's cluster arrive
+  earlier in turn order than another's. Not worth it before there is any playtesting to justify it.
+- **The offsets themselves are not derived and the note says so.** What can be defended: 4 is far enough
+  from the entry square that a pawn cannot reach a skill square straight out of the start area even with
+  a D2, and 4 and 7 are far enough apart that one move rarely covers both. Both are tests. The rest is a
+  playtesting question.
+- → Ch. 05
+
+### 2026-08-31: A used skill square respawns randomly, and three kinds of square are excluded
+
+- **Chosen:** the used square disappears and reappears on a random other track square. Excluded are the
+  four entry squares, the seven squares the other skill squares are on, and the square just used. 28
+  candidates remain.
+- **Why the entry squares:** not fairness in the abstract. The entry square is the busiest square a
+  player owns, since every one of their pawns starts on it and every one passes over it. A skill square
+  there would pay out far more often than one anywhere else, and always to the same player.
+- **Why not the square just used:** having it reappear under the pawn that just used it would read as
+  nothing having happened, and a player would have no way to tell that from a bug.
+- **Houses needed no rule.** A house is not a track square, so an absolute square index never refers to
+  one. The exclusion list is shorter than it looks because the topology already did the work.
+- **Rejected: static skill squares**, which is what the game design document had. The user asked for the
+  respawn on 2026-08-30, and the reason it is better is that eight fixed squares get farmed: players
+  learn the eight positions and steer for them all match.
+- **Rejected: a fixed rotation instead of a random square.** It would be reproducible without needing
+  the injected `rng`, which is a real advantage for tests. It also makes the next position predictable
+  after one match, which is the farming problem again in slower form.
+- → Ch. 05
+
+### 2026-08-31: The board's skill squares can be pinned when a match is created
+
+- **Chosen:** `createGameState(playerCount, skillSquares = INITIAL_SKILL_SQUARES)`, forwarded by
+  `startMatch`. No production caller passes it.
+- **Why:** `deps.rng` is now drawn from twice per turn, once for the roll and once for a possible
+  respawn. The exact-final-state unit test scripts 66 rolls as a list, and from the first pawn that
+  landed on a skill square it silently played a different match. Handing in an empty list says "this
+  test is about movement and turn order".
+- **Rejected: interleaving dummy respawn draws into the roll script.** It keeps production code
+  untouched, which is the honest argument for it. It also makes a test about movement depend on the exact
+  skill square rule it is not testing, and it would break again on the next rule that spends randomness.
+- **Rejected: a second `rng` in `deps`, one for rolls and one for board events.** It would separate the
+  two cleanly and it would mean one seed no longer reproduces a whole match, which is the property
+  NFR-09 is actually for.
+- **The second caller is the one that justifies it long term:** a Playwright spec needs a skill square
+  where its pawn will actually go, and a random layout cannot promise that.
+- **A restart resets the layout** rather than carrying it over. A restart is a fresh match, and keeping
+  the arrangement the previous match had wandered into would start the next one from a position nobody
+  chose.
+- → Ch. 06
+
+### 2026-08-31: The win spec reads the winner off the board instead of naming a seat
+
+- **Chosen:** the board carries `data-winner`, and `win.spec.js` asserts that the winner's four pawns
+  fill the four house squares and that the message names that seat.
+- **Why:** the spec used to assert the literal text "Spieler 3 hat gewonnen", because seed 200 happened
+  to be won by seat 2. Which seat wins is a property of the seed and not of any rule. The seeds were
+  regenerated twice in one week, and both times that spec failed for a reason unrelated to what it
+  tests, and both times it was repaired by copying a new seat number into it.
+- **Rejected: pinning the seed harder**, for example by searching only for seeds that seat 0 wins. It
+  narrows the search for no gain, and the spec would still be asserting an accident.
+- **The general form, and it is the second instance:** when a spec has to hard-code a value the seed
+  decides rather than a rule, the view is missing an attribute. `data-die` was added for exactly this
+  reason for issue #30.
+- → Ch. 04, Ch. 08
+
 ---
 
 ## Challenges
@@ -1685,6 +1782,28 @@ to get wrong later.
   documentation that records a conclusion without recording how it was reached is exactly as
   expensive as no documentation on the day the conclusion stops holding. The script is committed now,
   behind `npm run test:seeds`, and the seeds are regenerated rather than maintained.
+
+- **2026-08-31: The same failure happened again five days later, and cost five minutes instead of 45.**
+  The skill square respawn draws from `deps.rng`, so every seed expired for the second time. Two
+  Playwright specs failed across all three browsers, and the exact-final-state unit test failed with
+  "scripted RNG exhausted". Both symptoms were recognised immediately, because the entry above
+  describes them, and the routine fix was one command: `npm run test:seeds`.
+
+  **This is the entry that shows the previous challenge was worth writing.** The lesson recorded on
+  2026-08-30 was "when a change alters what a shared random source is spent on, every fixture derived
+  from that source expires, whether or not any rule changed". It was not a hypothetical: it recurred
+  within the week, from a completely different rule, and having the script committed turned an
+  afternoon into a command. Worth naming in the retrospective, because the sample report the team
+  models on lists late documentation as its own biggest weakness, and this is a small measured case of
+  the opposite.
+
+  One thing was not routine, and it is a second lesson. `win.spec.js` failed both times for a reason
+  that had nothing to do with what it tests: it named seat 2 and the text "Spieler 3", because the seed
+  happened to produce that. Repairing it by copying in a new seat number would have been the third
+  time. So the view now exposes `data-winner` and the spec asserts the rule instead. **The general
+  form: when a spec hard-codes a value the seed decides rather than a rule, the view is missing an
+  attribute.** `data-die` was added for the same reason on 2026-08-30, which makes this a pattern
+  rather than an incident.
 
 Log anything that cost more than roughly 30 minutes of unplanned work: what happened, what it cost,
 how it was resolved. These become the running prose of Chapter 11, so a sentence of context is worth
