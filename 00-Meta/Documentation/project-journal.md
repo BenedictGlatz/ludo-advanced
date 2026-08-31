@@ -224,7 +224,10 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   state and into the resolve step of the turn. The Playwright seeds went stale for the second time in
   a week, for the same reason and with a one-command fix this time. A negative finding: the skill
   squares are implementing FR-22 and appear in no requirement text, so the code is ahead of the
-  requirement. Sprint 2.
+  requirement. Then the 29-card catalogue and the closed skill card pool landed as pure `core/` work,
+  and the game design document was pulled along with them: section 2.5 written for the skill squares,
+  section 6.5 rewritten for the new card economy, section 7 replaced entirely, and three rows of the
+  sign-off table marked overridden by the Product Owner. Sprint 2.
 
 ---
 
@@ -1710,6 +1713,117 @@ to get wrong later.
   decides rather than a rule, the view is missing an attribute. `data-die` was added for exactly this
   reason for issue #30.
 - → Ch. 04, Ch. 08
+
+### 2026-08-31: The card catalogue is data and holds no effects
+
+- **Chosen:** a catalogue entry says what a card is (`type`, `category`, `kind`), when it may be played
+  (`triggers`) and what the player must point at (`targets`). What the card *does* is a separate function
+  looked up by the same id, arriving with the commit that implements it.
+- **Why:** FR-26 requires exactly this, that effect and artwork are matched by id and neither imports the
+  other. The practical payoff is that a view can render a card whose effect does not exist yet, and the
+  whole catalogue is testable without loading a single effect.
+- **Rejected: an effect function on each catalogue entry.** It is the obvious shape and it reads well.
+  It also means the catalogue cannot be loaded without loading every effect, so the card view would pull
+  the entire rules engine into the render path, and a test of the catalogue would be a test of 29 rules.
+- → Ch. 05
+
+### 2026-08-31: The catalogue validates itself when it loads, not only in a test
+
+- **Chosen:** `assertCatalogue` runs at import time and throws with the card id in the message.
+- **Why:** hand transcription from an artboard produces quiet mistakes. A duplicated id, a typo in a
+  category, a Reaction card whose trigger is the action phase: none of them throws, and all of them
+  become a card that cannot be played or cannot be labelled, discovered weeks later. One of the checks is
+  a genuine rule rather than spelling, that FR-23 and FR-24 restrict which triggers each type may carry.
+- **Rejected: leaving it to the unit tests**, which do also cover it. The person adding card 30 is not
+  necessarily running the tests first, and a boot-time throw naming the card reaches them in the browser.
+  The two are not redundant, they catch the same class at different moments.
+- → Ch. 05, Ch. 08
+
+### 2026-08-31: Ten cards keep `category: null` rather than being given an invented one
+
+- **Chosen:** the four categories are stored only for the 19 cards of artboard `4a`, which is where the
+  artwork prints them. The ten cards of artboard `6a` get `null`.
+- **Why:** that artboard labels its cards by type and a sub-kind instead of by category. Reconciling the
+  two labelling schemes into one card component is **open decision D28 of design handoff 03**, and
+  `CLAUDE.md` forbids this side from inventing a design rule. A category invented here would be an answer
+  to D28 hidden in a data file.
+- **Rejected: mapping each sub-kind onto one of the four categories.** It would give every card a
+  category and make the view simple. It is also the design decision, taken quietly, in the wrong place.
+- **The sub-kind is stored for all 29 as `kind`, and no code reads it.** Stored because the catalogue is
+  the machine-readable transcription of a generated HTML artboard nobody is going to open again, and
+  being lossy against that source is the worse failure. Some values are odd and they are the artwork's
+  own: `ACTION` and `REACTION` repeat `type`, `D4` and `D6` name a die. Transcribed as they are, because
+  tidying them would be a decision hidden inside a transcription.
+- → Ch. 05
+
+### 2026-08-31: The skill pool is pure functions over state, and the dice pool is a closure
+
+- **Chosen:** two pools in the same game, built in two different shapes. `core/dice-pool.js` holds its
+  remaining cards in a closure; `core/skill-pool.js` is pure functions over arrays that live in the
+  frozen game state.
+- **Why, and the reason is lifetime, not taste.** A dice hand exists for one turn: all three cards go
+  back at the end of it (FR-21), there is no discard pile, and nothing survives into the next turn, so
+  nobody outside that turn ever needs to see it. A skill card sits in a hand for as long as its owner
+  keeps it, so the pool, the four hands and the discard pile are all things the view must show, a saved
+  match must write down, and a replay must reproduce. That makes them state.
+- **Rejected: making the dice pool pure too, for consistency.** Consistency is a real argument and it
+  lost to this one: a closure that nothing outside a turn can observe is genuinely simpler, and moving it
+  into state would add three fields nothing reads.
+- **Rejected: making the skill pool a closure like the dice pool.** It would hide the pool from the view
+  and from any future save, and it would put mutable state in `core/`, which is exactly what the frozen
+  state object exists to prevent.
+- **The pool holds ids, not card objects.** Two copies of Angel Die are indistinguishable to every rule,
+  so two references to the same frozen object would be the same string stored twice with extra steps. It
+  also keeps the state JSON-shaped.
+- → Ch. 05
+
+### 2026-08-31: A full hand draws nothing, and the card stays in the pool
+
+- **Chosen:** a draw for a player already at the hand limit does nothing at all. No card leaves the pool.
+- **Why:** the alternative loses a card for no reason. A pool measurably thinner after a long match is a
+  slow change to the game's balance that nobody chose and nobody would notice happening.
+- **Rejected: draw it and discard it immediately**, which is what several card games do and which keeps
+  the draw step uniform. It burns a card for nothing, and since the discard pile is reshuffled into the
+  pool it does not even remove the card permanently, so the only effect is churn.
+- **Rejected: forcing the player to discard one and keep the new card.** It is the most interesting rule
+  of the three, and it needs a prompt, a decision and a screen in the middle of somebody else's turn. Not
+  worth it before the hand limit itself has been playtested.
+- → Ch. 05
+
+### 2026-08-31: The 29 card names are the same in both languages, and the rules sentences are not written yet
+
+- **Chosen:** `cards.json` holds `card.skill.<id>.title` for all 29 cards, identical text in German and
+  English. The rules sentence of each card lands with the commit that implements its effect.
+- **Why the names are not translated:** they are jokes and memes. "Aight Imma Head Out", "FR FR", "67",
+  "Speedrun Any%". A German rendering would be worse German than the English the players say out loud,
+  and `Nühü` is already German.
+- **Rejected: translating the nine or ten names that would survive it.** A hand holding half-translated
+  card names reads worse than either extreme.
+- **Why the sentences wait:** a rules sentence is a description of an effect, and no effect exists. 29
+  sentences written now would have to be checked against code that does not exist, and then checked again
+  when it does. The name is stable and does not depend on any of that.
+- **The keys exist in both files anyway**, which is what NFR-03's test requires, and which makes
+  translating one later a locale edit rather than a code change.
+- **Recorded as outstanding coverage** rather than as finished work, in Ch. 04 and Ch. 08.
+- → Ch. 04, Ch. 08
+
+### 2026-08-31: The eight invented skill cards were deleted rather than kept alongside the 29
+
+- **Chosen:** section 7 of the game design document is replaced. `action-reroll`, `reaction-shield` and
+  the other six are gone from the rulebook and were never implemented.
+- **Why:** none of the eight existed as artwork. Keeping them would have meant eight cards nobody had
+  drawn sitting in the same pool as 29 that had been, so either somebody draws eight more cards or the
+  set is visibly inconsistent.
+- **Rejected: keeping the eight as a smaller MVP set and treating the 29 as FR-29's expansion.** It is
+  the schedule-safe answer and it is what the effort estimate assumed. It lost because the Product Owner
+  chose the artwork set explicitly, and because the eight were invented in a document rather than
+  designed.
+- **The argument the old section made is still unanswered, and it is quoted rather than deleted.** It
+  said the set was sized to what can be finished and tested. 29 cards is 29 rules, 29 unit tests and 29
+  presentations against 8. The mitigation is the split into the ten cards that need no new board concept
+  and the nineteen that need five new mechanics, so that work can stop at a sensible point. Whether it
+  has to stop is a schedule decision and belongs in the sprint log.
+- → Ch. 05, Ch. 01
 
 ---
 

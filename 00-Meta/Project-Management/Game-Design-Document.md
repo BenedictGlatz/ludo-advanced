@@ -145,6 +145,43 @@ the part a player sees first. **Also rejected: 44 squares on a 13 × 13 grid**, 
 and therefore the smaller change. It cannot show five fields per outer row without deleting the
 centre corner fields, and deleting those breaks the ring into four unconnected arms.
 
+### 2.5 Skill squares
+
+**Added 2026-08-31.** Eight of the forty shared track squares hand out an extra skill card. Section 6.5
+covers the card economy; this section covers the board.
+
+- **Where they start.** Absolute squares 4, 7, 14, 17, 24, 27, 34 and 37. Built as `entry + 4` and
+  `entry + 7` per player quarter, so **every player meets a skill square at the same points of their own
+  lap**: relative positions 5, 8, 15, 18, 25, 28, 35 and 38. Turn order already gives seat 0 the first
+  move and FR-04 does not compensate for that; a board that also gave one seat an earlier first card
+  would stack a second advantage on top with nothing to balance it.
+- **Landing, not crossing.** Only the square a pawn finishes its move on counts. If crossing counted, a
+  D20 would collect several squares in one move and a D2 almost none, so "take the biggest card" would
+  be the only sensible answer to the choice FR-19 is built around. It also matches capture, which
+  already looks only at the target square.
+- **Using one moves it.** The square disappears and reappears on a random other track square. Excluded:
+  the four entry squares, the seven squares the other skill squares occupy, and the square just used.
+  That leaves 28 candidates.
+- **Why the entry squares are excluded.** Not fairness in the abstract. An entry square is the busiest
+  square a player owns, since every one of their pawns starts on it and every one passes over it, so a
+  skill square there would pay out far more often than one anywhere else and always to the same player.
+- **Why the square does not reappear where it was.** It would read as nothing having happened, and a
+  player could not tell that from a bug.
+- **Houses and start areas need no rule.** Neither is a track square, so an absolute square index never
+  refers to one. This is also why a captured pawn cannot trigger a skill square: it goes back to its
+  start area.
+
+**Rejected: static skill squares**, which is what this document assumed before the squares had a
+section. Eight fixed squares get farmed: players learn the positions and steer for them all match.
+**Rejected: a fixed rotation instead of a random square**, which would be reproducible without needing
+the injected randomness, and would make the next position predictable after one match, which is the
+farming problem again in slower form.
+
+**Open: the offsets 4 and 7 are not derived.** What can be said for them is that 4 is far enough from
+the entry square that a pawn cannot reach a skill square straight out of the start area even with a D2,
+and that 4 and 7 are far enough apart that one move rarely covers both. Both are asserted by tests. The
+rest is a playtesting question.
+
 ---
 
 ## 3 Turn sequence
@@ -466,32 +503,76 @@ loop when the position is blocked for every die in the pool.
 This was the largest hole in the specification: the rulebook never said how a player gets a skill
 card, so the Skill Card Pool had no defined behaviour at all.
 
+> **Revised 2026-08-31 by the Product Owner, and this section is the revision.** The pool, the hand
+> limit and the acquisition rule below all changed. What did not change is the discard-and-reshuffle
+> rule and the accounting invariant. The original wording is preserved under "What this section used
+> to say" at the end of the section, because the reasons it gave are still the reasons the new rule has
+> to answer.
+
 **Rule.**
 
-- **Pool.** 2 copies of each of the 8 MVP cards in section 7, so 16 cards.
-- **Hand limit.** 3 cards. A player at the limit draws nothing.
-- **Acquisition.** At the end of their own turn a player draws one card if their hand is below the
-  limit. In addition, a player whose pawn is captured draws one card immediately, again only if below
-  the limit.
+- **Pool.** 2 copies of each of the 29 cards in section 7, so **58 cards**.
+- **Hand limit.** **5 cards.** A player at the limit draws nothing and the card stays in the pool.
+- **Acquisition.** A player draws one card **at the start of their own turn**, and one more **whenever
+  one of their pawns lands exactly on a skill square** (section 2.5). Both draws are skipped if the
+  hand is at the limit.
 - **After playing.** A played card goes to a face-up discard pile. When the pool is empty and a draw
   is due, the discard pile is shuffled and becomes the new pool.
 - **Accounting.** Every card is in exactly one of pool, hand or discard at all times, which is the
   invariant FR-27 asks for and the one a unit test asserts.
 
-**Why one card per turn.** It ties card income to turns taken rather than to luck, so the economy
-cannot run away, and it makes the hand limit bite: a player at 3 cards has to spend before earning.
-**Why the capture compensation.** A captured pawn loses up to 43 steps of progress, which is the
-harshest event in the game; the compensating card keeps a player who is behind in the match without
-adding a comeback mechanic that fires on its own.
+**Why the start of the turn and not the end.** A card drawn at the start is a card the player can
+actually use this turn, so the draw is a decision and not bookkeeping. Drawing at the end means every
+card sits unused for a full lap of the table before its owner can do anything with it, which makes the
+whole mechanic feel like it is happening to somebody else.
 
-**Rejected: drawing at the start of the turn**, which would let a player draw and immediately play the
-card they drew, making the hand limit decorative. **Rejected: removing played cards from the game**
-rather than discarding and reshuffling. It is simpler to account for, and it means the pool empties
-during a long match, at which point the mechanic quietly stops existing. **Rejected: buying cards
-with a resource**, which is the energy system of FR-37: it is prioritised `W` because no rule for it
-exists, and inventing one here would decide an open question by accident.
+**Why a second draw on the skill squares.** It puts card income partly under the player's control. With
+one draw per turn and nothing else, a player's card count is a function of how long the match has run
+and nothing they did; the skill squares make "steer for that square" a real move, and they are the
+reason the choice of dice card matters in the second half of a match, once every pawn is out.
+
+**Why 5 and not 3.** With a draw at the start of every turn plus the skill squares, a limit of 3 means a
+player is at the limit almost always and the extra draws do nothing at all. **This number is an
+assumption and has not been playtested.** It is one constant in `core/skill-pool.js` and it is expected
+to move after the first play session.
+
+**Rejected: keeping the old end-of-turn draw plus a draw on capture.** The reasoning behind it is still
+sound and is quoted below. It lost to the Product Owner's decision, and the compensation half was lost
+with it, so **a captured player no longer gets a card**. That is a real loss: the argument that a
+captured pawn loses up to 43 steps and deserves something back has not been answered, only overruled.
+It should be revisited after the first playtest, and if it comes back it should come back as its own
+rule rather than as a modifier on this one.
+
+**Rejected: removing played cards from the game** rather than discarding and reshuffling. Discarding is
+simpler to account for, and removal means the pool empties during a long match, at which point the
+mechanic quietly stops existing. **Rejected: buying cards with a resource**, which is the energy system
+of FR-37: it is prioritised `W` because no rule for it exists, and inventing one here would decide an
+open question by accident.
+
+**What this section used to say**, kept because its reasons still have to be answered:
+
+> **Pool.** 2 copies of each of the 8 MVP cards, so 16 cards. **Hand limit.** 3 cards. **Acquisition.**
+> At the end of their own turn a player draws one card if their hand is below the limit. In addition, a
+> player whose pawn is captured draws one card immediately.
+>
+> **Why one card per turn.** It ties card income to turns taken rather than to luck, so the economy
+> cannot run away, and it makes the hand limit bite: a player at 3 cards has to spend before earning.
+> **Why the capture compensation.** A captured pawn loses up to 43 steps of progress, which is the
+> harshest event in the game; the compensating card keeps a player who is behind in the match without
+> adding a comeback mechanic that fires on its own.
+>
+> **Rejected: drawing at the start of the turn**, which would let a player draw and immediately play
+> the card they drew, making the hand limit decorative.
 
 ### 6.6 FR-25: the reaction window
+
+> **Superseded 2026-08-31 by the Product Owner and not yet rewritten.** The decided rule is **one
+> shared 30-second window** for all eligible players at once, and a budget of **one card per player per
+> turn** rather than per window. Point 5 below, that a Reaction opens no window of its own, is also
+> reversed: a Reaction can be answered, and the per-turn budget is what makes that terminate. The
+> section is rewritten when the window is implemented, which is the commit after the card catalogue.
+> Left standing until then rather than deleted, because the reasoning it gives against a timed window
+> is the argument the new rule has to beat, and it should be answered in writing rather than dropped.
 
 **Rule.** A reaction window opens at exactly two points, both named in section 3: when a capture is
 about to take effect, and when an Action card is played.
@@ -549,26 +630,104 @@ file forbids.
 
 ## 7 Skill card catalogue
 
-The MVP set (FR-28). The `id` is the contract between the two layers: a card's rule is a pure
-function in `core/` and its presentation lives in `ui/`, and the two are matched by id and never
-import each other (FR-26).
+> **Replaced 2026-08-31.** This section used to hold an 8-card set invented while writing this
+> document. The Product Owner chose the full 29-card set from the card artwork instead
+> (`01-Design/Handoff/Card artwork design planning/Card Art.dc.html`, artboards `6a` and `4a`). The
+> eight invented cards are gone: none of them existed as artwork, and keeping them would have meant
+> eight cards nobody had drawn sitting next to 29 that had been. The old table is quoted at the end of
+> this section, because the argument it made about set size is the argument the new set has to answer.
 
-| Card id | Type | Effect |
-| --- | --- | --- |
-| `action-extra-card` | Action | Draw a fourth dice card before choosing which die to roll; all four return to the pool at the end of the turn. |
-| `action-reroll` | Action | Reroll the chosen die once. The second result replaces the first, whether it is better or not. |
-| `action-swap-pawns` | Action | Swap the track positions of one of your pawns and one opponent pawn. Neither may be in a start area or a house. |
-| `action-step-one` | Action | Move one of your pawns exactly one square, in addition to this turn's move. Subject to sections 6.1 and 6.2 like any other move. |
-| `reaction-shield` | Reaction | Cancel a capture of one of your pawns. The capturing pawn returns to the square it started this move from. |
-| `reaction-slow` | Reaction | Halve the acting player's roll, rounded down, before the move resolves. The legal-move set is recomputed on the reduced roll. |
-| `reaction-cancel-card` | Reaction | Cancel an Action card as it is played. The cancelled card is spent and has no effect. |
-| `reaction-mirror` | Reaction | The capture of your pawn resolves as normal, and the capturing pawn also returns to its owner's start area. |
+The `id` is the contract between the two layers: a card's rule is a pure function in `core/` and its
+presentation lives in `ui/`, matched by id, neither importing the other (FR-26). The machine-readable
+version of this table is `src/core/cards/`, which validates itself when it loads.
 
-Eight cards, four of each type, two copies of each in the pool (section 6.5). The count is deliberate:
-each card is a distinct rule that needs its own unit test and its own presentation, so the set is
-sized to what can be finished and tested rather than to what can be imagined. An expanded set is
-FR-29, `could have`, and is explicitly a data-plus-one-function addition that does not touch the
-resolution engine.
+**29 cards, 22 Action and 7 Reaction, two copies of each, so a 58-card pool.**
+
+### 7.1 The ten cards that need no new board concept
+
+From artboard `6a`. Every one of them acts on the roll, on another card, or on a player's card budget,
+all of which the turn already has. These are the ten that ship first.
+
+| Card id | Title | Type | Sub-kind | Needs a target | Effect |
+| --- | --- | --- | --- | --- | --- |
+| `action-pot-of-greed` | Pot of Greed | Action | draw | no | Draw two Action cards. No cost and no condition. |
+| `action-double-dip` | Double Dip | Action | economy | no | On your next turn you may play two Action cards instead of one. |
+| `action-no-take-backsies` | No Take-Backsies | Action | lockout | no | Nobody may play Reaction cards for the rest of this turn. |
+| `action-critical-success` | Critical Success | Action | buff | no | Roll with advantage: throw twice and keep the higher. Played before the roll. |
+| `action-angel-die` | Angel Die | Action | buff | no | Add a D8 to your roll this turn. Stacks with everything. |
+| `reaction-critical-failure` | Critical Failure | Reaction | debuff | no | Played as any player rolls: they throw twice and keep the lower. |
+| `reaction-devil-die` | Devil Die | Reaction | debuff | no | Subtract a D8 from a roll as it happens. At zero or less the pawn does not move. |
+| `reaction-nuehue` | Nühü | Reaction | negate | no | Cancel one card or effect as it is played. |
+| `reaction-hold-pawn` | Hold Pawn | Reaction | control | enemy pawn | The named pawn drops out of this turn's move choice. |
+| `reaction-the-purge` | The Purge | Reaction | chaos | no | For one round every landing captures: own pawns no longer block, they are captured. |
+
+### 7.2 The nineteen cards that need new mechanics
+
+From artboard `4a`. Between them these need five things the game does not have: traps on squares,
+blockers that stop a pawn passing through, backward movement, statuses with a duration, and effects
+over several squares at once.
+
+| Card id | Title | Type | Category | Needs a target | Effect |
+| --- | --- | --- | --- | --- | --- |
+| `action-banana-peel` | Banana Peel | Action | blocking | track square | A trap. The next pawn to cross it is stunned and loses its next turn. |
+| `action-hyperbeam` | Hyperbeam | Action | offensive | own pawn, direction | Roll a D4. Every pawn on the next 1 to D4 squares in that direction goes home, yours included. |
+| `reaction-uno-reverse` | Uno Reverse | Reaction | troll | no | When an opponent lands on your pawn to capture it, their pawn goes home instead. |
+| `action-rock` | Rock | Action | blocking | own pawn | One of your pawns becomes immovable stone for 2 rounds. Nothing lands on it or passes through it. |
+| `action-big-ah-rock` | Big Ah Rock | Action | blocking | track square | A square becomes a boulder for 3 turns, and the enemy pawn directly behind you is knocked back 3. |
+| `action-oil-spill` | Oil Spill | Action | blocking | track square | A trap. Whoever steps on it slides 3 to 5 squares forward, triggering no skill square on the way. |
+| `reaction-ghost-mode` | Ghost Mode | Reaction | movement | no | Played when someone captures or blocks you: pass through every blocker and ignore capture this turn. |
+| `action-head-out` | Aight Imma Head Out | Action | movement | own pawn, choice | Swap with a random pawn, or teleport to the nearest skill square. Your call. |
+| `action-speedrun` | Speedrun Any% | Action | movement | no | Double your roll this turn. On an odd roll you must move backwards instead. |
+| `action-janky-rpg` | Janky RPG | Action | offensive | track square | Roll a D6. On 2 to 6 the target square and both neighbours are cleared; on a 1 it hits your own pawn. |
+| `action-yeet` | Yeet | Action | offensive | enemy pawn | Grab an opponent's pawn within 3 squares and throw it 4 squares backward. |
+| `action-tax-fraud` | Tax Fraud | Action | troll | player | Steal one random skill card from another player's hand. |
+| `action-lock-in` | Lock In | Action | troll | own pawn | Your pawn is immune to capture and to forced movement until your next turn. |
+| `action-not-that-deep` | It's Not That Deep | Action | blocking | track square | A face-down trap. The pawn that steps on it moves 1 square back. Offensive cards played within 3 squares of it are nullified. |
+| `action-let-him-cook` | Let Him Cook | Action | movement | own pawn | The pawn skips this turn. Next turn roll twice, take the higher, and double the move. Captured while cooking, both pawns go home. |
+| `action-built-different` | Built Different | Action | movement | own pawn | Armour for 2 turns. Ordinary collisions cannot capture the pawn and attackers bounce 1 square back. |
+| `action-fr-fr` | FR FR | Action | troll | number | Skip the roll and pick any number from 1 to 6. Move that far. |
+| `action-sixty-seven` | 67 | Action | offensive | no | Played before rolling. Roll a 6 and you move 13 instead, and every pawn in the last 7 squares goes home. |
+| `action-ragebait` | Ragebait | Action | troll | enemy pawn | Next turn the target must move toward you if a legal path exists. Fail and it wastes half its roll. |
+
+### 7.3 Six cards the artwork describes and the board model cannot express
+
+Each of these was read as something as close to the printed text as the board allows. The reading is in
+the effect column above; this table is why.
+
+| Card | What the artwork asks for | Why it cannot be built | What is built instead |
+| --- | --- | --- | --- |
+| Hyperbeam | "a straight cardinal lane" | A cardinal direction is a property of the 11 x 11 drawing grid, which lives in `ui/board-geometry.js`. `core/` may not import `ui/`, and a rule that needs the drawing grid is not a rule. | A pawn plus a direction along the track. Friendly fire and the D4 both survive. |
+| The Purge | "even pawns already home", "enter an opponent's house" | Houses are private in the data model: `isSameSquare` requires the same player, so a foreign house has no address at all. | Every landing captures for one round, own pawns included. The house half is dropped. |
+| Hold Pawn | "as its turn begins" | That is a point in time, not a response to an action, so it is not a Reaction. | Played into the window the roll opens. The named pawn drops out of that turn's move choice. |
+| Oil Spill | "skipping every skill tile and safe zone" | There are no safe squares in the MVP (FR-15, `could have`). | Slides 3 to 5 forward and triggers no skill square on the way. |
+| Janky RPG | "both neighbour tiles" | Unambiguous on the ring, undefined in a house, where only one of the two neighbours exists. | Playable on a track square only. Neighbours are `(square + 1) mod 40` and `(square - 1) mod 40`. |
+| 67 | "roll a 6" | Impossible on a D2 or a D4. | The card is only playable when the chosen dice card has at least six faces. |
+
+**Two rules elsewhere in this document have to change because of these cards**, and both are recorded
+in the project journal:
+
+1. **Leaving the start area becomes `roll >= dieMax` instead of `roll === dieMax`** (section 4.1).
+   Angel Die adds a D8 to the roll, so under the old wording a buff would make leaving the start area
+   *impossible*. Without card modifiers a roll can never exceed `dieMax`, so every match played so far
+   behaves identically.
+2. **Backward movement stops at the first track square and never returns a pawn to its start area.**
+   Yeet, It's Not That Deep and Big Ah Rock all push pawns backward. If that reached the start area they
+   would be cheap substitutes for capture, and capture as a mechanic would be worth nothing.
+
+### 7.4 What this section used to say
+
+> Eight cards, four of each type: `action-extra-card`, `action-reroll`, `action-swap-pawns`,
+> `action-step-one`, `reaction-shield`, `reaction-slow`, `reaction-cancel-card`, `reaction-mirror`.
+>
+> The count is deliberate: each card is a distinct rule that needs its own unit test and its own
+> presentation, so the set is sized to what can be finished and tested rather than to what can be
+> imagined.
+
+**That argument was right and the new set does not answer it.** 29 cards is 29 rules, 29 unit tests and
+29 presentations, against 8. The Product Owner chose the larger set knowing this, and the mitigation is
+the split above: the ten cards of section 7.1 are a complete, playable game on their own, and section
+7.2 is ordered so that the work can stop at a sensible point. Whether it has to stop is a schedule
+decision and belongs in the sprint log, not here.
 
 ---
 
@@ -602,9 +761,14 @@ re-derive them.
 
 ## 9 Product Owner sign-off
 
-The eight rules of section 6, listed for confirmation. The sign-off column is filled by the Product
-Owner, Fabian Gemming. An unsigned row is a rule implementation follows provisionally; a row
-overridden here changes this document and its requirement.
+The rules of section 6 plus the two that section 7 forced, listed for confirmation. The sign-off column
+is filled by the Product Owner, Fabian Gemming. An unsigned row is a rule implementation follows
+provisionally; a row overridden here changes this document and its requirement.
+
+**Three rows were overridden on 2026-08-31**, rows 5, 6 and 9, all in the same conversation and all in
+the same direction: the Product Owner chose the printed card artwork over the rules this document had
+invented for it. Rows 10 and 11 are new and unsigned; they are consequences of that choice rather than
+decisions of their own, and section 7.3 explains both.
 
 | # | Requirement | Proposed rule | Sign-off | Date |
 | --- | --- | --- | --- | --- |
@@ -612,8 +776,11 @@ overridden here changes this document and its requirement.
 | 2 | FR-13 | Entering home requires an exact count; overshoot is illegal | | |
 | 3 | FR-14 | A roll with no legal move passes the turn, with the reason shown | | |
 | 4 | FR-17 | 20 cards over 7 denominations, weighted toward D6 and D8 (section 5.1) | | |
-| 5 | FR-22, FR-27 | Hand limit 3; one card at end of own turn; one card when a pawn is captured; discard and reshuffle | | |
-| 6 | FR-25 | Explicit window at a capture and at an Action card; one reaction per player; no nesting | | |
+| 5 | FR-22, FR-27 | **Overridden 2026-08-31 by the Product Owner.** Hand limit **5**; one card at the **start** of the own turn; one card on landing on a skill square; no card on being captured; discard and reshuffle | Overridden | 2026-08-31 |
+| 6 | FR-25 | **Overridden 2026-08-31 by the Product Owner.** One shared **30-second** window; one card per player per **turn**; a Reaction may be answered | Overridden | 2026-08-31 |
+| 9 | FR-28 | **Overridden 2026-08-31 by the Product Owner.** The MVP card set is all **29** cards of the artwork, not the 8 invented in section 7 | Overridden | 2026-08-31 |
+| 10 | FR-09 | Leaving the start area becomes `roll >= dieMax`, because Angel Die can push a roll above the die's maximum | | |
+| 11 | FR-11 | Backward movement from a card stops at the first track square and never returns a pawn to its start area | | |
 | 7 | FR-37 | No energy or resource system in the MVP | | |
 | 8 | NFR-12 | **Answered as a question, not a rule.** Design handoff 01 (D2) delivers colour only and no second identifier. Confirm NFR-12 as met by pawn lightness alone, or require a non-colour identifier to be reinstated | | |
 
@@ -631,8 +798,17 @@ decisions for the Product Owner, which is why this row records the question rath
 
 ## 10 What is still open
 
-- **All eight rules of section 6 are unsigned.** They are decided in this document so that work is
-  not blocked, not decided by the person whose decision they are.
+- **Six of the eleven rows of section 9 are unsigned.** They are decided in this document so that work
+  is not blocked, not decided by the person whose decision they are. Rows 5, 6 and 9 now carry a real
+  answer, because they were overridden out loud.
+- **The hand limit of 5 is an assumption, not a decision.** It replaced 3 for a stated reason, that a
+  limit of 3 makes the extra draws do nothing, and neither number has been playtested. It is one
+  constant in `core/skill-pool.js`.
+- **A captured player no longer gets a compensating card**, and the argument for one was never
+  answered. A captured pawn loses up to 43 steps, which is the harshest event in the game. Section 6.5
+  records the loss; it should be revisited after the first playtest.
+- **Section 6.6 is superseded and not yet rewritten.** The 30-second window is decided and not
+  implemented, and the section still describes the untimed one.
 - **The pool composition is untested by humans.** The figures in sections 5.2 and 5.3 are arithmetic
   and simulation, not playtest results. Whether a match *feels* like a satisfying length is a
   question only the buffer-sprint playtest answers, and the composition is data so that the answer

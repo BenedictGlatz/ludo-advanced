@@ -504,6 +504,31 @@ pawns fill the four house squares, and the message names that seat. It cannot go
 change. This is the same argument that added `data-die` for issue #30, and it is now clearly a pattern:
 when a spec has to hard-code a value that the seed decides, the view is missing an attribute.
 
+### The card names went into the locales and the rules sentences did not: 2026-08-31, issue #38
+
+`cards.json` gained `card.skill.<id>.title` for all 29 cards, in both languages, plus the four category
+labels. It did **not** gain the rules sentence for any of them.
+
+**Why the split.** A card's rules sentence is a description of its effect, and no effect exists yet.
+Writing 29 of them now means writing text that has to be checked against code that does not exist, and
+then checked again when it does. A card's name is stable and does not depend on any of that. So the name
+lands with the catalogue and the sentence lands with the effect, in the commit that implements it. This
+is outstanding coverage rather than finished work, and it is recorded as such.
+
+**The names are identical in German and English, and that is a decision.** They are jokes and memes:
+"Aight Imma Head Out", "FR FR", "67", "Speedrun Any%". Translating them would produce German that is
+worse than the English the players already say out loud, and `Nühü` is German anyway. Rejected
+alternative: German names for the nine or ten that would survive translation, which would leave a hand
+holding half-translated card names, which reads worse than either extreme.
+
+The keys still exist in both files, which is what NFR-03's test requires, and which is what makes
+translating one of them later a locale edit rather than a code change.
+
+**Two tests hold the catalogue and the locales together**, and they run in both directions: every card
+id has a title in both languages, and every title in the locales belongs to a card that exists. The
+second one catches the opposite mistake, a card removed from the catalogue but left in the locales, which
+would be text nothing can reach sitting there until somebody counted.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

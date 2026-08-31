@@ -421,6 +421,134 @@ specification has not caught up. **The code is ahead of the requirement, which i
 Recorded rather than fixed silently, because FR-22 carries a † (needs a decision) and rewriting it is a
 requirements change that belongs with the rest of the skill card set.
 
+### The 29-card catalogue and the closed skill pool: 2026-08-31, issue #38
+
+Four new modules under `src/core/cards/` plus `src/core/skill-pool.js`.
+
+| File | What it holds |
+| --- | --- |
+| `cards/vocabulary.js` | The words a card entry may use: `TYPE`, `CATEGORY`, `KIND`, `TARGET`, `TRIGGER`, `COPIES_PER_CARD` |
+| `cards/catalogue-core.js` | The 10 cards of artboard `6a` |
+| `cards/catalogue-extra.js` | The 19 cards of artboard `4a` |
+| `cards/catalogue.js` | Merges the two, validates them at load, exposes the lookups |
+| `skill-pool.js` | The pool, the hands, the discard pile, and the closed accounting rule |
+
+`vocabulary.js` is a module of its own for a boring reason: the two data files import the names and
+`catalogue.js` imports the two data files, so keeping the names in `catalogue.js` would be a circle.
+
+#### The catalogue is data, and the effects are not in it
+
+FR-26 says a card's effect is a rule over game state, matched to its artwork **by card id**, with
+neither side importing the other. So a catalogue entry says what a card *is*, when it may be played and
+what the player must point at. What it *does* is a separate function, arriving with the commits that
+implement each card. A view can render a card whose effect does not exist yet, and this whole file can
+be tested without loading a single effect.
+
+#### The counts, and why they are asserted twice
+
+29 cards, **22 Action and 7 Reaction**, categories 5 Movement / 5 Blocking / 5 Troll / 4 Offensive. Two
+copies of each, so a **58-card pool**.
+
+Those numbers were counted off the artwork independently in section 4.3 of design handoff 03, before the
+catalogue was written. The tests assert them, so a transcription slip shows up as a disagreement between
+two counts rather than as a card quietly missing.
+
+#### What the ids had to change, and what changed only for readability
+
+Kebab-case, prefixed with the type. Three names could not be transcribed literally:
+
+- **`Nühü` becomes `reaction-nuehue`.** A non-ASCII character in an id is one URL encoding away from a
+  bug nobody enjoys.
+- **`67` becomes `action-sixty-seven`.** An identifier starting with a digit is a trap in several of the
+  places an id travels through.
+- **`Speedrun Any%` becomes `action-speedrun`.** A per cent sign is a URL escape waiting to happen.
+
+Two more were shortened purely for readability, and those are the only unforced changes in the file:
+`Aight Imma Head Out` to `action-head-out` and `It's Not That Deep` to `action-not-that-deep`.
+
+#### Category is `null` for ten cards, on purpose
+
+The four categories are printed on artboard `4a` only. Artboard `6a` labels its ten cards by type and a
+sub-kind instead. Those ten get `category: null` rather than an invented category, because reconciling
+the two labelling schemes is **open decision D28 of design handoff 03**, and inventing one here would be
+answering a design question that is not this side's to answer.
+
+The sub-kind is stored for all 29 as `kind`, and **no code reads it yet**. Stored anyway, because the
+catalogue is the machine-readable transcription of a generated HTML artboard nobody is going to open
+again, and being lossy against that source is the worse failure. Some of the values are odd and they are
+the artwork's own: `ACTION` and `REACTION` repeat what `type` already says, and `D4` and `D6` name a die.
+Transcribed as they are, because tidying them up would be a decision hidden inside a transcription.
+
+#### The catalogue validates itself when it loads
+
+`assertCatalogue` runs at import. The mistakes hand transcription produces are all quiet: a duplicated
+id, a typo in a category, a Reaction card whose trigger is the action phase. None of them throws when it
+happens, and all of them become a card that cannot be played or cannot be labelled, weeks later.
+
+One of the checks is a real rule rather than a spelling check. FR-23 and FR-24 say an Action is playable
+only on your own turn and a Reaction only during someone else's, so an Action may carry only
+`ACTION_PHASE` and a Reaction may carry only the three windows. That is asserted per card at load and
+again in the tests.
+
+#### 16 of the 29 cards need a target, not 14
+
+`targets` is a list, because Hyperbeam needs a pawn **and** a direction. The plan estimated 14 cards
+needing a target before the cards were transcribed one at a time; the real number is 16, and the test
+pins it, because it is the surface the target picker of issue #34 has to cover.
+
+`TARGET.NONE` may not be combined with a real target, which is checked, because a card that says both
+"nothing to pick" and "pick a pawn" would make the picker guess.
+
+### The skill pool is built completely differently from the dice pool, and the reason is lifetime
+
+`core/dice-pool.js` is an object holding its remaining cards in a closure. `core/skill-pool.js` is pure
+functions over arrays that live in the game state. The two are deliberately not the same shape.
+
+A **dice** hand exists for one turn. All three cards go back at the end of it (FR-21), there is no
+discard pile, and nothing about it survives into the next turn, so nobody outside that turn needs to see
+it. Hiding it in a closure costs nothing.
+
+A **skill** card, once drawn, sits in a hand for as long as its owner keeps it. The pool, four hands and
+the discard pile are all things the view has to show, all things a saved match would have to write down,
+and all things a replay has to reproduce. That makes them state, and state in this project lives in one
+frozen object in `state/`, not in a closure only one module can see.
+
+#### The pool holds ids, not card objects
+
+Two copies of Angel Die are indistinguishable to every rule, so storing two references to the same
+frozen object would be storing the same string twice with extra steps. It also keeps the state small and
+JSON-shaped, which matters the day a match has to be written down.
+
+#### The closed accounting rule, and the test that is the reason this module exists (FR-27)
+
+Every one of the 58 cards is in exactly one of pool, a hand, or the discard pile, at every moment.
+`totalCards` is the only function here that no rule calls; it exists because FR-27's acceptance criterion
+is a property of the whole system rather than of any single step, and a property is only worth stating if
+something checks it.
+
+**A card that quietly disappears is the most likely silent bug in a system like this.** It throws
+nothing, breaks nothing at the time, and shows up as a pool that is mysteriously thin an hour into a
+playtest. The test plays 400 draws and discards across four hands and asserts the total after every
+single step, and a second test asserts that no card ever exists in more copies than the catalogue
+defines, which is what would catch a reshuffle that copied instead of moving.
+
+#### Two refusals rather than two errors
+
+- **A full hand draws nothing** and the card stays in the pool. Rejected alternative: draw it and put it
+  straight in the discard pile, which some card games do. It burns a card for nothing and thins the pool
+  measurably over a match, for no gain a player would notice.
+- **An empty pool and an empty discard pile** draw nothing. Only reachable if all 58 cards are in hands,
+  which four hands of five cannot hold, so it cannot happen. Handled rather than assumed, because
+  "cannot happen" is how closed accounting stops being closed.
+
+#### Negative finding: the hand limit of 5 is an assumption
+
+The game design document said 3. It was written for a game that drew cards far more rarely, and with a
+draw at the start of every turn plus the skill squares a limit of 3 means a player is at the limit almost
+always and the extra draws do nothing. 5 is a guess at "enough room that a draw is usually worth
+something". Neither number has been playtested. It is one constant, and it is flagged in the plan, in
+section 4.2 of design handoff 03, and now in section 10 of the game design document.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

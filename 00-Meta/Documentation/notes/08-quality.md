@@ -474,6 +474,44 @@ claims, so the arithmetic in that comment is checked rather than trusted. The **
 2000 respawns and requires all 28 to appear at least once, because a respawn that only ever used half the
 board would satisfy every other test in the file.
 
+### Testing a transcription, and testing an invariant: 2026-08-31, issue #38
+
+Two new test files, and they are testing genuinely different kinds of thing.
+
+**`cards/catalogue.test.js` tests a transcription.** The catalogue is 29 entries typed out by hand from
+a generated artboard, so most of what can go wrong is a slip rather than a bug: a duplicated id, a card
+in the wrong category, a Reaction whose trigger is the action phase.
+
+The useful trick here is that the counts were taken **twice, independently**. Section 4.3 of design
+handoff 03 counted 22 Action, 7 Reaction and 5/5/5/4 across the categories off the artwork before the
+catalogue existed. The tests assert those numbers, so a slip shows up as two counts disagreeing and both
+get looked at, rather than as a card quietly missing from a list nobody counted.
+
+The catalogue also validates itself at import, which is a second layer on the same problem and worth
+having: the test catches it in CI, the load-time check catches it in the browser for whoever is editing
+the list. Neither is redundant, because the person adding card 30 is not necessarily running the tests
+first.
+
+**`skill-pool.test.js` tests an invariant**, and it is the reason that module exists. FR-27's acceptance
+criterion is a property of the whole system, not of any step: every one of the 58 cards is in exactly one
+of pool, a hand, or the discard pile, always. So the test plays 400 draws and discards across four hands
+and asserts the total after **every single step**, not at the end.
+
+Asserting after every step rather than at the end matters. A bug that loses a card and a bug that
+duplicates one can cancel out over a long run, and an end-of-run check would pass. A second test covers
+the duplication case directly: no card ever exists in more copies than the catalogue defines, which is
+what would catch a reshuffle that copied the discard pile instead of moving it.
+
+**One test deliberately exercises something that cannot happen.** Drawing from an empty pool with an
+empty discard pile needs all 58 cards in hands, which four hands of five cannot hold. It is tested
+because "cannot happen" arguments are how closed accounting quietly stops being closed, and the cost of
+the test is three lines.
+
+**Outstanding coverage, stated plainly:** no card effect is tested, because no card effect exists. The
+catalogue says what 29 cards are and when they may be played; what any of them *does* is untested and
+unimplemented. The rules sentences are also absent from the locales for the same reason, so the only
+card text under test is the 29 titles.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

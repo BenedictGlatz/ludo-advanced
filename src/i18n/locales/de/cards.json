@@ -8,8 +8,45 @@
       "action": "Aktion",
       "reaction": "Reaktion"
     },
+    "category": {
+      "movement": "Bewegung",
+      "blocking": "Blockade",
+      "troll": "Troll",
+      "offensive": "Offensive"
+    },
     "dice": {
       "name": "W{{faces}}"
+    },
+    "skill": {
+      "action-pot-of-greed": { "title": "Pot of Greed" },
+      "action-double-dip": { "title": "Double Dip" },
+      "action-no-take-backsies": { "title": "No Take-Backsies" },
+      "action-critical-success": { "title": "Critical Success" },
+      "action-angel-die": { "title": "Angel Die" },
+      "reaction-critical-failure": { "title": "Critical Failure" },
+      "reaction-devil-die": { "title": "Devil Die" },
+      "reaction-nuehue": { "title": "Nühü" },
+      "reaction-hold-pawn": { "title": "Hold Pawn" },
+      "reaction-the-purge": { "title": "The Purge" },
+      "action-banana-peel": { "title": "Banana Peel" },
+      "action-hyperbeam": { "title": "Hyperbeam" },
+      "reaction-uno-reverse": { "title": "Uno Reverse" },
+      "action-rock": { "title": "Rock" },
+      "action-big-ah-rock": { "title": "Big Ah Rock" },
+      "action-oil-spill": { "title": "Oil Spill" },
+      "reaction-ghost-mode": { "title": "Ghost Mode" },
+      "action-head-out": { "title": "Aight Imma Head Out" },
+      "action-speedrun": { "title": "Speedrun Any%" },
+      "action-janky-rpg": { "title": "Janky RPG" },
+      "action-yeet": { "title": "Yeet" },
+      "action-tax-fraud": { "title": "Tax Fraud" },
+      "action-lock-in": { "title": "Lock In" },
+      "action-not-that-deep": { "title": "It's Not That Deep" },
+      "action-let-him-cook": { "title": "Let Him Cook" },
+      "action-built-different": { "title": "Built Different" },
+      "action-fr-fr": { "title": "FR FR" },
+      "action-sixty-seven": { "title": "67" },
+      "action-ragebait": { "title": "Ragebait" }
     }
   }
 }

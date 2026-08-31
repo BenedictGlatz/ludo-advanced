@@ -11,6 +11,8 @@
 
 import { beforeAll, describe, expect, it } from "vitest";
 
+import { cardIds } from "../../../src/core/cards/catalogue.js";
+import { CATEGORY } from "../../../src/core/cards/vocabulary.js";
 import { REFUSAL } from "../../../src/core/movement.js";
 import { REJECTED } from "../../../src/state/intents.js";
 import {
@@ -109,6 +111,32 @@ describe("every key the code can emit has text in both languages", () => {
       expect(german.has(key), `de is missing ${key}`).toBe(true);
       expect(english.has(key), `en is missing ${key}`).toBe(true);
     }
+  });
+
+  it("names every one of the 29 skill cards, in both languages (FR-28, NFR-03)", () => {
+    // This is the test that stops a card existing with no name. A card whose title key is missing
+    // renders as the raw id on the table, which is the worst possible place to find out.
+    for (const id of cardIds()) {
+      expect(german.has(`card.skill.${id}.title`), `de is missing a title for ${id}`).toBe(true);
+      expect(english.has(`card.skill.${id}.title`), `en is missing a title for ${id}`).toBe(true);
+    }
+  });
+
+  it("names every card category the catalogue can hold", () => {
+    for (const category of Object.values(CATEGORY)) {
+      expect(german.has(`card.category.${category}`), `de: ${category}`).toBe(true);
+      expect(english.has(`card.category.${category}`), `en: ${category}`).toBe(true);
+    }
+  });
+
+  it("has a title for exactly the 29 cards and no orphan left behind", () => {
+    // The other direction: a card removed from the catalogue but left in the locales would be text
+    // nothing can reach, and it would sit there until somebody counted.
+    const titled = [...german]
+      .filter((key) => key.startsWith("card.skill.") && key.endsWith(".title"))
+      .map((key) => key.slice("card.skill.".length, -".title".length));
+
+    expect(titled.sort()).toEqual([...cardIds()].sort());
   });
 
   it("covers every intent rejection reason", () => {

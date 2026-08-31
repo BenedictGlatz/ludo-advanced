@@ -216,6 +216,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The locale text split into `locales/<code>/ui.json` and `locales/<code>/cards.json`, merged into one
   i18next namespace at boot so that every existing `t("turn.end")` call is unchanged. Done ahead of the 29
   card titles and rules sentences, which are roughly four times as much text as the whole interface
+- **The 29-card skill card catalogue** (issue #38, FR-26 and FR-28): 22 Action cards and 7 Reaction cards,
+  two copies of each, so a 58-card pool. Split across `src/core/cards/`: the ten cards of artboard `6a`
+  that need no new board concept, the nineteen of artboard `4a` that need five mechanics the game does not
+  have yet, a shared vocabulary, and an assembly module that validates the whole list when it loads. Each
+  entry says what a card is, when it may be played and what the player has to point at. **What a card
+  does is not in it**: an effect is a separate function matched by the same id, and none exists yet
+- **The closed skill card pool** (`src/core/skill-pool.js`, FR-22 and FR-27): the pool, one hand per seat
+  and a discard pile, as pure functions over the arrays the game state holds. A hand holds at most 5
+  cards and a draw for a full hand leaves the card in the pool. A played card goes to the discard pile,
+  and an empty pool is refilled by shuffling the discard pile back in. Every one of the 58 cards is in
+  exactly one of pool, hand or discard at every moment, which is checked after each of 400 steps in a test
+- The 29 card names in both locales, plus the four category labels. **The names are the same in German
+  and English on purpose**: they are memes, and a German "Aight Imma Head Out" is worse German than the
+  English. The rules sentence of each card is deliberately absent and arrives with the card's effect
+- Section 2.5 of the game design document, the skill fields as a board rule: where they start, why the
+  layout is symmetric, why landing counts and crossing does not, and what a respawn excludes
 
 ### Changed
 
@@ -330,3 +346,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `resolveReactions` and the `commit-move` intent take `deps`, because using up a skill field needs the
   injected randomness. `createGameState` and `startMatch` accept the skill field layout, defaulting to the
   real one, so a test that scripts an exact sequence of rolls can pin an empty board
+- **Section 7 of the game design document is replaced.** The eight skill cards invented while writing that
+  document are gone, and the 29 cards of the artwork take their place, in two tables split by how much new
+  machinery each half needs. A third table names the six cards whose printed text the board model cannot
+  express, with what is built instead and why. The old set and the argument it made about set size are
+  quoted rather than deleted, because that argument is still unanswered: 29 cards is 29 rules and 29 tests
+  against 8
+- **Section 6.5 of the game design document is rewritten**, and the old rule is quoted below the new one.
+  The pool is 58 cards instead of 16, the hand limit is 5 instead of 3, and a player draws at the **start**
+  of their own turn plus on landing on a skill field, instead of at the end of the turn plus on being
+  captured. The compensating card for a captured player is gone, and the changelog says so plainly because
+  the argument for it was never answered, only overruled
+- Section 6.6 of the game design document carries a "superseded, not yet rewritten" banner: the reaction
+  window is decided as one shared 30-second window with a budget of one card per player per turn, and the
+  section still describes the untimed one. Left standing until it is implemented, because the reasoning it
+  gives against a timed window is what the new rule has to answer
+- The Product Owner sign-off table of the game design document gained three rows marked **Overridden** and
+  two new unsigned rows for the rule changes the cards force: leaving the start field becomes
+  `roll >= dieMax`, and card-driven backward movement stops at the first track field
