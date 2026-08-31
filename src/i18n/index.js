@@ -12,9 +12,24 @@
  * ## What lives where
  *
  * The **keys** are produced by `core/movement.js` (`REFUSAL`) and `state/intents.js` (`REJECTED`).
- * The **text** is in `locales/de.json` and `locales/en.json`. A unit test checks that the two files
- * have identical key sets and that every key the code can emit has an entry in both, which is
- * NFR-03's acceptance criterion turned into a failing test.
+ * The **text** is in `locales/<code>/ui.json` and `locales/<code>/cards.json`. A unit test checks
+ * that the two languages have identical key sets and that every key the code can emit has an entry
+ * in both, which is NFR-03's acceptance criterion turned into a failing test.
+ *
+ * ## Why the text is in two files per language and not one
+ *
+ * The card set is 29 skill cards plus the dice denominations, and every one of them carries a title
+ * and a rules sentence in both languages. In one file that is roughly four times as much card text
+ * as interface text, and the interface strings become unfindable between them. Worse, the card text
+ * is the part that changes during playtesting: a wording tweak to one card would sit in the same
+ * diff as the whole interface, which makes a review pointless.
+ *
+ * The split is by **who owns the string**, not by size. `ui.json` is text the interface writes;
+ * `cards.json` is text the card set writes. Rejected alternative: i18next namespaces
+ * (`t("cards:card.type.action")`). They are the idiomatic i18next answer, but every existing call
+ * site says `t("move.refused.overshoot")` with no prefix, so namespaces would mean touching every
+ * call in `core/`, `state/` and `ui/` for no gain the merge does not already give. Merging the two
+ * objects into one `translation` namespace keeps every current call valid.
  *
  * ## German is the default and English is the fallback
  *
@@ -26,8 +41,10 @@
 
 import i18next from "i18next";
 
-import de from "./locales/de.json";
-import en from "./locales/en.json";
+import deCards from "./locales/de/cards.json";
+import deUi from "./locales/de/ui.json";
+import enCards from "./locales/en/cards.json";
+import enUi from "./locales/en/ui.json";
 
 /** The language the game starts in. */
 export const DEFAULT_LOCALE = "de";
@@ -35,8 +52,38 @@ export const DEFAULT_LOCALE = "de";
 /** The language a missing key falls back to. */
 export const FALLBACK_LOCALE = "en";
 
+/**
+ * Merge the per-language files into the one object i18next gets.
+ *
+ * The merge is shallow on purpose, because the files are meant to own disjoint top-level keys:
+ * `ui.json` owns `app`, `turn` and friends, `cards.json` owns `card`. A shallow spread would
+ * **silently** drop one side of a collision, and a missing translation shows up as a raw key on
+ * screen weeks later, so the collision is refused here instead of tolerated.
+ */
+export function mergeNamespaces(code, files) {
+  const merged = {};
+
+  for (const [fileName, file] of Object.entries(files)) {
+    for (const [key, value] of Object.entries(file)) {
+      if (Object.hasOwn(merged, key)) {
+        throw new Error(
+          `locale "${code}": top-level key "${key}" is defined in more than one file, ` +
+            `last seen in ${fileName}. Give it to exactly one file.`
+        );
+      }
+
+      merged[key] = value;
+    }
+  }
+
+  return merged;
+}
+
 /** Every locale the game ships, by code. FR-34 switches between exactly these. */
-export const LOCALES = Object.freeze({ de, en });
+export const LOCALES = Object.freeze({
+  de: mergeNamespaces("de", { "de/ui.json": deUi, "de/cards.json": deCards }),
+  en: mergeNamespaces("en", { "en/ui.json": enUi, "en/cards.json": enCards }),
+});
 
 /**
  * Boot i18next. Called once, by the composition root in `main.js`, and by nothing else.

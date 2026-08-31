@@ -2,8 +2,11 @@
  * NFR-03's acceptance criterion as a test: "the two locale files have identical key sets, and no
  * literal user-facing string exists in `src/`."
  *
- * The first half is checkable here and is. The second half is a grep over `src/ui/`, which does not
- * exist yet, so it is not checked anywhere and is recorded as outstanding in Chapter 08.
+ * The first half is checkable here and is. The second half is a grep over `src/ui/`, which no test
+ * performs, so it is recorded as outstanding in Chapter 08.
+ *
+ * Since the locale text was split into `ui.json` and `cards.json` per language, this file also
+ * guards the merge: the two files must own disjoint top-level keys, because merging them is shallow.
  */
 
 import { beforeAll, describe, expect, it } from "vitest";
@@ -17,8 +20,13 @@ import {
   changeLanguage,
   currentLanguage,
   initI18n,
+  mergeNamespaces,
   t,
 } from "../../../src/i18n/index.js";
+import deCards from "../../../src/i18n/locales/de/cards.json";
+import deUi from "../../../src/i18n/locales/de/ui.json";
+import enCards from "../../../src/i18n/locales/en/cards.json";
+import enUi from "../../../src/i18n/locales/en/ui.json";
 
 /** Every leaf key of a nested locale object, as the dotted keys i18next resolves. */
 function flatKeys(object, prefix = "") {
@@ -61,6 +69,34 @@ describe("the two locale files (NFR-03)", () => {
         placeholders(leafAt(LOCALES.en, key))
       );
     }
+  });
+});
+
+describe("the split into ui.json and cards.json", () => {
+  // The merge is shallow, so a top-level key in both files would drop one of them without a word.
+  // These two tests are the reason the merge refuses a collision instead of spreading over it.
+  it("gives every top-level key to exactly one file, in both languages", () => {
+    for (const [ui, cards, code] of [
+      [deUi, deCards, "de"],
+      [enUi, enCards, "en"],
+    ]) {
+      const shared = Object.keys(ui).filter((key) => Object.hasOwn(cards, key));
+
+      expect(shared, `${code}: keys in both files`).toEqual([]);
+    }
+  });
+
+  it("refuses a collision rather than dropping one side", () => {
+    expect(() =>
+      mergeNamespaces("de", { "a.json": { card: { x: "1" } }, "b.json": { card: { y: "2" } } })
+    ).toThrow(/top-level key "card" is defined in more than one file/);
+  });
+
+  it("puts both files into the merged locale", () => {
+    // Reading through LOCALES rather than through t(), so this fails on a broken merge even when
+    // i18next has not been booted yet.
+    expect(LOCALES.de.turn.end).toBe("Zug beenden");
+    expect(LOCALES.de.card.type.action).toBe("Aktion");
   });
 });
 
@@ -119,6 +155,17 @@ describe("i18next once it is booted", () => {
 
     await changeLanguage("de");
     expect(t("turn.end")).toBe("Zug beenden");
+  });
+
+  it("names a dice card the way each language names dice", async () => {
+    // W for Würfel, D for die. This one string is the clearest case for card text being localised
+    // rather than being a number the view can format itself.
+    expect(t("card.dice.name", { faces: 8 })).toBe("W8");
+
+    await changeLanguage("en");
+    expect(t("card.dice.name", { faces: 8 })).toBe("D8");
+
+    await changeLanguage("de");
   });
 
   it("refuses a locale it does not ship", async () => {

@@ -1,0 +1,15 @@
+{
+  "card": {
+    "family": {
+      "dice": "Dice card",
+      "skill": "Skill card"
+    },
+    "type": {
+      "action": "Action",
+      "reaction": "Reaction"
+    },
+    "dice": {
+      "name": "D{{faces}}"
+    }
+  }
+}

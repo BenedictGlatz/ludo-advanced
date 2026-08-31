@@ -446,6 +446,38 @@ chapter:
   draws the boundary explicitly: what has to be on screen is a requirement, what it looks like is a
   design decision.
 
+### The locale text split into interface text and card text: 2026-08-31, issue #38
+
+`locales/de.json` and `locales/en.json` became `locales/de/ui.json` plus `locales/de/cards.json`, and
+the same for English. `src/i18n/index.js` merges the two files per language into one i18next
+`translation` namespace at boot.
+
+**Why now and not when the cards land.** The card set is 29 skill cards plus the dice denominations,
+and each card carries a title and a rules sentence in both languages. That is roughly four times as
+much card text as interface text. In one file the interface strings become unfindable, and every
+playtesting tweak to a card's wording would land in the same diff as the whole interface, which makes
+a review of that diff pointless. Splitting before the text arrives is a rename; splitting after it is
+a merge conflict.
+
+**The split is by owner, not by size.** `ui.json` is text the interface writes. `cards.json` is text
+the card set writes. That line also predicts who edits which file during playtesting.
+
+**Rejected: i18next namespaces**, which is the idiomatic answer the library offers
+(`t("cards:card.type.action")`). Every existing call site says `t("move.refused.overshoot")` with no
+prefix, so namespaces would mean editing every translation call in `core/`, `state/` and `ui/` and
+would gain nothing the merge does not already give. The merge keeps every current call valid, and the
+split is invisible to callers.
+
+**The merge is shallow, so it refuses a collision instead of tolerating one.** A plain
+`{ ...ui, ...cards }` drops one side of a duplicate top-level key without a word, and the symptom
+would be a raw key such as `card.type.action` appearing on screen weeks later with nothing pointing at
+the cause. `mergeNamespaces` throws at boot and names both the key and the file. Two unit tests cover
+it: one asserts the shipped files own disjoint top-level keys, one asserts the throw.
+
+**One string already proves the split earns its keep:** `card.dice.name` is `W{{faces}}` in German and
+`D{{faces}}` in English. A dice card's name is not a number the view can format itself, because the
+letter in front of it is language.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

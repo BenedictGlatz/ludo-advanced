@@ -1,0 +1,15 @@
+{
+  "card": {
+    "family": {
+      "dice": "Würfelkarte",
+      "skill": "Skill-Karte"
+    },
+    "type": {
+      "action": "Aktion",
+      "reaction": "Reaktion"
+    },
+    "dice": {
+      "name": "W{{faces}}"
+    }
+  }
+}

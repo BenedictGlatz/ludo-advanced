@@ -378,6 +378,34 @@ names seat 2 with a comment saying why, instead of quietly assuming the first pl
 The general lesson for the report: **a test that hard-codes a value the rules derive will pass for
 the wrong reason until the derivation changes.** Both of these did.
 
+### The locale split brought its own failure mode, and a test for it: 2026-08-31, issue #38
+
+Splitting each language's text into `ui.json` and `cards.json` introduced a bug class that did not
+exist while there was one file per language: **two files defining the same top-level key**. The merge
+in `src/i18n/index.js` is shallow, so a plain spread keeps one side and discards the other in silence.
+
+The symptom is what makes it worth a test. A dropped key does not throw, does not fail a build and
+does not fail the existing key-set comparison, because that test compares German against English and
+both languages would lose the same keys. It surfaces as a raw key such as `card.type.action` printed on
+screen, possibly weeks later, with nothing pointing at the cause.
+
+Three tests were added:
+
+- **The shipped files own disjoint top-level keys**, checked per language. This is the one that would
+  actually fire during development.
+- **The merge throws on a collision**, checked against a hand-built pair of objects rather than the
+  shipped files, so the guard stays tested once the shipped files are correct.
+- **Both files reach the merged locale**, read through `LOCALES` rather than through `t()`, so a broken
+  merge fails even before i18next is booted.
+
+One more test was added for a reason that is not about the split: `card.dice.name` resolves to `W8` in
+German and `D8` in English. It is the first assertion in the project that a card's own text differs by
+language beyond translation of a sentence.
+
+**Still outstanding, unchanged:** the second half of NFR-03, the grep for literal user-facing strings
+in `src/ui/`, is still checked by nothing. `src/ui/` has existed since 2026-08-30, so the reason
+recorded above ("it does not exist yet") no longer holds. The gap is now simply unaddressed work.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

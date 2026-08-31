@@ -207,6 +207,19 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   no turn bar and no win screen. Milestones M2 and M3 are met, five days after M1 was missed.
   Sprint 2.
 
+- **2026-08-30**: The stand-in W6 was replaced by the real twenty-card dice pool, issue #30. Section 5
+  of the game design document was re-derived against the 44-step journey, which replaced the
+  "outdated" banner it had carried since the morning. Design handoff 03 was written for the card
+  component and the two hands. All five Playwright seeds had to be regenerated, because the pool draws
+  from the same generator the die rolls from; the replay script that finds them was never committed
+  and had to be rebuilt as `scripts/find-seeds.js`. Sprint 2. *(Entry written 2026-08-31: it was
+  missing from this log, the three commits carried their facts into the chapter notes and the
+  decisions below but not into the session log.)*
+
+- **2026-08-31**: Design handoff 03 went to Claude Design, so the visible card work is waiting on a
+  spec. The locale text was split into `ui.json` plus `cards.json` per language ahead of the 29 card
+  titles and rules sentences that are about to arrive. Sprint 2.
+
 ---
 
 ## Decisions
@@ -1542,6 +1555,33 @@ to get wrong later.
 - **A negative finding it produced:** one turn in three has no legal move at all, at every player
   count. Recorded in section 5.2.3 rather than smoothed over.
 - → Ch. 05, Ch. 01
+
+### 2026-08-31: Locale text splits by owner into `ui.json` and `cards.json`, and the merge refuses collisions
+
+- **Chosen:** `locales/<code>/ui.json` for text the interface writes, `locales/<code>/cards.json` for
+  text the card set writes. `src/i18n/index.js` merges the two per language into one i18next
+  `translation` namespace at boot, through a `mergeNamespaces` helper that **throws** when both files
+  define the same top-level key.
+- **Why now, before the text exists:** 29 skill cards plus the dice denominations, each with a title
+  and a rules sentence in two languages, is roughly four times as much card text as interface text.
+  Doing the split as a rename today costs minutes; doing it once the text is in place is a merge
+  conflict across a file nobody can review.
+- **Why by owner and not by size:** the card wording is the part that changes during playtesting. With
+  one file, a tweak to a single card's sentence produces a diff spanning the whole interface, so the
+  reviewer cannot see what changed. The owner line also answers who edits which file later.
+- **Rejected: i18next namespaces** (`t("cards:card.type.action")`), which is what the library itself
+  offers for exactly this. It would mean editing every translation call in `core/`, `state/` and `ui/`
+  to carry a prefix, and it buys nothing the merge does not already give. Keeping one namespace means
+  the split is invisible to callers and no existing call site was touched.
+- **Rejected: a plain `{ ...ui, ...cards }` spread.** It silently drops one side of a duplicate
+  top-level key, and the symptom surfaces weeks later as a raw key such as `card.type.action` printed
+  on screen with nothing pointing at the cause. A boot-time throw naming the key and the file is worth
+  the twelve lines. Two unit tests cover it: the shipped files own disjoint top-level keys, and the
+  throw happens.
+- **The string that proves the split is not bookkeeping:** `card.dice.name` is `W{{faces}}` in German
+  and `D{{faces}}` in English. W for Würfel, D for die. A dice card's name looked like a number the
+  view could format itself, and it is not, because the letter in front of it is language.
+- → Ch. 04
 
 ---
 
