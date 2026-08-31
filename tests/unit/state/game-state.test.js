@@ -8,6 +8,7 @@ import {
   createGameState,
   nextState,
 } from "../../../src/state/game-state.js";
+import { isDeeplyFrozen } from "../../../src/state/freeze.js";
 
 describe("createGameState (FR-01)", () => {
   it("starts every player with four pawns in their start area", () => {
@@ -72,6 +73,14 @@ describe("the state is frozen, so `ui/` cannot write to it (NFR-01)", () => {
     expect(() => {
       state.pawns[0].r = 30;
     }).toThrow(TypeError);
+  });
+
+  it("has no writable corner anywhere in it, whatever fields it grows", () => {
+    // The three tests above name the fields they check, so a field added tomorrow is not covered by
+    // any of them. This one covers the whole shape, which is what the switch to a generic deep freeze
+    // bought. It is the test that fails when a new nested field arrives unfrozen.
+    expect(isDeeplyFrozen(createGameState(4))).toBe(true);
+    expect(isDeeplyFrozen(nextState(createGameState(4), { hand: [2, 4, 6] }))).toBe(true);
   });
 });
 

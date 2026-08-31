@@ -406,6 +406,26 @@ language beyond translation of a sentence.
 in `src/ui/`, is still checked by nothing. `src/ui/` has existed since 2026-08-30, so the reason
 recorded above ("it does not exist yet") no longer holds. The gap is now simply unaddressed work.
 
+### A test that covers a shape instead of a field list: 2026-08-31, issue #38
+
+`game-state.test.js` had three tests for immutability, and each one named the field it wrote to:
+assign `activePlayer`, push onto `pawns`, set `pawns[0].r`. All three pass and all three are useless
+against a field added tomorrow, which is the same weakness the hand-written freeze list had.
+
+The generic deep freeze made a different test possible: `isDeeplyFrozen(createGameState(4))`. One
+assertion covers the whole object, and it is the test that fails when a new nested field arrives
+unfrozen. The three named tests were kept, because they are the ones that show a reader *what* throws.
+
+**One test in `freeze.test.js` is written the awkward way on purpose.** `isDeeplyFrozen` shares its
+notion of "is this a container" with `deepFreeze`, so a bug there would make both agree and both be
+wrong, and every test written with `isDeeplyFrozen` would pass. So the main freeze test asserts
+`Object.isFrozen` by hand on named paths, `state.legalMoves[0].captures[0]` among them. It is longer
+to read and it is the assertion that would still fail.
+
+The cycle guard has its own test, even though the game state cannot contain a cycle. The old
+hand-written freeze named that guard as its reason for not being generic, so the claim that it costs
+four lines is worth pinning down rather than asserting.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

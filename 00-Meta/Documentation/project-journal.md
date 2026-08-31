@@ -1583,6 +1583,37 @@ to get wrong later.
   view could format itself, and it is not, because the letter in front of it is language.
 - → Ch. 04
 
+### 2026-08-31: The hand-written freeze list was replaced by a generic deep freeze, reversing an earlier decision
+
+- **Chosen:** `src/state/freeze.js` with `deepFreeze` and `isDeeplyFrozen`, walking the whole state
+  object. `game-state.js` calls it from `createGameState` and `nextState` and names no field.
+- **This reverses the decision recorded in `game-state.js` on 2026-08-29**, which chose a
+  field-by-field freeze precisely so that no general recursion and no cycle guard would be needed. That
+  reasoning was sound for a seven-field state of known shape. It is recorded here rather than quietly
+  overwritten, because the interesting part is what changed the answer.
+- **What changed it:** the skill cards add nine fields, two of them nested two levels deep
+  (`skillHands` is an object keyed by seat holding an array per seat). The deciding argument is not
+  that the list got longer, it is the failure mode. A freeze list must be edited whenever a field is
+  added, and a forgotten line leaves one array writable inside an apparently frozen state, with no
+  symptom at all. Freezing exists to turn "`ui/` never mutates state" into a thrown error, and a list
+  with a hole in it surrenders that silently.
+- **The old objection cost four lines to answer:** a `WeakSet` of objects already visited in this call.
+  It guards against cycles the state cannot have, and doubles as a guard against walking a shared
+  subtree twice.
+- **Rejected: skipping any subtree that is already frozen.** It is the obvious speed-up, since an
+  unchanged array carries the same frozen reference from one state to the next. It is only sound while
+  every frozen object in the project is deeply frozen, and one shallow `Object.freeze` in `core/` over
+  an object with a mutable child would make the shortcut skip that child forever and in silence. What
+  it saves is a walk over a few dozen numbers a handful of times per turn.
+- **Rejected: freezing `Map`, `Date`, class instances and functions too.** `Object.freeze` on a `Map`
+  does not stop `map.set`, so it would look like protection without being one. Only plain objects and
+  arrays are touched. Nothing else belongs in the state, and leaving those alone keeps the code honest
+  about what it does.
+- **Rejected: a library such as `deep-freeze` or Immer.** A new runtime dependency needs the user's
+  approval per `CLAUDE.md`, and this is nine lines of code. Immer would also change how every
+  transition is written, for a state object that is copied a few times per turn.
+- → Ch. 06, Ch. 08
+
 ---
 
 ## Challenges

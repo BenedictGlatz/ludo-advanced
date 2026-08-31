@@ -134,6 +134,43 @@ being a requirement on the turn manager; and the rule check and the state write 
 purpose, so that the FR-32 legal-move highlighting and the validation on commit are one rule
 implementation and not two. This chapter fills from observation once the code exists.
 
+### Freezing became generic, and the reason is the fields that are about to arrive: 2026-08-31, issue #38
+
+`game-state.js` froze the state **field by field**: freeze every pawn, freeze the pawn array, freeze
+the seat array, walk `legalMoves` and freeze each move and its `captures`, then freeze the state
+itself. The comment on it argued for that explicitly, on the grounds that the state was a known,
+flat-ish shape and a general recursive freeze would need a cycle guard for cycles the state cannot
+have. That was a fair reading of the state as it stood.
+
+The skill cards break the premise. They add nine fields, and two of them are nested two levels deep:
+`skillHands` is an object keyed by seat holding an array per seat, and `statuses` and `traps` are
+arrays of objects.
+
+**What actually changed the decision was not length, it was the failure mode.** A hand-written freeze
+list is a list that must be edited every time a field is added. Forget one line and the state looks
+frozen, one array inside it stays writable, and a view can quietly write to the game state. Freezing
+exists to turn the "`ui/` never mutates state" convention into a thrown error; a freeze list with a
+hole in it gives that up without anything going red.
+
+`src/state/freeze.js` now holds `deepFreeze` and `isDeeplyFrozen`. The cycle objection turned out to
+cost four lines: a `WeakSet` of objects already visited in this call, which doubles as a guard against
+walking a shared subtree twice.
+
+Two limits are deliberate:
+
+- **Only plain objects and arrays are frozen.** A `Map`, a `Date`, a class instance or a function is
+  left alone, because `Object.freeze` on a `Map` does not stop `map.set`: freezing it would look like
+  protection and not be one. Nothing of that kind belongs in the state, and leaving it untouched keeps
+  the lie out of the code rather than hiding it.
+- **An already-frozen subtree is still walked.** Skipping it would be the obvious speed-up, since an
+  unchanged array carries the same frozen reference from one state to the next. It is only sound while
+  every frozen object anywhere in the project is also *deeply* frozen, and one shallow `Object.freeze`
+  in `core/` on an object with a mutable child would make the shortcut skip that child forever, in
+  silence. What it saves is a walk over a few dozen numbers and strings a handful of times per turn.
+
+`nextState` and `createGameState` are the only callers, so there is still exactly one line to read to
+know that no state is ever written in place.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

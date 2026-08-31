@@ -15,6 +15,11 @@
  * The cost is one shallow copy of a small object per transition, in a turn-based game that changes
  * state a few times per turn. That is not a performance question.
  *
+ * The freezing itself is in [freeze.js](freeze.js) and is generic: it walks the whole object rather
+ * than naming each field. That module carries the reason. The short version is that a hand-written
+ * freeze list has to be edited whenever a field is added, and a forgotten line leaves one array
+ * writable with no visible symptom, which is precisely the protection this was for.
+ *
  * ## What is stored and what is derived
  *
  * Stored: the pawn positions, whose turn it is, which phase the turn is in, the drawn hand, the
@@ -32,6 +37,7 @@
 
 import { seatsFor } from "../core/board.js";
 import { createPawns } from "../core/pawns.js";
+import { deepFreeze } from "./freeze.js";
 
 /**
  * The turn as a state machine, matching the eight steps in section 3 of the game design document.
@@ -63,32 +69,6 @@ export const MATCH_STATUS = {
 };
 
 /**
- * Freeze an object, the arrays in it and the objects inside those arrays.
- *
- * Hand-written rather than a general recursive freeze, because the state is a known, flat-ish shape
- * and a general one would have to guard against cycles it cannot have.
- */
-function freezeState(state) {
-  for (const pawn of state.pawns) Object.freeze(pawn);
-  Object.freeze(state.pawns);
-  Object.freeze(state.seats);
-
-  for (const move of state.legalMoves) {
-    if (move.captures !== null) Object.freeze(move.captures);
-    Object.freeze(move);
-  }
-  Object.freeze(state.legalMoves);
-  Object.freeze(state.hand);
-
-  if (state.pendingMove !== null) {
-    if (state.pendingMove.captures !== null) Object.freeze(state.pendingMove.captures);
-    Object.freeze(state.pendingMove);
-  }
-
-  return Object.freeze(state);
-}
-
-/**
  * A fresh match: `playerCount` players, four pawns each in their start areas, the first seat to
  * move, and nothing drawn yet (FR-01).
  *
@@ -101,7 +81,7 @@ function freezeState(state) {
 export function createGameState(playerCount) {
   const seats = seatsFor(playerCount);
 
-  return freezeState({
+  return deepFreeze({
     playerCount,
     seats,
     status: MATCH_STATUS.RUNNING,
@@ -131,7 +111,7 @@ export function createGameState(playerCount) {
  * that nothing is ever written in place.
  */
 export function nextState(state, changes) {
-  return freezeState({ ...state, ...changes });
+  return deepFreeze({ ...state, ...changes });
 }
 
 /**
