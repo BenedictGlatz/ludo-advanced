@@ -512,6 +512,121 @@ catalogue says what 29 cards are and when they may be played; what any of them *
 unimplemented. The rules sentences are also absent from the locales for the same reason, so the only
 card text under test is the 29 titles.
 
+### The suite had been running at the wrong resolution for two weeks: 2026-08-31, issue #31
+
+`playwright.config.js` has said `viewport: { width: 1440, height: 900 }` since 2026-08-14, in its
+top-level `use` block, with a comment explaining that NFR-10 is desktop only. **The suite was running
+at 1280 by 720.**
+
+Playwright's device descriptors each carry their own viewport, and every project spreads one:
+`{ ...devices["Desktop Chrome"] }` sets 1280 by 720, and a project's `use` beats the config's `use`.
+So the setting was overridden three times over, silently, and nothing failed.
+
+It went unnoticed because until this commit no test measured the page. It surfaced the moment one did:
+design spec 03 introduced a breakpoint at 84 rem, which is 1344 px, so 1280 is **below** it and the
+whole suite had been playing the stacked fallback layout rather than the two-column one the design is
+drawn for.
+
+- **Fixed** by naming the resolution once as `DESIGN_VIEWPORT` and spreading it into each project
+  *after* the device descriptor.
+- **And the fix got its own test**, `shell.spec.js`, whose first case does nothing but read
+  `page.viewportSize()` and assert 1440 by 900. A configuration mistake that no test can see is a
+  configuration mistake that comes back, and this one is invisible by construction: the wrong value
+  makes every other test pass.
+- **The general lesson, worth a line in the report:** a setting that is silently overridden looks
+  exactly like a setting that works. The only defence is a test that reads the setting itself, not the
+  behaviour it is supposed to produce.
+
+### A layout claim finally got a test, and it failed: 2026-08-31, issue #31
+
+FR-31 wants board, dice hand, skill hand and refusal strip visible together without scrolling. Spec 01
+said "the five-region layout is asserted, not built". Spec 03 built it and printed the arithmetic:
+"page height 776. Nothing scrolls."
+
+Measured at 1440 by 900 the page was **916 px tall in a 900 px viewport**. Two causes at once, and both
+had been invisible for the reason above.
+
+1. The delivered `app.css` had dropped the `body { margin: 0 }` that the placeholder it replaced
+   carried, so the browser's 8 px default came back and every page was exactly `100vh + 16px`.
+2. Nothing was measuring, and what measuring there was would have been at the wrong size.
+
+`tests/e2e/shell.spec.js` now holds four cases: the viewport is what the config says, the page does not
+scroll in either direction, all four regions sit inside the viewport, and below the breakpoint the
+regions stack and are all still present. The last one is there so the third is not read as "nothing may
+ever scroll": FR-31 asks for one screen at the design resolution, not at every size.
+
+**One trap in writing it, worth recording because it also produced a wrong measurement by hand
+first.** D31's dealing animation starts each card translated out of place, so a measurement taken while
+it plays reports a card sticking out of the page and a scroll height that is real for 360 ms and gone
+afterwards. The first hand measurement of a card came out 210 by 282 against the spec's 198 by 289, and
+the card was simply mid-rotation. The spec table was right. The test polls until the page has settled
+before it measures anything.
+
+### The choose step landed and every spec had to be told about it: 2026-08-31, issue #31
+
+Picking a dice card became a real player action, so a turn now has two waiting points instead of one.
+Fourteen of the 25 Chromium tests failed on the first run, and every failure was a spec asserting
+something about a game that no longer starts the same way.
+
+- **Four specs assumed a match opens ready to move.** `pawn-leaves-start.spec.js` expected
+  `data-phase="act"` straight after `openMatch`, and `no-legal-move.spec.js` expected `turn-end`. Both
+  now pick a card first, through a small local `openAndChoose` helper. **Deliberately not folded into
+  `openMatch`**: a match really does open with a choice to make, and hiding that in the opener would
+  make every spec describe a game that does not exist.
+- **`playUntil` changed shape.** It used to check its `done` predicate only when the phase was `act`.
+  Now it asks once per *step*, and the step that matters is the one straight after a card is chosen,
+  because at that point the roll is known and no pawn has moved: it is the only moment a caller can ask
+  "is this the situation I was waiting for" and still act on the answer.
+- **`capture.spec.js` lost a branch instead of gaining one.** Its loop had a "phase is not act, so wait
+  for it" case that would now wait forever. It just calls `playTurn` every iteration, because a turn
+  nobody can move in changes no position and therefore needs no special case at all.
+
+#### The seeds did not go stale this time, and that was not luck
+
+The seeds had to be regenerated for issue #30 and again for issue #38. This change touches what the
+tests *click*, which is exactly the thing `scripts/find-seeds.js` has to agree with, so it looked like
+a third regeneration.
+
+It was not, because **the helper clicks slot 0 and slot 0 holds `hand[0]`, which is what the replay
+script already picked.** The two policies stayed identical, so every seed produced the same match and
+`npm run test:seeds` printed the same five lines. That agreement is now stated in both files, in the
+helper header and in the script header, rather than being true by accident.
+
+#### One racy spec was found by the change rather than caused by it
+
+`pawn-leaves-start.spec.js` held `firstMovablePawn(board)` across the two clicks that end a turn. That
+locator is live: the second click hands the turn over, the next seat's pawns become the movable ones,
+and the assertion afterwards reads a *different* pawn that happens to also be at `r = 0`. It had been
+passing on timing. The extra step shifted the timing and it started failing.
+
+Fixed by resolving the pawn to its identity once, `[data-player][data-pawn]`, so the locator names one
+element for the whole test. The class of bug is worth naming: **a live locator plus an action that
+changes what it matches is a race, and it passes until something unrelated gets slower.**
+
+### The dice hand's own spec, and what it deliberately does not check: 2026-08-31, issue #31
+
+`tests/e2e/dice-hand.spec.js`, six cases. Every one is about the choice being real, not about how a
+card looks: whether the ink outline is 3 px is not something a test should have an opinion on.
+
+- Three face-up cards, all three offered, and the turn waits.
+- Every card carries a denomination the pool actually holds, cross-checked against `POOL_COMPOSITION`
+  rather than against a list typed into the test, and titled `W2` and not `2`.
+- **The card the player picks is the one that gets rolled.** This test clicks slot **1**, deliberately,
+  because clicking slot 0 would pass even if the click were ignored and the old automatic `hand[0]`
+  were still in place. That is the one case that would have caught the bug this commit fixes.
+- Once chosen, exactly one card is marked and none is playable: a second pick would be a second roll.
+- The next turn's hand is fresh, with no mark and no result badge left over from a finished turn.
+- **The whole thing works from the keyboard**, focus and Enter, which is NFR-08. The design styles
+  `:focus-visible` on a card, and a focus state on an element the keyboard cannot reach is a state that
+  never happens.
+
+**Not covered, and it is the same gap as the board's:** `card-view.js` and `dice-hand-view.js` have no
+unit tests. `vitest.config.js` runs with `environment: "node"` on purpose, as the second half of
+NFR-01's criterion, so a `ui/` unit test would need a DOM configured and would weaken that guarantee.
+The trade is stated in the config and is unchanged. What it costs here is real: `updateCard`'s handling
+of a roll of `0`, which will matter once a card can subtract from a die, is currently unreachable by
+any test.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

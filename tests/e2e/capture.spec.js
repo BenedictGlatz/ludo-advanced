@@ -20,19 +20,13 @@ async function playUntilCapture(board, maxTurns = 60) {
   let before = await pawnPositions(board);
 
   for (let turn = 0; turn < maxTurns; turn += 1) {
-    const { status, phase, activePlayer } = await boardState(board);
+    const { status, activePlayer } = await boardState(board);
     if (status !== "running") break;
 
-    if (phase !== "act") {
-      // A turn nobody can move in. It passes itself, and no pawn changes place while it does.
-      await expect
-        .poll(async () => (await boardState(board)).phase, { timeout: 15_000 })
-        .toBe("act");
-      continue;
-    }
-
-    // `playTurn` returns only once the turn number has moved on, so the positions read below are
-    // the ones this move produced and not a snapshot taken halfway through it.
+    // `playTurn` picks a dice card, moves a pawn if one can move, and returns only once the turn
+    // number has moved on. So the positions read below are the ones this turn produced and not a
+    // snapshot taken halfway through it. A turn nobody can move in changes no position, which is why
+    // it needs no branch of its own here.
     await playTurn(board);
 
     const after = await pawnPositions(board);

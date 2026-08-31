@@ -227,7 +227,12 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   requirement. Then the 29-card catalogue and the closed skill card pool landed as pure `core/` work,
   and the game design document was pulled along with them: section 2.5 written for the skill squares,
   section 6.5 rewritten for the new card economy, section 7 replaced entirely, and three rows of the
-  sign-off table marked overridden by the Product Owner. Sprint 2.
+  sign-off table marked overridden by the Product Owner. Then design spec 03 came back and the dice
+  hand was built on it, so the player finally picks their own dice card: the view had been taking the
+  first of the three since the pool landed. Landing the spec turned up four things the five-item
+  entrance check exists for, two of them in the delivery and two of them pre-existing: a stylesheet
+  split undone, a missing `body { margin: 0 }`, an end-to-end suite that had been running at the wrong
+  viewport for two weeks, and a racy locator in a spec that had been passing on timing. Sprint 2.
 
 ---
 
@@ -1825,6 +1830,106 @@ to get wrong later.
   has to stop is a schedule decision and belongs in the sprint log.
 - → Ch. 05, Ch. 01
 
+### 2026-08-31: One card component takes a description, and never resolves its own text
+
+- **Chosen:** `ui/card-view.js` renders any card from a plain object whose strings are already
+  translated. It calls no `t()` and knows no card id.
+- **Why:** the locale key layout differs per family. A dice card's name is `card.dice.name` with a
+  `faces` placeholder; a skill card's is `card.skill.<id>.title`. A component that resolved its own
+  text would have to learn a new key shape every time a family is added, and the two hands would then
+  be the only callers who knew which shape applied.
+- **Rejected: pass the card id and let the card look everything up.** It is fewer arguments and it
+  reads more naturally. It also puts a `switch` on card family inside the component that exists
+  precisely so there is only one component.
+- **Consequence worth stating:** the same file will render the 29 skill cards with no change at all,
+  which is what makes decision D28 a single component rather than a shared stylesheet.
+- → Ch. 04
+
+### 2026-08-31: Picking a dice card takes one click, and moving a pawn still takes two
+
+- **Chosen:** one activation picks a dice card. A pawn keeps its select-then-commit pair.
+- **Why:** the two clicks on a pawn exist because a misclick captures an opponent with no way back, and
+  a capture costs that player most of a lap. Picking a dice card costs nobody anything, is visible
+  before it matters, and is undone by the next turn. A confirmation step there charges a click for no
+  risk.
+- **Rejected: two clicks on a card as well, for consistency.** Consistency between two controls is
+  worth something, and it lost to the fact that the reason for the first one does not exist for the
+  second.
+- → Ch. 04
+
+### 2026-08-31: A dice card carries two tags, and neither of them is advice
+
+- **Chosen:** every dice card shows its range and the number it needs to leave the start area. Nothing
+  says which card is the better pick.
+- **Why:** the whole point of the pool is a decision, and the decision is that a small die gets a pawn
+  out of the yard while a large one moves it (FR-09 needs the die's maximum). That is not obvious from
+  `W2` and `W20` alone, and a player should not have to hold it in their head. Both tags are facts
+  printed from the card's own denomination.
+- **Rejected: marking a recommended card**, which would help a new player and would also be a second
+  player living in the view. `ui/` holds no rules and it holds no judgement either.
+- **Rejected: no tags at all**, on the grounds that the title says the denomination. It does, and it
+  does not say what the denomination is for.
+- → Ch. 04
+
+### 2026-08-31: `data-active` on a hand means "this plate is asking for a decision"
+
+- **Chosen:** the dice hand carries `data-active="true"` only during the `choose` phase.
+- **Why:** the DOM contract in the brief describes the attribute as "whether this hand belongs to the
+  player whose turn it is". In hot-seat there is one shared dice hand, always the active player's, so
+  read literally the attribute would be permanently true and the ink ring `app.css` draws around the
+  plate would never mean anything. The stylesheet's own comment says what it is for: "the plate that is
+  asking for a decision". That is the reading implemented.
+- **Rejected: literal compliance**, one hand always active, and no ring anywhere. It satisfies the
+  wording and throws away the design.
+- **This is a contract wording problem and it goes into the next brief**, rather than being settled
+  quietly on this side: the attribute needs a name or a definition that fits a single shared hand.
+- → Ch. 04
+
+### 2026-08-31: `body { margin: 0 }` was put back into a delivered stylesheet by hand
+
+- **Chosen:** `src/ui/styles/app.css` gained a two-line `body` rule that the delivery did not have.
+- **Why:** the placeholder `app.css` it replaced carried it. Without it the browser's own 8 px default
+  returns, every page is exactly `100vh + 16px`, and FR-31's "no scrolling" fails by 16 px at the one
+  resolution the requirement is about. Spec 03's own arithmetic assumes the margin is gone.
+- **Why this does not break the rule that Claude Code invents no design.** No colour, size, spacing,
+  font or component look is chosen here. A browser default is removed, which is the opposite of adding
+  a design value, and it restores a rule the project already had.
+- **Rejected: sending it back to Claude Design.** It is the correct process and it would have blocked
+  a finished feature on a two-line reset. It is recorded as delivery feedback for handoff 04 instead,
+  which is where the pattern belongs: this is the second delivery that dropped something the file it
+  replaced was carrying.
+- **Rejected: changing the padding or `--board-size` to buy the 16 px.** That would have been inventing
+  a design value, and it would have hidden the cause.
+- → Ch. 04
+
+### 2026-08-31: The end-to-end helper picks slot 0 because the seed script does
+
+- **Chosen:** `chooseDiceCard` always clicks the card in slot 0.
+- **Why:** `scripts/find-seeds.js` replays matches with `hand[0]`, and slot 0 renders `hand[0]`. The two
+  policies being the same one written twice is what makes every pinned seed survive this change. Picking
+  the middle card, or the largest die, would have invalidated all five seeds for a third time in a week.
+- **Rejected: picking a card by some rule**, such as the highest denomination, which would make the
+  matches more interesting to watch. It would also require the replay script to implement the same rule
+  and stay in step with it forever.
+- **The one spec that deliberately breaks the policy is the one that has to.** `dice-hand.spec.js`
+  clicks slot **1** when it checks that the chosen card is the card that gets rolled, because clicking
+  slot 0 would pass even if the click were ignored and the old automatic `hand[0]` were still in place.
+  A test of a choice has to pick something other than the default.
+- → Ch. 08
+
+### 2026-08-31: `playUntil` asks its question once per step, not once per turn
+
+- **Chosen:** the end-to-end loop checks its predicate after a dice card is chosen and before a pawn
+  moves, rather than once per turn.
+- **Why:** that is the only moment in a turn where the roll is known and the board has not changed yet.
+  A caller asking "is this the situation I was waiting for" needs both to be true, and every spec that
+  waits for a particular kind of move needs exactly that moment.
+- **Rejected: keeping one check per turn and having `playTurn` report what it did.** It moves the
+  question from the caller to the helper and makes the helper decide what is interesting.
+- **Cost:** the loop's cap now counts steps rather than turns, so a match may use two per turn. Said
+  plainly in the parameter name and in the error message rather than left for a reader to work out.
+- → Ch. 08
+
 ---
 
 ## Challenges
@@ -1918,6 +2023,40 @@ to get wrong later.
   form: when a spec hard-codes a value the seed decides rather than a rule, the view is missing an
   attribute.** `data-die` was added for the same reason on 2026-08-30, which makes this a pattern
   rather than an incident.
+
+- **2026-08-31: Landing one design spec turned up four defects, and only one of them was in the
+  spec.** The five-item entrance check in `01-Design/README.md` says not to merge a spec unread. On a
+  first look this delivery passed every item: nine decisions answered, each with a reason and a
+  rejected alternative, no stylesheet over 300 lines, every `content:` declaration empty, every state
+  in the contract styled. Reading it properly took about two hours and produced four separate problems.
+
+  The first was the delivery undoing work. `board.css` came back with the 40 track-field grid
+  placements inlined, which handoff 02 had already split into `board-track.css` for exactly the reason
+  it recurred here: the designer writes single-line rules that fit the 300-line limit, and this
+  project's Prettier expands them past it. 269 delivered lines became 429 formatted ones, and the 40
+  rules briefly existed in two stylesheets at once with identical values, so nothing looked wrong. The
+  fix was to restore the file from git, add only the 26 genuinely new lines, and then split it again at
+  the next real seam, a field against a region that holds fields.
+
+  The second was `body { margin: 0 }`, dropped from `app.css` between the placeholder and the delivery.
+  Sixteen pixels, and it broke the one requirement the layout exists to satisfy.
+
+  The third and fourth were not in the delivery at all and had been sitting there for two weeks.
+  `playwright.config.js` set the viewport to 1440 by 900 with a comment explaining why, and every
+  project overrode it to 1280 by 720 by spreading a Playwright device descriptor. Nothing failed,
+  because the value only matters once something measures the page, and nothing did. Spec 03 introduced
+  a breakpoint at 1344 px, which means the entire suite had been playing the stacked fallback layout.
+  And `pawn-leaves-start.spec.js` held a live "first movable pawn" locator across the two clicks that
+  end a turn, so after the handover it was asserting against a different pawn that happened to also be
+  at `r = 0`; it had been passing on timing and the extra choose step broke it.
+
+  Three lessons, and they are different from each other. **A delivery is a diff, not a file list:** two
+  of the eight stylesheets differed from `src/` only in Prettier's line breaking and were correctly not
+  copied, while one differed by 151 lines of duplicated work. Only the diff distinguishes them.
+  **A configuration value that is silently overridden looks exactly like one that works**, and the only
+  defence is a test that reads the setting rather than the behaviour, which `shell.spec.js` now does.
+  **A claim nobody measures comes back:** "nothing scrolls" was written in two specs, five weeks apart,
+  and was false when finally checked.
 
 Log anything that cost more than roughly 30 minutes of unplanned work: what happened, what it cost,
 how it was resolved. These become the running prose of Chapter 11, so a sentence of context is worth

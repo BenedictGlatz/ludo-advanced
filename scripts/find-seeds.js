@@ -20,7 +20,9 @@
  * It runs the real modules. `startMatch`, `dispatch` and `createDicePool` are the same functions the
  * page loads, and the policy below is the same one the tests click:
  *
- * - **Choosing a die**: `hand[0]`, which is what `ui/game-loop.js` does while the hand has no design.
+ * - **Choosing a die**: `hand[0]`. Since issue #31 a person chooses in the browser, so this is no
+ *   longer a copy of what the view does: it is a copy of what `chooseDiceCard` in
+ *   `tests/e2e/helpers.js` clicks, which is the card in slot 0, which is `hand[0]`.
  * - **Choosing a pawn**: the lowest-numbered movable pawn, which is what `firstMovablePawn` selects,
  *   because the view appends pawns in seat and then pawn order and only the active seat is movable.
  *
@@ -57,7 +59,7 @@ function replay(seed, playerCount) {
   while (state.status === MATCH_STATUS.RUNNING && turns < MAX_TURNS) {
     turns += 1;
 
-    // The loop picks the first drawn card for the player, exactly as the view does today.
+    // Slot 0, which is the card the end-to-end helpers click.
     if (state.phase === TURN_PHASE.CHOOSE) {
       const chosen = dispatch(state, { type: INTENT.CHOOSE_DIE, faces: state.hand[0] }, deps);
       if (!chosen.accepted) return { failed: "the die could not be chosen", turns };

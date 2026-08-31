@@ -19,9 +19,10 @@
  *
  * ## What is still stubbed
  *
- * The dice source is the real twenty-card pool as of issue #30. Which of the three drawn cards gets
- * rolled is still picked for the player by `ui/game-loop.js`, because the hand has no design yet and
- * therefore nothing to click. That is the last piece of issue #37 and it is issue #31.
+ * The dice source is the real twenty-card pool as of issue #30, and as of issue #31 the player picks
+ * which of the three drawn cards gets rolled, so issue #37 is complete. The skill hand region is
+ * mounted and **empty**: design spec 03 styles it, the card pool and the catalogue exist in `core/`,
+ * and the wiring that draws a card into a hand is issue #38.
  */
 
 import $ from "jquery";
@@ -31,13 +32,18 @@ import { createSeededRng } from "./core/dice-source.js";
 import { initI18n } from "./i18n/index.js";
 import { matchDeps, startMatch } from "./state/match.js";
 import { renderBoard } from "./ui/board-view.js";
+import { renderDiceHand } from "./ui/dice-hand-view.js";
 import { createGameLoop } from "./ui/game-loop.js";
 
 import "./ui/styles/tokens.css";
 import "./ui/styles/app.css";
 import "./ui/styles/board.css";
 import "./ui/styles/board-track.css";
+import "./ui/styles/board-regions.css";
 import "./ui/styles/pawn.css";
+import "./ui/styles/card.css";
+import "./ui/styles/card-state.css";
+import "./ui/styles/hand.css";
 import "./ui/styles/refusal.css";
 
 /** Player counts a match can start with (FR-01). Anything else in the URL falls back to four. */
@@ -64,11 +70,32 @@ export function readOptions(search) {
   };
 }
 
-/** Build the page: an `.app` shell holding the board and the message region under it. */
-function mount($root, $board) {
+/**
+ * Build the page: the four regions design spec 03 laid out as D30.
+ *
+ * Board on the left, the two hands stacked in a rail on the right, the refusal strip across the
+ * foot. The plate elements are `.app__dice` and `.app__skill`; the hand itself goes inside, because
+ * `app.css` styles the plate and `hand.css` styles the row of cards, and keeping those two jobs on
+ * two elements is what lets the plate carry the "it is your turn" ring without touching the cards.
+ *
+ * **The skill hand region is mounted empty.** It is a region with a plate and no cards until issue
+ * #38 draws one. Mounting it now rather than later is what makes the layout the one FR-31 asks for:
+ * a rail that grows a second row halfway through the sprint would move the board.
+ */
+function mount($root, $board, $diceHand) {
   const $message = $("<div>", { class: "move-refusal" });
+  const $skillHand = $("<div>", { class: "hand hand--skill" })
+    .attr("data-count", 0)
+    .attr("data-active", "false");
 
-  $root.empty().append($("<div>", { class: "app" }).append($board, $message));
+  const $app = $("<div>", { class: "app" }).append(
+    $("<div>", { class: "app__board" }).append($board),
+    $("<div>", { class: "app__dice" }).append($diceHand),
+    $("<div>", { class: "app__skill" }).append($skillHand),
+    $message
+  );
+
+  $root.empty().append($app);
   return $message;
 }
 
@@ -87,12 +114,14 @@ export async function boot(root = "#app", search = window.location.search) {
   const state = startMatch(options.playerCount, deps);
 
   const $board = renderBoard(state);
-  const $message = mount($(root), $board);
+  const $diceHand = renderDiceHand(deps.diceSource.handSize);
+  const $message = mount($(root), $board, $diceHand);
 
   const loop = createGameLoop({
     initialState: state,
     deps,
     $board,
+    $diceHand,
     $message,
     delays: options.fast ? FAST_DELAYS : {},
   });

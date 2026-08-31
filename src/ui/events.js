@@ -22,6 +22,11 @@ function pawnOf(element) {
   return Number($(element).attr("data-pawn"));
 }
 
+/** Enter and Space, which is what a button responds to and therefore what a clickable thing owes. */
+function isActivationKey(event) {
+  return event.key === "Enter" || event.key === " ";
+}
+
 /**
  * Bind the board's handlers.
  *
@@ -37,9 +42,36 @@ export function bindBoardEvents($board, handlers) {
   // reach and activate a pawn. Enter and Space are what a button responds to, and a pawn that can be
   // clicked is behaving as one.
   $board.on("keydown", '.pawn[data-movable="true"]', function onKeydown(event) {
-    if (event.key !== "Enter" && event.key !== " ") return;
+    if (!isActivationKey(event)) return;
 
     event.preventDefault();
     handlers.onPawnActivated(pawnOf(this));
+  });
+}
+
+/**
+ * Bind the dice hand's handlers. Issue #31.
+ *
+ * A second binding root rather than a second selector on `.board`, because the hand lives in the rail
+ * beside the board (D30) and is not inside it. The filter is the same idea as the pawns': a card that
+ * is not this turn's to pick carries `data-playable="false"`, matches nothing, and the click quietly
+ * does nothing. Whether picking is allowed right now is `dice-hand-view.js` writing down what the
+ * phase already said, not a rule being decided here.
+ *
+ * `handlers.onDiceCardActivated(faces)` is called with the denomination, which is how the turn
+ * manager identifies a card too.
+ */
+export function bindDiceHandEvents($hand, handlers) {
+  const facesOf = (element) => Number($(element).attr("data-faces"));
+
+  $hand.on("click", '.card[data-playable="true"]', function onClick() {
+    handlers.onDiceCardActivated(facesOf(this));
+  });
+
+  $hand.on("keydown", '.card[data-playable="true"]', function onKeydown(event) {
+    if (!isActivationKey(event)) return;
+
+    event.preventDefault();
+    handlers.onDiceCardActivated(facesOf(this));
   });
 }

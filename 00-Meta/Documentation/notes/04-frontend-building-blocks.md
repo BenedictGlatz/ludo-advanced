@@ -529,6 +529,142 @@ id has a title in both languages, and every title in the locales belongs to a ca
 second one catches the opposite mistake, a card removed from the catalogue but left in the locales, which
 would be text nothing can reach sitting there until somebody counted.
 
+### Design spec 03 landed, and the five-item check earned its keep: 2026-08-31, issues #31 and #34
+
+Spec 03 arrived as [03-spec-cards-and-hands.md](../../../01-Design/Handoff/03-spec-cards-and-hands.md)
+with six stylesheets. It answers all nine open decisions D25 to D33, every one with a reason and a
+named rejected alternative, and it adds D34, three requests of its own.
+
+**What the spec decided, in one line each.**
+
+| ID | Answer |
+| --- | --- |
+| D25 | The card palette becomes 30 tokens. A family hue is the same hex in both skins; a wash is too, because the illustrations are dark ink on light and CSS cannot recolour their strokes. The card *face* carries the skin instead. |
+| D26 | One size knob, `--card-u`, a factor on the 260 by 380 artboard. The dice hand uses 0.76, the skill hand 0.68. What the hand size drops is the rules paragraph, and the space goes to the art. |
+| D27 | A skill square is a **teal ink-outlined diamond**, not a purple fill. Teal is the only hue left that is not a seat colour, the violet hint or the orange refusal. |
+| D28 | The band is the type, the kind pill is the category. One component, both labelling schemes. |
+| D29 | The signal is on the card you *can* play: it sits 0.5 rem proud. Unplayable cards keep full opacity and drop to `saturate(0.5)`. |
+| D30 | Board left, both hands stacked in a rail on the right, refusal across the foot. `--board-size` changed. |
+| D31 | Deal 240 ms staggered by 60 ms, return along the same path. Nothing new under reduced motion. |
+| D32 | The roll goes on the card that produced it, as a badge in the art window. |
+| D33 | An inactive skill hand is a stack of backs. The rules half of the question goes to the Product Owner. |
+
+**The item that mattered was not the size check.** The delivered CSS was all under 300 lines and the
+five-item check in [01-Design/README.md](../../../01-Design/README.md) would have passed on a first
+look. Three things only came out of actually reading it, and all three are recorded below because
+they are the argument for the check existing at all.
+
+#### Finding 1: the delivery undid a split that handoff 02 had made, for the same reason twice
+
+The delivered `board.css` was 269 lines and had the 40 `.square[data-square="N"]` grid placements
+inlined. Those placements were moved into `board-track.css` on 2026-08-30, and that file's own header
+records why: **the designer's compressed formatting fits NFR-02 and the project's Prettier does not.**
+That file went from 248 delivered lines to 407 formatted ones.
+
+It happened again identically. The delivered 269 lines became 429 after `npm run format`, and the 40
+rules now existed in two stylesheets at once. Same values, so nothing looked broken; `board-track.css`
+loads second and won.
+
+- **Fixed by restoring `board.css` from git and adding only the genuinely new block**, the 26 lines of
+  the skill square. Two comments the delivery had also regressed were left as they were in git: one
+  called the yards "6 by 6", a leftover from the abandoned 15 by 15 board that handoff 02 had already
+  corrected to 4 by 4.
+- **That still left 314 lines, so a second split was needed**, and the seam is a field against a
+  region that holds fields. `board.css` styles `.board` and `.square`; the new
+  `board-regions.css` styles `.start-area`, `.home-column` and `.slot`. Section 1 of the spec
+  predicted the split and named the track placements as the seam, not knowing they had already moved.
+- **The real lesson is a process one and belongs in the next brief:** the size limit has to be checked
+  *after* Prettier, not on the delivered file, and the brief should say so. Twice is a pattern.
+
+#### Finding 2: two claims about the layout, neither of them checked by anything
+
+The spec printed arithmetic for D30: "At 1440 by 900: board 634, rail 702 ... page height 776. Nothing
+scrolls." Measured, the page was **916 px tall in a 900 px viewport**. Two independent causes:
+
+1. **The delivered `app.css` dropped `body { margin: 0 }`.** The placeholder it replaced had it. The
+   browser's own 8 px default came back top and bottom, so every page was exactly `100vh + 16px`.
+   Restored, with a comment saying it is a correction and not a design decision: no colour, size or
+   spacing is chosen by removing a browser default that the spec's own numbers assume gone.
+2. **`playwright.config.js` had been setting 1440 by 900 since 2026-08-14 and the suite had never run
+   at it.** Every project spreads `devices["Desktop Chrome"]` and friends, and each of those carries
+   its own 1280 by 720 viewport, which silently overrode the one in `use`. 1280 is *below* the 84 rem
+   breakpoint spec 03 introduced, so the whole suite was playing the stacked fallback layout.
+
+Both are now covered by `tests/e2e/shell.spec.js`, including a test whose only job is to assert the
+viewport is 1440 by 900, so a device descriptor cannot quietly take it away again.
+
+#### Finding 3: `pawn.css` and `refusal.css` were in the delivery and were not copied
+
+Both differed from the versions in `src/`, and every difference was Prettier reflowing a
+multi-value `transition` or `background-size`. No declaration changed. Copying them would have been
+pure churn in the diff, so they were left alone. Worth writing down only because "the delivery
+contains a file" and "the file changed" are not the same thing, and the diff is what tells them apart.
+
+### The card, the one component behind three families: 2026-08-31, issue #31
+
+`src/ui/card-view.js` builds one `.card` element tree and rewrites it. It is the component D28's
+answer needs: a dice card, an Action card and a Reaction card are the same markup with different
+attributes.
+
+- **It takes a description, not a card id, and never calls `t()`.** The description arrives with every
+  string already translated. The reason is that the locale key layout differs per family,
+  `card.dice.kind.8` against `card.skill.<id>.title`, so a component that resolved its own text would
+  have to learn a new key shape every time a family is added. `dice-hand-view.js` builds the dice
+  description; the skill hand of issue #34 will build its own.
+- **Built once, then rewritten**, which is D10 of spec 01 applied to cards. `updateCard` only sets
+  attributes and text. An element that is replaced restarts every transition on it, so a card that is
+  re-created cannot animate, and D31's dealing animation depends on it.
+- **`.card__result` and `.card__text` exist while empty.** `card-state.css` hides an empty result with
+  `:empty` and the hand size hides the paragraph. An element that has to exist before it has content
+  cannot be created at the moment it gets some.
+- **The tag row is the one part that is rebuilt** rather than rewritten, because the number of tags is
+  a property of the card. Nothing animates a tag, so there is no transition to restart.
+- **The art window is empty and that is outstanding work.** All 29 illustrations exist as inline SVG
+  inside a generated artboard; extracting them is its own job. A card is still readable: the band says
+  the type, the title says the name, the tags say the numbers.
+
+### The dice hand, and the choice the view had been making for the player: 2026-08-31, issue #31
+
+`src/ui/dice-hand-view.js` renders the three drawn cards and `ui/events.js` gained
+`bindDiceHandEvents`. Since issue #30 the pool had been dealing three different cards and
+`game-loop.js` had been taking `state.hand[0]`, so **FR-19's "the player chooses" was not true**, and
+it showed: a hand whose first card was a D20 needed a twenty to get a pawn out of the yard, so the
+turn usually passed. It is true now.
+
+- **Three permanent slots, and the count comes from `deps.diceSource.handSize`**, not from the literal
+  3. Reweighting the pool to deal four cards is then a change in `core/dice-pool.js` and nowhere else.
+- **One activation picks a card, not two.** A pawn takes two clicks because a misclick there costs
+  another player most of a lap. Picking a card costs nobody anything and is undone by the next turn, so
+  a confirmation step would be a click charged for no risk.
+- **The two tags on a dice card are the reason the pool is a decision**, restated on the card: the
+  range, and the number needed to leave the start area (FR-09). A hand holding a D2 and a D20 is a
+  choice between getting a pawn onto the board and moving one already on it, and a player should not
+  have to remember which die does which. Deliberately **not** a hint about which card is better: that
+  would be a second player living in the view.
+- **`data-active` on a hand is read as "this plate is asking for a decision"**, which is true in the
+  `choose` phase. The contract's wording is "whether this hand belongs to the player whose turn it
+  is", and in hot-seat there is one shared dice hand, so read literally it would always be true and
+  the plate ring `app.css` draws would never mean anything. The reading here is the one the stylesheet's
+  own comment describes.
+- **The dealing animation has to be replayed by hand.** A CSS animation does not restart because an
+  attribute *inside* the element changed, so rewriting `data-card-id` deals a card silently.
+  `data-dealing` is removed, a reflow is forced by reading `offsetWidth`, and it is put back. That
+  pointless-looking line is the whole trick, and it is why D34 asked for the attribute.
+- **Which turn was last dealt is kept in jQuery's data store, not in an attribute.** It is view
+  bookkeeping and no stylesheet reads it, so putting it in the DOM would add something to the contract
+  that the contract does not need.
+
+### Seven dice denominations got a name, and the seven paragraphs are outstanding: 2026-08-31, issue #31
+
+`cards.json` gained `card.dice.kind.<faces>` for all seven denominations, plus `card.dice.range` and
+`card.dice.leave` for the two tags. Same pattern as the skill cards: **the name lands now, the prose
+does not.**
+
+`.card__text` renders empty for a dice card. The paragraph is only shown at `.card--full`, which
+nothing uses yet, so nothing is missing on screen today. Seven paragraphs of flavour text in two
+languages is copy, and copy for cards the Product Owner chose is the Product Owner's to approve, not
+something to invent while wiring a hand. Recorded as outstanding, not as done.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -540,12 +676,23 @@ would be text nothing can reach sitting there until somebody counted.
   `ui/` does jQuery rendering and event binding, reads state, dispatches intents into `state/`, and
   contains no game rules.
 - ~~Design and UI are developed with Claude Design; no design specification (colour palette, spacing,
-  typography) exists in this repository yet. When it does, record where it lives.~~ **Half answered
-  2026-08-29:** where it will live is decided and recorded above, and the first brief has gone out.
-  **The specification itself does not exist yet.** No colour, spacing value or font has been decided
-  by anyone, and none is written down anywhere in this repository. The nine open decisions D1 to D9
-  are open. Chapter 12 still wants the component overview table, and it cannot be written until the
-  spec comes back.
+  typography) exists in this repository yet. When it does, record where it lives.~~ **Answered, over
+  three handoffs.** Specs 01, 02 and 03 have landed; where the CSS lives and where the reasoning lives
+  is recorded above. Chapter 12 still wants the component overview table and it can be written now.
+- **Open out of spec 03, and none of it blocks the dice hand:**
+  - **D33 needs the Product Owner, not the designer.** Is an opponent's skill hand represented on
+    screen at all, and is the card count public? The CSS supports either answer today.
+  - **NFR-12, telling the four seats apart without colour, is still open from handoff 02.** Spec 03
+    suggests a shape for the answer without closing it: the Reaction band is marked by stripes as well
+    as by orange, and four seats could take four fills that survive greyscale. That is a change to
+    `pawn.css`.
+  - **Whether a skill square moving should be animated.** Nobody has asked, and the reappearance would
+    happen on a field the player is not looking at.
+  - **Baloo 2 and Nunito are still loaded from Google Fonts**, unchanged from spec 01 section 5.
+  - **The 29 card illustrations are not extracted from the artboard**, so every `.card__art` is an
+    empty framed window.
+  - **The size limit has to be checked after Prettier, and the brief does not say so.** Two handoffs
+    in a row delivered a stylesheet that fitted 300 lines and did not after formatting.
 - A card's visual presentation belongs here and its rule belongs in Chapter 05; the two are matched
   by card id. Worth stating explicitly in the report, because it is the clearest example of the
   layering rule doing real work.

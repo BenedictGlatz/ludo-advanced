@@ -1,35 +1,108 @@
-/* The page the board sits on. Written by Claude Code on 2026-08-30, not by Claude Design.
+/* The shell: the page that holds the board, the two hands and the refusal
+   strip at once, with no scrolling at 1440 by 900 (FR-31).
+   Replaces the placeholder. Depends on tokens.css.
+   Reasoning is in 01-Design/Handoff/03-spec-cards-and-hands.md, D30.
 
-   Handoff 01 designed the board and the refusal strip. It did not design a page,
-   because the page is FR-31's five-region layout and that needs the dice hand,
-   the skill hand and the HUD to exist first, none of which do. Section 5 of the
-   spec says so: "The five-region layout is asserted, not built."
+   Board left, both hands in a rail on the right, refusal a strip across the
+   foot. The rail needs far more than the quarter width spec 01 reserved for
+   it, so --board-size changed in tokens.css and nothing else did. */
 
-   So this file is the minimum needed to put a designed component on a screen,
-   and it is deliberately the shortest file in src/ui/styles/.
-
-   THE RULE IT KEEPS: every value here is a token from tokens.css. No colour, no
-   size, no font and no radius is invented. --color-app-bg exists and nothing
-   else used it, so the design had already decided what is behind the board.
-
-   THE RULE IT DOES NOT KEEP: centring the board is a layout decision, and this
-   file makes it. It is a placeholder for the real layout and belongs in the
-   handoff 02 brief as an open decision, not in the delivery. */
-
+/* Added by Claude Code on 2026-08-31, and it is a correction rather than a
+   design decision: the placeholder this file replaced carried body { margin: 0 }
+   and the delivery did not, so the browser's own 8px default came back and every
+   page was exactly 100vh + 16px tall. That is a scrollbar at the resolution
+   FR-31 is about, and this spec's own arithmetic assumes the margin is gone.
+   No colour, size or spacing is chosen here, only a default removed. */
 body {
   margin: 0;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: auto minmax(28rem, 1fr);
+  grid-template-rows: 1fr auto auto;
+  gap: var(--space-4) var(--space-5);
+  box-sizing: border-box;
+  width: 100%;
   min-height: 100vh;
-  padding: var(--space-6) var(--space-4);
+  padding: var(--space-5);
   font-family: var(--font-ui);
   color: var(--color-text);
   background: var(--color-app-bg);
 }
 
-.app {
+.app__board {
+  display: grid;
+  grid-area: 1 / 1 / 3 / 2;
+  place-items: center;
+}
+
+.app__dice {
+  grid-area: 1 / 2;
+  align-self: end;
+}
+
+.app__skill {
+  grid-area: 2 / 2;
+}
+
+.app > .move-refusal {
+  grid-area: 3 / 1 / 4 / 3;
+  justify-self: center;
+}
+
+/* --- The two region plates. Same chrome as every other panel in the game,
+       so the hands read as part of the table and not as browser UI. --- */
+
+.app__dice,
+.app__skill {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  align-items: center;
   justify-content: center;
-  min-height: calc(100vh - var(--space-8));
+  min-width: 0;
+  background: var(--color-panel);
+  border: var(--border-card) solid var(--color-ink);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--motion-feedback) var(--ease-ui);
+}
+
+/* Whose turn it is, again, where the player is looking. The board says it
+   with an ink halo on that seat's yard; the rail says it by raising the
+   plate that is asking for a decision. */
+.app__dice:has(.hand[data-active="true"]),
+.app__skill:has(.hand[data-active="true"]) {
+  box-shadow:
+    0 0 0 var(--border-card) var(--color-ink),
+    var(--shadow-lift);
+}
+
+.app__skill:has(.hand[data-active="false"]) {
+  background: var(--color-dormant-soft);
+}
+
+/* --- Below the design resolution the rail cannot sit beside the board, so
+       the regions stack in turn order and the page is allowed to scroll:
+       FR-31 asks for one screen at 1440 by 900, not at every size. The
+       breakpoint is 84rem and not 80rem because at 1280 the rail is 14 px
+       narrower than three dice cards. --- */
+
+@media (max-width: 84rem), (orientation: portrait) {
+  .app {
+    /* --cell is derived from --board-size on :root, so it has to be
+       re-derived here or the grid keeps the desktop cell. */
+    --board-size: clamp(20rem, 92vw, 44rem);
+    --cell: calc(var(--board-size) / 11);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    overflow-y: auto;
+  }
+
+  .app__board,
+  .app__dice,
+  .app__skill,
+  .app > .move-refusal {
+    grid-area: auto;
+    align-self: auto;
+  }
 }

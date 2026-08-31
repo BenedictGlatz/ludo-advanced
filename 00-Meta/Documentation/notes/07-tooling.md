@@ -247,6 +247,45 @@ errors, none of them in project code**. Nothing under `01-Design/` is built or s
 The general point for the report: **a lint run that reports on somebody else's generated code is a
 lint run people learn to ignore**, and that is the failure mode worth avoiding, not the 306 errors.
 
+### The 300-line limit is not machine-checked for CSS, and that has now cost two fixes: 2026-08-31, issue #31
+
+`CLAUDE.md` says no file is longer than 300 lines and that it applies to source, tests and config.
+ESLint's `max-lines` enforces it for JavaScript. **It does not see CSS at all**, because ESLint does
+not lint stylesheets and no stylesheet linter is installed.
+
+The consequence is not theoretical. Two design deliveries in a row arrived under the limit and went
+over it the moment `npm run format` ran, because the designer writes single-line rules and Prettier
+expands them:
+
+| File | Delivered | After Prettier | What happened |
+| --- | --- | --- | --- |
+| `board-track.css` | 248 | 407 | Split out of `board.css`, handoff 02 |
+| `board.css` | 269 | 429 | Split into `board.css` plus `board-regions.css`, handoff 03 |
+
+- **Both were caught by hand**, by running `wc -l` after formatting. Nothing in `npm run lint` would
+  have said a word, and nothing in CI would either.
+- **The candidate fix is a stylesheet linter**, which is a new dev dependency and therefore needs
+  asking first under the rules in `CLAUDE.md`. Not installed, not decided, recorded as open.
+- **The cheap fix that needs no dependency** is a line in the design brief template saying the size
+  limit is measured after Prettier, not on the delivered file. That is a change to
+  `01-Design/README.md` and it costs nothing.
+
+Recorded as a negative finding rather than fixed, because the choice between the two is a dependency
+decision and belongs to the team.
+
+### A configuration value that was silently overridden for two weeks: 2026-08-31, issue #31
+
+`playwright.config.js` set the viewport in its top-level `use` block and every project overrode it by
+spreading a Playwright device descriptor, each of which carries its own. The full account is in
+[08-quality.md](08-quality.md); it belongs there because the damage was to what the tests measured.
+
+What belongs here is the shape of the mistake, because it is a configuration one and it will recur in
+any config with layered defaults: **`use` at the top level is the weakest layer, and a spread object
+is not obviously a competing setting.** `{ ...devices["Desktop Chrome"] }` reads as "pick this
+browser" and also silently sets a viewport, a user agent, a device scale factor and more.
+
+The fix is ordering, not values: the project-level `viewport` now comes after the spread.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

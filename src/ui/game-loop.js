@@ -7,20 +7,19 @@
  *
  * ## Why the turn advances by itself
  *
- * Design handoff 01 covers the board (S3) and the refusal region (S6). It does not cover a dice hand,
- * a turn bar or a win screen, and `CLAUDE.md` forbids Claude Code from inventing what a component
- * looks like. So the slice was built with **the pawn click as its only control**, decided on
- * 2026-08-30, and everything else happens on its own:
+ * Design handoff 01 covered the board (S3) and the refusal region (S6) and nothing else, so this loop
+ * was built on 2026-08-30 with **the pawn click as its only control** and everything else happening
+ * by itself. Design spec 03 has since delivered the dice hand, so there are now **two** controls:
  *
- * - **Choosing a die is still automatic, and since issue #30 that is a real gap.** The pool now deals
- *   three different cards and the loop takes the first one, so a choice the rulebook gives the player
- *   (FR-19) is currently made for them. It shows: a hand whose first card is a D20 needs a twenty to
- *   get a pawn out of the yard, and the turn usually passes. The fix is the hand screen in issue #31,
- *   which needs a design that does not exist yet, and `CLAUDE.md` forbids inventing one. Until then
- *   the pick stays `hand[0]` rather than becoming a clever rule, because a clever rule would be a
- *   second player hiding in the view.
+ * - **Choosing a dice card is the player's, as of issue #31.** The loop used to take `state.hand[0]`,
+ *   which meant a choice the rulebook gives the player (FR-19) was made for them, and it showed: a
+ *   hand whose first card was a D20 needed a twenty to get a pawn out of the yard, so the turn usually
+ *   passed. The `choose` phase now waits for a click, exactly the way `act` waits for one.
  * - **The turn hands over on its own**, after the move has finished animating, or after the refusal
  *   has been on screen long enough to read.
+ *
+ * What is still automatic is the seam issue #38 fills: there is no action phase between choosing a
+ * card and rolling it, because no skill card exists to play there yet.
  *
  * ## The two pauses are the design's numbers, not this file's
  *
@@ -33,7 +32,8 @@
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { INTENT, dispatch } from "../state/intents.js";
 import { motionMs, updateBoard } from "./board-view.js";
-import { bindBoardEvents } from "./events.js";
+import { updateDiceHand } from "./dice-hand-view.js";
+import { bindBoardEvents, bindDiceHandEvents } from "./events.js";
 import { applyMoveHints, showMessage } from "./move-hints.js";
 
 /**
@@ -52,13 +52,14 @@ export const REFUSAL_MIN_MS = 4000;
  * `deps` is the `{ rng, diceSource }` pair, injected here and never constructed, which is NFR-09.
  * `delays` overrides the two pauses, in milliseconds, and is what a test passes.
  */
-export function createGameLoop({ initialState, deps, $board, $message, delays = {} }) {
+export function createGameLoop({ initialState, deps, $board, $diceHand, $message, delays = {} }) {
   let state = initialState;
   let timer = null;
 
   function render() {
     updateBoard($board, state);
     applyMoveHints($board, state);
+    updateDiceHand($diceHand, state);
     showMessage($message, state);
   }
 
@@ -91,20 +92,14 @@ export function createGameLoop({ initialState, deps, $board, $message, delays = 
   /**
    * Render, then take whatever step the turn takes without the player.
    *
-   * The `choose` branch recurses, and its depth is bounded: choosing a die always lands the turn in
-   * `act` or in `turn-end`, neither of which recurses. The `turn-end` branch does come back round to
-   * `choose` for the next player, but through a timer, so it is a loop and not a growing stack.
+   * There is no recursion left in here. Both phases that wait for a person, `choose` and `act`, do
+   * exactly that, and `turn-end` comes back round through a timer, so this is a loop and not a
+   * growing stack.
    */
   function advance() {
     render();
 
     if (state.status !== MATCH_STATUS.RUNNING) return;
-
-    if (state.phase === TURN_PHASE.CHOOSE) {
-      if (!apply({ type: INTENT.CHOOSE_DIE, faces: state.hand[0] })) return;
-      advance();
-      return;
-    }
 
     if (state.phase === TURN_PHASE.TURN_END) {
       later(() => {
@@ -113,7 +108,24 @@ export function createGameLoop({ initialState, deps, $board, $message, delays = 
       }, pauseAfterTurn());
     }
 
-    // TURN_PHASE.ACT is the one phase that waits for a person.
+    // `choose` and `act` are the two phases that wait for a person.
+  }
+
+  /**
+   * A click or a keypress on one of the three drawn dice cards (FR-19).
+   *
+   * One activation, not two. Selecting a pawn first exists because a misclick there costs another
+   * player most of a lap; picking a card costs nobody anything and is undone by the next turn, so a
+   * confirmation step would be a click charged for no risk.
+   *
+   * Choosing also rolls, because `intents.js` runs steps 3 to 5 as one intent: the rulebook has no
+   * player input between picking a card and rolling it. Issue #38 puts the action phase in that gap.
+   */
+  function onDiceCardActivated(faces) {
+    if (state.status !== MATCH_STATUS.RUNNING || state.phase !== TURN_PHASE.CHOOSE) return;
+
+    if (!apply({ type: INTENT.CHOOSE_DIE, faces })) return;
+    advance();
   }
 
   /**
@@ -141,6 +153,7 @@ export function createGameLoop({ initialState, deps, $board, $message, delays = 
     /** Put the board on screen and start the first turn. */
     start() {
       bindBoardEvents($board, { onPawnActivated });
+      bindDiceHandEvents($diceHand, { onDiceCardActivated });
       advance();
     },
 

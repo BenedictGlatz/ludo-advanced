@@ -3,6 +3,17 @@ import { defineConfig, devices } from "@playwright/test";
 const PREVIEW_PORT = 4173;
 const BASE_URL = `http://localhost:${PREVIEW_PORT}`;
 
+/**
+ * The resolution the design is drawn for, and the one FR-31 is about.
+ *
+ * It has to be spread into every project **after** `devices[...]`, and that is not a style choice.
+ * Each of Playwright's device descriptors carries its own viewport, 1280 by 720 for Desktop Chrome,
+ * so a viewport set only in `use` above is silently overridden by every project. From 2026-08-14 to
+ * 2026-08-31 this file said 1440 by 900 and the suite ran at 1280 by 720, which is below the 84rem
+ * breakpoint of design spec 03: every test was quietly playing the stacked mobile-ish layout.
+ */
+const DESIGN_VIEWPORT = { width: 1440, height: 900 };
+
 // Decided here, because section 8 of Test-Plan-and-Quality-Strategy.md left it open and said it
 // would be settled in this file: **the end-to-end suite runs against the production build**, not
 // against the Vite dev server. The dev server serves modules straight off disk and hides exactly
@@ -21,19 +32,22 @@ export default defineConfig({
     baseURL: BASE_URL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
-    // NFR-10 is desktop only, so no mobile viewport is configured anywhere in this file.
-    viewport: { width: 1440, height: 900 },
+    // NFR-10 is desktop only, so no mobile viewport is configured anywhere in this file. The
+    // viewport itself is set per project, for the reason above DESIGN_VIEWPORT.
   },
 
   // NFR-10: current and previous major versions of Chrome, Firefox and Edge. Playwright ships one
   // pinned build per engine rather than a version matrix, so "current and previous" is not
   // something this file can assert. What it does cover is the three engines.
   projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    { name: "chromium", use: { ...devices["Desktop Chrome"], viewport: DESIGN_VIEWPORT } },
+    { name: "firefox", use: { ...devices["Desktop Firefox"], viewport: DESIGN_VIEWPORT } },
     // Edge is the system browser rather than a downloaded one, so this project needs Microsoft
     // Edge installed on the machine running the suite.
-    { name: "msedge", use: { ...devices["Desktop Edge"], channel: "msedge" } },
+    {
+      name: "msedge",
+      use: { ...devices["Desktop Edge"], channel: "msedge", viewport: DESIGN_VIEWPORT },
+    },
   ],
 
   webServer: {

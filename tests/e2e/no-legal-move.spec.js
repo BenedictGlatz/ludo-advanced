@@ -13,13 +13,26 @@
 
 import { expect, test } from "@playwright/test";
 
-import { SEEDS, boardState, openMatch } from "./helpers.js";
+import { SEEDS, boardState, chooseDiceCard, openMatch, playUntil } from "./helpers.js";
+
+/**
+ * Open the match and pick a dice card, which is what produces the refused turn.
+ *
+ * Since issue #31 the refusal is no longer the first thing on screen: the three drawn cards are, and
+ * the turn is only refused once one of them has been rolled. Seed 2 refuses whichever of the three is
+ * picked, and the helpers always pick slot 0.
+ */
+async function openAndChoose(page, options) {
+  const board = await openMatch(page, SEEDS.passesOnTurnOne, options);
+  await chooseDiceCard(board);
+  return board;
+}
 
 test.describe("a turn with no legal move", () => {
   test("shows a reason in the region under the board and then passes the turn", async ({
     page,
   }) => {
-    const board = await openMatch(page, SEEDS.passesOnTurnOne, { fast: false });
+    const board = await openAndChoose(page, { fast: false });
     const message = page.locator(".move-refusal");
 
     // The turn went straight from rolling to its end, with no `act` phase in between.
@@ -38,7 +51,7 @@ test.describe("a turn with no legal move", () => {
   });
 
   test("says it in German, which is the default language", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.passesOnTurnOne, { fast: false });
+    const board = await openAndChoose(page, { fast: false });
     await expect(board).toHaveAttribute("data-phase", "turn-end");
 
     // NFR-03: the text comes from the locale file, never from the rules and never from a stylesheet.
@@ -49,7 +62,7 @@ test.describe("a turn with no legal move", () => {
   });
 
   test("leaves the reason on screen long enough to read, then hands over", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.passesOnTurnOne, { fast: false });
+    const board = await openAndChoose(page, { fast: false });
     const message = page.locator(".move-refusal");
 
     const { activePlayer } = await boardState(board);
@@ -70,9 +83,12 @@ test.describe("a turn with no legal move", () => {
     const board = await openMatch(page, SEEDS.passesOnTurnOne);
     const message = page.locator(".move-refusal");
 
-    // With ?fast=1 the turns run on. Sooner or later somebody can move, and at that moment the
-    // refusal must be gone: a reason belonging to a turn that is over is worse than no reason.
-    await expect(board).toHaveAttribute("data-phase", "act", { timeout: 20_000 });
+    // Sooner or later somebody can move, and at that moment the refusal must be gone: a reason
+    // belonging to a turn that is over is worse than no reason. The turns have to be played rather
+    // than waited for, because since issue #31 a turn does not pass itself until a card is picked.
+    await playUntil(board, async () => (await boardState(board)).phase === "act");
+
+    await expect(board).toHaveAttribute("data-phase", "act");
     await expect(message).not.toHaveAttribute("data-message-kind", "refusal");
     await expect(message).toHaveText("");
   });

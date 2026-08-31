@@ -3,10 +3,14 @@
  *
  * ## How a test plays a turn
  *
- * The slice has exactly one control, the pawn click, decided on 2026-08-30 because handoff 01
- * designed the board and nothing around it. So a test plays by clicking pawns and by waiting for the
- * board's own attributes, never by sleeping. `data-phase` and `data-status` were added to the DOM
- * contract for precisely this.
+ * Two controls since issue #31: pick one of the three drawn dice cards, then click a pawn twice. A
+ * test plays by doing those and by waiting for the board's own attributes, never by sleeping.
+ * `data-phase` and `data-status` were added to the DOM contract for precisely this.
+ *
+ * **The card the tests pick is always the one in slot 0.** Not because it is the best card, but
+ * because `scripts/find-seeds.js` replays with `hand[0]`, and slot 0 holds `hand[0]`. Picking any
+ * other slot would make every seed below wrong, and the point of that script is that the two policies
+ * are the same one written twice.
  *
  * ## Why every spec passes a seed
  *
@@ -88,6 +92,45 @@ export function firstMovablePawn(board) {
 }
 
 /**
+ * The dice hand.
+ *
+ * Reached through `board.page()` rather than through the board, because design spec 03 put the hand
+ * in a rail beside the board (D30) and not inside it.
+ */
+export function diceHand(board) {
+  return board.page().locator(".hand--dice");
+}
+
+/**
+ * Pick the dice card in slot 0 and wait until choosing has actually happened.
+ *
+ * Choosing also rolls, because `intents.js` runs steps 3 to 5 as one intent, so the phase afterwards
+ * is `act` when something can move and `turn-end` when nothing can.
+ *
+ * **The wait cannot be "the phase is no longer `choose`", and that mistake cost half a test run.**
+ * With `?fast=1` a turn nobody can move in rolls, passes, hands over and draws the next hand inside
+ * one tick, so between the click and the next poll the board is back in `choose` for the *next*
+ * player. The phase looks unchanged and the click looks lost. The turn number only counts upward, so
+ * "the phase moved on, or the turn did" is the condition that cannot be fooled. This is the same trap
+ * `waitPastTurn` below was written for.
+ */
+export async function chooseDiceCard(board) {
+  const { turnNumber } = await boardState(board);
+
+  await diceHand(board).locator('.card[data-slot="0"]').click();
+
+  await expect
+    .poll(
+      async () => {
+        const now = await boardState(board);
+        return now.phase !== "choose" || now.turnNumber > turnNumber || now.status !== "running";
+      },
+      { timeout: 15_000 }
+    )
+    .toBe(true);
+}
+
+/**
  * Wait until the turn number has moved past `turnNumber`, or the match has ended.
  *
  * **Always wait on the turn number, never on the phase or the active seat.** With `?fast=1` a turn
@@ -108,43 +151,63 @@ async function waitPastTurn(board, turnNumber) {
 }
 
 /**
- * Play one turn: select a pawn, then commit it, then wait for the turn to be over.
+ * Move the lowest-numbered movable pawn.
  *
- * Two clicks on the same pawn, which is the interaction the game loop implements. The pawn stays
- * `data-movable` between the two, so the locator resolves to the same element both times.
+ * Two clicks on the same pawn, which is the interaction the game loop implements: the first selects
+ * and the second commits. The pawn keeps `data-movable` in between, so the locator resolves to the
+ * same element both times.
  */
-export async function playTurn(board) {
-  const { turnNumber } = await boardState(board);
+export async function moveFirstMovablePawn(board) {
   const pawn = firstMovablePawn(board);
 
   await pawn.click();
   await expect(pawn).toHaveAttribute("data-selected", "true");
   await pawn.click();
+}
+
+/**
+ * Play whatever this turn still needs, then wait for it to be over.
+ *
+ * Handles all three states the turn can be in when it is called: a card still to choose, a pawn ready
+ * to move, or a turn already finished because nothing could move. A caller does not have to look at
+ * the phase first, which is what stops every spec from having to know the shape of a turn.
+ */
+export async function playTurn(board) {
+  const { turnNumber, phase } = await boardState(board);
+
+  if (phase === "choose") await chooseDiceCard(board);
+  if ((await boardState(board)).phase === "act") await moveFirstMovablePawn(board);
 
   await waitPastTurn(board, turnNumber);
 }
 
 /**
- * Play until `done(board)` returns true, or until the match ends, or until the turn cap is reached.
+ * Play until `done(board)` returns true, or until the match ends, or until the step cap is reached.
  *
- * The cap is a real bound and not a formality: a bug that leaves the loop in `act` forever would
- * otherwise hang the suite instead of failing it.
+ * **`done` is asked once per step and not once per turn**, and the step that matters is the one after
+ * a card has been chosen: at that point the roll is known and no pawn has moved yet, which is the only
+ * moment a caller can ask "is this the situation I was waiting for" and still act on the answer. That
+ * is why choosing does a `continue` rather than falling through to the pawn.
+ *
+ * The cap is a real bound and not a formality: a bug that parks the loop in one phase forever would
+ * otherwise hang the suite instead of failing it. It counts steps, so a match may use two per turn.
  */
-export async function playUntil(board, done, maxTurns = 400) {
-  for (let turn = 0; turn < maxTurns; turn += 1) {
+export async function playUntil(board, done, maxSteps = 400) {
+  for (let step = 0; step < maxSteps; step += 1) {
     if (await done(board)) return true;
 
     const { status, phase, turnNumber } = await boardState(board);
     if (status !== "running") return await done(board);
 
-    if (phase === "act") {
-      await playTurn(board);
-    } else {
-      // A turn nobody can move in. The loop passes it on by itself; wait for that rather than for
-      // the clock, so the test runs at whatever speed the browser manages.
-      await waitPastTurn(board, turnNumber);
+    if (phase === "choose") {
+      await chooseDiceCard(board);
+      continue;
     }
+
+    if (phase === "act") await moveFirstMovablePawn(board);
+
+    await waitPastTurn(board, turnNumber);
   }
 
-  throw new Error(`the match did not reach the wanted situation within ${maxTurns} turns`);
+  throw new Error(`the match did not reach the wanted situation within ${maxSteps} steps`);
 }

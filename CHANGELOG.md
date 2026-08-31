@@ -222,6 +222,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   have yet, a shared vocabulary, and an assembly module that validates the whole list when it loads. Each
   entry says what a card is, when it may be played and what the player has to point at. **What a card
   does is not in it**: an effect is a separate function matched by the same id, and none exists yet
+- **The player now picks which of the three drawn dice cards is rolled** (issue #31, FR-18 and FR-19). The three
+  cards are dealt face up in a hand beside the board, any of them can be clicked or reached with the keyboard, and
+  the chosen one shows its roll on a badge. Until now the view took the first of the three, so a choice the
+  rulebook gives the player was being made for them
+- `src/ui/card-view.js`, one card component behind every dice card, Action card and Reaction card, built once and
+  updated by attribute. `src/ui/dice-hand-view.js` renders the three drawn cards and `src/ui/events.js` gained
+  `bindDiceHandEvents`
+- **The page is now the four-region layout FR-31 asks for**: board on the left, dice hand and skill hand stacked
+  in a rail on the right, refusal strip across the foot, all visible at 1440 by 900 without scrolling. Below
+  1344 px the regions stack and the page may scroll. The skill hand region is mounted and empty until issue #38
+  draws a card into it
+- Design specification 03 as `01-Design/Handoff/03-spec-cards-and-hands.md`, with `src/ui/styles/card.css`,
+  `card-state.css` and `hand.css`, a real `app.css` replacing the placeholder Claude Code wrote, 32 new tokens,
+  and the skill square finally visible as a teal diamond rather than as an attribute nothing styled
+- Names for all seven dice denominations in both locales, plus the two tags every dice card carries: its range,
+  and the number it needs to get a pawn out of the start area
+- `tests/e2e/shell.spec.js`, four cases covering FR-31: the suite runs at the design resolution, the page does not
+  scroll, all four regions sit inside the viewport, and below the breakpoint they stack. `tests/e2e/dice-hand.spec.js`,
+  six cases covering the choice itself, including one that plays a whole turn from the keyboard alone
 - **The closed skill card pool** (`src/core/skill-pool.js`, FR-22 and FR-27): the pool, one hand per seat
   and a discard pile, as pure functions over the arrays the game state holds. A hand holds at most 5
   cards and a draw for a full hand leaves the card in the pool. A played card goes to the discard pile,
@@ -252,6 +271,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The 40 track field grid placements were split out of `src/ui/styles/board.css` into `board-track.css`. The
   delivered file was 248 lines and inside the 300-line limit; running the project's own Prettier over it expanded
   every single-line rule and took it to 407
+- The yards, the houses and the pawn slots were split out of `src/ui/styles/board.css` into `board-regions.css`,
+  at the seam between a field and a region that holds fields. Same cause as the split above and the second time it
+  has happened: design specification 03 delivered `board.css` at 269 lines, Prettier expanded it to 429
+- `--board-size` is now `clamp(24rem, min(82vh, 44vw), 60rem)`, because the hand rail needs about half the width.
+  `--cell` is derived from it, so any rule overriding one has to re-derive the other
+- A turn no longer advances by itself from drawing to rolling. It waits in the `choose` phase for the player, the
+  way it already waited in `act` for a pawn click
 - Section 5 of `00-Meta/Project-Management/Obligations-Book.md` no longer says "No design specification exists",
   and points at `01-Design/` and `src/ui/styles/` instead. Screens S4, S5, S7 and the menus still have no design
 - Prettier now uses `"quoteProps": "preserve"`, so an object key written with quotes keeps them. The default
@@ -364,3 +390,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Product Owner sign-off table of the game design document gained three rows marked **Overridden** and
   two new unsigned rows for the rule changes the cards force: leaving the start field becomes
   `roll >= dieMax`, and card-driven backward movement stops at the first track field
+
+### Fixed
+
+- **Every page was 16 px taller than the window**, so the layout FR-31 requires to fit on one screen always had a
+  scrollbar. Design specification 03's `app.css` had dropped the `body { margin: 0 }` that the placeholder it
+  replaced carried, and the browser's own 8 px default came back top and bottom
+- **The end-to-end suite had been running at 1280 by 720 rather than the 1440 by 900 `playwright.config.js` asks
+  for**, since 2026-08-14. Each project spreads a Playwright device descriptor and every one of those carries its
+  own viewport, which silently overrode the setting. 1280 is below the breakpoint design specification 03
+  introduced, so the whole suite was playing the stacked fallback layout
+- The 40 track field grid placements briefly existed in two stylesheets at once, because design specification 03
+  delivered a `board.css` that had them inlined again after handoff 02 had split them out
+- `tests/e2e/pawn-leaves-start.spec.js` held a live "first movable pawn" locator across the two clicks that end a
+  turn, so after the handover it was asserting against a different pawn that happened to also be at `r = 0`. It had
+  been passing on timing

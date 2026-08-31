@@ -1,0 +1,120 @@
+/* The two hand rows. Depends on tokens.css and card.css.
+   Reasoning is in 01-Design/Handoff/03-spec-cards-and-hands.md, D26, D29,
+   D31 and D33. */
+
+.hand {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: calc(var(--card-u) * 24rem);
+  padding: calc(var(--card-u) * 1.25rem) calc(var(--card-u) * 0.75rem) calc(var(--card-u) * 0.75rem);
+}
+
+/* --- The dice hand. Three cards, one is kept, and the choice is the whole
+       turn, so this is the larger of the two sizes and the cards do not
+       overlap: all three have to be comparable at a glance (D26). --- */
+
+.hand--dice {
+  --card-u: 0.76;
+  gap: calc(var(--card-u) * 0.75rem);
+}
+
+/* --- The skill hand. Up to five cards today, three or six tomorrow, so the
+       row is a fan whose overlap follows data-count and never its own
+       width: the hand keeps the same footprint at any limit (§ 4.2). --- */
+
+.hand--skill {
+  --card-u: 0.68;
+  --overlap: 0.24;
+}
+
+.hand--skill[data-count="4"] {
+  --overlap: 0.26;
+}
+
+.hand--skill[data-count="5"] {
+  --overlap: 0.3;
+}
+
+.hand--skill[data-count="6"] {
+  --overlap: 0.44;
+}
+
+.hand--skill[data-count="7"] {
+  --overlap: 0.52;
+}
+
+.hand--skill .card + .card {
+  margin-left: calc(var(--card-u) * -16.25rem * var(--overlap));
+}
+
+/* Reading the fan: the card under the pointer rises out of it and the cards
+   to its right step aside, so a covered card can be read without leaving
+   the row. translate, not transform, so the lift in card.css survives. */
+.hand--skill .card:hover ~ .card,
+.hand--skill .card:focus-visible ~ .card {
+  translate: calc(var(--card-u) * 4rem) 0;
+  transition: translate var(--motion-feedback) var(--ease-ui);
+}
+
+.hand--skill .card {
+  transition:
+    transform var(--motion-feedback) var(--ease-ui),
+    box-shadow var(--motion-feedback) var(--ease-ui),
+    filter var(--motion-feedback) var(--ease-ui),
+    translate var(--motion-feedback) var(--ease-ui);
+}
+
+/* A hand that is not the active seat's is a stack of backs, not a row of
+   faces: in hot-seat the next player is looking at the same screen (D33). */
+.hand--skill[data-active="false"] {
+  --overlap: 0.82;
+}
+
+.hand--skill[data-active="false"] .card:hover ~ .card,
+.hand--skill[data-active="false"] .card:focus-visible ~ .card {
+  translate: none;
+}
+
+/* --- Dealing, choosing, returning (D31). Three cards arrive, one is kept,
+       two leave, roughly 250 times in a four-player match. Both animations
+       run on the existing --motion-move budget and collapse to nothing
+       under prefers-reduced-motion, because that token becomes 1 ms. --- */
+
+@keyframes card-deal {
+  from {
+    opacity: 0;
+    transform: translate(-45%, -55%) rotate(-9deg) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(var(--lift));
+  }
+}
+
+.hand--dice[data-dealing="true"] .card {
+  animation: card-deal var(--motion-move) var(--ease-move) backwards;
+}
+
+.hand--dice[data-dealing="true"] .card:nth-child(2) {
+  animation-delay: var(--motion-deal-stagger);
+}
+
+.hand--dice[data-dealing="true"] .card:nth-child(3) {
+  animation-delay: calc(var(--motion-deal-stagger) * 2);
+}
+
+/* The two cards nobody kept. They do not fade out on the spot, they go back
+   where they came from, so the pool stays visibly the source of the hand. */
+.hand--dice[data-resolved="true"] .card:not([data-selected="true"]) {
+  opacity: 0;
+  transform: translate(-30%, -40%) rotate(6deg) scale(0.9);
+  transition:
+    transform var(--motion-move) var(--ease-capture),
+    opacity var(--motion-move) var(--ease-capture);
+  pointer-events: none;
+}
+
+.hand--dice[data-resolved="true"] .card[data-selected="true"] {
+  transform: translateY(calc(var(--lift) * 2.5));
+}

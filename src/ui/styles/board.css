@@ -1,6 +1,10 @@
-/* Board: the 11 by 11 grid, the 40 track fields, the four yards and the four
-   four-field houses. Depends on tokens.css.
-   Geometry is derived in 01-Design/Handoff/01-spec-foundations-and-board.md (D3). */
+/* Board: the 11 by 11 grid and the fields on it. Depends on tokens.css.
+   Geometry is derived in 01-Design/Handoff/01-spec-foundations-and-board.md (D3).
+   The skill square is D27 of 03-spec-cards-and-hands.md.
+
+   Two files were split off this one, both for NFR-02 and both at a real seam:
+   board-track.css holds the 40 index-to-cell placements, board-regions.css
+   holds the yards, the houses and the slots. Load both after this one. */
 
 .board,
 .board * {
@@ -166,123 +170,28 @@
    2026-08-30 for NFR-02: see that file's header for why and for the
    index-to-cell table. --- */
 
-/* --- Start areas, the yards: the four 4 by 4 corners. No margin, so the 4 by 4
-       sub-grid stays aligned to the board grid and the pawns land on the
-       slot centres (D3). The comment delivered here said 6 by 6, which was
-       left over from the 15 by 15 board; the rules below have always been
-       4 by 4 and are what the 11 by 11 grid needs. --- */
+/* --- The skill square (D27). A mark, not a fill: the field keeps its own
+       background, so a skill square that is also a legal target shows the
+       violet ring and the teal diamond at the same time and neither has to
+       give way. The diamond is decorative geometry, no glyph and no text.
 
-.start-area {
-  position: relative;
-  z-index: var(--layer-region);
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(4, 1fr);
-  border-radius: var(--radius-lg);
-  background: var(--player);
-  box-shadow:
-    inset 0 0 0 var(--border-ink) var(--color-ink),
-    var(--shadow-region);
-}
+       Teal and not the purple the earlier material described, because violet
+       is --color-hint, which every legal-move highlight and focus ring in the
+       game already uses. --- */
 
-.start-area[data-player="0"] {
-  grid-area: 1 / 1 / 5 / 5;
-}
-.start-area[data-player="1"] {
-  grid-area: 1 / 8 / 5 / 12;
-}
-.start-area[data-player="2"] {
-  grid-area: 8 / 8 / 12 / 12;
-}
-.start-area[data-player="3"] {
-  grid-area: 8 / 1 / 12 / 5;
+.square[data-skill-square="true"]::before {
+  content: "";
+  position: absolute;
+  inset: 24%;
+  background: var(--color-skill);
+  border-radius: 14%;
+  box-shadow: inset 0 0 0 max(2px, calc(var(--cell) * 0.045)) var(--color-ink);
+  transform: rotate(45deg);
+  transition: inset var(--motion-feedback) var(--ease-ui);
 }
 
-.start-area .slot[data-slot="0"] {
-  grid-area: 2 / 2;
-}
-.start-area .slot[data-slot="1"] {
-  grid-area: 2 / 3;
-}
-.start-area .slot[data-slot="2"] {
-  grid-area: 3 / 2;
-}
-.start-area .slot[data-slot="3"] {
-  grid-area: 3 / 3;
-}
-
-/* --- Home columns: the house. Four squares, step 1 against the turn-off
-       square, step 4 the last one and the square a pawn finishes on. The
-       fifth cell of the arm's middle lane is the turn-off field itself, so
-       the house fits the arm exactly with nothing left over (D3). --- */
-
-.home-column {
-  z-index: var(--layer-region);
-  display: flex;
-  justify-content: flex-start;
-}
-
-.home-column .square {
-  flex: 1 1 0;
-}
-
-.home-column[data-player="0"] {
-  grid-area: 6 / 2 / 7 / 6;
-  flex-direction: row;
-}
-.home-column[data-player="1"] {
-  grid-area: 2 / 6 / 6 / 7;
-  flex-direction: column;
-}
-.home-column[data-player="2"] {
-  grid-area: 6 / 7 / 7 / 11;
-  flex-direction: row-reverse;
-}
-.home-column[data-player="3"] {
-  grid-area: 7 / 6 / 11 / 7;
-  flex-direction: column-reverse;
-}
-
-/* --- Slots: the empty receptacle a pawn stands on --- */
-
-/* A start slot is a field like any other, so a waiting pawn stands on the
-   same thing it will stand on for the rest of the game. */
-.slot {
-  place-self: center;
-  z-index: var(--layer-region);
-  width: var(--slot-size);
-  height: var(--slot-size);
-  border-radius: var(--radius-sm);
-  background: var(--color-square);
-  box-shadow: inset 0 0 0 var(--border-hair) var(--color-square-edge);
-}
-
-/* --- Empty seats, 2 and 3 player matches (D3). Present, drained, and
-       outlined rather than filled, so the board reads as complete. --- */
-
-.board[data-players="2"] [data-player="1"],
-.board[data-players="2"] [data-player="3"],
-.board[data-players="3"] [data-player="3"] {
-  --player: var(--color-dormant);
-  --player-soft: var(--color-dormant-soft);
-  --marked: var(--color-dormant);
-}
-
-.board[data-players="2"] .start-area[data-player="1"],
-.board[data-players="2"] .start-area[data-player="3"],
-.board[data-players="3"] .start-area[data-player="3"] {
-  background: var(--color-dormant-soft);
-  box-shadow: inset 0 0 0 var(--border-hair) var(--color-dormant);
-}
-
-/* Entry and turn-off squares belong to the 52-square topology, so they carry
-   data-entry-of and data-turnoff-of whatever the seat count is. They are
-   drained here rather than by the view. */
-.board[data-players="2"] .square[data-entry-of="1"],
-.board[data-players="2"] .square[data-turnoff-of="1"],
-.board[data-players="2"] .square[data-entry-of="3"],
-.board[data-players="2"] .square[data-turnoff-of="3"],
-.board[data-players="3"] .square[data-entry-of="3"],
-.board[data-players="3"] .square[data-turnoff-of="3"] {
-  --marked: var(--color-dormant);
+/* Inside the pulsing ring the diamond steps back a little, so the ring is
+   still the widest thing on the field. */
+.square[data-skill-square="true"][data-legal-target="true"]::before {
+  inset: 30%;
 }

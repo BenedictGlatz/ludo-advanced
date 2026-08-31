@@ -83,7 +83,7 @@
   --tracking-wide: 0.08em;
 
   /* --- Board geometry (D6). No fixed target resolution; one fluid unit. --- */
-  --board-size: clamp(28rem, min(76vh, 56vw), 66rem);
+  --board-size: clamp(24rem, min(82vh, 44vw), 60rem);
   --cell: calc(var(--board-size) / 11);
   --pawn-size: calc(var(--cell) * 0.78);
   --pawn-scale: 1;
@@ -116,9 +116,55 @@
   --motion-move: 240ms;
   --motion-capture: 320ms;
   --motion-pulse: 1200ms;
+  --motion-deal-stagger: 60ms;
   --ease-ui: cubic-bezier(0.2, 0, 0, 1);
   --ease-move: cubic-bezier(0.34, 1.1, 0.64, 1);
   --ease-capture: cubic-bezier(0.55, 0, 0.85, 0.3);
+
+  /* --- Cards (D25). The card artwork's palette, folded into the two skins.
+         Two hues are the same hex in both: the family hue, because green
+         means Action and must not shift with the lights, and the wash behind
+         the art, because all 29 illustrations are drawn with dark ink lines
+         and would vanish on a dark ground. The face, the body text and the
+         page around them are paired. --- */
+  --card-face: light-dark(#fff8ec, #473758);
+  --card-text: light-dark(#4a3b2e, #ece2f7);
+  --card-band-text: #fff8ec;
+  --card-result-bg: #fff8ec;
+  --card-back: light-dark(#6b3fa0, #3d245c);
+  --card-back-mark: light-dark(#b98ce0, #7c58a8);
+  --card-back-frame: light-dark(rgb(255 243 226 / 0.5), rgb(255 243 226 / 0.32));
+  --card-dormant-wash: #efe7d8;
+
+  /* Type, which decides when a card may be played, carried by the band. */
+  --card-action: #3fa35b;
+  --card-action-wash: #e3f4e8;
+  --card-reaction: #ff9a3c;
+  --card-reaction-wash: #ffeedc;
+  --card-dice: #8b5fb8;
+  --card-dice-wash: #f3e6fb;
+
+  /* Category, which is grouping and flavour, carried by the kind pill and
+     the wash. Four hues from artboard 4a. */
+  --card-movement: #4c86f9;
+  --card-movement-wash: #e4eeff;
+  --card-blocking: #b98ce0;
+  --card-blocking-wash: #f0e4f9;
+  --card-troll: #ffc93c;
+  --card-troll-wash: #fff0c9;
+  --card-offensive: #ff5d5d;
+  --card-offensive-wash: #ffe6e1;
+
+  /* Card geometry (D26). --card-u is a factor on the artboard, 260 by 380.
+     A hand sets it; the card reads it. Declared here and not on .card so a
+     hand can override it by inheritance. */
+  --card-u: 1;
+
+  /* --- The skill square (D27). Teal is the only hue left: it is not a seat
+         colour, not the violet hint and not the orange refusal, so a field
+         can be a skill square and a legal target at the same time. --- */
+  --color-skill: light-dark(#0f9c93, #33d2c4);
+  --color-skill-soft: light-dark(#d3f1ee, #1c4b4b);
 
   /* --- Layering --- */
   --layer-square: 1;
@@ -126,6 +172,9 @@
   --layer-pawn: 3;
   --layer-pawn-active: 4;
   --layer-refusal: 5;
+  --layer-card: 1;
+  --layer-card-raised: 2;
+  --layer-card-selected: 3;
 }
 
 /* D12: loops stop, feedback stays. */
@@ -134,5 +183,6 @@
     --motion-move: 1ms;
     --motion-capture: 1ms;
     --motion-pulse: 0ms;
+    --motion-deal-stagger: 0ms;
   }
 }

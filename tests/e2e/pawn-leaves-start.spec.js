@@ -6,11 +6,32 @@
 
 import { expect, test } from "@playwright/test";
 
-import { SEEDS, boardState, firstMovablePawn, openMatch, pawnPositions } from "./helpers.js";
+import {
+  SEEDS,
+  boardState,
+  chooseDiceCard,
+  firstMovablePawn,
+  openMatch,
+  pawnPositions,
+} from "./helpers.js";
+
+/**
+ * Open the match and take the step before the one this spec is about: pick a dice card.
+ *
+ * Since issue #31 a turn starts in `choose` and no pawn is offered until a card has been picked, so
+ * every test here needs that step first. It is a local helper and not part of `openMatch`, because a
+ * match really does open with a choice to make and hiding that in the opener would make the specs
+ * describe a game that does not exist.
+ */
+async function openAndChoose(page) {
+  const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+  await chooseDiceCard(board);
+  return board;
+}
 
 test.describe("a pawn leaves the start area", () => {
   test("moves onto its own entry field when the maximum is rolled", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    const board = await openAndChoose(page);
 
     await expect(board).toHaveAttribute("data-phase", "act");
     const { activePlayer, roll, die } = await boardState(board);
@@ -30,7 +51,7 @@ test.describe("a pawn leaves the start area", () => {
   });
 
   test("highlights the entry field before the player commits (FR-32)", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    const board = await openAndChoose(page);
     const { activePlayer } = await boardState(board);
 
     // With nothing selected, every legal move is lit. All four pawns can leave on a maximum, and
@@ -47,8 +68,14 @@ test.describe("a pawn leaves the start area", () => {
   test("marks the pawn selected on the first click and moves it on the second", async ({
     page,
   }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
-    const pawn = firstMovablePawn(board);
+    const board = await openAndChoose(page);
+    const { activePlayer } = await boardState(board);
+    const index = await firstMovablePawn(board).getAttribute("data-pawn");
+
+    // Pinned to this one pawn rather than to "the first movable pawn". That locator is live: the
+    // second click ends the turn, the next seat's pawns become the movable ones, and the assertion
+    // below would then be reading a different pawn that happens to still be at r = 0.
+    const pawn = board.locator(`.pawn[data-player="${activePlayer}"][data-pawn="${index}"]`);
 
     await pawn.click();
     await expect(pawn).toHaveAttribute("data-selected", "true");
@@ -59,7 +86,7 @@ test.describe("a pawn leaves the start area", () => {
   });
 
   test("does not offer a pawn to a player whose turn it is not", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    const board = await openAndChoose(page);
     const { activePlayer } = await boardState(board);
 
     const movable = board.locator('.pawn[data-movable="true"]');
