@@ -52,6 +52,55 @@ Likely candidates as the project runs:
 | 5 | Ludo Advanced schedule, recorded to 2026-08-23 and planned after it | [Roadmap-and-Gantt.md](../../Project-Management/Roadmap-and-Gantt.md) section 4, Mermaid gantt | Ch. 02, Ch. 11 |
 | 6 | The Roadmap view of the GitHub Projects board as a Gantt chart | *reserved*, see the note below | Ch. 02 |
 | 7 | Project structure plan of Ludo Advanced, to epic level | [Project-Structure-Plan.md](../../Project-Management/Project-Structure-Plan.md) section 2, Mermaid | Ch. 02 |
+| 8 | The board as an 11 by 11 grid: which cell holds which of the 40 track fields | [01-spec-foundations-and-board.md](../../../01-Design/Handoff/01-spec-foundations-and-board.md) D3, reproduced in the header of `src/ui/styles/board-track.css` | Ch. 04, Ch. 05 |
+| 9 | The design token reference | [01-spec-foundations-and-board.md](../../../01-Design/Handoff/01-spec-foundations-and-board.md) section 3 | Ch. 04 |
+| 10 | The board renderer, as the browser holds it | Drawn in this file, from `src/ui/board-view.js` | Ch. 04 |
+| 11 | The rendered board: 2, 3 and 4 players, the Night In skin, and greyscale | `01-Design/assets/*.png`, from `node scripts/design-screenshots.js` | Ch. 04, Ch. 08 |
+
+**Figures 8 and 9 registered on 2026-08-30**, both from design handoff 01. Figure 8 is a table and
+not a drawing on purpose: the board's geometry is 40 index-to-cell mappings, and a picture of the
+cross says less than the table does about which index sits where. It exists twice, once in the spec
+and once in the header of the stylesheet that implements it, and the two were emitted from the same
+arithmetic. If they ever disagree, the stylesheet is what the browser renders and the spec is what
+gets corrected.
+
+**Figure 10 is drawn below**, because Chapter 04 has to describe one component in depth and this is
+it. **Figure 11 is a set of five screenshots** in `01-Design/assets/`, produced by
+`node scripts/design-screenshots.js` against the production build at a fixed seed: the board at 2, 3
+and 4 players, the Night In skin, and the greyscale view that Chapter 08 quotes numbers for.
+
+### Figure 10: the board renderer, as the browser holds it
+
+The element tree `src/ui/board-view.js` produces. Counts are per match and do not change during one:
+nothing here is created or destroyed after the first render, which is what lets a pawn animate
+between two squares (D10 of the design spec).
+
+```
+#app
+└── .app                                        the page shell, src/ui/styles/app.css
+    ├── .board  [data-players]                  11 x 11 CSS grid
+    │           [data-active-player]            whose turn, styled by board.css
+    │           [data-phase] [data-status]      added for the tests, styled by nothing
+    │           [data-turn]  [data-roll]
+    │   ├── .square.square--track  x40          [data-square="0..39"]
+    │   │      ├── [data-entry-of="0..3"]       on 4 of the 40
+    │   │      ├── [data-turnoff-of="0..3"]     on 4 of the 40
+    │   │      └── [data-legal-target="true"]   transient, set by move-hints.js
+    │   ├── .start-area  x4                     [data-player="0..3"], the yards
+    │   │   └── .slot  x4                        [data-slot="0..3"]
+    │   ├── .home-column  x4                    [data-player="0..3"], the houses
+    │   │   └── .square.square--home-column x4   [data-home-step="1..4"]
+    │   └── .pawn  x(4 per seated player)       direct child of .board, never re-parented
+    │          ├── [data-player] [data-pawn]    identity, never changes
+    │          ├── [data-r="0..44"]             position, the only thing that changes
+    │          ├── style="--pawn-col, --pawn-row"  fractional cell centre, transitions
+    │          └── [data-movable] [data-selected] [data-captured]   transient states
+    └── .move-refusal  [data-reason-key]        the S6 strip, refusal.css
+                       [data-message-kind]      "refusal" or "win", see the note in Ch. 04
+```
+
+For a four-player match that is 1 board, 40 track squares, 4 yards with 16 slots, 4 houses with 16
+squares, 16 pawns and 1 message strip: **93 elements, built once.**
 
 **Figure 1 is reserved, not written.** Open pull request #51 adds a Kanban board screenshot as
 Figure 1 to this file. The architecture figures were numbered from 2 on 2026-08-22 so that the two

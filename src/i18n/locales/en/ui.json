@@ -1,0 +1,95 @@
+{
+  "app": {
+    "title": "Ludo Advanced"
+  },
+  "player": {
+    "name": "Player {{number}}"
+  },
+  "turn": {
+    "prompt": "Player {{number}} to move",
+    "chooseDie": "Choose a dice card",
+    "rolled": "Rolled: {{roll}}",
+    "selectPawn": "Choose a pawn",
+    "end": "End turn"
+  },
+  "match": {
+    "won": "Player {{number}} wins",
+    "abandoned": "The match was abandoned",
+    "restart": "New match"
+  },
+  "move": {
+    "refused": {
+      "needs-maximum": "Leaving the start area needs the die's highest number.",
+      "own-pawn": "One of your own pawns is already on that square.",
+      "overshoot": "The roll is too high: getting home needs the exact number.",
+      "already-home": "This pawn is home and does not move again.",
+      "held": "This pawn is being held and sits this turn out.",
+      "locked": "This pawn is locked in and may not be moved.",
+      "blocked": "There is a rock in the way. Nothing gets past it.",
+      "protected": "The pawn on that square is protected and cannot be captured.",
+      "no-steps": "The roll came out at 0. Nobody moves this turn.",
+      "none-available": "No move is possible with this roll."
+    }
+  },
+  "intent": {
+    "rejected": {
+      "match-over": "The match is over.",
+      "wrong-phase": "That is not possible at this step of the turn.",
+      "unknown-intent": "That action does not exist.",
+      "card-not-in-hand": "That dice card is not in the hand.",
+      "no-move-for-pawn": "That pawn cannot move with this roll.",
+      "not-your-turn": "Action cards are only playable on your own turn.",
+      "card-budget-spent": "You have already played a card this turn.",
+      "reactions-locked": "No Take-Backsies: no more reaction windows open this turn.",
+      "card-not-playable-now": "That card does not fit this moment.",
+      "card-not-in-skill-hand": "That skill card is not in your hand.",
+      "needs-target": "That card still needs a target.",
+      "bad-target": "That target does not fit the card.",
+      "no-window": "No reaction window is open right now.",
+      "not-eligible": "You are not part of this reaction window."
+    }
+  },
+  "reaction": {
+    "prompt": "React? {{seconds}} s",
+    "trigger": {
+      "on-card": "Player {{number}} plays a card",
+      "on-roll": "Player {{number}} rolls",
+      "on-capture": "Player {{number}} is about to capture a pawn"
+    },
+    "decline": "Decline",
+    "waiting": "Waiting for player {{number}}",
+    "declined": "Player {{number}} declined",
+    "played": "Player {{number}}: {{card}}",
+    "negated": "was cancelled"
+  },
+  "action": {
+    "prompt": "Play an action card or carry on",
+    "skip": "Carry on",
+    "target": {
+      "own-pawn": "Choose one of your own pawns",
+      "enemy-pawn": "Choose an opponent's pawn",
+      "track-square": "Choose a square on the track",
+      "direction": "Forwards or backwards?",
+      "number": "Name a number",
+      "player": "Choose an opponent",
+      "choice": "Pick one of the two options",
+      "forward": "Forwards",
+      "backward": "Backwards",
+      "cancel": "Cancel",
+      "advance": "Four squares forward",
+      "retreat": "Back to the entry square"
+    }
+  },
+  "roll": {
+    "step": {
+      "base": "D{{faces}}: {{value}}",
+      "fixed": "Named: {{value}}",
+      "advantage": "Rolled twice, higher: {{value}}",
+      "disadvantage": "Rolled twice, lower: {{value}}",
+      "add-die": "Plus a D{{faces}}: {{value}}",
+      "sub-die": "Minus a D{{faces}}: {{value}}",
+      "multiplier": "Times {{factor}}: {{value}}",
+      "floor": "Never below 0"
+    }
+  }
+}

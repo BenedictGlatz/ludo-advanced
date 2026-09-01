@@ -1,0 +1,95 @@
+{
+  "app": {
+    "title": "Ludo Advanced"
+  },
+  "player": {
+    "name": "Spieler {{number}}"
+  },
+  "turn": {
+    "prompt": "Spieler {{number}} ist am Zug",
+    "chooseDie": "Wähle eine Würfelkarte",
+    "rolled": "Gewürfelt: {{roll}}",
+    "selectPawn": "Wähle eine Figur",
+    "end": "Zug beenden"
+  },
+  "match": {
+    "won": "Spieler {{number}} hat gewonnen",
+    "abandoned": "Die Partie wurde abgebrochen",
+    "restart": "Neue Partie"
+  },
+  "move": {
+    "refused": {
+      "needs-maximum": "Zum Verlassen des Startfeldes brauchst du die höchste Zahl des Würfels.",
+      "own-pawn": "Auf dem Zielfeld steht schon eine eigene Figur.",
+      "overshoot": "Der Wurf ist zu hoch: ins Ziel geht es nur mit der genauen Zahl.",
+      "already-home": "Diese Figur ist schon im Ziel und wird nicht mehr gezogen.",
+      "held": "Diese Figur wird festgehalten und setzt diesen Zug aus.",
+      "locked": "Diese Figur ist eingesperrt und darf nicht gezogen werden.",
+      "blocked": "Auf dem Weg liegt ein Stein. Da kommt niemand vorbei.",
+      "protected": "Die Figur auf dem Zielfeld ist geschützt und kann nicht geschlagen werden.",
+      "no-steps": "Der Wurf ist auf 0 gefallen. Diese Runde bewegt sich niemand.",
+      "none-available": "Mit diesem Wurf ist kein Zug möglich."
+    }
+  },
+  "intent": {
+    "rejected": {
+      "match-over": "Die Partie ist beendet.",
+      "wrong-phase": "Das geht in diesem Schritt des Zuges nicht.",
+      "unknown-intent": "Diese Aktion gibt es nicht.",
+      "card-not-in-hand": "Diese Würfelkarte liegt nicht auf der Hand.",
+      "no-move-for-pawn": "Diese Figur kann mit dem Wurf nicht ziehen.",
+      "not-your-turn": "Aktionskarten spielst du nur in deinem eigenen Zug.",
+      "card-budget-spent": "Du hast in diesem Zug schon eine Karte gespielt.",
+      "reactions-locked": "No Take-Backsies: in diesem Zug geht kein Reaktionsfenster mehr auf.",
+      "card-not-playable-now": "Diese Karte passt nicht in diesen Moment.",
+      "card-not-in-skill-hand": "Diese Skill-Karte liegt nicht auf deiner Hand.",
+      "needs-target": "Für diese Karte fehlt noch ein Ziel.",
+      "bad-target": "Dieses Ziel passt nicht zu der Karte.",
+      "no-window": "Gerade ist kein Reaktionsfenster offen.",
+      "not-eligible": "Du bist an diesem Reaktionsfenster nicht beteiligt."
+    }
+  },
+  "reaction": {
+    "prompt": "Reaktion? {{seconds}} s",
+    "trigger": {
+      "on-card": "Spieler {{number}} spielt eine Karte",
+      "on-roll": "Spieler {{number}} würfelt",
+      "on-capture": "Spieler {{number}} will eine Figur schlagen"
+    },
+    "decline": "Ablehnen",
+    "waiting": "Warte auf Spieler {{number}}",
+    "declined": "Spieler {{number}} hat abgelehnt",
+    "played": "Spieler {{number}}: {{card}}",
+    "negated": "wurde abgesagt"
+  },
+  "action": {
+    "prompt": "Aktionskarte spielen oder weiter",
+    "skip": "Weiter",
+    "target": {
+      "own-pawn": "Wähle eine eigene Figur",
+      "enemy-pawn": "Wähle eine gegnerische Figur",
+      "track-square": "Wähle ein Feld auf der Strecke",
+      "direction": "Vorwärts oder rückwärts?",
+      "number": "Nenne eine Zahl",
+      "player": "Wähle einen Gegner",
+      "choice": "Wähle eine der beiden Möglichkeiten",
+      "forward": "Vorwärts",
+      "backward": "Rückwärts",
+      "cancel": "Abbrechen",
+      "advance": "Vier Felder vor",
+      "retreat": "Zurück zum Eingangsfeld"
+    }
+  },
+  "roll": {
+    "step": {
+      "base": "W{{faces}}: {{value}}",
+      "fixed": "Festgelegt: {{value}}",
+      "advantage": "Zweimal gewürfelt, höher: {{value}}",
+      "disadvantage": "Zweimal gewürfelt, niedriger: {{value}}",
+      "add-die": "Plus W{{faces}}: {{value}}",
+      "sub-die": "Minus W{{faces}}: {{value}}",
+      "multiplier": "Mal {{factor}}: {{value}}",
+      "floor": "Nicht unter 0"
+    }
+  }
+}

@@ -194,14 +194,53 @@ planning chapter describes, so the gap between it and the executed sprint has to
 | --- | --- |
 | **Planned start** | 2026-08-24 (board) |
 | **Planned end** | 2026-09-06 (board) |
-| **Actual start** | *open* |
+| **Actual start** | 2026-08-29 (first commit of implementation work) |
 | **Actual end** | *open* |
 
 **Planned scope**
 
-> **Board scope is empty**: no issue carries `Sprint 2` as of 2026-08-22, so what follows is the
-> prose plan only and is not yet what the team will work on. It also does not yet contain the
-> unstarted Sprint 1 gameplay scope or the npm bootstrap, both of which have to land here or later.
+> **Board scope read 2026-08-29: 17 issues, 72 story points.** The sprint no longer has an empty board
+> scope. The table is below; the prose plan and the project plan's assignment are both kept underneath
+> it, because the three disagree and the difference is the finding.
+
+| # | Title | Points | Status, latest read 2026-08-29 evening |
+| --- | --- | --- | --- |
+| 3 | Create Design System | 5 | In Progress, brief sent |
+| 26 | Board Grid & Tile Navigation System | 5 | In Progress, committed |
+| 27 | Turn Manager & Game Loop | 8 | In Progress, committed |
+| 28 | Pawn Movement Rules | 5 | In Progress, committed |
+| 29 | Knockout & Capture Rules Logic | 2 | In Progress, committed |
+| 62 | Pawn Rendering & Movement Animation | 3 | Todo |
+| 63 | Project Bootstrap: package.json, Vite, ESLint, Prettier, Vitest, Playwright | 5 | In Progress, committed |
+| 64 | i18n Setup and the German and English Locale Files | 5 | In Progress, committed |
+| 36 | Core Game Engine & Board (epic) | 0 by design | In Progress |
+| 37 | Enhanced Dice Pool System (epic) | 0 by design | Todo |
+| 38 | Skill Cards Mechanics (epic) | 0 by design | Todo |
+| 39 | UI / UX, Audio & Game State (epic) | 0 by design | Todo |
+| 42 | Online Multiplayer & Lobby System | 13 | Todo |
+| 43 | LLM-Powered Bot API Integration | 8 | Todo |
+| 44 | Expanded Skill Card Set | 3 | Todo |
+| 45 | Trap Card System & Tile Trigger Logic | 5 | Todo |
+| 46 | Classic vs. Custom Game Modes (Rule Toggles) | 5 | Todo |
+
+**Three things about that table are worth stating before the sprint closes, not after.**
+
+1. **34 of the 72 points are #42 to #46**, which section 4.4 of
+   [Project-Plan.md](../Project-Management/Project-Plan.md) leaves **unscheduled** on purpose: #42 is
+   `should have` and named there as the largest available cut, and #43 to #46 are all `could have`. They
+   were put in Sprint 2 on the board sometime between the 2026-08-22 read and the 2026-08-29 one. The
+   board wins by the 2026-08-22 decision, so this is Sprint 2's scope until a planning slot changes it.
+   It is not corrected unilaterally here.
+2. **The must-have work in this sprint is 38 points**: #3, #26, #27, #28, #29, #62, #63, #64. That is the
+   figure to compare against the calendar, and against a sprint that started 2026-08-24 with its first
+   implementation commit on 2026-08-29.
+3. **Three of the 17 issues did not exist on 2026-08-22.** #62 is the rendering half of #28, split out
+   the same day; #63 and #64 are the bootstrap and the i18n setup, 10 of the 12 points that section 3.6
+   of [Effort-Estimation.md](../Project-Management/Effort-Estimation.md) found invisible to the board.
+
+**Superseded prose scope**, from
+[01-Github-Project.md](../Project-Management/01-Github-Project.md). Kept because the report's planning
+chapter describes it:
 
 - Dice pool: special dice and the selection UI.
 - Skill cards: deck system, hand UI, action system (shield token, swap positions, reroll).
@@ -224,11 +263,120 @@ dice rolling, #27 turn manager. Three differences from the prose scope above, ea
   edited, which is why it stays visible here.
 
 Multiplayer also stays out of this sprint: #42 is `should have`, 13 points, and named as the largest
-available cut.
+available cut. **That is no longer what the board says**, see point 1 above.
 
-**Delivered**: *open*
+**Delivered**: *open, filled as it happens*
 
-**Divergence and reasons**: *open*
+- **2026-08-29:** board hygiene. `Story Points` created and back-filled on 25 open issues, `Sprint 2`
+  set on #26 to #29, #28 split into #28 and #62, #63 and #64 created. Details in
+  [notes/02-project-management.md](notes/02-project-management.md).
+- **2026-08-29:** #63 project bootstrap (5). npm project, Vite, ESLint, Prettier, Vitest, Playwright,
+  and the two architecture rules turned into failing lint runs.
+- **2026-08-29:** #26 board topology (5). `core/board.js`, the coordinate system everything else is
+  computed on.
+- **2026-08-29:** the first Claude Design handoff. `01-Design/` and
+  `Handoff/01-brief-foundations-and-board.md`, with nine numbered open decisions. #3 stays open until
+  the spec comes back.
+- **2026-08-29:** #29 capture (2) and #28 pawn movement rules (5). `core/pawns.js`,
+  `core/capture.js`, `core/movement.js`, `core/win.js`, `core/dice-source.js`.
+- **2026-08-29:** #27 turn manager and game loop (8). The four `state/` modules, the eight-step turn
+  sequence, the four-intent boundary, and a complete match played end to end on a scripted RNG.
+- **2026-08-29:** #64 i18n setup (5). i18next with the German and English locales.
+- **2026-08-30:** the design handoff came back, and it changed the rulebook. The board went from a
+  52-square track to 40, from a 5-square home column plus a separate home area to a 4-square house
+  holding one pawn per square, and two players now sit opposite each other on seats 0 and 2. Section
+  2 of the game design document was rewritten in the same commit as `core/board.js`. **This carries
+  no story points and was not in anybody's estimate.**
+- **2026-08-30:** #3 create design system (5). Five stylesheets in `src/ui/styles/` and the spec in
+  `01-Design/Handoff/`. The five landing checks from the sprint plan were run before merging the
+  delivery; one of them failed on arrival and is recorded below.
+- **2026-08-30:** #62 pawn rendering and movement animation (3). Five modules in `src/ui/`, the
+  composition root, and seven Playwright specs run against the production build in Chromium, Firefox
+  and Edge. **The game is playable.** Milestones M2 and M3 are both met.
+- **2026-08-30:** handoff 02 sent, `01-Design/Handoff/02-brief-board-review.md`, with nine numbered
+  questions and six screenshots taken from the running build. The round is open.
+
+**All 38 of the sprint's must-have points are committed**, over two days, all on the branch
+`feature/sprint2-core-and-design`. **None of it is merged, reviewed or pushed**, so by the project's
+own Definition of Done not one of these issues is done: the board still shows them as `In Progress`.
+That gap between "committed" and "done" is the whole remaining risk in this sprint, and it is one
+review away.
+
+**Divergence and reasons**: *open, filled as it happens*
+
+- **The plan's Step 4 was committed in the reverse of the order it names.** It asks for
+  `feat(movement)` closing #28 and then `feat(capture)` closing #29. `movement.js` imports
+  `capture.js`, so committing movement first would have left an intermediate commit whose tree does
+  not run. The two commits are in dependency order instead, and both issues still get their own
+  commit, which is what the plan asked the two commits *for*.
+- **The rules and the state layer take a pawn list, not the state object**, which is a deviation from
+  the function signature the plan sketched. The reason is in the 2026-08-29 decision block in
+  [project-journal.md](project-journal.md): passing the state object would keep the letter of NFR-01
+  and lose its point.
+- **Nothing was measured about how long any of this took**, because the project records no hours by
+  the 2026-08-06 decision. So the 30 committed points cannot be checked against the estimates that
+  produced them, and the retrospective will have story points delivered and no effort to compare them
+  against. That is the known cost of that decision, showing up for the first time.
+
+- **Five weekdays of the sprint were spent before any implementation work started.** The sprint opened
+  2026-08-24 and the first commit that is not documentation lands 2026-08-29. Milestone **M1, toolchain
+  up, was due 2026-08-25 and was missed**; M2, a pawn moves on a real board, is due 2026-08-31 and M3,
+  a full turn resolves, on 2026-09-06.
+- **The must-have half of this sprint is 38 points over the 5 weekdays that remain**, 2026-08-31 to
+  2026-09-04, which is 7.6 points per weekday against a required project average of 4.9 and against no
+  measured velocity at all, because every issue closed so far is a document. **This will not fit.** It
+  is written here in advance rather than explained afterwards, and neither the plan nor any board date
+  is being adjusted to hide it. Either the sprint end moves or part of the scope carries into Sprint 3,
+  and whichever happens is recorded here when it happens.
+- **The 34 points of #42 to #46 are counted in the sprint and are not planned to be worked on.** If
+  they are still `Todo` on 2026-09-06 the sprint reads as 38 of 72 points delivered at best, which
+  understates the work. The honest reading is against the 38, and the reason the two figures differ is
+  point 1 of the planned scope above.
+
+- **The "this will not fit" prediction above was wrong, and it is left standing.** It was written on
+  2026-08-29 against 38 points over 5 remaining weekdays. All 38 were committed on the second of
+  those days. The prediction is kept rather than deleted because the reason it was wrong is the
+  finding, not the arithmetic: the estimate was built for a team writing the code, and the work was
+  done at a rate that says nothing about how long it would take anybody to do it by hand. **The
+  velocity figure this sprint produces is therefore not a planning input for Sprint 3.** Using it as
+  one would be the single most misleading number this project could put in its report.
+
+- **A whole day of finished, tested work was invalidated by the design handoff.** #26 closed on
+  2026-08-29 against a 52-square board, because that is what the rulebook said and the sprint plan
+  explicitly forbade inventing a number that was not in it. The handoff arrived the next morning
+  built on 40. The plan had no step for this: it scheduled the rules and the design **in parallel**
+  precisely because they were not expected to interact. See the challenge entry of 2026-08-30 in
+  [project-journal.md](project-journal.md) for what it cost and why the recovery was cheap in the
+  source and expensive in the tests.
+
+- **The plan's step 8 needed a decision it did not anticipate.** Handoff 01 designed the board and
+  the refusal region and nothing around them, so there was no designed way to pick a die, hand over
+  or see who won. `CLAUDE.md` forbids Claude Code from inventing what a component looks like, so the
+  question went to the team rather than into the code, and the answer was that the pawn click is the
+  only control. That is a real reduction in what the slice does, taken deliberately.
+
+- **The seating rule reached the rules layer, which no estimate covered.** D3 of the design spec
+  seats two players opposite each other. The state layer numbered players 0 and 1, so a two-player
+  match would have put pawns in a yard the stylesheet had greyed out. `core/board.js` gained
+  `seatsFor`, `findWinner` lost an argument, and a second round of test re-derivation followed.
+
+- **One of the five landing checks failed on arrival, and the cause was our own toolchain.**
+  `board.css` was delivered at 248 lines and inside NFR-02. `npm run format` expanded every
+  single-line rule and took it to 407. Two rules that are each sensible on their own, "format
+  everything" and "no file over 300 lines", disagreed on a file that was compliant when it was
+  written.
+
+- **NFR-12 is not met, and the sprint closes with it not met.** The design tells players apart by
+  colour alone after the non-colour identifier was removed on request. Red and blue are ten
+  greyscale levels apart out of 255. `greyscale.spec.js` measures it, fails, and is marked as
+  expected to fail so the suite reports a known failure rather than going green. Row 8 of the
+  Product Owner sign-off table carries the question. **This is a `must have` requirement that is
+  visibly unsatisfied and is being carried, not closed.**
+
+- **The dice pool balance in section 5 of the game design document is knowingly out of date**,
+  because it was derived against a 58-step journey and the journey is now 44. It is flagged in the
+  document and belongs to issue #37. Nothing in the MVP depends on it, because the MVP runs on one
+  fixed die.
 
 > The resource/energy system appears only in this sprint plan, not in the one-pager or the README.
 > Whether it is in scope is undecided: see [notes/01-requirements-and-goals.md](notes/01-requirements-and-goals.md).

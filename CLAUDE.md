@@ -2,6 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Communication
+
+!!IMPORTANT!! This project is being developed by 4th semester university students. Please adapt your language to this, so we can understand what you are trying to convey. There is no point in condensing information so that we cannot understand that.
+Please keep this in mind when answering questions or writing documentation.
+
+## Tone & Readability
+- Write in clear, direct, and conversational plain English.
+- Target an accessible reading level: explain complex technical or conceptual ideas using clear analogies and concrete real-world examples rather than high-register academic abstractions.
+- Keep sentence structures straightforward. Favor active voice and concise phrasing; avoid deeply nested clauses, repetitive qualifiers, and overly formal transitions.
+
+## Structure & Scannability
+- Prioritize high scannability: break long explanations into short paragraphs, bullet points, numbered steps, or concise markdown tables.
+- Bold key terms and takeaways to make skimming effortless.
+- If an explanation becomes overly theoretical, ground it with a practical "Why this matters" or code/usage example.
+
 ## Project
 
 **Ludo Advanced** is a 2D web-based board game for 2–4 players: a Ludo variant that replaces the single die with two

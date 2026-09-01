@@ -1,0 +1,39 @@
+{
+  "name": "ludo-advanced",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A 2D web Ludo variant for 2 to 4 players, with a dice card pool and skill cards instead of a single die.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "docs:ai-index": "node scripts/docs-ai-index.js",
+    "test:seeds": "node scripts/find-seeds.js",
+    "docs:dice-balance": "node scripts/dice-balance.js"
+  },
+  "dependencies": {
+    "i18next": "^26.4.0",
+    "jquery": "^4.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
+    "@vitest/coverage-v8": "^4.1.11",
+    "eslint": "^10.9.1",
+    "prettier": "^3.9.6",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
+  }
+}

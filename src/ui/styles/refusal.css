@@ -1,0 +1,38 @@
+/* S6: move refusal. Split out of board.css along a real seam: S6 is its own
+   screen in the Obligations Book, and board.css was at the NFR-02 limit.
+   CSS styles the container; i18next supplies the text. Depends on tokens.css. */
+
+.move-refusal {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: calc(var(--space-6) + var(--space-2));
+  width: var(--board-size);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-card) solid var(--color-ink);
+  border-radius: var(--radius-card);
+  font: var(--weight-medium) var(--text-md) / var(--leading-body) var(--font-ui);
+  color: var(--color-text);
+  background: var(--color-warn-soft);
+  box-shadow: var(--shadow-card);
+  opacity: 0;
+  translate: 0 calc(var(--space-2) * -1);
+  transition:
+    opacity var(--motion-feedback) var(--ease-ui),
+    translate var(--motion-feedback) var(--ease-ui);
+}
+
+.move-refusal::before {
+  content: "";
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--color-warn);
+}
+
+.move-refusal[data-reason-key]:not([data-reason-key=""]) {
+  opacity: 1;
+  translate: 0 0;
+}

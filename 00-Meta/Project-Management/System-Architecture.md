@@ -220,15 +220,42 @@ is cut to the size of this application, and the note is here so that the absence
 
 ## 6 What this document does not decide
 
-- **Nothing here is verified.** There is no `src/`, so the module inventory is a plan. The first
-  commit that creates `src/core/board.js` is also the first evidence that the plan survives contact
-  with code.
+- ~~**Nothing here is verified.** There is no `src/`, so the module inventory is a plan.~~
+  **Verified 2026-08-30.** All four layers exist and a match can be played end to end in a browser.
+  What the plan got right and wrong, recorded rather than quietly fixed:
+
+  | Claim | Outcome |
+  | --- | --- |
+  | `core/` never imports `state/`, `ui/`, jQuery or i18next | **Held.** It is a failing ESLint run since 2026-08-29, not a convention |
+  | `core/` and `state/` run with no DOM configured at all | **Held.** Vitest runs them in `environment: "node"` |
+  | `ui/` never mutates state | **Held, and enforced rather than reviewed.** Every state object is deeply frozen, so a write throws in the line that did it |
+  | `ui/` dispatches intents and nothing else | **Held.** Four intents, and `ui/` never builds a move object of its own |
+  | The layering makes a rules change cheap | **Measured.** Changing the board from 52 squares to 40 on 2026-08-30 needed two constants in `board.js` and comment changes in four other modules. No rule was rewritten |
+  | `ui/` is not worth a coverage figure | **Half wrong.** One module in `ui/` turned out to be a pure lookup table with a silent failure mode, and it is unit tested. The rest is Playwright's |
+
+  **The module split changed in two places.** `core/` gained `dice-source.js`, which the inventory
+  did not name, because the turn manager could not be written without something to draw from before
+  issue #37 exists. `ui/` came out as five modules rather than the three the sprint plan listed:
+  `board-geometry.js` separated from `board-view.js` because grid arithmetic is testable without a
+  browser and rendering is not, and `game-loop.js` separated from `main.js` because deciding what the
+  view does between clicks is presentation policy and not composition.
 - **File-level splits inside a layer may change.** The inventory names the seams the requirements
   imply; if `core/movement.js` approaches 300 lines it splits again, along a real seam and not by
-  cutting it at line 300.
-- **No presentation decision.** How the board is drawn, in SVG, in a CSS grid or in `<canvas>`, is not
-  settled here. It belongs to Claude Design and issue #3, and picking one in this document would be
-  inventing a design rule that [CLAUDE.md](../../CLAUDE.md) forbids.
+  cutting it at line 300. **This happened first to a stylesheet rather than to a module**, on
+  2026-08-30: `board.css` was delivered at 248 lines, the formatter expanded it to 407, and the 40
+  track placements moved to `board-track.css`.
+- ~~**No presentation decision.** How the board is drawn, in SVG, in a CSS grid or in `<canvas>`, is
+  not settled here. It belongs to Claude Design and issue #3, and picking one in this document would
+  be inventing a design rule that [CLAUDE.md](../../CLAUDE.md) forbids.~~
+  **Settled 2026-08-29, and this deferral was over-cautious: the board is real DOM elements laid out
+  by CSS Grid.** SVG and `<canvas>` are the named rejected alternatives; the reasoning is the
+  2026-08-29 decision block in
+  [project-journal.md](../Documentation/project-journal.md). The correction worth recording is *why
+  the deferral was wrong*: `CLAUDE.md` forbids inventing colour palettes, spacing scales, typography
+  systems and component looks, and a rendering technology is none of those. It decides what a
+  stylesheet can address, not what anything looks like. It also could not be deferred any further in
+  practice, because the design handoff of issue #3 cannot pass over a DOM contract without first
+  deciding that there is a DOM.
 - **No deployment target.** The build is a static `dist/` (NFR-06), and where it is served from is
   undecided. Named as undecided in the obligations book, issue #14.
 - **No multiplayer architecture.** FR-42 is `should have` and has no chosen networking technology, so

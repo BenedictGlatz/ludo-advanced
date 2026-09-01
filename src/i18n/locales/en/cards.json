@@ -1,0 +1,171 @@
+{
+  "card": {
+    "family": {
+      "dice": "Dice card",
+      "skill": "Skill card"
+    },
+    "type": {
+      "action": "Action",
+      "reaction": "Reaction"
+    },
+    "category": {
+      "movement": "Movement",
+      "blocking": "Blocking",
+      "troll": "Troll",
+      "offensive": "Offensive"
+    },
+    "dice": {
+      "name": "D{{faces}}",
+      "kind": {
+        "2": "Coin",
+        "4": "Four sided",
+        "6": "Six sided",
+        "8": "Eight sided",
+        "10": "Ten sided",
+        "12": "Twelve sided",
+        "20": "Twenty sided"
+      },
+      "range": "Range 1 to {{faces}}",
+      "leave": "Leaves start on {{faces}}"
+    },
+    "skill": {
+      "action-pot-of-greed": {
+        "title": "Pot of Greed",
+        "text": "Draw two Action cards."
+      },
+      "action-double-dip": {
+        "title": "Double Dip",
+        "text": "You may play a second card this turn."
+      },
+      "action-no-take-backsies": {
+        "title": "No Take-Backsies",
+        "text": "No reaction window opens for the rest of this turn."
+      },
+      "action-critical-success": {
+        "title": "Critical Success",
+        "text": "Roll twice and keep the higher result."
+      },
+      "action-angel-die": {
+        "title": "Angel Die",
+        "text": "Add a D8 to your roll."
+      },
+      "reaction-critical-failure": {
+        "title": "Critical Failure",
+        "text": "The roll happens twice and the lower result counts."
+      },
+      "reaction-devil-die": {
+        "title": "Devil Die",
+        "text": "Subtract a D8 from the roll. If it falls to 0, nobody moves."
+      },
+      "reaction-nuehue": {
+        "title": "Nühü",
+        "text": "The card that opened this window does nothing."
+      },
+      "reaction-hold-pawn": {
+        "title": "Hold Pawn",
+        "text": "One opponent's pawn sits this turn out."
+      },
+      "reaction-the-purge": {
+        "title": "The Purge",
+        "text": "For one round every landing captures, own pawns included."
+      },
+      "action-banana-peel": {
+        "title": "Banana Peel",
+        "text": "Lay a trap on a square. Whoever touches it goes back to the start area."
+      },
+      "action-hyperbeam": {
+        "title": "Hyperbeam",
+        "text": "Choose one of your own pawns and a direction, then roll a D4. Everything on the squares ahead goes back to the start area. The pawn that fired is safe, your other pawns are not."
+      },
+      "reaction-uno-reverse": {
+        "title": "Uno Reverse",
+        "text": "The capture backfires: the attacker goes back to its own start area."
+      },
+      "action-rock": {
+        "title": "Rock",
+        "text": "One of your own pawns becomes a wall nothing gets past, for two rounds."
+      },
+      "action-big-ah-rock": {
+        "title": "Big Ah Rock",
+        "text": "Block one square for everybody, for two rounds."
+      },
+      "action-oil-spill": {
+        "title": "Oil Spill",
+        "text": "Lay a trap on a square. Whoever touches it slides 3 to 5 squares further and sets off no skill square."
+      },
+      "reaction-ghost-mode": {
+        "title": "Ghost Mode",
+        "text": "You dodge: the declared move does not happen."
+      },
+      "action-head-out": {
+        "title": "Aight Imma Head Out",
+        "text": "One of your own pawns jumps four squares forward, or returns to your entry square. Your choice."
+      },
+      "action-speedrun": {
+        "title": "Speedrun Any%",
+        "text": "Your roll is doubled. Too far is still too far."
+      },
+      "action-janky-rpg": {
+        "title": "Janky RPG",
+        "text": "Choose a square and roll a D6. On a 4 or better it hits that square, below that both its neighbours."
+      },
+      "action-yeet": {
+        "title": "Yeet",
+        "text": "Roll a D6 and push one opponent's pawn back that far."
+      },
+      "action-tax-fraud": {
+        "title": "Tax Fraud",
+        "text": "Take one card at random out of an opponent's hand."
+      },
+      "action-lock-in": {
+        "title": "Lock In",
+        "text": "One of your own pawns stays put for a round and cannot be captured while it does."
+      },
+      "action-not-that-deep": {
+        "title": "It's Not That Deep",
+        "text": "Lay a trap on a square. Whoever touches it is pushed back a D6."
+      },
+      "action-let-him-cook": {
+        "title": "Let Him Cook",
+        "text": "Roll a D12 and run. If the run goes past home, the pawn goes back to the start area."
+      },
+      "action-built-different": {
+        "title": "Built Different",
+        "text": "One of your own pawns cannot be captured for two rounds."
+      },
+      "action-fr-fr": {
+        "title": "FR FR",
+        "text": "Name a number instead of rolling."
+      },
+      "action-sixty-seven": {
+        "title": "67",
+        "text": "Playable on a D6 or larger only. Below a 6 nothing moves. On a 6 or better the roll counts double."
+      },
+      "action-ragebait": {
+        "title": "Ragebait",
+        "text": "If the named opponent pawn can move, its owner has to move it."
+      }
+    },
+    "kind": {
+      "action": "Action",
+      "buff": "Buff",
+      "chaos": "Chaos",
+      "control": "Control",
+      "d4": "D4",
+      "d6": "D6",
+      "debuff": "Debuff",
+      "defensive": "Defensive",
+      "draw": "Draw",
+      "economy": "Economy",
+      "gamble": "Gamble",
+      "lockout": "Lockout",
+      "negate": "Negate",
+      "passive": "Passive",
+      "reaction": "Reaction",
+      "risky": "Risky",
+      "taunt": "Taunt",
+      "trap": "Trap",
+      "upgrade": "Upgrade"
+    }
+  }
+}

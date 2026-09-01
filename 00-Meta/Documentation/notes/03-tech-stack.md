@@ -153,16 +153,81 @@ It cites this chapter's material rather than adding to it, so only what is new b
 - **Dependency licences remain unverified**, and the obligations book repeats that no licence is claimed
   from memory anywhere.
 
+### The stack becomes real: 2026-08-29, issue #63
+
+`package.json` exists. Everything above stops being a target and becomes an observation. Versions are
+read from each package's own `node_modules/<pkg>/package.json`, and the full script and configuration
+detail lives in [07-tooling.md](07-tooling.md) rather than being repeated here.
+
+| Area | Package | Version | Kind |
+| --- | --- | --- | --- |
+| DOM / UI | `jquery` | 4.0.0 | runtime |
+| Localisation | `i18next` | 26.4.0 | runtime |
+| Build | `vite` | 8.2.2 | dev |
+| Lint | `eslint` | 10.9.1 | dev |
+| Lint | `@eslint/js` | 10.0.1 | dev |
+| Format | `prettier` | 3.9.6 | dev |
+| Unit tests | `vitest` | 4.1.11 | dev |
+| Coverage | `@vitest/coverage-v8` | 4.1.11 | dev |
+| E2E tests | `@playwright/test` | 1.62.1 | dev |
+
+- **jQuery installed is version 4.0.0, and that is worth flagging rather than filing.** Every document
+  in this repository says "jQuery" and none of them says which major version. jQuery 4 drops support
+  for old browsers and removes a set of long-deprecated APIs. Nothing here depends on those APIs yet,
+  so it costs nothing today, and the risk is that a tutorial or an answer written for jQuery 3 will
+  not always apply. Recorded now so that a later "why does this snippet not work" has an answer
+  already written down.
+- **Only two runtime dependencies**, as promised. Everything else is a dev dependency and none of it
+  reaches `dist/`.
+- **Three packages were installed that are not literally in the approved list**, with their reasoning
+  and one package deliberately refused. The table is in
+  [07-tooling.md](07-tooling.md#dependencies-installed-beyond-the-five-approved-dev-tools); the short
+  version is that `@playwright/test` **is** Playwright, `@vitest/coverage-v8` is Vitest's own coverage
+  provider that a required npm script cannot run without, and `@eslint/js` is ESLint's own. `globals`
+  was **not** installed, and the globals are declared by hand instead.
+
+#### Licence check, run rather than deferred
+
+The feasibility study recorded this as a task blocked on `package.json` existing, with an explicit
+note that no licence is claimed from memory. `package.json` now exists, so it was run. Each row is
+read from the package's own `license` field **and** its own licence file:
+
+| Package | Licence | Licence file present |
+| --- | --- | --- |
+| `jquery` | MIT | `LICENSE.txt` |
+| `i18next` | MIT | `LICENSE` |
+| `vite` | MIT | `LICENSE.md` |
+| `eslint` | MIT | `LICENSE` |
+| `@eslint/js` | MIT | `LICENSE` |
+| `prettier` | MIT | `LICENSE` |
+| `vitest` | MIT | `LICENSE.md` |
+| `@vitest/coverage-v8` | MIT | `LICENSE` |
+| `@playwright/test` | Apache-2.0 | `LICENSE` |
+
+- **Eight of nine are MIT and Playwright is Apache-2.0.** Both are permissive and neither imposes any
+  obligation this project cannot meet. Playwright is a dev dependency in any case, so it is not in
+  anything a player receives.
+- **The check covers the 9 direct dependencies only, not the 139 packages `npm ls --all` resolves.**
+  That is a real limit and it is stated rather than hidden: a full transitive audit needs a tool the
+  project has not installed, and the honest claim is "the direct dependencies were checked", not "the
+  dependency tree is clean".
+- **The repository itself still has no licence.** `package.json` says `"license": "UNLICENSED"` and
+  `"private": true`, which is accurate for a university project with no licence file. Choosing a
+  repository licence was named as an open condition in the feasibility study and is still open.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
 
 ## Open / to verify
 
-- No `package.json` exists yet, so no version is pinned. The stack above is the binding target
-  state declared in [CLAUDE.md](../../../CLAUDE.md), not an observed fact.
-- Dependency licences are unverified until `package.json` exists: see the licence check in the
-  feasibility facts above.
+- ~~No `package.json` exists yet, so no version is pinned. The stack above is the binding target
+  state declared in [CLAUDE.md](../../../CLAUDE.md), not an observed fact.~~ **Resolved 2026-08-29,
+  issue #63.** See *The stack becomes real* above.
+- ~~Dependency licences are unverified until `package.json` exists: see the licence check in the
+  feasibility facts above.~~ **Run 2026-08-29** for the 9 direct dependencies: 8 MIT and 1
+  Apache-2.0. **Still open for the transitive tree**, 139 packages, which needs tooling nobody has
+  installed. The repository's own licence is also still unchosen.
 - Why jQuery specifically, over plain DOM APIs or a component framework, is unrecorded.
 - Why Vite over other bundlers is unrecorded.
 - Multiplayer is named in the Sprint 2 plan but no networking technology has been chosen. If the

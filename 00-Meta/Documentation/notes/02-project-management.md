@@ -173,13 +173,15 @@ Full document: [Roadmap-and-Gantt.md](../../Project-Management/Roadmap-and-Gantt
   observations, and they are labelled as such.
 - **Negative finding, measured: `Start Date` and `End Date` are set on 11 of 64 items.** The 4 sprint
   markers and the 7 `Sprint 0` issues. **The Roadmap view therefore renders 4 bars and 7 dots out of 64
-  items**, since an item with no dates does not appear on a roadmap layout at all.
+  items**, since an item with no dates does not appear on a roadmap layout at all. **Partly corrected
+  2026-08-29:** 14 more items were dated, so 25 of 64 now render. See *Sprint 1 back-dated on the
+  Roadmap* below.
 - **All 7 Sprint 0 issues have `Start Date` equal to `End Date`**, so each is a zero-length bar. They
   record the day something was closed rather than a work span. One, *Role Setup and Process Model*, is
   dated 2026-08-01, five days before the repository existed.
 - **All 13 `Sprint 1` issues have no dates**, so the sprint whose entire scope was delivered is absent
   from the chart. This is a regression against the 2026-08-06 read, which found dates populated on all
-  50 items of the smaller item set.
+  50 items of the smaller item set. **Corrected 2026-08-29**, see below.
 - **The 4 sprint markers carry no `Sprint` value of their own**, so a view grouped by `Sprint` puts the
   four bars that define the schedule in a no-sprint lane, away from the issues they contain.
 - **The Gantt chart is drawn in Mermaid in the repository, not screenshotted from the board.** Two
@@ -326,6 +328,12 @@ Full document: [Project-Structure-Plan.md](../../Project-Management/Project-Stru
   reads from depends on a human moving cards, which is the step most likely to be skipped under
   deadline pressure. Closing this needs one interactive `gh auth refresh -s project`, the same
   browser device flow as `read:project` and equally impossible for an agent to grant itself.
+- 2026-08-29: **that gap is closed.** `gh auth refresh -s project` was run by hand and
+  `gh project item-edit` now writes. Elapsed time from finding the block to clearing it: seven days,
+  and the fix took under a minute once someone typed the command. That ratio is the finding worth
+  keeping, not the command: the blocker was never technical difficulty, it was that the one step an
+  agent cannot take had no owner. Every board field is now automatable, so the manual-card-moving
+  dependency recorded above no longer holds.
 - **`read:project` cannot be added silently.** `gh auth refresh` is an interactive browser device
   flow, so an agent cannot grant it to itself: it is a step the human contributor has to perform
   once per machine. Worth stating in the report, because it is the difference between "automatable"
@@ -394,6 +402,140 @@ planned. The written plan and the board diverge on the whole content of the spri
 The divergence and its reason are recorded in [sprint-log.md](../sprint-log.md); which artefact wins
 is settled in the 2026-08-22 decision in [project-journal.md](../project-journal.md).
 
+#### Sprint 1 back-dated on the Roadmap: 2026-08-29, and the `project` scope finally granted
+
+- **The write block is gone.** `gh auth refresh -s project` was run by the human contributor on
+  2026-08-29, the interactive browser device flow that no agent can perform for itself. `gh project
+  item-edit` now succeeds. This closes the second scope gap recorded under *Board access from the
+  development environment* and unblocks the two actions that were parked on it: creating the
+  `Story Points` field and back-filling it, and setting `Sprint` on the 27 unscheduled issues.
+- **14 items were dated**, every closed issue that still had empty date fields: #1, #9, #10, #11, #12,
+  #13, #14, #15, #16, #17, #18, #21, #22, #23. That is the whole of `Sprint 1` plus #17, which was
+  pulled into the sprint on 2026-08-22. Written with `gh project item-edit --date`, two calls per item.
+- **Each date is the day the delivering commit was authored**, read out of `git log` per document
+  rather than taken from the issue's `closedAt`:
+
+  | Date | Issues | Commit |
+  | --- | --- | --- |
+  | 2026-08-09 | #9, #10, #13 | `4fa444e`, `4cf5983`, `89fd4d3` |
+  | 2026-08-10 | #11 | `5b52990` |
+  | 2026-08-15 | #12 | `571eafb` |
+  | 2026-08-22 | #1, #14, #15, #16, #17, #18, #21, #22, #23 | `07d26f2`, `6ea9239`, `2b2b515`, `72753f4`, `3234eff`, `efe5432`, `265edf9`, `f4aab10`, `3e55101` |
+
+- **Why the commit date and not the close date**, which differs for #9, #12 and #13 (authored 08-09 or
+  earlier, merged into `dev` and closed 08-15): the seven `Sprint 0` items already on the board use the
+  commit date. #6 and #47 are dated 2026-08-09 and were closed 2026-08-10. Choosing the close date now
+  would have produced a board where the same field means two different things depending on when the row
+  was filled in, which is worse for a chart than either choice on its own.
+- **Rejected: the merge-into-`dev` date.** It is the date the work became visible to the team and it is
+  also an artefact of when somebody got round to clicking merge. For #13 the gap is six days, all of it
+  the recovery from the unreviewed-merge history rewrite of 2026-08-09, which is a process event and not
+  work on the requirements specification.
+- **The sweeping commit `ade75f7` (em-dash removal) was excluded deliberately.** It is the newest commit
+  touching most of these documents, so "last commit that touched the file" would have dated nine issues
+  to 2026-08-22 that were finished up to two weeks earlier. A `git log` per document was read instead.
+- **`Start Date` was set equal to `End Date`** on all 14. The request was for an end date only; a
+  roadmap layout renders nothing for an item with just one of the pair, so an end-date-only fill would
+  have left the sprint as invisible as it already was. Zero-length bars also match what the 7 `Sprint 0`
+  items already do.
+- **Negative finding, and it is the same one the 2026-08-22 roadmap read made:** these dates record the
+  day a document was committed, not a work span. The board still cannot answer how long anything took,
+  so no cycle-time or burn-down figure can be derived from it. Fixing that needs dated status
+  transitions, which the board has never captured.
+- **Negative finding: the back-fill is itself late.** The dates were reconstructed from `git log` six
+  days after the sprint closed, which worked only because every deliverable is a document in this
+  repository. The same reconstruction is not available for implementation work whose progress lives in
+  board state rather than in commits.
+- **#3 *Create Design System* is still open and stays undated.** It is the one item in the screenshot
+  that is not `Done`.
+
+#### `Story Points` created and back-filled, Sprint 2 scoped: 2026-08-29, Sprint 2
+
+The first board write that uses the `project` scope granted the same day for anything other than dates.
+Read and written with `gh project field-create`, `gh project item-edit` and
+`gh project item-list 3 --owner BenedictGlatz --format json --limit 100`.
+
+- **The `Story Points` field now exists**, type `NUMBER`, id `PVTF_lAHOA5CXeM4BfkU_zhgvtgU`. It was
+  outstanding action 1 of section 6 of
+  [Effort-Estimation.md](../../Project-Management/Effort-Estimation.md), and it had been impossible
+  since 2026-08-22 for want of the token scope. The negative finding *No `Story Points` field exists*,
+  first recorded 2026-08-06, is **closed**.
+- **25 open issues carry a point value**, back-filled from section 3 of the effort estimation. Total on
+  the board: **134 points**. That reconciles exactly with the document's grand total of 138 open points:
+  138 minus #17 (2 points, delivered 2026-08-22) minus the CI workflow (2 points, still has no issue).
+  The reconciliation is worth keeping because it is the cheapest possible check that the back-fill was
+  complete rather than approximately complete.
+- **The four epics deliberately carry no points.** An epic is the sum of its children, so sizing both
+  would double-count. Section 2 of the effort estimation already decided this; the board now shows it.
+- **No closed issue was given points, and that is a decision rather than an omission.** Estimating
+  Sprint 0 and Sprint 1 after the fact was rejected on 2026-08-22, because a number produced after the
+  work flatters whatever it is compared against. #17 is the one closed issue whose estimate genuinely
+  predates its delivery by a few hours, and it was still left blank: filling only #17 would make Sprint 1
+  read as 2 points of velocity across 14 issues, which is a worse figure than no figure.
+  **Consequence: story-point velocity starts with Sprint 2 and there is no earlier data point to compare
+  it against.**
+- **`Sprint 2` set on the four children of epic #36** (#26, #27, #28, #29) and on the three issues
+  created the same day (#62, #63, #64). #36 already carried it.
+
+**Board state of Sprint 2 as measured after the changes: 17 issues, 72 points.** The composition is
+the finding:
+
+| Group | Issues | Points |
+| --- | --- | --- |
+| Epic #36 and its children, plus the split-out renderer | #26, #27, #28, #29, #62 | 23 |
+| The two issues that had none until today | #63 bootstrap, #64 i18n | 10 |
+| Design system | #3 | 5 |
+| The four epics | #36, #37, #38, #39 | 0 by design |
+| **Extended features** | #42, #43, #44, #45, #46 | **34** |
+| **Total** | 17 | **72** |
+
+- **Negative finding: 34 of the 72 Sprint 2 points are #42 to #46**, the extended features. Section 4.4
+  of [Project-Plan.md](../../Project-Management/Project-Plan.md) says these stay **unscheduled**: #42 is
+  `should have` and named as the largest available cut, and #43 to #46 are `could have`. Somebody put
+  them in Sprint 2 on the board between 2026-08-22 and 2026-08-29. Under the 2026-08-22 rule that the
+  board wins, the board's Sprint 2 is therefore **72 points and not the 46 the project plan assigned**,
+  and 34 of those points are work the plan says should not be in this sprint at all. This is a scope
+  conversation for the next planning slot, and it is deliberately **not** corrected here: silently
+  removing five issues from a sprint somebody else scoped would be the same single-handed board edit the
+  sprint-membership decision exists to prevent.
+- **Negative finding: the epics are in Sprint 2 and eight of their children are not.** #37, #38 and #39
+  carry `Sprint 2`, while #30, #31, #32, #33, #34, #35, #40 and #41 carry no sprint. A sub-issue progress
+  bar on an epic in this sprint therefore measures children nobody has scheduled. #36 is now the only
+  epic whose children are all in the same sprint as itself.
+- **Negative finding, unchanged: the 17 implementation child issues still carry no MoSCoW label.** Only
+  the epics and the extended features do. Measured consequence: filtering Sprint 2 by the `must have`
+  label returns **13 points**, all of them on the three issues created today, which are the only child
+  issues that carry the label. Outstanding action 4 of the effort estimation is still open.
+- **The board still has no dated status history and no Iteration field**, so burn-down remains
+  impossible exactly as recorded on 2026-08-22. Points fix the velocity half only.
+
+#### Issues created and #28 split: 2026-08-29, Sprint 2
+
+- **#28 was split**, outstanding action 3 of the effort estimation. It was
+  *Pawn/Token Spawning & Movement Animation* at 8 points, holding a rule and its rendering in one issue.
+  It is now **#28 *Pawn Movement Rules*** at 5 points, and the rendering half is
+  **#62 *Pawn Rendering & Movement Animation*** at 3 points, added as a sub-issue of epic #36 with
+  `addSubIssue`. **The split is point-neutral**, 5 plus 3 against the original 8, which is what makes it
+  a sequencing change rather than a re-estimate.
+- **Why it matters for the schedule:** the rule half blocks #27, #29, #62 and the playable slice. The
+  animation half blocks nothing and needs the design system, which does not exist yet. Held together,
+  the animation sat on the critical path for no reason.
+- **Two issues were created that had never existed**, from section 3.6 of the effort estimation:
+  **#63 Project Bootstrap** (5 points) and **#64 i18n Setup and the German and English Locale Files**
+  (5 points). Both are labelled `4-implementation` and `must have`, both are in Sprint 2, both are
+  assigned to `lbolender` and `BenedictGlatz`.
+- **10 of the 12 points that were invisible to the board are now on it.** The remaining 2 are the CI
+  workflow `build-check.yml`, deliberately left without an issue for now: it carries no requirement id,
+  and creating an issue for work nobody has scheduled would put it in a sprint by accident.
+- **Neither #63 nor #64 has a parent epic**, because none of the four epics covers them. #64 is arguably
+  a child of #39 through FR-34, and it was left unparented anyway, so that the epic point totals in the
+  effort estimation keep meaning what that document says they mean.
+- **The four new issue bodies are the first non-empty ones on this board.** Every one of the 47 original
+  issues has an empty body, which is the standing finding behind *acceptance criteria live in the
+  specification, not on the issues*. The four written today each state their scope and point at the
+  document holding their acceptance criteria, rather than restating it. That does not close the finding,
+  it just stops adding to it.
+
 ### Branching and review
 
 - `main` always holds a working, playable build; no direct pushes or commits.
@@ -418,6 +560,24 @@ is settled in the 2026-08-22 decision in [project-journal.md](../project-journal
   into one destroys exactly the per-issue trail that replaces the missing branch-to-issue link, and
   that trail is what the report's plan-versus-actual comparison reads. Recorded here because a policy
   deviation nobody wrote down is indistinguishable from a mistake.
+- **Fourth branch-naming deviation, 2026-08-29:** `feature/sprint2-core-and-design` also carries no
+  issue number, for the same reason as the third one and with one difference worth naming. It carries
+  **two epics**, #36 *Core Game Engine & Board* and #3 *Create Design System*, which is not a batch of
+  cross-referencing documents but two tracks that genuinely run at the same time: the headless rules in
+  `core/` and `state/` do not depend on the design system, and the design system does not depend on
+  them. They meet once, at the board view. One branch is what lets the design handoff go out while the
+  rules are still being written.
+- **The same merge-commit consequence applies**, and for the same reason: the branch carries one commit
+  per issue with `Closes #<n>` in its body, and Squash and Merge would collapse the lot into one commit
+  covering seven issues. **The decision is deliberately re-taken rather than assumed to carry over**,
+  because Sprint 1 recorded the deviation once and a second silent repetition would read as a habit
+  nobody decided on.
+- **A second deviation on the same branch: the plan file is not committed.**
+  `PLAN-sprint2-core-and-design.md` is listed in `.git/info/exclude`, which is a per-clone ignore file
+  and not a committed `.gitignore` entry. The plan is a working document for one session, so the
+  repository would carry a stale copy of it forever. `PLAN-sprint1.md` was handled the same way. The
+  cost, and it is real: the plan the sprint was executed from is **not** reconstructable from the
+  repository afterwards, so the sprint log and this note are the only record that it existed.
 
 ### Documentation process
 
@@ -482,6 +642,40 @@ is settled in the 2026-08-22 decision in [project-journal.md](../project-journal
     [SMART-Analysis.md](../../Project-Management/SMART-Analysis.md): Definition of Done, role
     contradiction, board fields, referenced there rather than repeated.
 
+### What the first implementation sprint said about the process: 2026-08-30
+
+Sprint 2 is the first sprint that produced code rather than documents, so it is the first one that
+can say anything about whether the process works. Four findings, and two of them are uncomfortable.
+
+**The register gained two rows, and both had already happened.** *A design handoff overrules the
+rulebook and invalidates committed work* and *a `must have` requirement ships visibly unmet* were
+written on 2026-08-30 describing events of the same day. Two rows were re-rated down and two were
+deliberately left where they were. **The two that did not move are the more interesting pair**,
+because both had evidence pointing at a lower rating and both were held: *test coverage discipline
+slips* stays at 3 because no CI workflow runs the gates, exactly as the 2026-08-22 entry said it
+would, and *the story point scale is wrong* stays at 3 because the check it asked for finally became
+possible and **still could not be read**.
+
+**The velocity this sprint produces is not a planning input, and saying so is the finding.** All 38
+must-have points landed over two days. The board can compute a story-point velocity from that for the
+first time in the project. It would be meaningless: the estimates were built for people writing the
+code, and nothing here measures how long that would take. The project records no hours by the
+2026-08-06 decision, so there is no second number to calibrate against either. **Sprint 3 is planned
+from the estimates, not from this velocity.**
+
+**The parallel-track plan worked and had one blind spot.** Running the headless rules alongside the
+design was the right scheduling move: three issues closed while the design was being drawn, and none
+of them waited. What the plan did not anticipate is that the two tracks would **contradict** each
+other, because it treated them as independent by construction. They were not: the design changed the
+board's topology, and a day of finished, passing rules code had to be re-derived. The fix is a
+process step rather than a schedule change, and it is written up in the register.
+
+**Two decisions went to the user rather than into a commit**, and both were the kind that a
+reasonable person could have guessed wrong on: whether to adopt the 40-square board, and what to do
+about the four undesigned controls the slice needed. Neither is recorded as a blocker in the log,
+because neither blocked for long. Both are recorded as decisions in
+[project-journal.md](../project-journal.md), which is what makes them visible to the report at all.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -497,6 +691,8 @@ is settled in the 2026-08-22 decision in [project-journal.md](../project-journal
   (see *Estimation method fixed* above); what is open is no longer a decision but an **action**, and it
   is blocked on the missing `project` token scope rather than on anyone's judgement. Velocity stays in
   the presentation; burn-down does not, because points do not fix the missing dated status history.
+  ~~Blocked on the token scope.~~ **Unblocked 2026-08-29**: the scope was granted, so creating and
+  back-filling the field is now an unowned action rather than an impossible one.
 - ~~No calendar dates for sprint boundaries.~~ **Answered 2026-08-06** from the board's sprint
   markers; see [sprint-log.md](../sprint-log.md). Two contradictions surfaced with it and **both were
   decided 2026-08-22, issue #15** (see *Schedule and sequencing fixed* above):

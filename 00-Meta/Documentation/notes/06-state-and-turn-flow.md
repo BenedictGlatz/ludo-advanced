@@ -22,7 +22,105 @@ that shows the layering was a real design decision rather than a folder naming c
 
 ## Facts
 
-*(Nothing observed yet: `src/state/` does not exist.)*
+### The state layer exists: 2026-08-29, issue #27
+
+All four planned modules landed, with the names the architecture document predicted. This is the
+8-point integration point everything else waits on, and it was written **in parallel with Claude
+Design**, because nothing in it touches the DOM. Counts and coverage are in
+[09-source-code-overview.md](09-source-code-overview.md).
+
+| Module | Owns |
+| --- | --- |
+| `state/game-state.js` | The state object, the phase names, and the only function that ever produces a new state |
+| `state/turn-manager.js` | The eight-step turn sequence from section 3 of the game design document |
+| `state/intents.js` | The four things `ui/` may ask for, and why each refusal happened |
+| `state/match.js` | Start, restart and abandon (FR-01, FR-06, FR-07) |
+
+#### The shape of the state object
+
+```js
+{
+  playerCount, status, activePlayer, turnNumber, phase, pawns,   // the match
+  hand, chosenDie, roll, legalMoves, selectedPawn,               // this turn only
+  pendingMove, refusalReason,                                    // this turn only
+  winner,
+}
+```
+
+**Stored, because nothing else can produce it:** the pawn positions, whose turn it is, the phase, the
+drawn hand, the chosen die, the roll.
+
+**Derived and cached for exactly one turn:** `legalMoves` and `refusalReason`. Both come from
+`core/movement.js` when the die is rolled. This chapter's own brief warns that derived values in
+state go out of sync, and the answer here is the lifetime: they are written once per roll and wiped
+at the end of the turn, so there is no window in which they can disagree with the pawn positions. The
+alternative, recomputing them on every render, would put a rules call in the render path and would
+make FR-32's highlighting and NFR-08's refusal text two calls instead of one.
+
+**Deliberately not stored: whether anyone has won.** `core/win.js` answers that from the pawn
+positions. `winner` holds the answer *after* the match is over, which is a record of an outcome
+rather than a shortcut around a rule.
+
+#### The turn cycle, end to end
+
+Each function moves the turn one step and the phase name says what the game is waiting for:
+
+| Rulebook step | Function | Phase afterwards |
+| --- | --- | --- |
+| 1 Turn start, 2 Draw | `drawHand` | `choose` |
+| 3 Choose | `chooseDie` | `roll` |
+| 4 Roll, 5 Compute legal moves | `rollChosenDie` | `act`, or `turn-end` when nothing can move |
+| 6 Act | `commitMove` | `reaction` |
+| 7 Resolve | `resolveReactions` | `turn-end`, or `match-over` |
+| 8 End of turn | `endTurn` | `draw`, next player |
+
+**Every one of them refuses to run in the wrong phase and throws.** A state machine that accepts a
+transition out of order is not one. `intents.js` checks the phase first and turns it into a refusal
+the player can see, so reaching the thrown error means something inside `state/` called out of order,
+which is a bug and not a player action.
+
+**The reaction window is a phase with nothing in it.** Skill cards are issue #38.
+`commitMove` records the move and opens the window; `resolveReactions` closes it and applies the
+move. Retrofitting an interruption point into a sequence that resolved a move in one step would mean
+rewriting the sequence; filling an empty phase does not. This is the same reasoning the architecture
+document gave on 2026-08-22 for making the window a phase rather than an event the cards raise, now
+carried out.
+
+#### The intent boundary, with the worked example this chapter asks for
+
+`ui/` may send exactly four things. There is deliberately **no "move this pawn to that square"**: the
+target comes from the legal-move set, so the rule is applied once and not once per caller.
+
+| Intent | Payload | What it runs |
+| --- | --- | --- |
+| `choose-die` | `{ faces }` | Steps 3 to 5. The player chose, so the roll follows with no further input |
+| `select-pawn` | `{ pawn }` | Highlighting only. Nothing moves (FR-32) |
+| `commit-move` | `{ pawn }` | Steps 6 and 7, because the window between them is empty until #38 |
+| `end-turn` | none | Step 8, and then draws the next player's hand |
+
+A dispatch returns `{ state, accepted, reason }`. **A rejected intent returns the object it was
+given**, identical rather than copied, so a test asserts `result.state === before`. Every check runs
+before anything is written, so there is never a half-applied intent to undo. The reason is an i18next
+key, for the same reason the movement refusals are (NFR-03).
+
+**The worked example.** A player with a pawn on relative position 10 clicks it, holding a rolled 4:
+
+1. `ui/events.js` turns the click into `{ type: "commit-move", pawn: 0 }` and dispatches it.
+2. `intents.js` checks the phase is `act`, then asks `moveForPawn` whether that pawn has a move.
+3. `turn-manager.js` takes the move out of `state.legalMoves`, records it as `pendingMove` and moves
+   the phase to `reaction`. Nothing on the board has changed yet.
+4. `resolveReactions` calls `core/movement.js`'s `applyMove`, which returns a **new** pawn list with
+   the pawn at 14, and `core/win.js`'s `findWinner`, which returns `null`.
+5. `nextState` freezes the result. The phase is `turn-end`, and the view re-renders from it.
+
+The rule was consulted twice, at step 2 and step 4, and written zero times outside `core/`.
+
+#### Persistence: none, and it is a decision
+
+Nothing is written to `localStorage` or anywhere else, so a page reload starts a new match. FR-45
+(persistence across a reload) is `could have` and is not built. FR-06 asks only that a **finished**
+match can be restarted without reloading, which `restartMatch` does by rebuilding the state from
+`createGameState`, so no field can survive by being forgotten.
 
 **Planned structure recorded 2026-08-22, issues #21 and #22.** The 4 planned modules of `state/`
 (`game-state`, `turn-manager`, `intents`, `match`), the intent vocabulary and the five-step data flow
@@ -36,15 +134,259 @@ being a requirement on the turn manager; and the rule check and the state write 
 purpose, so that the FR-32 legal-move highlighting and the validation on commit are one rule
 implementation and not two. This chapter fills from observation once the code exists.
 
+### Freezing became generic, and the reason is the fields that are about to arrive: 2026-08-31, issue #38
+
+`game-state.js` froze the state **field by field**: freeze every pawn, freeze the pawn array, freeze
+the seat array, walk `legalMoves` and freeze each move and its `captures`, then freeze the state
+itself. The comment on it argued for that explicitly, on the grounds that the state was a known,
+flat-ish shape and a general recursive freeze would need a cycle guard for cycles the state cannot
+have. That was a fair reading of the state as it stood.
+
+The skill cards break the premise. They add nine fields, and two of them are nested two levels deep:
+`skillHands` is an object keyed by seat holding an array per seat, and `statuses` and `traps` are
+arrays of objects.
+
+**What actually changed the decision was not length, it was the failure mode.** A hand-written freeze
+list is a list that must be edited every time a field is added. Forget one line and the state looks
+frozen, one array inside it stays writable, and a view can quietly write to the game state. Freezing
+exists to turn the "`ui/` never mutates state" convention into a thrown error; a freeze list with a
+hole in it gives that up without anything going red.
+
+`src/state/freeze.js` now holds `deepFreeze` and `isDeeplyFrozen`. The cycle objection turned out to
+cost four lines: a `WeakSet` of objects already visited in this call, which doubles as a guard against
+walking a shared subtree twice.
+
+Two limits are deliberate:
+
+- **Only plain objects and arrays are frozen.** A `Map`, a `Date`, a class instance or a function is
+  left alone, because `Object.freeze` on a `Map` does not stop `map.set`: freezing it would look like
+  protection and not be one. Nothing of that kind belongs in the state, and leaving it untouched keeps
+  the lie out of the code rather than hiding it.
+- **An already-frozen subtree is still walked.** Skipping it would be the obvious speed-up, since an
+  unchanged array carries the same frozen reference from one state to the next. It is only sound while
+  every frozen object anywhere in the project is also *deeply* frozen, and one shallow `Object.freeze`
+  in `core/` on an object with a mutable child would make the shortcut skip that child forever, in
+  silence. What it saves is a walk over a few dozen numbers and strings a handful of times per turn.
+
+`nextState` and `createGameState` are the only callers, so there is still exactly one line to read to
+know that no state is ever written in place.
+
+### The state gained its first match-level field, and `resolveReactions` gained a reason to take `deps`: 2026-08-31, issue #38
+
+`skillSquares` joined the state object. Every field before it was either a description of the pawns or
+something wiped at the end of the turn; this one is neither. A used-up skill square moves and stays
+moved, so it belongs to the match.
+
+`core/skill-squares.js` owns every rule about it. `state/` asks and writes the answer, which is the same
+division the pawn positions already follow.
+
+#### Where the square is used up, and why there
+
+In `resolveReactions`, the step that applies the committed move. Not in `commitMove`, which only records
+the intention: a skill square counts only if the pawn actually finished there, and a reaction card will
+be able to cancel a committed move once the cards exist. Putting it in the resolve step means it is
+already in the right place for that.
+
+**The win branch returns early, so the move that wins the match does not use up a square.** Deliberate,
+and tested as such: nothing happens after the match ends, so a card earned on the winning move would
+have nowhere to go.
+
+#### `resolveReactions` now takes `deps`, and `commit-move` forwards it
+
+A respawn needs randomness, and randomness in this project is injected (NFR-09). So the signature changed
+from `resolveReactions(state)` to `resolveReactions(state, deps)`, and `handleCommitMove` in `intents.js`
+passes it through.
+
+**The consequence is worth writing down: `deps.rng` is now drawn from twice in a turn**, once for the
+roll and once for a possible respawn. Anything that scripted an exact sequence of rolls silently played a
+different match from the moment a pawn landed on a skill square. That hit the same two places it hit for
+issue #30, the exact-final-state unit test and all five Playwright seeds, and it is written up as a
+challenge in the journal.
+
+#### `createGameState` gained a `skillSquares` parameter
+
+The board's skill squares can be pinned when a match is created, defaulting to the real eight-square
+layout so that no production caller passes anything.
+
+It exists because of the `rng` consequence above. A test that scripts rolls hands in an empty list, which
+says "this test is about movement and turn order" rather than encoding a rule it is not testing. The
+alternative, interleaving dummy respawn draws into the roll script at the right points, would make that
+test depend on the exact rule it is not testing, and it would break again on the next rule that draws.
+
+The second caller is the one this will really pay for: a Playwright spec needs a skill square in a place
+its pawn actually reaches, and a random layout cannot promise that.
+
+**A restart does not carry the arrangement over.** `restartMatch` rebuilds from the default, because a
+restart is a fresh match and a board that kept where the last match had wandered to would start the
+second match from a position nobody chose.
+
+### The turn became nine steps, and both empty seams got filled: 2026-08-31, issue #38
+
+The eight-step turn from issue #27 had two places that were deliberately left open. Both are now in use,
+and **neither needed the sequence reshaped**. That was the whole point of leaving them open, and it is
+worth stating as a result rather than as an intention:
+
+| Step | Phase | What changed |
+| --- | --- | --- |
+| 1, 2 | `draw` | Now draws a **skill card** as well as three dice cards, and expires statuses and traps |
+| 3 | `choose` | Ends in `action` instead of going straight to the roll |
+| 4 | **`action`** | New. The active player may play one Action card, or pass (FR-23) |
+| 5, 6 | `roll` | Now a real phase, and the roll is `core/roll.js`'s chain rather than one call |
+| 7 | `act` | Declares a move and **stops** |
+| 8 | `reaction` | Applies the declared move, or throws it away if a card cancelled it |
+| 9 | `turn-end` | Unchanged |
+
+#### Turn start deliberately did not become a phase
+
+The plan sketched a `turn-start` phase in which the skill card is drawn. It was not built, and the
+reason is what a phase name is for: **a phase says what the game is waiting for**, and this one would be
+waiting for nobody. The view would have to skip it immediately, which is a phase that exists only to be
+skipped. `drawHand` already covered "turn start and draw" as one step, so the card is drawn there.
+
+#### The intent list went from four to seven, and one intent got smaller
+
+`choose-die` used to pick the card **and roll it**, steps 3 to 5 in one intent, because the rulebook had
+no player input between them. The action phase is exactly that input, so `choose-die` now does step 3
+alone and `skip-action` and `roll-die` are separate.
+
+`commit-move` used to commit **and resolve**, steps 7 and 8. It now stops, and `close-window` finishes
+the job. That split is what makes a Reaction card against a capture possible at all (FR-25): there has
+to be a moment where the capture has been declared and has not happened.
+
+**`roll-die` is a separate intent rather than part of `skip-action`.** It costs one more intent and it
+buys two things: a place for the roll animation to hang off, and the moment the on-roll reaction window
+opens. Both were going to need it.
+
+#### Why the rejection reasons moved to their own file
+
+`state/rejections.js` holds `REJECTED`, `accept` and `reject` and imports nothing. `intents.js` and the
+card intents both need all three, and `intents.js` will fall through *into* the card intents, so putting
+them in either file would make a circle. A file with no imports cannot be part of one.
+
+#### The state gained thirteen fields, and they have three different lifetimes
+
+That is the change worth recording, more than the field names. Before issue #38 a field was either
+match-level or turn-level, and `clearedTurnFields` drew the line. Now there is a middle:
+
+| Lives for | Fields | Cleared by |
+| --- | --- | --- |
+| The match | `skillPool`, `skillDiscard`, `skillHands` | nothing |
+| Several turns | `statuses`, `traps` | their own deadline, or being used up |
+| One turn | `modifiers`, `cardsPlayed`, `cardBudget`, `reactionWindow`, `pendingCard`, `rollSteps`, `reactionsLocked` | `clearedTurnFields` |
+
+**The failure mode this creates is invisible in every ordinary test**: a field that a card writes and
+nothing clears, leaking a roll modifier or a spent budget into the next player's turn. Every test looks
+at one turn, so none of them would see it. `game-state.test.js` now compares `clearedTurnFields()` field
+by field against a **fresh match** instead, which catches a missing entry rather than trusting the list.
+
+#### The skill pool is shuffled in `match.js`, not in `createGameState`
+
+A shuffle needs the injected RNG, and keeping `createGameState` free of randomness is what lets about
+half the unit tests build a starting board with no `deps` at all. It is also what made the third seed
+regeneration survivable, below.
+
+#### Negative finding: the seeds went stale for the third time, and this time it cost one command
+
+`scripts/find-seeds.js` exists because the first two times this happened, the replay had to be rebuilt
+from undocumented work. Issue #38 spends the RNG in two more places: **57 draws** to shuffle the
+58-card skill pool when a match starts, and one more at the start of every turn. Every seed produced a
+different match from the same number.
+
+The fix was `npm run test:seeds`, one command, and two of the five pinned seeds changed. The other three
+kept working by coincidence. What the script needed was three added lines, because the replay policy has
+to match what the browser does step for step, and the browser now walks through two more phases.
+
+**A second consequence, and it is the one that will bite again.** Shuffling 58 cards spends 57 RNG draws
+*before the first die is thrown*, so every unit test that scripts an exact sequence of rolls was
+exhausted instantly. `startMatch` therefore takes a `skillPool` override, for the same reason it already
+took a `skillSquares` one, and the tests that script rolls pass `[]` for both. The pattern is now
+established twice: **anything that spends the injected RNG at match start needs a test-side off switch,
+or it silently invalidates every scripted test in the project.**
+
+### The reaction window, and the one decision the whole design rests on: 2026-08-31, issue #38
+
+A window opens at three moments and is a **field** rather than a phase:
+
+| Trigger | Opened by | Answered by |
+| --- | --- | --- |
+| `on-card` | An Action card being played | Nühü, The Purge |
+| `on-roll` | The roll, **before** the number is known | Critical Failure, Devil Die, Hold Pawn, The Purge |
+| `on-capture` | A declared move that would capture | Ghost Mode, Uno Reverse, The Purge |
+
+`reaction` was already a phase, for the move. A second phase for "waiting inside the roll" and a third
+for "waiting inside the action phase" would have tripled the machine to express one idea, so the window
+is a field and `dispatch` freezes every other intent while it is set. That guard is one line and it
+catches the case that would otherwise **deadlock**: `roll-die` opens an on-roll window, so dispatching
+it again while one is open would open a second one and the turn would never reach the roll.
+
+#### Nothing resolves until the window shuts, and that is the decision everything else follows from
+
+A card played into a window leaves its player's hand immediately and its **rule does not run** until
+the window closes. Then the played cards resolve in the order they were played, and the card that opened
+the window resolves last.
+
+**The reason is that nothing here can be undone.** `pawns`, `statuses` and `traps` are each replaced
+wholesale by a patch, so "cancel that card" cannot mean reversing an effect that has already run. Because
+nothing has run, cancelling is simply not running it, and Nühü needs no machinery at all.
+
+That also settles the resolution order without a rule about which card was played first: the opening
+card is last because it is the thing being answered.
+
+#### A window that nobody could use does not open
+
+`eligibleSeats` asks three questions of every other seat: is your card budget unspent, do you hold a
+Reaction whose triggers include this moment, and does that card have a rule yet. If nobody answers yes to
+all three, no window opens and the turn carries on.
+
+**This is not an optimisation.** A window that opened every time would put a thirty-second countdown in
+front of every roll of a game whose ordinary turn is two clicks, and it would show a prompt to players
+with nothing to press.
+
+For the same reason `on-capture` opens only when the declared move actually captures. A pawn walking onto
+an empty square is the ordinary turn.
+
+#### The thirty seconds are not in `state/`, and the reason is not tidiness
+
+ESLint forbids `window` and `setTimeout` under `state/`. A rules layer that reads a clock cannot be
+tested, so the countdown runs in `ui/` and dispatches `close-window` when it expires. **A timeout is
+therefore the same thing as every eligible seat declining**, and FR-25's "if everybody declines, play
+continues at once" needs no timer at all: every play and every decline shortens `eligible` by one, a
+seat cannot rejoin, and the last one empties the list.
+
+Not one test in `reaction-window.test.js` mentions time.
+
+#### One intent covers two very different card plays
+
+`play-card` is an Action card in the action phase **and** a Reaction in an open window, told apart by one
+question: is a window open? That is not a shortcut. A window is only ever open when somebody is being
+asked to answer, and an Action card cannot be played into one.
+
+Keeping them one intent matters for the view: a click on a card in a hand is one gesture, and the player
+is not choosing which kind of card play they are performing.
+
+#### The order the checks run in is a usability decision
+
+Whose turn it is, then whether you hold the card, then whether the card fits the moment, then the budget,
+then the target. Every check runs before anything is written, so there is no half-played card to undo.
+The order is chosen so the **most useful** message wins when more than one thing is wrong: telling a
+player "that card needs a target" when it was not even their turn would be true and useless.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
 
 ## Open / to verify
 
-- No source code exists yet. Declared target state from [CLAUDE.md](../../../CLAUDE.md): `state/`
-  holds the single game-state object and its transitions, is the only writable source of truth,
-  imports `core/` and never `ui/`.
+- ~~No source code exists yet.~~ **All four modules exist as of 2026-08-29.** `state/` holds the
+  single game-state object and its transitions, is the only writable source of truth, imports `core/`
+  and never `ui/`. The import half is enforced by ESLint (see [07-tooling.md](07-tooling.md)); the
+  "only writable" half is enforced by freezing every state object, so an assignment from `ui/` throws
+  rather than being silently dropped.
+- **Nothing has been read from `state/` by a view yet**, because `ui/` does not exist. The intent
+  boundary is tested from unit tests standing in for the view, which proves the contract holds and
+  not that a jQuery handler can satisfy it. That is issue #62.
+- **The reaction window has never had anything in it.** Its correctness as a seam is a claim about
+  issue #38 and cannot be checked until skill cards exist.
 - Multiplayer is planned for Sprint 2. Whether it is local hot-seat or networked changes this
   chapter substantially: networked play makes state authority a real question. Undecided. **The MVP
   is hot-seat** (FR-03), and the architecture document states plainly that where a network layer

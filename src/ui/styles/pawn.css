@@ -1,0 +1,167 @@
+/* Pawn: the piece itself, the five states of the DOM contract, and the
+   movement transition. Depends on tokens.css and on the seat mapping in
+   board.css, which supplies --player.
+
+   The pawn is a direct child of .board and is positioned by --pawn-col and
+   --pawn-row, fractional cell coordinates of its centre set inline by the
+   view. It is never re-parented into a square. See D10 in the spec: a pawn
+   moved by re-parenting cannot animate, because the element is destroyed
+   and rebuilt between the two positions. */
+
+.pawn {
+  position: absolute;
+  inset: 0 auto auto 0;
+  z-index: var(--layer-pawn);
+  width: var(--pawn-size);
+  height: var(--pawn-size);
+  cursor: default;
+  transform: translate(
+      calc(var(--pawn-col, 0) * var(--cell) - 50%),
+      calc(var(--pawn-row, 0) * var(--cell) - 50%)
+    )
+    scale(var(--pawn-scale));
+  transition:
+    transform var(--motion-move) var(--ease-move),
+    opacity var(--motion-feedback) var(--ease-ui);
+}
+
+/* The piece. A flat disc with a 3px ink outline, a hard offset shadow and
+   two googly eyes, so it reads as a little creature, not a counter (D14).
+   The eyes are two circles painted as background layers, no extra markup. */
+.pawn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--border-ink) solid var(--color-ink);
+  border-radius: 50%;
+  background-color: var(--player);
+  background-image:
+    radial-gradient(circle at 50% 50%, var(--color-ink) 0 42%, transparent 43%),
+    radial-gradient(circle at 50% 50%, var(--color-ink) 0 42%, transparent 43%),
+    radial-gradient(circle at 50% 50%, #ffffff 0 47%, transparent 48%),
+    radial-gradient(circle at 50% 50%, #ffffff 0 47%, transparent 48%);
+  background-repeat: no-repeat;
+  background-size:
+    22% 22%,
+    22% 22%,
+    30% 30%,
+    30% 30%;
+  background-position:
+    26% 30%,
+    66% 30%,
+    22% 26%,
+    70% 26%;
+  box-shadow: var(--shadow-piece);
+}
+
+/* The state ring. Sits behind the piece, and is the only thing the four
+   interactive states change. */
+.pawn::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--pawn-size) * -0.2);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  box-shadow: 0 0 0 0 transparent;
+  opacity: 0;
+  transition:
+    opacity var(--motion-feedback) var(--ease-ui),
+    box-shadow var(--motion-feedback) var(--ease-ui);
+}
+
+/* --- data-movable: this pawn has at least one legal move this turn.
+       A quiet outer ring plus a small rise. It must be visible across up to
+       four pawns at once without competing with the selected pawn. --- */
+
+.pawn[data-movable="true"] {
+  cursor: pointer;
+}
+
+.pawn[data-movable="true"]::before {
+  opacity: 1;
+  box-shadow: 0 0 0 max(2px, calc(var(--cell) * 0.05))
+    color-mix(in oklab, var(--color-hint) 48%, transparent);
+  animation: pawn-breathe var(--motion-pulse) var(--ease-ui) infinite;
+}
+
+@keyframes pawn-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.07);
+  }
+}
+
+/* --- data-selected: the player has picked this pawn. One pawn at a time,
+       so it is allowed to be the loudest thing on the board. --- */
+
+.pawn[data-selected="true"] {
+  z-index: var(--layer-pawn-active);
+  --pawn-scale: 1.14;
+}
+
+.pawn[data-selected="true"]::before {
+  opacity: 1;
+  animation: none;
+  box-shadow:
+    0 0 0 max(3px, calc(var(--cell) * 0.07)) var(--color-hint),
+    var(--shadow-lift);
+}
+
+.pawn[data-selected="true"]::after {
+  box-shadow: var(--shadow-lift);
+}
+
+/* --- data-captured: transient, for the return to the start area. The pawn
+       keeps its identity while it travels, so it shrinks and dims rather
+       than disappearing and reappearing. --- */
+
+.pawn[data-captured="true"] {
+  z-index: var(--layer-pawn-active);
+  --pawn-scale: 0.82;
+  opacity: 0.7;
+  transition:
+    transform var(--motion-capture) var(--ease-capture),
+    opacity var(--motion-capture) var(--ease-capture);
+}
+
+.pawn[data-captured="true"]::before {
+  opacity: 1;
+  animation: none;
+  box-shadow: 0 0 0 max(2px, calc(var(--cell) * 0.06)) var(--color-warn);
+}
+
+/* --- Active seat. Pawns of the player whose turn it is are at full
+       strength; the rest sit back one step. This is the second half of the
+       board-edge signal in board.css. --- */
+
+.board[data-active-player="0"] .pawn:not([data-player="0"]),
+.board[data-active-player="1"] .pawn:not([data-player="1"]),
+.board[data-active-player="2"] .pawn:not([data-player="2"]),
+.board[data-active-player="3"] .pawn:not([data-player="3"]) {
+  opacity: 0.85;
+}
+
+/* --- Keyboard focus. Desktop only does not mean mouse only (D11). --- */
+
+.pawn:focus-visible {
+  outline: none;
+}
+
+.pawn:focus-visible::before {
+  opacity: 1;
+  box-shadow:
+    0 0 0 max(3px, calc(var(--cell) * 0.07)) var(--color-focus),
+    0 0 0 max(5px, calc(var(--cell) * 0.11)) var(--color-surface);
+}
+
+/* --- Reduced motion: the ring states stay, the loops stop (D12). --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .pawn[data-movable="true"]::before {
+    animation: none;
+    box-shadow: 0 0 0 max(2px, calc(var(--cell) * 0.05)) var(--color-hint);
+  }
+}

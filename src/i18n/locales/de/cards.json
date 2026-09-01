@@ -1,0 +1,171 @@
+{
+  "card": {
+    "family": {
+      "dice": "Würfelkarte",
+      "skill": "Skill-Karte"
+    },
+    "type": {
+      "action": "Aktion",
+      "reaction": "Reaktion"
+    },
+    "category": {
+      "movement": "Bewegung",
+      "blocking": "Blockade",
+      "troll": "Troll",
+      "offensive": "Offensive"
+    },
+    "dice": {
+      "name": "W{{faces}}",
+      "kind": {
+        "2": "Münze",
+        "4": "Vierseitig",
+        "6": "Sechsseitig",
+        "8": "Achtseitig",
+        "10": "Zehnseitig",
+        "12": "Zwölfseitig",
+        "20": "Zwanzigseitig"
+      },
+      "range": "Reichweite 1 bis {{faces}}",
+      "leave": "Start frei bei {{faces}}"
+    },
+    "skill": {
+      "action-pot-of-greed": {
+        "title": "Pot of Greed",
+        "text": "Ziehe zwei Aktionskarten."
+      },
+      "action-double-dip": {
+        "title": "Double Dip",
+        "text": "Du darfst in diesem Zug noch eine zweite Karte spielen."
+      },
+      "action-no-take-backsies": {
+        "title": "No Take-Backsies",
+        "text": "In diesem Zug geht kein Reaktionsfenster mehr auf."
+      },
+      "action-critical-success": {
+        "title": "Critical Success",
+        "text": "Würfle zweimal und nimm das höhere Ergebnis."
+      },
+      "action-angel-die": {
+        "title": "Angel Die",
+        "text": "Addiere einen W8 auf deinen Wurf."
+      },
+      "reaction-critical-failure": {
+        "title": "Critical Failure",
+        "text": "Der Wurf geschieht zweimal, gezählt wird das niedrigere Ergebnis."
+      },
+      "reaction-devil-die": {
+        "title": "Devil Die",
+        "text": "Ziehe einen W8 vom Wurf ab. Fällt er auf 0, bewegt sich niemand."
+      },
+      "reaction-nuehue": {
+        "title": "Nühü",
+        "text": "Die Karte, die dieses Fenster geöffnet hat, verpufft."
+      },
+      "reaction-hold-pawn": {
+        "title": "Hold Pawn",
+        "text": "Eine gegnerische Figur setzt diesen Zug aus."
+      },
+      "reaction-the-purge": {
+        "title": "The Purge",
+        "text": "Eine Runde lang schlägt jede Landung, eigene Figuren eingeschlossen."
+      },
+      "action-banana-peel": {
+        "title": "Banana Peel",
+        "text": "Lege eine Falle auf ein Feld. Wer sie berührt, geht zurück ins Startfeld."
+      },
+      "action-hyperbeam": {
+        "title": "Hyperbeam",
+        "text": "Wähle eine eigene Figur und eine Richtung, dann würfle W4. Alles auf den nächsten Feldern geht ins Startfeld, deine eigene Figur schießt du nicht mit ab, deine anderen schon."
+      },
+      "reaction-uno-reverse": {
+        "title": "Uno Reverse",
+        "text": "Der Schlag geht nach hinten los: der Angreifer geht selbst ins Startfeld."
+      },
+      "action-rock": {
+        "title": "Rock",
+        "text": "Eine eigene Figur wird zwei Runden lang zur Mauer, an der niemand vorbeikommt."
+      },
+      "action-big-ah-rock": {
+        "title": "Big Ah Rock",
+        "text": "Sperre ein Feld zwei Runden lang für alle."
+      },
+      "action-oil-spill": {
+        "title": "Oil Spill",
+        "text": "Lege eine Falle auf ein Feld. Wer sie berührt, rutscht 3 bis 5 Felder weiter und löst dabei kein Skill-Feld aus."
+      },
+      "reaction-ghost-mode": {
+        "title": "Ghost Mode",
+        "text": "Du weichst aus: der angekündigte Zug findet nicht statt."
+      },
+      "action-head-out": {
+        "title": "Aight Imma Head Out",
+        "text": "Eine eigene Figur springt vier Felder vor, oder sie kehrt auf dein Eingangsfeld zurück. Du entscheidest."
+      },
+      "action-speedrun": {
+        "title": "Speedrun Any%",
+        "text": "Dein Wurf wird verdoppelt. Zu weit bleibt zu weit."
+      },
+      "action-janky-rpg": {
+        "title": "Janky RPG",
+        "text": "Wähle ein Feld und würfle W6. Ab 4 trifft es das Feld, darunter beide Nachbarfelder."
+      },
+      "action-yeet": {
+        "title": "Yeet",
+        "text": "Würfle W6 und schiebe eine gegnerische Figur so weit zurück."
+      },
+      "action-tax-fraud": {
+        "title": "Tax Fraud",
+        "text": "Nimm einem Gegner eine zufällige Karte aus der Hand."
+      },
+      "action-lock-in": {
+        "title": "Lock In",
+        "text": "Eine eigene Figur bleibt eine Runde stehen und kann in dieser Zeit nicht geschlagen werden."
+      },
+      "action-not-that-deep": {
+        "title": "It's Not That Deep",
+        "text": "Lege eine Falle auf ein Feld. Wer sie berührt, wird um einen W6 zurückgeschoben."
+      },
+      "action-let-him-cook": {
+        "title": "Let Him Cook",
+        "text": "Würfle W12 und lauf. Geht der Lauf über das Ziel hinaus, geht die Figur ins Startfeld."
+      },
+      "action-built-different": {
+        "title": "Built Different",
+        "text": "Eine eigene Figur kann zwei Runden lang nicht geschlagen werden."
+      },
+      "action-fr-fr": {
+        "title": "FR FR",
+        "text": "Nenne eine Zahl, statt zu würfeln."
+      },
+      "action-sixty-seven": {
+        "title": "67",
+        "text": "Nur ab W6 spielbar. Bleibt der Wurf unter 6, bewegt sich nichts. Ab 6 zählt er doppelt."
+      },
+      "action-ragebait": {
+        "title": "Ragebait",
+        "text": "Kann die genannte gegnerische Figur ziehen, muss sie ziehen."
+      }
+    },
+    "kind": {
+      "action": "Aktion",
+      "buff": "Buff",
+      "chaos": "Chaos",
+      "control": "Kontrolle",
+      "d4": "W4",
+      "d6": "W6",
+      "debuff": "Debuff",
+      "defensive": "Defensiv",
+      "draw": "Ziehen",
+      "economy": "Ökonomie",
+      "gamble": "Wette",
+      "lockout": "Sperre",
+      "negate": "Konter",
+      "passive": "Passiv",
+      "reaction": "Reaktion",
+      "risky": "Riskant",
+      "taunt": "Spott",
+      "trap": "Falle",
+      "upgrade": "Upgrade"
+    }
+  }
+}

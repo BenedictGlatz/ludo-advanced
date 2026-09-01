@@ -1,0 +1,197 @@
+/* Board: the 11 by 11 grid and the fields on it. Depends on tokens.css.
+   Geometry is derived in 01-Design/Handoff/01-spec-foundations-and-board.md (D3).
+   The skill square is D27 of 03-spec-cards-and-hands.md.
+
+   Two files were split off this one, both for NFR-02 and both at a real seam:
+   board-track.css holds the 40 index-to-cell placements, board-regions.css
+   holds the yards, the houses and the slots. Load both after this one. */
+
+.board,
+.board * {
+  box-sizing: border-box;
+}
+
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(11, var(--cell));
+  grid-template-rows: repeat(11, var(--cell));
+  width: var(--board-size);
+  height: var(--board-size);
+  padding: 0;
+  font-family: var(--font-ui);
+  color: var(--color-text);
+  background: var(--color-board-bg);
+  border-radius: var(--radius-lg);
+  outline: var(--border-board) solid var(--color-ink);
+  box-shadow: var(--shadow-board);
+  transition: box-shadow var(--motion-feedback) var(--ease-ui);
+}
+
+/* Whose turn it is, signalled by an ink halo around that seat's own yard, so
+   it cannot bleed into the board frame the way a coloured inset ring did. */
+.board[data-active-player="0"] .start-area[data-player="0"],
+.board[data-active-player="1"] .start-area[data-player="1"],
+.board[data-active-player="2"] .start-area[data-player="2"],
+.board[data-active-player="3"] .start-area[data-player="3"] {
+  box-shadow:
+    inset 0 0 0 calc(var(--border-ink) * 2.4) var(--color-ink),
+    var(--shadow-region);
+}
+
+/* One mapping from seat number to colour. Every region and every pawn takes
+   its colour from here, so a player's identity is set once (D2). */
+[data-player="0"] {
+  --player: var(--color-p0);
+  --player-soft: var(--color-p0-soft);
+}
+[data-player="1"] {
+  --player: var(--color-p1);
+  --player-soft: var(--color-p1-soft);
+}
+[data-player="2"] {
+  --player: var(--color-p2);
+  --player-soft: var(--color-p2-soft);
+}
+[data-player="3"] {
+  --player: var(--color-p3);
+  --player-soft: var(--color-p3-soft);
+}
+
+/* --- Squares --- */
+
+.square {
+  position: relative;
+  z-index: var(--layer-square);
+  margin: calc(var(--cell) * 0.028);
+  border-radius: var(--radius-sm);
+  background: var(--color-square);
+  box-shadow: inset 0 0 0 var(--border-hair) var(--color-square-edge);
+  transition:
+    background-color var(--motion-feedback) var(--ease-ui),
+    box-shadow var(--motion-feedback) var(--ease-ui);
+}
+
+.square--home-column {
+  background: color-mix(in oklab, var(--player) 55%, var(--color-square));
+  box-shadow: inset 0 0 0 var(--border-hair) var(--color-square-edge);
+}
+
+/* Entry and turn-off squares are marked, because a player has to find their
+   own way onto and off the shared track (D7). */
+.square[data-entry-of="0"],
+.square[data-turnoff-of="0"] {
+  --marked: var(--color-p0);
+}
+.square[data-entry-of="1"],
+.square[data-turnoff-of="1"] {
+  --marked: var(--color-p1);
+}
+.square[data-entry-of="2"],
+.square[data-turnoff-of="2"] {
+  --marked: var(--color-p2);
+}
+.square[data-entry-of="3"],
+.square[data-turnoff-of="3"] {
+  --marked: var(--color-p3);
+}
+
+.square[data-entry-of="0"],
+.square[data-entry-of="1"],
+.square[data-entry-of="2"],
+.square[data-entry-of="3"] {
+  background-color: var(--marked);
+  box-shadow: inset 0 0 0 var(--border-hair) var(--color-square-edge);
+}
+
+/* The turn-off bar points at the board edge the square sits on, not down. */
+.square[data-turnoff-of="0"]::after,
+.square[data-turnoff-of="1"]::after,
+.square[data-turnoff-of="2"]::after,
+.square[data-turnoff-of="3"]::after {
+  content: "";
+  position: absolute;
+  border-radius: var(--radius-pill);
+  background: var(--marked);
+}
+
+.square[data-turnoff-of="0"]::after {
+  inset: 18% auto 18% 8%;
+  width: calc(var(--cell) * 0.13);
+}
+.square[data-turnoff-of="1"]::after {
+  inset: 8% 18% auto 18%;
+  height: calc(var(--cell) * 0.13);
+}
+.square[data-turnoff-of="2"]::after {
+  inset: 18% 8% 18% auto;
+  width: calc(var(--cell) * 0.13);
+}
+.square[data-turnoff-of="3"]::after {
+  inset: auto 18% 8% 18%;
+  height: calc(var(--cell) * 0.13);
+}
+
+/* The legal-move highlight. It has to stay unmistakable when six squares
+   carry it at once, so it is a filled ring in a hue no player owns, plus a
+   slow pulse that makes the whole set read as one group (D7, FR-32). */
+.square[data-legal-target="true"] {
+  background-color: var(--color-hint-soft);
+  box-shadow:
+    inset 0 0 0 var(--border-thick) var(--color-hint),
+    0 0 0 calc(var(--cell) * 0.04) color-mix(in oklab, var(--color-hint) 28%, transparent);
+  animation: legal-pulse var(--motion-pulse) var(--ease-ui) infinite;
+}
+
+/* An entry square keeps its owner's colour when it is a legal target: the
+   highlight is the ring, never the fill (D7). */
+.square[data-legal-target="true"][data-entry-of="0"],
+.square[data-legal-target="true"][data-entry-of="1"],
+.square[data-legal-target="true"][data-entry-of="2"],
+.square[data-legal-target="true"][data-entry-of="3"] {
+  background-color: var(--marked);
+}
+
+@keyframes legal-pulse {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 var(--border-thick) var(--color-hint),
+      0 0 0 calc(var(--cell) * 0.02) var(--color-hint-soft);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 var(--border-thick) var(--color-hint),
+      0 0 0 calc(var(--cell) * 0.09) var(--color-hint-soft);
+  }
+}
+
+/* The 40 track field placements live in board-track.css. Split out on
+   2026-08-30 for NFR-02: see that file's header for why and for the
+   index-to-cell table. --- */
+
+/* --- The skill square (D27). A mark, not a fill: the field keeps its own
+       background, so a skill square that is also a legal target shows the
+       violet ring and the teal diamond at the same time and neither has to
+       give way. The diamond is decorative geometry, no glyph and no text.
+
+       Teal and not the purple the earlier material described, because violet
+       is --color-hint, which every legal-move highlight and focus ring in the
+       game already uses. --- */
+
+.square[data-skill-square="true"]::before {
+  content: "";
+  position: absolute;
+  inset: 24%;
+  background: var(--color-skill);
+  border-radius: 14%;
+  box-shadow: inset 0 0 0 max(2px, calc(var(--cell) * 0.045)) var(--color-ink);
+  transform: rotate(45deg);
+  transition: inset var(--motion-feedback) var(--ease-ui);
+}
+
+/* Inside the pulsing ring the diamond steps back a little, so the ring is
+   still the widest thing on the field. */
+.square[data-skill-square="true"][data-legal-target="true"]::before {
+  inset: 30%;
+}

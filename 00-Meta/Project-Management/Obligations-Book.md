@@ -90,8 +90,14 @@ Three obligations that are easy to miss because they are not screens:
 
 ### 2.4 Not decided here
 
-- How the board is drawn: SVG, a CSS grid or `<canvas>`. Named as undecided in section 6 of
-  [System-Architecture.md](System-Architecture.md) and belonging to issue #3.
+- ~~How the board is drawn: SVG, a CSS grid or `<canvas>`.~~ **Decided 2026-08-29: real DOM elements
+  laid out by CSS Grid**, with SVG and `<canvas>` recorded as the rejected alternatives. The reasoning
+  is the decision block of that date in
+  [project-journal.md](../Documentation/project-journal.md), and section 6 of
+  [System-Architecture.md](System-Architecture.md) carries the correction to its own deferral. The
+  practical consequence for this document: the screen inventory of section 2.2 is now backed by a DOM
+  contract, written into `01-Design/Handoff/01-brief-foundations-and-board.md`, which names the exact
+  elements and data attributes each region of screen S3 consists of.
 - Screen resolution and asset formats. They were Sprint 0 scope in
   [01-Github-Project.md](01-Github-Project.md) and were never agreed; see the Sprint 0 divergence in
   [sprint-log.md](../Documentation/sprint-log.md).
@@ -107,18 +113,25 @@ Three obligations that are easy to miss because they are not screens:
 | Layer | Technology | Version | Purpose |
 | --- | --- | --- | --- |
 | Language | JavaScript, ES modules | n/a | The whole application. No TypeScript, no build-time type checking (NFR-04). |
-| DOM and events | jQuery | unpinned | Rendering and event binding in `ui/`. |
-| Localisation | i18next | unpinned | German and English at runtime (FR-34, NFR-03). |
-| Build and dev server | Vite | unpinned | `npm run dev`, and a static `dist/` from `npm run build` (NFR-06). |
-| Unit tests | Vitest | unpinned | `core/` and `state/`, plus the coverage figure (NFR-05). |
-| E2E tests | Playwright | unpinned | The player-facing flows through `ui/`. |
-| Lint and format | ESLint, Prettier | unpinned | Style and static checks. |
+| DOM and events | jQuery | 4.0.0 | Rendering and event binding in `ui/`. |
+| Localisation | i18next | 26.4.0 | German and English at runtime (FR-34, NFR-03). |
+| Build and dev server | Vite | 8.2.2 | `npm run dev`, and a static `dist/` from `npm run build` (NFR-06). |
+| Unit tests | Vitest | 4.1.11 | `core/` and `state/`, plus the coverage figure (NFR-05), through `@vitest/coverage-v8` 4.1.11. |
+| E2E tests | Playwright | 1.62.1 | The player-facing flows through `ui/`, as `@playwright/test`. |
+| Lint and format | ESLint 10.9.1 with `@eslint/js` 10.0.1, Prettier 3.9.6 | see cell | Style and static checks, plus the two rules that enforce NFR-01 and NFR-02. |
 
-**The version column is empty on purpose.** No `package.json` exists, so no version is pinned, and a
-version written from memory here would be a number with no command behind it. It is filled from
-`package.json` in the same commit that creates it. Numbers in this project live only in
-[notes/09-source-code-overview.md](../Documentation/notes/09-source-code-overview.md), next to the
-command that produced them.
+Runtime environment used for the bootstrap: Node v24.11.0, npm 11.6.1.
+
+**The version column was empty until 2026-08-29 and is now filled from the real `package.json`**,
+created in the same commit as the project bootstrap. It is a copy and it will go stale, so the rule
+that applies to every other number applies here as well: the authority is `package.json`, and if this
+table and that file disagree, the file wins. The measured figures with their commands live in
+[notes/09-source-code-overview.md](../Documentation/notes/09-source-code-overview.md).
+
+**One version worth reading twice: jQuery is 4.0.0, not 3.x.** No document in this repository ever
+said which major version, and jQuery 4 removes a set of long-deprecated APIs. Nothing built so far
+uses them, so it costs nothing today. It is written down because an answer or a tutorial written for
+jQuery 3 will not always apply.
 
 ### 3.2 Why this stack
 
@@ -196,8 +209,14 @@ Printed rather than smoothed over, because each one is a real obligation this do
   (FR-34, `must have`, with NFR-03) appear in no issue on the board. FR-34 being a must-have
   requirement with no issue is the more serious of the two: the board understates the remaining work
   by that much. Carried into the effort estimation, issue #16.
-- **No design specification exists.** No colour palette, spacing scale or typography is recorded
-  anywhere in this repository, so the screen inventory above is the complete GUI commitment for now.
-  When the design system lands under issue #3, this document points at it and does not absorb it.
+- ~~**No design specification exists.**~~ **Closed on 2026-08-30.** Design handoff 01 landed under
+  issue #3. The reasoning is in
+  [01-Design/Handoff/01-spec-foundations-and-board.md](../../01-Design/Handoff/01-spec-foundations-and-board.md),
+  which answers sixteen numbered decisions covering colour, spacing, typography, board geometry,
+  motion, the two skins and every state in the DOM contract. The design system itself is not a
+  document: it is `src/ui/styles/tokens.css`, `board.css`, `board-track.css`, `pawn.css` and
+  `refusal.css`, which is what the build ships. **This document points at both and absorbs neither.**
+  It covers screens S3 and S6 only; S4, S5, S7 and the menus still have no design and belong to
+  issues #37, #38 and #39.
 - **Nothing here is verified**, as stated at the top. The first commit that creates `src/` is the first
   evidence that any of it survives contact with code.

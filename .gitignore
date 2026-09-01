@@ -1,3 +1,26 @@
 # AI prompt logs are kept locally per machine/user, not version-controlled.
 # See CLAUDE.md "AI prompt log" and the 2026-08-10 decision in project-journal.md.
 00-Meta/AI-Prompts/
+
+# npm
+node_modules/
+npm-debug.log*
+
+# Vite build output
+dist/
+.vite/
+
+# Vitest coverage
+coverage/
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
