@@ -1,0 +1,19 @@
+<svg viewBox="0 0 232 128" aria-hidden="true" focusable="false">
+          <g stroke="#2B1A3D" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" fill="none">
+            <g transform="translate(58 96)">
+              <g transform="rotate(-18)"><rect x="-22" y="-46" width="44" height="62" rx="7" fill="#FFF8EC"></rect></g>
+              <g transform="rotate(-2) translate(14 -4)"><rect x="-22" y="-46" width="44" height="62" rx="7" fill="#FFF8EC"></rect></g>
+              <g transform="rotate(14) translate(28 -4)"><rect x="-22" y="-46" width="44" height="62" rx="7" fill="#FFF8EC"></rect><circle cx="0" cy="-16" r="10" fill="#B98CE0"></circle></g>
+            </g>
+            <g transform="translate(168 108) scale(.84)">
+              <ellipse cx="0" cy="4" rx="38" ry="9" fill="#FFC93C"></ellipse>
+              <path d="M-34,4 C-34,-4 -25,-7 -18,-13 C-12,-18 -10,-25 -10,-31 L10,-31 C10,-25 12,-18 18,-13 C25,-7 34,-4 34,4 Z" fill="#FFC93C"></path>
+              <circle cx="0" cy="-48" r="23" fill="#FFE28A"></circle>
+              <path d="M-16,-52 L-2,-56 M2,-56 L16,-52" stroke-width="4"></path>
+              <path d="M-10,-38 Q0,-30 11,-38" stroke-width="4"></path>
+              <path d="M-20,-56 Q-40,-70 -58,-58" stroke-width="5"></path>
+            </g>
+            <g transform="translate(126 34) rotate(-16)"><rect x="-20" y="-26" width="40" height="54" rx="6" fill="#FFF8EC"></rect><circle cx="0" cy="0" r="9" fill="#4C86F9"></circle></g>
+            <g stroke="#2B1A3D" stroke-width="3.5"><path d="M198 34 L212 26 M204 52 L218 52"></path></g>
+          </g>
+        </svg>

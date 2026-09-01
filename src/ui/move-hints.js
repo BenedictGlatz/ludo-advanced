@@ -26,6 +26,7 @@ import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { movablePawns } from "../state/turn-manager.js";
 import { t } from "../i18n/index.js";
 import { pawnElement } from "./board-view.js";
+import { seatLabel } from "./player-labels.js";
 
 /**
  * The square a move lands on.
@@ -90,16 +91,20 @@ export function applyMoveHints($board, state) {
  * What the message region should say, as an i18next key plus its interpolation, or `null` for
  * nothing.
  *
- * A player is named by **seat number plus one**, so "Player 3" is the seat the board draws in green
- * whatever the player count. That keeps one numbering: the label, `data-player` in the markup and the
- * colour of the pawns all say the same thing. It also means a two-player match is played by players 1
- * and 3, which reads oddly and is a real cost. Naming them 1 and 2 would introduce a second numbering
- * that disagrees with the board, which is worse. The HUD in issue #35 is where player identity gets
- * designed, and this is a question for it.
+ * **The player is named by `seatLabel`, and that is the fix for a defect this comment used to
+ * describe.** Naming a seat `seat + 1` meant a two-player match was won by "Spieler 3", because two
+ * players sit on seats 0 and 2. The old reasoning was that a second numbering would disagree with
+ * `data-player` and the colour tokens; the answer, decided on 2026-09-01, is that the label carries
+ * **both**, the position in the match and the colour, so nothing has to be inferred from the number.
+ * The seat is still the seat in the markup and in every rule. See `player-labels.js`.
  */
 function message(state) {
   if (state.status === MATCH_STATUS.WON) {
-    return { kind: "win", key: "match.won", options: { number: state.winner + 1 } };
+    return {
+      kind: "win",
+      key: "match.won",
+      options: { player: seatLabel(state.seats, state.winner) },
+    };
   }
   if (state.status === MATCH_STATUS.ABANDONED) {
     return { kind: "info", key: "match.abandoned", options: {} };

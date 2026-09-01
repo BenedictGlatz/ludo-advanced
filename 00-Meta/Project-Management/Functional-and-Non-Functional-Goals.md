@@ -234,7 +234,7 @@ draw, and the game state that determines legal moves is fully derivable from wha
 | #36 Core Game Engine & Board | FG-01 – FG-06 | NFG-01, NFG-02, NFG-05 |
 | #37 Enhanced Dice Pool System | FG-07 – FG-10 | NFG-01, NFG-05 |
 | #38 Skill Cards Mechanics | FG-11 – FG-13 | NFG-01, NFG-05 |
-| #39 UI / UX, Audio & Game State | FG-14 – FG-16 | NFG-02, NFG-03, NFG-06, NFG-08 |
+| #39 UI / UX & Game State | FG-14 – FG-16 | NFG-02, NFG-03, NFG-06, NFG-08 |
 | none (applies to all work) | none | NFG-04, NFG-07 |
 
 Sub-issue decomposition per epic is transcribed in

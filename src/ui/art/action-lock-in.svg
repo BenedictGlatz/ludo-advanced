@@ -1,0 +1,22 @@
+<svg viewBox="0 0 232 128" aria-hidden="true" focusable="false">
+          <g stroke="#2B1A3D" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" fill="none">
+            <circle cx="110" cy="66" r="54" fill="#FFE9A8"></circle>
+            <path d="M110,12 A54,54 0 0 1 164,66" stroke="#FFFFFF" stroke-width="6" opacity=".8"></path>
+            <g transform="translate(110 104) scale(.84)">
+              <ellipse cx="0" cy="4" rx="38" ry="9" fill="#3FA35B"></ellipse>
+              <path d="M-34,4 C-34,-4 -25,-7 -18,-13 C-12,-18 -10,-25 -10,-31 L10,-31 C10,-25 12,-18 18,-13 C25,-7 34,-4 34,4 Z" fill="#3FA35B"></path>
+              <circle cx="0" cy="-48" r="23" fill="#78D18F"></circle>
+              <path d="M-17,-50 L-3,-50 M3,-50 L17,-50" stroke-width="4.5"></path>
+              <path d="M-9,-34 L10,-34" stroke-width="4.5"></path>
+            </g>
+            <g transform="translate(24 40) rotate(38)">
+              <path d="M-14,0 L6,-12 L24,0 L6,14 Z" fill="#FF5D5D"></path>
+              <path d="M-14,0 L-32,-8 L-32,8 Z" fill="#FFB03A"></path>
+            </g>
+            <g transform="translate(206 92) rotate(-140)">
+              <path d="M-14,0 L6,-12 L24,0 L6,14 Z" fill="#FF5D5D"></path>
+              <path d="M-14,0 L-32,-8 L-32,8 Z" fill="#FFB03A"></path>
+            </g>
+            <g stroke="#FFFFFF" stroke-width="4"><path d="M62 34 L74 44 M158 96 L146 86"></path></g>
+          </g>
+        </svg>

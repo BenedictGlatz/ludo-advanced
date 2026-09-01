@@ -83,7 +83,42 @@
   --tracking-wide: 0.08em;
 
   /* --- Board geometry (D6). No fixed target resolution; one fluid unit. --- */
-  --board-size: clamp(24rem, min(82vh, 44vw), 60rem);
+
+  /* Changed by Claude Code on 2026-09-01, issue #39: the width bound went from
+     44vw to 40vw. It is the only value in this file that issue #39 touched, and
+     it was **forced by a measurement rather than chosen**.
+
+     Spec 01 § 6 says of this token: "this is the number to check first when the
+     two hands are actually built". Two more regions landed, the chrome and the
+     HUD, and the arithmetic at the design resolution of 1440 by 900 is:
+
+       padding                  48   (2 x --space-5)
+       five row gaps            80   (5 x --space-4)
+       chrome row               30
+       HUD row                  64
+       board row               634   (44vw, the larger of board and rail)
+       refusal strip            46   (always laid out, faded, so nothing jumps)
+       prompt strip             70   (only while it is asking something)
+                              ----
+                               972   against 900
+
+     tests/e2e/skill-hand.spec.js caught it: 56 px of vertical overflow while
+     the prompt strip is up, which is FR-31's scrollbar.
+
+     Shrinking the board alone does not fix it, and finding that out is the
+     useful part: the board row is as tall as the **taller** of the two columns,
+     and the rail was 627 px against the board's 634. So both had to give the
+     same amount. 39vw makes the board 562 px, and hand.css brings the rail to
+     561, which leaves 14 px of headroom rather than none.
+
+     The height bound stays 82vh. At every desktop aspect ratio the width bound
+     is the smaller of the two, so it is the one that governs.
+
+     **D35 of handoff 04 is where this gets confirmed or overruled.** Shrinking
+     the board is the trade the designer should make, not this side; the numbers
+     above are in the brief so it can be made with real figures. If the HUD moves
+     somewhere cheaper, this reverts to 44vw. */
+  --board-size: clamp(24rem, min(82vh, 39vw), 60rem);
   --cell: calc(var(--board-size) / 11);
   --pawn-size: calc(var(--cell) * 0.78);
   --pawn-scale: 1;

@@ -710,6 +710,43 @@ the browser spend the injected RNG identically, and neither had to be told the o
 output. Pasting it in would have repinned every seed in the suite to values derived from a broken replay,
 and the tests would have gone green on them.
 
+### A test whose whole job is to make a generated directory honest: 2026-09-01, issue #39
+
+`tests/unit/ui/card-art.test.js` is the second unit test under `tests/unit/ui/`, and like
+`board-geometry.test.js` it needs no DOM, so it sits inside `environment: "node"` without weakening
+anything.
+
+It exists because `src/ui/art/index.js` reads its 36 files with `import.meta.glob`. That is the right
+call for the module and it has one consequence: **a missing drawing is a runtime `undefined`, not a
+build error.** So the test does not check a list of file names, which would be the same list twice. It
+walks `SKILL_CARDS` and `POOL_COMPOSITION`, the real ones, and asserts every id and every denomination
+resolves to something starting with `<svg`. A card added to the game without a drawing added to the
+artboard fails here.
+
+Three of the seven cases check the **extraction**, not the game: every drawing is `aria-hidden`, none
+carries an inline `style` on its root element, and all of them keep a `viewBox`. Those are the two
+transforms `scripts/extract-card-art.js` applies, and without a test they would be true only until the
+next re-run of a script nobody reads.
+
+`tests/e2e/dice-hand.spec.js` gained one case for the other half: that a drawing actually reaches the
+page. The unit test proves the string exists and the spec proves it arrives, which is the gap a module
+boundary hides.
+
+### A spec that had pinned a defect: 2026-09-01, issue #39
+
+`win.spec.js` asserted the literal string `Spieler ${winner + 1} hat gewonnen`. Renaming the players
+broke it, and the break was the useful part: the assertion had encoded **two** things a test should not
+own. The German wording, so any rewording would fail a test rather than change a JSON file. And the
+seat-plus-one numbering, which was the defect itself, so the test was actively holding the bug in place.
+
+It now composes the expected sentence out of `src/i18n/locales/de/ui.json`, filling `player.named` and
+`match.won` the way `player-labels.js` does, and adds one line asserting that seat 2 is called "Spieler
+2". The numbering is still checked; the prose is not duplicated.
+
+**Worth carrying into the report:** a test that hard-codes rendered output looks like a strong assertion
+and is a copy of the implementation. This one had been repaired twice already for seed changes, and its
+own header says so.
+
 ### Coverage after issue #38
 
 `ui/` is still not unit tested and that is unchanged and deliberate: `vitest.config.js` runs with
@@ -721,6 +758,97 @@ instead.
 behaviour it exists for, two named timers not cancelling each other, is exercised only indirectly by a
 reaction window opening during a handover pause. That situation is reachable in play and no test forces
 it.
+
+### The HUD spec and the language spec: 2026-09-01, issue #39
+
+`tests/e2e/hud.spec.js`, seven cases, and they are the first end-to-end assertions in the suite that are
+about **words** rather than about attributes.
+
+- **Two describe blocks in one file**, the HUD and the language switch, because they are two halves of
+  one complaint: the game did not say anything in words. It named no player and it had no language
+  control at all, although FR-34 makes one a must-have.
+- **It checks no appearance.** Whether the active seat is marked by a ring or a fill is handoff 04's D36
+  and the stylesheet is interim, so the spec asserts that the sentence is there, that exactly one seat
+  carries `data-on-turn`, and that the numbers agree with the board.
+- **The two-player case is a regression test with a name.** "renders one row per seat actually in the
+  match, numbered from 1" would have failed before this sprint, reading "Spieler 1" and "Spieler 3".
+- **The sum-to-four case runs before and after a turn**, which is FR-36's acceptance criterion turned
+  into an assertion. A player reads three numbers as a breakdown of four pawns, so a total of three
+  would be wrong even where each number looked plausible on its own.
+- **The language case asserts the absence of the old language**, by pulling the page's whole `innerText`
+  and searching it for the German words. FR-34's criterion is literally "no string remains in the
+  previous language", and a per-element check cannot say that. It deliberately does not search for
+  "Start", which is the same word in both files.
+- **Both locale files are imported** rather than the expected strings being typed out, for the reason
+  `win.spec.js` had just taught: a test that hard-codes rendered prose is a copy of the implementation.
+
+**What is not covered:** the interim stylesheets have no visual regression test, so a layout that fits
+at 1440 by 900 today and not after the next change would be caught only by
+`skill-hand.spec.js`'s no-scroll assertion. That assertion is real and it did catch the HUD's first
+version, which made the page 935 px tall.
+
+### The flow spec, and the two bugs it found before a person could: 2026-09-01, issue #41
+
+`tests/e2e/match-flow.spec.js`, eight cases over FR-01, FR-05, FR-06, FR-07 and FR-38.
+
+- **It asserts the flow as a flow**, because FR-38's acceptance criterion is one sentence about a
+  sequence: menu to match to pause to match to win to menu, without a reload. A pause screen that opens
+  and cannot be closed passes every per-screen check there is.
+- **"Without a reload" is tested rather than assumed.** A probe is written onto `window` before the match
+  and read back after the restart; a reload would wipe it. Every other assertion in the file would still
+  pass if the game secretly reloaded.
+- **One case runs without `?fast=1`**, the handover, because the whole point of that screen is that it
+  waits. It plays the turn by hand, checks the turn number does not move for 1.2 seconds, then presses
+  Ready and checks that it does.
+- **The restart case ends by counting three dice cards**, which is the cheapest observable form of "the
+  pool came back whole" after the leak described in Chapter 06.
+
+**Two defects were found by writing it, and both were invisible:**
+
+1. Every overlay and chrome button went dead from the second match onward, because `.empty()` unbinds
+   handlers on the children it removes. Everything still rendered, so the menu and the handover looked
+   correct and simply did nothing.
+2. Quitting to the menu left the abandoned match's board mounted behind the menu's opaque sheet, so
+   eight pawns were still in the document while the player was on the main menu.
+
+Neither is visible in a screenshot, and neither would have been found by playing the game once. That is
+the argument for an end-to-end test of a **flow** rather than of a screen, and it is worth a paragraph in
+the report.
+
+**What the ten older specs cost:** one case, and it is the honest kind. `?players=` skips the menu,
+which is a deliberate affordance in `main.js` and is documented there as load-bearing, and `?fast=1`
+passes the handover. Both are the same compromise the suite already made for the thirty-second reaction
+window: the shape of the turn is identical either way and only the waiting is gone.
+
+The exception is `no-legal-move.spec.js`, which deliberately runs **without** `?fast=1` because D9's
+four-second minimum is what it measures. Its last case asserted that the active player changes by itself
+once the four seconds are up, and with the gate on it does not: the handover screen opens instead. The
+requirement did not change and neither did the order, the reason is still readable for four seconds
+before anything covers the board, so the case now waits for that screen and presses Ready. **The point
+worth recording is that it failed rather than passing quietly**, which is what a timing assertion written
+against a behaviour rather than against a duration buys.
+
+### The suite outgrew `test.slow()`, and four failures were contention: 2026-09-01, issue #39
+
+The first run of the full three-browser suite after issue #39 reported **four failures, and none of them
+was a defect**. All four were the two tests that play a complete 77-turn match through the real
+interface, on chromium and firefox but not on the project that happened to run last.
+
+- **Measured:** 1.1 to 1.3 minutes each with three workers. `test.slow()` triples Playwright's default
+  30 seconds to 90, which was enough while the suite was smaller.
+- **What changed:** the suite went from 42 tests to 60, so Playwright's default worker count, half of
+  sixteen cores, now has eight browsers running at once. Eight concurrent full matches pushed the two
+  long ones past 90 seconds.
+- **The fix is an explicit `test.setTimeout(240_000)` on those two describe blocks**, with the
+  measurement in a comment above it. Rejected: pinning `workers` in `playwright.config.js`, which would
+  have slowed all 180 tests to fix two.
+
+**Why this is worth recording rather than quietly fixing.** A timeout failure and a real failure look
+identical in the summary line, and the temptation is to re-run until it passes. What made the difference
+here was that the same tests passed alone and failed together, twice, which is the signature of
+contention rather than of a bug. **The dangerous version of this is the one that happens in CI**, where
+`retries: 1` would have hidden it entirely and the suite would have been slowly getting less reliable
+with nobody able to say when it started.
 
 ## Decisions
 

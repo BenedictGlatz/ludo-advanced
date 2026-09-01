@@ -3,19 +3,63 @@
     "title": "Ludo Advanced"
   },
   "player": {
-    "name": "Spieler {{number}}"
+    "name": "Spieler {{number}}",
+    "named": "Spieler {{number}} ({{colour}})",
+    "colour": {
+      "0": "Rot",
+      "1": "Gelb",
+      "2": "Grün",
+      "3": "Blau"
+    }
   },
   "turn": {
-    "prompt": "Spieler {{number}} ist am Zug",
+    "prompt": "{{player}} ist am Zug",
     "chooseDie": "Wähle eine Würfelkarte",
     "rolled": "Gewürfelt: {{roll}}",
     "selectPawn": "Wähle eine Figur",
     "end": "Zug beenden"
   },
   "match": {
-    "won": "Spieler {{number}} hat gewonnen",
+    "won": "{{player}} hat gewonnen",
     "abandoned": "Die Partie wurde abgebrochen",
     "restart": "Neue Partie"
+  },
+  "hud": {
+    "heading": "Spielstand",
+    "start": "Start",
+    "track": "Strecke",
+    "home": "Ziel",
+    "cards": "Karten",
+    "finished": "im Ziel"
+  },
+  "menu": {
+    "title": "Ludo Advanced",
+    "text": "Ein Ludo mit Würfelkarten und Skill-Karten.",
+    "start": "Partie starten"
+  },
+  "setup": {
+    "title": "Wie viele spielen mit?",
+    "text": "Alle spielen an einem Bildschirm.",
+    "players": "{{players}} Spieler",
+    "start": "Los"
+  },
+  "pause": {
+    "open": "Pause",
+    "title": "Pause",
+    "resume": "Weiterspielen",
+    "quit": "Partie abbrechen"
+  },
+  "win": {
+    "quit": "Zurück zum Menü"
+  },
+  "handover": {
+    "title": "Weitergeben an {{player}}",
+    "text": "Gib den Bildschirm weiter, bevor du auf Bereit drückst.",
+    "ready": "Bereit"
+  },
+  "language": {
+    "label": "Sprache wechseln",
+    "switch": "English"
   },
   "move": {
     "refused": {

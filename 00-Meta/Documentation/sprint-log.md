@@ -216,12 +216,24 @@ planning chapter describes, so the gap between it and the executed sprint has to
 | 36 | Core Game Engine & Board (epic) | 0 by design | In Progress |
 | 37 | Enhanced Dice Pool System (epic) | 0 by design | Todo |
 | 38 | Skill Cards Mechanics (epic) | 0 by design | Todo |
-| 39 | UI / UX, Audio & Game State (epic) | 0 by design | Todo |
+| 39 | UI / UX & Game State (epic) | 0 by design | Todo |
 | 42 | Online Multiplayer & Lobby System | 13 | Todo |
 | 43 | LLM-Powered Bot API Integration | 8 | Todo |
 | 44 | Expanded Skill Card Set | 3 | Todo |
 | 45 | Trap Card System & Tile Trigger Logic | 5 | Todo |
 | 46 | Classic vs. Custom Game Modes (Rule Toggles) | 5 | Todo |
+
+> **The epic in row 39 was renamed on 2026-09-01**, from *UI / UX, Audio & Game State*, when audio was
+> deferred out of it. Its three points left the must-have class with it. The table above is written with
+> the current title; [notes/01-requirements-and-goals.md](notes/01-requirements-and-goals.md) has the
+> facts and [project-journal.md](project-journal.md) the decision.
+>
+> **The sprint placement of #39 is contradictory and this log is not the place that resolves it.** The
+> board carries it as Sprint 2, In Progress; `SMART-Analysis.md`, `Requirements-Specification.md` and
+> `Roadmap-and-Gantt.md` all put it in Sprint 3. By the 2026-08-22 decision the board wins, which is why
+> it is in the table above, and it is the same finding
+> [notes/02-project-management.md](notes/02-project-management.md) already records: the epics are in
+> Sprint 2 and eight of their children carry no sprint at all.
 
 **Three things about that table are worth stating before the sprint closes, not after.**
 

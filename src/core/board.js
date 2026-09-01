@@ -101,6 +101,17 @@ export const REGION = {
  * the right stride for 2 and 4 and nothing sensible for 3, and a formula with one exception in it is
  * harder to check against the board than three lists are.
  */
+/**
+ * Every player count a match can start with (FR-01), in order: 2, 3, 4.
+ *
+ * Derived from the two bounds rather than written out, so it cannot disagree with `seatsFor`, which
+ * throws for anything outside them. It lives in `core/` because which counts are legal is a rule; issue
+ * #39 added it, because the match-setup screen and the address-bar parser had grown a copy each.
+ */
+export const PLAYER_COUNTS = Object.freeze(
+  Array.from({ length: MAX_PLAYERS - MIN_PLAYERS + 1 }, (_, index) => MIN_PLAYERS + index)
+);
+
 const SEATS_BY_COUNT = {
   2: [0, 2],
   3: [0, 1, 2],

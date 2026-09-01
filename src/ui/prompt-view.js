@@ -31,6 +31,7 @@ import $ from "jquery";
 
 import { cardById } from "../core/cards/catalogue.js";
 import { t } from "../i18n/index.js";
+import { displayNumber, seatName } from "./player-labels.js";
 
 /** What the strip is currently for. `prompt.css` keys its layout off this. */
 export const PROMPT_MODE = {
@@ -69,18 +70,25 @@ function button(label, action, value) {
   return value === undefined ? $button : $button.attr("data-prompt-value", value);
 }
 
-/** The one-line description of an open reaction window: who is doing what to whom. */
-function windowLine(window) {
+/**
+ * The one-line description of an open reaction window: who is doing what to whom.
+ *
+ * `seats` is passed in so the players are numbered by position in the match rather than by seat index.
+ * A two-player match otherwise reads "Spieler 3 würfelt" and has no Spieler 2. See `player-labels.js`.
+ */
+function windowLine(seats, window) {
   const played = window.played
     .map((entry) =>
       t("reaction.played", {
-        number: entry.seat + 1,
+        number: displayNumber(seats, entry.seat),
         card: t(`card.skill.${entry.cardId}.title`),
       })
     )
     .join(" · ");
 
-  const trigger = t(`reaction.trigger.${window.trigger}`, { number: window.actor + 1 });
+  const trigger = t(`reaction.trigger.${window.trigger}`, {
+    number: displayNumber(seats, window.actor),
+  });
 
   return played === "" ? trigger : `${trigger} · ${played}`;
 }
@@ -112,9 +120,7 @@ function targetButtons(kind, { seats, actor, chosenDie, choices }) {
     case "player":
       return seats
         .filter((seat) => seat !== actor)
-        .map((seat) =>
-          button(t("player.name", { number: seat + 1 }), PROMPT_ACTION.PICK, String(seat))
-        );
+        .map((seat) => button(seatName(seats, seat), PROMPT_ACTION.PICK, String(seat)));
     default:
       return [];
   }
@@ -139,7 +145,7 @@ export function updatePrompt($prompt, state, { secondsLeft = null, pick = null }
 
   if (state.reactionWindow !== null) {
     $prompt.attr("data-mode", PROMPT_MODE.REACTION);
-    $line.text(windowLine(state.reactionWindow));
+    $line.text(windowLine(state.seats, state.reactionWindow));
     $clock.text(secondsLeft === null ? "" : t("reaction.prompt", { seconds: secondsLeft }));
     $buttons.append(button(t("reaction.decline"), PROMPT_ACTION.DECLINE));
     return $prompt;

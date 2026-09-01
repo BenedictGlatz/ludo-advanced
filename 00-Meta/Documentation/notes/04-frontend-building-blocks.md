@@ -621,7 +621,9 @@ attributes.
   a property of the card. Nothing animates a tag, so there is no transition to restart.
 - **The art window is empty and that is outstanding work.** All 29 illustrations exist as inline SVG
   inside a generated artboard; extracting them is its own job. A card is still readable: the band says
-  the type, the title says the name, the tags say the numbers.
+  the type, the title says the name, the tags say the numbers. *(Closed on 2026-09-01 by issue #39, and
+  it turned out to be 36 drawings rather than 29. Left standing here because it is what was true on
+  2026-08-31; the extraction is its own facts section below.)*
 
 ### The dice hand, and the choice the view had been making for the player: 2026-08-31, issue #31
 
@@ -761,6 +763,291 @@ over or a window that never shuts.
 Named timers make that unwriteable: `set("handover", ...)` and `set("reaction", ...)` cannot cancel each
 other, and setting the same name twice replaces itself, which is what a countdown being redrawn wants.
 
+### The 36 card illustrations came out of the artboard: 2026-09-01, issue #39
+
+The empty art window recorded above is filled. It was the first of two things the Product Owner asked
+about on opening the running build, and the second was that nothing on screen says whose turn it is.
+
+- **There are 36 drawings, not 29.** The count in every earlier note was the skill cards only. The
+  artboard also holds one per dice denomination, D2 to D20, and those were dealt on every single turn
+  with an empty window. 29 plus 7.
+- **`scripts/extract-card-art.js` does the extraction, run by hand as `npm run assets:card-art`.** It
+  parses `01-Design/Handoff/Card artwork design planning/Card Art.dc.html` and writes one `.svg` per
+  card into `src/ui/art/`. Not a build step: the artboard is a design source, and making `npm run build`
+  parse HTML out of `01-Design/` would put a design file in the production build's dependency graph.
+- **Drawings are matched to cards by title, not by position.** Position would have worked, since the
+  artboard happens to run in catalogue order. It would also break silently the first time a card is
+  moved on the canvas and put the Yeet illustration on Tax Fraud, which no test could catch because
+  both are valid SVG. Titles are matched against `src/i18n/locales/en/cards.json`.
+- **Both halves of the mapping are hard failures.** A drawing that matches no card and a card with no
+  drawing both abort the script before a file is written. The reason is that a half-import looks exactly
+  like the empty window being replaced, so it must not be reachable by accident.
+- **Titles are compared with accents and punctuation stripped.** The artboard and the locale file were
+  written months apart and disagree in three places: a curly against a straight apostrophe in "It's Not
+  That Deep", the `%` in "Speedrun Any%", and the umlauts in Nühü. Folding beats a table of three
+  special cases.
+- **Two things are changed on the way out, and nothing else.** The artboard's inline `style` on the root
+  `<svg>` is dropped, because it sets `display`, `width` and `height`, and `card.css` sets the same
+  three on `.card__art > svg`. An inline style wins over a stylesheet, so keeping it would have put
+  three sizing decisions out of Claude Design's reach. And `aria-hidden="true"` plus
+  `focusable="false"` are added, because the card already carries its name in `.card__title` and
+  without this a screen reader reads out the path data instead (NFR-08).
+- **`src/ui/art/index.js` reads the files with `import.meta.glob`**, Vite's own, so it costs no
+  dependency and needs no editing when the card set changes. Thirty-six import lines would have been a
+  second copy of the card list kept in step by hand.
+- **The price of the glob is that a missing drawing is a runtime `undefined`, not a build error**, and
+  `tests/unit/ui/card-art.test.js` is what pays it. It walks the real catalogue and the real pool
+  composition, so a card added without a drawing fails the suite. It also asserts the two transforms
+  above, which is how "the script cleaned it" stays true after the next re-run.
+- **A sprite sheet was the rejected alternative.** One file with 36 `<symbol>` elements is one request
+  instead of an inlined bundle, and it fails the 300-line limit by a factor of ten. Thirty-six separate
+  files are at most 50 lines each.
+- **`card-view.js` still looks nothing up.** The drawing arrives in the description as `card.art`, the
+  same way translated strings do, so the one card component keeps knowing nothing about what a card is.
+  It does guard the write: `.html()` runs only when the card's id changed, because `updateCard` runs on
+  every slot on every render and re-parsing eight SVG drawings each time would be waste. The
+  bookkeeping sits in jQuery's `.data()` rather than a DOM attribute, so no stylesheet can come to
+  depend on it.
+
+**Found while doing it, and not fixed:** the skill hand builds five permanent slots, so a hand holding
+one card renders four blank cards with a pale art window. Spec 03's D29 answered what *unplayable*
+looks like and `card-state.css` answers what *face down* looks like. Neither is *no card at all*. It is
+in handoff 04 as an open item rather than guessed at.
+
+### A player got a name, and a two-year-old off-by-one went with it: 2026-09-01, issue #39
+
+`src/ui/player-labels.js` is the one place that decides what a player is called.
+
+**The defect.** A seat is 0 to 3 and `seatsFor` seats two players **opposite each other on seats 0 and
+2**, so every label built as `seat + 1` produced "Spieler 1" and "Spieler 3" in a two-player match, with
+no Spieler 2 at the table. It was written down in `move-hints.js` as a known cost and left, on the
+grounds that a second numbering would disagree with `data-player` and the colour tokens.
+
+**Why it hid for two sprints:** in a four-player match `seat + 1` and the position in the match are the
+same numbers, 1 2 3 4. Every screenshot anybody had taken was a four-player match.
+
+- **The answer decided with the Product Owner on 2026-09-01 is that the label carries both facts:**
+  "Spieler 2 (Grün)". The number is the position in the match, counted over `state.seats`; the colour is
+  the seat. Nothing has to be inferred from the number any more, which is what the old objection was
+  about.
+- **The seat is still the seat everywhere else.** `data-player`, `--color-p0` to `--color-p3`, the entry
+  squares and every rule in `core/` keep using 0 to 3. This is a presentation-only translation and it
+  lives in `ui/` for that reason.
+- **The colour word is keyed on the seat, not on the display number**, because seat 2 is green whether it
+  is the second player of two or the third of four.
+- **The words come from design spec 01 § D1**, the same table that fixes the four hex values. Brief 04
+  asks Claude Design to correct any word that is wrong for the colour it specified, because those four
+  words are the only place the design is described to the player in prose.
+- **Three call sites were rewired**, and the reason for one file rather than a fix in each is that four
+  places building the same name is four chances to miss one. `move-hints.js` names the winner,
+  `prompt-view.js` names the actor in a reaction line and labels the opponent-picker buttons.
+- **`displayNumber` takes `state.seats` and not the state.** Two of the three call sites have no state
+  object to hand: the reaction line is built from a window and the buttons from a pick descriptor.
+- **It has a unit test even though it is in `ui/`**, alongside `board-geometry.js` and the card artwork,
+  because it calls no `t()` and needs no DOM, so it fits `environment: "node"` without weakening
+  NFR-01's second criterion.
+
+#### The locale keys that had existed and were never called
+
+`turn.prompt` ("Spieler {{number}} ist am Zug") had been in both locale files since the i18n commit and
+was called from nowhere. It was the answer to the first question the Product Owner asked about the
+running build, sitting unused in the repository. Four more like it: `turn.chooseDie`, `turn.rolled`,
+`turn.selectPawn` and `match.restart`.
+
+**`turn.prompt` and `match.won` changed their placeholder from `{{number}}` to `{{player}}`**, and both
+now take the composed label. One string per meaning: a second "player N wins" for the win screen would
+have been the same sentence maintained in two places and two languages.
+
+The parity test in `tests/unit/i18n/locales.test.js` already compared the `{{...}}` placeholders of the
+two locales, so changing one language and not the other would have failed the suite. That check was
+written for a different reason and paid for itself here.
+
+### The HUD, and the answer to the question that opened this issue: 2026-09-01, issue #35
+
+`src/ui/hud-view.js` plus the interim `src/ui/styles/hud.css`. One row per seat actually in the match,
+carrying the short name and four numbers, and `data-on-turn` on exactly one of them.
+
+- **Four numbers per seat, and no more.** Pawns in start, on track and home is FR-36. The fourth is the
+  size of the skill hand, on screen only because of decision D33. **FR-37, the resource display, is
+  `won't have` and has no slot**, because no rule for it exists anywhere in the rulebook: issue #35 is
+  titled *Game HUD & Resource Display* and only the first half is being built. Pool and discard
+  counters were considered at the same time and dropped, so sixteen numbers do not become twenty-four.
+- **The rows are rebuilt only when the set of seats changes**, which is a restart with a different
+  player count and nothing else. Every other update is an attribute or a text rewrite, per D10.
+- **`renderedSeats` reads the seat list back off the DOM** rather than remembering it in a variable, so
+  there is no field that can drift from what is on screen.
+
+#### The turn sentence is in the top bar, and that is arithmetic rather than taste
+
+The first attempt put "am Zug" as a chip on the active seat's row. The measurements, at 1440 by 900:
+
+| Thing | Pixels |
+| --- | --- |
+| The HUD region | 1392 wide |
+| One seat row, four seats | 332 |
+| The full label "Spieler 1 (Rot)" | 107 |
+| The four numbers with their words | 210 |
+| An "am Zug" chip | 55 |
+
+107 + 210 + 55 plus two gaps does not fit in 332. What it did instead was wrap the row onto a second
+line, which made the page **935 px tall and gave FR-31 a scrollbar**, and truncate the names to
+"Spi...". Two changes fixed it and both are recorded because both are visible on screen:
+
+1. **The turn line became one sentence for the whole page**, rendered in the chrome row, which had
+   roughly 1200 px going spare. `turn.prompt` was written as a sentence in the first place. The seat row
+   still carries `data-on-turn`, so the stylesheet marks it without spending width.
+2. **The seat row shows the short name**, "Spieler 2". 86 px were left after the numbers and the full
+   label needs 107. The colour is not lost: `hud.css` paints the row's left edge in the seat's own
+   colour, and the sentence above spells the label out in full.
+
+**The alternative was shrinking `--board-size`**, and spec 01 § 6 explicitly names it as the number to
+check first when a new region lands. It was not taken: shrinking the board to fit a HUD that Claude Code
+designed itself is a trade the designer should make, not this side. The numbers above are in handoff 04
+so that D35 and D37 can make it with real figures. `--board-size` is unchanged.
+
+#### The chrome row, and why the language switch is not in a menu
+
+`src/ui/chrome-view.js`: the turn sentence, a pause button and the language switch, in one always-present
+row. FR-34 is a `must have` and its criterion is a switch **at runtime**.
+
+`S11` in the obligations book pairs the language setting with the audio setting on one screen reached
+from the main menu, and **audio was dropped out of epic #39 on 2026-09-01**. Leaving the language switch
+in a screen that no longer exists would have quietly dropped a must-have requirement along with a
+`should have` one. So it is here, reachable in the middle of a match.
+
+- **The button shows the language you would switch to**, so `language.switch` is "English" in the German
+  file and "Deutsch" in the English one and one key covers both directions. `data-lang` carries the
+  language actually in use, for the stylesheet and the tests.
+- **Switching needs nothing but a re-render.** No view caches a translated string: every one of them
+  rewrites its own text from `t()` on every update. That is what makes FR-34's "no string remains in the
+  previous language" true by construction rather than by a list of things to remember to refresh, and
+  `hud.spec.js` asserts it by searching the whole page for the German words afterwards.
+
+#### Three regions on screen now have no design behind them
+
+`prompt.css` was one, and Chapter 04 already records it as a process failure. It is now three:
+`prompt.css`, `hud.css` and `chrome.css`. All three carry the same header saying so in the first thirty
+lines, all three compose only tokens that already exist in `tokens.css`, and all three are listed as
+deliverables to be **replaced** in handoff 04.
+
+`app.css` was also touched, and that is a fourth thing worth naming. Two `auto` grid rows were prepended
+and every existing `grid-area` shifted down by two, so the chrome and the HUD have somewhere to be. No
+colour, no spacing value and no token changed. The block carries a dated comment saying exactly that,
+following the precedent of the `body { margin: 0 }` correction already in that file.
+
+#### The HUD cost the board and the cards nine per cent each, and that is a measurement
+
+This is the part of issue #39 worth a paragraph in the report, because it is a constraint nobody had
+priced and the test suite is what found it.
+
+`tests/e2e/skill-hand.spec.js` has an assertion that the page does not scroll **while the prompt strip
+is asking something**, which was written after the prompt strip landed for exactly this class of
+problem. Adding the HUD failed it by 56 px.
+
+The vertical budget at the design resolution, 1440 by 900:
+
+| Row | Pixels |
+| --- | --- |
+| Page padding, top and bottom | 48 |
+| Five row gaps | 80 |
+| Chrome | 28 |
+| HUD | 62 |
+| The board row | 634 |
+| Refusal strip | 46 |
+| Prompt strip | 70 |
+| **Total** | **968 against 900** |
+
+Two findings came out of fixing it:
+
+1. **The refusal strip occupies its 46 px even when it says nothing.** `refusal.css` fades it with
+   `opacity` rather than removing it, so the page does not jump when a refusal appears. That is a design
+   decision from D9 and it was left alone, but it means the foot of the page costs 116 px whether
+   anything is being said or not.
+2. **Shrinking the board alone does nothing.** The board row is as tall as the **taller** of the two
+   columns, and the rail was 627 px against the board's 634. Dropping `--board-size` from 44vw to 40vw
+   bought 7 px, not 58, and the first attempt at the fix was therefore wasted.
+
+So both columns gave the same amount:
+
+| | Before | After |
+| --- | --- | --- |
+| Board, `--board-size` width bound | 634 px, 44vw | 562 px, 39vw |
+| Rail, the two `--card-u` factors | 627 px, 0.76 and 0.68 | 561 px, 0.70 and 0.62 |
+
+**Two delivered design tokens were changed by Claude Code, and that is the cost being recorded.** Spec
+01 § 6 sanctions it in advance for `--board-size`, calling it "the number to check first when the two
+hands are actually built". It says nothing about `--card-u`, and D26 is the decision that sized the
+hands in the first place. Both changes carry a dated comment with the arithmetic above, both are in
+handoff 04 as things D35 must confirm or overrule, and both revert if the HUD ends up somewhere that
+costs no grid row. The full-size reference card, `--card-u: 1`, is untouched.
+
+**What the smaller cards spend** is what D26 already identified: the hand sizes drop the rules paragraph
+and keep the art, and they keep doing that at 0.70 and 0.62. What the smaller board spends is field
+size, and spec 01 records that `--board-size` had been **raised** on 2026-08-29 to make the fields
+larger. Nine per cent of that is given back here.
+
+### The five screens, and the game becoming a game: 2026-09-01, issues #39 and #41
+
+Screens S1, S2, S8, S9 and a new one with no screen id: the handover.
+
+- **One overlay component, five contents.** The menu, the setup, the pause, the win and the handover are
+  the same thing from the player's side: the game has stopped and is asking you something, and here are
+  your buttons. `overlay-view.js` renders a description and calls no `t()`; `overlay-screens.js` builds
+  the description. Same split as `card-view.js` and the two hand views, and for the same reason: the
+  component stays one component while the number of screens grows. Whether it is the right seam is D38.
+- **`match-flow.js` owns which screen is up, and it never enters the game state.** The rules know nothing
+  about a pause and `createGameState` has no field for one. This is the same reasoning `skill-hand-view.js`
+  already records for a half-finished card play.
+- **Starting a match rebuilds the page.** The board's markup depends on the player count, so a
+  two-player match has eight pawns where a four-player one has sixteen. Old elements go away with their
+  jQuery handlers attached to them, which is what keeps handlers from piling up over a session of
+  restarts.
+- **The chrome and the overlay survive the rebuild, and one line makes that work.** `.empty()`
+  deliberately unbinds every handler on the children it removes, so from the second match onward the
+  menu and the handover rendered correctly and simply stopped responding to clicks. `.detach()` first is
+  the fix. Worth carrying into the report: the symptom was silent, and it was a Playwright walk of the
+  flow that found it rather than anything visible.
+- **A test found a second one.** Quitting to the menu left the abandoned match mounted behind the menu's
+  opaque sheet, so `.board .pawn` still resolved to eight elements while the player was on the main menu.
+  Invisible, and wrong.
+
+#### The handover, which is what makes a secret hand secret
+
+Before this the rail flipped from one player's face-up cards to the next player's after a 320 ms timer,
+with nothing in between. Once the Product Owner made an opponent's hand secret and only its count public
+(decision D33), that stopped being acceptable: at one shared screen, secrecy is whatever covers the
+screen while it changes hands.
+
+- **The wait comes first, then the overlay.** The pause after a move is still read out of
+  `--motion-capture` and a refusal still gets D9's four seconds, because a move has to finish animating
+  and a refusal has to be readable **before** anything covers the board. The handover screen opens on
+  the same timer that used to pass the turn.
+- **`nextSeat` was exported from the turn manager** rather than the overlay walking `state.seats` a
+  second time. Two answers to "who is next" would disagree the first time turn order changes.
+- **`?fast=1` passes the handover without waiting**, which is the affordance that kept all ten older
+  end-to-end specs running unchanged. It is the same compromise the flag already makes for the
+  thirty-second reaction window, and `match-flow.spec.js` has one case that runs **without** it and
+  asserts the gate.
+
+#### `game-loop.js` was split three ways, and the seams were already there
+
+It passed 300 lines (NFR-02) when the handover gate and the pause landed. Three files came out of it,
+and none of them is a slice taken to make a number:
+
+| File | Answers |
+| --- | --- |
+| `render.js` | What does the page look like for this state |
+| `turn-controls.js` | What does a click on a dice card or a pawn mean |
+| `game-loop.js` | What does the game do when nobody is clicking |
+
+`turn-controls.js` in particular is the symmetric half of `card-controls.js`, which has done exactly that
+job for card clicks since issue #34. The chrome moved out too, to `match-flow.js`, because the pause
+button opens a screen the loop does not own. `REFUSAL_MIN_MS` went to `timers.js`, which is where the
+game's named waits live and was the only thing left in the loop that was a duration rather than a step.
+
+`match-flow.js` then hit the same limit and `page.js` came out of it on the same principle: what the page
+consists of, against which screen the session is on.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -776,8 +1063,11 @@ other, and setting the same name twice replaces itself, which is what a countdow
   three handoffs.** Specs 01, 02 and 03 have landed; where the CSS lives and where the reasoning lives
   is recorded above. Chapter 12 still wants the component overview table and it can be written now.
 - **Open out of spec 03, and none of it blocks the dice hand:**
-  - **D33 needs the Product Owner, not the designer.** Is an opponent's skill hand represented on
-    screen at all, and is the card count public? The CSS supports either answer today.
+  - ~~**D33 needs the Product Owner, not the designer.** Is an opponent's skill hand represented on
+    screen at all, and is the card count public?~~ **Answered by the Product Owner on 2026-09-01:** the
+    cards stay secret, the **count is public** and sits in the HUD. It turned out not to be only a
+    presentation question, which is the interesting part: it is what forced the handover screen, because
+    secrecy at one shared screen is whatever covers the screen while it changes hands.
   - **NFR-12, telling the four seats apart without colour, is still open from handoff 02.** Spec 03
     suggests a shape for the answer without closing it: the Reaction band is marked by stripes as well
     as by orange, and four seats could take four fills that survive greyscale. That is a change to
@@ -785,10 +1075,32 @@ other, and setting the same name twice replaces itself, which is what a countdow
   - **Whether a skill square moving should be animated.** Nobody has asked, and the reappearance would
     happen on a field the player is not looking at.
   - **Baloo 2 and Nunito are still loaded from Google Fonts**, unchanged from spec 01 section 5.
-  - **The 29 card illustrations are not extracted from the artboard**, so every `.card__art` is an
-    empty framed window.
+  - ~~**The 29 card illustrations are not extracted from the artboard**, so every `.card__art` is an
+    empty framed window.~~ **Done 2026-09-01, issue #39,** and there were 36 rather than 29. See the
+    facts section above. What is still open is **whether the artwork needs a Night In variant**: the
+    drawings carry raw hex from the artboard, so the frame follows the skin and the drawing inside it
+    does not. That is D41 in handoff 04.
   - **The size limit has to be checked after Prettier, and the brief does not say so.** Two handoffs
     in a row delivered a stylesheet that fitted 300 lines and did not after formatting.
+- **Open out of issue #39, and design handoff 04 is where all of it goes:**
+  - **Four stylesheets were written by Claude Code and none of them should have been**: `prompt.css`,
+    `hud.css`, `chrome.css` and `overlay.css`. All four compose only existing tokens and say so in their
+    first thirty lines. They are listed in handoff 04 as deliverables to be **replaced**, and until the
+    spec lands the game looks provisional by design rather than by accident.
+  - **Two delivered tokens were changed to make room for the HUD**, `--board-size` and the two hand
+    `--card-u` factors, each about nine per cent. D35 confirms or overrules it, and the arithmetic is in
+    the brief.
+  - **What an empty hand slot looks like.** The skill hand builds five permanent slots, so a hand of one
+    card renders four blank cards with a pale art window. D29 answered *unplayable* and `card-state.css`
+    answers *face down*; neither is *no card at all*.
+  - **The overlay does not animate.** It goes from `display: none` to `display: grid` in one frame, so
+    the opacity transition cannot run. It matters most for the handover, where a screen that flashes
+    conceals nothing, and it is D39.
+  - **The win message is now in two places**, the overlay and the orange refusal strip. That is D40,
+    which is D18 from handoff 02 finally unblocked.
+  - **The rules screen, S10, still has no issue at all** (FR-35, `should have`), and neither does the
+    mute half of S11 now that audio is deferred. Neither is in issue #39 and neither is forgotten: both
+    are named here so the board's silence about them is on the record.
 - A card's visual presentation belongs here and its rule belongs in Chapter 05; the two are matched
   by card id. Worth stating explicitly in the report, because it is the clearest example of the
   layering rule doing real work.

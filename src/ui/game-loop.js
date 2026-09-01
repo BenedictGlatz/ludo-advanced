@@ -7,6 +7,11 @@
  *
  * ## The four controls, and what still happens by itself
  *
+ * **What a click *means* moved out of this file in issue #39.** `turn-controls.js` owns the dice card and
+ * the pawn, `card-controls.js` owns the cards and the prompt, and the always-present chrome belongs to
+ * `match-flow.js`, which owns the pause screen the button opens. What is left here is the question this
+ * file is named for: what the game does when nobody is clicking.
+ *
  * The loop was built on 2026-08-30 with **the pawn click as its only control**. It now has four:
  *
  * | Control | Phase it answers | Landed in |
@@ -20,8 +25,12 @@
  *
  * - **`roll` rolls itself.** There is nothing to decide there. The phase exists so that the on-roll
  *   reaction window has a moment to open in, and so a roll animation has something to hang off.
- * - **The turn hands over on its own**, after the move has finished animating or the refusal has been on
- *   screen long enough to read.
+ * - **The turn hands over on its own** only when nobody is watching for it. Since issue #39 the pause
+ *   after a move ends in the handover overlay rather than in the next turn: `onHandover` is called and a
+ *   person presses Ready. The timer is still there and still uses the design's durations, because a move
+ *   has to finish animating and a refusal has to be readable **before** anything covers the board. When
+ *   no `onHandover` is given the loop passes the turn itself, which is what keeps a match driven straight
+ *   out of `createGameLoop` playable and is how `?fast=1` keeps the end-to-end suite short.
  *
  * And one thing happens by itself only when there is nothing to decide: **the action phase is skipped
  * when the active player holds no playable card.** Waiting there would stall the game, which is not a
@@ -38,9 +47,9 @@
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { INTENT, dispatch } from "../state/intents.js";
 import { playableCards } from "../state/intents-cards.js";
-import { motionMs, updateBoard } from "./board-view.js";
+import { nextSeat } from "../state/turn-manager.js";
+import { motionMs } from "./board-view.js";
 import { createCardControls } from "./card-controls.js";
-import { updateDiceHand } from "./dice-hand-view.js";
 import {
   bindBoardEvents,
   bindDiceHandEvents,
@@ -48,42 +57,40 @@ import {
   bindPromptEvents,
   bindSkillHandEvents,
 } from "./events.js";
-import { applyMoveHints, showMessage } from "./move-hints.js";
-import { updatePrompt } from "./prompt-view.js";
-import { updateSkillHand } from "./skill-hand-view.js";
-import { createTimers } from "./timers.js";
+import { createRenderer } from "./render.js";
+import { REFUSAL_MIN_MS, createTimers } from "./timers.js";
+import { createTurnControls } from "./turn-controls.js";
 
 /**
- * How long a refusal stays on screen before the turn passes.
+ * Drive a match. `deps` is the injected `{ rng, diceSource }` pair (NFR-09).
  *
- * D9 of the design spec: the strip "stays until the player's next action, and at minimum for 4 seconds".
- * With the pawn click as the only control there was no next action to wait for, so the minimum was the
- * whole rule. It is a number in a JavaScript file because `tokens.css` has no token for it, which is
- * worth raising in the next handoff: it is a design decision living outside the design.
+ * `parts` is every region of the page, and it is passed through to `render.js` whole rather than
+ * destructured here. Only four of the seven are named below, and that is the point: the board, the two
+ * hands and the prompt are the ones the loop **binds events to**. The HUD, the chrome and the message
+ * strip are drawn and never clicked, so this file has no business knowing they exist.
  */
-export const REFUSAL_MIN_MS = 4000;
-
-/** Drive a match. `deps` is the injected `{ rng, diceSource }` pair (NFR-09). */
 export function createGameLoop({
   initialState,
   deps,
-  $board,
-  $diceHand,
-  $skillHand,
-  $prompt,
-  $message,
+  parts,
   delays = {},
+  onHandover = null,
+  onMatchOver = null,
 }) {
-  let state = initialState;
-  const timers = createTimers();
+  const { $board, $diceHand, $skillHand, $prompt } = parts;
 
+  let state = initialState;
+  let finished = false;
+  const timers = createTimers();
+  const draw = createRenderer(parts);
+
+  /** Redraw, with the three pieces of presentation state `card-controls.js` owns. */
   function render() {
-    updateBoard($board, state);
-    applyMoveHints($board, state);
-    updateDiceHand($diceHand, state);
-    updateSkillHand($skillHand, state, cards.selectedSlot());
-    updatePrompt($prompt, state, { secondsLeft: cards.secondsLeft(), pick: cards.pick() });
-    showMessage($message, state);
+    draw(state, {
+      selectedSlot: cards.selectedSlot(),
+      secondsLeft: cards.secondsLeft(),
+      pick: cards.pick(),
+    });
   }
 
   /**
@@ -108,6 +115,14 @@ export function createGameLoop({
     apply,
     refresh: render,
     resume: () => advance(),
+  });
+
+  const board = createTurnControls({
+    getState: () => state,
+    apply,
+    render,
+    advance: () => advance(),
+    isPicking: () => cards.isPicking(),
   });
 
   /** How long to leave the finished turn on screen before passing it on. */
@@ -141,6 +156,17 @@ export function createGameLoop({
   }
 
   /**
+   * Hand the turn on and carry straight into the next one.
+   *
+   * Split out of `advance` because there are now two callers: the timer, when nothing is watching for the
+   * handover, and the Ready button on the handover overlay.
+   */
+  function passTurn() {
+    if (!apply({ type: INTENT.END_TURN })) return;
+    advance();
+  }
+
+  /**
    * Render, then take whatever step the turn takes without the player.
    *
    * The recursion is bounded rather than a growing stack: every branch either advances the phase or
@@ -151,6 +177,14 @@ export function createGameLoop({
 
     if (state.status !== MATCH_STATUS.RUNNING) {
       timers.clearAll();
+      cards.stop();
+
+      // Guarded, because `advance()` is re-entered after every accepted intent and the match-over
+      // screen must open once rather than on every pass.
+      if (!finished) {
+        finished = true;
+        onMatchOver?.(state);
+      }
       return;
     }
 
@@ -183,73 +217,70 @@ export function createGameLoop({
     }
 
     if (state.phase === TURN_PHASE.TURN_END) {
-      timers.set(
-        "handover",
-        () => {
-          if (!apply({ type: INTENT.END_TURN })) return;
-          advance();
-        },
-        pauseAfterTurn()
-      );
+      // The wait comes first either way. A move has to finish animating and a refusal has to be on
+      // screen long enough to read (D9) **before** the overlay covers the board, so the handover
+      // screen opens on the same timer that used to pass the turn.
+      const next = onHandover === null ? passTurn : () => onHandover(nextSeat(state));
+
+      timers.set("handover", next, pauseAfterTurn());
     }
 
     // `choose`, `action` with a card in hand, and `act` are the phases that wait for a person.
   }
 
-  /**
-   * A click or a keypress on one of the three drawn dice cards (FR-19).
-   *
-   * One activation, not two. Selecting a pawn first exists because a misclick there costs another player
-   * most of a lap; picking a card costs nobody anything and is undone by the next turn, so a confirmation
-   * step would be a click charged for no risk.
-   */
-  function onDiceCardActivated(faces) {
-    if (state.status !== MATCH_STATUS.RUNNING || state.phase !== TURN_PHASE.CHOOSE) return;
-
-    if (!apply({ type: INTENT.CHOOSE_DIE, faces })) return;
-    advance();
-  }
-
-  /**
-   * A click or a keypress on a pawn that can move.
-   *
-   * **The first activation selects and the second commits.** One click would be fewer clicks, and it would
-   * also mean that a misclick captures an opponent with no way back, in a game where a capture costs the
-   * other player most of a lap. Selecting first is also what makes FR-32 literal: the target of the move
-   * about to be played is lit before it is played.
-   *
-   * **A pawn click means something else entirely while a card is being aimed**, and that case is caught
-   * here rather than by the two handlers racing: `bindPickEvents` filters on `[data-pickable]` and this one
-   * on `[data-movable]`, and a pawn can carry both.
-   */
-  function onPawnActivated(pawn) {
-    if (state.status !== MATCH_STATUS.RUNNING || state.phase !== TURN_PHASE.ACT) return;
-    if (cards.isPicking()) return;
-
-    if (state.selectedPawn !== pawn) {
-      if (apply({ type: INTENT.SELECT_PAWN, pawn })) render();
-      return;
-    }
-
-    if (!apply({ type: INTENT.COMMIT_MOVE, pawn })) return;
-    advance();
-  }
-
   return {
     /** Put the board on screen and start the first turn. */
     start() {
-      bindBoardEvents($board, { onPawnActivated });
+      bindBoardEvents($board, { onPawnActivated: board.onPawnActivated });
       bindPickEvents($board, cards.handlers);
-      bindDiceHandEvents($diceHand, { onDiceCardActivated });
+      bindDiceHandEvents($diceHand, { onDiceCardActivated: board.onDiceCardActivated });
       bindSkillHandEvents($skillHand, cards.handlers);
       bindPromptEvents($prompt, cards.handlers);
       advance();
     },
 
+    /**
+     * Redraw without advancing the turn.
+     *
+     * The flow calls this after a language change. Every view rewrites its own text from `t()` on every
+     * update, so a plain redraw is the whole of FR-34's "every visible string changes".
+     */
+    refresh: render,
+
     /** Stop every pending timer. Nothing else in here waits. */
     stop() {
       timers.clearAll();
       cards.stop();
+    },
+
+    /**
+     * Pass the turn on, which is what the handover overlay's Ready button does.
+     *
+     * Exposed rather than done inside the loop, because who decides that the screen has changed hands is
+     * a question about the person in front of it and not about the turn.
+     */
+    passTurn,
+
+    /**
+     * Freeze the match (FR-07). Every pending timer and the reaction clock stop.
+     *
+     * The state object is untouched, because a pause is not a game event: nothing in the rulebook knows
+     * about it, and putting it in the frozen state would make the rules layer hold a fact about a button.
+     */
+    pause() {
+      timers.clearAll();
+      cards.stop();
+    },
+
+    /**
+     * Carry on from where the pause left off.
+     *
+     * `advance()` re-enters whatever phase the turn was in, which is why pausing needs to save nothing.
+     * A reaction window that was open reopens its clock at the full thirty seconds, and that is the
+     * intended reading: the players stopped, so the window did too.
+     */
+    resume() {
+      advance();
     },
 
     /** The current state, for tests and for the browser console. Frozen, so it cannot be written. */

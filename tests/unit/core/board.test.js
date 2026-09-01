@@ -5,6 +5,7 @@ import {
   PLAYER_OFFSET,
   HOME_COLUMN_LENGTH,
   PAWNS_PER_PLAYER,
+  PLAYER_COUNTS,
   START_R,
   HOME_R,
   REGION,
@@ -250,5 +251,29 @@ describe("isSameSquare", () => {
   it("treats start areas as separate slots, so they never collide", () => {
     expect(isSameSquare({ player: 0, r: START_R }, { player: 0, r: START_R })).toBe(false);
     expect(isSameSquare({ player: 0, r: START_R }, { player: 1, r: START_R })).toBe(false);
+  });
+});
+
+describe("PLAYER_COUNTS (FR-01)", () => {
+  it("lists exactly the counts a match can start with", () => {
+    expect(PLAYER_COUNTS).toEqual([2, 3, 4]);
+  });
+
+  /**
+   * The point of deriving it from the two bounds is that it cannot drift from `seatsFor`, which is the
+   * function that actually refuses a bad count. Two places that both know which counts are legal is how
+   * a setup screen ends up offering one the rules reject.
+   */
+  it("holds every count seatsFor accepts, and no other", () => {
+    for (const count of PLAYER_COUNTS) {
+      expect(seatsFor(count)).toHaveLength(count);
+    }
+
+    expect(() => seatsFor(Math.min(...PLAYER_COUNTS) - 1)).toThrow(RangeError);
+    expect(() => seatsFor(Math.max(...PLAYER_COUNTS) + 1)).toThrow(RangeError);
+  });
+
+  it("is frozen, so a view cannot sort or push into the rules' own list", () => {
+    expect(Object.isFrozen(PLAYER_COUNTS)).toBe(true);
   });
 });

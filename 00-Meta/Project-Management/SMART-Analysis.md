@@ -72,7 +72,7 @@ are the board's sprint end dates.
 | **SG1** | #36 Core Game Engine & Board | 2026-08-23 | Sprint 1 |
 | **SG2** | #37 Enhanced Dice Pool System | 2026-09-06 | Sprint 2 |
 | **SG3** | #38 Skill Cards Mechanics | 2026-09-06 | Sprint 2 |
-| **SG4** | #39 UI / UX, Audio & Game State | 2026-09-17 | Sprint 3 |
+| **SG4** | #39 UI / UX & Game State | 2026-09-17 | Sprint 3 |
 
 ### SG1: Core game engine and board, by 2026-08-23
 

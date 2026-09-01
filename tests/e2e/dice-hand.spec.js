@@ -115,6 +115,21 @@ test.describe("the dice hand", () => {
     await expect(hand.locator(".card__result")).toHaveText(["", "", ""]);
   });
 
+  test("shows a drawing on every card it deals", async ({ page }) => {
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+
+    // Issue #39. `.card__art` was an empty framed window for two sprints, which is what the Product
+    // Owner saw and asked about. The unit test proves the 36 drawings resolve; this proves one of them
+    // actually reaches the page, which is the half a module boundary can hide.
+    const art = diceHand(board).locator(".card__art");
+
+    await expect(art).toHaveCount(3);
+    await expect(art.locator("svg")).toHaveCount(3);
+
+    // Decoration, not content: the card's name is already in `.card__title` (NFR-08).
+    await expect(art.locator("svg").first()).toHaveAttribute("aria-hidden", "true");
+  });
+
   test("can be played with the keyboard alone (NFR-08)", async ({ page }) => {
     const board = await openMatch(page, SEEDS.leavesStartAtOnce);
     const hand = diceHand(board);

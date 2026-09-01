@@ -2292,6 +2292,258 @@ to get wrong later.
 - **Rejected: a number input.** Fewer elements on screen and four more states to design and test.
 - → Ch. 04
 
+### 2026-09-01: The card artwork is extracted by a script, not copied by hand
+
+- **Chosen:** `scripts/extract-card-art.js` parses the Claude Design artboard and writes one `.svg` per
+  card into `src/ui/art/`, run by hand as `npm run assets:card-art`. It matches drawings to cards **by
+  title**, and it aborts before writing anything if a drawing matches no card or a card has no drawing.
+- **Why:** a manual copy produces identical files once and leaves the next person to find 36 drawings in
+  a 126 KB file and hope they catch all of them. The failure mode is the expensive part: a card that
+  quietly misses its drawing looks exactly like the empty art window this work removes, so nobody would
+  notice. Title matching over position matching for the same reason: the artboard happens to run in
+  catalogue order today, and the first card moved on the canvas would silently put the Yeet drawing on
+  Tax Fraud, which no test could catch because both are valid SVG.
+- **Rejected: a build step.** It would make every `npm run build` depend on a file in `01-Design/`,
+  which puts a design source in the production build's dependency graph.
+- **Rejected: doing it once by hand.** Cheaper today, and it loses the two hard failure checks, which
+  are the whole value.
+- → Ch. 04
+
+### 2026-09-01: The drawings are 36 separate files behind a glob, not one sprite sheet
+
+- **Chosen:** one `.svg` file per card, read by `import.meta.glob` in `src/ui/art/index.js` and inlined
+  eagerly, with `tests/unit/ui/card-art.test.js` walking the real catalogue to prove all 36 resolve.
+- **Why:** the 300-line limit decides it. A sprite sheet holding 36 drawings is a few thousand lines in
+  one file; 36 files are at most 50 lines each. The glob then means this module needs no editing when
+  the card set changes, where 36 import lines would be a second copy of the card list maintained by
+  hand, and this project already has one of those drifting in the locale files.
+- **The cost is named:** a glob turns a missing drawing into a runtime `undefined` instead of a build
+  error. The unit test is what buys that back, and it is why the test walks `SKILL_CARDS` and
+  `POOL_COMPOSITION` rather than a list of file names.
+- **Rejected: a sprite sheet with `<symbol>` and `<use>`.** One request instead of an inlined bundle,
+  and it fails the file-size limit by a factor of ten.
+- **Rejected: `<img>` tags or CSS backgrounds.** Design brief 03 § 2 already fixed inline SVG, and an
+  external asset would put the drawing out of the stylesheet's reach.
+- → Ch. 04
+
+### 2026-09-01: The extraction strips the artboard's inline sizing, and that is a boundary question
+
+- **Chosen:** the root `<svg>` of every extracted drawing loses its inline `style` and gains
+  `aria-hidden="true"` and `focusable="false"`. The `viewBox` stays.
+- **Why:** the artboard sets `display`, `width` and `height` inline, and `card.css` sets the same three
+  on `.card__art > svg`. An inline style beats a stylesheet, so shipping it as delivered would have
+  moved three sizing decisions out of Claude Design's reach, which is exactly the line `CLAUDE.md`
+  draws. The `viewBox` is the drawing's own coordinate system and not a presentation choice, so it is
+  not ours to touch. `aria-hidden` is NFR-08: the card already carries its name in `.card__title`, and
+  without it a screen reader reads out the path data and the name is lost in it.
+- **Rejected: shipping the SVG byte-for-byte as delivered.** Truer to the source, and it silently
+  overrides the stylesheet the design owns.
+- **Rejected: overriding it back with `!important` in `card.css`.** Same outcome, achieved by making the
+  stylesheet fight the markup.
+- → Ch. 04
+
+### 2026-09-01: A player is named by position plus colour, and the seat stays the seat
+
+- **Chosen:** on screen a player is "Spieler 2 (Grün)". The number counts from 1 over `state.seats`, so
+  the second player of a two-player match is Spieler 2 and not Spieler 3. The colour word belongs to the
+  seat. One helper, `ui/player-labels.js`, and three rewired call sites.
+- **Why:** this fixes a real defect. Two players sit on seats 0 and **2**, so labelling a seat `seat + 1`
+  gave a table with a Spieler 1 and a Spieler 3 and no Spieler 2. `move-hints.js` had recorded it as a
+  known cost and left it, arguing that renumbering would introduce a second numbering that disagrees
+  with `data-player` and the colour tokens. That objection is answered rather than overruled: the label
+  now carries **both** facts, so nothing has to be inferred from the number, and the seat is still the
+  seat in the markup and in every rule. The colour is in the name because a pawn on the board is
+  identified by nothing else, so a name without it leaves the player to work out which pieces are theirs.
+- **Why it survived two sprints:** in a four-player match the two numberings are identical, 1 2 3 4, and
+  every screenshot anybody had taken was a four-player match.
+- **Rejected: keeping `seat + 1`.** One numbering everywhere, and it prints a player who does not exist.
+- **Rejected: names typed in at match setup.** The most personal option at a hot-seat table, and it needs
+  an input per player and a place in the state object that does not exist: `createGameState` knows only
+  `playerCount`.
+- **Rejected: the colour alone, "Rot ist am Zug".** Shorter and directly readable off the board, and it
+  makes the turn order invisible.
+- → Ch. 04
+
+### 2026-09-01: An opponent's skill cards stay secret and the count is public
+
+- **Chosen:** the hand keeps rendering as card backs for anyone who is not the seat on show, and the
+  number of cards each seat holds appears in the HUD. This closes open decision **D33**, which design
+  spec 03 had correctly escalated to the Product Owner.
+- **Why:** bluffing survives, and planning becomes possible, because a player can see where the threat
+  is without seeing what it is. It also has a consequence the design has to absorb: **secrecy at a shared
+  screen stops being theatre and becomes a requirement**, which is what forces the handover overlay. The
+  rail currently flips from one player's face-up cards to the next player's after a 320 ms timer with
+  nothing in between.
+- **Rejected: hiding the count as well.** Maximum uncertainty, and weak at a hot-seat table where anyone
+  can count the draws. It converts real information into mental bookkeeping.
+- **Rejected: everything face up.** Honest, since all four players look at the same screen anyway, and it
+  removes the surprise that makes a reaction card worth holding.
+- **Consequence recorded rather than assumed:** the HUD now shows four numbers per seat instead of three.
+  Pool and discard counters were considered at the same time and dropped, so sixteen numbers on screen do
+  not become twenty-four.
+- → Ch. 04, Ch. 06
+
+### 2026-09-01: The turn sentence lives in the top bar, because the HUD had no width for it
+
+- **Chosen:** one sentence, "Spieler 1 (Rot) ist am Zug", rendered in the always-present chrome row. The
+  HUD's seat rows carry `data-on-turn` and the **short** name, "Spieler 2", with the colour shown as the
+  row's left edge.
+- **Why:** measured at 1440 by 900, a four-seat HUD row is 332 px wide. The full label needs 107, the
+  four numbers with their words need 210, and an "am Zug" chip needs 55. It did not fit, and what it did
+  instead was wrap onto a second line, which made the page 935 px tall and handed FR-31 a scrollbar, and
+  truncate the names to "Spi...". The chrome row had roughly 1200 px going spare. A sentence is also
+  what `turn.prompt` was written as, and it had been sitting unused in both locale files since the i18n
+  commit.
+- **Rejected: shrinking `--board-size`.** Spec 01 § 6 names it as the number to check first when a new
+  region lands, so it was the sanctioned move and it was still the wrong one here: shrinking the board to
+  make room for a HUD that Claude Code designed itself is a trade the designer should make. The
+  measurements are in handoff 04 so D35 and D37 can make it with real numbers. The token is unchanged.
+- **Rejected: dropping the words next to the four numbers.** It buys the width and leaves four bare
+  numbers whose meaning nobody can recover.
+- **Rejected: the full label in the seat row, clipped with an ellipsis.** "Spieler 2 (Gr..." is worse
+  than "Spieler 2" next to a green edge.
+- → Ch. 04
+
+### 2026-09-01: The language switch is in the game's chrome and not behind a menu
+
+- **Chosen:** the German/English switch is a button in the always-present top row, showing the language
+  you would switch to.
+- **Why:** FR-34 is a `must have` and its acceptance criterion is a switch **at runtime**. `S11` in the
+  obligations book puts the language setting on a shared settings screen with the audio setting, and
+  audio was dropped out of epic #39 on the same day. Leaving the language switch on a screen that no
+  longer exists would have quietly dropped a must-have requirement behind a `should have` one, and
+  nothing in the sprint log would have said so.
+- **One key, both directions:** `language.switch` is "English" in the German file and "Deutsch" in the
+  English one, so the label is always a word the reader can act on and there is no "current language"
+  logic to get backwards.
+- **Rejected: a settings overlay reached from the main menu.** Tidier, and it makes a runtime switch
+  three clicks deep in a game that is played at one shared screen.
+- **Rejected: two buttons, DE and EN.** No state to get wrong, and one of them is always a no-op.
+- **What made it cheap:** no view caches a translated string, so the switch is `changeLanguage()` plus
+  the existing re-render. FR-34's "no string remains in the previous language" is true by construction,
+  and `hud.spec.js` checks it by searching the whole page for the German words afterwards.
+- → Ch. 04
+
+### 2026-09-01: Three stylesheets now exist that Claude Code should not have written
+
+- **Chosen:** `hud.css` and `chrome.css` join `prompt.css` as interim files, each composing only tokens
+  that already exist, each carrying a header in its first thirty lines saying it is not a delivered
+  spec, and all three listed in handoff 04 as deliverables to be **replaced**.
+- **Why:** the game had to become playable and nothing in epic #39 has a design. Handoff 01 said the HUD
+  was "not yours to design yet" and handoff 03 listed it under what is deliberately not being asked, so
+  waiting for a spec meant shipping a sprint with no answer to "whose turn is it". The honest version of
+  that trade is to invent no colour, size, spacing or type, and to say so where nobody can miss it.
+- **Rejected: waiting for design spec 04.** Correct by the letter of `CLAUDE.md`, and it ends the sprint
+  with the same unplayable build the Product Owner opened this issue about.
+- **Rejected: writing it and not saying so.** Cheapest of all, and it is the failure the report is meant
+  to be able to describe.
+- **`app.css` was touched too, and differently.** Two `auto` grid rows were prepended and every existing
+  `grid-area` shifted down by two, so the two new regions have somewhere to be. No colour, no spacing
+  value and no token changed. It carries a dated comment saying exactly that, which is the precedent the
+  `body { margin: 0 }` correction in the same file already set.
+- → Ch. 04
+
+### 2026-09-01: The HUD was paid for out of the board and the cards, nine per cent each
+
+- **Chosen:** `--board-size`'s width bound goes from 44vw to 39vw and the two hand `--card-u` factors
+  from 0.76 and 0.68 to 0.70 and 0.62. Both carry the arithmetic in a dated comment, and both are in
+  handoff 04 for D35 to confirm or overrule.
+- **Why:** the HUD is a full-width grid row and the page had no room for one. Measured at 1440 by 900,
+  the existing layout used 968 px of 900 once the prompt strip was up, and
+  `tests/e2e/skill-hand.spec.js` caught it as FR-31's scrollbar. Spec 01 § 6 names `--board-size` as
+  "the number to check first when the two hands are actually built", so changing it is the sanctioned
+  procedure rather than an improvisation.
+- **Why both and not one:** the board row is as tall as the taller of its two columns. Board 634, rail
+  627. Shrinking the board alone bought 7 px of the 56 needed, which is worth writing down because the
+  first attempt at the fix did exactly that and did not work.
+- **Rejected: collapsing the empty refusal strip**, which would have freed 62 px in one move.
+  `refusal.css` deliberately keeps it laid out at `opacity: 0` so the page does not jump when a refusal
+  appears, which is D9's decision, and taking it would have traded a scrollbar for a jumping layout.
+- **Rejected: cutting HUD content until it fits.** The measurements say a seat row needs 270 px and four
+  seats plus a turn sentence need more than one line at 1392 px. Dropping the words next to the numbers
+  would have fitted and left four numbers nobody can interpret.
+- **Rejected: leaving FR-31 broken and noting it.** The assertion is a must-have requirement with a
+  test already written for it, and a failing test in the suite is not a note.
+- **The cost is named:** D26 says the hand sizes already drop the rules paragraph to keep the art, and
+  spec 01 says `--board-size` had been raised on 2026-08-29 specifically to make the fields larger. Nine
+  per cent of that increase is given back. The full-size reference card is untouched.
+- → Ch. 04
+
+### 2026-09-01: The turn is handed over by a person, not by a timer
+
+- **Chosen:** at the end of a turn the game shows an overlay naming the next player, and waits for a
+  Ready button. The 320 ms timer that used to pass the turn now opens that screen instead.
+- **Why:** it follows from D33. Once an opponent's skill cards are secret and only the count is public,
+  secrecy at one shared screen is whatever covers the screen while it changes hands, and the rail used to
+  flip from one player's face-up cards to the next player's with nothing in between. It also answers the
+  Product Owner's original question a second time: there is now a moment that says, in words, that it is
+  your turn.
+- **The wait still comes first.** A move has to finish animating and a refusal has to be readable (D9)
+  **before** anything covers the board, so the overlay opens on the same timer rather than replacing it.
+- **Rejected: carrying on automatically and just labelling the turn better.** Smoothest to play, and it
+  makes the secret hand a fiction.
+- **Rejected: leaving the hand face down until the player clicks it.** No overlay and one extra click per
+  turn, and it protects the cards without protecting the board, the roll or the prompt.
+- **The cost is named:** every turn now needs a click that it did not. `?fast=1` skips the gate so the
+  end-to-end suite is not ten times slower, and one spec runs without the flag to prove the gate works.
+- → Ch. 04
+
+### 2026-09-01: A dice pool belongs to one match, and the caller is what enforces it
+
+- **Chosen:** `match-flow.js` builds a fresh `createDicePool()` for every match, new or restarted. The
+  RNG is **not** reset, so a restart plays a different match.
+- **Why:** `createDicePool`'s own header has claimed since issue #30 that a pool is created once per
+  match, and nothing enforced it because until the restart button there was only ever one match. A match
+  that ends mid-turn never returns its three drawn cards, so a restart on the same pool starts seventeen
+  deep and `draw()` throws outright after four of them.
+- **Rejected: making `restartMatch` return the outstanding hand first.** It keeps one pool alive across
+  matches, which contradicts the pool's own documented contract rather than satisfying it.
+- **Rejected: making `restartMatch` build its own pool.** The state it returns and the `deps` the caller
+  keeps dispatching with have to come from the same pool, and only the caller holds both.
+- → Ch. 06
+
+### 2026-09-01: `game-loop.js` was split three ways rather than compressed
+
+- **Chosen:** `render.js` (what the page looks like), `turn-controls.js` (what a click means) and
+  `game-loop.js` (what happens when nobody is clicking). The chrome moved to `match-flow.js` and
+  `REFUSAL_MIN_MS` to `timers.js`. `match-flow.js` then hit the same limit and `page.js` came out of it.
+- **Why:** the file passed NFR-02's 300 lines when the handover gate and the pause landed, and `CLAUDE.md`
+  says to split along a real seam rather than compress. Every seam here already existed:
+  `turn-controls.js` is the symmetric half of `card-controls.js`, which has done the same job for card
+  clicks since issue #34, and the chrome's only button opens a screen the loop does not own.
+- **Rejected: shortening the comments.** It is the one thing `CLAUDE.md` names explicitly as not a way to
+  meet the limit, and the comments in that file are where the turn loop's reasoning lives.
+- **Rejected: raising the limit.** It is NFR-02 and it is enforced by ESLint on purpose.
+- → Ch. 04
+
+### 2026-09-01: Audio left epic #39, and the language switch did not go with it
+
+- **Chosen:** issue #40 (Audio Manager & SFX Integration, 3 points) is deferred out of epic #39. The epic
+  is retitled from *UI / UX, Audio & Game State* to *UI / UX & Game State*, its estimate falls from 10
+  points to 7, and the must-have class in the effort estimation falls from 74 to 71. **FR-34, the runtime
+  language switch, was built anyway.**
+- **Why:** the estimate's own note had said it for two weeks: "no asset exists yet; the estimate covers
+  wiring, not sound design", and no asset was ever budgeted. The sprint log already listed audio as
+  surviving "only if assets exist", the project plan listed it under "holds if the visual design exists
+  by then", and both the feasibility study and the AI-engineering note had named it in advance as the
+  likely cut. **No audio requirement is a must-have** (FR-39 `should`, FR-40 `could`, FR-41 `should`) and
+  FG-14 to FG-16, the epic's must-have goals, contain no audio at all. So deferring it costs no must-have
+  requirement, which is exactly the condition the MoSCoW drop order was written for.
+- **The trap, and it was nearly walked into:** S11 in the obligations book is *"Audio and language
+  settings"*, one screen for both. Cutting #40 would have taken the language switch with it, and FR-34 is
+  a **must have** with no issue of its own, which means nothing on the board would have said it had gone.
+  So the switch was built into the always-present chrome instead, where it does not depend on a settings
+  screen existing at all.
+- **Rejected: cutting the language switch too.** Consistent, and it silently drops a must-have
+  requirement behind a `should have` one.
+- **Rejected: keeping audio in the epic and letting it slip.** It is the same outcome with no record, and
+  the sprint log would have had to explain an epic that closed with an open child.
+- **What made this a decision block at all:** the retitling had already happened on GitHub earlier the
+  same day and **no document recorded it.** Nine places across six files still carried the old title, the
+  effort figures still counted the three points as must-have, and nothing anywhere said why. That gap is
+  the thing worth carrying into the report: a board edit is not a decision until it is written down.
+- → Ch. 01, Ch. 02
+
 ---
 
 ## Challenges

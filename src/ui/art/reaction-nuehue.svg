@@ -1,0 +1,7 @@
+<svg viewBox="0 0 232 128" aria-hidden="true" focusable="false">
+          <g stroke="#2B1A3D" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" fill="none">
+      <g transform="translate(96 116) scale(0.94)"><ellipse cx="0" cy="4" rx="38" ry="9" fill="#FFF3E2"></ellipse><path d="M-34,4 C-34,-4 -25,-7 -18,-13 C-12,-18 -10,-25 -10,-31 L10,-31 C10,-25 12,-18 18,-13 C25,-7 34,-4 34,4 Z" fill="#FFF3E2"></path><circle cx="0" cy="-48" r="23" fill="#FFF8EC"></circle><path d="M-14,-54 Q-9,-60 -4,-54" stroke-width="4"></path><path d="M5,-54 Q10,-60 15,-54" stroke-width="4"></path><path d="M-8,-38 Q1,-31 11,-39" stroke-width="4"></path><g transform="rotate(10)"><path d="M-6,-66 L0,-96 L6,-66 Z" fill="#FFC93C"></path><path d="M-4,-78 L4,-78 M-3,-87 L3,-87" stroke-width="2.5"></path></g><g stroke="#B98CE0" stroke-width="6" stroke-linecap="round"><path d="M-16,-62 C-28,-54 -28,-42 -22,-34"></path><path d="M-24,-52 C-36,-44 -36,-32 -30,-26"></path></g></g>
+      <g transform="translate(190 46)"><circle cx="0" cy="0" r="28" fill="#FFF8EC"></circle><path d="M-8,-14 Q10,-6 -6,4 Q8,10 14,2" stroke-width="4"></path><path d="M-20,-20 L20,20" stroke="#E0492F" stroke-width="6"></path></g>
+      <g fill="#EFE1F8" stroke-width="3"><circle cx="36" cy="34" r="6"></circle><circle cx="56" cy="20" r="4"></circle></g>
+          </g>
+        </svg>

@@ -56,7 +56,7 @@ should adopt this tree rather than invent another, and this document is then its
 | #36 Core Game Engine & Board | #26, #27, #28, #29 | FR-01 to FR-15 | must have |
 | #37 Enhanced Dice Pool System | #30, #31 | FR-16 to FR-21 | must have |
 | #38 Skill Cards Mechanics | #32, #33, #34 | FR-22 to FR-30 | must have |
-| #39 UI / UX, Audio & Game State | #35, #40, #41 | FR-31 to FR-41 | must have |
+| #39 UI / UX & Game State | #35, #41 | FR-31 to FR-38 | must have |
 | No epic: extended features | #42, #43, #44, #45, #46 | FR-42 to FR-45 | see section 3.5 |
 
 **The four epics carry no points of their own.** An epic is the sum of its children; giving it a size as
@@ -95,14 +95,24 @@ MoSCoW label**, only the four epics and the five extended features do.
 | #34 Player Hand UI & Card Interaction | 5 | `ui/skill-hand-view.js`: the hand, which cards are playable now, and the reaction prompt as a modal state. Comparable to #31 and for the same reason. |
 | **Epic total** | **23** | |
 
-### 3.4 Epic #39, UI / UX, Audio & Game State
+### 3.4 Epic #39, UI / UX & Game State
 
 | Issue | Points | Rationale |
 | --- | --- | --- |
 | #35 Game HUD & Resource Display | 2 | Three counts per player read from state (FR-36). Small because section 6.7 of the game design document rules out the resource system the issue title names, so the issue is half what its title suggests. |
-| #40 Audio Manager & SFX Integration | 3 | Four sounds, background music and a mute that survives leaving a match (FR-39 to FR-41). No asset exists yet; the estimate covers wiring, not sound design. |
 | #41 Main Menu, Pause & Win Screen Flow | 5 | Five screens and the navigation between them (S1, S2, S8, S9 of [Obligations-Book.md](Obligations-Book.md)), plus match restart and abandon (FR-06, FR-07). |
-| **Epic total** | **10** | |
+| **Epic total** | **7** | |
+
+**#40 Audio Manager & SFX Integration, 3 points, left this epic on 2026-09-01** and is counted in
+section 4.1 as deferred work instead. Its estimate is unchanged: four sounds, background music and a
+mute that survives leaving a match (FR-39 to FR-41), covering wiring and not sound design.
+
+The reason is the estimate's own note, now acted on: **no asset exists and none was ever budgeted.** No
+audio requirement is a must-have either, FR-39 is `should`, FR-40 is `could` and FR-41 is `should`, and
+FG-14 to FG-16, the epic's must-have goals, contain no audio at all. The decision block of 2026-09-01 in
+[project-journal.md](../Documentation/project-journal.md) carries the reasoning and the rejected
+alternatives. **The language half of S11 did not go with it**: FR-34 is a must-have with no issue of its
+own, and it shipped inside #39.
 
 ### 3.5 Extended features, no epic
 
@@ -140,17 +150,21 @@ adding issues to a shared board is the team's decision, not a side effect of an 
 | #36 Core Game Engine & Board | 23 |
 | #37 Enhanced Dice Pool System | 8 |
 | #38 Skill Cards Mechanics | 23 |
-| #39 UI / UX, Audio & Game State | 10 |
+| #39 UI / UX & Game State | 7 |
+| #40 Audio, deferred out of #39 on 2026-09-01 | 3 |
 | Extended features (#42 to #46) | 34 |
 | No board issue (section 3.6) | 12 |
 | **Implementation total** | **110** |
+
+The implementation total is unchanged, because deferring audio moved the work rather than deleting it.
+What changed is which class it counts in, below.
 
 ### 4.2 By MoSCoW class
 
 | Class | Points | What is in it |
 | --- | --- | --- |
-| Must have | 74 | The four epics (64) plus the bootstrap and i18n (10) |
-| Should have | 13 | #42 online multiplayer |
+| Must have | 71 | The four epics (61) plus the bootstrap and i18n (10) |
+| Should have | 16 | #42 online multiplayer, and #40 audio since 2026-09-01 |
 | Could have | 21 | #43, #44, #45, #46 |
 | No requirement id | 2 | The CI workflow |
 | **Total** | **110** | |
@@ -158,8 +172,12 @@ adding issues to a shared board is the team's decision, not a side effect of an 
 **Two thirds of the remaining implementation work is `must have`**, which is the same finding the MoSCoW
 distribution already made from the other direction: 39 of 57 requirements are must-haves because a game
 missing a rule is not partially playable. Section 3.2 of the requirements specification argues it. The
-estimate turns it from a count into a cost: the droppable work is 36 points of 110, and none of it is
+estimate turns it from a count into a cost: the droppable work is 39 points of 110, and none of it is
 load-bearing for a playable match.
+
+**Three of those 39 have now actually been dropped**, which is worth noting because it is the first time
+this document's drop order was used rather than described: audio left the must-have class on 2026-09-01
+and the must-have figure fell from 74 to 71.
 
 ### 4.3 Documentation still open
 

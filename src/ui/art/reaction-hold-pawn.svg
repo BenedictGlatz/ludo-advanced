@@ -1,0 +1,8 @@
+<svg viewBox="0 0 232 128" aria-hidden="true" focusable="false">
+          <g stroke="#2B1A3D" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" fill="none">
+      <g transform="translate(126 44)"><g fill="#FFE9C9"><rect x="-31" y="-42" width="16" height="46" rx="8"></rect><rect x="-11" y="-50" width="16" height="54" rx="8"></rect><rect x="9" y="-46" width="16" height="50" rx="8"></rect><rect x="29" y="-32" width="15" height="36" rx="7.5"></rect><rect x="-48" y="-6" width="17" height="32" rx="8.5"></rect><rect x="-34" y="-12" width="70" height="42" rx="16"></rect></g></g>
+      <g transform="translate(128 126) scale(0.68)"><ellipse cx="0" cy="4" rx="38" ry="9" fill="#FFC93C"></ellipse><path d="M-34,4 C-34,-4 -25,-7 -18,-13 C-12,-18 -10,-25 -10,-31 L10,-31 C10,-25 12,-18 18,-13 C25,-7 34,-4 34,4 Z" fill="#FFC93C"></path><circle cx="0" cy="-48" r="23" fill="#FFE28A"></circle><ellipse cx="-8" cy="-52" rx="4.5" ry="6" fill="#2B1A3D" stroke="none"></ellipse><ellipse cx="9" cy="-52" rx="4.5" ry="6" fill="#2B1A3D" stroke="none"></ellipse><path d="M-9,-36 Q-3,-42 3,-36 Q9,-30 15,-36" stroke-width="3.5"></path></g>
+      <g stroke="#B98CE0" stroke-width="4"><path d="M56 62 Q40 76 46 96"></path><path d="M196 62 Q212 76 206 96"></path></g>
+      <g fill="#DCE9FF" stroke-width="3"><circle cx="176" cy="108" r="5"></circle><circle cx="188" cy="120" r="4"></circle></g>
+          </g>
+        </svg>

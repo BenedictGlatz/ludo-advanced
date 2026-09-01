@@ -124,3 +124,15 @@ export function changeLanguage(locale) {
 export function currentLanguage() {
   return i18next.language;
 }
+
+/**
+ * The language a switch would go to (FR-34).
+ *
+ * A toggle rather than a list, because the game ships exactly two locales. It lives here and not in the
+ * view because "which languages are there" is this module's fact: `LOCALES` is the list, so a third
+ * language makes this function wrong in the same file that gained it, rather than silently in `ui/`.
+ */
+export function nextLanguage(from = currentLanguage()) {
+  const codes = Object.keys(LOCALES);
+  return codes[(codes.indexOf(from) + 1) % codes.length];
+}

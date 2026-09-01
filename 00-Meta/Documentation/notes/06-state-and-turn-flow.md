@@ -371,6 +371,52 @@ then the target. Every check runs before anything is written, so there is no hal
 The order is chosen so the **most useful** message wins when more than one thing is wrong: telling a
 player "that card needs a target" when it was not even their turn would be true and useless.
 
+### The HUD reads a selector, not a stored field: 2026-09-01, issue #39
+
+`seatProgress(state, seat)` in `state/game-state.js` returns `{ start, track, home, cards }`.
+
+- **A selector and not a state field.** Everything in it is derivable from `state.pawns` and
+  `state.skillHands`, and storing it would create two places that can disagree about how far a player
+  has got. FR-36's acceptance criterion is precisely that the HUD matches the state after every turn, so
+  the cheapest way to satisfy it is to make disagreement unrepresentable.
+- **It is the seam between `core/` and the state object.** The three pawn counts come from
+  `pawnProgress` in `core/`; `cards` is added here, because a hand is a state field and `core/` is not
+  allowed to know the shape of the state object (NFR-01).
+- **`cards` is on screen at all because of a Product Owner decision**, not because it was convenient.
+  Design spec 03 escalated open decision D33 (is an opponent's hand shown, and is the count public), and
+  on 2026-09-01 the answer was: cards secret, **count public**. Without that decision this selector
+  returns three numbers.
+- **An unseated seat returns `cards: 0` rather than throwing.** The HUD is redrawn on every render, so a
+  crash there is worse than a wrong number.
+
+### A pool belongs to one match, and nothing had been enforcing that: 2026-09-01, issue #41
+
+`createDicePool`'s own header has said since issue #30 that "the closure is created once per match by
+the composition root, so two matches never share a pool". Until the restart button existed there was
+only ever one match, so nothing tested the claim.
+
+**The defect it hides:** a match that ends mid-turn never runs `endTurn`, so its three drawn dice cards
+are never returned. `restartMatch(state, deps)` forwards whatever `deps` it is given, so a restart on the
+same pool starts seventeen cards deep, and `draw()` throws outright once four matches have leaked twelve
+of the twenty.
+
+**The fix is in the caller and not in `match.js`.** `match-flow.js` builds a fresh `matchDeps(rng,
+createDicePool())` for every match, new or restarted, which is what the pool asked for in the first
+place. Making `restartMatch` build its own pool internally would not work: the state it returns and the
+`deps` the caller keeps dispatching with have to come from the same pool, and only the caller holds both.
+
+**The RNG is deliberately not reset.** One per session, so a restart plays a different match rather than
+replaying the one that just finished.
+
+`match-flow.spec.js` asserts three dice cards on the board after a restart, which is the cheapest
+observable form of "the pool came back whole".
+
+### `nextSeat` became public: 2026-09-01, issue #39
+
+The handover overlay names the player it is passing to, and it has to name the same one `endTurn` is
+about to hand the turn to. A second walk over `state.seats` in `ui/` would be a second answer to the same
+question, and the two would disagree the first time turn order changes.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

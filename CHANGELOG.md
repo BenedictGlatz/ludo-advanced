@@ -307,8 +307,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with "2 rounds" converted to turns once so a card cannot quietly mean something different at a
   different table size. Traps and blockers sit on the shared squares. And movement can now be asked
   about the squares a move **passes over**, which it never needed before
+- **Every card shows its illustration** (issue #39). All 36 drawings, 29 skill cards plus one per dice
+  denomination from D2 to D20, now appear in the card's art window. They had existed only inside the
+  Claude Design artboard, so the window had been a framed empty box on every card since it was built.
+  `npm run assets:card-art` extracts them into `src/ui/art/`, matches each drawing to its card by title,
+  and refuses to write anything at all if a drawing matches no card or a card has no drawing
+- **Design handoff 04** (`01-Design/Handoff/04-brief-hud-menus-and-handover.md`), asking for the HUD
+  (S7), the main menu (S1), match setup (S2), pause (S8), win (S9) and a new handover screen for the
+  moment between two turns at a shared screen. Eight open decisions, D35 to D42, plus the eleven items
+  that were left open by handoffs 02 and 03 and had been drifting since
+- **Players are named on screen** (issue #39): "Spieler 2 (Grün)", the number counting from 1 in seat
+  order and the colour naming the pieces on the board. German and English
+- **The game says whose turn it is** (issue #35). A sentence in the top bar, "Spieler 1 (Rot) ist am
+  Zug", which is what the game had never said in words: the board marked the active player with a
+  colour halo and dimmed pawns and nothing else, so a player who had not worked out which colour was
+  theirs had no way to tell
+- **A HUD showing each player's progress** (issue #35, FR-36): pawns in the start area, out on the
+  track and home, plus how many skill cards that player holds, one row per player. The three pawn
+  counts always add up to four, and the fourth number is public because an opponent's hand size was
+  made public. No resource or energy display: FR-37 has no rule behind it and stays out of scope
+- **A German/English switch that works during a match** (FR-34, a must-have that had no issue of its
+  own). One button in the top bar showing the language you would switch to. Every visible string
+  changes, including the cards in hand
+- **A main menu, a match setup, a pause screen and a win screen** (issue #41, FR-01, FR-05, FR-06,
+  FR-07, FR-38). The game opens on a menu, asks how many people are playing, and can be paused at any
+  point in a turn, given up, or restarted after a win, all without reloading the page. Opening the game
+  with a player count in the address bar still starts a match straight away
+- **A handover screen between two turns.** It names the next player and waits for them to say the screen
+  has been passed on. It exists because an opponent's skill cards are secret: at one shared screen that
+  is only true if something covers the screen while it changes hands. The turn used to change by itself
+  after a third of a second
 
 ### Changed
+
+- **A two-player match is played by Spieler 1 and Spieler 2** (issue #39). It used to be played by
+  Spieler 1 and Spieler 3, because two players sit opposite each other on seats 0 and 2 and every label
+  was built as the seat number plus one. Four-player matches were unaffected, which is why nobody had
+  noticed. The seat number is still what the markup, the pawn colours and every rule use
+- **The board and the cards in hand are about nine per cent smaller** (issue #39), so that the new HUD
+  row fits without the page scrolling (FR-31). Measured at 1440 by 900, the layout needed 968 pixels of
+  900 once the HUD and the prompt strip were both up. Shrinking only the board would not have been
+  enough, because the row is as tall as the taller of its two columns and the card column was within
+  seven pixels of the board. The full-size reference card is unchanged. This is a stopgap: design
+  handoff 04 is asked to confirm it or move the HUD somewhere that costs no row
 
 - **A turn now waits for the player in three places rather than two**: the dice card, the action phase,
   and the pawn. The action phase is skipped automatically when the player holds nothing playable, so it
@@ -470,6 +511,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `roll >= dieMax`, and card-driven backward movement stops at the first track field
 
 ### Fixed
+
+- **A restart no longer eats the dice pool** (issue #41). A match that ends in the middle of a turn never
+  gives its three drawn cards back, so a second match on the same pool started three cards short, and the
+  fourth would have failed outright. Every match now gets its own pool, which is what the pool's own
+  documentation had been claiming all along
+- **Quitting to the main menu now actually ends the match.** The abandoned game's board stayed in the
+  page behind the menu. Nobody could see it, because the menu covers the screen, but it was still there
+- **The menu, the pause screen and the handover stopped responding to clicks from the second match
+  onward.** They still looked right, which is what made it hard to spot: rebuilding the page for a new
+  match was silently unbinding their buttons
 
 - **Every page was 16 px taller than the window**, so the layout FR-31 requires to fit on one screen always had a
   scrollbar. Design specification 03's `app.css` had dropped the `body { margin: 0 }` that the placeholder it

@@ -37,6 +37,7 @@ import { cardById } from "../core/cards/catalogue.js";
 import { SKILL_HAND_LIMIT } from "../core/skill-pool.js";
 import { playableCards, seatOnShow } from "../state/intents-cards.js";
 import { t } from "../i18n/index.js";
+import { skillArt } from "./art/index.js";
 import { createCard, updateCard } from "./card-view.js";
 
 /** One card's description, with every string already translated. */
@@ -53,6 +54,7 @@ function skillCard(cardId, { playable, selected }) {
     title: t(`card.skill.${cardId}.title`),
     text: t(`card.skill.${cardId}.text`),
     tags: card.category === null ? [] : [t(`card.category.${card.category}`)],
+    art: skillArt(cardId),
     playable,
     selected,
   };
@@ -89,6 +91,7 @@ function emptySlot() {
     title: "",
     text: "",
     tags: [],
+    art: null,
     playable: false,
     selected: false,
   };

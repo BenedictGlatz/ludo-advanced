@@ -1,10 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_PLAYERS, PAWNS_PER_PLAYER, START_R, seatsFor } from "../../../src/core/board.js";
+import {
+  HOME_R,
+  MAX_PLAYERS,
+  PAWNS_PER_PLAYER,
+  START_R,
+  TRACK_LENGTH,
+  seatsFor,
+} from "../../../src/core/board.js";
+import { hasWon } from "../../../src/core/win.js";
 import {
   MIN_PLAYERS,
   createPawns,
   findPawn,
+  pawnProgress,
   pawnsOf,
   playerCountOf,
   seatsIn,
@@ -95,5 +104,67 @@ describe("playerCountOf", () => {
     for (let playerCount = MIN_PLAYERS; playerCount <= MAX_PLAYERS; playerCount += 1) {
       expect(playerCountOf(createPawns(playerCount))).toBe(playerCount);
     }
+  });
+});
+
+describe("pawnProgress (FR-36)", () => {
+  it("puts all four pawns in the start area at the beginning of a match", () => {
+    for (let playerCount = MIN_PLAYERS; playerCount <= MAX_PLAYERS; playerCount += 1) {
+      for (const seat of seatsFor(playerCount)) {
+        expect(pawnProgress(createPawns(playerCount), seat)).toEqual({
+          start: PAWNS_PER_PLAYER,
+          track: 0,
+          home: 0,
+        });
+      }
+    }
+  });
+
+  it("counts one pawn per region as it moves out, along and home", () => {
+    let pawns = createPawns(4);
+    pawns = withPawnAt(pawns, { player: 0, pawn: 0 }, 1);
+    pawns = withPawnAt(pawns, { player: 0, pawn: 1 }, TRACK_LENGTH);
+    pawns = withPawnAt(pawns, { player: 0, pawn: 2 }, HOME_R);
+
+    expect(pawnProgress(pawns, 0)).toEqual({ start: 1, track: 2, home: 1 });
+  });
+
+  /**
+   * The invariant is the whole point: the HUD shows three numbers per seat and a player reads them as
+   * a breakdown of four pawns. A bucket that missed a region would make them sum to three, and the
+   * acceptance criterion for FR-36 is that the counts match the state after every turn.
+   */
+  it("always sums to four, wherever the pawns are", () => {
+    let pawns = createPawns(2);
+
+    for (let r = 0; r <= HOME_R; r += 1) {
+      pawns = withPawnAt(pawns, { player: 0, pawn: 0 }, r);
+      const { start, track, home } = pawnProgress(pawns, 0);
+
+      expect({ r, total: start + track + home }).toEqual({ r, total: PAWNS_PER_PLAYER });
+    }
+  });
+
+  /**
+   * `home` has to mean exactly what winning means, or the HUD can read "4 home" for a player who has
+   * not won, or the other way round. Both numbers come from `region()`, and this is the test that says
+   * so out loud.
+   */
+  it("reads home: 4 exactly when that player has won", () => {
+    let pawns = createPawns(2);
+    for (let pawn = 0; pawn < PAWNS_PER_PLAYER; pawn += 1) {
+      expect(hasWon(pawns, 0)).toBe(false);
+      pawns = withPawnAt(pawns, { player: 0, pawn }, TRACK_LENGTH + 1 + pawn);
+    }
+
+    expect(pawnProgress(pawns, 0)).toEqual({ start: 0, track: 0, home: PAWNS_PER_PLAYER });
+    expect(hasWon(pawns, 0)).toBe(true);
+  });
+
+  it("counts only the seat it was asked about", () => {
+    const pawns = withPawnAt(createPawns(4), { player: 2, pawn: 0 }, HOME_R);
+
+    expect(pawnProgress(pawns, 2).home).toBe(1);
+    expect(pawnProgress(pawns, 0)).toEqual({ start: PAWNS_PER_PLAYER, track: 0, home: 0 });
   });
 });

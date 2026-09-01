@@ -29,6 +29,7 @@ import $ from "jquery";
 
 import { t } from "../i18n/index.js";
 import { TURN_PHASE } from "../state/game-state.js";
+import { diceArt } from "./art/index.js";
 import { createCard, updateCard } from "./card-view.js";
 
 /**
@@ -50,12 +51,13 @@ function diceCard(faces) {
     kindLabel: t(`card.dice.kind.${faces}`),
     title: t("card.dice.name", { faces }),
     tags: [t("card.dice.range", { faces }), t("card.dice.leave", { faces })],
+    art: diceArt(faces),
   };
 }
 
 /** An empty slot, for a hand that has fewer cards than the source can deal. */
 function emptySlot() {
-  return { id: null, family: "dice", tags: [] };
+  return { id: null, family: "dice", tags: [], art: null };
 }
 
 /**
