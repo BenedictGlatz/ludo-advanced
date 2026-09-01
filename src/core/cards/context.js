@@ -155,11 +155,6 @@ export function pawnIn(context, ref) {
   return context.pawns.find((entry) => entry.player === ref.player && entry.pawn === ref.pawn);
 }
 
-/** Every seat except one. What "each opponent" means, and it is not `seats.length - 1` arithmetic. */
-export function opponentsOf(context, seat) {
-  return context.seats.filter((entry) => entry !== seat);
-}
-
 /** One seat's hand, never `undefined`. A seat that has drawn nothing still has a hand: an empty one. */
 export function handOf(context, seat) {
   return context.hands[seat] ?? [];

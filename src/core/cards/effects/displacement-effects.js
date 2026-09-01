@@ -31,6 +31,7 @@
 import { HOME_R, START_R } from "../../board.js";
 import { rollDie } from "../../dice-source.js";
 import { displace, sendHome } from "../../displacement.js";
+import { pawnIn } from "../context.js";
 
 /** The die Yeet rolls, and the one Let Him Cook rolls. The artwork's numbers. */
 export const YEET_DIE = 6;
@@ -67,9 +68,7 @@ export function yeet(context) {
  */
 export function headOut(context) {
   const ref = context.target.pawn;
-  const pawn = context.pawns.find(
-    (entry) => entry.player === ref.player && entry.pawn === ref.pawn
-  );
+  const pawn = pawnIn(context, ref);
 
   if (pawn === undefined || pawn.r === START_R) return {};
 
@@ -93,9 +92,7 @@ export function headOut(context) {
  */
 export function letHimCook(context) {
   const ref = context.target.pawn;
-  const pawn = context.pawns.find(
-    (entry) => entry.player === ref.player && entry.pawn === ref.pawn
-  );
+  const pawn = pawnIn(context, ref);
 
   if (pawn === undefined || pawn.r === START_R) return {};
 

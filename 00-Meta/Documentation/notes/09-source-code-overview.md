@@ -109,6 +109,45 @@ of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
 
+### Measured 2026-08-31, after issues #37 and #38
+
+Every command in the section above was re-run. The figures below replace the 2026-08-30 set that follows
+them, which is kept so that the growth over two days of work is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **7710 lines in 51 files** | 2026-08-31, after #37 and #38 |
+| Stylesheet lines in `src/` | 7 | **1623 lines in 11 files** | 2026-08-31, after #37 and #38 |
+| Test lines in `tests/` | 2 | **7290 lines in 44 files** | 2026-08-31, after #37 and #38 |
+| Lines in `src/core/` | 3 | 3608 lines in 27 files | 2026-08-31, after #37 and #38 |
+| Lines in `src/state/` | 3 | 1778 lines in 10 files | 2026-08-31, after #37 and #38 |
+| Lines in `src/ui/` | 3 | **2048 lines in 12 files**, plus the 1623 lines of CSS | 2026-08-31, after #37 and #38 |
+| Unit tests | 4 | **34 test files, 503 tests, all passing** | 2026-08-31, after #37 and #38 |
+| End-to-end tests | 8 | **42 tests in 9 files per browser, 126 across the three** | 2026-08-31, after #37 and #38 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | **99.19 % (742/748)** | 2026-08-31, after #37 and #38 |
+| Coverage of `src/core/`, lines | 5c | **99.59 % (483/485) over 27 files** | 2026-08-31, after #37 and #38 |
+| Coverage of `src/state/`, lines | 5c | **98.48 % (259/263) over 10 files** | 2026-08-31, after #37 and #38 |
+| Coverage, branches | 5a | 96.00 % (528/550) | 2026-08-31, after #37 and #38 |
+| Coverage, functions | 5a | **100 % (266/266)** | 2026-08-31, after #37 and #38 |
+| Files below 100 % lines | 5b | 5 of 37: `move-rules.js` 97.91, `cards/context.js` 90, `intents-cards.js` 96.22, `intents.js` 97.61, `skill-play.js` 97.05 | 2026-08-31, after #37 and #38 |
+| Longest file of any kind | 6 | **299 lines, `tests/unit/state/intents-cards.test.js`** | 2026-08-31, after #37 and #38 |
+| Longest source file | 6 | 295 lines, `src/state/turn-manager.js` | 2026-08-31, after #37 and #38 |
+| Longest stylesheet | 6 | 221 lines, `src/ui/styles/card.css` | 2026-08-31, after #37 and #38 |
+
+**What the numbers say, and it is worth one paragraph in the report.** The source tripled and the
+coverage went **up**, from 99.55 % over 225 lines to 99.19 % over 748. The floor NFR-05 asks for is 80 %,
+so there is a lot of room, and the reason there is room is the layering: `core/` and `state/` hold no DOM
+and no clock, so every rule in the game is testable with literals.
+
+**Two things the table does not say and should.** The longest file in the project is now a **test**, and
+four files were split during these two issues purely to stay under 300 lines: `movement.js`,
+`turn-manager.test.js`, `board-effects.test.js` and `intents-cards.test.js`. Each was split at a seam that
+can be described in a sentence, which is recorded per split in Chapters 05, 06 and 08. And `ui/` has 2048
+lines of JavaScript with **no unit tests at all**, by the decision in `vitest.config.js`; it is covered
+by 42 Playwright cases instead.
+
+### Measured 2026-08-30, after issue #62
+
 | Metric | Command | Value | Taken on |
 | --- | --- | --- | --- |
 | JavaScript lines in `src/` | 1 | **2228 lines in 17 files** | 2026-08-30, after #62 |

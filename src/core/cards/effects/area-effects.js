@@ -25,6 +25,7 @@
 import { rollDie } from "../../dice-source.js";
 import { pawnsOnSquares, sendHome, squareOf } from "../../displacement.js";
 import { neighbourSquares, squareRun } from "../../path.js";
+import { pawnIn } from "../context.js";
 
 /** The dice these cards roll. The artwork prints both. */
 export const HYPERBEAM_DIE = 4;
@@ -62,10 +63,7 @@ function sweep(context, squares) {
  * square in front of it to name.
  */
 export function hyperbeam(context) {
-  const ref = context.target.pawn;
-  const shooter = context.pawns.find(
-    (entry) => entry.player === ref.player && entry.pawn === ref.pawn
-  );
+  const shooter = pawnIn(context, context.target.pawn);
   const from = shooter === undefined ? null : squareOf(shooter);
 
   if (from === null) return {};
