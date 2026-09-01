@@ -13,6 +13,7 @@
 
 import { createDicePool } from "../core/dice-pool.js";
 import { MATCH_STATUS, TURN_PHASE, createGameState, nextState } from "./game-state.js";
+import { seedSkillCards } from "./skill-turn.js";
 import { drawHand } from "./turn-manager.js";
 
 /**
@@ -40,10 +41,28 @@ function assertDeps(deps) {
  *
  * `skillSquares` is forwarded to `createGameState`, which carries the reason it exists. No production
  * caller passes it.
+ *
+ * **The skill card pool is shuffled here and not in `createGameState`**, because a shuffle needs the
+ * injected RNG and keeping `createGameState` free of randomness is what lets about half the unit tests
+ * build a starting board with no `deps` at all. The seats start with **empty** hands: a card is drawn
+ * at the start of every turn (FR-23), so the first turn's draw is the first card anybody holds.
+ *
+ * **`skillPool` exists for the same reason `skillSquares` does, and it is the stronger case of the
+ * two.** Shuffling 58 cards spends 57 draws from `deps.rng`, and drawing one at the start of every turn
+ * spends another. A test that scripts a sequence of rolls has no chance against that: it would be
+ * exhausted before the first die was thrown. Passing `[]` starts a match with no skill cards in it, and
+ * a draw from an empty pool spends no randomness at all, so a scripted roll sequence stays exact.
+ *
+ * Both defaults are the real thing, so no production caller passes either and there is no way to start
+ * a real match with an accidentally empty pool.
  */
-export function startMatch(playerCount, deps, skillSquares) {
+export function startMatch(playerCount, deps, skillSquares, skillPool) {
   assertDeps(deps);
-  return drawHand(createGameState(playerCount, skillSquares), deps);
+
+  const fresh = createGameState(playerCount, skillSquares);
+  const seeded = nextState(fresh, seedSkillCards(fresh, deps, skillPool));
+
+  return drawHand(seeded, deps);
 }
 
 /**

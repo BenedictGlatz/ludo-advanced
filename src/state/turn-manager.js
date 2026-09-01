@@ -1,5 +1,5 @@
 /**
- * The turn as an eight-step sequence. Issue #27, section 3 of the game design document.
+ * The turn as a nine-step sequence. Issue #27, extended by issue #38.
  *
  * Imports `core/` and never `ui/` (NFR-01). Contains no rules: every rule question is asked of
  * `core/` and the answer is written into a new state object.
@@ -9,36 +9,47 @@
  * | Rulebook step | Function here | Phase afterwards |
  * | --- | --- | --- |
  * | 1 Turn start, 2 Draw | `drawHand` | `choose` |
- * | 3 Choose | `chooseDie` | `roll` |
- * | 4 Roll, 5 Compute legal moves | `rollChosenDie` | `act`, or `turn-end` when nothing can move |
- * | 6 Act | `commitMove` | `reaction` |
- * | 7 Resolve | `resolveReactions` | `turn-end`, or `match-over`. Uses up a skill square (FR-22) |
- * | 8 End of turn | `endTurn` | `draw` for the next player |
+ * | 3 Choose a dice card | `chooseDie` | `action` |
+ * | 4 Play an Action card, or pass | `passAction` | `roll` |
+ * | 5 Roll, 6 Compute legal moves | `rollChosenDie` | `act`, or `turn-end` when nothing can move |
+ * | 7 Act | `commitMove` | `reaction` |
+ * | 8 Resolve | `resolveMove` | `turn-end`, or `match-over`. Uses up a skill square (FR-22) |
+ * | 9 End of turn | `endTurn` | `draw` for the next player |
  *
- * ## Why the reaction window is a phase and not a special case
+ * ## What issue #38 changed, and what it deliberately did not
  *
- * Skill cards are issue #38 and do not exist. The window between committing a move and applying it
- * is still a real phase here, and `resolveReactions` currently opens it and closes it again with
- * nothing in between. That is deliberate: retrofitting an interruption point into a sequence that
- * resolves a move in one step means rewriting the sequence, while filling an empty phase does not.
+ * Two seams that were left open on purpose in issue #27 have now been filled, and neither needed the
+ * sequence reshaped:
+ *
+ * - **The action phase is new.** It sits after the dice card and before the roll, because the Product
+ *   Owner's rule is that skill cards come after the die is known. Half the Action cards change the
+ *   roll, and deciding whether to buff a D20 or a D4 is what makes them a decision.
+ * - **Committing a move no longer resolves it.** `intents.js` used to run steps 7 and 8 as one call,
+ *   because the reaction window between them was empty. It is not empty any more: `commitMove` stops
+ *   at `reaction` and something else has to close the window. That "something else" is
+ *   `state/reaction-window.js`.
+ *
+ * **Turn start did not become a phase.** The plan sketched one, and it would be a phase in which
+ * nothing can be done and which the view would have to skip immediately. `drawHand` already covered
+ * "turn start and draw" as one step, so the skill card is drawn there. A phase name says what the game
+ * is waiting for, and this one would be waiting for nobody.
  *
  * ## What `deps` is
  *
- * `{ diceSource, rng }`, both injected and never constructed here. `rng` is NFR-09's injectable
- * randomness, so a test hands in a fixed sequence and asserts an exact board state. `diceSource` is
- * the real twenty-card Dice Card Pool since issue #30, and `core/dice-source.js` still provides a
- * fixed stand-in for tests that need to script an exact roll.
- *
- * **`rng` is now spent in two places per turn**, the roll and a skill square respawn, so a test that
- * scripts an exact sequence of rolls has to account for the respawn draw as well. That is why
- * `fixedDieSource` exists and why the tests that assert exact boards use it.
+ * `{ diceSource, rng }`, both injected and never constructed here. **`rng` is now spent in up to five
+ * places per turn**: the roll, every extra die a card adds, a skill square respawn, a skill card draw
+ * and a skill pool reshuffle. A test that scripts an exact sequence of rolls has to account for all of
+ * them, which is why the tests that assert exact boards use `fixedDieSource` and start their match with
+ * no skill squares.
  */
 
-import { rollDie } from "../core/dice-source.js";
 import { applyMove, evaluateTurn } from "../core/movement.js";
-import { consumeSkillSquare, skillSquareLandedOn } from "../core/skill-squares.js";
+import { resolveRoll } from "../core/roll.js";
+import { expireStatuses } from "../core/statuses.js";
+import { expireTraps } from "../core/traps.js";
 import { findWinner } from "../core/win.js";
-import { MATCH_STATUS, TURN_PHASE, clearedTurnFields, nextState } from "./game-state.js";
+import { MATCH_STATUS, TURN_PHASE, boardOf, clearedTurnFields, nextState } from "./game-state.js";
+import { drawFor, skillSquareChanges } from "./skill-turn.js";
 
 /**
  * Every function below refuses to run in the wrong phase.
@@ -53,23 +64,47 @@ function assertPhase(state, expected) {
   }
 }
 
-/** Steps 1 and 2: draw the hand of dice cards for the active player (FR-18). */
+/**
+ * Steps 1 and 2: the turn starts and the active player draws.
+ *
+ * Three things happen in one transition, and the order inside it matters:
+ *
+ * 1. **Statuses and traps expire first**, before anything reads either list. A status added on turn 14
+ *    with a deadline of 16 applies on 14 and 15 and is gone on 16, whatever order the rest of the turn
+ *    does things in.
+ * 2. **One skill card is drawn** for the active player (FR-23). It can come back empty, when the hand
+ *    is already at its limit of five, and that is an ordinary situation rather than a failure.
+ * 3. **Three dice cards are drawn** (FR-18).
+ *
+ * The skill draw comes before the dice draw so that a card which could change what the dice hand is
+ * worth is in the player's hand before they see it. Nothing exploits that yet, and reversing it later
+ * would be a rule change rather than a tidy-up, so it is settled now.
+ */
 export function drawHand(state, deps) {
   assertPhase(state, TURN_PHASE.DRAW);
+
+  const started = {
+    statuses: expireStatuses(state.statuses, state.turnNumber),
+    traps: expireTraps(state.traps, state.turnNumber),
+  };
+  const drawn = drawFor({ ...state, ...started }, state.activePlayer, deps);
 
   const hand = deps.diceSource.draw(deps.rng);
   if (!Array.isArray(hand) || hand.length === 0) {
     throw new Error("the dice source drew an empty hand");
   }
 
-  return nextState(state, { hand, phase: TURN_PHASE.CHOOSE });
+  return nextState(state, { ...started, ...drawn, hand, phase: TURN_PHASE.CHOOSE });
 }
 
 /**
  * Step 3: the active player picks one card of the hand. The other cards are not rolled (FR-19).
  *
- * `faces` identifies the card, so a hand holding two cards of the same denomination is picked from
- * by denomination. That is the right behaviour: the two cards are indistinguishable to the rules.
+ * `faces` identifies the card, so a hand holding two cards of the same denomination is picked from by
+ * denomination. That is the right behaviour: the two cards are indistinguishable to the rules.
+ *
+ * The turn now stops in `action` rather than going on to `roll`, which is the one line of this file
+ * that opened the whole of issue #38.
  */
 export function chooseDie(state, faces) {
   assertPhase(state, TURN_PHASE.CHOOSE);
@@ -78,24 +113,47 @@ export function chooseDie(state, faces) {
     throw new Error(`no card with ${faces} faces in the drawn hand [${state.hand.join(", ")}]`);
   }
 
-  return nextState(state, { chosenDie: faces, phase: TURN_PHASE.ROLL });
+  return nextState(state, { chosenDie: faces, phase: TURN_PHASE.ACTION });
 }
 
 /**
- * Steps 4 and 5: roll the chosen die and work out what the active player can do with it.
+ * Step 4, the passing half: the active player plays no Action card and the turn goes on to the roll.
  *
- * When nothing can be done the turn goes straight to its end and carries the reason with it
- * (FR-14). The reason comes from `core/movement.js` rather than being decided here, because it is a
- * rule and not a presentation choice.
+ * Playing one is `state/skill-play.js`, because a card's effect is a rule and this file holds none.
+ * What is here is the part that is purely the sequence: the phase moves on.
+ */
+export function passAction(state) {
+  assertPhase(state, TURN_PHASE.ACTION);
+
+  return nextState(state, { phase: TURN_PHASE.ROLL });
+}
+
+/**
+ * Steps 5 and 6: roll the chosen die and work out what the active player can do with it.
+ *
+ * The roll is `core/roll.js`'s chain rather than a single call, so every modifier a card wrote into
+ * `state.modifiers` applies here, in the documented order. `rollSteps` keeps the trace so the screen
+ * can explain a number that three cards had a hand in (NFR-08).
+ *
+ * When nothing can be done the turn goes straight to its end and carries the reason with it (FR-14).
+ * The reason comes from `core/movement.js` rather than being decided here, because it is a rule and not
+ * a presentation choice.
  */
 export function rollChosenDie(state, deps) {
   assertPhase(state, TURN_PHASE.ROLL);
 
-  const roll = rollDie(state.chosenDie, deps.rng);
-  const result = evaluateTurn(state.pawns, state.activePlayer, roll, state.chosenDie);
+  const rolled = resolveRoll({ dieMax: state.chosenDie, modifiers: state.modifiers }, deps.rng);
+  const result = evaluateTurn(
+    state.pawns,
+    state.activePlayer,
+    rolled.roll,
+    state.chosenDie,
+    boardOf(state)
+  );
 
   return nextState(state, {
-    roll,
+    roll: rolled.roll,
+    rollSteps: rolled.steps,
     legalMoves: result.moves,
     refusalReason: result.reason,
     phase: result.moves.length === 0 ? TURN_PHASE.TURN_END : TURN_PHASE.ACT,
@@ -124,10 +182,14 @@ export function selectPawn(state, pawn) {
 }
 
 /**
- * Step 6: the active player commits to a move, and the reaction window opens.
+ * Step 7: the active player commits to a move, and the reaction window opens.
  *
- * The move is looked up in `state.legalMoves` rather than trusted from the caller. A caller that
- * builds its own move object would be a second place where the rules are applied.
+ * The move is looked up in `state.legalMoves` rather than trusted from the caller. A caller that built
+ * its own move object would be a second place where the rules are applied.
+ *
+ * **This no longer resolves the move.** Until issue #38 the committing intent ran step 8 as well,
+ * because there was nothing to put between them. Now there is, and the split is what lets a Reaction
+ * card be played against a capture that has been declared and not yet happened (FR-25).
  */
 export function commitMove(state, pawn) {
   assertPhase(state, TURN_PHASE.ACT);
@@ -141,19 +203,24 @@ export function commitMove(state, pawn) {
 }
 
 /**
- * Step 7: the reaction window closes and the committed move is applied.
+ * Step 8: the committed move is applied.
  *
- * Nothing can be played into the window yet, which is issue #38. The phase exists so that adding
- * cards later is filling it rather than reshaping the sequence.
+ * Called when the reaction window has closed, which is `state/reaction-window.js`'s decision and not
+ * this file's. A move that a Reaction card cancelled never reaches here: the window resolves to
+ * `cancelPendingMove` instead, and the turn ends with the pawn where it stood.
  *
  * This is also where a skill square is used up (FR-22), and it is the right place for one reason: the
- * square only counts if the pawn **finished** here. Doing it any earlier would mean looking at a move
- * that a reaction card can still cancel.
+ * square only counts if the pawn **finished** here. Doing it any earlier would mean acting on a move a
+ * reaction card can still cancel.
  */
-export function resolveReactions(state, deps) {
+export function resolveMove(state, deps) {
   assertPhase(state, TURN_PHASE.REACTION);
 
   const move = state.pendingMove;
+  if (move === null) {
+    return nextState(state, { phase: TURN_PHASE.TURN_END });
+  }
+
   const pawns = applyMove(state.pawns, move);
   const winner = findWinner(pawns);
 
@@ -176,31 +243,23 @@ export function resolveReactions(state, deps) {
 }
 
 /**
- * The skill-square part of resolving a move: nothing, or the square used up and moved elsewhere.
+ * The committed move is thrown away and the turn ends with nothing moved.
  *
- * Reads the move rather than searching the new pawn list, because `move.player` and `move.to` already
- * say which pawn ended where.
- *
- * **A captured pawn cannot trigger this.** It goes back to its start area, and a start area is not a
- * track square, so `skillSquareLandedOn` answers `null` for it. That falls out of the topology and
- * needs no rule.
- *
- * Drawing the card the square earns is the next commit: the skill card pool does not exist yet. The
- * square moving is the half of FR-22 that stands on its own, and separating the two keeps the pool out
- * of a commit that is about the board.
+ * What Ghost Mode and Uno Reverse resolve to. Kept here rather than in the card effects, because
+ * "the declared move does not happen" is a step of the sequence and every card that reaches it needs
+ * the same behaviour.
  */
-function skillSquareChanges(state, move, deps) {
-  const landedOn = skillSquareLandedOn(state.skillSquares, { player: move.player, r: move.to });
-
-  if (landedOn === null) return {};
-
-  return { skillSquares: consumeSkillSquare(state.skillSquares, landedOn, deps.rng) };
+export function cancelPendingMove(state) {
+  return nextState(state, { pendingMove: null, phase: TURN_PHASE.TURN_END });
 }
 
 /**
- * Step 8: the drawn cards go back into the pool (FR-21) and the next player takes over (FR-04).
+ * Step 9: the drawn cards go back into the pool (FR-21) and the next player takes over (FR-04).
  *
- * Drawing skill cards up to the hand limit also belongs to this step and is issue #38.
+ * `clearedTurnFields` is what makes this safe as skill cards pile more onto a turn: the roll
+ * modifiers, the card budget and the reaction window all go with it, and the test in
+ * `game-state.test.js` compares the result field by field against a fresh match rather than trusting
+ * this list to be complete.
  */
 export function endTurn(state, deps) {
   assertPhase(state, TURN_PHASE.TURN_END);
@@ -218,8 +277,8 @@ export function endTurn(state, deps) {
 /**
  * The seat that takes the next turn (FR-04).
  *
- * Turn order is the order of `state.seats`, not `activePlayer + 1`. In a two-player match the seats
- * are 0 and 2, so counting upward would hand the turn to seat 1, which nobody is sitting in.
+ * Turn order is the order of `state.seats`, not `activePlayer + 1`. In a two-player match the seats are
+ * 0 and 2, so counting upward would hand the turn to seat 1, which nobody is sitting in.
  */
 function nextSeat(state) {
   const index = state.seats.indexOf(state.activePlayer);

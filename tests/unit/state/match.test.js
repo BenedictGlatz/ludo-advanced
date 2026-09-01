@@ -10,21 +10,54 @@ import { movablePawns } from "../../../src/state/turn-manager.js";
 import { rngForRolls } from "../../helpers/fixtures.js";
 
 /**
- * Dependencies for a match that is about the turn machinery and not about the Dice Card Pool.
+ * Dependencies for a match that is about the turn machinery and not about either card pool.
  *
- * The pool is the default since issue #30, and it spends the injected RNG on picking cards as well
- * as on rolling them. That is right for a real match and useless for a test that scripts an exact
- * sequence of rolls, so these tests hand in the single-card stand-in and keep every RNG value for
- * the die. What the pool itself does is `tests/unit/core/dice-pool.test.js`.
+ * The dice pool is the default since issue #30, and it spends the injected RNG on picking cards as
+ * well as on rolling them. That is right for a real match and useless for a test that scripts an
+ * exact sequence of rolls, so these tests hand in the single-card stand-in and keep every RNG value
+ * for the die. What the pool itself does is `tests/unit/core/dice-pool.test.js`.
  */
 function scripted(rolls) {
   return matchDeps(rngForRolls(rolls, 6), fixedDieSource(6));
 }
 
+/**
+ * The same match, started with no skill cards and no skill squares.
+ *
+ * Issue #38 added two more claims on `deps.rng` inside a match's first moments: shuffling the 58-card
+ * skill pool spends 57 draws, and every turn's opening draw spends one more. A scripted roll sequence
+ * is exhausted before the first die is thrown.
+ *
+ * So every test below that scripts rolls starts an **empty** match: no skill cards, no skill squares.
+ * The two overrides exist for exactly this and are documented in `match.js`. What the seeded pool does
+ * is `core/skill-pool.test.js`, and the one test here that cares about it does not script anything.
+ */
+function startPlainMatch(playerCount, deps) {
+  return startMatch(playerCount, deps, [], []);
+}
+
+/**
+ * One whole turn: choose the die, pass on the action phase, roll, declare a move and let the reaction
+ * window close.
+ *
+ * Six intents where issue #27 had three. Both extra pairs are the seams issue #38 opened: the action
+ * phase between choosing and rolling, and the reaction window between declaring a move and applying
+ * it. A helper rather than five inlined dispatches, because none of the tests using it is about the
+ * sequence; `intents.test.js` is.
+ */
+function playOnePawn(state, deps, pawn) {
+  let current = dispatch(state, { type: INTENT.CHOOSE_DIE, faces: state.hand[0] }, deps).state;
+  current = dispatch(current, { type: INTENT.SKIP_ACTION }, deps).state;
+  current = dispatch(current, { type: INTENT.ROLL_DIE }, deps).state;
+  current = dispatch(current, { type: INTENT.COMMIT_MOVE, pawn }, deps).state;
+
+  return dispatch(current, { type: INTENT.CLOSE_WINDOW }, deps).state;
+}
+
 describe("startMatch (FR-01)", () => {
   it("starts 2, 3 and 4 player matches with the first hand already drawn", () => {
     for (const playerCount of [2, 3, 4]) {
-      const state = startMatch(playerCount, scripted([6]));
+      const state = startPlainMatch(playerCount, scripted([6]));
 
       expect(state.playerCount).toBe(playerCount);
       expect(state.phase).toBe(TURN_PHASE.CHOOSE);
@@ -44,14 +77,16 @@ describe("startMatch (FR-01)", () => {
 
 describe("restartMatch (FR-06)", () => {
   it("gives a fresh match with every field reset, and never reloads anything", () => {
-    const deps = scripted([6, 6]);
-    const started = startMatch(2, deps);
-    const played = dispatch(started, { type: INTENT.CHOOSE_DIE, faces: 6 }, deps).state;
-    const moved = dispatch(played, { type: INTENT.COMMIT_MOVE, pawn: 0 }, deps).state;
+    const deps = scripted([6]);
+    const started = startPlainMatch(2, deps);
+    const moved = playOnePawn(started, deps, 0);
 
     expect(findPawn(moved.pawns, { player: 0, pawn: 0 }).r).toBe(1);
 
-    const restarted = restartMatch(moved, deps);
+    // A restart gets its own dependencies, because it shuffles a fresh 58-card skill pool and the
+    // scripted RNG above holds exactly one number. That is the point of `restartMatch` taking `deps`
+    // rather than reading them off the state it is replacing.
+    const restarted = restartMatch(moved, matchDeps(createSeededRng(7), fixedDieSource(6)));
 
     expect(restarted.pawns.every((pawn) => pawn.r === START_R)).toBe(true);
     expect(restarted.activePlayer).toBe(0);
@@ -64,12 +99,7 @@ describe("restartMatch (FR-06)", () => {
 describe("abandonMatch (FR-07)", () => {
   it("stops the match and leaves the pawns where they stood", () => {
     const deps = scripted([6]);
-    const started = startMatch(2, deps);
-    const moved = dispatch(
-      dispatch(started, { type: INTENT.CHOOSE_DIE, faces: 6 }, deps).state,
-      { type: INTENT.COMMIT_MOVE, pawn: 0 },
-      deps
-    ).state;
+    const moved = playOnePawn(startPlainMatch(2, deps), deps, 0);
 
     const abandoned = abandonMatch(moved);
 
@@ -142,7 +172,7 @@ describe("a complete match, played end to end on a scripted RNG (NFR-09)", () =>
     // so a script written as a list of rolls would shift the moment a pawn landed on one. This test is
     // about movement and turn order, and `skill-squares.test.js` covers the respawn.
     const deps = scripted(rolls);
-    let state = startMatch(2, deps, []);
+    let state = startPlainMatch(2, deps);
     let turns = 0;
 
     while (state.status === MATCH_STATUS.RUNNING) {
@@ -150,10 +180,13 @@ describe("a complete match, played end to end on a scripted RNG (NFR-09)", () =>
       expect(turns, "the scripted match did not finish").toBeLessThan(200);
 
       state = dispatch(state, { type: INTENT.CHOOSE_DIE, faces: state.hand[0] }, deps).state;
+      state = dispatch(state, { type: INTENT.SKIP_ACTION }, deps).state;
+      state = dispatch(state, { type: INTENT.ROLL_DIE }, deps).state;
 
       if (state.phase === TURN_PHASE.ACT) {
         const pawn = furthestMovablePawn(state);
         state = dispatch(state, { type: INTENT.COMMIT_MOVE, pawn }, deps).state;
+        state = dispatch(state, { type: INTENT.CLOSE_WINDOW }, deps).state;
       }
 
       if (state.status !== MATCH_STATUS.RUNNING) break;
@@ -182,7 +215,7 @@ describe("a complete match, played end to end on a scripted RNG (NFR-09)", () =>
 
   it("refuses every intent once it is won", () => {
     const deps = scripted([6]);
-    const won = abandonMatch(startMatch(2, deps));
+    const won = abandonMatch(startPlainMatch(2, deps));
 
     expect(dispatch(won, { type: INTENT.END_TURN }, deps).accepted).toBe(false);
   });

@@ -220,6 +220,89 @@ its pawn actually reaches, and a random layout cannot promise that.
 restart is a fresh match and a board that kept where the last match had wandered to would start the
 second match from a position nobody chose.
 
+### The turn became nine steps, and both empty seams got filled: 2026-08-31, issue #38
+
+The eight-step turn from issue #27 had two places that were deliberately left open. Both are now in use,
+and **neither needed the sequence reshaped**. That was the whole point of leaving them open, and it is
+worth stating as a result rather than as an intention:
+
+| Step | Phase | What changed |
+| --- | --- | --- |
+| 1, 2 | `draw` | Now draws a **skill card** as well as three dice cards, and expires statuses and traps |
+| 3 | `choose` | Ends in `action` instead of going straight to the roll |
+| 4 | **`action`** | New. The active player may play one Action card, or pass (FR-23) |
+| 5, 6 | `roll` | Now a real phase, and the roll is `core/roll.js`'s chain rather than one call |
+| 7 | `act` | Declares a move and **stops** |
+| 8 | `reaction` | Applies the declared move, or throws it away if a card cancelled it |
+| 9 | `turn-end` | Unchanged |
+
+#### Turn start deliberately did not become a phase
+
+The plan sketched a `turn-start` phase in which the skill card is drawn. It was not built, and the
+reason is what a phase name is for: **a phase says what the game is waiting for**, and this one would be
+waiting for nobody. The view would have to skip it immediately, which is a phase that exists only to be
+skipped. `drawHand` already covered "turn start and draw" as one step, so the card is drawn there.
+
+#### The intent list went from four to seven, and one intent got smaller
+
+`choose-die` used to pick the card **and roll it**, steps 3 to 5 in one intent, because the rulebook had
+no player input between them. The action phase is exactly that input, so `choose-die` now does step 3
+alone and `skip-action` and `roll-die` are separate.
+
+`commit-move` used to commit **and resolve**, steps 7 and 8. It now stops, and `close-window` finishes
+the job. That split is what makes a Reaction card against a capture possible at all (FR-25): there has
+to be a moment where the capture has been declared and has not happened.
+
+**`roll-die` is a separate intent rather than part of `skip-action`.** It costs one more intent and it
+buys two things: a place for the roll animation to hang off, and the moment the on-roll reaction window
+opens. Both were going to need it.
+
+#### Why the rejection reasons moved to their own file
+
+`state/rejections.js` holds `REJECTED`, `accept` and `reject` and imports nothing. `intents.js` and the
+card intents both need all three, and `intents.js` will fall through *into* the card intents, so putting
+them in either file would make a circle. A file with no imports cannot be part of one.
+
+#### The state gained thirteen fields, and they have three different lifetimes
+
+That is the change worth recording, more than the field names. Before issue #38 a field was either
+match-level or turn-level, and `clearedTurnFields` drew the line. Now there is a middle:
+
+| Lives for | Fields | Cleared by |
+| --- | --- | --- |
+| The match | `skillPool`, `skillDiscard`, `skillHands` | nothing |
+| Several turns | `statuses`, `traps` | their own deadline, or being used up |
+| One turn | `modifiers`, `cardsPlayed`, `cardBudget`, `reactionWindow`, `pendingCard`, `rollSteps`, `reactionsLocked` | `clearedTurnFields` |
+
+**The failure mode this creates is invisible in every ordinary test**: a field that a card writes and
+nothing clears, leaking a roll modifier or a spent budget into the next player's turn. Every test looks
+at one turn, so none of them would see it. `game-state.test.js` now compares `clearedTurnFields()` field
+by field against a **fresh match** instead, which catches a missing entry rather than trusting the list.
+
+#### The skill pool is shuffled in `match.js`, not in `createGameState`
+
+A shuffle needs the injected RNG, and keeping `createGameState` free of randomness is what lets about
+half the unit tests build a starting board with no `deps` at all. It is also what made the third seed
+regeneration survivable, below.
+
+#### Negative finding: the seeds went stale for the third time, and this time it cost one command
+
+`scripts/find-seeds.js` exists because the first two times this happened, the replay had to be rebuilt
+from undocumented work. Issue #38 spends the RNG in two more places: **57 draws** to shuffle the
+58-card skill pool when a match starts, and one more at the start of every turn. Every seed produced a
+different match from the same number.
+
+The fix was `npm run test:seeds`, one command, and two of the five pinned seeds changed. The other three
+kept working by coincidence. What the script needed was three added lines, because the replay policy has
+to match what the browser does step for step, and the browser now walks through two more phases.
+
+**A second consequence, and it is the one that will bite again.** Shuffling 58 cards spends 57 RNG draws
+*before the first die is thrown*, so every unit test that scripts an exact sequence of rolls was
+exhausted instantly. `startMatch` therefore takes a `skillPool` override, for the same reason it already
+took a `skillSquares` one, and the tests that script rolls pass `[]` for both. The pattern is now
+established twice: **anything that spends the injected RNG at match start needs a test-side off switch,
+or it silently invalidates every scripted test in the project.**
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

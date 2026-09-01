@@ -92,14 +92,41 @@ export function createGameLoop({ initialState, deps, $board, $diceHand, $message
   /**
    * Render, then take whatever step the turn takes without the player.
    *
-   * There is no recursion left in here. Both phases that wait for a person, `choose` and `act`, do
-   * exactly that, and `turn-end` comes back round through a timer, so this is a loop and not a
-   * growing stack.
+   * Three of the seven phases move on by themselves, and they do it for three different reasons:
+   *
+   * - **`action` and `roll` are immediate.** Nothing waits, because the skill hand is not playable yet
+   *   (issue #34). The two steps exist in the sequence and the player is carried straight through
+   *   them. When the hand becomes playable, `action` stops being in this list and nothing else moves.
+   * - **`reaction` is immediate for the same reason**: no Reaction card can be played into it yet, so
+   *   the window opens and closes in one tick. This is the empty seam issue #38 reopened, and the
+   *   split is worth having even while it is empty, because the alternative is reshaping the sequence
+   *   later rather than filling it.
+   * - **`turn-end` waits**, so the finished move or the refusal is on screen long enough to read.
+   *
+   * The recursion is bounded and not a growing stack: each of the three immediate steps advances the
+   * phase, and `turn-end` comes back round through a timer rather than through a call.
    */
   function advance() {
     render();
 
     if (state.status !== MATCH_STATUS.RUNNING) return;
+
+    // Carried straight through: the action phase and the roll take no input yet.
+    if (state.phase === TURN_PHASE.ACTION) {
+      if (!apply({ type: INTENT.SKIP_ACTION })) return;
+      advance();
+      return;
+    }
+    if (state.phase === TURN_PHASE.ROLL) {
+      if (!apply({ type: INTENT.ROLL_DIE })) return;
+      advance();
+      return;
+    }
+    if (state.phase === TURN_PHASE.REACTION) {
+      if (!apply({ type: INTENT.CLOSE_WINDOW })) return;
+      advance();
+      return;
+    }
 
     if (state.phase === TURN_PHASE.TURN_END) {
       later(() => {

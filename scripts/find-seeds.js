@@ -25,8 +25,17 @@
  *   `tests/e2e/helpers.js` clicks, which is the card in slot 0, which is `hand[0]`.
  * - **Choosing a pawn**: the lowest-numbered movable pawn, which is what `firstMovablePawn` selects,
  *   because the view appends pawns in seat and then pawn order and only the active seat is movable.
+ * - **Playing a skill card**: never. The hand is not playable until issue #34, and the browser cannot
+ *   play one either, so the replay passes on the action phase exactly as the loop does.
  *
- * If either of those two changes, this script has to change with it or the seeds go stale silently.
+ * If any of those three changes, this script has to change with it or the seeds go stale silently.
+ *
+ * ## Issue #38 made the seeds stale for the third time, and this run is why the script exists
+ *
+ * A turn now draws a skill card before it draws its dice cards, and starting a match shuffles the
+ * 58-card skill pool. Both spend the injected RNG, so every seed produced a different match from the
+ * same number. The first two times this happened the replay had to be rebuilt from nothing; this time
+ * it was one command.
  */
 
 import { createSeededRng } from "../src/core/dice-source.js";
@@ -66,6 +75,13 @@ function replay(seed, playerCount) {
       state = chosen.state;
     }
 
+    // The action phase and the roll, which the browser also walks through without stopping.
+    for (const type of [INTENT.SKIP_ACTION, INTENT.ROLL_DIE]) {
+      const stepped = dispatch(state, { type }, deps);
+      if (!stepped.accepted) return { failed: `the turn stalled at ${type}`, turns };
+      state = stepped.state;
+    }
+
     if (state.phase === TURN_PHASE.ACT) {
       const pawn = lowestMovablePawn(state);
       const move = state.legalMoves.find((entry) => entry.pawn === pawn);
@@ -77,7 +93,11 @@ function replay(seed, playerCount) {
 
       const played = dispatch(state, { type: INTENT.COMMIT_MOVE, pawn }, deps);
       if (!played.accepted) return { failed: "the move was refused", turns };
-      state = played.state;
+
+      // Declaring a move no longer applies it: the reaction window has to close first.
+      const resolved = dispatch(played.state, { type: INTENT.CLOSE_WINDOW }, deps);
+      if (!resolved.accepted) return { failed: "the reaction window would not close", turns };
+      state = resolved.state;
     } else if (state.refusalReason !== null && found.passed === null) {
       found.passed = state.turnNumber;
     }
@@ -123,7 +143,7 @@ function report(label, hit, note) {
 }
 
 function main() {
-  console.log(`Replaying seeds 1..${SEEDS_TO_SCAN} against the twenty-card pool.\n`);
+  console.log(`Replaying seeds 1..${SEEDS_TO_SCAN} against both card pools.\n`);
 
   const twoPlayers = scan(2);
   const fourPlayers = scan(4);

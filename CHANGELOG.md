@@ -251,6 +251,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   English. The rules sentence of each card is deliberately absent and arrives with the card's effect
 - Section 2.5 of the game design document, the skill fields as a board rule: where they start, why the
   layout is symmetric, why landing counts and crossing does not, and what a respawn excludes
+- **The action phase**: a turn now stops after the dice card is chosen and before the die is rolled, so
+  the active player can play a skill card there (issue #38, FR-23). The player is carried straight
+  through it for now, because the skill hand is not clickable yet. The rule it exists for is the Product
+  Owner's: skill cards come **after** the die is known, so choosing whether to buff a D20 or a D4 is a
+  real decision
+- **A skill card is drawn at the start of every turn** (FR-23), and a second one when a pawn lands on a
+  skill square (FR-22). The 58-card pool is shuffled when the match starts. The cards are in a hand
+  nobody can play yet, which is issue #34
+- **Declaring a move no longer applies it.** A committed move waits in the reaction window, and the pawn
+  moves when the window closes. Nothing can be played into that window yet, so it opens and closes in
+  one tick, and the split is what makes a reaction to an announced capture possible at all (FR-25)
 - **The rules the skill cards stand on** (issue #38), five new modules in `src/core/`, none of which
   mentions a card by name. The roll is now an ordered chain of modifiers rather than a single number, so
   a card can add a die, subtract one, roll twice for the better or worse of two, multiply the result or
@@ -268,6 +279,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A roll can now come out at 0**, which happens when a card subtracts more than the die produced.
   Nobody moves that turn and the board says so. The roll used to be rejected as an invalid number, which
   would have turned one card into a crash
+- The intent list `ui/` may dispatch went from four entries to seven. `choose-die` got **smaller**: it
+  used to pick the card and roll it in one step, and now stops at the action phase. `commit-move` got
+  smaller too, and `skip-action`, `roll-die` and `close-window` are the three new ones
+- **The end-to-end seeds were repinned for the third time**, because starting a match now shuffles a
+  58-card skill pool and every turn draws from it, so every seed played a different match. `npm run
+  test:seeds` found the new ones and two of the five changed
 - The per-pawn movement rules moved out of `src/core/movement.js` into `src/core/move-rules.js`.
   `movement.js` keeps the public API and everything that looks at a player's four pawns at once, and
   still exports the move kinds and refusal reasons from the same place, so no caller changed

@@ -2006,6 +2006,61 @@ to get wrong later.
   a second roll would fail the test with "scripted RNG exhausted" rather than passing quietly.
 - → Ch. 05
 
+### 2026-08-31: Turn start stayed a step and did not become a phase
+
+- **Chosen:** the skill card of the turn's opening is drawn inside `drawHand`, which already covered
+  "turn start and draw" as one step. There is no `turn-start` phase.
+- **Why:** a phase name says **what the game is waiting for**, which is what the view needs to know. A
+  turn-start phase would be waiting for nobody, so the view would have to skip it the instant it saw it.
+  A phase that exists only to be skipped is a phase that will be forgotten in one of the places that has
+  to skip it.
+- **Rejected: the plan's own sketch**, which had `turn-start` as a phase before `draw`. It reads tidily
+  as a table and it adds a state nobody can act in.
+- **What is deferred with it:** if a card ever has to be played *at* turn start, before the dice hand is
+  seen, this becomes a phase after all. No card in the 29 does.
+- → Ch. 06
+
+### 2026-08-31: `roll` became a real phase and the roll got its own intent
+
+- **Chosen:** `skip-action` moves the turn to `roll`, and a separate `roll-die` intent does the rolling.
+- **Why:** two things need exactly that moment. The roll animation has to hang off something, and the
+  on-roll reaction window (Critical Failure, Devil Die, Hold Pawn) opens there. Folding the roll into
+  `skip-action` would mean reopening it for both.
+- **Rejected: rolling as part of passing on the action phase.** One intent fewer, and it hides the
+  moment three of the ten cards of artboard `6a` are played into.
+- **Cost, stated plainly:** the view now walks through two phases nobody can act in yet, `action` and
+  `roll`. It does that in one tick and the player sees nothing. When the skill hand becomes playable
+  (issue #34), `action` stops being automatic and nothing else moves.
+- → Ch. 06
+
+### 2026-08-31: The rejection reasons live in a file that imports nothing
+
+- **Chosen:** `state/rejections.js` holds `REJECTED`, `accept` and `reject`, and has no imports at all.
+- **Why:** `intents.js` and the card intents both need all three, and `intents.js` falls through *into*
+  the card intents. Putting the shared three in either file would be a circular import. A file with no
+  imports cannot be in a cycle.
+- **Rejected: duplicating the two helpers in both files.** Four lines each, and then two lists of
+  rejection reasons that drift.
+- → Ch. 06
+
+### 2026-08-31: Anything that spends the RNG at match start needs a test-side off switch
+
+- **Chosen:** `startMatch(playerCount, deps, skillSquares, skillPool)`. Passing `[]` for the pool starts
+  a match with no skill cards in it.
+- **Why:** shuffling 58 cards spends **57 draws** from the injected RNG before the first die is thrown,
+  and drawing a card at the start of every turn spends one more. Every unit test that scripts an exact
+  sequence of rolls was exhausted instantly. The same argument already justified the `skillSquares`
+  parameter one commit earlier, so this is the second instance of one pattern rather than a new
+  workaround.
+- **Rejected: dropping the initial shuffle**, on the grounds that `drawSkillCard` picks a random index
+  rather than the top card, so the pool's order carries no information and the shuffle is redundant. It
+  is redundant, and removing it would make a pool that anybody who has seen the catalogue can count.
+- **Rejected: padding the scripted RNG sequences with 57 leading values.** It works and it makes every
+  affected test unreadable, and it breaks again the day the pool size changes.
+- **Both defaults are the real thing**, so no production caller passes either and a real match cannot
+  start with an accidentally empty pool.
+- → Ch. 06, Ch. 08
+
 ---
 
 ## Challenges

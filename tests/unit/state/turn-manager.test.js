@@ -4,7 +4,6 @@ import { HOME_R, START_R } from "../../../src/core/board.js";
 import { fixedDieSource } from "../../../src/core/dice-source.js";
 import { REFUSAL } from "../../../src/core/movement.js";
 import { findPawn } from "../../../src/core/pawns.js";
-import { INITIAL_SKILL_SQUARES } from "../../../src/core/skill-squares.js";
 import {
   MATCH_STATUS,
   TURN_PHASE,
@@ -18,7 +17,8 @@ import {
   endTurn,
   moveForPawn,
   movablePawns,
-  resolveReactions,
+  passAction,
+  resolveMove,
   rollChosenDie,
   selectPawn,
 } from "../../../src/state/turn-manager.js";
@@ -33,11 +33,19 @@ function deps(rolls) {
 function afterRoll(pawns, rolls, playerCount = 2) {
   const d = deps(rolls);
   const start = nextState(createGameState(playerCount), { pawns });
-  return { state: rollChosenDie(chooseDie(drawHand(start, d), 6), d), deps: d };
+  return { state: rollChosenDie(passAction(chooseDie(drawHand(start, d), 6)), d), deps: d };
 }
 
-describe("the eight-step sequence (section 3 of the game design document)", () => {
-  it("draws, chooses, rolls and lands in the act phase", () => {
+describe("the nine-step sequence (section 3 of the game design document)", () => {
+  /**
+   * Every test in this file builds its state from `createGameState`, which starts with an **empty**
+   * skill card pool. That is what keeps the scripted roll sequences below exact: `drawHand` now draws
+   * a skill card as well, and a draw from an empty pool spends no randomness at all.
+   *
+   * `match.test.js` covers the other half, a match started through `startMatch` with the pool
+   * shuffled, and it deliberately does not script individual rolls.
+   */
+  it("draws, chooses, passes on the action, rolls and lands in the act phase", () => {
     const d = deps([6]);
 
     const drawn = drawHand(createGameState(2), d);
@@ -45,14 +53,31 @@ describe("the eight-step sequence (section 3 of the game design document)", () =
     expect(drawn.hand).toEqual([6]);
 
     const chosen = chooseDie(drawn, 6);
-    expect(chosen.phase).toBe(TURN_PHASE.ROLL);
+    expect(chosen.phase).toBe(TURN_PHASE.ACTION);
     expect(chosen.chosenDie).toBe(6);
 
-    const rolled = rollChosenDie(chosen, d);
+    // The step issue #38 added. Nothing is rolled until the player has had their chance to play a
+    // card, which is what makes an Action card that changes the roll worth holding.
+    const passed = passAction(chosen);
+    expect(passed.phase).toBe(TURN_PHASE.ROLL);
+    expect(passed.roll).toBeNull();
+
+    const rolled = rollChosenDie(passed, d);
     expect(rolled.phase).toBe(TURN_PHASE.ACT);
     expect(rolled.roll).toBe(6);
     expect(rolled.legalMoves).toHaveLength(4);
     expect(rolled.refusalReason).toBeNull();
+  });
+
+  /**
+   * The roll trace exists so the screen can explain a number that cards had a hand in (NFR-08). With
+   * no card played it is one entry, and asserting that here is what makes the entry for a modified
+   * roll meaningful rather than decorative.
+   */
+  it("records how the roll came about, even when nothing modified it", () => {
+    const { state } = afterRoll(pawnsAt(2), [6]);
+
+    expect(state.rollSteps).toEqual([{ step: "base", value: 6, faces: 6 }]);
   });
 
   it("goes straight to the end of the turn when nothing can move, and says why (FR-14)", () => {
@@ -72,7 +97,7 @@ describe("the eight-step sequence (section 3 of the game design document)", () =
     // Nothing has moved yet: the window is open and the move is still pending.
     expect(findPawn(committed.pawns, { player: 0, pawn: 0 }).r).toBe(0);
 
-    const resolved = resolveReactions(committed, d);
+    const resolved = resolveMove(committed, d);
     expect(resolved.phase).toBe(TURN_PHASE.TURN_END);
     expect(resolved.pendingMove).toBeNull();
     expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(1);
@@ -85,7 +110,7 @@ describe("the eight-step sequence (section 3 of the game design document)", () =
 
     expect(state.legalMoves[0].captures).toEqual({ player: 2, pawn: 0 });
 
-    const resolved = resolveReactions(commitMove(state, 0), d);
+    const resolved = resolveMove(commitMove(state, 0), d);
 
     expect(findPawn(resolved.pawns, { player: 2, pawn: 0 }).r).toBe(START_R);
     expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(1);
@@ -95,7 +120,7 @@ describe("the eight-step sequence (section 3 of the game design document)", () =
     // Three pawns already fill the back of the house, so the last one only needs r = 41.
     const pawns = pawnsAt(2, { "0.0": 40, "0.1": 42, "0.2": 43, "0.3": HOME_R });
     const { state, deps: d } = afterRoll(pawns, [1]);
-    const resolved = resolveReactions(commitMove(state, 0), d);
+    const resolved = resolveMove(commitMove(state, 0), d);
 
     expect(resolved.status).toBe(MATCH_STATUS.WON);
     expect(resolved.phase).toBe(TURN_PHASE.MATCH_OVER);
@@ -119,7 +144,7 @@ describe("turn order (FR-04)", () => {
 
       for (let turn = 0; turn < playerCount * 2; turn += 1) {
         seen.push(state.activePlayer);
-        state = rollChosenDie(chooseDie(drawHand(state, d), 6), d);
+        state = rollChosenDie(passAction(chooseDie(drawHand(state, d), 6)), d);
         state = endTurn(state, d);
       }
 
@@ -130,7 +155,7 @@ describe("turn order (FR-04)", () => {
 
   it("clears everything that belonged to the finished turn", () => {
     const { state, deps: d } = afterRoll(pawnsAt(2), [6]);
-    const ended = endTurn(resolveReactions(commitMove(state, 0), d), d);
+    const ended = endTurn(resolveMove(commitMove(state, 0), d), d);
 
     expect(ended.hand).toEqual([]);
     expect(ended.legalMoves).toEqual([]);
@@ -148,7 +173,7 @@ describe("turn order (FR-04)", () => {
       diceSource: { handSize: 1, draw: () => [6], returnHand: (hand) => returned.push(hand) },
     };
 
-    const rolled = rollChosenDie(chooseDie(drawHand(createGameState(2), d), 6), d);
+    const rolled = rollChosenDie(passAction(chooseDie(drawHand(createGameState(2), d), 6)), d);
     endTurn(rolled, d);
 
     expect(returned).toEqual([[6]]);
@@ -178,100 +203,16 @@ describe("what the view needs from a turn", () => {
   });
 });
 
-describe("using up a skill square when a move resolves (FR-22)", () => {
-  /**
-   * A state in the `act` phase with a scripted roll, on a board whose skill squares are pinned.
-   *
-   * The rolls have to be scripted through `rngForRolls`, and the respawn draws from the same `rng`.
-   * Every test here therefore scripts exactly one roll and then never rolls again, so the second draw
-   * the generator is asked for is the respawn and nothing else depends on it.
-   */
-  function onBoard(skillSquares, pawns, rolls) {
-    const d = { rng: rngForRolls([...rolls, 1], 6), diceSource: fixedDieSource(6) };
-    const start = nextState(createGameState(2, skillSquares), { pawns });
-
-    return { state: rollChosenDie(chooseDie(drawHand(start, d), 6), d), deps: d };
-  }
-
-  it("moves the square somewhere else when a pawn lands on it", () => {
-    // Seat 0 enters on square 0, so r = 5 is absolute square 4.
-    const { state, deps: d } = onBoard([4], pawnsAt(2, { "0.0": 1 }), [4]);
-    const resolved = resolveReactions(commitMove(state, 0), d);
-
-    expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(5);
-    expect(resolved.skillSquares).toHaveLength(1);
-    expect(resolved.skillSquares).not.toContain(4);
-  });
-
-  it("leaves the board alone when the pawn merely passes over the square", () => {
-    // Crossing does not count. Otherwise a D20 would collect several squares in one move and a D2
-    // almost none, which makes "always take the biggest die" the only sensible choice.
-    const { state, deps: d } = onBoard([4], pawnsAt(2, { "0.0": 1 }), [6]);
-    const resolved = resolveReactions(commitMove(state, 0), d);
-
-    expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(7);
-    expect(resolved.skillSquares).toEqual([4]);
-  });
-
-  it("leaves the board alone on an ordinary square", () => {
-    const { state, deps: d } = onBoard([4], pawnsAt(2, { "0.0": 1 }), [3]);
-
-    expect(resolveReactions(commitMove(state, 0), d).skillSquares).toEqual([4]);
-  });
-
-  it("does not trigger for the pawn that was captured, only for the one that moved", () => {
-    // Seat 2 at r = 21 stands on absolute square 0. Seat 0's pawn at r = 4 rolls a 1 onto absolute
-    // square 4, a skill square, and there is no capture. Then the reverse: a capture that lands on a
-    // square that is not a skill square must change nothing, and a captured pawn goes to its start
-    // area, which is not a track square at all.
-    const captureBoard = onBoard([4], pawnsAt(2, { "0.0": 0, "2.0": 21 }), [6]);
-    const resolved = resolveReactions(commitMove(captureBoard.state, 0), captureBoard.deps);
-
-    expect(findPawn(resolved.pawns, { player: 2, pawn: 0 }).r).toBe(START_R);
-    expect(resolved.skillSquares).toEqual([4]);
-  });
-
-  it("does not use up a square on the move that wins the match", () => {
-    // The win branch returns early. That is deliberate rather than an oversight: nothing happens after
-    // the match ends, so a card earned on the winning move would have nowhere to go.
-    const pawns = pawnsAt(2, { "0.0": 40, "0.1": 42, "0.2": 43, "0.3": HOME_R });
-    const { state, deps: d } = onBoard([4], pawns, [1]);
-    const resolved = resolveReactions(commitMove(state, 0), d);
-
-    expect(resolved.status).toBe(MATCH_STATUS.WON);
-    expect(resolved.skillSquares).toEqual([4]);
-  });
-
-  it("starts a match with the real eight-square layout when nothing is pinned", () => {
-    expect(createGameState(2).skillSquares).toEqual(INITIAL_SKILL_SQUARES);
-  });
-
-  it("sees the same square through a second player's numbering", () => {
-    // Seat 2 enters on square 20, so its r = 5 is absolute square 24. Pinning 24 and moving seat 2 is
-    // the check that the conversion uses the moving pawn's own entry square and not seat 0's: a
-    // version that always used seat 0 would look for absolute 4 and find nothing.
-    const d = { rng: rngForRolls([4, 1], 6), diceSource: fixedDieSource(6) };
-    const start = nextState(createGameState(2, [24]), {
-      pawns: pawnsAt(2, { "2.0": 1 }),
-      activePlayer: 2,
-    });
-    const state = rollChosenDie(chooseDie(drawHand(start, d), 6), d);
-    const resolved = resolveReactions(commitMove(state, 0), d);
-
-    expect(findPawn(resolved.pawns, { player: 2, pawn: 0 }).r).toBe(5);
-    expect(resolved.skillSquares).not.toContain(24);
-  });
-});
-
 describe("the phase guards", () => {
   it("refuse every step taken out of order", () => {
     const d = deps([6, 6]);
     const fresh = createGameState(2);
 
     expect(() => chooseDie(fresh, 6)).toThrow(/expected phase "choose"/);
+    expect(() => passAction(fresh)).toThrow(/expected phase "action"/);
     expect(() => rollChosenDie(fresh, d)).toThrow(/expected phase "roll"/);
     expect(() => commitMove(fresh, 0)).toThrow(/expected phase "act"/);
-    expect(() => resolveReactions(fresh)).toThrow(/expected phase "reaction"/);
+    expect(() => resolveMove(fresh)).toThrow(/expected phase "reaction"/);
     expect(() => endTurn(fresh, d)).toThrow(/expected phase "turn-end"/);
     expect(() => drawHand(drawHand(fresh, d), d)).toThrow(/expected phase "draw"/);
   });

@@ -627,6 +627,53 @@ The trade is stated in the config and is unchanged. What it costs here is real: 
 of a roll of `0`, which will matter once a card can subtract from a die, is currently unreachable by
 any test.
 
+### The seeds went stale a third time, and the script paid for itself: 2026-08-31, issue #38
+
+`scripts/find-seeds.js` was written after the second regeneration, when the replay had to be rebuilt
+from work nobody had written down. Issue #38 made it happen again, and this time it cost one command.
+
+What changed is what the injected RNG is spent on. Two new claims on it, both at the very start of a
+match or a turn:
+
+| New draw | How many | When |
+| --- | --- | --- |
+| Shuffling the 58-card skill pool | 57 | Once, when the match starts |
+| Drawing one skill card | 1 | Every turn |
+
+Every seed therefore produced a different match from the same number. `npm run test:seeds` found new
+ones, and **two of the five pinned seeds changed**: the capture seed and the win seed. The other three
+kept working by coincidence, which is worth noting rather than celebrating.
+
+The script itself needed three lines, because its replay policy has to match what the browser does step
+for step, and the browser now walks through two extra phases and a reaction window. That agreement is
+the script's whole value, and it is stated in both files rather than being true by accident.
+
+#### The consequence that hit harder than the seeds
+
+**Every unit test that scripts an exact sequence of rolls broke**, and not by one draw: by 57. A
+scripted RNG throws when it is asked for a number it was not given, so the tests failed at
+`startMatch` before the first die.
+
+Two fixes, and the choice between them is recorded in the journal:
+
+- `startMatch` now takes a `skillPool` override, the same way it already took `skillSquares`, and the
+  tests that script rolls pass `[]` for both. That was the existing pattern, used a second time.
+- The tests that are *not* about `startMatch` build their state from `createGameState` instead, which
+  starts with an empty pool and therefore spends nothing.
+
+**The general lesson, and it is the second one this project has learned about scripted randomness:**
+anything that spends the injected RNG at match start silently invalidates every scripted test in the
+project. It needs a test-side off switch on the day it is written, not on the day the tests go red.
+
+### `turn-manager.test.js` was split because it grew past 300 lines: 2026-08-31, issue #38
+
+The skill-square cases moved to `turn-manager-skill-squares.test.js`. The seam is a real one and not a
+line count: every case in the new file pins the skill squares to one known place and asserts what
+happens to **the board**, while the cases left behind assert what happens to **the turn**.
+
+Worth recording because NFR-02 applies to tests as well as to source, and this is the first test file in
+the project to hit the limit.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

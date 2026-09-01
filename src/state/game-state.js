@@ -159,6 +159,18 @@ export function createGameState(playerCount, skillSquares = INITIAL_SKILL_SQUARE
 }
 
 /**
+ * The board as `core/` wants to see it: the statuses and the traps, and nothing else.
+ *
+ * `core/` is not allowed to know the shape of the state object (NFR-01), so every rules call that needs
+ * to know about card effects takes a `board` argument instead. This is the one function that builds it,
+ * which means there is one line to change the day a third kind of board effect is added, rather than
+ * one line per call site in the turn manager.
+ */
+export function boardOf(state) {
+  return { statuses: state.statuses, traps: state.traps };
+}
+
+/**
  * The next state: this one, with `changes` applied, frozen.
  *
  * **This is the only place in the whole project that produces a new state object.** Every transition
