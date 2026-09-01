@@ -316,6 +316,24 @@ available cut. **That is no longer what the board says**, see point 1 above.
   table's own check found missing. Handoff 05 sent,
   `01-Design/Handoff/05-brief-dice-pool-overlay.md`, with five numbered decisions D43 to D47. The round
   is open. **The 3 points are booked in full**, and whether that is honest is the note below.
+- **2026-09-01:** the work order `01-Design/Handoff/00-open-requests.md` sent, and **design handoff 04
+  answered the same evening**: `04-spec-hud-menus-and-handover.md`, D35 to D42 plus D16, D20 and four
+  unnumbered items, with five replacement stylesheets and five amended ones. Landed on the branch. **No
+  story points**, because it carries no issue: it is design work for issues #35, #41 and epic #39, all of
+  which were already booked. The visible effect on the board is nil and the visible effect on the game is
+  the whole of its interface, which is worth one sentence in the retrospective about what a points-based
+  velocity figure does and does not measure.
+  - **What it closed:** four of the five placeholder stylesheets, D38's overlay animation, D40's duplicated
+    win message, D20's hardcoded duration, and the empty-hand-slot question open since issue #39. It also
+    reverted issue #39's two token changes, so the board and the cards are full size again.
+  - **What it did not close:** handoff 05 has no spec, so `pool.css` is still a placeholder. **D16 is
+    answered but NFR-12 is still unmet**, because the seat shapes went on the HUD, the chrome and two
+    overlay panels and not on the pawn, which is where the requirement is measured. That is the only
+    `must have` in the sprint that a design item is still blocking, and the remaining work is named in the
+    spec as one `<span>` and about fifteen lines of CSS.
+  - **Two defects found while landing it**, both by the spec's own requirements rather than by the code: the
+    handover was uncovering the leaving player's secret hand for one frame, and the chrome's seat marker was
+    being written by one file and erased by another. Both fixed and both tested.
 - **This Delivered list has a hole between 2026-08-30 and 2026-09-01.** Issues #31, #32, #33, #34, #35,
   #38, #39 and #41 all landed in that window and none of them has an entry here, although their facts
   are in the chapter notes and the journal's decision blocks. Not reconstructed by whoever wrote the

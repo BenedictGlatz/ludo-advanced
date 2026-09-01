@@ -253,6 +253,28 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   run passed first time on all three browsers. Sprint 2. *(Noted while writing this: the morning's epic
   #39 work has no entry in this log either, the same gap the 2026-08-30 entry records. Not reconstructed
   here, because whoever did that work is who can describe it.)*
+- **2026-09-01, late evening**: **Design handoff 04 came back the same evening the work order went out**,
+  and it is the largest single delivery the design loop has produced: a 437-line spec answering D35 to D42
+  plus D16, D20 and four items owed since spec 03, five replacement stylesheets, five amended ones and a
+  rendered mockup. Four of the five placeholder stylesheets are gone and `pool.css` is the only one left.
+  Landing it took three kinds of work. **Copying**, which was the smallest part and had one trap in it: the
+  three files the README lists as "unchanged, included so the mockup runs" are not unchanged against this
+  branch, because the delivered `board.css` is a pre-split copy from before NFR-02 split it three ways, so
+  the whole folder was diffed file by file before anything was copied. **Wiring**, which was the three DOM
+  attributes the spec asked for by name rather than styling around, plus the refusal strip moving inside
+  `.app__board`, plus D40 taking the win message off the orange strip and D20 moving the last hardcoded
+  duration into `tokens.css`. **Finding two defects**, both of which the spec's own requirements exposed
+  rather than the code: the handover was taking its curtain down *before* rewriting the rail, so one painted
+  frame of the leaving player's secret hand was on screen for the arriving player, which is the exact thing
+  the screen exists to prevent; and `data-player` on the chrome was being written by `match-flow.js` and
+  erased by `render.js` a few times per turn, because two files write that element with different argument
+  sets. The first is fixed and tested with two MutationObservers, because a single frame is not something a
+  retrying assertion can see. The second failed its test in all three browsers on the first run. `core/` and
+  `state/` did not change by one line and every coverage figure is identical, which is the cleanest
+  measurement of NFR-01's layering the project has produced. **D16 is answered and still not closed**: four
+  seat shapes exist and are on the HUD, the chrome and two overlay panels, but not on the pawn, which is
+  where NFR-12 is measured, so `greyscale.spec.js` stays expected-to-fail and the `must have` stays unmet.
+  Sprint 2.
 
 ---
 
@@ -2646,6 +2668,100 @@ to get wrong later.
 - **Consequence found while testing it:** `quitToMenu` cleared `state` but not `deps`, so the overview
   could have described an abandoned match's pool from the main menu. One line, and it was the test for
   "the button is hidden on the menu" that found it.
+- → Ch. 04
+
+---
+
+### 2026-09-01: A delivery is diffed file by file, including the files declared unchanged
+
+- **Chosen:** before copying anything out of the handoff folder, every delivered file was diffed against
+  the file it would replace, including the three the README lists as "unchanged, included so the mockup
+  runs". `board.css`, `card.css` and `card-state.css` were then **not** copied.
+- **Why:** the delivered `board.css` is a 269-line pre-split copy. This branch had already split that file
+  into `board.css`, `board-track.css` and `board-regions.css` for NFR-02. Copying the folder wholesale
+  would have reverted the split, left two orphaned files still imported by `main.js`, and produced a page
+  that looked correct because the pre-split file contains all the same rules.
+- **The generalisable form:** "unchanged" in a delivery means unchanged since the designer took the
+  snapshot, not unchanged against the branch it is being applied to. A handoff is a copy of a working tree
+  at a moment, and the moment is not now.
+- **Rejected: trusting the README's table.** It is accurate about what the designer changed, which is a
+  different question from what is safe to copy. The cost of the diff was two minutes.
+- → Ch. 04, Ch. 08
+
+---
+
+### 2026-09-01: The two rows the HUD needed were paid for out of the foot of the page, not the board
+
+- **Chosen:** D35's answer was taken as delivered. `--board-size` goes back to 44vw and the two hand
+  `--card-u` factors back to 0.76 and 0.68. The refusal strip hangs off the bottom of `.app__board` and the
+  prompt strip becomes the third plate in the rail, so neither holds a grid row any more.
+- **Why:** issue #39 had bought the HUD and the chrome their rows by shrinking the board and both hands
+  about nine per cent, and both files said in their own headers that the change was forced by a measurement
+  rather than chosen. The measurement was real, the *choice of what to cut* was not examined: the foot of
+  the page held 148 px for two strips that are usually saying nothing, and the board and the cards are the
+  part of the screen the game happens in. 882 px of 900 with the prompt up, measured in the mockup.
+- **Rejected: keeping the smaller board.** It protects two empty strips by taking room from the two regions
+  the player looks at.
+- **Rejected: putting the HUD in the rail.** It is the only place that costs no full-width row, and the
+  rail already sets the board row's height, so a HUD there would shrink the board by its own height anyway.
+- **The fact to carry forward:** the board row is now set by the **rail** and not by the board, with 18 px
+  of headroom. The next region added to the rail is the first one that costs the board its size.
+- → Ch. 01, Ch. 04
+
+---
+
+### 2026-09-01: The handover passes the turn before it lifts the curtain
+
+- **Chosen:** on the Ready button, `loop.passTurn()` runs first and `openScreen(NONE)` second, guarded so
+  that a `passTurn` which ends the match does not have its win screen replaced.
+- **Why:** `passTurn` is what re-renders the rail for the arriving seat. Closing the overlay first meant one
+  painted frame of the **leaving** player's five skill cards in front of the person picking the device up.
+  That is a real leak of decision D33's secrecy rule, and it is what the handover screen exists to prevent.
+  Design spec 04 § 5 states the ordering as its one hard requirement, and its reason is the one that
+  settles it: no CSS can cover a frame that has already been painted.
+- **Rejected: hiding the rail with `visibility: hidden` during the handover as well.** It works, and it puts
+  the concealment in two files that have to agree. When they stop agreeing the failure is silent, and what
+  it costs is the game.
+- **How it is tested:** two MutationObservers pushing into one array, asserting that `data-seat` on the rail
+  appears before `data-open="false"` on the overlay. Every Playwright assertion retries, so all of them
+  would pass a page that showed the wrong thing for one frame and then corrected itself, which is precisely
+  the failure mode in question.
+- → Ch. 04, Ch. 08
+
+---
+
+### 2026-09-01: The win is announced by the overlay alone, and the orange strip says nothing
+
+- **Chosen:** `move-hints.js` lost its `WON` and `ABANDONED` branches. The win screen carries a new
+  `data-outcome="won|abandoned"` so the stylesheet can draw the two apart.
+- **Why:** the strip is `--color-warn` orange and `--color-warn` means the game has refused something.
+  Telling a player they have won in the colour reserved for "you cannot do that" was recorded here as a
+  defect when the strip was the only designed region available. D40 removed the reason it existed: there is
+  a designed win screen now, so one message in two places is no longer a workaround, it is duplication.
+- **Rejected: keeping the strip as a second, quieter announcement.** Two elements saying one thing is two
+  places to change when the wording changes, and the strip was the wrong colour for it either way.
+- **Rejected: inferring the outcome from `data-player` being absent**, which would have needed no new
+  attribute. That is exactly the guess design brief 04 § 2 asks not to be made, and it couples the panel's
+  colour rule to the accident that nobody wins an abandoned match.
+- **Found while doing it:** the abandoned screen **cannot be reached from the interface at all**. Nothing in
+  `ui/` calls `abandonMatch`; the Quit button goes to the menu. It is styled, translated, unit-tested and
+  unreachable. Not fixed here, because what quitting a match is supposed to mean is a rule question.
+- → Ch. 04, Ch. 08
+
+---
+
+### 2026-09-01: The four-second refusal hold became a token instead of a constant
+
+- **Chosen:** `--motion-refusal-hold: 4s` in `tokens.css`, read by `game-loop.js` through the existing
+  `motionMs` helper. `REFUSAL_MIN_MS = 4000` survives as the fallback for a harness with no stylesheet.
+- **Why:** it was the only duration in the game that lived outside `tokens.css`, and its own comment said so
+  and asked for it to be raised in the next handoff. D20 answered yes. The player feels this number, so it
+  belongs to the design, and the mechanism to read it back already existed for `--motion-capture`.
+- **Rejected: deleting the constant and letting the read fail to `undefined`.** Vitest runs with
+  `environment: "node"` and no stylesheet, so the fallback is not hypothetical.
+- **Why this one is worth recording at all:** it is the cheapest answer in a 437-line spec, one line of CSS,
+  and it is the clearest demonstration of what the handoff round trip is for. A number stopped living in two
+  layers at once, and nobody had to remember which.
 - → Ch. 04
 
 ---

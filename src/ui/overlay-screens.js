@@ -66,6 +66,11 @@ function pauseScreen() {
  * **An abandoned match arrives here too**, by a different route: `abandonMatch` reaches the same
  * `match-over` phase. It reads completely differently to a player, so the title comes from the status
  * rather than from the screen, and the abandoned version names nobody because nobody won.
+ *
+ * `outcome` is what lets `overlay.css` draw the two apart, and it is deliberately a second field rather
+ * than something the stylesheet infers from `player` being absent. D40 of design spec 04 asked for it by
+ * name: a win takes the winner's colour and the game's only `--text-2xl` title, and an abandoned match
+ * drops both, because the same screen in a different colour would be a small cruelty.
  */
 function winScreen(state) {
   const won = state.status === MATCH_STATUS.WON;
@@ -76,6 +81,7 @@ function winScreen(state) {
       ? t("match.won", { player: seatLabel(state.seats, state.winner) })
       : t("match.abandoned"),
     player: won ? state.winner : null,
+    outcome: won ? "won" : "abandoned",
     buttons: [
       { action: OVERLAY_ACTION.RESTART, label: t("match.restart"), variant: "primary" },
       { action: OVERLAY_ACTION.QUIT, label: t("win.quit") },
@@ -106,7 +112,15 @@ function handoverScreen(state, seat) {
 
 /** Nothing on the overlay: the match is on screen and the game is not asking anything. */
 function noScreen() {
-  return { screen: OVERLAY_SCREEN.NONE, title: "", text: "", player: null, cards: [], buttons: [] };
+  return {
+    screen: OVERLAY_SCREEN.NONE,
+    title: "",
+    text: "",
+    player: null,
+    outcome: null,
+    cards: [],
+    buttons: [],
+  };
 }
 
 /**

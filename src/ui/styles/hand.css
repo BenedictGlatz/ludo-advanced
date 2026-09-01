@@ -1,29 +1,14 @@
 /* The two hand rows. Depends on tokens.css and card.css.
    Reasoning is in 01-Design/Handoff/03-spec-cards-and-hands.md, D26, D29,
-   D31 and D33. */
+   D31 and D33, and 04-spec D35 and § 4.
 
-/* Changed by Claude Code on 2026-09-01, issue #39: the two --card-u factors
-   below went from 0.76 and 0.68 to 0.70 and 0.62. Nothing else in this file
-   changed, and no colour, spacing or type value was touched anywhere.
-
-   It is forced by a measurement and not chosen. The HUD (S7, FR-36) had to go
-   somewhere and it costs a full-width grid row, and at 1440 by 900 the page had
-   45 px too little once the prompt strip was also up:
-   tests/e2e/skill-hand.spec.js catches exactly that as FR-31's scrollbar.
-
-   Both columns had to give, because both were within 10 px of each other and
-   the taller one sets the row:
-
-     before   board 634 (44vw)   rail 627 (0.76 + 0.68)
-     after    board 576 (40vw)   rail 576 (0.70 + 0.62)
-
-   D26's own trade is what this spends: the hand sizes already drop the rules
-   paragraph and keep the art, and they keep doing that at the smaller factor.
-   The full-size reference card, --card-u: 1 on .card--full, is untouched.
-
-   **D35 of handoff 04 is where this gets confirmed or overruled**, together
-   with the --board-size change. If the HUD ends up somewhere that costs no
-   row, both revert. */
+   Amended on 2026-09-01, D35: issue #39 had taken the two --card-u factors
+   from 0.76 and 0.68 down to 0.70 and 0.62 to buy the HUD a grid row, and
+   the brief asked to be overruled. It is overruled. Both factors are back at
+   D26's sizes and the rows are paid for out of the foot of the page instead.
+   A skill card at 0.62 is 161 px wide, which puts the kind pill under 9 px:
+   D26 says a shrinking card drops the rules paragraph and keeps the art and
+   the pill, and 0.62 broke the second half of that. */
 
 .hand {
   display: flex;
@@ -38,7 +23,7 @@
        overlap: all three have to be comparable at a glance (D26). --- */
 
 .hand--dice {
-  --card-u: 0.7;
+  --card-u: 0.76;
   gap: calc(var(--card-u) * 0.75rem);
 }
 
@@ -47,7 +32,7 @@
        width: the hand keeps the same footprint at any limit (§ 4.2). --- */
 
 .hand--skill {
-  --card-u: 0.62;
+  --card-u: 0.68;
   --overlap: 0.24;
 }
 
@@ -140,4 +125,29 @@
 
 .hand--dice[data-resolved="true"] .card[data-selected="true"] {
   transform: translateY(calc(var(--lift) * 2.5));
+}
+
+/* --- An empty slot (issue #39, and it was neither of the two answers on
+       record). The skill hand builds five permanent slots and renders the
+       empty ones as blank cards, which spec 03 D29 called unplayable and
+       card-state.css drew face down. Neither is true: there is no card.
+
+       So an empty slot is not a card at all. It is the outline of where one
+       would go: the card's silhouette in dashed ink at low weight, no face,
+       no shadow, no lift, and out of the tab order. It keeps the fan's
+       geometry, so a hand of one does not re-flow into the middle of the
+       plate every time a card is played.
+
+       Selected on the absence of card data rather than on a new attribute,
+       because the slot the hand builds already has none. --- */
+
+.hand--skill .card:not([data-card-id]) {
+  background: none;
+  border: var(--border-card) dashed color-mix(in srgb, var(--color-ink) 32%, transparent);
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.hand--skill .card:not([data-card-id]) > * {
+  visibility: hidden;
 }

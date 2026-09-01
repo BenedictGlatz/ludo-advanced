@@ -3,42 +3,53 @@
 
    !! THIS FILE WAS NOT WRITTEN BY CLAUDE DESIGN AND IS NOT A DELIVERED SPEC !!
 
-   Fifth file in this state, after prompt.css, hud.css, chrome.css and
-   overlay.css, and the same rule from CLAUDE.md each time: Claude Code does not
-   invent design rules and asks when a specification is missing. The request is
-   out as 01-Design/Handoff/05-brief-dice-pool-overlay.md and this file is what
-   it asks to have replaced.
+   **It is the last file left in this state.** There were five of them, and
+   design handoff 04 replaced prompt.css, hud.css, chrome.css and overlay.css on
+   2026-09-01. This one belongs to handoff 05, whose brief is out as
+   01-Design/Handoff/05-brief-dice-pool-overlay.md and has had no spec back.
+   The rule from CLAUDE.md is the same as it was: Claude Code does not invent
+   design rules and asks when a specification is missing.
 
-   Nothing here is invented, and this file is deliberately the least opinionated
-   of the five. It sets no colour at all, and its one size factor is 0.62, which
-   is the skill hand's existing --card-u out of hand.css rather than a new value.
+   Nothing here is invented. It sets no colour at all, and its one size factor
+   is 0.62, which was the skill hand's --card-u out of hand.css when this file
+   was written. Note that D35 has since put that factor back to 0.68, so 0.62 is
+   now a number that exists only here, which is one more reason to replace it.
    Every other length is a token out of tokens.css.
 
    What is owed by design handoff 05, and is deliberately not guessed at:
 
    - D43: seven cards at once, at what size and in what arrangement. This lays
-     them out four and three at the skill hand's card size, because that shows
-     all seven denominations without a scroll and reuses a factor that already
-     ships. It is a layout that fits, not a layout that was designed: the
-     bottom row is short and nothing here says whether that reads as deliberate.
+     them out four and three at what used to be the skill hand's card size,
+     because that shows all seven denominations without a scroll and reused a
+     factor that already shipped. It is a layout that fits, not a layout that
+     was designed: the bottom row is short and nothing here says whether that
+     reads as deliberate.
    - D44: how the copy count is shown. It is the third tag on the card, which
      states the number but not the proportion, and the weighting of the pool is
      the most useful thing the screen could communicate.
    - D45: where the face-down sentence sits and how loud it is. It is in the
      .overlay__text slot, unchanged, because that number barely moves. See
      section 4.2 of the brief before making it prominent.
-   - D46: a third chrome button. chrome.css is untouched here and the row now
-     carries three buttons where handoff 04's D42 asked about two.
+   - D47: whether the overview also opens from the dice hand. Nothing here
+     depends on the answer either way.
+
+   D46 is answered and is off this list. Design spec 04 took it inside D42: the
+   row carries three controls, ordered pool, language, pause, and the pool
+   button is the only one with a coloured edge.
 
    Recorded in 00-Meta/Documentation/notes/04-frontend-building-blocks.md.
    ========================================================================== */
 
-/* --- The panel has to be wider than the 28rem every other screen uses, because
+/* --- The panel has to be wider than the 30rem every other screen uses, because
        four cards side by side do not fit in it. 48rem is that arithmetic and
-       nothing else: 4 x 0.62 x 16.25rem of card, three gaps, two paddings. --- */
+       nothing else: 4 x 0.62 x 16.25rem of card, three gaps, two paddings.
+
+       Set through --overlay-panel-w rather than by overriding `width`, because
+       that is the handle overlay.css offers for exactly this and it is what the
+       setup and handover screens already widen themselves with. --- */
 
 .overlay[data-screen="pool"] .overlay__panel {
-  width: min(48rem, 100%);
+  --overlay-panel-w: 48rem;
 }
 
 /* --- The card region. Empty on every screen but this one, and `:empty` is what

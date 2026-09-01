@@ -103,7 +103,14 @@ export function createMatchFlow({ $root, rng, players = null, delays = {}, skipH
     updateChrome(session.$chrome, {
       canPause: loop !== null && screen === OVERLAY_SCREEN.NONE,
       turn: live === null ? "" : turnLine(live),
+      player: live === null ? null : live.activePlayer,
     });
+
+    // `data-paused` is on the shell rather than on the prompt strip, because the strip is rebuilt with
+    // every match and the pause is a fact about the session. Design spec 04 asks for it so the reaction
+    // countdown can stop: the ring is a CSS animation off `data-mode`, and an animation cannot pause
+    // itself. Every screen except none means the game has stopped, which is what FR-07 pauses.
+    session.$app?.attr("data-paused", String(loop !== null && screen !== OVERLAY_SCREEN.NONE));
   }
 
   /**
@@ -208,9 +215,19 @@ export function createMatchFlow({ $root, rng, players = null, delays = {}, skipH
       loop.resume();
     }
 
+    // **The turn passes before the curtain comes down, and that order is the whole point of the screen.**
+    // `passTurn` is what re-renders the rail for the arriving seat, so closing the overlay first left one
+    // painted frame of the *leaving* player's five skill cards in front of the person picking the device
+    // up, which is the exact leak D33's secrecy rule and D39's handover exist to prevent. Design spec 04
+    // § 5 states it as its one ordering requirement, and no CSS can cover a frame already on screen.
+    //
+    // The guard is not decoration: `passTurn` advances the turn, and an advance can reach `match-over`,
+    // in which case `onMatchOver` has already put the win screen up and there is no curtain left to take
+    // down. Without it, a win on the first move of a turn would be replaced by an empty screen.
     if (action === OVERLAY_ACTION.READY) {
-      openScreen(OVERLAY_SCREEN.NONE);
       loop.passTurn();
+
+      if (screen === OVERLAY_SCREEN.HANDOVER) openScreen(OVERLAY_SCREEN.NONE);
     }
   }
 

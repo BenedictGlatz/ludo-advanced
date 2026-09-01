@@ -1,8 +1,21 @@
 /* S6: move refusal. Split out of board.css along a real seam: S6 is its own
    screen in the Obligations Book, and board.css was at the NFR-02 limit.
-   CSS styles the container; i18next supplies the text. Depends on tokens.css. */
+   CSS styles the container; i18next supplies the text. Depends on tokens.css.
+
+   Amended on 2026-09-01, 04-spec D35: the strip used to hold a full-width
+   grid row at the foot of the page, 46 px of it, permanently, faded to
+   nothing so that the page would not jump when a refusal arrived. It now
+   hangs off the bottom of the board region instead. It costs no grid, it
+   still cannot make the page jump, and a message about a refused move is
+   over the pieces it is about. app.css makes .app__board the containing
+   block. */
 
 .move-refusal {
+  position: absolute;
+  bottom: calc(var(--space-4) * -1);
+  left: 50%;
+  z-index: var(--layer-refusal);
+  translate: -50% calc(var(--space-2) * -1);
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -17,7 +30,6 @@
   background: var(--color-warn-soft);
   box-shadow: var(--shadow-card);
   opacity: 0;
-  translate: 0 calc(var(--space-2) * -1);
   transition:
     opacity var(--motion-feedback) var(--ease-ui),
     translate var(--motion-feedback) var(--ease-ui);
@@ -34,5 +46,5 @@
 
 .move-refusal[data-reason-key]:not([data-reason-key=""]) {
   opacity: 1;
-  translate: 0 0;
+  translate: -50% 0;
 }

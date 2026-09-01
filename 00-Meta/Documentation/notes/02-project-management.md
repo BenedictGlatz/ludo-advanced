@@ -712,6 +712,45 @@ guess. **The likely cause is worth naming: the chapter notes are where the inter
 they get written, and the logs feel like bookkeeping.** The report needs the logs, because they are the
 only artefacts that show sequence and pace.
 
+### A whole day's work with no issue behind it: 2026-09-01, design handoff 04
+
+Design handoff 04 replaced the stylesheets for four of the game's regions, reverted two token changes,
+answered nine numbered decisions and fixed two defects. **It carries no issue number and books no story
+points**, and every process finding here follows from that.
+
+**Where the work belongs on the board is nowhere.** The design it answers is for issues #35, #41 and epic
+#39, all three of which are already booked and two of which are closed. So the largest single change to what
+the game looks like appears on the board as no movement at all. The board is not wrong: nothing new was
+requested, a request already made was answered. What it shows is that **a Kanban board tracks requests and
+not work**, and the design loop is the one workflow in this project that generates work without generating a
+card for it.
+
+**The consequence for the velocity figure is the third one this sprint**, and it is a new cause again:
+
+| Finding | Date | Why velocity is unreadable |
+| --- | --- | --- |
+| First | 2026-08-30 | No effort is measured anywhere, so points cannot be divided by anything |
+| Second | 2026-09-01, #30 | The points and the work have drifted apart: 3 points describe a file written on a different day |
+| Third | 2026-09-01, handoff 04 | A day of work has no points at all, because the issue it serves was booked before the work existed |
+
+Three independent reasons is enough to stop treating the number as a planning input and say so in the
+retrospective. The useful sentence is not "our velocity is unreliable", it is that **each of the three
+causes is a different failure and each needs a different fix**: measure effort, estimate against the work
+rather than the file, and give the design loop cards of its own.
+
+**The design loop's own cadence is the finding worth keeping.** The work order went out and handoff 04 came
+back the same evening. Three briefs had been open at once and one of them, handoff 02, had been open for two
+days with no spec ever returned. The difference between those two outcomes is not the size of the request:
+handoff 04 is much larger than handoff 02. The difference is that one of them had a written index of what
+was owed and the other did not. That is one sentence for the report about why the work order was worth
+writing, and it is cheap evidence because both cases are on the record.
+
+**What is still unowned.** The `.pawn__mark` follow-up that closes D16 and NFR-12 is fifteen lines of CSS,
+is named in the spec, was not delivered, and now has **no card, no brief and no owner**. It is the only
+`must have` in the project blocked by a design item, and it is exactly the kind of small named remainder
+that a board with no card for it loses. Recorded here and in
+[01-requirements-and-goals.md](01-requirements-and-goals.md) so it survives this sprint.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -346,17 +346,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The game has a designed look for the whole of its interface** (design handoff 04). The four regions that
+  were drawn by placeholder stylesheets are drawn by real ones now: the top bar, the scoreboard, the prompt
+  strip and the five screens. What a player notices, in rough order: the reaction countdown is a ring that
+  empties and turns orange for the last eight seconds instead of a bare number; each seat has a **shape** as
+  well as a colour, a circle, triangle, square or diamond, so the scoreboard and the top bar say whose turn
+  it is without relying on being able to tell red from green; the pause and win screens let you read the
+  board through them, while the menu and the handover do not; an empty slot in the skill hand is now the
+  dashed outline of where a card would go rather than a blank card; and the win screen is where winning is
+  announced
+- **The board and the cards in hand are back to full size** (design handoff 04, FR-31). They had been
+  shrunk about nine per cent to make room for the scoreboard row. The room came out of the foot of the page
+  instead: the refusal message now appears over the bottom of the board and the prompt strip sits under the
+  skill hand, so neither holds an empty strip across the page any more. Measured at 1440 by 900, the layout
+  uses 882 pixels of 900 in the worst case
+- **Winning is announced once, on the win screen, and no longer in the orange strip under the board.** That
+  strip is the colour the game uses for "you cannot do that", which is the wrong colour for "you won", and
+  the message was being shown in two places at the same time
 - **A two-player match is played by Spieler 1 and Spieler 2** (issue #39). It used to be played by
   Spieler 1 and Spieler 3, because two players sit opposite each other on seats 0 and 2 and every label
   was built as the seat number plus one. Four-player matches were unaffected, which is why nobody had
   noticed. The seat number is still what the markup, the pawn colours and every rule use
-- **The board and the cards in hand are about nine per cent smaller** (issue #39), so that the new HUD
-  row fits without the page scrolling (FR-31). Measured at 1440 by 900, the layout needed 968 pixels of
-  900 once the HUD and the prompt strip were both up. Shrinking only the board would not have been
-  enough, because the row is as tall as the taller of its two columns and the card column was within
-  seven pixels of the board. The full-size reference card is unchanged. This is a stopgap: design
-  handoff 04 is asked to confirm it or move the HUD somewhere that costs no row
-
 - **A turn now waits for the player in three places rather than two**: the dice card, the action phase,
   and the pawn. The action phase is skipped automatically when the player holds nothing playable, so it
   never stalls a turn
@@ -518,6 +528,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The handover screen no longer shows the leaving player's skill cards to the arriving one.** For one
+  frame after the Ready button, the screen uncovered the hand of the player who had just finished before
+  swapping it for the new player's. Nobody would have called it a bug from watching it, and it defeated the
+  entire point of the screen: an opponent's skill cards are supposed to be secret, and at one shared screen
+  that is only true if the cover comes off *after* the hand has changed
+- **The seat colour and shape on the turn sentence kept disappearing.** The top bar was being redrawn by two
+  different places and only one of them was setting which seat is on turn, so the mark vanished several
+  times a turn
 - **A restart no longer eats the dice pool** (issue #41). A match that ends in the middle of a turn never
   gives its three drawn cards back, so a second match on the same pool started three cards short, and the
   fourth would have failed outright. Every match now gets its own pool, which is what the pool's own

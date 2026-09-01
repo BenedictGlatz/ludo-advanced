@@ -25,12 +25,17 @@
  * screen: the menu has one and the pause screen has two. Nothing in the stylesheet animates a button's
  * arrival, so there is no transition to restart.
  *
- * ## Design note
+ * ## The design landed on 2026-09-01, and D38 confirmed this seam
  *
- * **No design specification covers any of this.** Handoff 01 excluded the menus, handoff 03 listed them
- * under what is deliberately not being asked, and `overlay.css` therefore composes only tokens that
- * already exist. It is D38 to D40 in handoff 04. Fourth file in this state, after `prompt.css`,
- * `hud.css` and `chrome.css`, and recorded rather than hidden.
+ * One component behind five screens is the answer, and the sheet has two modes rather than one: a **veil**
+ * you can read the board through for pause and win, and an opaque **curtain** for the menu, the setup
+ * screen and the handover. The handover's half moved to `handover.css`, which is a split of the same
+ * component and not a second one.
+ *
+ * **`data-outcome` is new and is the one thing this file had to grow.** D40 draws a win and an abandoned
+ * match as two different screens, and both arrive at `data-screen="win"` because both reach the same
+ * `match-over` phase. Nothing in the markup told them apart: the CSS would have had to guess from
+ * `data-player` being absent, which is exactly the guess the design brief asks us not to make.
  */
 
 import $ from "jquery";
@@ -111,6 +116,7 @@ function overlayButton(button) {
  * { screen,          // one of OVERLAY_SCREEN
  *   title, text,     // already translated: this file calls no t()
  *   player,          // the seat the panel is about, or null
+ *   outcome,         // "won" or "abandoned" on the win screen, null everywhere else
  *   cards: [],       // dice or skill card descriptions, only the pool overview has any
  *   buttons: [{ action, label, variant, count }] }
  * ```
@@ -131,6 +137,13 @@ export function updateOverlay($overlay, description) {
     $overlay.removeAttr("data-player");
   } else {
     $overlay.attr("data-player", String(description.player));
+  }
+
+  // Same rule for the outcome, which only the win screen has one of (D40).
+  if (description.outcome === null || description.outcome === undefined) {
+    $overlay.removeAttr("data-outcome");
+  } else {
+    $overlay.attr("data-outcome", String(description.outcome));
   }
 
   $overlay.find(".overlay__title").text(description.title ?? "");

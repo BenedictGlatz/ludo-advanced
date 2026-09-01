@@ -310,6 +310,53 @@ the assertion side by side, which is what this table forced.
   and the game is still worse without it, which is a case worth one sentence in the report about what a
   requirements catalogue does not capture.
 
+### NFR-12 moved for the first time since it was written: 2026-09-01, design handoff 04
+
+NFR-12, "a greyscale screenshot still identifies whose pawns are whose", is a `must have` and has been the
+only requirement in the project that a design decision was actively blocking. Design spec 01's D2 answered
+it by colour alone, and `tests/e2e/greyscale.spec.js` has been marked expected-to-fail since 2026-08-30 so
+that the suite reports a known failure rather than going green over an unmet `must have`.
+
+**Design spec 04 answered it and did not close it, and the distinction is the interesting part.**
+
+| | |
+| --- | --- |
+| Answered | Four seat shapes as clip paths: circle, triangle, square, diamond, as `--seat-shape-0` to `--seat-shape-3`. No font dependency, nothing readable, nothing a translator is handed |
+| Applied to | The HUD seat plate, the chrome turn sentence, the win panel, the handover panel |
+| Not applied to | **The pawn**, which is the only place the acceptance criterion is measured |
+| Still needed | `.pawn__mark`, an empty `<span>` inside `.pawn`, plus about fifteen lines of `pawn.css`. Named in the spec, not delivered |
+| Test status | Still `test.fail`. Unchanged, and correctly so |
+
+So the requirement is **still unmet**, and the measurement is unchanged: the worst seat pair reduces to
+greys 1.146 apart against a 1.30 floor. What changed is that an answer now exists and the remaining work is
+fifteen lines rather than a decision nobody had made.
+
+**One side effect helped the measurement without settling it.** D36 removed the pawn dim, which had put
+everyone else's fifteen pieces at 85 % opacity while one seat was on turn. It was the only one of four
+"whose turn is it" cues that touched all sixteen pawns, so it was spending contrast on every piece that was
+not the active seat's, which is a budget NFR-12 has none of.
+
+**The report sentence this is for:** a `must have` that is measured by an automated test, and that has been
+failing visibly for three days rather than quietly, moved because the test made the gap impossible to
+forget. Row 8 of design spec 01's sign-off table recorded it as a question, and the question is what carried
+it into the next handoff.
+
+### FR-31's arithmetic was redone, and the requirement got cheaper: 2026-09-01, design handoff 04
+
+FR-31 asks that every region be visible at once at 1440 by 900 with no scrolling. Issue #35's HUD and issue
+#39's chrome each needed a full-width row, and the way the code paid for them was to shrink the board and
+both hand-card sizes by about nine per cent. `tests/e2e/skill-hand.spec.js` had caught 56 px of overflow, so
+the change was forced by a measurement, and both files said so and asked the designer to overrule them.
+
+**D35 overruled it by finding a cheaper thing to cut**, and the requirement is now satisfied with 18 px to
+spare rather than 14: the two strips at the foot of the page, 148 px of grid for things that are usually
+saying nothing, moved next to their subjects instead. The board and the cards went back to full size.
+
+The fact worth carrying into the report is not the numbers, it is that **the implementation side made the
+wrong trade and the requirement was the reason it was visible.** FR-31 is one of the few non-functional
+requirements in this project with a number in it, which is what let a test catch the overflow, which is what
+put the arithmetic in the brief, which is what let the designer see that the cut was in the wrong place.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

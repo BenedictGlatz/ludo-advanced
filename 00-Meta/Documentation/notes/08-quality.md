@@ -955,6 +955,79 @@ at all about code no test imports.** The first attempt to import a module is the
 dependencies are checked, which is an argument for writing the unit test even when the end-to-end suite
 already covers the behaviour.
 
+### Testing a single painted frame, and the two attribute checks that found a bug: 2026-09-01, handoff 04
+
+Design spec 04 arrived with one ordering requirement and three new DOM attributes. Three tests went in for
+them, and one of the three failed on the first run and was right to.
+
+#### The MutationObserver test, because a frame is not something an assertion can see
+
+D39's handover conceals the rail while the device changes hands. The requirement is an **ordering** one: the
+rail has to be rewritten for the arriving seat while the curtain is still up, because no CSS can cover a
+frame that has already been painted. Playwright's assertions all retry, so every one of them would pass a
+page that showed the wrong thing for 16 ms and then corrected itself. That is exactly the failure this
+requirement is about, which makes the whole assertion library the wrong tool.
+
+What works is recording the order of the DOM writes instead of the pixels. Two MutationObservers, installed
+after the handover screen is up and before the Ready click, both pushing into one array on `window`:
+
+```js
+watch(".hand--skill", "data-seat", "rail");
+watch(".overlay", "data-open", "curtain");
+// then, after the click:
+expect(order.indexOf("rail:2")).toBeLessThan(order.indexOf("curtain:false"));
+```
+
+**It is deterministic and not a race**, and the reason is worth stating: both writes happen inside one
+synchronous click handler, so there is no scheduling between them. The order in the log is the order in the
+source. A test that had waited and then looked would have been flaky; this one cannot be.
+
+It caught the defect it was written for. `openScreen(NONE)` was running before `loop.passTurn()`, so the
+curtain came down over the leaving player's cards and then flipped. Recorded in
+[04-frontend-building-blocks.md](04-frontend-building-blocks.md).
+
+#### The attribute test that failed, and why that is a good outcome
+
+`data-player` on `.app__chrome` was written by `match-flow.js` and cleared a few times per turn by
+`render.js`, because **two files update the same element with different argument sets** and whatever one of
+them omits, the other erases. The test failed in all three browsers on the first run with `unexpected value
+"null"`.
+
+The generalisable point for Chapter 08: this is a defect that no unit test could have found, because neither
+file is wrong on its own. It only exists in the composition, which is the layer end-to-end tests are for.
+It is also invisible without a test, since the attribute's only job is to feed a CSS selector, so the
+symptom would have been a missing seat mark that nobody thought to look for.
+
+#### One test was deliberately written smaller than the requirement
+
+D40's abandoned win screen cannot be reached from the interface at all: nothing in `ui/` calls
+`abandonMatch`. So the end-to-end test asserts what is reachable, that no screen leaves `data-outcome`
+behind, and says in its own comment why the other half is missing and where it is covered instead
+(`tests/unit/ui/overlay-screens.test.js`, which reaches both branches directly).
+
+**Writing the smaller test and naming the gap is the point.** A test called "distinguishes a win from an
+abandoned match" that quit to the menu and asserted an absent attribute would have passed forever while
+checking nothing, and it would have read in a report as coverage of a requirement.
+
+#### What the suite costs now
+
+| | Before handoff 04 | After |
+| --- | --- | --- |
+| Unit test files | 38 | 39 |
+| Unit tests | 549 | 554 |
+| End-to-end files, per browser | 13 | 14 |
+| End-to-end tests, per browser | 68 | 71 |
+| Full end-to-end run | 204 | 213 |
+
+Numbers are in [09-source-code-overview.md](09-source-code-overview.md) next to the commands that produced
+them. `tests/e2e/match-flow.spec.js` hit 331 lines and was split into `handover.spec.js` along the same seam
+the spec used for the stylesheets, which is where the extra e2e file comes from.
+
+**The five pinned Playwright seeds did not need regenerating**, and that was predicted before the work
+started rather than discovered afterwards: nothing in this delivery consumes RNG. Two full green runs
+confirmed it. That is the third change in a row where the prediction was made in advance, after the first
+two cost 45 minutes and then 5 minutes as post-mortems.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

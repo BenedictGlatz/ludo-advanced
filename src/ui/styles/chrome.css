@@ -1,78 +1,91 @@
 /* =============================================================================
-   chrome.css -- the three controls that are on screen the whole time: the
-   language switch (FR-34), the pause button (FR-07) and, since issue #30, the
-   dice card pool overview.
+   chrome.css -- the controls that are on screen the whole time: the pause
+   button (FR-07), the German/English switch (FR-34) and, since issue #30, the
+   dice card pool overview. Plus the sentence that says whose turn it is.
+   Depends on tokens.css. Reasoning: 04-spec, D36, D42 and D46.
 
-   !! THIS FILE WAS NOT WRITTEN BY CLAUDE DESIGN AND IS NOT A DELIVERED SPEC !!
-
-   Third file in this state, after prompt.css and hud.css, and for the same
-   reason each time: CLAUDE.md says Claude Code does not invent design rules,
-   and no specification covers this. It is D42 in handoff 04.
-
-   Nothing here is invented. The button is the prompt strip's button shape from
-   prompt.css, which is itself composed of tokens, and every value below is a
-   token out of tokens.css.
-
-   !! AND NO BRIEF ASKED FOR IT: SEE 00-open-requests.md SECTION 2.2 !!
-
-   Handoff 04 asks about this row in D42 and does not list this file in its
-   deliverables, and handoff 05 lists it only conditionally. So a spec could
-   have answered D42 in prose and left this placeholder in place looking
-   finished. It is requested explicitly in the work order instead.
-
-   What is owed:
-
-   - D42: where these controls sit and what the language control should be. It
-     is a single button showing the language you would switch to, parked at the
-     top of the page, which is the least opinionated thing that satisfies
-     FR-34's "at runtime" without competing with the board.
-   - D46, new with issue #30: the row now carries three buttons where D42 asked
-     about two, and the turn sentence as well. Whether three is the point at
-     which it needs a different structure is the question.
-   - Whether pause, language and the pool overview belong together at all. They
-     are side by side here because all three are always reachable, which is a
-     property of when they are used and not of what they do.
-   - D36: whether the turn sentence belongs in this row. It is here because the
-     HUD had no width left for it, which is a measurement and not a design
-     judgement. See hud-view.js `turnLine`.
-
-   Recorded in 00-Meta/Documentation/notes/04-frontend-building-blocks.md.
+   The row is the page's title bar and nothing else goes in it. It is above
+   the overlay in the stack, because FR-34 says the language switch works at
+   runtime and the main menu is a runtime the player spends time in.
    ========================================================================== */
 
-/* Above the overlay, because FR-34 says the language switch works at runtime and
-   the main menu is a runtime the player spends time in. The overlay is a fixed
-   sheet at --layer-refusal, so without this the switch is reachable during a
-   match and buried under every screen that is not one.
-
-   Arithmetic on an existing token rather than a new token: inventing a layer is
-   a design decision and this is a correction. If handoff 04 wants a real
-   stacking order for the chrome, D42 is where it goes. */
 .app__chrome {
   position: relative;
-  z-index: calc(var(--layer-refusal) + 1);
+  z-index: var(--layer-chrome);
   display: flex;
   gap: var(--space-2);
   align-items: center;
+  min-height: 2.25rem;
 }
 
-/* The sentence that says whose turn it is. It takes the row's slack, so the two
-   buttons stay at the right-hand end where they were. */
+/* --- The turn sentence. It is the cue the Product Owner asked for, so it is
+       set at display weight and it carries the seat's colour and the seat's
+       D16 shape, which means the row says whose turn it is three times: in
+       words, in colour and in shape. data-player on .app__chrome is the one
+       attribute this file needs that the DOM contract does not promise. --- */
+
 .chrome__turn {
+  display: flex;
   flex: 1 1 auto;
+  gap: var(--space-2);
+  align-items: center;
+  min-width: 0;
   margin: 0;
   overflow: hidden;
   font-family: var(--font-display);
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   font-weight: var(--weight-strong);
+  line-height: var(--leading-tight);
   color: var(--color-text);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.app__chrome[data-player="0"] {
+  --seat-color: var(--color-p0);
+  --seat-shape: var(--seat-shape-0);
+}
+.app__chrome[data-player="1"] {
+  --seat-color: var(--color-p1);
+  --seat-shape: var(--seat-shape-1);
+}
+.app__chrome[data-player="2"] {
+  --seat-color: var(--color-p2);
+  --seat-shape: var(--seat-shape-2);
+}
+.app__chrome[data-player="3"] {
+  --seat-color: var(--color-p3);
+  --seat-shape: var(--seat-shape-3);
+}
+
+.app__chrome[data-player] .chrome__turn::before {
+  content: "";
+  flex: none;
+  width: var(--space-5);
+  height: var(--space-5);
+  background: var(--seat-color);
+  clip-path: var(--seat-shape, circle(50%));
+  outline: var(--border-hair) solid var(--color-ink);
+  outline-offset: calc(var(--border-hair) * -1);
+}
+
+/* The sentence is empty on the menu and the setup screen, and an empty flex
+   child still eats the row's slack, so it is taken out of flow instead. */
+.chrome__turn:empty {
+  display: none;
+}
+
+/* --- The controls. Three of them now, and they are ordered by how often a
+       hand reaches for them: pool overview, language, pause. Pause is last
+       because it is the one that stops the game. --- */
+
 .chrome__button {
+  box-sizing: border-box;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
   padding: var(--space-1) var(--space-3);
   font-family: var(--font-ui);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   font-weight: var(--weight-strong);
   color: var(--color-text);
   cursor: pointer;
@@ -85,8 +98,23 @@
     background-color var(--motion-feedback) var(--ease-ui);
 }
 
+/* The pool overview opens a panel about the dice cards, so it wears the dice
+   family's hue on its edge and is the only control in the row that does. */
+.chrome__button[data-action="pool"] {
+  border-color: var(--card-dice);
+}
+
+/* The language control is one button and it names the language you would
+   switch to, not the one you are in: a control is labelled with what it does.
+   data-lang carries the language currently active, so the two disagree by
+   design and the attribute is what the CSS keys the state off. */
+.chrome__button[data-action="language"] {
+  font-variant-caps: all-small-caps;
+  letter-spacing: var(--tracking-wide);
+}
+
 .chrome__button:hover {
-  background: var(--color-panel);
+  background: var(--color-hint-soft);
 }
 
 .chrome__button:focus-visible {
@@ -96,4 +124,30 @@
 
 .chrome__button:active {
   box-shadow: none;
+}
+
+/* --- Below the design resolution the sentence gives up the row first: three
+       controls at 44 px are worth more than a line of text that is already
+       repeated on every HUD plate. --- */
+
+@media (max-width: 84rem), (orientation: portrait) {
+  .app__chrome {
+    flex-wrap: wrap;
+  }
+
+  .chrome__turn {
+    flex: 1 1 100%;
+    font-size: var(--text-md);
+  }
+
+  .chrome__button {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chrome__button {
+    transition: none;
+  }
 }

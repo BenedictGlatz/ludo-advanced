@@ -115,6 +115,47 @@ of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
 
+### Measured 2026-09-01, after design handoff 04 landed
+
+Every command in the section above was re-run after the handoff-04 stylesheets were copied in. This is the
+third measurement of the same day and it is the one that is current; the two below it are kept so the
+growth is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **9347 lines in 64 files** | 2026-09-01, after handoff 04 |
+| Stylesheet lines in `src/` | 7 | **2523 lines in 16 files** | 2026-09-01, after handoff 04 |
+| Test lines in `tests/` | 2 | **9046 lines in 55 files** | 2026-09-01, after handoff 04 |
+| Lines in `src/core/` | 3 | 3669 lines in 27 files, unchanged | 2026-09-01, after handoff 04 |
+| Lines in `src/state/` | 3 | 1809 lines in 10 files, unchanged | 2026-09-01, after handoff 04 |
+| Lines in `src/ui/` | 3 | **3598 lines in 25 files**, plus 2523 lines of CSS | 2026-09-01, after handoff 04 |
+| Unit tests | 4 | **39 test files, 554 tests, all passing** | 2026-09-01, after handoff 04 |
+| End-to-end tests | 8 | **71 tests in 14 files per browser, 213 across the three** | 2026-09-01, after handoff 04 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.20 % (751/757), unchanged | 2026-09-01, after handoff 04 |
+| Coverage of `src/core/`, lines | 5c | 99.59 % (491/493) over 27 files, unchanged | 2026-09-01, after handoff 04 |
+| Coverage of `src/state/`, lines | 5c | 98.48 % (260/264) over 10 files, unchanged | 2026-09-01, after handoff 04 |
+| Coverage, branches | 5a | 96.01 % (530/552), unchanged | 2026-09-01, after handoff 04 |
+| Coverage, functions | 5a | 100 % (273/273), unchanged | 2026-09-01, after handoff 04 |
+| Longest file of any kind | 6 | 300 lines, `src/state/turn-manager.js`, unchanged | 2026-09-01, after handoff 04 |
+| Longest stylesheet | 6 | **244 lines, `src/ui/styles/prompt.css`** | 2026-09-01, after handoff 04 |
+
+**Four readings of that table, and the first is the one the report needs.**
+
+1. **`src/core/` and `src/state/` did not move by a single line, and every coverage figure is identical.**
+   That is the measurement of what NFR-01's layering buys. A delivery that replaced five stylesheets,
+   rewrote the page grid, moved two regions and added three DOM attributes touched `ui/` and nothing else.
+   The layering is asserted in chapter 05 and this row is the evidence for it.
+2. **The stylesheets grew by 285 lines and the longest one moved from `tokens.css` to `prompt.css`.** This
+   is the first measurement in which the longest stylesheet is a component rather than the token file,
+   which is what a design delivery looks like in numbers: the values were already there and what arrived
+   was rules that use them.
+3. **`prompt.css` at 244 lines is 56 lines from the NFR-02 limit and is the file to watch.** Design spec 04
+   § 1 predicted this and named the seam to cut if it goes over: the 41-line `.board[data-picking]` block
+   at the end, which is board CSS living in a prompt file. Nothing has been cut, because nothing is over.
+4. **The 300-line limit bit once, in the tests.** `tests/e2e/match-flow.spec.js` reached 331 lines and was
+   split into `handover.spec.js`, which is why the e2e file count went 13 to 14 while the test count went
+   68 to 71. The three new tests are two attribute checks and the handover ordering check.
+
 ### Measured 2026-09-01, after issue #30
 
 Every command in the section above was re-run. The figures below replace the "after #39" set that follows

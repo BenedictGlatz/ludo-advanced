@@ -2,7 +2,50 @@
 
 **From:** Claude Code
 **To:** Claude Design
-**Date:** 2026-09-01
+**Date:** 2026-09-01, **updated the same evening**
+
+---
+
+## Status after handoff 04
+
+**Handoff 04 was answered on the evening this file was written, and it is landed.** The spec is at
+[04-spec-hud-menus-and-handover.md](04-spec-hud-menus-and-handover.md); the ten stylesheets are in
+`src/ui/styles/`; the three DOM attributes it asked for by name are wired up; `npm test`, `npm run lint`
+and the 213-case Playwright run are green. What that leaves:
+
+| Was owed | Now |
+| --- | --- |
+| `04-spec-hud-menus-and-handover.md` | **Delivered and landed** |
+| `prompt.css`, `hud.css`, `overlay.css`, `chrome.css` | **Replaced.** Plus `handover.css`, which is new |
+| `tokens.css`, `app.css`, `hand.css`, `refusal.css`, `pawn.css` | **Amended and landed** |
+| `05-spec-dice-pool-overlay.md` and `pool.css` | **Still owed.** D43, D44, D45, D47. D46 was answered inside D42 |
+| D16, and NFR-12 with it | **Answered, not closed.** See below |
+
+**The one thing to read before anything else.** D16's answer is in and it is on the HUD, the chrome and two
+overlay panels, but NFR-12 is measured **on the pawn** and the mark is not there. The spec names what is
+missing: `.pawn__mark`, an empty `<span>` inside `.pawn`, and about fifteen lines of `pawn.css` after it.
+Those fifteen lines were not in the delivery. **That is the only outstanding design item in the project
+that blocks a `must have` requirement**, `greyscale.spec.js` is still marked expected-to-fail because of it,
+and it has no brief of its own. It is a smaller ask than the handoff 05 spec and it is worth more.
+
+Two notes on landing the delivery, for the next one:
+
+- **`board.css`, `card.css` and `card-state.css` were not copied in.** All three are listed as "unchanged,
+  included so the mockup runs", and two of them differ from the repository only in Prettier formatting.
+  `board.css` does not: the delivered copy predates the NFR-02 split into `board.css`, `board-track.css`
+  and `board-regions.css`, so copying it would have reverted that split silently. **If a future delivery
+  includes files it did not change, say which commit or date the snapshot was taken from.**
+- **Every delivered file was under 300 lines after `npm run format`**, which is the first handoff to manage
+  that without a split. Writing one declaration and one selector per line is what did it. `prompt.css` is
+  the closest at 244.
+- **The spec arrived with five em dashes and they were edited out before it was committed.** CLAUDE.md bans
+  the character and the rhetorical habit outright, in every document and every language, and no brief in
+  this loop has ever said so. **It is added to section 5 below**, because it is a rule about the deliverable
+  and every brief lists the rules about the deliverable. Two were table placeholders and three were the
+  habit: a claim interrupted by an aside and then a stated consequence.
+
+The rest of this file is the work order as it was written, and sections 1, 2.1 and 2.2 are now partly
+historical. Section 4's decision table and section 5's rules still apply as written.
 
 ---
 
@@ -140,7 +183,8 @@ answers the existing specs give.
 
 ## 5 The rules that apply to every delivery
 
-Full versions are in each brief's § 2. The four that get broken most often:
+Full versions are in each brief's § 2. The five that get broken most often, and the fifth is new because
+handoff 04 was the first delivery to break it:
 
 1. **No user-facing string in CSS.** Nothing a player reads in a `content:` property (NFR-03). Overlays are
    almost entirely text, which is where this bites.
@@ -149,6 +193,12 @@ Full versions are in each brief's § 2. The four that get broken most often:
 3. **Built once, then only attributes rewritten.** The HUD updates after every turn, so a re-created
    element restarts every transition on it.
 4. **Two skins from the tokens, through `light-dark()` pairs, and `prefers-reduced-motion` respected.**
+5. **No em dash, anywhere, in the spec or in a CSS comment.** CLAUDE.md bans the character and the
+   rhetorical habit it enables: a claim interrupted mid-sentence by an inserted aside and then a stated
+   consequence, or "either A, in which case B, or C, in which case D". Use a colon, a semicolon, a comma,
+   or two ordinary sentences. In a table cell where a value is genuinely absent, write `n/a` or `none`.
+   Handoff 04's spec had five and they were edited out on landing, which is a change to a delivered
+   document and is better avoided than corrected.
 
 **If an answer needs a DOM element the brief does not promise, name it in the spec rather than styling
 around its absence.** Claude Code adds it, and that is a much smaller change than a stylesheet built on a

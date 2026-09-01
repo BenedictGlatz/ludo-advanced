@@ -20,6 +20,11 @@
  * own: the German wording, and the old seat-plus-one numbering that made a two-player match have no
  * Spieler 2. Filling the real templates means this assertion still checks the numbering, and a reworded
  * sentence changes one JSON file rather than breaking a test.
+ *
+ * **Where the message is read from changed on 2026-09-01**, when design spec 04 answered D40. It used to
+ * be the refusal strip under the board and it is now the win overlay, because the strip is orange and
+ * orange means the game refused something. The wording assertion is the same one; only the element it is
+ * made against moved, and this spec now also checks that the strip is left empty.
  */
 
 import { expect, test } from "@playwright/test";
@@ -69,9 +74,20 @@ test.describe("winning a match", () => {
     const winner = Number(await board.getAttribute("data-winner"));
     expect([0, 2]).toContain(winner);
 
+    // **The overlay says it and the strip says nothing**, which is D40 of design spec 04 and a change
+    // from what this test asserted before 2026-09-01. The strip is `--color-warn` orange, the colour the
+    // game reserves for "you cannot do that", and announcing a win in it was a recorded defect. The
+    // sentence itself is unchanged, so this still checks the seat numbering it was written to check.
+    const overlay = page.locator(".overlay");
+
+    await expect(overlay).toHaveAttribute("data-screen", "win");
+    await expect(overlay).toHaveAttribute("data-outcome", "won");
+    await expect(overlay).toHaveAttribute("data-player", String(winner));
+    await expect(overlay.locator(".overlay__title")).toHaveText(wonMessage(winner));
+
     const message = page.locator(".move-refusal");
-    await expect(message).toHaveAttribute("data-message-kind", "win");
-    await expect(message).toHaveText(wonMessage(winner));
+    await expect(message).toHaveText("");
+    await expect(message).not.toHaveAttribute("data-message-kind", /.*/);
 
     // The numbering itself, stated so a regression is readable: seats 0 and 2 are players 1 and 2.
     // Before issue #39 a win by seat 2 announced "Spieler 3" and there was no Spieler 2 at the table.

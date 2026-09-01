@@ -137,12 +137,11 @@
        strength; the rest sit back one step. This is the second half of the
        board-edge signal in board.css. --- */
 
-.board[data-active-player="0"] .pawn:not([data-player="0"]),
-.board[data-active-player="1"] .pawn:not([data-player="1"]),
-.board[data-active-player="2"] .pawn:not([data-player="2"]),
-.board[data-active-player="3"] .pawn:not([data-player="3"]) {
-  opacity: 0.85;
-}
+/* Removed on 2026-09-01, 04-spec D36. Everyone else's pawns used to sit at
+   85% opacity while one seat was on turn. It was the fourth of four cues for
+   one fact, it is the only one that touches all sixteen pieces, and it costs
+   contrast on every pawn that is not the active seat's, which is exactly what
+   NFR-12 and D16 cannot afford. The yard halo in board.css keeps the job. */
 
 /* --- Keyboard focus. Desktop only does not mean mouse only (D11). --- */
 

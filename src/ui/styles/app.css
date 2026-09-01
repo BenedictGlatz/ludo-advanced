@@ -1,35 +1,18 @@
-/* The shell: the page that holds the board, the two hands and the refusal
-   strip at once, with no scrolling at 1440 by 900 (FR-31).
-   Replaces the placeholder. Depends on tokens.css.
-   Reasoning is in 01-Design/Handoff/03-spec-cards-and-hands.md, D30.
+/* The shell: the page that holds the chrome, the HUD, the board, the two
+   hands and the two transient strips at once, with no scrolling at 1440 by
+   900 (FR-31). Depends on tokens.css.
+   Reasoning is in 03-spec-cards-and-hands.md D30 and 04-spec D35.
 
-   Board left, both hands in a rail on the right, refusal a strip across the
-   foot. The rail needs far more than the quarter width spec 01 reserved for
-   it, so --board-size changed in tokens.css and nothing else did. */
+   Board left, both hands in a rail on the right. Two full-width rows above
+   them: the chrome, then the HUD. Nothing below them, which is the change:
+   the refusal strip and the prompt strip used to cost 116 px of grid whether
+   they were saying anything or not, and now each one sits with its subject.
+   The arithmetic that buys the board back its 44vw is in 04-spec § D35. */
 
-/* Added by Claude Code on 2026-08-31, and it is a correction rather than a
-   design decision: the placeholder this file replaced carried body { margin: 0 }
-   and the delivery did not, so the browser's own 8px default came back and every
-   page was exactly 100vh + 16px tall. That is a scrollbar at the resolution
-   FR-31 is about, and this spec's own arithmetic assumes the margin is gone.
-   No colour, size or spacing is chosen here, only a default removed. */
 body {
   margin: 0;
 }
 
-/* Added by Claude Code on 2026-09-01, issue #39, and it is a placement and not
-   a design: two regions that no spec covers had to go somewhere, the chrome
-   (FR-34's language switch and FR-07's pause) and the HUD (S7, FR-36).
-
-   Two `auto` rows are prepended and every existing grid-area is shifted down by
-   two. Nothing else changed: not a colour, not a spacing value, not
-   --board-size. The rows are at the top because that is where a full-width
-   region fits without touching the rail, which spec 01 § 6 names as the tighter
-   of the two reservations.
-
-   **This is what D35 of handoff 04 asks about**, and the answer here is the
-   least opinionated one that keeps FR-31 true. If Claude Design puts either
-   region elsewhere, this block is what changes. */
 .app {
   display: grid;
   grid-template-columns: auto minmax(28rem, 1fr);
@@ -52,9 +35,14 @@ body {
   grid-area: 2 / 1 / 3 / 3;
 }
 
+/* The board spans the three rail rows. `relative` is what lets the refusal
+   strip hang off the bottom of the board instead of holding a grid row: a
+   refused move is a fact about a pawn, so the message belongs over the
+   pieces and not at the foot of the page (D35, and D9 revisited). */
 .app__board {
+  position: relative;
   display: grid;
-  grid-area: 3 / 1 / 5 / 2;
+  grid-area: 3 / 1 / 6 / 2;
   place-items: center;
 }
 
@@ -65,11 +53,6 @@ body {
 
 .app__skill {
   grid-area: 4 / 2;
-}
-
-.app > .move-refusal {
-  grid-area: 5 / 1 / 6 / 3;
-  justify-self: center;
 }
 
 /* --- The two region plates. Same chrome as every other panel in the game,
@@ -88,9 +71,9 @@ body {
   transition: box-shadow var(--motion-feedback) var(--ease-ui);
 }
 
-/* Whose turn it is, again, where the player is looking. The board says it
-   with an ink halo on that seat's yard; the rail says it by raising the
-   plate that is asking for a decision. */
+/* The plate that is asking for a decision is lifted. This is not a fourth
+   "whose turn is it" cue and D36 renames it: during a reaction window it is
+   somebody else's plate that rises. It says "this region wants an answer". */
 .app__dice:has(.hand[data-active="true"]),
 .app__skill:has(.hand[data-active="true"]) {
   box-shadow:
@@ -123,8 +106,7 @@ body {
   .app > .hud,
   .app__board,
   .app__dice,
-  .app__skill,
-  .app > .move-refusal {
+  .app__skill {
     grid-area: auto;
     align-self: auto;
   }

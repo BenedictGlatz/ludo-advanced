@@ -1,85 +1,64 @@
 /* =============================================================================
-   overlay.css -- screens S1, S2, S8, S9 and the handover, as one component.
+   overlay.css -- screens S1 menu, S2 setup, S8 pause and S9 win, as one
+   component. The handover is the fifth content and lives in handover.css,
+   because it is the only one with a job the others do not have.
+   Depends on tokens.css. Reasoning: 04-spec, D38 and D40.
 
-   !! THIS FILE WAS NOT WRITTEN BY CLAUDE DESIGN AND IS NOT A DELIVERED SPEC !!
-
-   Fourth file in this state, after prompt.css, hud.css and chrome.css, and the
-   same rule from CLAUDE.md each time: Claude Code does not invent design rules
-   and asks when a specification is missing. Handoff 01 excluded the menus,
-   handoff 02 said they were deliberately not being asked for, and handoff 03
-   listed them under out of scope. So they have never been designed, and the
-   game has no way to start, pause, restart or finish without them.
-
-   Nothing here is invented. Every colour, space, radius, shadow, font, size
-   and duration is a token out of tokens.css, and every shape is one already on
-   the page: the panel chrome from app.css, the button from prompt.css, and the
-   seat colours from spec 01's D1.
-
-   What is owed by design handoff 04, and is deliberately not guessed at:
-
-   - D38: whether five screens really are one component, and what the panel
-     looks like. The board stays visible behind a dimmed sheet here, which is
-     the least opinionated answer, and it is the wrong one for at least the
-     menu, where there is no board worth showing.
-   - D39: the handover. It has one job the others do not, which is to actually
-     conceal the skill hand, so its sheet is opaque rather than dimmed. How it
-     enters and leaves, and what the reduced-motion version is, are open. A
-     brief flash conceals nothing, so this is the one animation that cannot
-     simply be shortened.
-   - D40: the win screen. This is D18 from handoff 02, still unanswered: the
-     win message had been borrowing the orange refusal strip. It has its own
-     screen now and the strip still says it too, which is one message in two
-     places and wants deciding.
-
-   Recorded in 00-Meta/Documentation/notes/04-frontend-building-blocks.md.
+   Two sheet modes, and D38 is the answer that there are two rather than one:
+   a VEIL you can still read the board through (pause, win), and a CURTAIN
+   you cannot (menu, setup, handover).
    ========================================================================== */
-
-/* --- The sheet. Fixed rather than absolute, because it covers the viewport
-       and not the .app grid cell it happens to sit in. --- */
 
 .overlay {
   position: fixed;
-  z-index: var(--layer-refusal);
+  z-index: var(--layer-overlay);
   display: grid;
+  place-content: center;
   place-items: center;
   padding: var(--space-5);
   inset: 0;
   background: var(--color-app-bg);
+  opacity: 1;
+  transition:
+    opacity var(--motion-overlay) var(--ease-ui),
+    display var(--motion-overlay) allow-discrete;
 }
 
-/* `display: grid` above beats the `hidden` attribute's own `display: none`, and
-   a closed overlay that keeps its box swallows every click on the board behind
-   it. This rule is what makes `hidden` mean hidden, and it is a correction
-   rather than a design choice.
-
-   It also means the overlay does not fade: it goes from display: none to
-   display: grid in one frame, and a transition cannot run across that. How an
-   overlay should arrive and leave is D38 and D39, and the handover's is the one
-   that matters, because a screen that flashes conceals nothing. */
+/* Both spellings, because the DOM contract says data-open and the interim
+   markup shipped the hidden attribute. 04-spec § 5 asks for one of them. */
+.overlay[data-open="false"],
 .overlay[hidden] {
   display: none;
+  opacity: 0;
 }
 
-/* Pause and win happen over a board the player still wants to read, so the
-   sheet is only a veil. Menu and setup have no board worth showing and the
-   handover must not let the next player read the rail, so both stay opaque.
+/* A sheet that goes from display:none to display:grid in one frame cannot
+   fade, so the arrival is declared rather than assumed. Pause and win fade
+   in; the curtains do not, see handover.css. */
+@starting-style {
+  .overlay {
+    opacity: 0;
+  }
+}
 
-   72% and not 88%: at 88% the board was still there but not readable, which is
-   the worst of both. How opaque a veil should be is D38's to settle. */
+/* Pause and win happen over a board the player still wants to read. 74% and
+   not 88%: at 88% the board is present but unreadable, which is the worst of
+   the two. Menu, setup and handover keep the opaque default. */
 .overlay[data-screen="pause"],
 .overlay[data-screen="win"] {
-  background: color-mix(in srgb, var(--color-app-bg) 72%, transparent);
+  background: var(--overlay-veil);
 }
 
 /* --- The panel. Same chrome as every other surface in the game. --- */
 
 .overlay__panel {
+  --seat-color: var(--color-hint);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   align-items: center;
   box-sizing: border-box;
-  width: min(28rem, 100%);
+  width: min(var(--overlay-panel-w, 30rem), 100%);
   padding: var(--space-6);
   text-align: center;
   background: var(--color-panel);
@@ -88,23 +67,44 @@
   box-shadow: var(--shadow-card);
 }
 
-/* The win and handover panels are about one player, so they take that seat's
-   colour on the top edge. --color-p0 to --color-p3 are spec 01's D1. */
-.overlay[data-player] .overlay__panel {
-  border-top-width: var(--space-2);
+/* Setup carries three count buttons side by side and wants the room. */
+.overlay[data-screen="setup"] .overlay__panel {
+  --overlay-panel-w: 34rem;
 }
 
+/* --- A panel that is about one seat. Win and handover only: the contract
+       puts data-player on those two and nowhere else. The seat is said
+       twice, as a colour and as the D16 shape, so it survives greyscale. --- */
+
 .overlay[data-player="0"] .overlay__panel {
-  border-top-color: var(--color-p0);
+  --seat-color: var(--color-p0);
+  --seat-shape: var(--seat-shape-0);
 }
 .overlay[data-player="1"] .overlay__panel {
-  border-top-color: var(--color-p1);
+  --seat-color: var(--color-p1);
+  --seat-shape: var(--seat-shape-1);
 }
 .overlay[data-player="2"] .overlay__panel {
-  border-top-color: var(--color-p2);
+  --seat-color: var(--color-p2);
+  --seat-shape: var(--seat-shape-2);
 }
 .overlay[data-player="3"] .overlay__panel {
-  border-top-color: var(--color-p3);
+  --seat-color: var(--color-p3);
+  --seat-shape: var(--seat-shape-3);
+}
+
+.overlay[data-player] .overlay__panel {
+  border-top: var(--space-2) solid var(--seat-color);
+}
+
+.overlay[data-player] .overlay__panel::before {
+  content: "";
+  width: var(--space-6);
+  height: var(--space-6);
+  background: var(--seat-color);
+  clip-path: var(--seat-shape, circle(50%));
+  outline: var(--border-card) solid var(--color-ink);
+  outline-offset: calc(var(--border-card) * -1);
 }
 
 .overlay__title {
@@ -114,22 +114,40 @@
   font-weight: var(--weight-strong);
   line-height: var(--leading-tight);
   color: var(--color-text);
+  text-wrap: balance;
 }
 
-/* Absent on a screen with nothing to add, and `:empty` is what keeps the gap
-   from doubling when it is. */
+/* Winning is the one moment in the game that is allowed to be loud. */
+.overlay[data-screen="win"] .overlay__title {
+  font-size: var(--text-2xl);
+}
+
+/* An abandoned match reaches the same phase by a different route and reads
+   nothing like a win, so it drops the seat colour and the celebration size.
+   data-outcome is the one attribute this spec asks the contract to add. */
+.overlay[data-screen="win"][data-outcome="abandoned"] .overlay__panel {
+  --seat-color: var(--color-dormant);
+}
+
+.overlay[data-screen="win"][data-outcome="abandoned"] .overlay__title {
+  font-size: var(--text-xl);
+  color: var(--color-text-muted);
+}
+
 .overlay__text {
+  max-width: 34ch;
   margin: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-md);
   line-height: var(--leading-body);
   color: var(--color-text-muted);
+  text-wrap: pretty;
 }
 
 .overlay__text:empty {
   display: none;
 }
 
-/* --- The buttons. Two on most screens, three on the setup screen. --- */
+/* --- The buttons. --- */
 
 .overlay__actions {
   display: flex;
@@ -139,9 +157,11 @@
 }
 
 .overlay__button {
+  box-sizing: border-box;
+  min-height: 2.75rem;
   padding: var(--space-2) var(--space-5);
   font-family: var(--font-ui);
-  font-size: var(--text-sm);
+  font-size: var(--text-md);
   font-weight: var(--weight-strong);
   color: var(--color-text);
   cursor: pointer;
@@ -160,6 +180,22 @@
   background: var(--color-hint);
 }
 
+/* Leaving the match is not the same act as continuing it, and it is the only
+   button in the game that throws work away. */
+.overlay__button[data-action="quit"] {
+  color: var(--color-warn);
+  background: var(--color-warn-soft);
+}
+
+/* The three setup counts are a choice between equals, so they are one size
+   and they are square-ish rather than word-shaped. */
+.overlay__button[data-action="players"] {
+  min-width: 4.5rem;
+  font-family: var(--font-num);
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+}
+
 .overlay__button:hover {
   translate: 0 calc(var(--space-1) * -1);
 }
@@ -174,7 +210,14 @@
   outline-offset: var(--space-1);
 }
 
+@media (max-width: 84rem), (orientation: portrait) {
+  .overlay__panel {
+    padding: var(--space-5);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .overlay,
   .overlay__button {
     transition: none;
   }
