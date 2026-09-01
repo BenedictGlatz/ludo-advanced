@@ -17,12 +17,15 @@
  * `card-state.css` hides an empty result with `:empty` and the hand size hides the paragraph. An
  * element that has to exist before it has content cannot be added at the moment it gets some.
  *
- * ## The art window is empty, and that is outstanding work
+ * ## The art window holds a drawing now
  *
- * The 29 illustrations exist as inline SVG inside a generated artboard. Extracting them into
- * something the view can insert is its own piece of work and it is not in this commit, so
- * `.card__art` renders as the framed, category-washed window with nothing in it. The card is
- * readable without it: the band says the type, the title says the name, the tags say the numbers.
+ * It was an empty framed window for two sprints, because the 36 illustrations only existed inside a
+ * Claude Design artboard. Issue #39 extracted them into `src/ui/art/`, and the description now carries
+ * the drawing as an SVG string in `card.art`.
+ *
+ * **The card still looks nothing up.** `dice-hand-view.js` and `skill-hand-view.js` resolve the drawing
+ * the same way they already resolve the translated strings, which keeps this file's one job intact: it
+ * renders a description and knows nothing about what a card is.
  */
 
 import $ from "jquery";
@@ -96,6 +99,27 @@ function fillTags($card, tags) {
 }
 
 /**
+ * Put the drawing in the art window, but only when it actually changed.
+ *
+ * The guard is not a micro-optimisation. `updateCard` runs on every slot on every render, and a render
+ * happens several times per turn, so writing `.html()` unconditionally would have the browser re-parse
+ * up to eight SVG drawings each time and throw away a perfectly good subtree.
+ *
+ * The card's own **id** is the key, because it is what decides the drawing. The bookkeeping lives in
+ * jQuery's `.data()` rather than in a DOM attribute on purpose: it is this file's private note to
+ * itself, and an attribute would be one more thing the stylesheet could accidentally depend on.
+ * `dice-hand-view.js` keeps `dealtTurn` the same way and for the same reason.
+ */
+function setArt($card, card) {
+  const $art = $card.find(".card__art");
+  const key = card.id === null || card.id === undefined ? "" : String(card.id);
+
+  if ($art.data("artOf") === key) return;
+
+  $art.data("artOf", key).html(card.art ?? "");
+}
+
+/**
  * Put a description on screen.
  *
  * The description is:
@@ -104,6 +128,7 @@ function fillTags($card, tags) {
  * { id, family, type, category, faces,   // identity, any of them optional
  *   typeLabel, kindLabel, title, text,   // already translated: this file calls no t()
  *   tags: [],                            // already translated
+ *   art,                                 // the illustration as an SVG string, or null
  *   playable, selected,                  // booleans
  *   result }                             // the roll, or null
  * ```
@@ -119,6 +144,8 @@ export function updateCard($card, card) {
 
   $card.attr("data-playable", String(card.playable === true));
   $card.attr("data-selected", String(card.selected === true));
+
+  setArt($card, card);
 
   $card.find(".card__type").text(card.typeLabel ?? "");
   $card.find(".card__kind").text(card.kindLabel ?? "");

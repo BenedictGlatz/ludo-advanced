@@ -21,7 +21,8 @@
     "test:e2e": "playwright test",
     "docs:ai-index": "node scripts/docs-ai-index.js",
     "test:seeds": "node scripts/find-seeds.js",
-    "docs:dice-balance": "node scripts/dice-balance.js"
+    "docs:dice-balance": "node scripts/dice-balance.js",
+    "assets:card-art": "node scripts/extract-card-art.js"
   },
   "dependencies": {
     "i18next": "^26.4.0",

@@ -307,6 +307,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with "2 rounds" converted to turns once so a card cannot quietly mean something different at a
   different table size. Traps and blockers sit on the shared squares. And movement can now be asked
   about the squares a move **passes over**, which it never needed before
+- **Every card shows its illustration** (issue #39). All 36 drawings, 29 skill cards plus one per dice
+  denomination from D2 to D20, now appear in the card's art window. They had existed only inside the
+  Claude Design artboard, so the window had been a framed empty box on every card since it was built.
+  `npm run assets:card-art` extracts them into `src/ui/art/`, matches each drawing to its card by title,
+  and refuses to write anything at all if a drawing matches no card or a card has no drawing
+- **Design handoff 04** (`01-Design/Handoff/04-brief-hud-menus-and-handover.md`), asking for the HUD
+  (S7), the main menu (S1), match setup (S2), pause (S8), win (S9) and a new handover screen for the
+  moment between two turns at a shared screen. Eight open decisions, D35 to D42, plus the eleven items
+  that were left open by handoffs 02 and 03 and had been drifting since
 
 ### Changed
 

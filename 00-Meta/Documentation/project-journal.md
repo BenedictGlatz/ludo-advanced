@@ -2292,6 +2292,56 @@ to get wrong later.
 - **Rejected: a number input.** Fewer elements on screen and four more states to design and test.
 - → Ch. 04
 
+### 2026-09-01: The card artwork is extracted by a script, not copied by hand
+
+- **Chosen:** `scripts/extract-card-art.js` parses the Claude Design artboard and writes one `.svg` per
+  card into `src/ui/art/`, run by hand as `npm run assets:card-art`. It matches drawings to cards **by
+  title**, and it aborts before writing anything if a drawing matches no card or a card has no drawing.
+- **Why:** a manual copy produces identical files once and leaves the next person to find 36 drawings in
+  a 126 KB file and hope they catch all of them. The failure mode is the expensive part: a card that
+  quietly misses its drawing looks exactly like the empty art window this work removes, so nobody would
+  notice. Title matching over position matching for the same reason: the artboard happens to run in
+  catalogue order today, and the first card moved on the canvas would silently put the Yeet drawing on
+  Tax Fraud, which no test could catch because both are valid SVG.
+- **Rejected: a build step.** It would make every `npm run build` depend on a file in `01-Design/`,
+  which puts a design source in the production build's dependency graph.
+- **Rejected: doing it once by hand.** Cheaper today, and it loses the two hard failure checks, which
+  are the whole value.
+- → Ch. 04
+
+### 2026-09-01: The drawings are 36 separate files behind a glob, not one sprite sheet
+
+- **Chosen:** one `.svg` file per card, read by `import.meta.glob` in `src/ui/art/index.js` and inlined
+  eagerly, with `tests/unit/ui/card-art.test.js` walking the real catalogue to prove all 36 resolve.
+- **Why:** the 300-line limit decides it. A sprite sheet holding 36 drawings is a few thousand lines in
+  one file; 36 files are at most 50 lines each. The glob then means this module needs no editing when
+  the card set changes, where 36 import lines would be a second copy of the card list maintained by
+  hand, and this project already has one of those drifting in the locale files.
+- **The cost is named:** a glob turns a missing drawing into a runtime `undefined` instead of a build
+  error. The unit test is what buys that back, and it is why the test walks `SKILL_CARDS` and
+  `POOL_COMPOSITION` rather than a list of file names.
+- **Rejected: a sprite sheet with `<symbol>` and `<use>`.** One request instead of an inlined bundle,
+  and it fails the file-size limit by a factor of ten.
+- **Rejected: `<img>` tags or CSS backgrounds.** Design brief 03 § 2 already fixed inline SVG, and an
+  external asset would put the drawing out of the stylesheet's reach.
+- → Ch. 04
+
+### 2026-09-01: The extraction strips the artboard's inline sizing, and that is a boundary question
+
+- **Chosen:** the root `<svg>` of every extracted drawing loses its inline `style` and gains
+  `aria-hidden="true"` and `focusable="false"`. The `viewBox` stays.
+- **Why:** the artboard sets `display`, `width` and `height` inline, and `card.css` sets the same three
+  on `.card__art > svg`. An inline style beats a stylesheet, so shipping it as delivered would have
+  moved three sizing decisions out of Claude Design's reach, which is exactly the line `CLAUDE.md`
+  draws. The `viewBox` is the drawing's own coordinate system and not a presentation choice, so it is
+  not ours to touch. `aria-hidden` is NFR-08: the card already carries its name in `.card__title`, and
+  without it a screen reader reads out the path data and the name is lost in it.
+- **Rejected: shipping the SVG byte-for-byte as delivered.** Truer to the source, and it silently
+  overrides the stylesheet the design owns.
+- **Rejected: overriding it back with `!important` in `card.css`.** Same outcome, achieved by making the
+  stylesheet fight the markup.
+- → Ch. 04
+
 ---
 
 ## Challenges

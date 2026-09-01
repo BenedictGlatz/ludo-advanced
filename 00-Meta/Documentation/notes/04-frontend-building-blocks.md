@@ -621,7 +621,9 @@ attributes.
   a property of the card. Nothing animates a tag, so there is no transition to restart.
 - **The art window is empty and that is outstanding work.** All 29 illustrations exist as inline SVG
   inside a generated artboard; extracting them is its own job. A card is still readable: the band says
-  the type, the title says the name, the tags say the numbers.
+  the type, the title says the name, the tags say the numbers. *(Closed on 2026-09-01 by issue #39, and
+  it turned out to be 36 drawings rather than 29. Left standing here because it is what was true on
+  2026-08-31; the extraction is its own facts section below.)*
 
 ### The dice hand, and the choice the view had been making for the player: 2026-08-31, issue #31
 
@@ -761,6 +763,57 @@ over or a window that never shuts.
 Named timers make that unwriteable: `set("handover", ...)` and `set("reaction", ...)` cannot cancel each
 other, and setting the same name twice replaces itself, which is what a countdown being redrawn wants.
 
+### The 36 card illustrations came out of the artboard: 2026-09-01, issue #39
+
+The empty art window recorded above is filled. It was the first of two things the Product Owner asked
+about on opening the running build, and the second was that nothing on screen says whose turn it is.
+
+- **There are 36 drawings, not 29.** The count in every earlier note was the skill cards only. The
+  artboard also holds one per dice denomination, D2 to D20, and those were dealt on every single turn
+  with an empty window. 29 plus 7.
+- **`scripts/extract-card-art.js` does the extraction, run by hand as `npm run assets:card-art`.** It
+  parses `01-Design/Handoff/Card artwork design planning/Card Art.dc.html` and writes one `.svg` per
+  card into `src/ui/art/`. Not a build step: the artboard is a design source, and making `npm run build`
+  parse HTML out of `01-Design/` would put a design file in the production build's dependency graph.
+- **Drawings are matched to cards by title, not by position.** Position would have worked, since the
+  artboard happens to run in catalogue order. It would also break silently the first time a card is
+  moved on the canvas and put the Yeet illustration on Tax Fraud, which no test could catch because
+  both are valid SVG. Titles are matched against `src/i18n/locales/en/cards.json`.
+- **Both halves of the mapping are hard failures.** A drawing that matches no card and a card with no
+  drawing both abort the script before a file is written. The reason is that a half-import looks exactly
+  like the empty window being replaced, so it must not be reachable by accident.
+- **Titles are compared with accents and punctuation stripped.** The artboard and the locale file were
+  written months apart and disagree in three places: a curly against a straight apostrophe in "It's Not
+  That Deep", the `%` in "Speedrun Any%", and the umlauts in Nühü. Folding beats a table of three
+  special cases.
+- **Two things are changed on the way out, and nothing else.** The artboard's inline `style` on the root
+  `<svg>` is dropped, because it sets `display`, `width` and `height`, and `card.css` sets the same
+  three on `.card__art > svg`. An inline style wins over a stylesheet, so keeping it would have put
+  three sizing decisions out of Claude Design's reach. And `aria-hidden="true"` plus
+  `focusable="false"` are added, because the card already carries its name in `.card__title` and
+  without this a screen reader reads out the path data instead (NFR-08).
+- **`src/ui/art/index.js` reads the files with `import.meta.glob`**, Vite's own, so it costs no
+  dependency and needs no editing when the card set changes. Thirty-six import lines would have been a
+  second copy of the card list kept in step by hand.
+- **The price of the glob is that a missing drawing is a runtime `undefined`, not a build error**, and
+  `tests/unit/ui/card-art.test.js` is what pays it. It walks the real catalogue and the real pool
+  composition, so a card added without a drawing fails the suite. It also asserts the two transforms
+  above, which is how "the script cleaned it" stays true after the next re-run.
+- **A sprite sheet was the rejected alternative.** One file with 36 `<symbol>` elements is one request
+  instead of an inlined bundle, and it fails the 300-line limit by a factor of ten. Thirty-six separate
+  files are at most 50 lines each.
+- **`card-view.js` still looks nothing up.** The drawing arrives in the description as `card.art`, the
+  same way translated strings do, so the one card component keeps knowing nothing about what a card is.
+  It does guard the write: `.html()` runs only when the card's id changed, because `updateCard` runs on
+  every slot on every render and re-parsing eight SVG drawings each time would be waste. The
+  bookkeeping sits in jQuery's `.data()` rather than a DOM attribute, so no stylesheet can come to
+  depend on it.
+
+**Found while doing it, and not fixed:** the skill hand builds five permanent slots, so a hand holding
+one card renders four blank cards with a pale art window. Spec 03's D29 answered what *unplayable*
+looks like and `card-state.css` answers what *face down* looks like. Neither is *no card at all*. It is
+in handoff 04 as an open item rather than guessed at.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -785,8 +838,11 @@ other, and setting the same name twice replaces itself, which is what a countdow
   - **Whether a skill square moving should be animated.** Nobody has asked, and the reappearance would
     happen on a field the player is not looking at.
   - **Baloo 2 and Nunito are still loaded from Google Fonts**, unchanged from spec 01 section 5.
-  - **The 29 card illustrations are not extracted from the artboard**, so every `.card__art` is an
-    empty framed window.
+  - ~~**The 29 card illustrations are not extracted from the artboard**, so every `.card__art` is an
+    empty framed window.~~ **Done 2026-09-01, issue #39,** and there were 36 rather than 29. See the
+    facts section above. What is still open is **whether the artwork needs a Night In variant**: the
+    drawings carry raw hex from the artboard, so the frame follows the skin and the drawing inside it
+    does not. That is D41 in handoff 04.
   - **The size limit has to be checked after Prettier, and the brief does not say so.** Two handoffs
     in a row delivered a stylesheet that fitted 300 lines and did not after formatting.
 - A card's visual presentation belongs here and its rule belongs in Chapter 05; the two are matched

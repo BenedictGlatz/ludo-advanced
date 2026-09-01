@@ -710,6 +710,28 @@ the browser spend the injected RNG identically, and neither had to be told the o
 output. Pasting it in would have repinned every seed in the suite to values derived from a broken replay,
 and the tests would have gone green on them.
 
+### A test whose whole job is to make a generated directory honest: 2026-09-01, issue #39
+
+`tests/unit/ui/card-art.test.js` is the second unit test under `tests/unit/ui/`, and like
+`board-geometry.test.js` it needs no DOM, so it sits inside `environment: "node"` without weakening
+anything.
+
+It exists because `src/ui/art/index.js` reads its 36 files with `import.meta.glob`. That is the right
+call for the module and it has one consequence: **a missing drawing is a runtime `undefined`, not a
+build error.** So the test does not check a list of file names, which would be the same list twice. It
+walks `SKILL_CARDS` and `POOL_COMPOSITION`, the real ones, and asserts every id and every denomination
+resolves to something starting with `<svg`. A card added to the game without a drawing added to the
+artboard fails here.
+
+Three of the seven cases check the **extraction**, not the game: every drawing is `aria-hidden`, none
+carries an inline `style` on its root element, and all of them keep a `viewBox`. Those are the two
+transforms `scripts/extract-card-art.js` applies, and without a test they would be true only until the
+next re-run of a script nobody reads.
+
+`tests/e2e/dice-hand.spec.js` gained one case for the other half: that a drawing actually reaches the
+page. The unit test proves the string exists and the spec proves it arrives, which is the gap a module
+boundary hides.
+
 ### Coverage after issue #38
 
 `ui/` is still not unit tested and that is unchanged and deliberate: `vitest.config.js` runs with
