@@ -830,6 +830,22 @@ tables above.
 with a name and no rules text is a card nobody at the table can play. The locale test checks that all 29
 have one, so replacing the wording is editing text and not hunting for gaps.
 
+### Counting how far a player has got: 2026-09-01, issue #39
+
+`pawnProgress(pawns, player)` in `core/pawns.js` returns `{ start, track, home }`, which is the whole
+content of FR-36 and therefore of the HUD.
+
+- **The three buckets are the three regions of `board.js`, not a scale invented for the HUD.** That is
+  what makes `home` mean exactly what winning means: `hasWon` is all four pawns in the home column, so a
+  HUD row reading `home: 4` and a won match are the same fact read twice. A unit test asserts the two
+  together rather than trusting the coincidence.
+- **It sums to `PAWNS_PER_PLAYER` at every position**, and there is a test that walks a pawn from `r=0`
+  to `r=44` and checks the total after every step. A player reads three numbers as a breakdown of four
+  pawns, so a bucket that missed a region would show a breakdown of three and nothing else would notice.
+- **It is in `core/` and not in `ui/`** because it is arithmetic over pawn positions, the same kind of
+  question `seatsIn` answers. The practical consequence is that it sits inside the coverage figure,
+  where `ui/` does not.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

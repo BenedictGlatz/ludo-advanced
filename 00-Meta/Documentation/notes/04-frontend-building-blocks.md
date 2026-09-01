@@ -814,6 +814,54 @@ one card renders four blank cards with a pale art window. Spec 03's D29 answered
 looks like and `card-state.css` answers what *face down* looks like. Neither is *no card at all*. It is
 in handoff 04 as an open item rather than guessed at.
 
+### A player got a name, and a two-year-old off-by-one went with it: 2026-09-01, issue #39
+
+`src/ui/player-labels.js` is the one place that decides what a player is called.
+
+**The defect.** A seat is 0 to 3 and `seatsFor` seats two players **opposite each other on seats 0 and
+2**, so every label built as `seat + 1` produced "Spieler 1" and "Spieler 3" in a two-player match, with
+no Spieler 2 at the table. It was written down in `move-hints.js` as a known cost and left, on the
+grounds that a second numbering would disagree with `data-player` and the colour tokens.
+
+**Why it hid for two sprints:** in a four-player match `seat + 1` and the position in the match are the
+same numbers, 1 2 3 4. Every screenshot anybody had taken was a four-player match.
+
+- **The answer decided with the Product Owner on 2026-09-01 is that the label carries both facts:**
+  "Spieler 2 (Grün)". The number is the position in the match, counted over `state.seats`; the colour is
+  the seat. Nothing has to be inferred from the number any more, which is what the old objection was
+  about.
+- **The seat is still the seat everywhere else.** `data-player`, `--color-p0` to `--color-p3`, the entry
+  squares and every rule in `core/` keep using 0 to 3. This is a presentation-only translation and it
+  lives in `ui/` for that reason.
+- **The colour word is keyed on the seat, not on the display number**, because seat 2 is green whether it
+  is the second player of two or the third of four.
+- **The words come from design spec 01 § D1**, the same table that fixes the four hex values. Brief 04
+  asks Claude Design to correct any word that is wrong for the colour it specified, because those four
+  words are the only place the design is described to the player in prose.
+- **Three call sites were rewired**, and the reason for one file rather than a fix in each is that four
+  places building the same name is four chances to miss one. `move-hints.js` names the winner,
+  `prompt-view.js` names the actor in a reaction line and labels the opponent-picker buttons.
+- **`displayNumber` takes `state.seats` and not the state.** Two of the three call sites have no state
+  object to hand: the reaction line is built from a window and the buttons from a pick descriptor.
+- **It has a unit test even though it is in `ui/`**, alongside `board-geometry.js` and the card artwork,
+  because it calls no `t()` and needs no DOM, so it fits `environment: "node"` without weakening
+  NFR-01's second criterion.
+
+#### The locale keys that had existed and were never called
+
+`turn.prompt` ("Spieler {{number}} ist am Zug") had been in both locale files since the i18n commit and
+was called from nowhere. It was the answer to the first question the Product Owner asked about the
+running build, sitting unused in the repository. Four more like it: `turn.chooseDie`, `turn.rolled`,
+`turn.selectPawn` and `match.restart`.
+
+**`turn.prompt` and `match.won` changed their placeholder from `{{number}}` to `{{player}}`**, and both
+now take the composed label. One string per meaning: a second "player N wins" for the win screen would
+have been the same sentence maintained in two places and two languages.
+
+The parity test in `tests/unit/i18n/locales.test.js` already compared the `{{...}}` placeholders of the
+two locales, so changing one language and not the other would have failed the suite. That check was
+written for a different reason and paid for itself here.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

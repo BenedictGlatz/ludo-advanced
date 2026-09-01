@@ -3,19 +3,64 @@
     "title": "Ludo Advanced"
   },
   "player": {
-    "name": "Player {{number}}"
+    "name": "Player {{number}}",
+    "named": "Player {{number}} ({{colour}})",
+    "colour": {
+      "0": "red",
+      "1": "yellow",
+      "2": "green",
+      "3": "blue"
+    }
   },
   "turn": {
-    "prompt": "Player {{number}} to move",
+    "prompt": "{{player}} to move",
     "chooseDie": "Choose a dice card",
     "rolled": "Rolled: {{roll}}",
     "selectPawn": "Choose a pawn",
     "end": "End turn"
   },
   "match": {
-    "won": "Player {{number}} wins",
+    "won": "{{player}} wins",
     "abandoned": "The match was abandoned",
     "restart": "New match"
+  },
+  "hud": {
+    "heading": "Progress",
+    "start": "Start",
+    "track": "Track",
+    "home": "Home",
+    "cards": "Cards",
+    "onTurn": "to move",
+    "finished": "home"
+  },
+  "menu": {
+    "title": "Ludo Advanced",
+    "text": "Ludo with a dice card pool and skill cards.",
+    "start": "Start a match"
+  },
+  "setup": {
+    "title": "How many players?",
+    "text": "Everyone plays at the same screen.",
+    "players": "{{players}} players",
+    "start": "Go"
+  },
+  "pause": {
+    "open": "Pause",
+    "title": "Paused",
+    "resume": "Resume",
+    "quit": "Abandon match"
+  },
+  "win": {
+    "quit": "Back to the menu"
+  },
+  "handover": {
+    "title": "Pass to {{player}}",
+    "text": "Hand the screen over before you press Ready.",
+    "ready": "Ready"
+  },
+  "language": {
+    "label": "Switch language",
+    "switch": "Deutsch"
   },
   "move": {
     "refused": {

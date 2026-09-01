@@ -8,6 +8,7 @@ import {
   clearedTurnFields,
   createGameState,
   nextState,
+  seatProgress,
 } from "../../../src/state/game-state.js";
 import { isDeeplyFrozen } from "../../../src/state/freeze.js";
 
@@ -152,5 +153,57 @@ describe("clearedTurnFields", () => {
     for (const [field, value] of Object.entries(clearedTurnFields())) {
       expect({ field, value }).toEqual({ field, value: fresh[field] });
     }
+  });
+});
+
+describe("seatProgress (FR-36, and D33)", () => {
+  it("reports four pawns in the start area and an empty hand at the beginning", () => {
+    const state = createGameState(4);
+
+    for (const seat of state.seats) {
+      expect(seatProgress(state, seat)).toEqual({
+        start: PAWNS_PER_PLAYER,
+        track: 0,
+        home: 0,
+        cards: 0,
+      });
+    }
+  });
+
+  /**
+   * The card count is the one number in the HUD that is not on the board, and it is there because the
+   * Product Owner made an opponent's hand size public on 2026-09-01 (open decision D33 of design spec
+   * 03). Without that decision this selector would return three numbers.
+   */
+  it("reports how many skill cards the seat holds", () => {
+    const fresh = createGameState(2);
+    const state = nextState(fresh, {
+      skillHands: { ...fresh.skillHands, 0: ["action-yeet", "action-rock"] },
+    });
+
+    expect(seatProgress(state, 0).cards).toBe(2);
+    expect(seatProgress(state, 2).cards).toBe(0);
+  });
+
+  it("reports no cards rather than throwing for a seat that is not in the match", () => {
+    // A HUD that crashed on an unseated seat would be a worse bug than a wrong number, because the
+    // HUD is drawn on every render.
+    expect(seatProgress(createGameState(2), 1).cards).toBe(0);
+  });
+
+  it("is derived, so it cannot disagree with the pawns it is counting", () => {
+    const fresh = createGameState(2);
+    const moved = nextState(fresh, {
+      pawns: fresh.pawns.map((pawn) =>
+        pawn.player === 0 && pawn.pawn === 0 ? { ...pawn, r: 5 } : pawn
+      ),
+    });
+
+    expect(seatProgress(moved, 0)).toEqual({
+      start: PAWNS_PER_PLAYER - 1,
+      track: 1,
+      home: 0,
+      cards: 0,
+    });
   });
 });

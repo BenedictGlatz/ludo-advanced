@@ -2342,6 +2342,47 @@ to get wrong later.
   stylesheet fight the markup.
 - → Ch. 04
 
+### 2026-09-01: A player is named by position plus colour, and the seat stays the seat
+
+- **Chosen:** on screen a player is "Spieler 2 (Grün)". The number counts from 1 over `state.seats`, so
+  the second player of a two-player match is Spieler 2 and not Spieler 3. The colour word belongs to the
+  seat. One helper, `ui/player-labels.js`, and three rewired call sites.
+- **Why:** this fixes a real defect. Two players sit on seats 0 and **2**, so labelling a seat `seat + 1`
+  gave a table with a Spieler 1 and a Spieler 3 and no Spieler 2. `move-hints.js` had recorded it as a
+  known cost and left it, arguing that renumbering would introduce a second numbering that disagrees
+  with `data-player` and the colour tokens. That objection is answered rather than overruled: the label
+  now carries **both** facts, so nothing has to be inferred from the number, and the seat is still the
+  seat in the markup and in every rule. The colour is in the name because a pawn on the board is
+  identified by nothing else, so a name without it leaves the player to work out which pieces are theirs.
+- **Why it survived two sprints:** in a four-player match the two numberings are identical, 1 2 3 4, and
+  every screenshot anybody had taken was a four-player match.
+- **Rejected: keeping `seat + 1`.** One numbering everywhere, and it prints a player who does not exist.
+- **Rejected: names typed in at match setup.** The most personal option at a hot-seat table, and it needs
+  an input per player and a place in the state object that does not exist: `createGameState` knows only
+  `playerCount`.
+- **Rejected: the colour alone, "Rot ist am Zug".** Shorter and directly readable off the board, and it
+  makes the turn order invisible.
+- → Ch. 04
+
+### 2026-09-01: An opponent's skill cards stay secret and the count is public
+
+- **Chosen:** the hand keeps rendering as card backs for anyone who is not the seat on show, and the
+  number of cards each seat holds appears in the HUD. This closes open decision **D33**, which design
+  spec 03 had correctly escalated to the Product Owner.
+- **Why:** bluffing survives, and planning becomes possible, because a player can see where the threat
+  is without seeing what it is. It also has a consequence the design has to absorb: **secrecy at a shared
+  screen stops being theatre and becomes a requirement**, which is what forces the handover overlay. The
+  rail currently flips from one player's face-up cards to the next player's after a 320 ms timer with
+  nothing in between.
+- **Rejected: hiding the count as well.** Maximum uncertainty, and weak at a hot-seat table where anyone
+  can count the draws. It converts real information into mental bookkeeping.
+- **Rejected: everything face up.** Honest, since all four players look at the same screen anyway, and it
+  removes the surprise that makes a reaction card worth holding.
+- **Consequence recorded rather than assumed:** the HUD now shows four numbers per seat instead of three.
+  Pool and discard counters were considered at the same time and dropped, so sixteen numbers on screen do
+  not become twenty-four.
+- → Ch. 04, Ch. 06
+
 ---
 
 ## Challenges

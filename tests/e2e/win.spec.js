@@ -13,14 +13,29 @@
  * seat wins is a property of the seed, and the seeds were regenerated for issue #30 and again for
  * issue #38. So the spec reads the winner off `data-winner` and asserts the rule instead, that the
  * winner's four pawns fill the four house squares and the message names that seat. In a two-player
- * match the seats are 0 and 2, because `seatsFor` sits two players opposite each other, and the seat
- * numbering is why the message for seat 2 reads "Spieler 3".
+ * match the seats are 0 and 2, because `seatsFor` sits two players opposite each other.
+ *
+ * **The winner's name is built from the locale file rather than typed out**, since issue #39. The message
+ * used to be pinned as the literal "Spieler 3 hat gewonnen", which encoded two things a test should not
+ * own: the German wording, and the old seat-plus-one numbering that made a two-player match have no
+ * Spieler 2. Filling the real templates means this assertion still checks the numbering, and a reworded
+ * sentence changes one JSON file rather than breaking a test.
  */
 
 import { expect, test } from "@playwright/test";
 
-import { HOME_R, TRACK_LENGTH } from "../../src/core/board.js";
+import { HOME_R, TRACK_LENGTH, seatsFor } from "../../src/core/board.js";
+import de from "../../src/i18n/locales/de/ui.json" with { type: "json" };
 import { SEEDS, boardState, openMatch, pawnPositions, playUntil } from "./helpers.js";
+
+/** The winner's label, composed the way `player-labels.js` composes it, out of the real locale file. */
+function wonMessage(seat) {
+  const player = de.player.named
+    .replace("{{number}}", String(seatsFor(2).indexOf(seat) + 1))
+    .replace("{{colour}}", de.player.colour[seat]);
+
+  return de.match.won.replace("{{player}}", player);
+}
 
 test.describe("winning a match", () => {
   test.slow();
@@ -42,7 +57,11 @@ test.describe("winning a match", () => {
 
     const message = page.locator(".move-refusal");
     await expect(message).toHaveAttribute("data-message-kind", "win");
-    await expect(message).toHaveText(`Spieler ${winner + 1} hat gewonnen`);
+    await expect(message).toHaveText(wonMessage(winner));
+
+    // The numbering itself, stated so a regression is readable: seats 0 and 2 are players 1 and 2.
+    // Before issue #39 a win by seat 2 announced "Spieler 3" and there was no Spieler 2 at the table.
+    expect(wonMessage(2)).toContain("Spieler 2");
 
     const positions = await pawnPositions(board);
     const winnerPositions = [0, 1, 2, 3]

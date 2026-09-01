@@ -732,6 +732,21 @@ next re-run of a script nobody reads.
 page. The unit test proves the string exists and the spec proves it arrives, which is the gap a module
 boundary hides.
 
+### A spec that had pinned a defect: 2026-09-01, issue #39
+
+`win.spec.js` asserted the literal string `Spieler ${winner + 1} hat gewonnen`. Renaming the players
+broke it, and the break was the useful part: the assertion had encoded **two** things a test should not
+own. The German wording, so any rewording would fail a test rather than change a JSON file. And the
+seat-plus-one numbering, which was the defect itself, so the test was actively holding the bug in place.
+
+It now composes the expected sentence out of `src/i18n/locales/de/ui.json`, filling `player.named` and
+`match.won` the way `player-labels.js` does, and adds one line asserting that seat 2 is called "Spieler
+2". The numbering is still checked; the prose is not duplicated.
+
+**Worth carrying into the report:** a test that hard-codes rendered output looks like a strong assertion
+and is a copy of the implementation. This one had been repaired twice already for seed changes, and its
+own header says so.
+
 ### Coverage after issue #38
 
 `ui/` is still not unit tested and that is unchanged and deliberate: `vitest.config.js` runs with

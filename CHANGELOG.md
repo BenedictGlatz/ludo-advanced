@@ -316,8 +316,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (S7), the main menu (S1), match setup (S2), pause (S8), win (S9) and a new handover screen for the
   moment between two turns at a shared screen. Eight open decisions, D35 to D42, plus the eleven items
   that were left open by handoffs 02 and 03 and had been drifting since
+- **Players are named on screen** (issue #39): "Spieler 2 (Grün)", the number counting from 1 in seat
+  order and the colour naming the pieces on the board. German and English
 
 ### Changed
+
+- **A two-player match is played by Spieler 1 and Spieler 2** (issue #39). It used to be played by
+  Spieler 1 and Spieler 3, because two players sit opposite each other on seats 0 and 2 and every label
+  was built as the seat number plus one. Four-player matches were unaffected, which is why nobody had
+  noticed. The seat number is still what the markup, the pawn colours and every rule use
 
 - **A turn now waits for the player in three places rather than two**: the dice card, the action phase,
   and the pawn. The action phase is skipped automatically when the player holds nothing playable, so it

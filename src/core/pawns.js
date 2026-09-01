@@ -25,7 +25,7 @@
  * a bug in `ui/` cannot corrupt the board by holding on to an old reference.
  */
 
-import { MIN_PLAYERS, PAWNS_PER_PLAYER, START_R, seatsFor } from "./board.js";
+import { MIN_PLAYERS, PAWNS_PER_PLAYER, REGION, START_R, region, seatsFor } from "./board.js";
 
 export { MIN_PLAYERS };
 
@@ -95,4 +95,30 @@ export function seatsIn(pawns) {
 /** How many distinct players appear in a pawn list. Used to check a state object against itself. */
 export function playerCountOf(pawns) {
   return seatsIn(pawns).length;
+}
+
+/**
+ * How far one player has got: how many of their four pawns are still in the start area, out on the
+ * track, and home. This is FR-36, the HUD's whole content.
+ *
+ * ```js
+ * { start: 2, track: 1, home: 1 }   // always sums to PAWNS_PER_PLAYER
+ * ```
+ *
+ * **The three buckets are the three regions of `board.js` and not a scale invented here**, which is
+ * what makes "home" mean exactly what winning means: `hasWon` is all four pawns in the home column, so
+ * a player whose HUD row reads `home: 4` has won and the two facts cannot drift apart.
+ *
+ * It lives in `core/` because it is arithmetic over pawn positions, the same kind of question
+ * `seatsIn` answers. The HUD needs one more number that is not on the board, how many skill cards the
+ * seat holds, and that is added by `seatProgress` in `state/game-state.js`.
+ */
+export function pawnProgress(pawns, player) {
+  const own = pawnsOf(pawns, player);
+
+  return {
+    start: own.filter((entry) => region(entry.r) === REGION.START).length,
+    track: own.filter((entry) => region(entry.r) === REGION.TRACK).length,
+    home: own.filter((entry) => region(entry.r) === REGION.HOME_COLUMN).length,
+  };
 }

@@ -371,6 +371,24 @@ then the target. Every check runs before anything is written, so there is no hal
 The order is chosen so the **most useful** message wins when more than one thing is wrong: telling a
 player "that card needs a target" when it was not even their turn would be true and useless.
 
+### The HUD reads a selector, not a stored field: 2026-09-01, issue #39
+
+`seatProgress(state, seat)` in `state/game-state.js` returns `{ start, track, home, cards }`.
+
+- **A selector and not a state field.** Everything in it is derivable from `state.pawns` and
+  `state.skillHands`, and storing it would create two places that can disagree about how far a player
+  has got. FR-36's acceptance criterion is precisely that the HUD matches the state after every turn, so
+  the cheapest way to satisfy it is to make disagreement unrepresentable.
+- **It is the seam between `core/` and the state object.** The three pawn counts come from
+  `pawnProgress` in `core/`; `cards` is added here, because a hand is a state field and `core/` is not
+  allowed to know the shape of the state object (NFR-01).
+- **`cards` is on screen at all because of a Product Owner decision**, not because it was convenient.
+  Design spec 03 escalated open decision D33 (is an opponent's hand shown, and is the count public), and
+  on 2026-09-01 the answer was: cards secret, **count public**. Without that decision this selector
+  returns three numbers.
+- **An unseated seat returns `cards: 0` rather than throwing.** The HUD is redrawn on every render, so a
+  crash there is worse than a wrong number.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
