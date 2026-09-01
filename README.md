@@ -64,6 +64,31 @@ The dev server prints a local URL: open it in your browser to play.
 | `npm run test:coverage` | Unit tests with a coverage report  |
 | `npm run test:e2e`      | Run Playwright end-to-end tests    |
 
+Four more exist and are not part of the everyday loop. They generate things rather than check them, so
+each is run by hand when its input changes:
+
+| Command                   | Description                                                                    |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| `npm run assets:card-art` | Extract the 36 card illustrations out of the Claude Design artboard into `src/ui/art/` |
+| `npm run docs:ai-index`   | Generate the AI index chapter from the local AI prompt logs                    |
+| `npm run docs:dice-balance` | Derive and measure the dice pool balance quoted in the game design document  |
+| `npm run test:seeds`      | Search for the fixed RNG seeds the end-to-end suite pins                       |
+
+## The address bar
+
+Three settings, read by `src/main.js` and nowhere else. All three fall back rather than failing, so a
+malformed URL starts a normal game.
+
+| Parameter    | Effect                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------- |
+| `?seed=42`   | Fixes the RNG, so the same match plays out the same way every time (NFR-09)                 |
+| `?players=4` | Starts a match with that many players at once, **skipping the main menu**. 2, 3 or 4        |
+| `?fast=1`    | Shortens the pauses in the turn loop and passes the handover screen without waiting for it  |
+
+`?players=` and `?fast=1` exist for the end-to-end suite. They are what let every spec written before
+the main menu and the handover screen existed keep running unchanged, and they change the waiting rather
+than the rules: a run with `?fast=1` plays exactly the same turn, only quicker.
+
 ## Project structure
 
 ```

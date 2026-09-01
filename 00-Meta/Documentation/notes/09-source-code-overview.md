@@ -124,7 +124,7 @@ them, which is kept so that the growth is readable rather than asserted.
 | Lines in `src/ui/` | 3 | **3280 lines in 22 files**, plus 2136 lines of CSS | 2026-09-01, after #39 |
 | Generated card artwork in `src/ui/art/` | 3 | 582 lines in 36 `.svg` files | 2026-09-01, after #39 |
 | Unit tests | 4 | **36 test files, 527 tests, all passing** | 2026-09-01, after #39 |
-| End-to-end tests | 8 | **59 tests in 12 files per browser, 177 across the three** | 2026-09-01, after #39 |
+| End-to-end tests | 8 | **60 tests in 12 files per browser, 180 across the three** | 2026-09-01, after #39 |
 | Coverage of `src/core/` and `src/state/`, lines | 5a | **99.21 % (750/756)** | 2026-09-01, after #39 |
 | Coverage of `src/core/`, lines | 5c | **99.59 % (490/492) over 27 files** | 2026-09-01, after #39 |
 | Coverage of `src/state/`, lines | 5c | **98.48 % (260/264) over 10 files** | 2026-09-01, after #39 |
@@ -147,7 +147,7 @@ them, which is kept so that the growth is readable rather than asserted.
    achievement: `ui/` is outside the measured set by design, so a sprint spent almost entirely in `ui/`
    cannot move the number much in either direction. The figure is honest and it is also close to
    meaningless for this particular sprint, which is the sort of thing a coverage number needs an
-   interpretation for. What actually covers this sprint's work is the 17 new end-to-end tests.
+   interpretation for. What actually covers this sprint's work is the 18 new end-to-end tests.
 
 ### Measured 2026-08-31, after issues #37 and #38
 

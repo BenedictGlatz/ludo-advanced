@@ -28,7 +28,17 @@
    Recorded in 00-Meta/Documentation/notes/04-frontend-building-blocks.md.
    ========================================================================== */
 
+/* Above the overlay, because FR-34 says the language switch works at runtime and
+   the main menu is a runtime the player spends time in. The overlay is a fixed
+   sheet at --layer-refusal, so without this the switch is reachable during a
+   match and buried under every screen that is not one.
+
+   Arithmetic on an existing token rather than a new token: inventing a layer is
+   a design decision and this is a correction. If handoff 04 wants a real
+   stacking order for the chrome, D42 is where it goes. */
 .app__chrome {
+  position: relative;
+  z-index: calc(var(--layer-refusal) + 1);
   display: flex;
   gap: var(--space-2);
   align-items: center;

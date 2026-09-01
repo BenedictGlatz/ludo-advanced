@@ -18,6 +18,7 @@
 import { expect, test } from "@playwright/test";
 
 import de from "../../src/i18n/locales/de/ui.json" with { type: "json" };
+import en from "../../src/i18n/locales/en/ui.json" with { type: "json" };
 import {
   SEEDS,
   boardState,
@@ -114,6 +115,19 @@ test.describe("the match flow", () => {
     await expect(page.locator(".board .pawn")).toHaveCount(0);
   });
 
+  test("switches language on the menu, not only during a match (FR-34)", async ({ page }) => {
+    // The chrome sits above the overlay for exactly this. Without it the switch is reachable during a
+    // match and buried under every screen that is not one, and the main menu is a screen a first-time
+    // player spends time on.
+    await openMenu(page);
+
+    await expect(overlay(page).locator(".overlay__text")).toHaveText(de.menu.text);
+    await page.locator('.chrome__button[data-action="language"]').click();
+
+    await expect(overlay(page).locator(".overlay__text")).toHaveText(en.menu.text);
+    await expect(action(page, "start")).toHaveText(en.menu.start);
+  });
+
   test("hides the pause button while a screen is already up", async ({ page }) => {
     // Pausing a paused game, or a handover, has no meaning, and a button that does nothing is worse
     // than one that is not there.
@@ -159,8 +173,22 @@ test.describe("the handover", () => {
   });
 });
 
+/**
+ * A whole match, played click by click, is the most expensive kind of test in this suite.
+ *
+ * Measured on 2026-09-01: 1.1 to 1.3 minutes each when the three browser projects run with three
+ * workers. `test.slow()` triples the default 30 seconds to 90, which was enough while the suite was
+ * smaller and is not any more: at Playwright's default worker count, half of sixteen cores, eight
+ * browsers each playing a 77-turn match pushed these two past 90 seconds and the run reported four
+ * failures that were purely contention.
+ *
+ * Four minutes is deliberately generous. The alternative was pinning `workers` in
+ * `playwright.config.js`, which would have slowed all 177 tests to fix two.
+ */
+const FULL_MATCH_TIMEOUT_MS = 240_000;
+
 test.describe("winning and starting again", () => {
-  test.slow();
+  test.setTimeout(FULL_MATCH_TIMEOUT_MS);
 
   test("names the winner and restarts with the same players, with no reload (FR-05, FR-06)", async ({
     page,

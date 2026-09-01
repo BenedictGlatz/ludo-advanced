@@ -828,6 +828,28 @@ before anything covers the board, so the case now waits for that screen and pres
 worth recording is that it failed rather than passing quietly**, which is what a timing assertion written
 against a behaviour rather than against a duration buys.
 
+### The suite outgrew `test.slow()`, and four failures were contention: 2026-09-01, issue #39
+
+The first run of the full three-browser suite after issue #39 reported **four failures, and none of them
+was a defect**. All four were the two tests that play a complete 77-turn match through the real
+interface, on chromium and firefox but not on the project that happened to run last.
+
+- **Measured:** 1.1 to 1.3 minutes each with three workers. `test.slow()` triples Playwright's default
+  30 seconds to 90, which was enough while the suite was smaller.
+- **What changed:** the suite went from 42 tests to 60, so Playwright's default worker count, half of
+  sixteen cores, now has eight browsers running at once. Eight concurrent full matches pushed the two
+  long ones past 90 seconds.
+- **The fix is an explicit `test.setTimeout(240_000)` on those two describe blocks**, with the
+  measurement in a comment above it. Rejected: pinning `workers` in `playwright.config.js`, which would
+  have slowed all 180 tests to fix two.
+
+**Why this is worth recording rather than quietly fixing.** A timeout failure and a real failure look
+identical in the summary line, and the temptation is to re-run until it passes. What made the difference
+here was that the same tests passed alone and failed together, twice, which is the signature of
+contention rather than of a bug. **The dangerous version of this is the one that happens in CI**, where
+`retries: 1` would have hidden it entirely and the suite would have been slowly getting less reliable
+with nobody able to say when it started.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

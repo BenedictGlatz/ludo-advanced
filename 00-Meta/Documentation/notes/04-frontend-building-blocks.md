@@ -1063,8 +1063,11 @@ consists of, against which screen the session is on.
   three handoffs.** Specs 01, 02 and 03 have landed; where the CSS lives and where the reasoning lives
   is recorded above. Chapter 12 still wants the component overview table and it can be written now.
 - **Open out of spec 03, and none of it blocks the dice hand:**
-  - **D33 needs the Product Owner, not the designer.** Is an opponent's skill hand represented on
-    screen at all, and is the card count public? The CSS supports either answer today.
+  - ~~**D33 needs the Product Owner, not the designer.** Is an opponent's skill hand represented on
+    screen at all, and is the card count public?~~ **Answered by the Product Owner on 2026-09-01:** the
+    cards stay secret, the **count is public** and sits in the HUD. It turned out not to be only a
+    presentation question, which is the interesting part: it is what forced the handover screen, because
+    secrecy at one shared screen is whatever covers the screen while it changes hands.
   - **NFR-12, telling the four seats apart without colour, is still open from handoff 02.** Spec 03
     suggests a shape for the answer without closing it: the Reaction band is marked by stripes as well
     as by orange, and four seats could take four fills that survive greyscale. That is a change to
@@ -1079,6 +1082,25 @@ consists of, against which screen the session is on.
     does not. That is D41 in handoff 04.
   - **The size limit has to be checked after Prettier, and the brief does not say so.** Two handoffs
     in a row delivered a stylesheet that fitted 300 lines and did not after formatting.
+- **Open out of issue #39, and design handoff 04 is where all of it goes:**
+  - **Four stylesheets were written by Claude Code and none of them should have been**: `prompt.css`,
+    `hud.css`, `chrome.css` and `overlay.css`. All four compose only existing tokens and say so in their
+    first thirty lines. They are listed in handoff 04 as deliverables to be **replaced**, and until the
+    spec lands the game looks provisional by design rather than by accident.
+  - **Two delivered tokens were changed to make room for the HUD**, `--board-size` and the two hand
+    `--card-u` factors, each about nine per cent. D35 confirms or overrules it, and the arithmetic is in
+    the brief.
+  - **What an empty hand slot looks like.** The skill hand builds five permanent slots, so a hand of one
+    card renders four blank cards with a pale art window. D29 answered *unplayable* and `card-state.css`
+    answers *face down*; neither is *no card at all*.
+  - **The overlay does not animate.** It goes from `display: none` to `display: grid` in one frame, so
+    the opacity transition cannot run. It matters most for the handover, where a screen that flashes
+    conceals nothing, and it is D39.
+  - **The win message is now in two places**, the overlay and the orange refusal strip. That is D40,
+    which is D18 from handoff 02 finally unblocked.
+  - **The rules screen, S10, still has no issue at all** (FR-35, `should have`), and neither does the
+    mute half of S11 now that audio is deferred. Neither is in issue #39 and neither is forgotten: both
+    are named here so the board's silence about them is on the record.
 - A card's visual presentation belongs here and its rule belongs in Chapter 05; the two are matched
   by card id. Worth stating explicitly in the report, because it is the clearest example of the
   layering rule doing real work.

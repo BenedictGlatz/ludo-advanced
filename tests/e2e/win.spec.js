@@ -37,8 +37,22 @@ function wonMessage(seat) {
   return de.match.won.replace("{{player}}", player);
 }
 
+/**
+ * A whole match, played click by click, is the most expensive kind of test in this suite.
+ *
+ * Measured on 2026-09-01: 1.1 to 1.3 minutes each when the three browser projects run with three
+ * workers. `test.slow()` triples the default 30 seconds to 90, which was enough while the suite was
+ * smaller and is not any more: at Playwright's default worker count, half of sixteen cores, eight
+ * browsers each playing a 77-turn match pushed these two past 90 seconds and the run reported four
+ * failures that were purely contention.
+ *
+ * Four minutes is deliberately generous. The alternative was pinning `workers` in
+ * `playwright.config.js`, which would have slowed all 177 tests to fix two.
+ */
+const FULL_MATCH_TIMEOUT_MS = 240_000;
+
 test.describe("winning a match", () => {
-  test.slow();
+  test.setTimeout(FULL_MATCH_TIMEOUT_MS);
 
   test("ends the match when one player's four pawns fill their house, and names the winner", async ({
     page,
