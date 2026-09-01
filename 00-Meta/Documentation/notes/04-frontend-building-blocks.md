@@ -1048,6 +1048,109 @@ game's named waits live and was the only thing left in the loop that was a durat
 `match-flow.js` then hit the same limit and `page.js` came out of it on the same principle: what the page
 consists of, against which screen the session is on.
 
+### The pool the player is choosing from became visible: 2026-09-01, issue #30
+
+The overlay got a sixth screen, `data-screen="pool"`: seven cards, one per denomination, each with how
+many copies the pool holds, plus one sentence saying how many of the twenty are face down.
+
+**The gap it closes is a rules gap and not a cosmetic one.** Every turn deals three dice cards and keeps
+one (FR-18, FR-19), and that is only a decision because of what the pool holds: a D2 leaves the start
+area half the time and a D20 one time in twenty (FR-09). Until this screen there was no way to see the
+twenty cards behind the three. A player who had not read section 5.1 of the game design document was
+choosing without the information the choice is made of.
+
+| What | Where |
+| --- | --- |
+| The screen's content | `ui/pool-screen.js`, new, pure, unit tested |
+| The card region on the overlay | `ui/overlay-view.js`, `.overlay__cards` with `data-count` |
+| The dice card description, shared | `ui/dice-card.js`, new, extracted out of `dice-hand-view.js` |
+| The two enums, jQuery-free | `ui/overlay-vocabulary.js`, new |
+| The entry point | `ui/chrome-view.js`, a third always-present button |
+| Interim CSS | `ui/styles/pool.css`, new, tokens only |
+| The design request | `01-Design/Handoff/05-brief-dice-pool-overlay.md`, D43 to D47 |
+
+- **A screen the player opens, and not counters in the HUD.** Pool and discard counters were considered
+  for the HUD row on 2026-09-01 and dropped, so that sixteen numbers on screen do not become
+  twenty-four. That decision closed the route of a number that is permanently there. It did not close
+  this one: a screen costs no space until it is asked for, and it can show the seven cards rather than a
+  number about them.
+- **Rejected: the prose rules screen, S10 (FR-35).** It is a `should have` with no backlog issue and it
+  would explain dice cards, skill cards and the leaving-start rule in words. Showing a composition table
+  is both cheaper than describing it and clearer. If S10 is ever built, this is the part of it that
+  already exists.
+- **It is in the chrome row and not on the hand plate**, which is the nearer place for it, because the
+  chrome is where a control reachable at any point in a turn already lives and the overview has to be
+  reachable in the `choose` phase or it does not help the decision it exists for. Whether the hand should
+  carry a second entry point is D47 of handoff 05, and the flow needs only the extra element.
+- **Opening it pauses the match loop, exactly as the pause screen does.** The loop advances the `roll`,
+  `reaction` and `turn-end` phases on timers of its own, so a player who opened the overview to think
+  about three cards would otherwise come back to a turn that had moved without them. There is an
+  end-to-end test for this and it is the same 600 ms check `match-flow.spec.js` gives the pause screen.
+- **The close button reuses `OVERLAY_ACTION.RESUME` rather than a verb of its own.** `match-flow.js`
+  already answers RESUME with "close the overlay and resume the loop", which is what closing this screen
+  means. Rejected: a `CLOSE_POOL` action, which would have been a second name for one behaviour and two
+  places to keep in step.
+- **`quitToMenu` now clears `deps` as well as `state`.** Without it the overview could describe an
+  abandoned match's pool from the main menu. It is one line and it was found by writing the test that
+  the button is hidden there.
+- **The seven cards come from `POOL_COMPOSITION`**, so FR-17 keeps its promise that the composition is
+  one data definition. A screen with seven denominations typed into it would be a second definition, and
+  it would go stale silently the first time the pool was reweighted. Both the unit test and the
+  end-to-end spec import that table rather than restating it.
+
+#### Two extractions, and the second one uncovered a testability defect
+
+`diceCard(faces)` was private in `dice-hand-view.js`. It is now `diceCardDescription(faces, { tags })` in
+its own `ui/dice-card.js`, because the overview needs the same card plus a copy-count tag. **Rejected:
+exporting it from the hand view.** The overview is not part of the hand and has no business importing
+from it; they render the same component for two unrelated reasons. Same seam as `player-labels.js`, which
+the HUD, the overlay and the board all use without importing each other.
+
+The second extraction is the one worth the report. `OVERLAY_SCREEN` and `OVERLAY_ACTION` moved out of
+`overlay-view.js` into `ui/overlay-vocabulary.js`, and the reason is a **defect that had been invisible
+since the overlay was written**:
+
+- `overlay-view.js` imports jQuery, and jQuery throws on import when there is no `document`.
+- `vitest.config.js` runs unit tests with `environment: "node"` **deliberately**, so that a module in
+  `core/` or `state/` reaching for the DOM fails the run (NFR-01).
+- So **anything importing `overlay-view.js` could not be unit tested at all**, including
+  `overlay-screens.js`, which is pure and does nothing but describe screens.
+
+Nobody noticed, because `overlay-screens.js` had no unit test to fail. It was covered through Playwright
+like the rest of `ui/`, which is the right default, and it hid the fact that a pure function had been made
+untestable by an import it did not need. `pool-screen.js` made it visible on the first try: the test file
+failed with "jQuery requires a window with a document" before a single assertion ran.
+
+**Rejected: giving these tests a DOM environment.** The `node` environment is a real guard and trading it
+for one corner's convenience would weaken NFR-01 to make a test easier to write. `overlay-view.js`
+re-exports both tables, so nothing that already imported them from there had to change.
+
+**The general form, and it is the second time this pattern has been recorded:** an untestable pure
+function is a sign of an import that is not needed, not a reason to weaken the test environment. The
+first time was `data-die` on 2026-08-30.
+
+#### Negative finding: the fifth stylesheet in a row that Claude Code should not have written
+
+`pool.css` composes only existing tokens, sets no colour at all, and its one size factor is `0.62`, the
+skill hand's existing `--card-u` out of `hand.css` rather than a new value. Its header says all of that
+and names D43 to D46 as what is owed.
+
+**That makes five: `prompt.css`, `hud.css`, `chrome.css`, `overlay.css`, `pool.css`.** Each one was
+written the same way and for the same reason, that the feature had to ship before the sprint ended, and
+each one is recorded rather than hidden. It is no longer an incident and it should be named in the
+retrospective as a process finding: **the handoff loop is slower than the implementation loop, and the
+project has never once scheduled the design request before the code that needs it.** Handoff 05 was
+written before a line of this issue's `ui/` code, which is the first time that order has held, and it
+still did not help, because the spec cannot arrive in the same session.
+
+**One thing in `pool.css` is a correction to a delivered spec rather than a placeholder**, and it is
+flagged in the file. `card-view.js` writes `data-playable="false"` on a card nobody can play, and
+`card-state.css` washes such a card out with `filter: saturate(0.5)`. On a hand that is correct and it is
+D29: a card you cannot play right now should recede. On the overview it states something false, because
+those seven cards are not unavailable, they are the pool. So the wash is taken back off. **Rejected:
+describing the overview's cards as playable**, which would have been the worse lie: it adds a pointer
+cursor and a hover lift to a card that does nothing when clicked.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -337,6 +337,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   has been passed on. It exists because an opponent's skill cards are secret: at one shared screen that
   is only true if something covers the screen while it changes hands. The turn used to change by itself
   after a third of a second
+- **A dice card pool overview** (issue #30, FR-16, FR-17). A **Kartenpool** button in the top bar, reachable
+  at any point in a turn, opens a screen showing all seven dice card denominations, how many copies of each
+  the pool holds, and how many of the twenty cards are face down right now. It is there because keeping one
+  of three dealt cards is only a decision if you can see what the twenty behind them look like: a D2 gets a
+  pawn out of the start area half the time and a D20 one time in twenty. The match stops while the screen is
+  open and carries on where it left off
 
 ### Changed
 

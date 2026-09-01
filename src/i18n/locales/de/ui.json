@@ -57,6 +57,13 @@
     "text": "Gib den Bildschirm weiter, bevor du auf Bereit drückst.",
     "ready": "Bereit"
   },
+  "pool": {
+    "open": "Kartenpool",
+    "label": "Den Würfelkartenpool ansehen",
+    "title": "Der Würfelkartenpool",
+    "text": "{{remaining}} von {{total}} Karten liegen verdeckt im Pool.",
+    "close": "Zurück zur Partie"
+  },
   "language": {
     "label": "Sprache wechseln",
     "switch": "English"

@@ -676,6 +676,42 @@ about the four undesigned controls the slice needed. Neither is recorded as a bl
 because neither blocked for long. Both are recorded as decisions in
 [project-journal.md](../project-journal.md), which is what makes them visible to the report at all.
 
+### An issue closed as an audit, and three things the board could not tell anybody: 2026-09-01, issue #30
+
+Issue #30 was picked up expecting to build a dice pool. The pool had shipped two days earlier. Three
+findings about the process, and none of them is about the code.
+
+**An empty issue body costs about an hour.** #30 and its parent epic #37 both have **empty bodies**:
+title, labels, assignees and nothing else. So the acceptance criteria for the work were only in
+[Requirements-Specification.md](../../Project-Management/Requirements-Specification.md), which maps FR-16
+to FR-21 to the issue in its own trace column, and nothing on the board points at that document. Matching
+a six-word title to six requirement ids is work somebody already did once when the specification was
+written, and it was done again from scratch to close the issue. **The cheap fix is one line in the issue
+body naming the requirement ids**, and it costs whoever creates the issue about ten seconds.
+
+**The board described a state that had ended two days earlier.** The parent epic #37 was closed while its
+child #30 stayed open, and the child's code was already committed and passing. Nothing is wrong with
+either the code or the closure: what is wrong is that "is #30 done" was not answerable from the board, and
+the only way to answer it was to read six requirement criteria against the source. That is the concrete
+form of a risk the register already carries in the abstract.
+
+**A booked story point can describe work that was not done.** The 3 points estimated for #30 are for
+`core/dice-pool.js`, and that file was written on 2026-08-30 under a commit naming no issue. The work
+actually done on 2026-09-01 was an audit, a screen and a test, none of which the estimate mentions. The
+points are booked in full, because the alternative is 3 points no sprint ever receives, and the divergence
+is written into [sprint-log.md](../sprint-log.md) next to them. **This is the second finding this sprint
+that the velocity figure is not a planning input**, and it is a different cause from the first one: the
+2026-08-30 entry above says velocity is unreadable because no effort is measured. This says it is
+unreadable because the points and the work have drifted apart.
+
+**The per-change documentation step is being done unevenly, and the pattern is now visible.** The chapter
+notes and the journal's decision blocks are current. The two *chronological* logs, the journal's session
+log and the sprint log's Delivered list, both stop on 2026-08-30 and miss eight issues. Both were filled
+for #30 and neither was reconstructed backwards, because a log written from somebody else's commits is a
+guess. **The likely cause is worth naming: the chapter notes are where the interesting content goes, so
+they get written, and the logs feel like bookkeeping.** The report needs the logs, because they are the
+only artefacts that show sequence and pace.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -25,10 +25,17 @@
  *   handSize: 3,                 // how many cards a turn draws (FR-18)
  *   draw(rng) -> number[],       // the faces of each card in the hand
  *   returnHand(hand) -> void,    // give them back at end of turn (FR-21)
+ *   remaining() -> number,       // how many cards are face down in the source right now
  * }
  * ```
  *
- * The plan sketched a third method, `chosen()`, holding the card the player picked. It is not here
+ * `remaining()` joined the interface with the pool overview of issue #30. It had existed on
+ * `createDicePool` alone since that pool was written, which made it a property of one implementation
+ * rather than of the interface, and every caller would have had to ask
+ * `typeof source.remaining === "function"` before trusting it. A source that cannot say how full it is
+ * is not a source a screen can describe.
+ *
+ * The plan sketched a further method, `chosen()`, holding the card the player picked. It is not here
  * on purpose: which card was chosen is part of the turn, and the turn is the turn manager's to own.
  * A source that remembered it would be a second place where turn state lives.
  */
@@ -93,5 +100,14 @@ export function fixedDieSource(faces = 6) {
     handSize: 1,
     draw: () => [faces],
     returnHand: () => {},
+
+    /**
+     * One, always.
+     *
+     * Not a lie and not a placeholder: this source holds exactly one card and it never runs out, so
+     * one is the honest answer. It is here because `remaining()` is part of the interface, and an
+     * implementation that omits an interface method forces every caller to guard.
+     */
+    remaining: () => 1,
   };
 }

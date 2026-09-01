@@ -1,5 +1,5 @@
 /**
- * What each of the five overlay screens says. Issues #39 and #41.
+ * What each of the overlay screens says. Issues #39, #41 and #30.
  *
  * `ui/` only. This is the file that calls `t()`; `overlay-view.js` renders whatever it returns and knows
  * nothing about screens. Same split as `dice-hand-view.js` and `card-view.js`, and for the same reason:
@@ -12,8 +12,9 @@
 import { PLAYER_COUNTS } from "../core/board.js";
 import { MATCH_STATUS } from "../state/game-state.js";
 import { t } from "../i18n/index.js";
-import { OVERLAY_ACTION, OVERLAY_SCREEN } from "./overlay-view.js";
+import { OVERLAY_ACTION, OVERLAY_SCREEN } from "./overlay-vocabulary.js";
 import { seatLabel } from "./player-labels.js";
+import { poolScreen } from "./pool-screen.js";
 
 /** S1. The entry point: one button, because there is one thing to do here (FR-38). */
 function menuScreen() {
@@ -105,16 +106,24 @@ function handoverScreen(state, seat) {
 
 /** Nothing on the overlay: the match is on screen and the game is not asking anything. */
 function noScreen() {
-  return { screen: OVERLAY_SCREEN.NONE, title: "", text: "", player: null, buttons: [] };
+  return { screen: OVERLAY_SCREEN.NONE, title: "", text: "", player: null, cards: [], buttons: [] };
 }
 
 /**
  * The description for whichever screen the flow is on.
  *
  * `state` is `null` on the menu and the setup screen, because there is no match yet. `seat` is only
- * used by the handover.
+ * used by the handover, and `pool` only by the pool overview.
+ *
+ * **The pool overview lives in its own file** rather than as a seventh function here. It is the only
+ * screen with cards on it, it is the only one whose content comes from `core/` rather than from the game
+ * state, and it carries a paragraph of reasoning of its own. This file stays a switch.
+ *
+ * `pool` is handed in rather than read, because the face-down count lives in the dice source inside
+ * `deps` and this file is pure. A screen that reached into the running match for a number would be the
+ * one place in `ui/` that could not be tested by asking it what it says.
  */
-export function screenDescription(screen, { state = null, seat = null } = {}) {
+export function screenDescription(screen, { state = null, seat = null, pool = null } = {}) {
   switch (screen) {
     case OVERLAY_SCREEN.MENU:
       return menuScreen();
@@ -126,6 +135,9 @@ export function screenDescription(screen, { state = null, seat = null } = {}) {
       return winScreen(state);
     case OVERLAY_SCREEN.HANDOVER:
       return handoverScreen(state, seat);
+    case OVERLAY_SCREEN.POOL:
+      // `noScreen` when there is no match, so a stale POOL screen cannot outlive the pool it describes.
+      return pool === null ? noScreen() : poolScreen(pool);
     default:
       return noScreen();
   }

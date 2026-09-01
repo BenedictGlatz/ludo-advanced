@@ -1,8 +1,15 @@
 /**
- * The controls that are on screen the whole time. Issue #39.
+ * The controls that are on screen the whole time. Issues #39 and #30.
  *
- * Two of them, and they have nothing to do with each other beyond both being always reachable: the
- * language switch (FR-34) and the pause button (FR-07).
+ * Three of them, and they have nothing to do with each other beyond all being always reachable: the
+ * language switch (FR-34), the pause button (FR-07) and the dice card pool overview (issue #30).
+ *
+ * **Why the pool overview is here and not on the hand.** The question it answers, "what am I choosing
+ * from", is asked while looking at the hand, so the hand plate would be the nearer place for the control.
+ * It is here because this row is where a control that is reachable at any point in a turn already lives,
+ * and the overview has to be reachable in the `choose` phase or it does not help the decision it exists
+ * for. Whether the hand should carry a second entry point is D47 of handoff 05, and the flow needs only
+ * the extra element to support one.
  *
  * `ui/` only: jQuery, i18next, no rule.
  *
@@ -40,6 +47,8 @@ import { currentLanguage, t } from "../i18n/index.js";
 export const CHROME_ACTION = {
   LANGUAGE: "language",
   PAUSE: "pause",
+  /** Open the dice card pool overview (issue #30). */
+  POOL: "pool",
 };
 
 function chromeButton(action) {
@@ -55,6 +64,7 @@ function chromeButton(action) {
 export function renderChrome() {
   return $("<div>", { class: "app__chrome" }).append(
     $("<p>", { class: "chrome__turn" }),
+    chromeButton(CHROME_ACTION.POOL),
     chromeButton(CHROME_ACTION.PAUSE),
     chromeButton(CHROME_ACTION.LANGUAGE)
   );
@@ -88,6 +98,14 @@ export function updateChrome($chrome, { canPause = true, turn = "" } = {}) {
     .children(`[data-action="${CHROME_ACTION.PAUSE}"]`)
     .attr("hidden", canPause ? null : "hidden")
     .text(t("pause.open"));
+
+  // The pool overview shares `canPause`, because it is the same condition under a second name: there is
+  // no pool to look at without a running match, and both buttons open the same overlay the same way.
+  $chrome
+    .children(`[data-action="${CHROME_ACTION.POOL}"]`)
+    .attr("hidden", canPause ? null : "hidden")
+    .attr("aria-label", t("pool.label"))
+    .text(t("pool.open"));
 
   return $chrome;
 }

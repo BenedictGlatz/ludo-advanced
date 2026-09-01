@@ -307,6 +307,30 @@ available cut. **That is no longer what the board says**, see point 1 above.
   and Edge. **The game is playable.** Milestones M2 and M3 are both met.
 - **2026-08-30:** handoff 02 sent, `01-Design/Handoff/02-brief-board-review.md`, with nine numbered
   questions and six screenshots taken from the running build. The round is open.
+- **2026-09-01:** #30 dice pool data model and selection logic (3), **closed as an audit rather than as
+  a build.** The pool itself shipped on 2026-08-30 inside the same day's work; FR-16, FR-17, FR-18,
+  FR-19 and FR-21 were already satisfied and its parent epic #37 was already closed. What this issue
+  actually delivered is the FR-16 to FR-21 traceability table in
+  [notes/01-requirements-and-goals.md](notes/01-requirements-and-goals.md), a dice card pool overview
+  screen so the player can see what they are choosing from, and the FR-20 distribution test that the
+  table's own check found missing. Handoff 05 sent,
+  `01-Design/Handoff/05-brief-dice-pool-overlay.md`, with five numbered decisions D43 to D47. The round
+  is open. **The 3 points are booked in full**, and whether that is honest is the note below.
+- **This Delivered list has a hole between 2026-08-30 and 2026-09-01.** Issues #31, #32, #33, #34, #35,
+  #38, #39 and #41 all landed in that window and none of them has an entry here, although their facts
+  are in the chapter notes and the journal's decision blocks. Not reconstructed by whoever wrote the
+  #30 entry, because a sprint log written from someone else's commits is a guess. It is the same gap the
+  2026-08-30 entry in [project-journal.md](project-journal.md) records for the session log, which makes
+  it a pattern rather than an oversight: **the per-change documentation step is being done in the
+  chapter notes and skipped in the two chronological logs.**
+
+**Note on booking #30's points.** The estimate for #30 reads "`core/dice-pool.js`: the 20-card
+composition as a single data definition, the draw of 3, the return and reshuffle, with the RNG taken as
+an argument", and every word of that was built on 2026-08-30 under a commit that named no issue. So the
+3 points describe work that was delivered on a different day, and the work actually done on 2026-09-01
+was an audit, a screen and a test that the estimate does not mention. Booked in full anyway, because
+the alternative is 3 points that no sprint ever gets, and flagged here because it makes the sprint's
+velocity figure slightly fictional in a way a reader could not otherwise see.
 
 **All 38 of the sprint's must-have points are committed**, over two days, all on the branch
 `feature/sprint2-core-and-design`. **None of it is merged, reviewed or pushed**, so by the project's

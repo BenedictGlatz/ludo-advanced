@@ -1,0 +1,92 @@
+/* =============================================================================
+   pool.css -- the dice card pool overview, issue #30.
+
+   !! THIS FILE WAS NOT WRITTEN BY CLAUDE DESIGN AND IS NOT A DELIVERED SPEC !!
+
+   Fifth file in this state, after prompt.css, hud.css, chrome.css and
+   overlay.css, and the same rule from CLAUDE.md each time: Claude Code does not
+   invent design rules and asks when a specification is missing. The request is
+   out as 01-Design/Handoff/05-brief-dice-pool-overlay.md and this file is what
+   it asks to have replaced.
+
+   Nothing here is invented, and this file is deliberately the least opinionated
+   of the five. It sets no colour at all, and its one size factor is 0.62, which
+   is the skill hand's existing --card-u out of hand.css rather than a new value.
+   Every other length is a token out of tokens.css.
+
+   What is owed by design handoff 05, and is deliberately not guessed at:
+
+   - D43: seven cards at once, at what size and in what arrangement. This lays
+     them out four and three at the skill hand's card size, because that shows
+     all seven denominations without a scroll and reuses a factor that already
+     ships. It is a layout that fits, not a layout that was designed: the
+     bottom row is short and nothing here says whether that reads as deliberate.
+   - D44: how the copy count is shown. It is the third tag on the card, which
+     states the number but not the proportion, and the weighting of the pool is
+     the most useful thing the screen could communicate.
+   - D45: where the face-down sentence sits and how loud it is. It is in the
+     .overlay__text slot, unchanged, because that number barely moves. See
+     section 4.2 of the brief before making it prominent.
+   - D46: a third chrome button. chrome.css is untouched here and the row now
+     carries three buttons where handoff 04's D42 asked about two.
+
+   Recorded in 00-Meta/Documentation/notes/04-frontend-building-blocks.md.
+   ========================================================================== */
+
+/* --- The panel has to be wider than the 28rem every other screen uses, because
+       four cards side by side do not fit in it. 48rem is that arithmetic and
+       nothing else: 4 x 0.62 x 16.25rem of card, three gaps, two paddings. --- */
+
+.overlay[data-screen="pool"] .overlay__panel {
+  width: min(48rem, 100%);
+}
+
+/* --- The card region. Empty on every screen but this one, and `:empty` is what
+       keeps the panel's flex gap from doubling on the other five. --- */
+
+.overlay__cards:empty {
+  display: none;
+}
+
+.overlay__cards {
+  --card-u: 0.62;
+
+  display: grid;
+  grid-template-columns: repeat(4, max-content);
+  gap: var(--space-2);
+  justify-content: center;
+  max-width: 100%;
+}
+
+/* The cards here are not playable, so `card-view.js` writes data-playable="false"
+   on them, and card-state.css washes such a card out with
+   `filter: saturate(0.5)`. On a hand that is correct and it is D29: a card you
+   cannot play right now should recede. On this screen it states something false,
+   because these seven cards are not unavailable, they are the pool.
+
+   So the wash is taken back off. This is a correction rather than a design
+   choice, and it is the one place where this file overrides a delivered spec.
+   The alternative was to describe these cards as playable, which would have been
+   a worse lie: it adds a pointer cursor and a hover lift to a card that does
+   nothing when clicked.
+
+   Nothing else is touched. The card keeps its focus ring, because it is still in
+   the tab order and NFR-08 wants that visible when a keyboard reaches it, and
+   whether a non-interactive card belongs in the tab order at all is a question
+   for the spec rather than for this stylesheet. */
+.overlay__cards .card[data-playable="false"] {
+  filter: none;
+  cursor: default;
+}
+
+/* Two rows of cards is roughly 480px, and under about 800px of viewport height
+   the panel would grow past the sheet. Scrolling inside the panel is the honest
+   fallback: it keeps the button reachable, which matters more than seeing all
+   seven cards at once on a screen this short. Section 2.8 of the brief is about
+   the design resolution of 1440x900, where nothing scrolls. */
+@media (height <= 50rem) {
+  .overlay[data-screen="pool"] .overlay__panel {
+    max-height: 100%;
+    overflow-y: auto;
+  }
+}

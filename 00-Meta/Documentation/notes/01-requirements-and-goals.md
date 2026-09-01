@@ -271,6 +271,45 @@ This section is that record.
   must-have requirement had gone. It was built into the always-present chrome instead, where it does not
   need a settings screen to exist. Chapter 04 has the how.
 
+### FR-16 to FR-21 traced against the shipped code: 2026-09-01, issue #30
+
+Issue #30 closed with an **empty issue body**, and so did its parent #37. There were no acceptance
+criteria in the tracker at all: the criteria are the ones in
+[Requirements-Specification.md](../../Project-Management/Requirements-Specification.md) section 4, and the
+issue title was the only description of the work.
+
+So this table was written before the issue was closed, to check each criterion against a named module and
+a named test rather than against a memory of having built it. **It is the first requirement in this
+project traced this way**, and doing it found a real gap, which is the argument for repeating it (see
+FR-20 below).
+
+| Req | Acceptance criterion, abbreviated | Implemented in | Proved by |
+| --- | --- | --- | --- |
+| FR-16 | Every card drawn is a defined denomination, and each is reachable | `core/dice-pool.js`, `POOL_COMPOSITION` | `dice-distribution.test.js`, 90,000 dealt cards |
+| FR-17 | The composition is one data definition the rules read | same table, frozen | `dice-pool.test.js` (frozen), `pool-screen.test.js` (the screen follows it) |
+| FR-18 | The hand holds 3 cards at every point in a match | `createDicePool().draw(rng)`, `HAND_SIZE` | `dice-pool.test.js`, `dice-hand.spec.js` |
+| FR-19 | Exactly one roll result per turn | `INTENT.CHOOSE_DIE`, `ui/dice-hand-view.js` | `dice-hand.spec.js`, "rolls the card the player picked, and no other" |
+| FR-20 | Each face occurs with frequency consistent with 1/*n* | `rollDie` in `core/dice-source.js` | **`dice-distribution.test.js`, added for this table** |
+| FR-21 | Pool size before and after a turn is identical | `returnHand`, `endTurn` | `dice-pool.test.js`, `dice-pool.spec.js` "keeps saying seventeen of twenty" |
+
+**FR-20 was the gap, and it had been reported as covered.** The existing test proved that every face of
+every die is reachable, which is not what the criterion says. It is written up in full in
+[08-quality.md](08-quality.md). The one-sentence version: a test citing a requirement id had the right
+name and the wrong assertion, and the only thing that would have caught it is reading the criterion and
+the assertion side by side, which is what this table forced.
+
+**Two smaller findings from the same exercise:**
+
+- **FR-19 is mapped to issue #31 in the requirements specification, not to #30**, even though it is the
+  half of the pool that makes the pool a decision. The mapping is right, because #31 built the hand that
+  does the picking, and it is worth noting that the requirement ids and the issue boundaries do not line
+  up one to one. A traceability table has to be per requirement, not per issue.
+- **Nothing in FR-16 to FR-21 asks that the player be able to see the pool.** The overview built for this
+  issue satisfies no requirement of its own: the nearest is FR-35, the rules screen, which is a
+  `should have` with no backlog issue. It was built because the requirements are satisfiable without it
+  and the game is still worse without it, which is a case worth one sentence in the report about what a
+  requirements catalogue does not capture.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

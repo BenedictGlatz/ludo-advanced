@@ -32,7 +32,7 @@
  * **not** reset, so a restart plays a different match rather than replaying the same one.
  */
 
-import { createDicePool } from "../core/dice-pool.js";
+import { POOL_SIZE, createDicePool } from "../core/dice-pool.js";
 import { matchDeps, restartMatch, startMatch } from "../state/match.js";
 import { CHROME_ACTION, renderChrome, updateChrome } from "./chrome-view.js";
 import { bindChromeEvents, bindOverlayEvents } from "./events.js";
@@ -70,6 +70,23 @@ export function createMatchFlow({ $root, rng, players = null, delays = {}, skipH
   let deps = null;
 
   /**
+   * The two numbers the pool overview needs, or `null` when there is no match.
+   *
+   * The face-down count is asked of the dice source at the moment the shell is drawn rather than kept in
+   * a variable, because the pool is the only thing in the game that is not in the frozen state object and
+   * a copy of its count would go stale on the next draw.
+   *
+   * `total` is `POOL_SIZE` because this flow builds a real `createDicePool()` for every match and never a
+   * stand-in source, so the twenty is the truth here rather than an assumption about whatever was
+   * injected.
+   */
+  function poolCounts() {
+    if (deps === null) return null;
+
+    return { remaining: deps.diceSource.remaining(), total: POOL_SIZE };
+  }
+
+  /**
    * Redraw the overlay and the chrome. Called whenever the screen or the language changes.
    *
    * The turn sentence is read off the **loop's** state and not the flow's copy, because the flow only
@@ -79,7 +96,10 @@ export function createMatchFlow({ $root, rng, players = null, delays = {}, skipH
   function drawShell() {
     const live = loop?.getState() ?? null;
 
-    updateOverlay(session.$overlay, screenDescription(screen, { state, seat: handoverSeat }));
+    updateOverlay(
+      session.$overlay,
+      screenDescription(screen, { state, seat: handoverSeat, pool: poolCounts() })
+    );
     updateChrome(session.$chrome, {
       canPause: loop !== null && screen === OVERLAY_SCREEN.NONE,
       turn: live === null ? "" : turnLine(live),
@@ -170,6 +190,8 @@ export function createMatchFlow({ $root, rng, players = null, delays = {}, skipH
     loop?.stop();
     loop = null;
     state = null;
+    // The pool goes with the match, so the overview cannot describe an abandoned one from the menu.
+    deps = null;
 
     mount($root, emptyParts(), session);
     openScreen(OVERLAY_SCREEN.MENU);
@@ -212,6 +234,15 @@ export function createMatchFlow({ $root, rng, players = null, delays = {}, skipH
     if (action === CHROME_ACTION.PAUSE && loop !== null && screen === OVERLAY_SCREEN.NONE) {
       loop.pause();
       openScreen(OVERLAY_SCREEN.PAUSE);
+    }
+
+    // The pool overview pauses too, and that is not politeness. The loop advances the `roll`, `reaction`
+    // and `turn-end` phases on timers of its own, so a player who opened the overview to decide between
+    // three cards would come back to a turn that had moved without them. Closing it is
+    // `OVERLAY_ACTION.RESUME`, handled above, which is why there is no second resume path.
+    if (action === CHROME_ACTION.POOL && loop !== null && screen === OVERLAY_SCREEN.NONE) {
+      loop.pause();
+      openScreen(OVERLAY_SCREEN.POOL);
     }
   }
 

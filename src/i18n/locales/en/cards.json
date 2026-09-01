@@ -26,7 +26,8 @@
         "20": "Twenty sided"
       },
       "range": "Range 1 to {{faces}}",
-      "leave": "Leaves start on {{faces}}"
+      "leave": "Leaves start on {{faces}}",
+      "copies": "{{copies}} in the pool"
     },
     "skill": {
       "action-pot-of-greed": {

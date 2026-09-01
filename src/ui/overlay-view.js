@@ -35,31 +35,17 @@
 
 import $ from "jquery";
 
-/** Which screen the overlay is showing. `none` means the match is on screen and nothing is asked. */
-export const OVERLAY_SCREEN = {
-  NONE: "none",
-  MENU: "menu",
-  SETUP: "setup",
-  PAUSE: "pause",
-  WIN: "win",
-  HANDOVER: "handover",
-};
+import { createCard, updateCard } from "./card-view.js";
+import { OVERLAY_ACTION, OVERLAY_SCREEN } from "./overlay-vocabulary.js";
 
-/** What an overlay button can ask for, as the `data-action` the event handler reads. */
-export const OVERLAY_ACTION = {
-  /** Leave the main menu for the match setup. */
-  START: "start",
-  /** A player count, 2, 3 or 4. Carries `data-count` as well. */
-  PLAYERS: "players",
-  /** Close the pause screen and carry on. */
-  RESUME: "resume",
-  /** A fresh match with the same players (FR-06). */
-  RESTART: "restart",
-  /** Give up and go back to the main menu (FR-07). */
-  QUIT: "quit",
-  /** The handover is acknowledged and the next player's turn may begin. */
-  READY: "ready",
-};
+/**
+ * Re-exported so that every file which already imported the two tables from here keeps working.
+ *
+ * They live in `overlay-vocabulary.js` since issue #30, because this file imports jQuery and jQuery
+ * throws without a `document`, which made the pure screen-description files impossible to unit test.
+ * That module's header carries the reasoning.
+ */
+export { OVERLAY_ACTION, OVERLAY_SCREEN };
 
 /**
  * The overlay, closed and empty.
@@ -77,9 +63,29 @@ export function renderOverlay() {
       $("<div>", { class: "overlay__panel" }).append(
         $("<h2>", { class: "overlay__title" }),
         $("<p>", { class: "overlay__text" }),
+        $("<div>", { class: "overlay__cards" }),
         $("<div>", { class: "overlay__actions" })
       )
     );
+}
+
+/**
+ * Fill or empty the card region.
+ *
+ * Rebuilt rather than rewritten, which is the opposite of what the hands do and is right here for two
+ * reasons. Only one screen has cards at all, so there is nothing to keep in step between screens, and
+ * nothing on this region animates on arrival: the hands rewrite in place because a dealt card has to
+ * animate from its old identity, and a screen that was not on the page a moment ago has no old identity.
+ *
+ * `data-count` is written even when it is zero, so the CSS can lay out by how many cards there are the
+ * way `.hand` already does, and a composition change from seven denominations to eight needs no new rule.
+ */
+function setCards($overlay, cards) {
+  const $cards = $overlay.find(".overlay__cards").attr("data-count", String(cards.length)).empty();
+
+  for (const card of cards) {
+    $cards.append(updateCard(createCard(), card));
+  }
 }
 
 /** One button, from `{ action, label, variant, count }`. */
@@ -105,6 +111,7 @@ function overlayButton(button) {
  * { screen,          // one of OVERLAY_SCREEN
  *   title, text,     // already translated: this file calls no t()
  *   player,          // the seat the panel is about, or null
+ *   cards: [],       // dice or skill card descriptions, only the pool overview has any
  *   buttons: [{ action, label, variant, count }] }
  * ```
  *
@@ -128,6 +135,8 @@ export function updateOverlay($overlay, description) {
 
   $overlay.find(".overlay__title").text(description.title ?? "");
   $overlay.find(".overlay__text").text(description.text ?? "");
+
+  setCards($overlay, description.cards ?? []);
 
   $overlay
     .find(".overlay__actions")

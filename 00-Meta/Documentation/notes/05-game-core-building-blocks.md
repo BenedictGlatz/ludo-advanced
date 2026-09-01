@@ -846,6 +846,41 @@ content of FR-36 and therefore of the HUD.
   question `seatsIn` answers. The practical consequence is that it sits inside the coverage figure,
   where `ui/` does not.
 
+### `remaining()` became part of the dice-source interface: 2026-09-01, issue #30
+
+The interface `core/dice-source.js` documents gained a fourth method. It is now
+`{ handSize, draw(rng), returnHand(hand), remaining() }`, and `fixedDieSource` answers `remaining()` with
+1.
+
+- **It already existed on `createDicePool` and had done since 2026-08-30.** What changed is that it is
+  now a property of the *interface* rather than of one implementation. Before this, a caller that wanted
+  the count had to write `typeof source.remaining === "function"` first, and that guard would have been
+  the only place in `ui/` that had to know which dice source it had been handed.
+- **The stand-in returns 1 and that is not a placeholder.** `fixedDieSource` holds exactly one card and
+  never runs out, so one is the honest answer for it. An implementation that omitted the method would
+  push the guard back out to every caller, which is the thing being removed.
+- **Rejected: reading `POOL_SIZE` and subtracting the hand size in `ui/`.** It computes the right number
+  today and it is a rule about the pool living in the view. It would also be silently wrong the first
+  time anything holds a dice card across a turn boundary.
+- **The comment on `remaining()` was wrong and was corrected.** It said "for tests and for the HUD in
+  issue #35". The HUD dropped pool and discard counters on 2026-09-01, so the sentence pointed at a
+  caller that had been decided against. It names the pool overview now.
+
+#### Negative finding: the FR-20 test proved reachability and was read as proving uniformity
+
+FR-20's acceptance criterion is "over a large sample each face occurs with frequency consistent with
+1/*n*". What `dice-source.test.js` asserted was `seen.size === faces` over four thousand rolls: every
+face turns up at least once. **A die that returned the 1 in ninety per cent of rolls and spread the
+remaining ten per cent over the other faces would have passed it.**
+
+The same shape of gap was in the pool test for FR-16, "each defined denomination is reachable" over a
+long run: it checked the composition *table* rather than what `draw` actually deals.
+
+Both are closed by `tests/unit/core/dice-distribution.test.js`, and how the tolerance was chosen is in
+[08-quality.md](08-quality.md). The finding worth carrying into the report is not the missing test, it
+is that **the test's name was accurate and its assertion was not.** It was called `rollDie (FR-20)` and
+it sat next to the requirement id for two days, which is exactly the state in which nobody re-reads it.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

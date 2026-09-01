@@ -60,6 +60,7 @@ import "./ui/styles/prompt.css";
 import "./ui/styles/hud.css";
 import "./ui/styles/chrome.css";
 import "./ui/styles/overlay.css";
+import "./ui/styles/pool.css";
 
 /**
  * How long a Playwright run waits, in milliseconds, when `?fast=1` is set.
