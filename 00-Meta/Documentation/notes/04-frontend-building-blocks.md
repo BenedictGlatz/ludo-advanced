@@ -1048,6 +1048,316 @@ game's named waits live and was the only thing left in the loop that was a durat
 `match-flow.js` then hit the same limit and `page.js` came out of it on the same principle: what the page
 consists of, against which screen the session is on.
 
+### The pool the player is choosing from became visible: 2026-09-01, issue #30
+
+The overlay got a sixth screen, `data-screen="pool"`: seven cards, one per denomination, each with how
+many copies the pool holds, plus one sentence saying how many of the twenty are face down.
+
+**The gap it closes is a rules gap and not a cosmetic one.** Every turn deals three dice cards and keeps
+one (FR-18, FR-19), and that is only a decision because of what the pool holds: a D2 leaves the start
+area half the time and a D20 one time in twenty (FR-09). Until this screen there was no way to see the
+twenty cards behind the three. A player who had not read section 5.1 of the game design document was
+choosing without the information the choice is made of.
+
+| What | Where |
+| --- | --- |
+| The screen's content | `ui/pool-screen.js`, new, pure, unit tested |
+| The card region on the overlay | `ui/overlay-view.js`, `.overlay__cards` with `data-count` |
+| The dice card description, shared | `ui/dice-card.js`, new, extracted out of `dice-hand-view.js` |
+| The two enums, jQuery-free | `ui/overlay-vocabulary.js`, new |
+| The entry point | `ui/chrome-view.js`, a third always-present button |
+| Interim CSS | `ui/styles/pool.css`, new, tokens only |
+| The design request | `01-Design/Handoff/05-brief-dice-pool-overlay.md`, D43 to D47 |
+
+- **A screen the player opens, and not counters in the HUD.** Pool and discard counters were considered
+  for the HUD row on 2026-09-01 and dropped, so that sixteen numbers on screen do not become
+  twenty-four. That decision closed the route of a number that is permanently there. It did not close
+  this one: a screen costs no space until it is asked for, and it can show the seven cards rather than a
+  number about them.
+- **Rejected: the prose rules screen, S10 (FR-35).** It is a `should have` with no backlog issue and it
+  would explain dice cards, skill cards and the leaving-start rule in words. Showing a composition table
+  is both cheaper than describing it and clearer. If S10 is ever built, this is the part of it that
+  already exists.
+- **It is in the chrome row and not on the hand plate**, which is the nearer place for it, because the
+  chrome is where a control reachable at any point in a turn already lives and the overview has to be
+  reachable in the `choose` phase or it does not help the decision it exists for. Whether the hand should
+  carry a second entry point is D47 of handoff 05, and the flow needs only the extra element.
+- **Opening it pauses the match loop, exactly as the pause screen does.** The loop advances the `roll`,
+  `reaction` and `turn-end` phases on timers of its own, so a player who opened the overview to think
+  about three cards would otherwise come back to a turn that had moved without them. There is an
+  end-to-end test for this and it is the same 600 ms check `match-flow.spec.js` gives the pause screen.
+- **The close button reuses `OVERLAY_ACTION.RESUME` rather than a verb of its own.** `match-flow.js`
+  already answers RESUME with "close the overlay and resume the loop", which is what closing this screen
+  means. Rejected: a `CLOSE_POOL` action, which would have been a second name for one behaviour and two
+  places to keep in step.
+- **`quitToMenu` now clears `deps` as well as `state`.** Without it the overview could describe an
+  abandoned match's pool from the main menu. It is one line and it was found by writing the test that
+  the button is hidden there.
+- **The seven cards come from `POOL_COMPOSITION`**, so FR-17 keeps its promise that the composition is
+  one data definition. A screen with seven denominations typed into it would be a second definition, and
+  it would go stale silently the first time the pool was reweighted. Both the unit test and the
+  end-to-end spec import that table rather than restating it.
+
+#### Two extractions, and the second one uncovered a testability defect
+
+`diceCard(faces)` was private in `dice-hand-view.js`. It is now `diceCardDescription(faces, { tags })` in
+its own `ui/dice-card.js`, because the overview needs the same card plus a copy-count tag. **Rejected:
+exporting it from the hand view.** The overview is not part of the hand and has no business importing
+from it; they render the same component for two unrelated reasons. Same seam as `player-labels.js`, which
+the HUD, the overlay and the board all use without importing each other.
+
+The second extraction is the one worth the report. `OVERLAY_SCREEN` and `OVERLAY_ACTION` moved out of
+`overlay-view.js` into `ui/overlay-vocabulary.js`, and the reason is a **defect that had been invisible
+since the overlay was written**:
+
+- `overlay-view.js` imports jQuery, and jQuery throws on import when there is no `document`.
+- `vitest.config.js` runs unit tests with `environment: "node"` **deliberately**, so that a module in
+  `core/` or `state/` reaching for the DOM fails the run (NFR-01).
+- So **anything importing `overlay-view.js` could not be unit tested at all**, including
+  `overlay-screens.js`, which is pure and does nothing but describe screens.
+
+Nobody noticed, because `overlay-screens.js` had no unit test to fail. It was covered through Playwright
+like the rest of `ui/`, which is the right default, and it hid the fact that a pure function had been made
+untestable by an import it did not need. `pool-screen.js` made it visible on the first try: the test file
+failed with "jQuery requires a window with a document" before a single assertion ran.
+
+**Rejected: giving these tests a DOM environment.** The `node` environment is a real guard and trading it
+for one corner's convenience would weaken NFR-01 to make a test easier to write. `overlay-view.js`
+re-exports both tables, so nothing that already imported them from there had to change.
+
+**The general form, and it is the second time this pattern has been recorded:** an untestable pure
+function is a sign of an import that is not needed, not a reason to weaken the test environment. The
+first time was `data-die` on 2026-08-30.
+
+#### Negative finding: the fifth stylesheet in a row that Claude Code should not have written
+
+`pool.css` composes only existing tokens, sets no colour at all, and its one size factor is `0.62`, the
+skill hand's existing `--card-u` out of `hand.css` rather than a new value. Its header says all of that
+and names D43 to D46 as what is owed.
+
+**That makes five: `prompt.css`, `hud.css`, `chrome.css`, `overlay.css`, `pool.css`.** Each one was
+written the same way and for the same reason, that the feature had to ship before the sprint ended, and
+each one is recorded rather than hidden. It is no longer an incident and it should be named in the
+retrospective as a process finding: **the handoff loop is slower than the implementation loop, and the
+project has never once scheduled the design request before the code that needs it.** Handoff 05 was
+written before a line of this issue's `ui/` code, which is the first time that order has held, and it
+still did not help, because the spec cannot arrive in the same session.
+
+**One thing in `pool.css` is a correction to a delivered spec rather than a placeholder**, and it is
+flagged in the file. `card-view.js` writes `data-playable="false"` on a card nobody can play, and
+`card-state.css` washes such a card out with `filter: saturate(0.5)`. On a hand that is correct and it is
+D29: a card you cannot play right now should recede. On the overview it states something false, because
+those seven cards are not unavailable, they are the pool. So the wash is taken back off. **Rejected:
+describing the overview's cards as playable**, which would have been the worse lie: it adds a pointer
+cursor and a hover lift to a card that does nothing when clicked.
+
+### Three briefs open at once needed an index, and writing it found a dropped file: 2026-09-01
+
+`01-Design/Handoff/00-open-requests.md`. Not a brief and not a spec, so it breaks the numbered-pair
+convention deliberately and says so in its own first section. It is a cover sheet: which requests are out,
+which files each owes, in what order they are best answered, and every open decision from D16 to D47 in one
+table with a column for whether it blocks a requirement.
+
+**Why it was needed.** Three requests are outstanding at the same time, two of them sent on the same day,
+and the handoff loop as [01-Design/README.md](../../../01-Design/README.md) describes it has no place to
+record that. A brief with no spec looks identical in a directory listing to a brief whose spec has landed.
+
+**What it found, and this is the point of the exercise.** `src/ui/styles/chrome.css` declares itself a
+placeholder and names D42 of handoff 04 as what is owed. **Brief 04's deliverables table does not list
+it.** Brief 05 lists it only conditionally, "only if D46 restructures the row". So a spec answering D42 in
+prose while leaving the placeholder stylesheet in place would have passed all five landing checks and
+looked complete, and nobody would have noticed until somebody read the file's own header again. It is
+requested explicitly in the work order now, and the file's header points at that request.
+
+**Two smaller things fell out of the same read:**
+
+- **Handoff 02 never received a spec at all**, and that had not been recorded as a state anywhere except in
+  passing inside brief 04 § 5.1. Eight decisions have no answer: D16, D17, D20, D21, D22, D23, D24, and
+  D18 which was re-asked as D40. **D16 is NFR-12**, telling four seats apart without colour, and it is the
+  only open design question in this project that blocks a requirement at all. (It was recorded here as a
+  `must have`, which is wrong: NFR-12 is `should have`. Corrected in 01-requirements-and-goals.md.)
+- **`chrome.css`'s header was stale**, and it was stale because of the previous commit rather than
+  someone else's: it still described "the two controls" after issue #30 added a third button to the row.
+  Corrected. Worth one line in the report, because the header of a placeholder file is the only place its
+  design debt is written down, so a stale one is worse than a stale comment elsewhere.
+
+**The count was five placeholder stylesheets** when the work order was written, in the order they appeared:
+`prompt.css` 183 lines, `hud.css` 167, `overlay.css` 185, `chrome.css` 88, `pool.css` 92. Every one composed
+existing tokens only and said so at the top. The pattern behind them is written up under issue #30 above:
+the handoff loop is slower than the implementation loop, and the design request has been scheduled before
+the code that needs it exactly once.
+
+**Four of the five were replaced the same evening**, once the work order went out. That is the fact worth
+keeping about the work order: the omission it found, `chrome.css`, came back as a 153-line delivered
+stylesheet rather than as a paragraph of prose, which is what would have happened without it.
+
+### Design handoff 04 landed, and four of the five placeholders are gone: 2026-09-01
+
+**What arrived.** One spec, `04-spec-hud-menus-and-handover.md`, 437 lines, answering D35 to D42 plus D16,
+D20 and four unnumbered items owed since spec 03 § 5. With it: five replacement stylesheets, five amended
+ones, and a rendered mockup that is not production code.
+
+| File | Before | After | What it is |
+| --- | --- | --- | --- |
+| `prompt.css` | 183 | 244 | Replaced. The strip moved into the rail, and it gained the countdown ring |
+| `overlay.css` | 185 | 228 | Replaced. Two sheet modes, veil and curtain |
+| `handover.css` | did not exist | 89 | New. A split of `overlay.css`, not a sixth component |
+| `hud.css` | 167 | 173 | Replaced |
+| `chrome.css` | 99 | 153 | Replaced. **The file no brief asked for**, see the work order above |
+| `tokens.css` | 223 | 230 | Amended. 17 tokens added, one reverted, none removed or renamed |
+| `app.css` | 131 | 113 | Amended. Two rows fewer, and it got *shorter* |
+| `hand.css` | 143 | 153 | Amended. Two factors reverted, plus the empty slot |
+| `refusal.css` | 38 | 49 | Amended. Off the grid and onto the board |
+| `pawn.css` | 167 | 166 | Amended. The pawn dim removed |
+
+**`pool.css` is the one placeholder left**, and the count went five to one. It belongs to handoff 05, whose
+brief was sent on the same day and has had no spec back.
+
+#### The answer to D35 is the one worth a paragraph, because it inverted the trade
+
+Issue #39 had shrunk the board by nine per cent and both hand cards by nine per cent to buy the HUD and the
+chrome a grid row each. `tokens.css` and `hand.css` both carried a comment saying the change was forced by a
+measurement rather than chosen, and both asked D35 to confirm or overrule it. **D35 overruled it, and the
+reason is that the wrong thing had been cut.**
+
+The two new rows had to cost something. What issue #39 spent was the board and the cards, which is the part
+of the screen the game happens in. What D35 spent instead was the **foot of the page**, which held 148 px
+for two strips that are usually saying nothing:
+
+- the **refusal strip** hangs off the bottom edge of `.app__board` now, absolutely positioned. A refused
+  move is a fact about a pawn, so the message sits over the pieces it is about. It costs no grid row and it
+  still cannot make the page jump, which is what D9 gave it a permanent row for.
+- the **prompt strip** became the third plate in the rail, under the skill hand. It asks about cards, and it
+  had been asking from the far side of the page. At `data-mode="none"` it is `display: none`, so the rail
+  gives the height back to the board column.
+
+Measured in the mockup at 1440 by 900, worst case with the prompt up: **882 px of 900**. With no prompt up,
+811. So both reverted values went back: `--board-size` to 44vw, the two `--card-u` factors to 0.76 and 0.68.
+
+**The carry-forward fact is that the rail, not the board, now sets the height of the board row, with 18 px
+of headroom.** The next region added to the rail is the first one that costs the board its size. That is a
+sentence worth having in the report, because it is a constraint nobody would find by reading the CSS.
+
+#### The one ordering requirement, and it was a real leak
+
+D39's answer to the handover is that the sheet is opaque in the frame it first exists, in both motion
+preferences, and that **only the panel is animated**. An animated curtain is a curtain that is briefly open,
+and at a shared screen the next player sits close enough to read five cards in 200 ms.
+
+The spec's § 5 states one ordering requirement: `data-open="true"` has to be written **before** the rail is
+re-rendered for the arriving seat, because no CSS can cover a frame that has already been painted. Checking
+it found the mirror-image defect on the way out:
+
+```js
+// Before
+if (action === OVERLAY_ACTION.READY) {
+  openScreen(OVERLAY_SCREEN.NONE);   // curtain down
+  loop.passTurn();                   // rail rewritten for the new seat
+}
+```
+
+`passTurn` is what re-renders the rail, so the curtain came down over the **leaving** player's five skill
+cards and then flipped. One painted frame of exactly what D33's secrecy rule and the whole handover screen
+exist to prevent. The two lines are swapped now, guarded so that a `passTurn` which ends the match does not
+have its win screen replaced by an empty one.
+
+**It is tested rather than asserted**, and the test is worth describing because a single frame is not
+something a Playwright assertion can look at. `tests/e2e/handover.spec.js` installs two MutationObservers
+that push to one array, and the array is the evidence: `data-seat` on the rail has to appear before
+`data-open="false"` on the overlay. Both writes happen in one synchronous handler, so the order in the log
+is the order in the code and nothing about the test depends on timing.
+
+#### D40 took the win message off the refusal strip, which closes a defect this chapter recorded
+
+The strip is `--color-warn` orange and `--color-warn` means the game has refused something. Announcing a win
+in it was recorded here under issue #39 as a known defect, together with the fact that one message was being
+said in two places. D40's answer: **the overlay says it and the strip says nothing.** `move-hints.js` lost
+both status branches, and `winScreen` gained `outcome`.
+
+`data-message-kind` stays even though the strip now has exactly one kind left, because it is the seam the
+region is told apart by and removing it would change two end-to-end specs for no gain. Recorded as a
+deliberately dead attribute rather than left to look like an oversight.
+
+#### Three attributes were asked for by name rather than styled around
+
+Brief 04 § 2 asks the designer to name any element the DOM contract does not promise instead of styling
+around its absence, and the spec did exactly that three times. All three are one line of jQuery each:
+
+| Attribute | On | Why CSS could not do it |
+| --- | --- | --- |
+| `data-player` | `.app__chrome` | D36 puts the seat's colour and its D16 shape on the turn sentence, and there was nothing to key them off |
+| `data-outcome="won\|abandoned"` | `.overlay` | A win and an abandoned match both arrive at `data-screen="win"`; nothing in the markup told them apart |
+| `data-paused="true"` | `.app` | The reaction countdown is a CSS animation and an animation cannot pause itself. FR-07 puts pause inside the reaction window |
+
+**`data-player` failed its own test on the first run, and the reason is a fact about `ui/`.** Two files write
+the chrome: `match-flow.js`'s `drawShell` on a screen change, and `render.js` on every render. `drawShell`
+was passing the seat and `render.js` was not, so a running match cleared the attribute a few times per turn.
+It is the same shape as `canPause`, which `render.js` also leaves at its default. Two writers of one element
+with different argument sets is a seam worth naming in chapter 12: whatever either of them omits, the other
+one erases.
+
+#### D16 is answered and is the only item that moved a `must have`, and it is still not closed
+
+A shape per seat, as a clip path rather than a glyph: no font dependency, nothing readable, nothing a
+translator is handed. Circle, triangle, square, diamond, as `--seat-shape-0` to `--seat-shape-3`. Applied to
+the HUD seat plate, the chrome turn sentence, the win panel and the handover panel.
+
+**`greyscale.spec.js` is still marked expected-to-fail, and honestly so.** NFR-12 is measured on the pawn,
+and the mark cannot go on the piece without `.pawn__mark`, an empty `<span>` inside `.pawn`, which the
+contract does not promise. The spec names it and estimates fifteen lines of `pawn.css` after that. **Those
+fifteen lines were not delivered**, so the follow-up is owed and the requirement is still unmet.
+
+Removing the pawn dim under D36 helps the measurement without settling it. That is worth its own note: the
+dim was one of four cues for "whose turn is it", and it was the only one that touched all sixteen pieces, so
+it was spending contrast on every pawn that was not the active seat's, which is the exact budget NFR-12 has
+none of.
+
+#### D20 moved a duration out of JavaScript and into the design
+
+`REFUSAL_MIN_MS = 4000` in `timers.js` was the only duration in the game that was not in `tokens.css`, and
+its own comment said so and asked for it to be raised in the next handoff. It is `--motion-refusal-hold: 4s`
+now, and `game-loop.js` reads it with the `motionMs` helper that already reads `--motion-capture`. The
+constant survives as the fallback for a harness with no stylesheet loaded.
+
+This is the smallest answer in the spec and the clearest example of what the round trip is for: one line of
+CSS, and a number stopped living in two layers at once.
+
+#### What landing the delivery cost, and one thing it nearly cost silently
+
+**The delivered `board.css`, `card.css` and `card-state.css` were not copied in, and copying them would have
+been a silent regression.** The README lists all three as "unchanged, included so the mockup runs". Two of
+them differ from the repo only in Prettier formatting. `board.css` does not: the delivery ships a 269-line
+pre-split copy, and the repo's version was split into `board.css`, `board-track.css` and `board-regions.css`
+for NFR-02. Copying the folder wholesale would have reverted that split and left two orphaned files.
+
+**The check that caught it was diffing every delivered file against the repo before copying any of them**,
+including the ones declared unchanged. That is the fact worth carrying: a delivery is a snapshot of a working
+tree at some moment, and "unchanged" means unchanged since the designer took the snapshot, not unchanged
+against the branch it is being applied to.
+
+Everything else landed as delivered. Every file was under 300 lines after `npm run format`, which is the
+first time a handoff has managed that without a split: the spec says every file is written one declaration
+and one selector per line, which is the shape Prettier produces. `board.css` went 248 to 407 two handoffs
+ago for the opposite reason.
+
+**One thing did get split, in the tests.** `match-flow.spec.js` reached 331 lines and went over NFR-02, so
+the handover moved into `tests/e2e/handover.spec.js`. The seam is the one the spec itself used to split
+`handover.css` out of `overlay.css`: the four other screens ask the player something and wait, and the
+handover is the one with a secrecy rule behind it.
+
+#### A negative finding: the abandoned win screen cannot be reached from the interface
+
+D40 draws two screens, a win and an abandoned match, and `overlay.css` styles both. `abandonMatch` in
+`state/match.js` sets `MATCH_STATUS.ABANDONED` and **nothing in `ui/` calls it**: the Quit button on the
+pause screen goes straight back to the menu. So `data-outcome="abandoned"`, the muted title and the
+`match.abandoned` string in both locale files are all live, tested at the unit level in
+`tests/unit/ui/overlay-screens.test.js`, and unreachable by a player.
+
+It is not a defect introduced here, and it is not one this commit should fix: what "giving a match up" is
+supposed to be, a return to the menu or a recorded outcome, is a rule question and not a styling one. It is
+recorded because a styled, translated, tested screen that no player can reach is exactly the kind of thing
+that reads as finished in a report.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -1068,10 +1378,10 @@ consists of, against which screen the session is on.
     cards stay secret, the **count is public** and sits in the HUD. It turned out not to be only a
     presentation question, which is the interesting part: it is what forced the handover screen, because
     secrecy at one shared screen is whatever covers the screen while it changes hands.
-  - **NFR-12, telling the four seats apart without colour, is still open from handoff 02.** Spec 03
-    suggests a shape for the answer without closing it: the Reaction band is marked by stripes as well
-    as by orange, and four seats could take four fills that survive greyscale. That is a change to
-    `pawn.css`.
+  - **NFR-12, telling the four seats apart without colour**, was still open from handoff 02 and is now
+    **half answered**. Spec 04 gives four seat shapes as clip paths and puts them on the HUD, the chrome
+    and two overlay panels. It does **not** put one on the pawn, which is where the requirement is
+    measured, so this stays on the open list above.
   - **Whether a skill square moving should be animated.** Nobody has asked, and the reappearance would
     happen on a field the player is not looking at.
   - **Baloo 2 and Nunito are still loaded from Google Fonts**, unchanged from spec 01 section 5.
@@ -1082,25 +1392,40 @@ consists of, against which screen the session is on.
     does not. That is D41 in handoff 04.
   - **The size limit has to be checked after Prettier, and the brief does not say so.** Two handoffs
     in a row delivered a stylesheet that fitted 300 lines and did not after formatting.
-- **Open out of issue #39, and design handoff 04 is where all of it goes:**
-  - **Four stylesheets were written by Claude Code and none of them should have been**: `prompt.css`,
-    `hud.css`, `chrome.css` and `overlay.css`. All four compose only existing tokens and say so in their
-    first thirty lines. They are listed in handoff 04 as deliverables to be **replaced**, and until the
-    spec lands the game looks provisional by design rather than by accident.
-  - **Two delivered tokens were changed to make room for the HUD**, `--board-size` and the two hand
-    `--card-u` factors, each about nine per cent. D35 confirms or overrules it, and the arithmetic is in
-    the brief.
-  - **What an empty hand slot looks like.** The skill hand builds five permanent slots, so a hand of one
-    card renders four blank cards with a pale art window. D29 answered *unplayable* and `card-state.css`
-    answers *face down*; neither is *no card at all*.
-  - **The overlay does not animate.** It goes from `display: none` to `display: grid` in one frame, so
-    the opacity transition cannot run. It matters most for the handover, where a screen that flashes
-    conceals nothing, and it is D39.
-  - **The win message is now in two places**, the overlay and the orange refusal strip. That is D40,
-    which is D18 from handoff 02 finally unblocked.
+- **Opened by issue #39, and closed by design handoff 04 on 2026-09-01:**
+  - ~~**Four stylesheets were written by Claude Code and none of them should have been**: `prompt.css`,
+    `hud.css`, `chrome.css` and `overlay.css`.~~ **All four replaced.** `pool.css` is the one left and it
+    belongs to handoff 05.
+  - ~~**Two delivered tokens were changed to make room for the HUD**, `--board-size` and the two hand
+    `--card-u` factors, each about nine per cent.~~ **Both reverted by D35**, which paid for the two rows
+    out of the foot of the page instead. See the handoff 04 section above for the arithmetic.
+  - ~~**What an empty hand slot looks like.**~~ **Answered:** neither unplayable nor face down, because
+    both are things a card can be and there is no card. It is the outline of where one would go, in dashed
+    ink at 32 %, keeping the fan's geometry so a hand of one does not re-flow. Selected on
+    `:not([data-card-id])`, so it needed no new attribute; it did need `tabindex="-1"` in `card-view.js`,
+    because CSS cannot take an element out of the tab order (NFR-08).
+  - ~~**The overlay does not animate.**~~ **Answered by D38** with `transition-behavior: allow-discrete`
+    and `@starting-style`, which is what makes a transition possible across `display: none`. The handover
+    deliberately does **not** animate its sheet, and that is D39.
+  - ~~**The win message is now in two places**, the overlay and the orange refusal strip.~~ **Closed by
+    D40:** the overlay says it, the strip says nothing.
   - **The rules screen, S10, still has no issue at all** (FR-35, `should have`), and neither does the
     mute half of S11 now that audio is deferred. Neither is in issue #39 and neither is forgotten: both
     are named here so the board's silence about them is on the record.
+- **Open after handoff 04, and this is the whole list:**
+  - **`pool.css` is the last placeholder stylesheet**, 92 lines. Handoff 05's brief has been out since
+    2026-09-01 with no spec back. D43, D44, D45 and D47 are open; D46 was answered inside D42.
+  - **`.pawn__mark` and about fifteen lines of `pawn.css` are the follow-up that closes D16**, and they
+    were not delivered. Until they are, NFR-12 is visibly unmet and `greyscale.spec.js` stays marked
+    expected-to-fail. It is the only design item in the project that blocks a requirement rather than a
+    preference. **NFR-12 is `should have`**, not `must have`: that error is corrected in
+    [01-requirements-and-goals.md](01-requirements-and-goals.md) and it had spread to five files.
+  - **Handoff 02 still has no spec of its own.** D17, D21, D22, D23 and D24 are unanswered anywhere.
+    Spec 04 answered D16 and D20 in passing and said so.
+  - **`prompt.css` is 244 lines**, 56 from the NFR-02 limit, and it is the file to watch. Spec 04 § 1
+    names the seam to cut if it goes over: the `.board[data-picking]` block at the end, which is board CSS
+    living in a prompt file.
+  - **The abandoned win screen is unreachable from the interface.** See the negative finding above.
 - A card's visual presentation belongs here and its rule belongs in Chapter 05; the two are matched
   by card id. Worth stating explicitly in the report, because it is the clearest example of the
   layering rule doing real work.

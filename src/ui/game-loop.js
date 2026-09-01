@@ -39,8 +39,9 @@
  * ## The pauses and the countdown are the design's numbers, not this file's
  *
  * The pause after a move is read out of `--motion-capture` in `tokens.css`, so the turn changes when the
- * pawn has actually arrived. The pause after a refused turn is D9's four seconds. The reaction window is
- * the Product Owner's thirty. All three are overridable, which is what lets a Playwright run take seconds
+ * pawn has actually arrived. The pause after a refused turn is D9's four seconds, and since design spec
+ * 04 answered D20 that is `--motion-refusal-hold` and is read the same way. The reaction window is the
+ * Product Owner's thirty. All three are overridable, which is what lets a Playwright run take seconds
  * instead of minutes; the shape of the turn is identical either way and only the waiting is shorter.
  */
 
@@ -125,10 +126,15 @@ export function createGameLoop({
     isPicking: () => cards.isPicking(),
   });
 
-  /** How long to leave the finished turn on screen before passing it on. */
+  /**
+   * How long to leave the finished turn on screen before passing it on.
+   *
+   * Both durations are read out of `tokens.css` since design spec 04 answered D20 and gave the refusal
+   * hold a token of its own. `REFUSAL_MIN_MS` is the fallback for a harness with no stylesheet loaded.
+   */
   function pauseAfterTurn() {
     if (state.refusalReason !== null) {
-      return delays.afterRefusal ?? REFUSAL_MIN_MS;
+      return delays.afterRefusal ?? motionMs($board, "--motion-refusal-hold", REFUSAL_MIN_MS);
     }
 
     return delays.afterMove ?? motionMs($board, "--motion-capture", 320);

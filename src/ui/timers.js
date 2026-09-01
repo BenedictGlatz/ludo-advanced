@@ -29,8 +29,14 @@
  *
  * D9 of the design spec: the strip "stays until the player's next action, and at minimum for 4 seconds".
  * With the pawn click as the only control there was no next action to wait for, so the minimum was the
- * whole rule. It is a number in a JavaScript file because `tokens.css` has no token for it, which is
- * worth raising in the next handoff: it is a design decision living outside the design.
+ * whole rule.
+ *
+ * **This is the fallback now and not the number.** It used to be the only place the four seconds existed,
+ * which the previous version of this comment flagged as a design decision living outside the design.
+ * D20 of design spec 04 answered it: the duration is `--motion-refusal-hold` in `tokens.css`, and
+ * `game-loop.js` reads it off the board with `motionMs` the same way it already reads `--motion-capture`.
+ * What is left here is what to use when no stylesheet has loaded, which happens in a test harness rather
+ * than in a browser.
  *
  * It lives here rather than in `game-loop.js` since issue #39, because this module is where the game's
  * named waits belong and it was the only thing left in the loop that was a duration rather than a step.

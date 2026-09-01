@@ -44,7 +44,11 @@ export function createRenderer({
     updateBoard($board, state);
     applyMoveHints($board, state);
     updateHud($hud, state);
-    updateChrome($chrome, { turn: turnLine(state) });
+    // `player` as well as the sentence, since design spec 04's D36 puts the seat's colour and its D16
+    // shape on that sentence. **Both this and `match-flow.js`'s `drawShell` write this one element**, so
+    // anything either of them leaves out is cleared by the other: a match is running whenever this
+    // renderer runs, so the seat is always the active one here, and `canPause` is left at its default.
+    updateChrome($chrome, { turn: turnLine(state), player: state.activePlayer });
     updateDiceHand($diceHand, state);
     updateSkillHand($skillHand, state, selectedSlot);
     updatePrompt($prompt, state, { secondsLeft, pick });

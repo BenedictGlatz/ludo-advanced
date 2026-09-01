@@ -26,7 +26,8 @@
         "20": "Zwanzigseitig"
       },
       "range": "Reichweite 1 bis {{faces}}",
-      "leave": "Start frei bei {{faces}}"
+      "leave": "Start frei bei {{faces}}",
+      "copies": "{{copies}} mal im Pool"
     },
     "skill": {
       "action-pot-of-greed": {

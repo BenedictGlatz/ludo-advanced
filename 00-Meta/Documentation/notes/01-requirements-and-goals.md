@@ -271,6 +271,113 @@ This section is that record.
   must-have requirement had gone. It was built into the always-present chrome instead, where it does not
   need a settings screen to exist. Chapter 04 has the how.
 
+### FR-16 to FR-21 traced against the shipped code: 2026-09-01, issue #30
+
+Issue #30 closed with an **empty issue body**, and so did its parent #37. There were no acceptance
+criteria in the tracker at all: the criteria are the ones in
+[Requirements-Specification.md](../../Project-Management/Requirements-Specification.md) section 4, and the
+issue title was the only description of the work.
+
+So this table was written before the issue was closed, to check each criterion against a named module and
+a named test rather than against a memory of having built it. **It is the first requirement in this
+project traced this way**, and doing it found a real gap, which is the argument for repeating it (see
+FR-20 below).
+
+| Req | Acceptance criterion, abbreviated | Implemented in | Proved by |
+| --- | --- | --- | --- |
+| FR-16 | Every card drawn is a defined denomination, and each is reachable | `core/dice-pool.js`, `POOL_COMPOSITION` | `dice-distribution.test.js`, 90,000 dealt cards |
+| FR-17 | The composition is one data definition the rules read | same table, frozen | `dice-pool.test.js` (frozen), `pool-screen.test.js` (the screen follows it) |
+| FR-18 | The hand holds 3 cards at every point in a match | `createDicePool().draw(rng)`, `HAND_SIZE` | `dice-pool.test.js`, `dice-hand.spec.js` |
+| FR-19 | Exactly one roll result per turn | `INTENT.CHOOSE_DIE`, `ui/dice-hand-view.js` | `dice-hand.spec.js`, "rolls the card the player picked, and no other" |
+| FR-20 | Each face occurs with frequency consistent with 1/*n* | `rollDie` in `core/dice-source.js` | **`dice-distribution.test.js`, added for this table** |
+| FR-21 | Pool size before and after a turn is identical | `returnHand`, `endTurn` | `dice-pool.test.js`, `dice-pool.spec.js` "keeps saying seventeen of twenty" |
+
+**FR-20 was the gap, and it had been reported as covered.** The existing test proved that every face of
+every die is reachable, which is not what the criterion says. It is written up in full in
+[08-quality.md](08-quality.md). The one-sentence version: a test citing a requirement id had the right
+name and the wrong assertion, and the only thing that would have caught it is reading the criterion and
+the assertion side by side, which is what this table forced.
+
+**Two smaller findings from the same exercise:**
+
+- **FR-19 is mapped to issue #31 in the requirements specification, not to #30**, even though it is the
+  half of the pool that makes the pool a decision. The mapping is right, because #31 built the hand that
+  does the picking, and it is worth noting that the requirement ids and the issue boundaries do not line
+  up one to one. A traceability table has to be per requirement, not per issue.
+- **Nothing in FR-16 to FR-21 asks that the player be able to see the pool.** The overview built for this
+  issue satisfies no requirement of its own: the nearest is FR-35, the rules screen, which is a
+  `should have` with no backlog issue. It was built because the requirements are satisfiable without it
+  and the game is still worse without it, which is a case worth one sentence in the report about what a
+  requirements catalogue does not capture.
+
+### NFR-12 moved for the first time since it was written: 2026-09-01, design handoff 04
+
+NFR-12, "a greyscale screenshot still identifies whose pawns are whose", has been the only requirement in
+the project that a design decision was actively blocking. Design spec 01's D2 answered it by colour alone,
+and `tests/e2e/greyscale.spec.js` has been marked expected-to-fail since 2026-08-30 so that the suite
+reports a known failure rather than going green over an unmet requirement.
+
+**A correction that belongs in this chapter, because it is a requirements fact and it was wrong for three
+days.** NFR-12 was repeatedly called a `must have`, here and in four other files. **It is `S`, should
+have.** Row NFR-12 of [Requirements-Specification.md](../../Project-Management/Requirements-Specification.md)
+reads `S`, and section 3.2 of the same document names it explicitly as one of the last two should-haves to
+be cut, alongside FR-35:
+
+> **Should-haves next**, keeping FR-35 (rules screen) and NFR-12 (colour-independent players) for last,
+> since both are preconditions for the buffer-sprint playtest with people who get no instructions.
+
+The error originated in the risk register, in a row that read "A `must have` requirement ships visibly
+unmet", and spread from there into this chapter, chapter 04, the journal, the design work order and design
+spec 04 itself. **It is worth a paragraph in the report on its own**, and not because it was embarrassing:
+the specification is the only document in the project that assigns MoSCoW labels, and every one of the five
+files that got it wrong was written by somebody reading a *summary* of the requirement rather than the
+requirement. The risk row has been corrected and re-rated from priority 4 to 3, because "no must-have is
+droppable" is a rule NFR-12 is not covered by.
+
+What does **not** change is that the requirement is unmet and that the test says so. A should-have that
+ships unmet is a scope decision the Product Owner is entitled to make; a should-have that ships unmet
+without anybody noticing is the thing the expected-to-fail marker exists to prevent.
+
+**Design spec 04 answered it and did not close it, and the distinction is the interesting part.**
+
+| | |
+| --- | --- |
+| Answered | Four seat shapes as clip paths: circle, triangle, square, diamond, as `--seat-shape-0` to `--seat-shape-3`. No font dependency, nothing readable, nothing a translator is handed |
+| Applied to | The HUD seat plate, the chrome turn sentence, the win panel, the handover panel |
+| Not applied to | **The pawn**, which is the only place the acceptance criterion is measured |
+| Still needed | `.pawn__mark`, an empty `<span>` inside `.pawn`, plus about fifteen lines of `pawn.css`. Named in the spec, not delivered |
+| Test status | Still `test.fail`. Unchanged, and correctly so |
+
+So the requirement is **still unmet**, and the measurement is unchanged: the worst seat pair reduces to
+greys 1.146 apart against a 1.30 floor. What changed is that an answer now exists and the remaining work is
+fifteen lines rather than a decision nobody had made.
+
+**One side effect helped the measurement without settling it.** D36 removed the pawn dim, which had put
+everyone else's fifteen pieces at 85 % opacity while one seat was on turn. It was the only one of four
+"whose turn is it" cues that touched all sixteen pawns, so it was spending contrast on every piece that was
+not the active seat's, which is a budget NFR-12 has none of.
+
+**The report sentence this is for:** a `must have` that is measured by an automated test, and that has been
+failing visibly for three days rather than quietly, moved because the test made the gap impossible to
+forget. Row 8 of design spec 01's sign-off table recorded it as a question, and the question is what carried
+it into the next handoff.
+
+### FR-31's arithmetic was redone, and the requirement got cheaper: 2026-09-01, design handoff 04
+
+FR-31 asks that every region be visible at once at 1440 by 900 with no scrolling. Issue #35's HUD and issue
+#39's chrome each needed a full-width row, and the way the code paid for them was to shrink the board and
+both hand-card sizes by about nine per cent. `tests/e2e/skill-hand.spec.js` had caught 56 px of overflow, so
+the change was forced by a measurement, and both files said so and asked the designer to overrule them.
+
+**D35 overruled it by finding a cheaper thing to cut**, and the requirement is now satisfied with 18 px to
+spare rather than 14: the two strips at the foot of the page, 148 px of grid for things that are usually
+saying nothing, moved next to their subjects instead. The board and the cards went back to full size.
+
+The fact worth carrying into the report is not the numbers, it is that **the implementation side made the
+wrong trade and the requirement was the reason it was visible.** FR-31 is one of the few non-functional
+requirements in this project with a number in it, which is what let a test catch the overflow, which is what
+put the arithmetic in the brief, which is what let the designer see that the cut was in the wrong place.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

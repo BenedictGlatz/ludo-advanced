@@ -1,7 +1,8 @@
 /* Ludo Advanced design tokens.
    Every value the UI layer is allowed to use lives here, on :root, so that
    core/ and state/ never see a colour, a size or a font (NFR-01).
-   Reasoning is in 01-Design/Handoff/01-spec-foundations-and-board.md.
+   Reasoning is in 01-Design/Handoff/01-spec-foundations-and-board.md and
+   03-spec-cards-and-hands.md; the 2026-09-01 additions are 04-spec.
 
    Tone (D14): friend-slop party game. Flat fills, a 3px ink outline on every
    card, pill and pawn, hard offset shadows that are never blurred, big radii.
@@ -46,6 +47,15 @@
   --color-p2-soft: light-dark(#dcf3e5, #2f4a50);
   --color-p3-soft: light-dark(#dfe9fe, #3a3a6e);
 
+  /* --- Seat marks (D16, NFR-12). A shape per seat, so four seats are told
+         apart with the colour taken away. Clip paths and not glyphs: no font
+         dependency, nothing readable, nothing translatable. --- */
+  --seat-shape-0: circle(50% at 50% 50%);
+  --seat-shape-1: polygon(50% 4%, 96% 94%, 4% 94%);
+  --seat-shape-2: inset(6%);
+  --seat-shape-3: polygon(50% 2%, 98% 50%, 50% 98%, 2% 50%);
+  --seat-mark: 0.85rem;
+
   /* --- Signal colours (D7, D9). Violet and orange are outside the
          player hue set, so a highlight can never be read as a player. --- */
   --color-hint: light-dark(#a35de0, #c08bf2);
@@ -75,6 +85,7 @@
   --text-md: 1.0625rem;
   --text-lg: 1.375rem;
   --text-xl: 1.75rem;
+  --text-2xl: 2.5rem;
   --leading-tight: 1.2;
   --leading-body: 1.5;
   --weight-regular: 600;
@@ -84,41 +95,12 @@
 
   /* --- Board geometry (D6). No fixed target resolution; one fluid unit. --- */
 
-  /* Changed by Claude Code on 2026-09-01, issue #39: the width bound went from
-     44vw to 40vw. It is the only value in this file that issue #39 touched, and
-     it was **forced by a measurement rather than chosen**.
-
-     Spec 01 § 6 says of this token: "this is the number to check first when the
-     two hands are actually built". Two more regions landed, the chrome and the
-     HUD, and the arithmetic at the design resolution of 1440 by 900 is:
-
-       padding                  48   (2 x --space-5)
-       five row gaps            80   (5 x --space-4)
-       chrome row               30
-       HUD row                  64
-       board row               634   (44vw, the larger of board and rail)
-       refusal strip            46   (always laid out, faded, so nothing jumps)
-       prompt strip             70   (only while it is asking something)
-                              ----
-                               972   against 900
-
-     tests/e2e/skill-hand.spec.js caught it: 56 px of vertical overflow while
-     the prompt strip is up, which is FR-31's scrollbar.
-
-     Shrinking the board alone does not fix it, and finding that out is the
-     useful part: the board row is as tall as the **taller** of the two columns,
-     and the rail was 627 px against the board's 634. So both had to give the
-     same amount. 39vw makes the board 562 px, and hand.css brings the rail to
-     561, which leaves 14 px of headroom rather than none.
-
-     The height bound stays 82vh. At every desktop aspect ratio the width bound
-     is the smaller of the two, so it is the one that governs.
-
-     **D35 of handoff 04 is where this gets confirmed or overruled.** Shrinking
-     the board is the trade the designer should make, not this side; the numbers
-     above are in the brief so it can be made with real figures. If the HUD moves
-     somewhere cheaper, this reverts to 44vw. */
-  --board-size: clamp(24rem, min(82vh, 39vw), 60rem);
+  /* Reverted to 44vw by Claude Design on 2026-09-01, D35 of handoff 04.
+     Issue #39 had taken it to 39vw to buy a HUD row and a chrome row. The
+     answer to D35 pays for both rows out of the foot of the page instead: the
+     refusal strip and the prompt strip stop holding 116 px of grid, so the
+     board keeps its size. The arithmetic is in 04-spec § D35. */
+  --board-size: clamp(24rem, min(82vh, 44vw), 60rem);
   --cell: calc(var(--board-size) / 11);
   --pawn-size: calc(var(--cell) * 0.78);
   --pawn-scale: 1;
@@ -156,6 +138,20 @@
   --ease-move: cubic-bezier(0.34, 1.1, 0.64, 1);
   --ease-capture: cubic-bezier(0.55, 0, 0.85, 0.3);
 
+  /* Overlays (D38, D39). --motion-curtain moves the handover panel, never the
+     sheet: the sheet is opaque in frame one or it conceals nothing. */
+  --overlay-veil: color-mix(in srgb, var(--color-app-bg) 74%, transparent);
+  --motion-overlay: 180ms;
+  --motion-curtain: 320ms;
+  --ease-curtain: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* The refusal message holds for four seconds (D20, now a token). */
+  --motion-refusal-hold: 4s;
+
+  /* The reaction window, and the point at which it starts shouting. */
+  --clock-window: 30s;
+  --clock-urgent: 8s;
+
   /* --- Cards (D25). The card artwork's palette, folded into the two skins.
          Two hues are the same hex in both: the family hue, because green
          means Action and must not shift with the lights, and the wash behind
@@ -170,6 +166,12 @@
   --card-back-mark: light-dark(#b98ce0, #7c58a8);
   --card-back-frame: light-dark(rgb(255 243 226 / 0.5), rgb(255 243 226 / 0.32));
   --card-dormant-wash: #efe7d8;
+
+  /* The artwork's own two values (D41). Fixed in both skins: the drawings are
+     dark ink on cream and a card is a printed object. The extraction map
+     points the raw hex at these, so the ink is a token from now on. */
+  --card-art-ground: #fff8ec;
+  --card-art-ink: #2b1a3d;
 
   /* Type, which decides when a card may be played, carried by the band. */
   --card-action: #3fa35b;
@@ -207,17 +209,22 @@
   --layer-pawn: 3;
   --layer-pawn-active: 4;
   --layer-refusal: 5;
+  --layer-overlay: 6;
+  --layer-chrome: 7;
   --layer-card: 1;
   --layer-card-raised: 2;
   --layer-card-selected: 3;
 }
 
-/* D12: loops stop, feedback stays. */
+/* D12: loops stop, feedback stays. The curtain keeps its opacity and loses
+   only its travel, because concealment is not a decoration (D39). */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion-move: 1ms;
     --motion-capture: 1ms;
     --motion-pulse: 0ms;
     --motion-deal-stagger: 0ms;
+    --motion-overlay: 1ms;
+    --motion-curtain: 1ms;
   }
 }

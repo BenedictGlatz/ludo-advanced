@@ -1,6 +1,10 @@
 /**
- * Menu to match to pause to match to win to menu, with no page reload. Screens S1, S2, S8, S9 and the
- * handover. Issue #41, requirements FR-01, FR-05, FR-06, FR-07 and FR-38.
+ * Menu to match to pause to match to win to menu, with no page reload. Screens S1, S2, S8 and S9.
+ * Issue #41, requirements FR-01, FR-05, FR-06, FR-07 and FR-38.
+ *
+ * **The handover moved to `handover.spec.js`** on 2026-09-01, when this file passed the 300-line limit.
+ * The seam is the one design spec 04 used for the stylesheets: the four screens here ask the player
+ * something and wait, and the handover is the one with a secrecy rule behind it.
  *
  * FR-38's acceptance criterion is that exact sentence, so the flow is asserted as a flow rather than as
  * five separate screens: most of the value is in the transitions, and a pause screen that opens and
@@ -19,14 +23,7 @@ import { expect, test } from "@playwright/test";
 
 import de from "../../src/i18n/locales/de/ui.json" with { type: "json" };
 import en from "../../src/i18n/locales/en/ui.json" with { type: "json" };
-import {
-  SEEDS,
-  boardState,
-  chooseAndCarryOn,
-  moveFirstMovablePawn,
-  openMatch,
-  playUntil,
-} from "./helpers.js";
+import { SEEDS, boardState, openMatch, playUntil } from "./helpers.js";
 
 const overlay = (page) => page.locator(".overlay");
 const action = (page, name) => page.locator(`.overlay__button[data-action="${name}"]`);
@@ -137,39 +134,55 @@ test.describe("the match flow", () => {
     await startMatch(page, 2);
     await expect(page.locator('.chrome__button[data-action="pause"]')).toBeVisible();
   });
-});
 
-test.describe("the handover", () => {
-  test("stops between two turns and names the player it is passing to", async ({ page }) => {
-    // Deliberately **without** `fast=1`, because the whole point of this screen is that it waits. Every
-    // other spec runs with the gate skipped, which is the affordance that kept them unchanged.
-    await page.goto("/?seed=1");
-    await action(page, "start").click();
-    await page.locator('.overlay__button[data-count="2"]').click();
+  /**
+   * The two attributes design spec 04 asked the markup for, and the reason each one is not a CSS
+   * problem. `data-paused` stops the reaction countdown, which is a CSS animation and cannot pause
+   * itself. `data-player` puts the seat's colour and its D16 shape on the turn sentence, and the row has
+   * no seat to name before a match starts.
+   */
+  test("marks the shell as paused, and names the seat on turn in the chrome", async ({ page }) => {
+    await openMenu(page);
 
-    const board = page.locator(".board");
+    const app = page.locator(".app");
+    const chrome = page.locator(".app__chrome");
 
-    // The turn has to be played, because without `fast=1` nothing happens on its own: the game waits for
-    // a dice card, then for the action phase to be passed, then for a pawn. A turn with no legal move
-    // skips the last step and reaches the handover through the four-second refusal instead.
-    await chooseAndCarryOn(board);
-    if ((await boardState(board)).phase === "act") await moveFirstMovablePawn(board);
+    // No match, so no seat and nothing to pause: both attributes are absent rather than empty, because
+    // the stylesheet matches on `[data-player]` existing at all.
+    await expect(chrome).not.toHaveAttribute("data-player", /.*/);
+    await expect(app).toHaveAttribute("data-paused", "false");
 
-    await expect(overlay(page)).toHaveAttribute("data-screen", "handover", { timeout: 15000 });
+    await startMatch(page, 2);
+    await expect(chrome).toHaveAttribute("data-player", "0");
+    await expect(app).toHaveAttribute("data-paused", "false");
 
-    // Seats 0 and 2 play a two-player match, so the second player is Spieler 2 and not Spieler 3.
-    await expect(overlay(page).locator(".overlay__title")).toContainText("Spieler 2");
-    await expect(overlay(page)).toHaveAttribute("data-player", "2");
+    await page.locator('.chrome__button[data-action="pause"]').click();
+    await expect(app).toHaveAttribute("data-paused", "true");
 
-    // It waits. The turn does not pass until somebody says the screen has changed hands, which is what
-    // makes an opponent's secret hand actually secret at one shared screen (decision D33).
-    const turn = (await boardState(board)).turnNumber;
-    await page.waitForTimeout(1200);
-    expect((await boardState(board)).turnNumber).toBe(turn);
+    await action(page, "resume").click();
+    await expect(app).toHaveAttribute("data-paused", "false");
+  });
 
-    await action(page, "ready").click();
-    await expect(overlay(page)).toHaveAttribute("data-screen", "none");
-    await expect.poll(async () => (await boardState(board)).turnNumber).toBe(turn + 1);
+  /**
+   * `data-outcome` is written by the win screen and by nothing else, so every other screen has to clear
+   * it. A leftover would be invisible on the screen that leaked it and would then quietly restyle the
+   * next win, which is the kind of defect an attribute-driven stylesheet makes easy to write.
+   *
+   * **The abandoned half of D40 is not tested here, and cannot be from the interface.** `abandonMatch` in
+   * `state/match.js` sets `MATCH_STATUS.ABANDONED`, and nothing in `ui/` calls it: the Quit button goes
+   * straight back to the menu instead. So `data-outcome="abandoned"` is styled and translated and
+   * currently unreachable. `tests/unit/ui/overlay-screens.test.js` covers the description; reaching it on
+   * screen needs a rule decision about what quitting a match is, which is not this commit's.
+   */
+  test("leaves no outcome attribute behind on a screen that has none (D40)", async ({ page }) => {
+    await openMenu(page);
+    await expect(overlay(page)).not.toHaveAttribute("data-outcome", /.*/);
+
+    await startMatch(page, 2);
+    await page.locator('.chrome__button[data-action="pause"]').click();
+
+    await expect(overlay(page)).toHaveAttribute("data-screen", "pause");
+    await expect(overlay(page)).not.toHaveAttribute("data-outcome", /.*/);
   });
 });
 

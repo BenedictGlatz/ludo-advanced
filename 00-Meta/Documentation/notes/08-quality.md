@@ -850,6 +850,184 @@ contention rather than of a bug. **The dangerous version of this is the one that
 `retries: 1` would have hidden it entirely and the suite would have been slowly getting less reliable
 with nobody able to say when it started.
 
+### A test that named a requirement and did not test it: 2026-09-01, issue #30
+
+This is the most useful negative finding of the sprint for Chapter 08, because nothing was broken, no
+test was failing, and the suite was reporting a requirement as covered that it was not checking.
+
+**What FR-20 asks:** "over a large sample each face occurs with frequency consistent with 1/*n*".
+
+**What `tests/unit/core/dice-source.test.js` asserted**, under the heading `rollDie (FR-20)`:
+
+```js
+it("covers the whole range 1..n and nothing outside it", () => {
+  // ... 4000 rolls per denomination
+  expect(seen.size).toBe(faces);
+});
+```
+
+That is *reachability*: every face turns up at least once. **A die that returned the 1 in ninety per cent
+of rolls and spread the other ten per cent over the remaining faces would have passed it**, at every
+denomination, every run. Reachability and uniformity are different claims, and the test asserted the one
+the requirement does not ask for.
+
+The pool test had the same shape of gap against FR-16, "each defined denomination is reachable" over a
+long run: `dice-pool.test.js` checked the `POOL_COMPOSITION` **table**, not what `draw` actually deals. A
+`draw` that never returned a D20 would have passed, because the table would still have said two copies.
+
+#### What was added, and how the tolerance was chosen rather than guessed
+
+`tests/unit/core/dice-distribution.test.js`, 12 cases:
+
+| What | Sample | Assertion |
+| --- | --- | --- |
+| `rollDie` per denomination | 60,000 rolls each | every face inside a band around `n/faces` |
+| `draw` per denomination | 30,000 hands, 90,000 cards | every denomination inside a band around `copies/20` |
+| The weighting itself | same sample | D6 : D2 is 2 to 1, D4 : D20 is 1.5 to 1, as ratios |
+| The band's own sensitivity | 8,000 rolls | a deliberately skewed generator falls outside it |
+
+For `n` trials of an event with probability `p`, a binomial count has standard deviation
+`sqrt(n * p * (1 - p))`. The band is **four** of those. Four rather than three, because three sigma over
+sixty-seven separate faces would be expected to fail somewhere by chance, and a suite with one known
+flaky test in it stops being read.
+
+**Every generator uses `createSeededRng` with a seed written into the file, and that is the decision worth
+recording.** Rejected: a fresh seed per run, which is what a "real" statistical test would do. It buys
+sensitivity to a bias that only shows on some seeds, and it pays for it with a test that fails one run in
+some thousands for no reason at all. With a pinned seed the sample is the same sample on every machine and
+every run, so the assertion either holds forever or it never held. It also means this file spends no
+budget on the CI flakiness that would otherwise have to be diagnosed later.
+
+The last case in the table is there because a tolerance nobody has tested is a tolerance that might be
+wide enough to accept anything. It hands `rollDie` a generator that never returns the top fifth of
+`[0, 1)` and asserts the band rejects it.
+
+**Runtime cost of all of it: about one second**, measured, on top of a 2.45 s unit suite.
+
+#### The lesson, and it is about names rather than about dice
+
+The test was called `rollDie (FR-20)`. It sat directly under the requirement id, in a file organised by
+requirement, and it had been read and approved twice. **A test with the right name and the wrong
+assertion is worse than a missing test**, because the missing one shows up in a coverage gap or a
+traceability table and this one shows up as a green tick next to the requirement.
+
+Nothing in this project's process would have caught it. The Definition of Done asks whether a rule change
+ships with its unit test, and it did. What is worth adding, and it is one sentence: **when a test cites a
+requirement id, the check is whether the assertion is the acceptance criterion, not whether an assertion
+exists.** The FR-16 to FR-21 traceability table in
+[01-requirements-and-goals.md](01-requirements-and-goals.md) was written for this issue and is the first
+place that check was actually performed against a requirement's own wording.
+
+### Two new spec files, and the pause check that was borrowed: 2026-09-01, issue #30
+
+- **`tests/unit/ui/pool-screen.test.js`**, 10 cases. Only the fourth unit test in `ui/`, after
+  `board-geometry`, `card-art` and `player-labels`, and it exists for the same reason those do: the module
+  is pure and what it claims has to stay true when the data behind it changes. Two of its cases are about
+  FR-17 specifically, that the screen follows `POOL_COMPOSITION` rather than a list of its own.
+- **`tests/e2e/dice-pool.spec.js`**, 8 cases per browser, 24 across the three. The one worth naming is
+  "stops the match while it is open", which is the same 600 ms `waitForTimeout` plus `boardState`
+  comparison that `match-flow.spec.js` gives the pause screen. **Borrowed deliberately rather than
+  invented:** the two screens make the same claim about the loop, so they should fail the same way when it
+  stops being true.
+- **Neither needed a seed regeneration**, and that was predicted before the work started rather than
+  discovered afterwards. The overview consumes no randomness: it reads `remaining()` and
+  `POOL_COMPOSITION`. The five pinned seeds in `tests/e2e/helpers.js` are untouched and the full 204-case
+  run passed first time on all three browsers. That is the entry from 2026-08-30 finally being used as a
+  prediction instead of as a post-mortem.
+
+#### A jQuery import made a pure function untestable, and no test failed to say so
+
+`pool-screen.test.js` failed on its first run with `jQuery requires a window with a document`, before any
+assertion. The cause and the fix are in [04-frontend-building-blocks.md](04-frontend-building-blocks.md);
+what belongs here is the testing half.
+
+`overlay-screens.js` has been in the same state since it was written and **it has no unit test, so nothing
+ever reported it.** The module is pure, it returns a description rather than touching the DOM, and it was
+covered through Playwright along with the rest of `ui/`. That is the right default and it is also what hid
+the problem: Playwright runs in a browser, where jQuery imports fine.
+
+**Rejected: `environment: "jsdom"` for these files.** The `node` environment is the guard that makes
+NFR-01 enforceable rather than declared, and weakening it so one test file can import an enum would trade
+a real check for a convenience. The enums moved instead.
+
+The generalisable form for Chapter 08: **a test suite tells you about the code it runs, and says nothing
+at all about code no test imports.** The first attempt to import a module is the first time that module's
+dependencies are checked, which is an argument for writing the unit test even when the end-to-end suite
+already covers the behaviour.
+
+### Testing a single painted frame, and the two attribute checks that found a bug: 2026-09-01, handoff 04
+
+Design spec 04 arrived with one ordering requirement and three new DOM attributes. Three tests went in for
+them, and one of the three failed on the first run and was right to.
+
+#### The MutationObserver test, because a frame is not something an assertion can see
+
+D39's handover conceals the rail while the device changes hands. The requirement is an **ordering** one: the
+rail has to be rewritten for the arriving seat while the curtain is still up, because no CSS can cover a
+frame that has already been painted. Playwright's assertions all retry, so every one of them would pass a
+page that showed the wrong thing for 16 ms and then corrected itself. That is exactly the failure this
+requirement is about, which makes the whole assertion library the wrong tool.
+
+What works is recording the order of the DOM writes instead of the pixels. Two MutationObservers, installed
+after the handover screen is up and before the Ready click, both pushing into one array on `window`:
+
+```js
+watch(".hand--skill", "data-seat", "rail");
+watch(".overlay", "data-open", "curtain");
+// then, after the click:
+expect(order.indexOf("rail:2")).toBeLessThan(order.indexOf("curtain:false"));
+```
+
+**It is deterministic and not a race**, and the reason is worth stating: both writes happen inside one
+synchronous click handler, so there is no scheduling between them. The order in the log is the order in the
+source. A test that had waited and then looked would have been flaky; this one cannot be.
+
+It caught the defect it was written for. `openScreen(NONE)` was running before `loop.passTurn()`, so the
+curtain came down over the leaving player's cards and then flipped. Recorded in
+[04-frontend-building-blocks.md](04-frontend-building-blocks.md).
+
+#### The attribute test that failed, and why that is a good outcome
+
+`data-player` on `.app__chrome` was written by `match-flow.js` and cleared a few times per turn by
+`render.js`, because **two files update the same element with different argument sets** and whatever one of
+them omits, the other erases. The test failed in all three browsers on the first run with `unexpected value
+"null"`.
+
+The generalisable point for Chapter 08: this is a defect that no unit test could have found, because neither
+file is wrong on its own. It only exists in the composition, which is the layer end-to-end tests are for.
+It is also invisible without a test, since the attribute's only job is to feed a CSS selector, so the
+symptom would have been a missing seat mark that nobody thought to look for.
+
+#### One test was deliberately written smaller than the requirement
+
+D40's abandoned win screen cannot be reached from the interface at all: nothing in `ui/` calls
+`abandonMatch`. So the end-to-end test asserts what is reachable, that no screen leaves `data-outcome`
+behind, and says in its own comment why the other half is missing and where it is covered instead
+(`tests/unit/ui/overlay-screens.test.js`, which reaches both branches directly).
+
+**Writing the smaller test and naming the gap is the point.** A test called "distinguishes a win from an
+abandoned match" that quit to the menu and asserted an absent attribute would have passed forever while
+checking nothing, and it would have read in a report as coverage of a requirement.
+
+#### What the suite costs now
+
+| | Before handoff 04 | After |
+| --- | --- | --- |
+| Unit test files | 38 | 39 |
+| Unit tests | 549 | 554 |
+| End-to-end files, per browser | 13 | 14 |
+| End-to-end tests, per browser | 68 | 71 |
+| Full end-to-end run | 204 | 213 |
+
+Numbers are in [09-source-code-overview.md](09-source-code-overview.md) next to the commands that produced
+them. `tests/e2e/match-flow.spec.js` hit 331 lines and was split into `handover.spec.js` along the same seam
+the spec used for the stylesheets, which is where the extra e2e file comes from.
+
+**The five pinned Playwright seeds did not need regenerating**, and that was predicted before the work
+started rather than discovered afterwards: nothing in this delivery consumes RNG. Two full green runs
+confirmed it. That is the third change in a row where the prediction was made in advance, after the first
+two cost 45 minutes and then 5 minutes as post-mortems.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

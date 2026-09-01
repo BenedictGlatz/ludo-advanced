@@ -10,6 +10,10 @@
  * view. What it does say is what each card can do, through the two tags, because that is printed on
  * the card and is not advice.
  *
+ * **What a card says moved out of this file with issue #30's pool overview.** `dice-card.js` owns the
+ * description now, because the overview shows the same seven cards for a reason that has nothing to do
+ * with a hand, and this file should not be the place a second screen has to import from.
+ *
  * ## Three permanent slots
  *
  * The three cards are built once and rewritten, per D10 of spec 01 and D31 of spec 03. A dealt card
@@ -27,33 +31,9 @@
 
 import $ from "jquery";
 
-import { t } from "../i18n/index.js";
 import { TURN_PHASE } from "../state/game-state.js";
-import { diceArt } from "./art/index.js";
 import { createCard, updateCard } from "./card-view.js";
-
-/**
- * What one dice card says, translated.
- *
- * The title is the denomination, `W8` in German and `D8` in English, which is why it is a locale
- * string and not something the view formats out of a number.
- *
- * The two tags are the reason the pool is a decision at all, restated on the card: how far this die
- * can move a pawn, and the number it needs to get one out of the start area (FR-09). A hand holding a
- * D2 and a D20 is a choice between those two things, and a player should not have to remember which.
- */
-function diceCard(faces) {
-  return {
-    id: `dice-d${faces}`,
-    family: "dice",
-    faces,
-    typeLabel: t("card.family.dice"),
-    kindLabel: t(`card.dice.kind.${faces}`),
-    title: t("card.dice.name", { faces }),
-    tags: [t("card.dice.range", { faces }), t("card.dice.leave", { faces })],
-    art: diceArt(faces),
-  };
-}
+import { diceCardDescription } from "./dice-card.js";
 
 /** An empty slot, for a hand that has fewer cards than the source can deal. */
 function emptySlot() {
@@ -129,7 +109,7 @@ export function updateDiceHand($hand, state) {
     }
 
     updateCard($card, {
-      ...diceCard(faces),
+      ...diceCardDescription(faces),
       playable: choosing,
       selected: slot === selected,
       result: slot === selected ? state.roll : null,

@@ -26,7 +26,6 @@ import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { movablePawns } from "../state/turn-manager.js";
 import { t } from "../i18n/index.js";
 import { pawnElement } from "./board-view.js";
-import { seatLabel } from "./player-labels.js";
 
 /**
  * The square a move lands on.
@@ -91,40 +90,27 @@ export function applyMoveHints($board, state) {
  * What the message region should say, as an i18next key plus its interpolation, or `null` for
  * nothing.
  *
- * **The player is named by `seatLabel`, and that is the fix for a defect this comment used to
- * describe.** Naming a seat `seat + 1` meant a two-player match was won by "Spieler 3", because two
- * players sit on seats 0 and 2. The old reasoning was that a second numbering would disagree with
- * `data-player` and the colour tokens; the answer, decided on 2026-09-01, is that the label carries
- * **both**, the position in the match and the colour, so nothing has to be inferred from the number.
- * The seat is still the seat in the markup and in every rule. See `player-labels.js`.
+ * **The strip says one kind of thing now, and that is the fix for a defect this comment used to
+ * describe.** It used to carry the win message and the abandoned message as well as refusals, because
+ * handoff 01 designed the strip and no win screen, and inventing a second component was not this side's
+ * to do. The cost was that "you won" was announced in `--color-warn` orange, the colour the game
+ * reserves for "you cannot do that", and that one message was said in two places at once.
+ *
+ * D40 of design spec 04 settled it: **the overlay says it and the strip says nothing.** So the two
+ * status branches are gone from here, and `match-over` is now the win screen's business alone. See
+ * `overlay-screens.js`.
+ *
+ * `kind` stays, even though the strip has exactly one kind left, because it is the seam the region is
+ * told apart by and removing it would be a change to two end-to-end specs for no gain.
  */
 function message(state) {
-  if (state.status === MATCH_STATUS.WON) {
-    return {
-      kind: "win",
-      key: "match.won",
-      options: { player: seatLabel(state.seats, state.winner) },
-    };
-  }
-  if (state.status === MATCH_STATUS.ABANDONED) {
-    return { kind: "info", key: "match.abandoned", options: {} };
-  }
   if (state.refusalReason !== null) {
     return { kind: "refusal", key: state.refusalReason, options: {} };
   }
   return null;
 }
 
-/**
- * Fill the region under the board, or empty it.
- *
- * **The win message shares the refusal region, and it should not.** `refusal.css` styles this
- * element in the warning orange of D9, which is right for "that move is not allowed" and wrong for
- * "you won". Handoff 01 designed S6 and no win message, so rather than invent a component, the two
- * share the one designed region and are told apart by `data-message-kind`. That attribute exists so
- * that handoff 02 can split them with a selector and no change to this file. It is a known defect and
- * is recorded as one.
- */
+/** Fill the strip that hangs off the bottom of the board, or empty it. */
 export function showMessage($message, state) {
   const next = message(state);
 

@@ -145,6 +145,13 @@ export function updateCard($card, card) {
   $card.attr("data-playable", String(card.playable === true));
   $card.attr("data-selected", String(card.selected === true));
 
+  // An empty slot leaves the tab order, and that is the JavaScript half of an answer design spec 04
+  // gave: an empty slot in the skill hand is not an unplayable card and not a face-down one, it is the
+  // outline of where a card would go. `hand.css` draws it, but CSS cannot take an element out of the tab
+  // order, so a keyboard user would otherwise stop on up to four holes on the way across the hand
+  // (NFR-08). Keyed on the id being absent, which is what `skill-hand-view.js`'s `emptySlot` produces.
+  $card.attr("tabindex", card.id === null || card.id === undefined ? -1 : 0);
+
   setArt($card, card);
 
   $card.find(".card__type").text(card.typeLabel ?? "");

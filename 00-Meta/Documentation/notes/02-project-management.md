@@ -676,6 +676,109 @@ about the four undesigned controls the slice needed. Neither is recorded as a bl
 because neither blocked for long. Both are recorded as decisions in
 [project-journal.md](../project-journal.md), which is what makes them visible to the report at all.
 
+### An issue closed as an audit, and three things the board could not tell anybody: 2026-09-01, issue #30
+
+Issue #30 was picked up expecting to build a dice pool. The pool had shipped two days earlier. Three
+findings about the process, and none of them is about the code.
+
+**An empty issue body costs about an hour.** #30 and its parent epic #37 both have **empty bodies**:
+title, labels, assignees and nothing else. So the acceptance criteria for the work were only in
+[Requirements-Specification.md](../../Project-Management/Requirements-Specification.md), which maps FR-16
+to FR-21 to the issue in its own trace column, and nothing on the board points at that document. Matching
+a six-word title to six requirement ids is work somebody already did once when the specification was
+written, and it was done again from scratch to close the issue. **The cheap fix is one line in the issue
+body naming the requirement ids**, and it costs whoever creates the issue about ten seconds.
+
+**The board described a state that had ended two days earlier.** The parent epic #37 was closed while its
+child #30 stayed open, and the child's code was already committed and passing. Nothing is wrong with
+either the code or the closure: what is wrong is that "is #30 done" was not answerable from the board, and
+the only way to answer it was to read six requirement criteria against the source. That is the concrete
+form of a risk the register already carries in the abstract.
+
+**A booked story point can describe work that was not done.** The 3 points estimated for #30 are for
+`core/dice-pool.js`, and that file was written on 2026-08-30 under a commit naming no issue. The work
+actually done on 2026-09-01 was an audit, a screen and a test, none of which the estimate mentions. The
+points are booked in full, because the alternative is 3 points no sprint ever receives, and the divergence
+is written into [sprint-log.md](../sprint-log.md) next to them. **This is the second finding this sprint
+that the velocity figure is not a planning input**, and it is a different cause from the first one: the
+2026-08-30 entry above says velocity is unreadable because no effort is measured. This says it is
+unreadable because the points and the work have drifted apart.
+
+**The per-change documentation step is being done unevenly, and the pattern is now visible.** The chapter
+notes and the journal's decision blocks are current. The two *chronological* logs, the journal's session
+log and the sprint log's Delivered list, both stop on 2026-08-30 and miss eight issues. Both were filled
+for #30 and neither was reconstructed backwards, because a log written from somebody else's commits is a
+guess. **The likely cause is worth naming: the chapter notes are where the interesting content goes, so
+they get written, and the logs feel like bookkeeping.** The report needs the logs, because they are the
+only artefacts that show sequence and pace.
+
+### A whole day's work with no issue behind it: 2026-09-01, design handoff 04
+
+Design handoff 04 replaced the stylesheets for four of the game's regions, reverted two token changes,
+answered nine numbered decisions and fixed two defects. **It carries no issue number and books no story
+points**, and every process finding here follows from that.
+
+**Where the work belongs on the board is nowhere.** The design it answers is for issues #35, #41 and epic
+#39, all three of which are already booked and two of which are closed. So the largest single change to what
+the game looks like appears on the board as no movement at all. The board is not wrong: nothing new was
+requested, a request already made was answered. What it shows is that **a Kanban board tracks requests and
+not work**, and the design loop is the one workflow in this project that generates work without generating a
+card for it.
+
+**The consequence for the velocity figure is the third one this sprint**, and it is a new cause again:
+
+| Finding | Date | Why velocity is unreadable |
+| --- | --- | --- |
+| First | 2026-08-30 | No effort is measured anywhere, so points cannot be divided by anything |
+| Second | 2026-09-01, #30 | The points and the work have drifted apart: 3 points describe a file written on a different day |
+| Third | 2026-09-01, handoff 04 | A day of work has no points at all, because the issue it serves was booked before the work existed |
+
+Three independent reasons is enough to stop treating the number as a planning input and say so in the
+retrospective. The useful sentence is not "our velocity is unreliable", it is that **each of the three
+causes is a different failure and each needs a different fix**: measure effort, estimate against the work
+rather than the file, and give the design loop cards of its own.
+
+**The design loop's own cadence is the finding worth keeping.** The work order went out and handoff 04 came
+back the same evening. Three briefs had been open at once and one of them, handoff 02, had been open for two
+days with no spec ever returned. The difference between those two outcomes is not the size of the request:
+handoff 04 is much larger than handoff 02. The difference is that one of them had a written index of what
+was owed and the other did not. That is one sentence for the report about why the work order was worth
+writing, and it is cheap evidence because both cases are on the record.
+
+**What is still unowned.** The `.pawn__mark` follow-up that closes D16 and NFR-12 is fifteen lines of CSS,
+is named in the spec, was not delivered, and now has **no card, no brief and no owner**. It is the only
+requirement in the project blocked by a design item, and it is exactly the kind of small named remainder
+that a board with no card for it loses. Recorded here and in
+[01-requirements-and-goals.md](01-requirements-and-goals.md) so it survives this sprint.
+
+### A MoSCoW label was wrong in five files, and the specification was right all along: 2026-09-01
+
+NFR-12 was called a `must have` in the risk register, in two chapter notes, in the project journal, in the
+design work order and in design spec 04. **It is `S`, should have.** The correction is in
+[01-requirements-and-goals.md](01-requirements-and-goals.md); what belongs in this chapter is how a
+prioritisation fact got wrong in five places at once.
+
+**Nobody read the specification.** Every one of the five wrote the label from a *summary* of the
+requirement: the risk register said it first, the work order took it from the register, and the design spec
+took it from the work order. The requirements specification, the one document in the project that assigns
+MoSCoW labels, says `S` twice, once in the table row and once in section 3.2's cutting order.
+
+Three process points:
+
+1. **A prioritisation claim is not a fact about a requirement, it is a lookup.** Every other kind of claim
+   in these notes carries a reason, and a reason is a defence against being wrong. "NFR-12 is a must have"
+   has no reason attached and nothing to check it against unless the reader goes to the table.
+2. **The register was the origin, and a register is exactly the document to get this wrong in.** A risk row
+   is written to argue that something matters, and inflating the label is the cheapest way to make that
+   argument. The row's own priority score depended on it: `M`/`H` = 4 became `M`/`M` = 3 on correction.
+3. **It cost nothing this time, and that is the point of catching it now.** The remaining work is fifteen
+   lines either way. What it would have cost is a report that claims a must-have requirement shipped unmet,
+   which is a heavier finding than the truth and is one a reader can check in ten seconds.
+
+**The generalisable fix is cheap:** any note that states a requirement's MoSCoW label links to the
+specification row it read it from. That is the same rule chapter 09 already applies to numbers, for the same
+reason, and it makes the claim re-checkable rather than remembered.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -234,6 +234,58 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   split undone, a missing `body { margin: 0 }`, an end-to-end suite that had been running at the wrong
   viewport for two weeks, and a racy locator in a spec that had been passing on timing. Sprint 2.
 
+- **2026-09-01, evening**: Issue #30 was closed, and the interesting part is that its code had shipped
+  two days earlier. The audit that opened the work found the issue body **empty**, its parent #37
+  already closed, and FR-16, FR-17, FR-18, FR-19 and FR-21 all satisfied since 2026-08-30. Two real
+  gaps were left. The first is that **the pool was invisible to the player**: `pool.remaining()` existed
+  and nothing outside the tests called it, and design spec 03 had delivered `.card--full` explicitly
+  "because the pool overlay ... needs exactly it" for an overlay nobody built. The second is that
+  **FR-20's test proved reachability rather than uniformity**, so a die biased ninety per cent toward
+  the 1 would have passed a test named after the requirement. Both are closed: a sixth overlay screen
+  showing the seven denominations with their copy counts, and a real distribution test over 60,000 rolls
+  and 90,000 dealt cards against a four-sigma band. Writing the FR-16 to FR-21 traceability table is
+  what found the second gap, and it is the first requirement in the project traced criterion by
+  criterion against a named module and a named test. Two extractions came out of it, and the second one
+  matters more than the feature: moving the overlay's two enums into a jQuery-free module revealed that
+  **every pure screen-description file had been impossible to unit test since the overlay was written**,
+  and nothing had reported it because none of them had a unit test. The five Playwright seeds needed no
+  regeneration, predicted in advance for once rather than discovered afterwards, and the full 204-case
+  run passed first time on all three browsers. Sprint 2. *(Noted while writing this: the morning's epic
+  #39 work has no entry in this log either, the same gap the 2026-08-30 entry records. Not reconstructed
+  here, because whoever did that work is who can describe it.)*
+- **2026-09-01, late evening**: **Design handoff 04 came back the same evening the work order went out**,
+  and it is the largest single delivery the design loop has produced: a 437-line spec answering D35 to D42
+  plus D16, D20 and four items owed since spec 03, five replacement stylesheets, five amended ones and a
+  rendered mockup. Four of the five placeholder stylesheets are gone and `pool.css` is the only one left.
+  Landing it took three kinds of work. **Copying**, which was the smallest part and had one trap in it: the
+  three files the README lists as "unchanged, included so the mockup runs" are not unchanged against this
+  branch, because the delivered `board.css` is a pre-split copy from before NFR-02 split it three ways, so
+  the whole folder was diffed file by file before anything was copied. **Wiring**, which was the three DOM
+  attributes the spec asked for by name rather than styling around, plus the refusal strip moving inside
+  `.app__board`, plus D40 taking the win message off the orange strip and D20 moving the last hardcoded
+  duration into `tokens.css`. **Finding two defects**, both of which the spec's own requirements exposed
+  rather than the code: the handover was taking its curtain down *before* rewriting the rail, so one painted
+  frame of the leaving player's secret hand was on screen for the arriving player, which is the exact thing
+  the screen exists to prevent; and `data-player` on the chrome was being written by `match-flow.js` and
+  erased by `render.js` a few times per turn, because two files write that element with different argument
+  sets. The first is fixed and tested with two MutationObservers, because a single frame is not something a
+  retrying assertion can see. The second failed its test in all three browsers on the first run. `core/` and
+  `state/` did not change by one line and every coverage figure is identical, which is the cleanest
+  measurement of NFR-01's layering the project has produced. **D16 is answered and still not closed**: four
+  seat shapes exist and are on the HUD, the chrome and two overlay panels, but not on the pawn, which is
+  where NFR-12 is measured, so `greyscale.spec.js` stays expected-to-fail and the requirement stays unmet.
+  Sprint 2.
+- **2026-09-01, immediately after**: asked what NFR-12 actually is, and looking it up found that **it is
+  `should have` and had been called `must have` in five files**, including three written that evening and
+  the design spec itself. The requirements specification says `S` in the table row and again in section
+  3.2's cutting order, where NFR-12 is named as one of the last two should-haves to be cut. The chain is
+  traceable: the risk register said it first on 2026-08-30, the design work order took the label from the
+  register, design spec 04 took it from the work order, and the chapter notes took it from all three.
+  Nobody read the specification. All five corrected, and the risk row re-rated from priority 4 to 3,
+  because its score depended on the label. The work it changes is nothing, fifteen lines of `pawn.css`
+  either way; what it would have changed is a report claiming a must-have requirement shipped unmet, which
+  is a heavier finding than the truth and one a reader can check in ten seconds. Sprint 2.
+
 ---
 
 ## Decisions
@@ -2544,6 +2596,184 @@ to get wrong later.
   the thing worth carrying into the report: a board edit is not a decision until it is written down.
 - → Ch. 01, Ch. 02
 
+### 2026-09-01: The pool the player chooses from is a screen, not a counter
+
+- **Chosen:** a sixth overlay screen showing all seven denominations with their copy counts, plus one
+  sentence saying how many of the twenty cards are face down. Opened from a third always-present chrome
+  button, and it pauses the match loop while it is up.
+- **Why:** FR-19 asks the player to keep one of three dealt dice cards, and that is only a decision
+  because of what the pool holds. A D2 leaves the start area half the time and a D20 one time in twenty
+  (FR-09), so a hand of three is a good hand or a poor one entirely relative to the twenty cards behind
+  it. Until this screen the only way to know the composition was to read section 5.1 of the game design
+  document. The mechanic was complete and the information the mechanic depends on was not on screen.
+- **Rejected: pool and discard counters in the HUD.** Considered earlier the same day and dropped, so
+  that sixteen numbers on screen do not become twenty-four. A permanent number also could not have shown
+  the seven cards, which is the part that communicates the weighting.
+- **Rejected: the prose rules screen, S10 / FR-35.** A `should have` with no backlog issue that would
+  explain dice cards, skill cards and the leaving-start rule in words. Showing a composition table is
+  cheaper than describing it and clearer. If S10 is ever built, this is the part that already exists.
+- **Rejected: putting the control on the hand plate**, which is nearer to where the question is asked.
+  The chrome is where a control reachable at any point in a turn already lives, and the overview has to
+  work in the `choose` phase or it does not help the decision it exists for. A second entry point on the
+  hand is D47 of handoff 05 and needs only the extra element.
+- **Worth noting for Ch. 01: this satisfies no requirement.** FR-16 to FR-21 are all satisfiable without
+  it. It was built because the game is worse without it, which is a case the requirements catalogue does
+  not capture.
+- → Ch. 04, Ch. 01
+
+### 2026-09-01: A jQuery import had made a pure function untestable, and no test said so
+
+- **Chosen:** `OVERLAY_SCREEN` and `OVERLAY_ACTION` moved out of `overlay-view.js` into a new
+  `ui/overlay-vocabulary.js`, which imports nothing. `overlay-view.js` re-exports both, so no existing
+  importer changed.
+- **Why:** `overlay-view.js` imports jQuery, and jQuery throws on import when there is no `document`.
+  Vitest runs unit tests with `environment: "node"` **deliberately**, so that a module in `core/` or
+  `state/` reaching for the DOM fails the run (NFR-01). The consequence nobody had noticed is that
+  **anything importing `overlay-view.js` could not be unit tested at all**, including
+  `overlay-screens.js`, which is pure and does nothing but describe screens. It went unreported because
+  that file has no unit test to fail: it is covered through Playwright, where jQuery imports fine.
+  `pool-screen.js` surfaced it on its first run, failing with "jQuery requires a window with a document"
+  before a single assertion.
+- **Rejected: `environment: "jsdom"` for these files.** The `node` environment is what makes NFR-01
+  enforceable rather than declared. Weakening it so one test file can import an enum trades a real guard
+  for a convenience.
+- **Rejected: duplicating the two enums in `pool-screen.js`.** Two definitions of one vocabulary, and the
+  attribute values are what the CSS and the Playwright specs match on.
+- **The generalisable finding:** an untestable pure function is a sign of an import it does not need, not
+  a reason to weaken the test environment. And a test suite says nothing at all about code that no test
+  imports, which is an argument for writing the unit test even where the end-to-end suite already covers
+  the behaviour.
+- → Ch. 04, Ch. 08
+
+### 2026-09-01: A distribution is tested against a pinned seed, not a fresh one
+
+- **Chosen:** `tests/unit/core/dice-distribution.test.js` asserts that every die face and every pool
+  denomination lands inside four binomial standard deviations of its expected count, over samples of
+  60,000 rolls and 90,000 dealt cards, with **`createSeededRng` seeds written into the file**.
+- **Why:** FR-20's criterion is a statement about frequencies and the old test was a statement about
+  reachability, so a real distribution check was owed. Given that, the choice is between a fresh seed per
+  run and a pinned one. A fresh seed fails roughly one run in some thousands for no reason at all, and a
+  suite with one known flaky test in it stops being read. With a pinned seed the assertion either holds
+  forever or it never held.
+- **Why four sigma and not three:** there are sixty-seven separate faces across the seven denominations,
+  and at three sigma one of them would be expected to fall outside the band by chance.
+- **Rejected: a chi-square test with a p-value threshold.** More standard and it has the same flakiness
+  problem, plus a threshold nobody on the team could defend in the report without explaining the
+  statistic first.
+- **Rejected: leaving the tolerance untested.** A band nobody has probed might be wide enough to accept
+  anything, so one case hands `rollDie` a deliberately skewed generator and asserts the band rejects it.
+- **Cost: about one second** on top of a 2.45 s unit suite, measured.
+- → Ch. 08
+
+### 2026-09-01: The pool overview reuses `resume` rather than getting an action of its own
+
+- **Chosen:** the overview's close button carries `data-action="resume"`, the same action the pause
+  screen's Resume button carries.
+- **Why:** `match-flow.js` already answers `RESUME` with "close the overlay and resume the loop", and that
+  is exactly what closing this screen means. Both screens suspend the loop while they are open for the
+  same reason and both mean "put it back the way it was" when they close.
+- **Rejected: a `CLOSE_POOL` action.** A second name for one behaviour, and two handlers that have to be
+  kept in step for no gain. The label differs, which is the part the player sees, and the label is a
+  locale string rather than an action name.
+- **Consequence found while testing it:** `quitToMenu` cleared `state` but not `deps`, so the overview
+  could have described an abandoned match's pool from the main menu. One line, and it was the test for
+  "the button is hidden on the menu" that found it.
+- → Ch. 04
+
+---
+
+### 2026-09-01: A delivery is diffed file by file, including the files declared unchanged
+
+- **Chosen:** before copying anything out of the handoff folder, every delivered file was diffed against
+  the file it would replace, including the three the README lists as "unchanged, included so the mockup
+  runs". `board.css`, `card.css` and `card-state.css` were then **not** copied.
+- **Why:** the delivered `board.css` is a 269-line pre-split copy. This branch had already split that file
+  into `board.css`, `board-track.css` and `board-regions.css` for NFR-02. Copying the folder wholesale
+  would have reverted the split, left two orphaned files still imported by `main.js`, and produced a page
+  that looked correct because the pre-split file contains all the same rules.
+- **The generalisable form:** "unchanged" in a delivery means unchanged since the designer took the
+  snapshot, not unchanged against the branch it is being applied to. A handoff is a copy of a working tree
+  at a moment, and the moment is not now.
+- **Rejected: trusting the README's table.** It is accurate about what the designer changed, which is a
+  different question from what is safe to copy. The cost of the diff was two minutes.
+- → Ch. 04, Ch. 08
+
+---
+
+### 2026-09-01: The two rows the HUD needed were paid for out of the foot of the page, not the board
+
+- **Chosen:** D35's answer was taken as delivered. `--board-size` goes back to 44vw and the two hand
+  `--card-u` factors back to 0.76 and 0.68. The refusal strip hangs off the bottom of `.app__board` and the
+  prompt strip becomes the third plate in the rail, so neither holds a grid row any more.
+- **Why:** issue #39 had bought the HUD and the chrome their rows by shrinking the board and both hands
+  about nine per cent, and both files said in their own headers that the change was forced by a measurement
+  rather than chosen. The measurement was real, the *choice of what to cut* was not examined: the foot of
+  the page held 148 px for two strips that are usually saying nothing, and the board and the cards are the
+  part of the screen the game happens in. 882 px of 900 with the prompt up, measured in the mockup.
+- **Rejected: keeping the smaller board.** It protects two empty strips by taking room from the two regions
+  the player looks at.
+- **Rejected: putting the HUD in the rail.** It is the only place that costs no full-width row, and the
+  rail already sets the board row's height, so a HUD there would shrink the board by its own height anyway.
+- **The fact to carry forward:** the board row is now set by the **rail** and not by the board, with 18 px
+  of headroom. The next region added to the rail is the first one that costs the board its size.
+- → Ch. 01, Ch. 04
+
+---
+
+### 2026-09-01: The handover passes the turn before it lifts the curtain
+
+- **Chosen:** on the Ready button, `loop.passTurn()` runs first and `openScreen(NONE)` second, guarded so
+  that a `passTurn` which ends the match does not have its win screen replaced.
+- **Why:** `passTurn` is what re-renders the rail for the arriving seat. Closing the overlay first meant one
+  painted frame of the **leaving** player's five skill cards in front of the person picking the device up.
+  That is a real leak of decision D33's secrecy rule, and it is what the handover screen exists to prevent.
+  Design spec 04 § 5 states the ordering as its one hard requirement, and its reason is the one that
+  settles it: no CSS can cover a frame that has already been painted.
+- **Rejected: hiding the rail with `visibility: hidden` during the handover as well.** It works, and it puts
+  the concealment in two files that have to agree. When they stop agreeing the failure is silent, and what
+  it costs is the game.
+- **How it is tested:** two MutationObservers pushing into one array, asserting that `data-seat` on the rail
+  appears before `data-open="false"` on the overlay. Every Playwright assertion retries, so all of them
+  would pass a page that showed the wrong thing for one frame and then corrected itself, which is precisely
+  the failure mode in question.
+- → Ch. 04, Ch. 08
+
+---
+
+### 2026-09-01: The win is announced by the overlay alone, and the orange strip says nothing
+
+- **Chosen:** `move-hints.js` lost its `WON` and `ABANDONED` branches. The win screen carries a new
+  `data-outcome="won|abandoned"` so the stylesheet can draw the two apart.
+- **Why:** the strip is `--color-warn` orange and `--color-warn` means the game has refused something.
+  Telling a player they have won in the colour reserved for "you cannot do that" was recorded here as a
+  defect when the strip was the only designed region available. D40 removed the reason it existed: there is
+  a designed win screen now, so one message in two places is no longer a workaround, it is duplication.
+- **Rejected: keeping the strip as a second, quieter announcement.** Two elements saying one thing is two
+  places to change when the wording changes, and the strip was the wrong colour for it either way.
+- **Rejected: inferring the outcome from `data-player` being absent**, which would have needed no new
+  attribute. That is exactly the guess design brief 04 § 2 asks not to be made, and it couples the panel's
+  colour rule to the accident that nobody wins an abandoned match.
+- **Found while doing it:** the abandoned screen **cannot be reached from the interface at all**. Nothing in
+  `ui/` calls `abandonMatch`; the Quit button goes to the menu. It is styled, translated, unit-tested and
+  unreachable. Not fixed here, because what quitting a match is supposed to mean is a rule question.
+- → Ch. 04, Ch. 08
+
+---
+
+### 2026-09-01: The four-second refusal hold became a token instead of a constant
+
+- **Chosen:** `--motion-refusal-hold: 4s` in `tokens.css`, read by `game-loop.js` through the existing
+  `motionMs` helper. `REFUSAL_MIN_MS = 4000` survives as the fallback for a harness with no stylesheet.
+- **Why:** it was the only duration in the game that lived outside `tokens.css`, and its own comment said so
+  and asked for it to be raised in the next handoff. D20 answered yes. The player feels this number, so it
+  belongs to the design, and the mechanism to read it back already existed for `--motion-capture`.
+- **Rejected: deleting the constant and letting the read fail to `undefined`.** Vitest runs with
+  `environment: "node"` and no stylesheet, so the fallback is not hypothetical.
+- **Why this one is worth recording at all:** it is the cheapest answer in a 437-line spec, one line of CSS,
+  and it is the clearest demonstration of what the handoff round trip is for. A number stopped living in two
+  layers at once, and nobody had to remember which.
+- → Ch. 04
+
 ---
 
 ## Challenges
@@ -2671,6 +2901,43 @@ to get wrong later.
   defence is a test that reads the setting rather than the behaviour, which `shell.spec.js` now does.
   **A claim nobody measures comes back:** "nothing scrolls" was written in two specs, five weeks apart,
   and was false when finally checked.
+
+- **2026-09-01: A closed feature, a green suite, and a requirement that was not being tested.** Issue #30
+  was picked up expecting to build a dice pool. The pool had shipped on 2026-08-30. The issue body was
+  empty, its parent epic #37 was already closed, and five of the six requirements were satisfied. So the
+  work became an audit, and the audit is what cost the unplanned time: roughly an hour, almost all of it
+  reading FR-16 to FR-21 against the code and the tests one criterion at a time to build the traceability
+  table.
+
+  **It found one thing, and it was not a bug.** FR-20's criterion is "over a large sample each face
+  occurs with frequency consistent with 1/*n*". The test under the heading `rollDie (FR-20)` asserted
+  `seen.size === faces` over four thousand rolls: every face turns up at least once. A die returning the
+  1 in ninety per cent of rolls would have passed it, at every denomination, every run. The test had the
+  right name, cited the right requirement, sat in a file organised by requirement, and had been read and
+  approved twice. Nothing was failing and nothing would have started failing.
+
+  Fixing it was twenty minutes: a distribution test over 60,000 rolls and 90,000 dealt cards against a
+  four-sigma binomial band, with pinned seeds, costing about a second of runtime.
+
+  **Three lessons, and the first is the expensive one.**
+
+  **A test that names a requirement is not evidence that the requirement is tested.** The only check that
+  catches this is reading the acceptance criterion and the assertion side by side, and this project's
+  Definition of Done does not ask for that: it asks whether a rule change ships with its unit test, and
+  it did. One sentence is worth adding to it. The traceability table is where the check actually happened,
+  which is an argument for writing those tables during development rather than as report filler at the
+  end, since as filler it would have been written from the test *names*.
+
+  **An issue with an empty body costs an hour to close.** #30 and #37 both have empty bodies. There were
+  no acceptance criteria anywhere in the tracker, so the only source of truth was the requirements
+  specification, and matching a title to six requirement ids is work somebody had already done once when
+  the specification was written. That mapping exists in the specification's own trace column and nothing
+  on the board points at it.
+
+  **Two days is long enough for a repository to disagree with its issue tracker.** The parent epic was
+  closed while a child stayed open, and the child's own code was already merged. Nothing is wrong with
+  the code and the board is simply describing a state that ended. Worth one sentence in the project
+  management chapter, because "is this done" was not answerable from the board.
 
 Log anything that cost more than roughly 30 minutes of unplanned work: what happened, what it cost,
 how it was resolved. These become the running prose of Chapter 11, so a sentence of context is worth

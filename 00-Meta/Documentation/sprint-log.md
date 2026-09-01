@@ -307,6 +307,48 @@ available cut. **That is no longer what the board says**, see point 1 above.
   and Edge. **The game is playable.** Milestones M2 and M3 are both met.
 - **2026-08-30:** handoff 02 sent, `01-Design/Handoff/02-brief-board-review.md`, with nine numbered
   questions and six screenshots taken from the running build. The round is open.
+- **2026-09-01:** #30 dice pool data model and selection logic (3), **closed as an audit rather than as
+  a build.** The pool itself shipped on 2026-08-30 inside the same day's work; FR-16, FR-17, FR-18,
+  FR-19 and FR-21 were already satisfied and its parent epic #37 was already closed. What this issue
+  actually delivered is the FR-16 to FR-21 traceability table in
+  [notes/01-requirements-and-goals.md](notes/01-requirements-and-goals.md), a dice card pool overview
+  screen so the player can see what they are choosing from, and the FR-20 distribution test that the
+  table's own check found missing. Handoff 05 sent,
+  `01-Design/Handoff/05-brief-dice-pool-overlay.md`, with five numbered decisions D43 to D47. The round
+  is open. **The 3 points are booked in full**, and whether that is honest is the note below.
+- **2026-09-01:** the work order `01-Design/Handoff/00-open-requests.md` sent, and **design handoff 04
+  answered the same evening**: `04-spec-hud-menus-and-handover.md`, D35 to D42 plus D16, D20 and four
+  unnumbered items, with five replacement stylesheets and five amended ones. Landed on the branch. **No
+  story points**, because it carries no issue: it is design work for issues #35, #41 and epic #39, all of
+  which were already booked. The visible effect on the board is nil and the visible effect on the game is
+  the whole of its interface, which is worth one sentence in the retrospective about what a points-based
+  velocity figure does and does not measure.
+  - **What it closed:** four of the five placeholder stylesheets, D38's overlay animation, D40's duplicated
+    win message, D20's hardcoded duration, and the empty-hand-slot question open since issue #39. It also
+    reverted issue #39's two token changes, so the board and the cards are full size again.
+  - **What it did not close:** handoff 05 has no spec, so `pool.css` is still a placeholder. **D16 is
+    answered but NFR-12 is still unmet**, because the seat shapes went on the HUD, the chrome and two
+    overlay panels and not on the pawn, which is where the requirement is measured. That is the only
+    `must have` in the sprint that a design item is still blocking, and the remaining work is named in the
+    spec as one `<span>` and about fifteen lines of CSS.
+  - **Two defects found while landing it**, both by the spec's own requirements rather than by the code: the
+    handover was uncovering the leaving player's secret hand for one frame, and the chrome's seat marker was
+    being written by one file and erased by another. Both fixed and both tested.
+- **This Delivered list has a hole between 2026-08-30 and 2026-09-01.** Issues #31, #32, #33, #34, #35,
+  #38, #39 and #41 all landed in that window and none of them has an entry here, although their facts
+  are in the chapter notes and the journal's decision blocks. Not reconstructed by whoever wrote the
+  #30 entry, because a sprint log written from someone else's commits is a guess. It is the same gap the
+  2026-08-30 entry in [project-journal.md](project-journal.md) records for the session log, which makes
+  it a pattern rather than an oversight: **the per-change documentation step is being done in the
+  chapter notes and skipped in the two chronological logs.**
+
+**Note on booking #30's points.** The estimate for #30 reads "`core/dice-pool.js`: the 20-card
+composition as a single data definition, the draw of 3, the return and reshuffle, with the RNG taken as
+an argument", and every word of that was built on 2026-08-30 under a commit that named no issue. So the
+3 points describe work that was delivered on a different day, and the work actually done on 2026-09-01
+was an audit, a screen and a test that the estimate does not mention. Booked in full anyway, because
+the alternative is 3 points that no sprint ever gets, and flagged here because it makes the sprint's
+velocity figure slightly fictional in a way a reader could not otherwise see.
 
 **All 38 of the sprint's must-have points are committed**, over two days, all on the branch
 `feature/sprint2-core-and-design`. **None of it is merged, reviewed or pushed**, so by the project's

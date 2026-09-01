@@ -160,7 +160,15 @@ export function createDicePool() {
       onLoan -= hand.length;
     },
 
-    /** How many cards are face down in the pool right now. For tests and for the HUD in issue #35. */
+    /**
+     * How many cards are face down in the pool right now.
+     *
+     * Part of the dice-source interface since issue #30's pool overview, which is what reads it. It is
+     * **not** read by the HUD: pool and discard counters were considered for that row on 2026-09-01 and
+     * dropped, so that sixteen numbers on screen do not become twenty-four. See the header of
+     * `ui/hud-view.js`. A screen the player asks for is a different question to a number that is always
+     * there, and this is the answer to the first one.
+     */
     remaining() {
       return remaining.length;
     },

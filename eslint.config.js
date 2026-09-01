@@ -17,6 +17,10 @@ const browserGlobals = {
   setInterval: "readonly",
   clearInterval: "readonly",
   requestAnimationFrame: "readonly",
+  // Only ever used inside a Playwright `page.evaluate`, which runs in the browser and not in the test
+  // process. It is here rather than in a test-only list because that is where the browser globals live
+  // and adding a second list for one name would be the more confusing arrangement.
+  MutationObserver: "readonly",
 };
 
 const nodeGlobals = {

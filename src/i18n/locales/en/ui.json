@@ -57,6 +57,13 @@
     "text": "Hand the screen over before you press Ready.",
     "ready": "Ready"
   },
+  "pool": {
+    "open": "Card pool",
+    "label": "Look at the dice card pool",
+    "title": "The dice card pool",
+    "text": "{{remaining}} of {{total}} cards are face down in the pool.",
+    "close": "Back to the match"
+  },
   "language": {
     "label": "Switch language",
     "switch": "Deutsch"

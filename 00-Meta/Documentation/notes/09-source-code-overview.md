@@ -22,22 +22,26 @@ history of what was true.
 
 ## Commands
 
-Run from the repository root, in Git Bash. Every command below has been executed. Four of the ones
+Run from the repository root, in Git Bash. Every command below has been executed. Five of the ones
 suggested when this file was first written turned out to be wrong and were corrected, which is
 noted under them.
 
+Every path is passed null-delimited (`git ls-files -z | xargs -0`) since 2026-09-01, because a
+directory with a space in its name silently broke command 6. See the correction below.
+
 ```bash
 # 1. Source files and lines, excluding tests
-git ls-files 'src/*.js' | xargs wc -l | tail -1
+git ls-files 'src/*.js' | wc -l                          # files
+git ls-files -z 'src/*.js' | xargs -0 wc -l | tail -1    # lines
 
 # 2. Test files and lines
-git ls-files 'tests/*.js' | xargs wc -l | tail -1
+git ls-files 'tests/*.js' | wc -l
+git ls-files -z 'tests/*.js' | xargs -0 wc -l | tail -1
 
 # 3. Lines per architecture layer
 for d in src/core src/state src/ui src/i18n; do
-  printf '%s ' "$d"
-  n=$(git ls-files "$d/*.js" | wc -l)
-  if [ "$n" -eq 0 ]; then echo "0 files"; else git ls-files "$d/*.js" | xargs wc -l | tail -1; fi
+  printf '%s %s files ' "$d" "$(git ls-files "$d/*.js" | wc -l)"
+  git ls-files -z "$d/*.js" | xargs -0 wc -l | tail -1
 done
 
 # 4. Unit test count
@@ -60,10 +64,12 @@ for (const [d,x] of Object.entries(a))
   console.log(d, x.f + ' files', x.c + '/' + x.t, (100*x.c/x.t).toFixed(2) + '%');"
 
 # 6. Longest files: evidence for the 300-line rule. CSS counts, so it is in the pattern.
-git ls-files '*.js' '*.css' | xargs wc -l | sort -rn | sed -n '2,7p'
+#    Scoped and null-delimited since 2026-09-01, see the correction below.
+git ls-files -z 'src/*.js' 'src/*.css' 'tests/*.js' 'scripts/*.js' '*.config.js' \
+  | xargs -0 wc -l | sort -rn | sed -n '2,7p'
 
 # 7. Stylesheet lines. Added 2026-08-30, when src/ui/styles/ stopped being empty.
-git ls-files 'src/*.css' | xargs wc -l | sort -rn
+git ls-files -z 'src/*.css' | xargs -0 wc -l | sort -rn
 
 # 8. End-to-end test count, per browser. The suite runs three, so the total run is three times this.
 npx playwright test --list --project=chromium 2>&1 | tail -1
@@ -108,6 +114,127 @@ The lesson is worth a sentence in the report on its own: a measurement taken onc
 of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
+
+### Measured 2026-09-01, after design handoff 04 landed
+
+Every command in the section above was re-run after the handoff-04 stylesheets were copied in. This is the
+third measurement of the same day and it is the one that is current; the two below it are kept so the
+growth is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **9347 lines in 64 files** | 2026-09-01, after handoff 04 |
+| Stylesheet lines in `src/` | 7 | **2523 lines in 16 files** | 2026-09-01, after handoff 04 |
+| Test lines in `tests/` | 2 | **9046 lines in 55 files** | 2026-09-01, after handoff 04 |
+| Lines in `src/core/` | 3 | 3669 lines in 27 files, unchanged | 2026-09-01, after handoff 04 |
+| Lines in `src/state/` | 3 | 1809 lines in 10 files, unchanged | 2026-09-01, after handoff 04 |
+| Lines in `src/ui/` | 3 | **3598 lines in 25 files**, plus 2523 lines of CSS | 2026-09-01, after handoff 04 |
+| Unit tests | 4 | **39 test files, 554 tests, all passing** | 2026-09-01, after handoff 04 |
+| End-to-end tests | 8 | **71 tests in 14 files per browser, 213 across the three** | 2026-09-01, after handoff 04 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.20 % (751/757), unchanged | 2026-09-01, after handoff 04 |
+| Coverage of `src/core/`, lines | 5c | 99.59 % (491/493) over 27 files, unchanged | 2026-09-01, after handoff 04 |
+| Coverage of `src/state/`, lines | 5c | 98.48 % (260/264) over 10 files, unchanged | 2026-09-01, after handoff 04 |
+| Coverage, branches | 5a | 96.01 % (530/552), unchanged | 2026-09-01, after handoff 04 |
+| Coverage, functions | 5a | 100 % (273/273), unchanged | 2026-09-01, after handoff 04 |
+| Longest file of any kind | 6 | 300 lines, `src/state/turn-manager.js`, unchanged | 2026-09-01, after handoff 04 |
+| Longest stylesheet | 6 | **244 lines, `src/ui/styles/prompt.css`** | 2026-09-01, after handoff 04 |
+
+**Four readings of that table, and the first is the one the report needs.**
+
+1. **`src/core/` and `src/state/` did not move by a single line, and every coverage figure is identical.**
+   That is the measurement of what NFR-01's layering buys. A delivery that replaced five stylesheets,
+   rewrote the page grid, moved two regions and added three DOM attributes touched `ui/` and nothing else.
+   The layering is asserted in chapter 05 and this row is the evidence for it.
+2. **The stylesheets grew by 285 lines and the longest one moved from `tokens.css` to `prompt.css`.** This
+   is the first measurement in which the longest stylesheet is a component rather than the token file,
+   which is what a design delivery looks like in numbers: the values were already there and what arrived
+   was rules that use them.
+3. **`prompt.css` at 244 lines is 56 lines from the NFR-02 limit and is the file to watch.** Design spec 04
+   § 1 predicted this and named the seam to cut if it goes over: the 41-line `.board[data-picking]` block
+   at the end, which is board CSS living in a prompt file. Nothing has been cut, because nothing is over.
+4. **The 300-line limit bit once, in the tests.** `tests/e2e/match-flow.spec.js` reached 331 lines and was
+   split into `handover.spec.js`, which is why the e2e file count went 13 to 14 while the test count went
+   68 to 71. The three new tests are two attribute checks and the handover ordering check.
+
+### Measured 2026-09-01, after issue #30
+
+Every command in the section above was re-run. The figures below replace the "after #39" set that follows
+them, which is kept so that the growth is readable rather than asserted. Both sets are from the same day:
+#39 landed in the morning and #30 in the evening.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **9256 lines in 64 files** | 2026-09-01, after #30 |
+| Stylesheet lines in `src/` | 7 | **2238 lines in 15 files** | 2026-09-01, after #30 |
+| Test lines in `tests/` | 2 | **8795 lines in 53 files** | 2026-09-01, after #30 |
+| Lines in `src/core/` | 3 | 3669 lines in 27 files | 2026-09-01, after #30 |
+| Lines in `src/state/` | 3 | 1809 lines in 10 files, unchanged | 2026-09-01, after #30 |
+| Lines in `src/ui/` | 3 | **3515 lines in 25 files**, plus 2238 lines of CSS | 2026-09-01, after #30 |
+| Unit tests | 4 | **38 test files, 549 tests, all passing** | 2026-09-01, after #30 |
+| End-to-end tests | 8 | **68 tests in 13 files per browser, 204 across the three** | 2026-09-01, after #30 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | **99.20 % (751/757)** | 2026-09-01, after #30 |
+| Coverage of `src/core/`, lines | 5c | **99.59 % (491/493) over 27 files** | 2026-09-01, after #30 |
+| Coverage of `src/state/`, lines | 5c | 98.48 % (260/264) over 10 files, unchanged | 2026-09-01, after #30 |
+| Coverage, branches | 5a | 96.01 % (530/552), unchanged | 2026-09-01, after #30 |
+| Coverage, functions | 5a | **100 % (273/273)** | 2026-09-01, after #30 |
+| Files below 100 % lines | 5b | 5 of 37, unchanged | 2026-09-01, after #30 |
+| Longest file of any kind | 6 | **300 lines, `src/state/turn-manager.js`**, unchanged | 2026-09-01, after #30 |
+| Longest stylesheet | 6 | 223 lines, `src/ui/styles/tokens.css`, unchanged | 2026-09-01, after #30 |
+
+**Two things in that table are worth a sentence in the report, and one of them is a correction to this
+file's own method.**
+
+1. **`src/state/` did not change at all, and that is the measurement of what this issue was.** Issue #30
+   added a screen. `core/` gained 24 lines, all of them a comment and a three-line `remaining()` on the
+   stand-in dice source; `state/` gained nothing. The 235 new lines of `ui/` and the 451 new lines of
+   tests are the whole of the work. A feature that shows the player something and changes no rule should
+   look exactly like this, and it is the second sprint in a row where the layer split is visible in the
+   line counts rather than only claimed.
+2. **The coverage figure barely moved and the test count moved a lot**: 527 tests to 549, with the line
+   percentage going from 99.21 % to 99.20 %. It went **down by one hundredth of a point** while 22 tests
+   were added, because the two new lines in `core/dice-source.js` are covered and the denominator grew.
+   The honest reading is that a percentage this close to the ceiling has stopped being informative, and
+   what the 22 new tests actually bought is written up in [08-quality.md](08-quality.md): the FR-20 test
+   went from proving that every face is reachable to proving that the distribution is uniform, which is
+   what the requirement asks and what the old test did not check.
+
+#### Correction to command 6: it silently skipped every path with a space in it
+
+Command 6 was run for this measurement and printed five `No such file or directory` errors before its
+result. The cause is that `git ls-files | xargs wc -l` splits on whitespace, and
+`01-Design/Handoff/Card artwork design planning/` has spaces in its name, so every file under it was
+passed to `wc` as three or four broken fragments.
+
+**The corrected command is null-delimited**, and it also narrows the pathspec:
+
+```bash
+# 6. Longest files: evidence for the 300-line rule. CSS counts, so it is in the pattern.
+git ls-files -z 'src/*.js' 'src/*.css' 'tests/*.js' 'scripts/*.js' '*.config.js' \
+  | xargs -0 wc -l | sort -rn | sed -n '2,7p'
+```
+
+Two changes and both are needed.
+
+- **`-z` with `xargs -0`** passes paths as null-terminated records, so a space in a directory name is
+  just a character. This is the general lesson and it applies to commands 1, 2, 3 and 7 as well, which
+  are given the same treatment from now on. Those four were never wrong, because their pathspecs are all
+  under `src/` and `tests/`, where nothing has a space in its name. They are fixed anyway, because "it
+  happens to be safe today" is not a property worth relying on.
+- **The pathspec narrows to `src/`, `tests/`, `scripts/` and the config files**, and that is a
+  scope decision rather than a bug fix. Once paths with spaces are handled, the two longest tracked
+  JavaScript files in the repository are `01-Design/Handoff/Card artwork design planning/support.js` and
+  its copy under `uploads/`, at **1911 lines each**, plus a 294-line `styles.css` beside them. They are
+  a Claude Design mockup bundle: generated, vendored, not imported by the build and not written by
+  anyone on the team. NFR-02 limits "source, tests and config", and a vendored artefact is none of the
+  three, so counting it would make the headline figure describe something the rule does not govern.
+
+**The negative finding is that this was reported as "300 lines, the limit to the line" once already,
+on the morning of the same day, from a command that was quietly dropping files.** The figure happened
+to be right, because the files it dropped are out of scope anyway, and that is exactly what makes it
+worth writing down: a command that fails loudly and a command that is correct look the same in a
+results table. The five error lines went into the terminal and never into this file. Every figure in
+this chapter is only as good as somebody reading the command's stderr, which is a cheaper lesson to
+learn here than in the report.
 
 ### Measured 2026-09-01, after issue #39
 

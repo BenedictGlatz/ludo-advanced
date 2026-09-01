@@ -42,8 +42,8 @@ Screen ids from [Obligations-Book.md](../../00-Meta/Project-Management/Obligatio
 | **S2** | Match setup | Choose 2, 3 or 4 players and start |
 | **S8** | Pause | Reachable at any point in a turn: resume, or abandon back to the menu |
 | **S9** | Win | Names the winner, offers a restart with no page reload |
-| — | Handover | **New, no screen id yet.** The moment between two turns at a shared screen |
-| — | Chrome | The always-present controls: pause, and the German/English switch |
+| none | Handover | **New, no screen id yet.** The moment between two turns at a shared screen |
+| none | Chrome | The always-present controls: pause, and the German/English switch |
 
 S1, S2, S8, S9 and the handover are one component with five contents, see § 3.2. Whether that is the
 right seam is itself a question, D38.

@@ -34,9 +34,16 @@
  * have their rule, and the reaction window and its thirty-second clock are wired up, so issue #38 is
  * complete too.
  *
- * **Four regions on screen have no design specification behind them**: the prompt strip, the HUD, the
- * chrome and the overlay. Every one of them composes existing tokens only and says so in its own header,
- * and design handoff 04 is the request to replace all four. Recorded rather than hidden.
+ * ## Every region on screen now has a design behind it, except one
+ *
+ * Design handoff 04 landed on 2026-09-01 and replaced the four interim stylesheets that used to be
+ * listed here: the prompt strip, the HUD, the chrome and the overlay. **`pool.css` is the one left**, and
+ * it is the request that handoff 05 has not answered yet.
+ *
+ * The import order below is the one 04-spec § 1 asks for, and two entries in it are load-bearing rather
+ * than tidy. `prompt.css` has to come after `app.css`, because both place `.prompt` on the grid and at
+ * equal specificity the later file wins. `handover.css` has to come after `overlay.css`, because it
+ * overrides the sheet's transition to none, which is the whole of D39's concealment.
  */
 
 import $ from "jquery";
@@ -47,19 +54,21 @@ import { initI18n } from "./i18n/index.js";
 import { createMatchFlow } from "./ui/match-flow.js";
 
 import "./ui/styles/tokens.css";
-import "./ui/styles/app.css";
 import "./ui/styles/board.css";
 import "./ui/styles/board-track.css";
 import "./ui/styles/board-regions.css";
 import "./ui/styles/pawn.css";
+import "./ui/styles/refusal.css";
 import "./ui/styles/card.css";
 import "./ui/styles/card-state.css";
 import "./ui/styles/hand.css";
-import "./ui/styles/refusal.css";
-import "./ui/styles/prompt.css";
+import "./ui/styles/app.css";
 import "./ui/styles/hud.css";
 import "./ui/styles/chrome.css";
+import "./ui/styles/prompt.css";
 import "./ui/styles/overlay.css";
+import "./ui/styles/handover.css";
+import "./ui/styles/pool.css";
 
 /**
  * How long a Playwright run waits, in milliseconds, when `?fast=1` is set.

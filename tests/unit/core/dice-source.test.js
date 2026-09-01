@@ -94,6 +94,17 @@ describe("fixedDieSource, the stand-in for the Dice Card Pool (issue #37)", () =
     expect(fixedDieSource().draw()).toEqual([6]);
   });
 
+  it("answers remaining() like every other dice source, so no caller has to guard", () => {
+    const source = fixedDieSource(6);
+
+    expect(source.remaining()).toBe(1);
+
+    // Still one after a hand has been taken, because this source never runs out. That is the whole
+    // difference between the stand-in and the real pool, and it is stated rather than implied.
+    source.draw();
+    expect(source.remaining()).toBe(1);
+  });
+
   it("refuses a die with fewer than two faces", () => {
     for (const faces of [1, 0, 6.5, "6"]) {
       expect(() => fixedDieSource(faces)).toThrow(RangeError);
