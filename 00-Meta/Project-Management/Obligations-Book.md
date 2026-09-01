@@ -55,7 +55,7 @@ FR-31 asks for.
 
 | # | Screen | Responsibility | Requirements | Issue |
 | --- | --- | --- | --- | --- |
-| S1 | Main menu | Entry point. Starts a match, reaches the rules screen, reaches the audio and language settings. | FR-38 | #41 |
+| S1 | Main menu | Entry point. Starts a match. **As built on 2026-09-01 it does not reach a settings screen**: the language switch lives in the always-present chrome instead, see S11, and the rules screen still has no issue. | FR-38 | #41 |
 | S2 | Match setup | Choose the player count from 2, 3 or 4 and start the match. | FR-01 | #41 |
 | S3 | Board | The track, the four start areas, the four home columns, the home slots and every pawn, rendered from state. | FR-31, FR-02, FR-08 | #26, #28 |
 | S4 | Dice hand | The 3 drawn dice cards, the choice between them, and the roll result. | FR-18, FR-19, FR-31, FR-33 | #30, #31 |
@@ -71,7 +71,7 @@ boundary stays readable:
 | # | Screen | Responsibility | Requirements | Issue |
 | --- | --- | --- | --- | --- |
 | S10 | Rules screen | Explains dice cards, skill cards and the leaving-the-start-area rule, reachable from the menu and from a match. | FR-35 | none |
-| S11 | Audio and language settings | Mute, and the runtime switch between German and English. | FR-34, FR-41 | #40 for audio, none for language |
+| S11 | Audio and language settings | Mute, and the runtime switch between German and English. **Split on 2026-09-01.** Audio was deferred with #40, and the language half is a must-have (FR-34) with no issue of its own, so it was built as a button in the always-present chrome rather than left on a screen that no longer had a reason to exist. What is outstanding here is the mute, not the language. | FR-34, FR-41 | #40 for audio; the language half shipped inside #39 |
 
 ### 2.3 What the GUI owes the rules
 

@@ -288,8 +288,13 @@ export function endTurn(state, deps) {
  *
  * Turn order is the order of `state.seats`, not `activePlayer + 1`. In a two-player match the seats are
  * 0 and 2, so counting upward would hand the turn to seat 1, which nobody is sitting in.
+ *
+ * **Exported since issue #39** because the handover overlay names the player it is passing to, and it has
+ * to name the same one `endTurn` is about to hand the turn to. A second walk over `state.seats` in `ui/`
+ * would be a second answer to the same question, and the two would disagree the first time turn order
+ * changes.
  */
-function nextSeat(state) {
+export function nextSeat(state) {
   const index = state.seats.indexOf(state.activePlayer);
   return state.seats[(index + 1) % state.seats.length];
 }

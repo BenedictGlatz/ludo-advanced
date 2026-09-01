@@ -329,6 +329,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A German/English switch that works during a match** (FR-34, a must-have that had no issue of its
   own). One button in the top bar showing the language you would switch to. Every visible string
   changes, including the cards in hand
+- **A main menu, a match setup, a pause screen and a win screen** (issue #41, FR-01, FR-05, FR-06,
+  FR-07, FR-38). The game opens on a menu, asks how many people are playing, and can be paused at any
+  point in a turn, given up, or restarted after a win, all without reloading the page. Opening the game
+  with a player count in the address bar still starts a match straight away
+- **A handover screen between two turns.** It names the next player and waits for them to say the screen
+  has been passed on. It exists because an opponent's skill cards are secret: at one shared screen that
+  is only true if something covers the screen while it changes hands. The turn used to change by itself
+  after a third of a second
 
 ### Changed
 
@@ -503,6 +511,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `roll >= dieMax`, and card-driven backward movement stops at the first track field
 
 ### Fixed
+
+- **A restart no longer eats the dice pool** (issue #41). A match that ends in the middle of a turn never
+  gives its three drawn cards back, so a second match on the same pool started three cards short, and the
+  fourth would have failed outright. Every match now gets its own pool, which is what the pool's own
+  documentation had been claiming all along
+- **Quitting to the main menu now actually ends the match.** The abandoned game's board stayed in the
+  page behind the menu. Nobody could see it, because the menu covers the screen, but it was still there
+- **The menu, the pause screen and the handover stopped responding to clicks from the second match
+  onward.** They still looked right, which is what made it hard to spot: rebuilding the page for a new
+  match was silently unbinding their buttons
 
 - **Every page was 16 px taller than the window**, so the layout FR-31 requires to fit on one screen always had a
   scrollbar. Design specification 03's `app.css` had dropped the `body { margin: 0 }` that the placeholder it

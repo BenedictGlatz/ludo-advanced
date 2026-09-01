@@ -25,6 +25,19 @@
  */
 
 /**
+ * How long a refusal stays on screen before the turn passes.
+ *
+ * D9 of the design spec: the strip "stays until the player's next action, and at minimum for 4 seconds".
+ * With the pawn click as the only control there was no next action to wait for, so the minimum was the
+ * whole rule. It is a number in a JavaScript file because `tokens.css` has no token for it, which is
+ * worth raising in the next handoff: it is a design decision living outside the design.
+ *
+ * It lives here rather than in `game-loop.js` since issue #39, because this module is where the game's
+ * named waits belong and it was the only thing left in the loop that was a duration rather than a step.
+ */
+export const REFUSAL_MIN_MS = 4000;
+
+/**
  * A set of named timers.
  *
  * `window` is read from the caller's scope rather than injected, which is the same choice `game-loop.js`

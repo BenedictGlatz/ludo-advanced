@@ -192,7 +192,7 @@ to supply a die in Sprint 1 avoids that.
 | #36 Core Game Engine & Board | FR-01 – FR-15 |
 | #37 Enhanced Dice Pool System | FR-16 – FR-21 |
 | #38 Skill Cards Mechanics | FR-22 – FR-30 |
-| #39 UI / UX, Audio & Game State | FR-31 – FR-41 |
+| #39 UI / UX & Game State | FR-31 – FR-38 (FR-39 to FR-41 deferred with #40 on 2026-09-01) |
 | #42 – #46 (extended) | FR-42 – FR-45 |
 | No epic: applies to all work | NFR-01 – NFR-12 |
 

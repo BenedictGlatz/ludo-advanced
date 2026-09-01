@@ -109,6 +109,46 @@ of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
 
+### Measured 2026-09-01, after issue #39
+
+Every command in the section above was re-run. The figures below replace the 2026-08-31 set that follows
+them, which is kept so that the growth is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **8996 lines in 61 files** | 2026-09-01, after #39 |
+| Stylesheet lines in `src/` | 7 | **2136 lines in 14 files** | 2026-09-01, after #39 |
+| Test lines in `tests/` | 2 | **8291 lines in 50 files** | 2026-09-01, after #39 |
+| Lines in `src/core/` | 3 | 3645 lines in 27 files | 2026-09-01, after #39 |
+| Lines in `src/state/` | 3 | 1809 lines in 10 files | 2026-09-01, after #39 |
+| Lines in `src/ui/` | 3 | **3280 lines in 22 files**, plus 2136 lines of CSS | 2026-09-01, after #39 |
+| Generated card artwork in `src/ui/art/` | 3 | 582 lines in 36 `.svg` files | 2026-09-01, after #39 |
+| Unit tests | 4 | **36 test files, 527 tests, all passing** | 2026-09-01, after #39 |
+| End-to-end tests | 8 | **59 tests in 12 files per browser, 177 across the three** | 2026-09-01, after #39 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | **99.21 % (750/756)** | 2026-09-01, after #39 |
+| Coverage of `src/core/`, lines | 5c | **99.59 % (490/492) over 27 files** | 2026-09-01, after #39 |
+| Coverage of `src/state/`, lines | 5c | **98.48 % (260/264) over 10 files** | 2026-09-01, after #39 |
+| Coverage, branches | 5a | 96.01 % (530/552) | 2026-09-01, after #39 |
+| Coverage, functions | 5a | **100 % (272/272)** | 2026-09-01, after #39 |
+| Files below 100 % lines | 5b | 5 of 37, unchanged: `cards/context.js` 90, `intents-cards.js` 96.22, `skill-play.js` 97.05, `intents.js` 97.61, `move-rules.js` 97.91 | 2026-09-01, after #39 |
+| Longest file of any kind | 6 | **300 lines, `src/state/turn-manager.js`** | 2026-09-01, after #39 |
+| Longest source file | 6 | 300 lines, `src/state/turn-manager.js` | 2026-09-01, after #39 |
+| Longest stylesheet | 6 | 223 lines, `src/ui/styles/tokens.css` | 2026-09-01, after #39 |
+
+**Three things in that table are worth a sentence each in the report.**
+
+1. **`src/ui/` grew by 60 % and `src/core/` by 1 %.** Issue #39 added no rules: it added a HUD, five
+   overlay screens, a chrome row and the card artwork. `pawnProgress` and `PLAYER_COUNTS` are the whole of
+   the `core/` change, 37 lines. That split is the layering doing exactly what Chapter 05 claims for it.
+2. **The longest file in the repository is now exactly 300 lines**, which is NFR-02's limit to the line.
+   `turn-manager.js` has been at 295 since issue #38 and gained five when `nextSeat` was exported and
+   documented. It is not a comfortable margin, and the next change to that file has to split it.
+3. **Coverage went up while `ui/` grew by 1232 lines**, from 99.19 % to 99.21 %, and that is not an
+   achievement: `ui/` is outside the measured set by design, so a sprint spent almost entirely in `ui/`
+   cannot move the number much in either direction. The figure is honest and it is also close to
+   meaningless for this particular sprint, which is the sort of thing a coverage number needs an
+   interpretation for. What actually covers this sprint's work is the 17 new end-to-end tests.
+
 ### Measured 2026-08-31, after issues #37 and #38
 
 Every command in the section above was re-run. The figures below replace the 2026-08-30 set that follows

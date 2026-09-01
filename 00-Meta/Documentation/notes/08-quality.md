@@ -787,6 +787,47 @@ at 1440 by 900 today and not after the next change would be caught only by
 `skill-hand.spec.js`'s no-scroll assertion. That assertion is real and it did catch the HUD's first
 version, which made the page 935 px tall.
 
+### The flow spec, and the two bugs it found before a person could: 2026-09-01, issue #41
+
+`tests/e2e/match-flow.spec.js`, eight cases over FR-01, FR-05, FR-06, FR-07 and FR-38.
+
+- **It asserts the flow as a flow**, because FR-38's acceptance criterion is one sentence about a
+  sequence: menu to match to pause to match to win to menu, without a reload. A pause screen that opens
+  and cannot be closed passes every per-screen check there is.
+- **"Without a reload" is tested rather than assumed.** A probe is written onto `window` before the match
+  and read back after the restart; a reload would wipe it. Every other assertion in the file would still
+  pass if the game secretly reloaded.
+- **One case runs without `?fast=1`**, the handover, because the whole point of that screen is that it
+  waits. It plays the turn by hand, checks the turn number does not move for 1.2 seconds, then presses
+  Ready and checks that it does.
+- **The restart case ends by counting three dice cards**, which is the cheapest observable form of "the
+  pool came back whole" after the leak described in Chapter 06.
+
+**Two defects were found by writing it, and both were invisible:**
+
+1. Every overlay and chrome button went dead from the second match onward, because `.empty()` unbinds
+   handlers on the children it removes. Everything still rendered, so the menu and the handover looked
+   correct and simply did nothing.
+2. Quitting to the menu left the abandoned match's board mounted behind the menu's opaque sheet, so
+   eight pawns were still in the document while the player was on the main menu.
+
+Neither is visible in a screenshot, and neither would have been found by playing the game once. That is
+the argument for an end-to-end test of a **flow** rather than of a screen, and it is worth a paragraph in
+the report.
+
+**What the ten older specs cost:** one case, and it is the honest kind. `?players=` skips the menu,
+which is a deliberate affordance in `main.js` and is documented there as load-bearing, and `?fast=1`
+passes the handover. Both are the same compromise the suite already made for the thirty-second reaction
+window: the shape of the turn is identical either way and only the waiting is gone.
+
+The exception is `no-legal-move.spec.js`, which deliberately runs **without** `?fast=1` because D9's
+four-second minimum is what it measures. Its last case asserted that the active player changes by itself
+once the four seconds are up, and with the gate on it does not: the handover screen opens instead. The
+requirement did not change and neither did the order, the reason is still readable for four seconds
+before anything covers the board, so the case now waits for that screen and presses Ready. **The point
+worth recording is that it failed rather than passing quietly**, which is what a timing assertion written
+against a behaviour rather than against a duration buys.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

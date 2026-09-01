@@ -129,6 +129,16 @@ export function bindPromptEvents($prompt, handlers) {
  * `[data-pickable]` means "this is a legal answer to the question the prompt is asking right now". A pawn
  * can carry either, both, or neither, and the two are written by different modules.
  */
+export function bindPickEvents($board, handlers) {
+  $board.on("click", '.pawn[data-pickable="true"]', function onClick() {
+    handlers.onPawnPicked(Number($(this).attr("data-player")), pawnOf(this));
+  });
+
+  $board.on("click", '.square--track[data-pickable="true"]', function onClick() {
+    handlers.onSquarePicked(Number($(this).attr("data-square")));
+  });
+}
+
 /**
  * Bind the always-present controls: the language switch and the pause button. Issue #39.
  *
@@ -144,12 +154,17 @@ export function bindChromeEvents($chrome, handlers) {
   });
 }
 
-export function bindPickEvents($board, handlers) {
-  $board.on("click", '.pawn[data-pickable="true"]', function onClick() {
-    handlers.onPawnPicked(Number($(this).attr("data-player")), pawnOf(this));
-  });
-
-  $board.on("click", '.square--track[data-pickable="true"]', function onClick() {
-    handlers.onSquarePicked(Number($(this).attr("data-square")));
+/**
+ * Bind the overlay's buttons. Issues #39 and #41.
+ *
+ * The same shape as the prompt strip and the chrome: one handler for every button in the region, told
+ * apart by `data-action`, and no `keydown` of its own because these are real `<button>` elements.
+ *
+ * `handlers.onOverlayAction(action, value)` gets the action and, for the match-setup buttons, the player
+ * count they stand for.
+ */
+export function bindOverlayEvents($overlay, handlers) {
+  $overlay.on("click", "[data-action]", function onClick() {
+    handlers.onOverlayAction($(this).attr("data-action"), $(this).attr("data-count"));
   });
 }

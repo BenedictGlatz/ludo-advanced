@@ -37,7 +37,7 @@ issues and every fine-grained implementation task, #26–#35, #40, #41) carry no
 
 | Label | Issues |
 | --- | --- |
-| `must have` | #36 Core Game Engine & Board, #37 Enhanced Dice Pool System, #38 Skill Cards Mechanics, #39 UI / UX, Audio & Game State |
+| `must have` | #36 Core Game Engine & Board, #37 Enhanced Dice Pool System, #38 Skill Cards Mechanics, #39 UI / UX & Game State |
 | `should have` | #42 Online Multiplayer & Lobby System |
 | `could have` | #43 LLM-Powered Bot API Integration, #44 Expanded Skill Card Set, #45 Trap Card System & Tile Trigger Logic, #46 Classic vs. Custom Game Modes (Rule Toggles) |
 
@@ -50,7 +50,7 @@ from titles:
 | #36 Core Game Engine & Board | #26, #27, #28, #29 |
 | #37 Enhanced Dice Pool System | #30, #31 |
 | #38 Skill Cards Mechanics | #32, #33, #34 |
-| #39 UI / UX, Audio & Game State | #35, #40, #41 |
+| #39 UI / UX & Game State | #35, #41 (and #40, deferred on 2026-09-01, see below) |
 
 That accounts for every unlabelled implementation issue: **the MoSCoW labels sit at epic level, and
 the sub-issues inherit priority through the link.** So the 20 % label rate is a deliberate structure,
@@ -246,6 +246,30 @@ argument:
 - The analysis carries its own *Prerequisites for measurability* section listing what has to exist
   before the M criteria can be read at all: acceptance criteria in #36–#39, a written Definition of
   Done, a runnable test setup, and board `Status`/`Sprint` values.
+
+### Audio was dropped out of epic #39, and the language switch was rescued from it: 2026-09-01
+
+The epic was retitled on GitHub from *UI / UX, Audio & Game State* to *UI / UX & Game State* on
+2026-09-01. **No document recorded it**: nine places across six files still carried the old title, the
+effort estimation still counted audio's three points as must-have work, and nothing anywhere said why.
+This section is that record.
+
+- **What moved:** issue #40 (Audio Manager & SFX Integration, 3 points) left the epic. The epic's
+  estimate falls from 10 points to 7 and the must-have class in
+  [Effort-Estimation.md](../../Project-Management/Effort-Estimation.md) from 74 to 71. The implementation
+  total is unchanged at 110, because the work was moved and not deleted.
+- **It costs no must-have requirement.** FR-39 is `should`, FR-40 is `could`, FR-41 is `should`, and
+  FG-14 to FG-16, the epic's three must-have goals, contain no audio at all. This is the first time the
+  MoSCoW drop order in section 3.2 of the requirements specification was used rather than described.
+- **Four documents had already predicted it.** The sprint log had audio surviving "only if assets exist",
+  the project plan listed it under "holds if the visual design exists by then", and the feasibility study
+  and the AI-engineering note both named "the audio and polish scope of #39" as the likely cut. The
+  estimate's own line said "no asset exists yet; the estimate covers wiring, not sound design".
+- **The near miss is the part worth carrying into the report.** S11 in the obligations book is one screen
+  called *Audio and language settings*. Cutting #40 would have taken the language switch with it, and
+  **FR-34 is a `must have` with no issue of its own**, so nothing on the board would have shown that a
+  must-have requirement had gone. It was built into the always-present chrome instead, where it does not
+  need a settings screen to exist. Chapter 04 has the how.
 
 ## Decisions
 

@@ -2469,6 +2469,81 @@ to get wrong later.
   per cent of that increase is given back. The full-size reference card is untouched.
 - → Ch. 04
 
+### 2026-09-01: The turn is handed over by a person, not by a timer
+
+- **Chosen:** at the end of a turn the game shows an overlay naming the next player, and waits for a
+  Ready button. The 320 ms timer that used to pass the turn now opens that screen instead.
+- **Why:** it follows from D33. Once an opponent's skill cards are secret and only the count is public,
+  secrecy at one shared screen is whatever covers the screen while it changes hands, and the rail used to
+  flip from one player's face-up cards to the next player's with nothing in between. It also answers the
+  Product Owner's original question a second time: there is now a moment that says, in words, that it is
+  your turn.
+- **The wait still comes first.** A move has to finish animating and a refusal has to be readable (D9)
+  **before** anything covers the board, so the overlay opens on the same timer rather than replacing it.
+- **Rejected: carrying on automatically and just labelling the turn better.** Smoothest to play, and it
+  makes the secret hand a fiction.
+- **Rejected: leaving the hand face down until the player clicks it.** No overlay and one extra click per
+  turn, and it protects the cards without protecting the board, the roll or the prompt.
+- **The cost is named:** every turn now needs a click that it did not. `?fast=1` skips the gate so the
+  end-to-end suite is not ten times slower, and one spec runs without the flag to prove the gate works.
+- → Ch. 04
+
+### 2026-09-01: A dice pool belongs to one match, and the caller is what enforces it
+
+- **Chosen:** `match-flow.js` builds a fresh `createDicePool()` for every match, new or restarted. The
+  RNG is **not** reset, so a restart plays a different match.
+- **Why:** `createDicePool`'s own header has claimed since issue #30 that a pool is created once per
+  match, and nothing enforced it because until the restart button there was only ever one match. A match
+  that ends mid-turn never returns its three drawn cards, so a restart on the same pool starts seventeen
+  deep and `draw()` throws outright after four of them.
+- **Rejected: making `restartMatch` return the outstanding hand first.** It keeps one pool alive across
+  matches, which contradicts the pool's own documented contract rather than satisfying it.
+- **Rejected: making `restartMatch` build its own pool.** The state it returns and the `deps` the caller
+  keeps dispatching with have to come from the same pool, and only the caller holds both.
+- → Ch. 06
+
+### 2026-09-01: `game-loop.js` was split three ways rather than compressed
+
+- **Chosen:** `render.js` (what the page looks like), `turn-controls.js` (what a click means) and
+  `game-loop.js` (what happens when nobody is clicking). The chrome moved to `match-flow.js` and
+  `REFUSAL_MIN_MS` to `timers.js`. `match-flow.js` then hit the same limit and `page.js` came out of it.
+- **Why:** the file passed NFR-02's 300 lines when the handover gate and the pause landed, and `CLAUDE.md`
+  says to split along a real seam rather than compress. Every seam here already existed:
+  `turn-controls.js` is the symmetric half of `card-controls.js`, which has done the same job for card
+  clicks since issue #34, and the chrome's only button opens a screen the loop does not own.
+- **Rejected: shortening the comments.** It is the one thing `CLAUDE.md` names explicitly as not a way to
+  meet the limit, and the comments in that file are where the turn loop's reasoning lives.
+- **Rejected: raising the limit.** It is NFR-02 and it is enforced by ESLint on purpose.
+- → Ch. 04
+
+### 2026-09-01: Audio left epic #39, and the language switch did not go with it
+
+- **Chosen:** issue #40 (Audio Manager & SFX Integration, 3 points) is deferred out of epic #39. The epic
+  is retitled from *UI / UX, Audio & Game State* to *UI / UX & Game State*, its estimate falls from 10
+  points to 7, and the must-have class in the effort estimation falls from 74 to 71. **FR-34, the runtime
+  language switch, was built anyway.**
+- **Why:** the estimate's own note had said it for two weeks: "no asset exists yet; the estimate covers
+  wiring, not sound design", and no asset was ever budgeted. The sprint log already listed audio as
+  surviving "only if assets exist", the project plan listed it under "holds if the visual design exists
+  by then", and both the feasibility study and the AI-engineering note had named it in advance as the
+  likely cut. **No audio requirement is a must-have** (FR-39 `should`, FR-40 `could`, FR-41 `should`) and
+  FG-14 to FG-16, the epic's must-have goals, contain no audio at all. So deferring it costs no must-have
+  requirement, which is exactly the condition the MoSCoW drop order was written for.
+- **The trap, and it was nearly walked into:** S11 in the obligations book is *"Audio and language
+  settings"*, one screen for both. Cutting #40 would have taken the language switch with it, and FR-34 is
+  a **must have** with no issue of its own, which means nothing on the board would have said it had gone.
+  So the switch was built into the always-present chrome instead, where it does not depend on a settings
+  screen existing at all.
+- **Rejected: cutting the language switch too.** Consistent, and it silently drops a must-have
+  requirement behind a `should have` one.
+- **Rejected: keeping audio in the epic and letting it slip.** It is the same outcome with no record, and
+  the sprint log would have had to explain an epic that closed with an open child.
+- **What made this a decision block at all:** the retitling had already happened on GitHub earlier the
+  same day and **no document recorded it.** Nine places across six files still carried the old title, the
+  effort figures still counted the three points as must-have, and nothing anywhere said why. That gap is
+  the thing worth carrying into the report: a board edit is not a decision until it is written down.
+- → Ch. 01, Ch. 02
+
 ---
 
 ## Challenges

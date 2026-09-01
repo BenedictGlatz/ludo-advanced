@@ -9,6 +9,10 @@
  * Seed 1 with four players has no legal move on turn 1, so the refusal is the first thing the board
  * ever shows. This spec runs with the real pauses rather than with `?fast=1`, because the four-second
  * minimum of D9 is part of what is being tested.
+ *
+ * **That also means the handover gate is on here**, unlike in most of the suite. Since issue #39 a turn
+ * ends in a screen that names the next player and waits for a button, so the case that measures the four
+ * seconds is also the case that has to press it.
  */
 
 import { expect, test } from "@playwright/test";
@@ -73,7 +77,15 @@ test.describe("a turn with no legal move", () => {
     await expect(message).toBeVisible();
     await expect(board).toHaveAttribute("data-active-player", String(activePlayer));
 
-    // And the turn does move on afterwards rather than sticking.
+    // Since issue #39 "hands over" means the handover screen rather than the turn changing by itself.
+    // The requirement is unchanged and so is the order it puts things in: the reason is readable for
+    // D9's four seconds **first**, and only then does anything cover the board. What changed is that a
+    // person now says the screen has been passed on, which is what makes a secret hand secret at one
+    // shared screen (decision D33).
+    const overlay = page.locator(".overlay");
+    await expect(overlay).toHaveAttribute("data-screen", "handover", { timeout: 15_000 });
+
+    await overlay.locator('[data-action="ready"]').click();
     await expect(board).not.toHaveAttribute("data-active-player", String(activePlayer), {
       timeout: 15_000,
     });

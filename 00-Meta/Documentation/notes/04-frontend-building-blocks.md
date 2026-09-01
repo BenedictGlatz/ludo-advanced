@@ -986,6 +986,68 @@ and keep the art, and they keep doing that at 0.70 and 0.62. What the smaller bo
 size, and spec 01 records that `--board-size` had been **raised** on 2026-08-29 to make the fields
 larger. Nine per cent of that is given back here.
 
+### The five screens, and the game becoming a game: 2026-09-01, issues #39 and #41
+
+Screens S1, S2, S8, S9 and a new one with no screen id: the handover.
+
+- **One overlay component, five contents.** The menu, the setup, the pause, the win and the handover are
+  the same thing from the player's side: the game has stopped and is asking you something, and here are
+  your buttons. `overlay-view.js` renders a description and calls no `t()`; `overlay-screens.js` builds
+  the description. Same split as `card-view.js` and the two hand views, and for the same reason: the
+  component stays one component while the number of screens grows. Whether it is the right seam is D38.
+- **`match-flow.js` owns which screen is up, and it never enters the game state.** The rules know nothing
+  about a pause and `createGameState` has no field for one. This is the same reasoning `skill-hand-view.js`
+  already records for a half-finished card play.
+- **Starting a match rebuilds the page.** The board's markup depends on the player count, so a
+  two-player match has eight pawns where a four-player one has sixteen. Old elements go away with their
+  jQuery handlers attached to them, which is what keeps handlers from piling up over a session of
+  restarts.
+- **The chrome and the overlay survive the rebuild, and one line makes that work.** `.empty()`
+  deliberately unbinds every handler on the children it removes, so from the second match onward the
+  menu and the handover rendered correctly and simply stopped responding to clicks. `.detach()` first is
+  the fix. Worth carrying into the report: the symptom was silent, and it was a Playwright walk of the
+  flow that found it rather than anything visible.
+- **A test found a second one.** Quitting to the menu left the abandoned match mounted behind the menu's
+  opaque sheet, so `.board .pawn` still resolved to eight elements while the player was on the main menu.
+  Invisible, and wrong.
+
+#### The handover, which is what makes a secret hand secret
+
+Before this the rail flipped from one player's face-up cards to the next player's after a 320 ms timer,
+with nothing in between. Once the Product Owner made an opponent's hand secret and only its count public
+(decision D33), that stopped being acceptable: at one shared screen, secrecy is whatever covers the
+screen while it changes hands.
+
+- **The wait comes first, then the overlay.** The pause after a move is still read out of
+  `--motion-capture` and a refusal still gets D9's four seconds, because a move has to finish animating
+  and a refusal has to be readable **before** anything covers the board. The handover screen opens on
+  the same timer that used to pass the turn.
+- **`nextSeat` was exported from the turn manager** rather than the overlay walking `state.seats` a
+  second time. Two answers to "who is next" would disagree the first time turn order changes.
+- **`?fast=1` passes the handover without waiting**, which is the affordance that kept all ten older
+  end-to-end specs running unchanged. It is the same compromise the flag already makes for the
+  thirty-second reaction window, and `match-flow.spec.js` has one case that runs **without** it and
+  asserts the gate.
+
+#### `game-loop.js` was split three ways, and the seams were already there
+
+It passed 300 lines (NFR-02) when the handover gate and the pause landed. Three files came out of it,
+and none of them is a slice taken to make a number:
+
+| File | Answers |
+| --- | --- |
+| `render.js` | What does the page look like for this state |
+| `turn-controls.js` | What does a click on a dice card or a pawn mean |
+| `game-loop.js` | What does the game do when nobody is clicking |
+
+`turn-controls.js` in particular is the symmetric half of `card-controls.js`, which has done exactly that
+job for card clicks since issue #34. The chrome moved out too, to `match-flow.js`, because the pause
+button opens a screen the loop does not own. `REFUSAL_MIN_MS` went to `timers.js`, which is where the
+game's named waits live and was the only thing left in the loop that was a duration rather than a step.
+
+`match-flow.js` then hit the same limit and `page.js` came out of it on the same principle: what the page
+consists of, against which screen the session is on.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

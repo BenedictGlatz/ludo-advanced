@@ -1,0 +1,185 @@
+/* =============================================================================
+   overlay.css -- screens S1, S2, S8, S9 and the handover, as one component.
+
+   !! THIS FILE WAS NOT WRITTEN BY CLAUDE DESIGN AND IS NOT A DELIVERED SPEC !!
+
+   Fourth file in this state, after prompt.css, hud.css and chrome.css, and the
+   same rule from CLAUDE.md each time: Claude Code does not invent design rules
+   and asks when a specification is missing. Handoff 01 excluded the menus,
+   handoff 02 said they were deliberately not being asked for, and handoff 03
+   listed them under out of scope. So they have never been designed, and the
+   game has no way to start, pause, restart or finish without them.
+
+   Nothing here is invented. Every colour, space, radius, shadow, font, size
+   and duration is a token out of tokens.css, and every shape is one already on
+   the page: the panel chrome from app.css, the button from prompt.css, and the
+   seat colours from spec 01's D1.
+
+   What is owed by design handoff 04, and is deliberately not guessed at:
+
+   - D38: whether five screens really are one component, and what the panel
+     looks like. The board stays visible behind a dimmed sheet here, which is
+     the least opinionated answer, and it is the wrong one for at least the
+     menu, where there is no board worth showing.
+   - D39: the handover. It has one job the others do not, which is to actually
+     conceal the skill hand, so its sheet is opaque rather than dimmed. How it
+     enters and leaves, and what the reduced-motion version is, are open. A
+     brief flash conceals nothing, so this is the one animation that cannot
+     simply be shortened.
+   - D40: the win screen. This is D18 from handoff 02, still unanswered: the
+     win message had been borrowing the orange refusal strip. It has its own
+     screen now and the strip still says it too, which is one message in two
+     places and wants deciding.
+
+   Recorded in 00-Meta/Documentation/notes/04-frontend-building-blocks.md.
+   ========================================================================== */
+
+/* --- The sheet. Fixed rather than absolute, because it covers the viewport
+       and not the .app grid cell it happens to sit in. --- */
+
+.overlay {
+  position: fixed;
+  z-index: var(--layer-refusal);
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  inset: 0;
+  background: var(--color-app-bg);
+}
+
+/* `display: grid` above beats the `hidden` attribute's own `display: none`, and
+   a closed overlay that keeps its box swallows every click on the board behind
+   it. This rule is what makes `hidden` mean hidden, and it is a correction
+   rather than a design choice.
+
+   It also means the overlay does not fade: it goes from display: none to
+   display: grid in one frame, and a transition cannot run across that. How an
+   overlay should arrive and leave is D38 and D39, and the handover's is the one
+   that matters, because a screen that flashes conceals nothing. */
+.overlay[hidden] {
+  display: none;
+}
+
+/* Pause and win happen over a board the player still wants to read, so the
+   sheet is only a veil. Menu and setup have no board worth showing and the
+   handover must not let the next player read the rail, so both stay opaque.
+
+   72% and not 88%: at 88% the board was still there but not readable, which is
+   the worst of both. How opaque a veil should be is D38's to settle. */
+.overlay[data-screen="pause"],
+.overlay[data-screen="win"] {
+  background: color-mix(in srgb, var(--color-app-bg) 72%, transparent);
+}
+
+/* --- The panel. Same chrome as every other surface in the game. --- */
+
+.overlay__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: center;
+  box-sizing: border-box;
+  width: min(28rem, 100%);
+  padding: var(--space-6);
+  text-align: center;
+  background: var(--color-panel);
+  border: var(--border-card) solid var(--color-ink);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+/* The win and handover panels are about one player, so they take that seat's
+   colour on the top edge. --color-p0 to --color-p3 are spec 01's D1. */
+.overlay[data-player] .overlay__panel {
+  border-top-width: var(--space-2);
+}
+
+.overlay[data-player="0"] .overlay__panel {
+  border-top-color: var(--color-p0);
+}
+.overlay[data-player="1"] .overlay__panel {
+  border-top-color: var(--color-p1);
+}
+.overlay[data-player="2"] .overlay__panel {
+  border-top-color: var(--color-p2);
+}
+.overlay[data-player="3"] .overlay__panel {
+  border-top-color: var(--color-p3);
+}
+
+.overlay__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-strong);
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+}
+
+/* Absent on a screen with nothing to add, and `:empty` is what keeps the gap
+   from doubling when it is. */
+.overlay__text {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  color: var(--color-text-muted);
+}
+
+.overlay__text:empty {
+  display: none;
+}
+
+/* --- The buttons. Two on most screens, three on the setup screen. --- */
+
+.overlay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+.overlay__button {
+  padding: var(--space-2) var(--space-5);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-strong);
+  color: var(--color-text);
+  cursor: pointer;
+  background: var(--color-surface);
+  border: var(--border-card) solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-card);
+  transition:
+    box-shadow var(--motion-feedback) var(--ease-ui),
+    translate var(--motion-feedback) var(--ease-ui);
+}
+
+/* At most one per screen: the one that carries the flow forward. */
+.overlay__button[data-variant="primary"] {
+  color: var(--card-band-text);
+  background: var(--color-hint);
+}
+
+.overlay__button:hover {
+  translate: 0 calc(var(--space-1) * -1);
+}
+
+.overlay__button:active {
+  translate: 0 0;
+  box-shadow: none;
+}
+
+.overlay__button:focus-visible {
+  outline: var(--border-thick) solid var(--color-focus);
+  outline-offset: var(--space-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay__button {
+    transition: none;
+  }
+
+  .overlay__button:hover {
+    translate: none;
+  }
+}
