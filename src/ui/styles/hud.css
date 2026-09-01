@@ -1,0 +1,167 @@
+/* =============================================================================
+   hud.css -- screen S7: who is playing, whose turn it is, how far each player
+   has got.
+
+   !! THIS FILE WAS NOT WRITTEN BY CLAUDE DESIGN AND IS NOT A DELIVERED SPEC !!
+
+   Same situation as prompt.css, and the same rule from CLAUDE.md: Claude Code
+   does not invent design rules and asks when a specification is missing. One is
+   missing. Design handoff 01 said the HUD was "not yours to design yet" and
+   handoff 03 listed it under what is deliberately not being asked. So the HUD
+   has never been designed, and on 2026-09-01 the Product Owner opened the
+   running build and asked how you can tell whose turn it is. There was no
+   answer on screen, in text, anywhere.
+
+   This file therefore invents nothing. Every colour, space, radius, shadow,
+   font, size and duration below is a token out of tokens.css, and every shape
+   is one already on the page: the panel chrome from app.css, the seat colours
+   from spec 01's D1, and the lifted ring app.css already uses for "this region
+   is asking you something".
+
+   What is owed by design handoff 04, and is deliberately not guessed at:
+
+   - D35: where the HUD sits, and whether --board-size changes again to make
+     room. It is a row above the board here because that is the only place a
+     new region fits in the existing grid without touching the rail.
+   - D36: what "on turn" looks like, and which of the four cues for it survive.
+     There are now four: the ink halo on the seat's yard, the dimmed pawns of
+     everyone else, the lifted hand plate, and this. Four cues for one fact is
+     noise, and the Product Owner's question means one was not enough.
+   - D36 again: the seat row is marked by the lifted ring only, because the
+     words "am Zug" did not fit next to four numbers. The sentence version of
+     it lives in the chrome row instead; hud-view.js `turnLine` has the
+     measurement that forced that.
+   - D37: sixteen numbers. Four counts times four seats, redrawn every turn.
+     They are "4 Start 0 Strecke 0 Ziel 1 Karten" on one line here, which is
+     the least opinionated thing that fits the height budget below.
+     --font-num exists in tokens.css, was unused, and spec 01 says it exists
+     for exactly this, so the values use it.
+
+   Recorded in 00-Meta/Documentation/notes/04-frontend-building-blocks.md.
+   ========================================================================== */
+
+/* --- The region. One row of seats, the same panel chrome as the two hand
+       plates in app.css so it reads as part of the table. --- */
+
+.hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  padding: var(--space-3);
+  background: var(--color-panel);
+  border: var(--border-card) solid var(--color-ink);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+/* --- One seat. The left border is the seat's own colour, which is the only
+       way a row is tied to the pieces it describes. --- */
+
+/* One row per seat and not a stacked block, and the reason is a measurement
+   rather than a preference: stacked, the HUD made the page 935 px tall at 1440
+   by 900 and FR-31 forbids the scrollbar. Flat, the whole region is one line of
+   text high. This is the arithmetic D35 needs and it is why --board-size did
+   not have to change. */
+.hud__seat {
+  display: flex;
+  flex: 1 1 0;
+  gap: var(--space-3);
+  align-items: center;
+  min-width: 0;
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-surface);
+  border: var(--border-hair) solid var(--color-square-edge);
+  border-left: var(--border-thick) solid var(--color-ink);
+  border-radius: var(--radius-md);
+  transition:
+    box-shadow var(--motion-feedback) var(--ease-ui),
+    background-color var(--motion-feedback) var(--ease-ui);
+}
+
+.hud__seat[data-player="0"] {
+  border-left-color: var(--color-p0);
+}
+.hud__seat[data-player="1"] {
+  border-left-color: var(--color-p1);
+}
+.hud__seat[data-player="2"] {
+  border-left-color: var(--color-p2);
+}
+.hud__seat[data-player="3"] {
+  border-left-color: var(--color-p3);
+}
+
+/* The active seat is lifted the same way app.css lifts the hand plate that is
+   asking for a decision, so the two agree rather than competing. */
+.hud__seat[data-on-turn="true"] {
+  box-shadow:
+    0 0 0 var(--border-card) var(--color-ink),
+    var(--shadow-lift);
+}
+
+/* A player who is home has nothing left to do, and --color-dormant-soft is
+   already what app.css uses for a region that is not asking anything. */
+.hud__seat[data-finished="true"] {
+  background: var(--color-dormant-soft);
+}
+
+.hud__name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-strong);
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- The four numbers. --- */
+
+.hud__counts {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-2);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.hud__count {
+  display: flex;
+  gap: var(--space-1);
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.hud__value {
+  font-family: var(--font-num);
+  font-size: var(--text-md);
+  font-weight: var(--weight-strong);
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+}
+
+.hud__label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-regular);
+  color: var(--color-text-muted);
+}
+
+/* The hand size is the one number that is not on the board, and it is public
+   only because of decision D33. --color-skill is the token spec 03 gave the
+   skill card family, so the number is tied to what it counts. */
+.hud__count[data-kind="cards"] .hud__value {
+  color: var(--color-skill);
+}
+
+/* --- Below the design resolution the seats stack rather than shrink, matching
+       what app.css already does to the rail at the same breakpoint. --- */
+
+@media (max-width: 84rem), (orientation: portrait) {
+  .hud__seat {
+    flex: 1 1 14rem;
+  }
+}

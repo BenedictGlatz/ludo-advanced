@@ -2383,6 +2383,92 @@ to get wrong later.
   not become twenty-four.
 - → Ch. 04, Ch. 06
 
+### 2026-09-01: The turn sentence lives in the top bar, because the HUD had no width for it
+
+- **Chosen:** one sentence, "Spieler 1 (Rot) ist am Zug", rendered in the always-present chrome row. The
+  HUD's seat rows carry `data-on-turn` and the **short** name, "Spieler 2", with the colour shown as the
+  row's left edge.
+- **Why:** measured at 1440 by 900, a four-seat HUD row is 332 px wide. The full label needs 107, the
+  four numbers with their words need 210, and an "am Zug" chip needs 55. It did not fit, and what it did
+  instead was wrap onto a second line, which made the page 935 px tall and handed FR-31 a scrollbar, and
+  truncate the names to "Spi...". The chrome row had roughly 1200 px going spare. A sentence is also
+  what `turn.prompt` was written as, and it had been sitting unused in both locale files since the i18n
+  commit.
+- **Rejected: shrinking `--board-size`.** Spec 01 § 6 names it as the number to check first when a new
+  region lands, so it was the sanctioned move and it was still the wrong one here: shrinking the board to
+  make room for a HUD that Claude Code designed itself is a trade the designer should make. The
+  measurements are in handoff 04 so D35 and D37 can make it with real numbers. The token is unchanged.
+- **Rejected: dropping the words next to the four numbers.** It buys the width and leaves four bare
+  numbers whose meaning nobody can recover.
+- **Rejected: the full label in the seat row, clipped with an ellipsis.** "Spieler 2 (Gr..." is worse
+  than "Spieler 2" next to a green edge.
+- → Ch. 04
+
+### 2026-09-01: The language switch is in the game's chrome and not behind a menu
+
+- **Chosen:** the German/English switch is a button in the always-present top row, showing the language
+  you would switch to.
+- **Why:** FR-34 is a `must have` and its acceptance criterion is a switch **at runtime**. `S11` in the
+  obligations book puts the language setting on a shared settings screen with the audio setting, and
+  audio was dropped out of epic #39 on the same day. Leaving the language switch on a screen that no
+  longer exists would have quietly dropped a must-have requirement behind a `should have` one, and
+  nothing in the sprint log would have said so.
+- **One key, both directions:** `language.switch` is "English" in the German file and "Deutsch" in the
+  English one, so the label is always a word the reader can act on and there is no "current language"
+  logic to get backwards.
+- **Rejected: a settings overlay reached from the main menu.** Tidier, and it makes a runtime switch
+  three clicks deep in a game that is played at one shared screen.
+- **Rejected: two buttons, DE and EN.** No state to get wrong, and one of them is always a no-op.
+- **What made it cheap:** no view caches a translated string, so the switch is `changeLanguage()` plus
+  the existing re-render. FR-34's "no string remains in the previous language" is true by construction,
+  and `hud.spec.js` checks it by searching the whole page for the German words afterwards.
+- → Ch. 04
+
+### 2026-09-01: Three stylesheets now exist that Claude Code should not have written
+
+- **Chosen:** `hud.css` and `chrome.css` join `prompt.css` as interim files, each composing only tokens
+  that already exist, each carrying a header in its first thirty lines saying it is not a delivered
+  spec, and all three listed in handoff 04 as deliverables to be **replaced**.
+- **Why:** the game had to become playable and nothing in epic #39 has a design. Handoff 01 said the HUD
+  was "not yours to design yet" and handoff 03 listed it under what is deliberately not being asked, so
+  waiting for a spec meant shipping a sprint with no answer to "whose turn is it". The honest version of
+  that trade is to invent no colour, size, spacing or type, and to say so where nobody can miss it.
+- **Rejected: waiting for design spec 04.** Correct by the letter of `CLAUDE.md`, and it ends the sprint
+  with the same unplayable build the Product Owner opened this issue about.
+- **Rejected: writing it and not saying so.** Cheapest of all, and it is the failure the report is meant
+  to be able to describe.
+- **`app.css` was touched too, and differently.** Two `auto` grid rows were prepended and every existing
+  `grid-area` shifted down by two, so the two new regions have somewhere to be. No colour, no spacing
+  value and no token changed. It carries a dated comment saying exactly that, which is the precedent the
+  `body { margin: 0 }` correction in the same file already set.
+- → Ch. 04
+
+### 2026-09-01: The HUD was paid for out of the board and the cards, nine per cent each
+
+- **Chosen:** `--board-size`'s width bound goes from 44vw to 39vw and the two hand `--card-u` factors
+  from 0.76 and 0.68 to 0.70 and 0.62. Both carry the arithmetic in a dated comment, and both are in
+  handoff 04 for D35 to confirm or overrule.
+- **Why:** the HUD is a full-width grid row and the page had no room for one. Measured at 1440 by 900,
+  the existing layout used 968 px of 900 once the prompt strip was up, and
+  `tests/e2e/skill-hand.spec.js` caught it as FR-31's scrollbar. Spec 01 § 6 names `--board-size` as
+  "the number to check first when the two hands are actually built", so changing it is the sanctioned
+  procedure rather than an improvisation.
+- **Why both and not one:** the board row is as tall as the taller of its two columns. Board 634, rail
+  627. Shrinking the board alone bought 7 px of the 56 needed, which is worth writing down because the
+  first attempt at the fix did exactly that and did not work.
+- **Rejected: collapsing the empty refusal strip**, which would have freed 62 px in one move.
+  `refusal.css` deliberately keeps it laid out at `opacity: 0` so the page does not jump when a refusal
+  appears, which is D9's decision, and taking it would have traded a scrollbar for a jumping layout.
+- **Rejected: cutting HUD content until it fits.** The measurements say a seat row needs 270 px and four
+  seats plus a turn sentence need more than one line at 1392 px. Dropping the words next to the numbers
+  would have fitted and left four numbers nobody can interpret.
+- **Rejected: leaving FR-31 broken and noting it.** The assertion is a must-have requirement with a
+  test already written for it, and a failing test in the suite is not a note.
+- **The cost is named:** D26 says the hand sizes already drop the rules paragraph to keep the art, and
+  spec 01 says `--board-size` had been raised on 2026-08-29 specifically to make the fields larger. Nine
+  per cent of that increase is given back. The full-size reference card is untouched.
+- → Ch. 04
+
 ---
 
 ## Challenges

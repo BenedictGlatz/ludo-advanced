@@ -318,6 +318,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that were left open by handoffs 02 and 03 and had been drifting since
 - **Players are named on screen** (issue #39): "Spieler 2 (Grün)", the number counting from 1 in seat
   order and the colour naming the pieces on the board. German and English
+- **The game says whose turn it is** (issue #35). A sentence in the top bar, "Spieler 1 (Rot) ist am
+  Zug", which is what the game had never said in words: the board marked the active player with a
+  colour halo and dimmed pawns and nothing else, so a player who had not worked out which colour was
+  theirs had no way to tell
+- **A HUD showing each player's progress** (issue #35, FR-36): pawns in the start area, out on the
+  track and home, plus how many skill cards that player holds, one row per player. The three pawn
+  counts always add up to four, and the fourth number is public because an opponent's hand size was
+  made public. No resource or energy display: FR-37 has no rule behind it and stays out of scope
+- **A German/English switch that works during a match** (FR-34, a must-have that had no issue of its
+  own). One button in the top bar showing the language you would switch to. Every visible string
+  changes, including the cards in hand
 
 ### Changed
 
@@ -325,6 +336,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Spieler 1 and Spieler 3, because two players sit opposite each other on seats 0 and 2 and every label
   was built as the seat number plus one. Four-player matches were unaffected, which is why nobody had
   noticed. The seat number is still what the markup, the pawn colours and every rule use
+- **The board and the cards in hand are about nine per cent smaller** (issue #39), so that the new HUD
+  row fits without the page scrolling (FR-31). Measured at 1440 by 900, the layout needed 968 pixels of
+  900 once the HUD and the prompt strip were both up. Shrinking only the board would not have been
+  enough, because the row is as tall as the taller of its two columns and the card column was within
+  seven pixels of the board. The full-size reference card is unchanged. This is a stopgap: design
+  handoff 04 is asked to confirm it or move the HUD somewhere that costs no row
 
 - **A turn now waits for the player in three places rather than two**: the dice card, the action phase,
   and the pawn. The action phase is skipped automatically when the player holds nothing playable, so it

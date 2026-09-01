@@ -1,0 +1,78 @@
+/* =============================================================================
+   chrome.css -- the two controls that are on screen the whole time: the
+   language switch (FR-34) and the pause button (FR-07).
+
+   !! THIS FILE WAS NOT WRITTEN BY CLAUDE DESIGN AND IS NOT A DELIVERED SPEC !!
+
+   Third file in this state, after prompt.css and hud.css, and for the same
+   reason each time: CLAUDE.md says Claude Code does not invent design rules,
+   and no specification covers this. It is D42 in handoff 04.
+
+   Nothing here is invented. The button is the prompt strip's button shape from
+   prompt.css, which is itself composed of tokens, and every value below is a
+   token out of tokens.css.
+
+   What is owed by handoff 04:
+
+   - D42: where these two controls sit and what the language control should be.
+     It is a single button showing the language you would switch to, parked at
+     the top of the page, which is the least opinionated thing that satisfies
+     FR-34's "at runtime" without competing with the board.
+   - Whether pause and language belong together at all. They are side by side
+     here because both are always reachable, which is a property of when they
+     are used and not of what they do.
+   - D36: whether the turn sentence belongs in this row. It is here because the
+     HUD had no width left for it, which is a measurement and not a design
+     judgement. See hud-view.js `turnLine`.
+
+   Recorded in 00-Meta/Documentation/notes/04-frontend-building-blocks.md.
+   ========================================================================== */
+
+.app__chrome {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* The sentence that says whose turn it is. It takes the row's slack, so the two
+   buttons stay at the right-hand end where they were. */
+.chrome__turn {
+  flex: 1 1 auto;
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-strong);
+  color: var(--color-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chrome__button {
+  padding: var(--space-1) var(--space-3);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-strong);
+  color: var(--color-text);
+  cursor: pointer;
+  background: var(--color-surface);
+  border: var(--border-hair) solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-card);
+  transition:
+    box-shadow var(--motion-feedback) var(--ease-ui),
+    background-color var(--motion-feedback) var(--ease-ui);
+}
+
+.chrome__button:hover {
+  background: var(--color-panel);
+}
+
+.chrome__button:focus-visible {
+  outline: var(--border-thick) solid var(--color-focus);
+  outline-offset: var(--space-1);
+}
+
+.chrome__button:active {
+  box-shadow: none;
+}

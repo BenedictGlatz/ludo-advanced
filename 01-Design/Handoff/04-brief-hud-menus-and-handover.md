@@ -85,7 +85,7 @@ Claude Code guarantees these elements and attributes exist. The CSS may target t
 ```html
 <div class="hud" data-players="4">
   <div class="hud__seat" data-player="0" data-on-turn="true" data-finished="false">
-    <span class="hud__name">Spieler 1 (Rot)</span>
+    <span class="hud__name">Spieler 1</span>
     <ul class="hud__counts">
       <li class="hud__count" data-kind="start">
         <span class="hud__value">2</span>
@@ -107,6 +107,12 @@ Claude Code guarantees these elements and attributes exist. The CSS may target t
   all four pawns home.
 - Each `.hud__count` has both a value and a label, and the label is a translated word. Four numbers per
   seat times four seats is sixteen numbers on screen, so **how they stay readable is D37**.
+- **`.hud__name` carries the short name, "Spieler 2", not the full "Spieler 2 (Grün)".** Measured: a
+  seat row is 332 px at the design resolution and the four numbers take 210 of it, which left 86 where
+  the full label needs 107 and clipped it to "Spieler 2 (Gr...". So the row relies on the CSS to say
+  which colour it is; the interim stylesheet paints the row's left edge. **The full label, and the
+  sentence that says whose turn it is, live in the chrome row instead**, see § 3.3. That is a
+  measurement, not a preference, and D36 and D37 can undo it.
 
 ### 3.2 The overlay, five screens in one component
 
@@ -137,25 +143,35 @@ Claude Code guarantees these elements and attributes exist. The CSS may target t
 
 ```html
 <div class="app__chrome">
+  <p class="chrome__turn">Spieler 1 (Rot) ist am Zug</p>
   <button class="chrome__button" data-action="pause">…</button>
   <button class="chrome__button" data-action="language" data-lang="de">…</button>
 </div>
 ```
 
-`data-lang` is the language currently active, `de` or `en`. Whether the control is a toggle, two
-buttons or something else is part of D42.
+- `data-lang` is the language currently active, `de` or `en`. Whether the control is a toggle, two
+  buttons or something else is part of D42.
+- **`.chrome__turn` is the sentence that answers the Product Owner's question**, and it is in this row
+  because the HUD had no width left for it. It is empty on the menu and setup screens. Whether it
+  belongs here is part of D36; the arithmetic that put it here is in § 3.1 and D35.
 
 ### 3.4 The shell, as it stands today
 
 ```html
 <div class="app">
+  <div class="app__chrome">…</div>
+  <div class="hud">…</div>
   <div class="app__board">…</div>
   <div class="app__dice">…</div>
   <div class="app__skill">…</div>
-  <div class="prompt">…</div>
   <div class="move-refusal">…</div>
+  <div class="prompt">…</div>
 </div>
 ```
+
+Two `auto` rows were prepended to your grid for the chrome and the HUD, and every existing `grid-area`
+shifted down by two. No colour, spacing or type value was touched. `app.css` carries a dated comment
+saying exactly that.
 
 `app.css` is your own delivery from spec 03, D30. The HUD and the chrome have to find a place in it,
 which is D35.
@@ -249,11 +265,41 @@ animation: whatever it costs in attention, it costs that many times.
 
 Numbered from D35, continuing from spec 03.
 
-**D35 Where the HUD and the chrome go.** `app.css` is a three-row grid with the board on the left and
-the two hand plates in a rail on the right. Two new things want a place: a HUD showing up to four
-seats, and two always-present controls. `--board-size` is `clamp(26rem, min(76vh, 56vw), 60rem)` and
-spec 01 § 6 names it *the number to check first* when a new region lands. **What is the layout, and
-does `--board-size` change again?** Note that the rail is already the tighter of the two reservations.
+**D35 Where the HUD and the chrome go, and what they cost.** This one comes with measurements, because
+building it against existing tokens produced a number nobody had priced.
+
+`app.css` is a grid with the board on the left and the two hand plates in a rail on the right. The HUD
+is a full-width row and the chrome is another, and at 1440 by 900 there was no room for either:
+
+| Row | Pixels, before this sprint |
+| --- | --- |
+| Page padding, top and bottom | 48 |
+| Row gaps | 64 |
+| The board row, the taller of board 634 and rail 627 | 634 |
+| Refusal strip, **occupied even when it says nothing** | 46 |
+| Prompt strip, only while it is asking | 70 |
+| **Used** | **862 of 900** |
+
+A HUD row plus a chrome row plus their two gaps needs about 126 px and 38 were left, so
+`tests/e2e/skill-hand.spec.js` failed its FR-31 no-scroll assertion by 56 px.
+
+**Two delivered tokens were changed to close it, and both want your answer:**
+
+| | Before | After | Where |
+| --- | --- | --- | --- |
+| `--board-size` width bound | 44vw, 634 px | 39vw, 562 px | `tokens.css` |
+| The two hand `--card-u` factors | 0.76 and 0.68, rail 627 px | 0.70 and 0.62, rail 561 px | `hand.css` |
+
+Spec 01 § 6 sanctions the first in advance. **Nothing sanctions the second**, and D26 is your decision
+about what a card drops as it shrinks, so it is the one we would most like overruled. Both changes carry
+the arithmetic in a dated comment and both revert if the HUD ends up somewhere that costs no grid row.
+
+**Also worth knowing, because it is the biggest single saving available and we did not take it:** the
+refusal strip holds its 46 px permanently, faded to `opacity: 0`, so the page does not jump when a
+refusal arrives. Collapsing it frees 62 px with the gap. That is D9's decision and yours to revisit.
+
+**So: what is the layout?** Where do the HUD and the chrome go, does either token stay changed, and
+should the foot of the page keep costing 116 px whether it is saying anything or not?
 
 **D36 What "on turn" looks like, and how many places say it.** Three cues already exist and none is
 text: an ink halo on the active seat's yard (`board.css`), dimmed pawns for everyone else

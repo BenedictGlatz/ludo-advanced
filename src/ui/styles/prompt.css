@@ -42,7 +42,9 @@
        rather than trusting it. --- */
 
 .app > .prompt {
-  grid-area: 4 / 1 / 5 / 3;
+  /* Row 6 since issue #39 added the chrome and HUD rows at the top of
+     the grid; it was row 4. See the note at the top of app.css. */
+  grid-area: 6 / 1 / 7 / 3;
   justify-self: center;
 }
 

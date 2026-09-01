@@ -38,16 +38,20 @@
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { INTENT, dispatch } from "../state/intents.js";
 import { playableCards } from "../state/intents-cards.js";
+import { changeLanguage, currentLanguage } from "../i18n/index.js";
 import { motionMs, updateBoard } from "./board-view.js";
 import { createCardControls } from "./card-controls.js";
+import { CHROME_ACTION, updateChrome } from "./chrome-view.js";
 import { updateDiceHand } from "./dice-hand-view.js";
 import {
   bindBoardEvents,
+  bindChromeEvents,
   bindDiceHandEvents,
   bindPickEvents,
   bindPromptEvents,
   bindSkillHandEvents,
 } from "./events.js";
+import { turnLine, updateHud } from "./hud-view.js";
 import { applyMoveHints, showMessage } from "./move-hints.js";
 import { updatePrompt } from "./prompt-view.js";
 import { updateSkillHand } from "./skill-hand-view.js";
@@ -68,6 +72,8 @@ export function createGameLoop({
   initialState,
   deps,
   $board,
+  $hud,
+  $chrome,
   $diceHand,
   $skillHand,
   $prompt,
@@ -80,6 +86,8 @@ export function createGameLoop({
   function render() {
     updateBoard($board, state);
     applyMoveHints($board, state);
+    updateHud($hud, state);
+    updateChrome($chrome, { turn: turnLine(state) });
     updateDiceHand($diceHand, state);
     updateSkillHand($skillHand, state, cards.selectedSlot());
     updatePrompt($prompt, state, { secondsLeft: cards.secondsLeft(), pick: cards.pick() });
@@ -235,11 +243,36 @@ export function createGameLoop({
     advance();
   }
 
+  /**
+   * The other language, of the two the game ships (FR-34).
+   *
+   * A toggle rather than a list, because there are exactly two locales and `supportedLngs` in
+   * `i18n/index.js` is the one place that would have to grow first if a third arrived.
+   */
+  function otherLanguage() {
+    return currentLanguage() === "de" ? "en" : "de";
+  }
+
+  /**
+   * A click on one of the always-present controls.
+   *
+   * Switching language needs nothing but a re-render, because no view caches a translated string: every
+   * one of them rewrites its own text from `t()` on every update. That is what makes FR-34's acceptance
+   * criterion, "no string remains in the previous language", true by construction rather than by a list
+   * of things to remember to refresh.
+   */
+  function onChromeAction(action) {
+    if (action === CHROME_ACTION.LANGUAGE) {
+      changeLanguage(otherLanguage()).then(render);
+    }
+  }
+
   return {
     /** Put the board on screen and start the first turn. */
     start() {
       bindBoardEvents($board, { onPawnActivated });
       bindPickEvents($board, cards.handlers);
+      bindChromeEvents($chrome, { onChromeAction });
       bindDiceHandEvents($diceHand, { onDiceCardActivated });
       bindSkillHandEvents($skillHand, cards.handlers);
       bindPromptEvents($prompt, cards.handlers);

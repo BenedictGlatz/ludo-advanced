@@ -862,6 +862,130 @@ The parity test in `tests/unit/i18n/locales.test.js` already compared the `{{...
 two locales, so changing one language and not the other would have failed the suite. That check was
 written for a different reason and paid for itself here.
 
+### The HUD, and the answer to the question that opened this issue: 2026-09-01, issue #35
+
+`src/ui/hud-view.js` plus the interim `src/ui/styles/hud.css`. One row per seat actually in the match,
+carrying the short name and four numbers, and `data-on-turn` on exactly one of them.
+
+- **Four numbers per seat, and no more.** Pawns in start, on track and home is FR-36. The fourth is the
+  size of the skill hand, on screen only because of decision D33. **FR-37, the resource display, is
+  `won't have` and has no slot**, because no rule for it exists anywhere in the rulebook: issue #35 is
+  titled *Game HUD & Resource Display* and only the first half is being built. Pool and discard
+  counters were considered at the same time and dropped, so sixteen numbers do not become twenty-four.
+- **The rows are rebuilt only when the set of seats changes**, which is a restart with a different
+  player count and nothing else. Every other update is an attribute or a text rewrite, per D10.
+- **`renderedSeats` reads the seat list back off the DOM** rather than remembering it in a variable, so
+  there is no field that can drift from what is on screen.
+
+#### The turn sentence is in the top bar, and that is arithmetic rather than taste
+
+The first attempt put "am Zug" as a chip on the active seat's row. The measurements, at 1440 by 900:
+
+| Thing | Pixels |
+| --- | --- |
+| The HUD region | 1392 wide |
+| One seat row, four seats | 332 |
+| The full label "Spieler 1 (Rot)" | 107 |
+| The four numbers with their words | 210 |
+| An "am Zug" chip | 55 |
+
+107 + 210 + 55 plus two gaps does not fit in 332. What it did instead was wrap the row onto a second
+line, which made the page **935 px tall and gave FR-31 a scrollbar**, and truncate the names to
+"Spi...". Two changes fixed it and both are recorded because both are visible on screen:
+
+1. **The turn line became one sentence for the whole page**, rendered in the chrome row, which had
+   roughly 1200 px going spare. `turn.prompt` was written as a sentence in the first place. The seat row
+   still carries `data-on-turn`, so the stylesheet marks it without spending width.
+2. **The seat row shows the short name**, "Spieler 2". 86 px were left after the numbers and the full
+   label needs 107. The colour is not lost: `hud.css` paints the row's left edge in the seat's own
+   colour, and the sentence above spells the label out in full.
+
+**The alternative was shrinking `--board-size`**, and spec 01 § 6 explicitly names it as the number to
+check first when a new region lands. It was not taken: shrinking the board to fit a HUD that Claude Code
+designed itself is a trade the designer should make, not this side. The numbers above are in handoff 04
+so that D35 and D37 can make it with real figures. `--board-size` is unchanged.
+
+#### The chrome row, and why the language switch is not in a menu
+
+`src/ui/chrome-view.js`: the turn sentence, a pause button and the language switch, in one always-present
+row. FR-34 is a `must have` and its criterion is a switch **at runtime**.
+
+`S11` in the obligations book pairs the language setting with the audio setting on one screen reached
+from the main menu, and **audio was dropped out of epic #39 on 2026-09-01**. Leaving the language switch
+in a screen that no longer exists would have quietly dropped a must-have requirement along with a
+`should have` one. So it is here, reachable in the middle of a match.
+
+- **The button shows the language you would switch to**, so `language.switch` is "English" in the German
+  file and "Deutsch" in the English one and one key covers both directions. `data-lang` carries the
+  language actually in use, for the stylesheet and the tests.
+- **Switching needs nothing but a re-render.** No view caches a translated string: every one of them
+  rewrites its own text from `t()` on every update. That is what makes FR-34's "no string remains in the
+  previous language" true by construction rather than by a list of things to remember to refresh, and
+  `hud.spec.js` asserts it by searching the whole page for the German words afterwards.
+
+#### Three regions on screen now have no design behind them
+
+`prompt.css` was one, and Chapter 04 already records it as a process failure. It is now three:
+`prompt.css`, `hud.css` and `chrome.css`. All three carry the same header saying so in the first thirty
+lines, all three compose only tokens that already exist in `tokens.css`, and all three are listed as
+deliverables to be **replaced** in handoff 04.
+
+`app.css` was also touched, and that is a fourth thing worth naming. Two `auto` grid rows were prepended
+and every existing `grid-area` shifted down by two, so the chrome and the HUD have somewhere to be. No
+colour, no spacing value and no token changed. The block carries a dated comment saying exactly that,
+following the precedent of the `body { margin: 0 }` correction already in that file.
+
+#### The HUD cost the board and the cards nine per cent each, and that is a measurement
+
+This is the part of issue #39 worth a paragraph in the report, because it is a constraint nobody had
+priced and the test suite is what found it.
+
+`tests/e2e/skill-hand.spec.js` has an assertion that the page does not scroll **while the prompt strip
+is asking something**, which was written after the prompt strip landed for exactly this class of
+problem. Adding the HUD failed it by 56 px.
+
+The vertical budget at the design resolution, 1440 by 900:
+
+| Row | Pixels |
+| --- | --- |
+| Page padding, top and bottom | 48 |
+| Five row gaps | 80 |
+| Chrome | 28 |
+| HUD | 62 |
+| The board row | 634 |
+| Refusal strip | 46 |
+| Prompt strip | 70 |
+| **Total** | **968 against 900** |
+
+Two findings came out of fixing it:
+
+1. **The refusal strip occupies its 46 px even when it says nothing.** `refusal.css` fades it with
+   `opacity` rather than removing it, so the page does not jump when a refusal appears. That is a design
+   decision from D9 and it was left alone, but it means the foot of the page costs 116 px whether
+   anything is being said or not.
+2. **Shrinking the board alone does nothing.** The board row is as tall as the **taller** of the two
+   columns, and the rail was 627 px against the board's 634. Dropping `--board-size` from 44vw to 40vw
+   bought 7 px, not 58, and the first attempt at the fix was therefore wasted.
+
+So both columns gave the same amount:
+
+| | Before | After |
+| --- | --- | --- |
+| Board, `--board-size` width bound | 634 px, 44vw | 562 px, 39vw |
+| Rail, the two `--card-u` factors | 627 px, 0.76 and 0.68 | 561 px, 0.70 and 0.62 |
+
+**Two delivered design tokens were changed by Claude Code, and that is the cost being recorded.** Spec
+01 § 6 sanctions it in advance for `--board-size`, calling it "the number to check first when the two
+hands are actually built". It says nothing about `--card-u`, and D26 is the decision that sized the
+hands in the first place. Both changes carry a dated comment with the arithmetic above, both are in
+handoff 04 as things D35 must confirm or overrule, and both revert if the HUD ends up somewhere that
+costs no grid row. The full-size reference card, `--card-u: 1`, is untouched.
+
+**What the smaller cards spend** is what D26 already identified: the hand sizes drop the rules paragraph
+and keep the art, and they keep doing that at 0.70 and 0.62. What the smaller board spends is field
+size, and spec 01 records that `--board-size` had been **raised** on 2026-08-29 to make the fields
+larger. Nine per cent of that is given back here.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

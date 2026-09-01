@@ -759,6 +759,34 @@ behaviour it exists for, two named timers not cancelling each other, is exercise
 reaction window opening during a handover pause. That situation is reachable in play and no test forces
 it.
 
+### The HUD spec and the language spec: 2026-09-01, issue #39
+
+`tests/e2e/hud.spec.js`, seven cases, and they are the first end-to-end assertions in the suite that are
+about **words** rather than about attributes.
+
+- **Two describe blocks in one file**, the HUD and the language switch, because they are two halves of
+  one complaint: the game did not say anything in words. It named no player and it had no language
+  control at all, although FR-34 makes one a must-have.
+- **It checks no appearance.** Whether the active seat is marked by a ring or a fill is handoff 04's D36
+  and the stylesheet is interim, so the spec asserts that the sentence is there, that exactly one seat
+  carries `data-on-turn`, and that the numbers agree with the board.
+- **The two-player case is a regression test with a name.** "renders one row per seat actually in the
+  match, numbered from 1" would have failed before this sprint, reading "Spieler 1" and "Spieler 3".
+- **The sum-to-four case runs before and after a turn**, which is FR-36's acceptance criterion turned
+  into an assertion. A player reads three numbers as a breakdown of four pawns, so a total of three
+  would be wrong even where each number looked plausible on its own.
+- **The language case asserts the absence of the old language**, by pulling the page's whole `innerText`
+  and searching it for the German words. FR-34's criterion is literally "no string remains in the
+  previous language", and a per-element check cannot say that. It deliberately does not search for
+  "Start", which is the same word in both files.
+- **Both locale files are imported** rather than the expected strings being typed out, for the reason
+  `win.spec.js` had just taught: a test that hard-codes rendered prose is a copy of the implementation.
+
+**What is not covered:** the interim stylesheets have no visual regression test, so a layout that fits
+at 1440 by 900 today and not after the next change would be caught only by
+`skill-hand.spec.js`'s no-scroll assertion. That assertion is real and it did catch the HUD's first
+version, which made the page 935 px tall.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

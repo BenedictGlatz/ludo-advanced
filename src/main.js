@@ -36,8 +36,10 @@ import { createSeededRng } from "./core/dice-source.js";
 import { initI18n } from "./i18n/index.js";
 import { matchDeps, startMatch } from "./state/match.js";
 import { renderBoard } from "./ui/board-view.js";
+import { renderChrome } from "./ui/chrome-view.js";
 import { renderDiceHand } from "./ui/dice-hand-view.js";
 import { createGameLoop } from "./ui/game-loop.js";
+import { renderHud } from "./ui/hud-view.js";
 import { renderPrompt } from "./ui/prompt-view.js";
 import { renderSkillHand } from "./ui/skill-hand-view.js";
 
@@ -52,6 +54,8 @@ import "./ui/styles/card-state.css";
 import "./ui/styles/hand.css";
 import "./ui/styles/refusal.css";
 import "./ui/styles/prompt.css";
+import "./ui/styles/hud.css";
+import "./ui/styles/chrome.css";
 
 /** Player counts a match can start with (FR-01). Anything else in the URL falls back to four. */
 const PLAYER_COUNTS = [2, 3, 4];
@@ -84,19 +88,22 @@ export function readOptions(search) {
 }
 
 /**
- * Build the page: the four regions design spec 03 laid out as D30, plus the prompt strip.
+ * Build the page: the four regions design spec 03 laid out as D30, plus three that no spec covers.
  *
  * Board on the left, the two hands stacked in a rail on the right, the refusal strip across the foot. The
  * plate elements are `.app__dice` and `.app__skill`; the hand itself goes inside, because `app.css`
  * styles the plate and `hand.css` styles the row of cards, and keeping those two jobs on two elements is
  * what lets the plate carry the "it is your turn" ring without touching the cards.
  *
- * **The prompt strip is the fifth region and it has no design specification.** It shares the foot of the
- * page with the refusal strip, and it is the one thing on screen composed only of existing tokens rather
- * than from a delivered spec. Recorded in the header of `ui/prompt-view.js` and in Chapter 04.
+ * **Three regions have no design specification: the prompt strip, the HUD and the chrome.** All three are
+ * composed only of existing tokens rather than from a delivered spec, which is the most this side can
+ * honestly do while the game has to be playable. Handoff 04 is the request to replace them; see the
+ * headers of `ui/prompt-view.js`, `ui/hud-view.js` and `ui/chrome-view.js`, and Chapter 04.
  */
 function mount($root, parts) {
   const $app = $("<div>", { class: "app" }).append(
+    parts.$chrome,
+    parts.$hud,
     $("<div>", { class: "app__board" }).append(parts.$board),
     $("<div>", { class: "app__dice" }).append(parts.$diceHand),
     $("<div>", { class: "app__skill" }).append(parts.$skillHand),
@@ -123,6 +130,8 @@ export async function boot(root = "#app", search = window.location.search) {
 
   const parts = {
     $board: renderBoard(state),
+    $hud: renderHud(state),
+    $chrome: renderChrome(),
     $diceHand: renderDiceHand(deps.diceSource.handSize),
     $skillHand: renderSkillHand(),
     $prompt: renderPrompt(),
