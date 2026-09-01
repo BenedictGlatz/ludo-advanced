@@ -738,6 +738,98 @@ looked at, and is refused when played. The count is **asserted** in the effect t
 in a comment, so the number in this note cannot go stale silently: when the assertion reads 29 the game
 is complete.
 
+### The last twelve cards, and the three mechanics they needed: 2026-08-31, issue #38
+
+All 29 cards now have a rule. The twelve added here are the ones that need something the board did not
+have, and the three new mechanics are what the plan predicted would be the expensive half.
+
+| Mechanic | Cards | New module |
+| --- | --- | --- |
+| A pawn moved without a move | Yeet, Aight Imma Head Out, Let Him Cook, Ghost Mode, Uno Reverse | `core/displacement.js` |
+| Objects sitting on a square | Banana Peel, Oil Spill, It's Not That Deep, Big Ah Rock | `core/traps.js` |
+| More than one square at a time | Hyperbeam, Janky RPG, 67 | `core/path.js` |
+
+#### `applyMove` was not enough, and the second way is deliberately blunt
+
+Everything a pawn did before this was a **move**: an object produced by `evaluateTurn`, checked against
+every rule, then written by `applyMove`. A pawn shoved by Yeet is not making a move. Nobody chose it, no
+legality was checked, and its owner cannot refuse it.
+
+So `core/displacement.js` checks nothing about legality, because the card is the authority. It enforces
+only the two things that are properties of the **board** rather than of any rule: a pawn never lands
+outside 0 to 44, and a pawn pushed backwards stops at `r = 1`.
+
+**The backwards floor is a game decision and it is the most important one in this commit.** If a pushback
+could reach the start area, then Yeet, It's Not That Deep and Big Ah Rock would all be cheap substitutes
+for a capture, and capture is the mechanic the whole game is built around: a captured pawn loses most of
+a lap. Stopping at `r = 1` keeps a pushback a setback. The two cards that are *meant* to send a pawn
+home say so and call `sendHome`, which is a different function for exactly that reason.
+
+#### A trap fires on crossing, and a skill square only on landing
+
+These two are the opposite of each other and both are right:
+
+| | Fires on | Why |
+| --- | --- | --- |
+| A trap | Crossing **or** landing | A trap that needed an exact landing would almost never fire. A D20 crosses twenty squares and lands on one |
+| A skill square | Landing only | Collecting them in bulk with the biggest die would undo the point of the dice pool |
+
+Said plainly: **a reward you can farm is broken, and a punishment you can jump over is not a punishment.**
+
+Only the **first** trap on a walk fires, so one move has one outcome, and a trap never fires under a pawn
+belonging to the player who laid it. A card that punishes its own player is a card nobody plays.
+
+#### The order inside `resolveMove` is a rule, and it is invisible in almost every test
+
+Three things happen in one transition:
+
+1. the pawn arrives, and a captured pawn goes home
+2. a trap it walked into goes off, **which can move it again**
+3. the square it is *actually standing on* is asked whether it hands out a card
+
+Step 2 moving the pawn is what makes the order matter, and a trap and a skill square rarely meet, so
+getting it wrong would pass nearly every test. `move-resolution.test.js` therefore puts them in each
+other's way on purpose, in both directions: a trap that knocks a pawn **off** a skill square before it
+can collect, and a trap that pushes a pawn **onto** one it was never going to reach.
+
+#### Two cards needed a new step in the roll chain
+
+67 is "roll a six or go nowhere, and if you do, take double". That is a **threshold**, which the chain
+had no notion of, so `modifiers.atLeast` was added and sits **before** the multiplier. The order is the
+rule: a 3 doubled to 6 must not pass a test the dice failed.
+
+The guard on it caught a real bug immediately. `atLeast` defaults to 0, and without `atLeast > 0` a roll
+that Devil Die had pushed to -7 was reported as a *missed threshold* rather than as the floor doing its
+job. The trace is what the screen reads out, so a wrong label there is a wrong explanation.
+
+#### Four more cards were changed from what the artwork says
+
+| Card | Artwork | Implemented | Why |
+| --- | --- | --- | --- |
+| Hyperbeam | A straight cardinal lane on the 11 by 11 grid | A run of 1 to D4 squares along the track, friendly fire included | The grid lives in `ui/board-geometry.js` and `core/` may not import `ui/`. The D4, the direction, the run and the friendly fire all survive; the geometry does not |
+| Oil Spill | Skips every skill tile **and safe zone** | Skips the skill square only | There are no safe squares in the MVP (FR-15 is a `could have`) |
+| Aight Imma Head Out | Two options, not stated precisely | Forward four, or back to your own entry square | Retreating to `r = 1` rather than to the yard is what makes it a choice rather than a worse capture |
+| Let Him Cook | Labelled `RISKY`, risk not stated | A D12 run, and an overshoot sends the pawn home | `displace` alone clamps at the deepest house square, which would make it a free win for any pawn near home. Deliberately harsher than FR-13: a move the player chose is refused, a gamble the player took is lost |
+
+#### Both area cards hit their own side, on purpose
+
+Hyperbeam's artwork says "friendly fire" outright and Janky RPG's whole name is that it is unreliable.
+Neither filters the player's own pawns out of the sweep. **A card that sent four pawns home with no risk
+to its owner would be the only card anybody ever played.**
+
+Janky RPG is the sharper of the two: a D6 of 4 or better hits the square that was named, and 3 or less
+hits both its neighbours instead, which makes the square you aimed at the one place that is safe.
+
+#### The 29 rules sentences are provisional copy
+
+Every card now has a `text` key in both locales, and it describes the rule that was **implemented**
+rather than the artwork's wording. Seven cards differ from the artwork and each deviation is in the
+tables above.
+
+**This is Product Owner work that was done to unblock the code**, and it is recorded as such: a card
+with a name and no rules text is a card nobody at the table can play. The locale test checks that all 29
+have one, so replacing the wording is editing text and not hunting for gaps.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

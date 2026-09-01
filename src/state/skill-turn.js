@@ -24,9 +24,12 @@
  * and draws a card is one new state object rather than three.
  */
 
+import { fireTrap } from "../core/cards/effects/trap-effects.js";
+import { squaresCrossed } from "../core/path.js";
 import { createSkillPool, drawSkillCard } from "../core/skill-pool.js";
 import { consumeSkillSquare, skillSquareLandedOn } from "../core/skill-squares.js";
 import { STATUS, expireStatuses, hasStatus } from "../core/statuses.js";
+import { firstTrapOnPath } from "../core/traps.js";
 
 /** How many cards a seat may play in one turn unless a card says otherwise (FR-23). */
 export const DEFAULT_CARD_BUDGET = 1;
@@ -110,6 +113,39 @@ export function skillSquareChanges(state, move, deps) {
     skillSquares: consumeSkillSquare(state.skillSquares, landedOn, deps.rng),
     ...drawFor(state, move.player, deps),
   };
+}
+
+/**
+ * The trap part of resolving a move: nothing, or one trap going off under the pawn that walked into it.
+ *
+ * `state` here must already have the **moved** pawn list in it, because a trap acts on where the pawn
+ * ended up and `displace` looks the pawn up by identity. `turn-manager.js` passes the post-move state
+ * for exactly that reason.
+ *
+ * **The whole walk is checked, not just the destination.** That is the one exception to the rule the rest
+ * of the project follows, and `core/cards/effects/trap-effects.js` carries the reason: a trap that only
+ * fired on an exact landing would almost never fire, because a D20 crosses twenty squares and lands on
+ * one. The skill squares work the other way round, on landing only, and that difference is deliberate.
+ *
+ * Only the **first** trap on the path fires. A move that crosses two Banana Peels sets off the near one
+ * and stops there, which keeps one move from having two outcomes.
+ */
+export function trapChanges(state, move, deps) {
+  if (state.traps.length === 0) return {};
+
+  const crossed = squaresCrossed(move.player, move.from, move.to);
+  const trap = firstTrapOnPath(state.traps, crossed, move);
+  if (trap === null) return {};
+
+  return fireTrap({
+    pawns: state.pawns,
+    statuses: state.statuses,
+    traps: state.traps,
+    trap,
+    mover: { player: move.player, pawn: move.pawn },
+    turnNumber: state.turnNumber,
+    rng: deps.rng,
+  });
 }
 
 /** How many cards `seat` may play this turn: one, unless a card has raised it (Double Dip). */

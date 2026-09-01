@@ -251,6 +251,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   English. The rules sentence of each card is deliberately absent and arrives with the card's effect
 - Section 2.5 of the game design document, the skill fields as a board rule: where they start, why the
   layout is symmetric, why landing counts and crossing does not, and what a respawn excludes
+- **All 29 skill cards now have their rule** (issue #38, FR-26, FR-28, FR-29). The last twelve needed
+  three mechanics the board did not have: a pawn can be moved without making a move (Yeet, Aight Imma
+  Head Out, Let Him Cook, Ghost Mode, Uno Reverse), objects can sit on a square and either fire or block
+  (Banana Peel, Oil Spill, It's Not That Deep, Big Ah Rock), and a card can hit a run of squares at once
+  (Hyperbeam, Janky RPG, 67)
+- **A trap fires when a pawn crosses it, not only when it lands on it.** A skill square is the opposite
+  and only counts on a landing. Both are deliberate: a reward you can farm is broken, and a punishment
+  you can jump over is not a punishment
+- **A push backwards stops at your entry square and never reaches the start area.** Otherwise three cards
+  would be cheaper substitutes for a capture, and capture is what the whole board is built around
+- **A rules sentence for every one of the 29 cards, in both languages.** It describes the rule that was
+  implemented, which differs from the artwork's wording on seven cards. Provisional copy: the Product
+  Owner owns the final wording
+- The nineteen sub-kind labels the artwork prints under a card's banner, in both languages
 - **Skill cards can be played, and 17 of the 29 have their rule** (issue #38, FR-23 to FR-26). The
   action phase accepts an Action card, and an opponent can answer it, the roll, or an announced capture
   with a Reaction card. The five that change the roll (Critical Success, Critical Failure, Angel Die,

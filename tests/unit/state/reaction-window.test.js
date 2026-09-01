@@ -50,13 +50,21 @@ describe("who may react", () => {
   });
 
   /**
-   * A card in the catalogue with no rule yet can be held and looked at and not played. That is what let
-   * the 29-card catalogue ship two commits before the effects did.
+   * Two guards that were load-bearing while the catalogue was ahead of the effects, and are kept now
+   * that all 29 cards have rules: a card the catalogue does not know, and a card with no rule. Neither
+   * is reachable through the shipped game, and a 30th card lands on both.
    */
-  it("does not count a card whose effect is not written yet", () => {
-    const state = withHands({ 1: ["reaction-ghost-mode"] });
+  it("does not count a card id that is not a real card", () => {
+    const state = withHands({ 1: ["reaction-not-a-card"] });
 
     expect(canReact(state, 1, TRIGGER.ON_CAPTURE)).toBe(false);
+  });
+
+  it("does count Ghost Mode against a capture, now that it has a rule", () => {
+    const state = withHands({ 1: ["reaction-ghost-mode"] });
+
+    expect(canReact(state, 1, TRIGGER.ON_CAPTURE)).toBe(true);
+    expect(canReact(state, 1, TRIGGER.ON_ROLL)).toBe(false);
   });
 
   it("does not count a seat that has already played its card this turn (FR-23)", () => {

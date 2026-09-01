@@ -31,6 +31,9 @@ import {
 } from "./roll-effects.js";
 import { doubleDip, noTakeBacksies, nuehue, potOfGreed, taxFraud } from "./card-effects.js";
 import { builtDifferent, holdPawn, lockIn, ragebait, rock, thePurge } from "./status-effects.js";
+import { ghostMode, headOut, letHimCook, unoReverse, yeet } from "./displacement-effects.js";
+import { bananaPeel, bigAhRock, notThatDeep, oilSpill } from "./trap-effects.js";
+import { hyperbeam, jankyRpg, sixtySeven } from "./area-effects.js";
 
 /**
  * Every card that has a rule, grouped the way the files are: by mechanic, not by artboard.
@@ -62,6 +65,24 @@ export const EFFECTS = Object.freeze({
   "action-ragebait": ragebait,
   "reaction-hold-pawn": holdPawn,
   "reaction-the-purge": thePurge,
+
+  // Pawns moved without a move (`core/displacement.js`).
+  "action-yeet": yeet,
+  "action-head-out": headOut,
+  "action-let-him-cook": letHimCook,
+  "reaction-ghost-mode": ghostMode,
+  "reaction-uno-reverse": unoReverse,
+
+  // Objects on squares (`core/traps.js`).
+  "action-banana-peel": bananaPeel,
+  "action-oil-spill": oilSpill,
+  "action-not-that-deep": notThatDeep,
+  "action-big-ah-rock": bigAhRock,
+
+  // More than one square at a time (`core/path.js`).
+  "action-hyperbeam": hyperbeam,
+  "action-janky-rpg": jankyRpg,
+  "action-sixty-seven": sixtySeven,
 });
 
 /** Does this card have a rule yet? What `state/` and `ui/` both ask before offering it. */

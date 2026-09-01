@@ -166,6 +166,43 @@ describe("the order of the chain", () => {
     expect(resolveRoll({ dieMax: 6, modifiers }, rngForDice([])).roll).toBe(6);
   });
 
+  /**
+   * 67's gamble, and the reason the threshold sits **before** the multiplier.
+   *
+   * The card is "roll a six or go nowhere, and if you do, take double". A 3 doubled to 6 must not pass a
+   * test the dice failed, so the order is asserted rather than assumed.
+   */
+  it("collapses the roll to zero when it misses a threshold (67)", () => {
+    const modifiers = withModifier(createModifiers(), { atLeast: 6, multiplier: 2 });
+    const missed = resolveRoll({ dieMax: 20, modifiers }, rngForDice([[3, 20]]));
+
+    expect(missed.roll).toBe(0);
+    expect(missed.steps.map((step) => step.step)).toEqual([ROLL_STEP.BASE, ROLL_STEP.MISSED]);
+  });
+
+  it("doubles the roll when it clears the threshold", () => {
+    const modifiers = withModifier(createModifiers(), { atLeast: 6, multiplier: 2 });
+
+    expect(resolveRoll({ dieMax: 20, modifiers }, rngForDice([[7, 20]])).roll).toBe(14);
+  });
+
+  /**
+   * The guard that broke a test when the threshold landed: with no card asking for one, `atLeast` is 0,
+   * and a roll pushed below zero by Devil Die is the **floor's** business rather than a missed threshold.
+   */
+  it("does not report a miss when no card asked for a threshold", () => {
+    const modifiers = withModifier(createModifiers(), { subDice: [8] });
+    const result = resolveRoll(
+      { dieMax: 6, modifiers },
+      rngForDice([
+        [1, 6],
+        [8, 8],
+      ])
+    );
+
+    expect(result.steps.map((step) => step.step)).not.toContain(ROLL_STEP.MISSED);
+  });
+
   it("truncates rather than rounding, so a multiplier can never invent half a square", () => {
     const modifiers = withModifier(createModifiers(), { multiplier: 1.5 });
     const result = resolveRoll({ dieMax: 6, modifiers }, rngForDice([[3, 6]]));

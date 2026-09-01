@@ -2159,6 +2159,74 @@ to get wrong later.
   faces, which is a playability rule and not a target, so it is one line in `skill-play.js`.
 - → Ch. 05
 
+### 2026-08-31: A pushback stops at the entry square and never reaches the start area
+
+- **Chosen:** `displace` in `core/displacement.js` clamps backward movement at `r = 1`.
+- **Why:** three cards push a pawn back. If any of them could reach `r = 0` they would all be cheap
+  substitutes for a capture, and capture is the mechanic the entire game is built around: a captured pawn
+  loses most of a lap and that is what makes the whole board tense. Stopping at the entry square keeps a
+  pushback a setback.
+- **Rejected: letting a pushback reach the start area.** It is the literal reading of "push back six" and
+  it makes Yeet strictly better than landing a capture, because it needs no exact count and no lucky roll.
+- **The cards that are meant to send a pawn home call a different function.** `sendHome` exists so that
+  "this card sends the pawn home" is visible at the call site rather than being a consequence of a large
+  enough number.
+- → Ch. 05
+
+### 2026-08-31: A trap fires on crossing, a skill square only on landing
+
+- **Chosen:** the two behave in opposite ways, and both are deliberate.
+- **Why:** a trap that needed an exact landing would almost never fire, because a D20 crosses twenty
+  squares and lands on one. A skill square that fired on crossing would be farmable by always taking the
+  biggest die, which undoes the entire point of the dice card pool. Said plainly: a reward you can farm
+  is broken, and a punishment you can jump over is not a punishment.
+- **Rejected: one rule for both**, in either direction. Consistency between the two is worth something
+  and it loses to each of them being right.
+- **Cost:** `core/path.js` exists only for the trap half, and it is the one place in the project that
+  looks at the whole walk rather than at the destination. Every ordinary move still ignores it.
+- → Ch. 05
+
+### 2026-08-31: The order inside `resolveMove` is a rule, and the tests put it under pressure
+
+- **Chosen:** the pawn arrives, then a trap fires, then the square the pawn is **actually standing on** is
+  asked whether it hands out a card.
+- **Why:** a trap can move the pawn. Asking about the skill square first would hand out a card for a
+  square the pawn is no longer on, or miss one a trap pushed it onto.
+- **Why it needed a test written on purpose:** a trap and a skill square rarely meet, so the wrong order
+  passes nearly every test that exists. `move-resolution.test.js` puts them in each other's way in both
+  directions.
+- **Rejected: skipping the skill square whenever a trap fired.** Simpler, and it loses the case where a
+  trap pushes a pawn onto a skill square it was never going to reach, which is a nice thing to happen and
+  should not be silently impossible.
+- → Ch. 05, Ch. 08
+
+### 2026-08-31: 67 needed a threshold step in the roll chain, before the multiplier
+
+- **Chosen:** `modifiers.atLeast`, applied after the extra dice and **before** the multiplier.
+- **Why:** the card is "roll a six or go nowhere, and if you do, take double". Putting the threshold after
+  the multiplier would let a 3 doubled to 6 pass a test the dice failed, which is a different and much
+  better card than the one on the artboard.
+- **The guard on it caught a bug the same minute.** `atLeast` defaults to 0, and without checking
+  `atLeast > 0` a roll that Devil Die had pushed to -7 was reported as a *missed threshold* instead of as
+  the floor. The value was right and the explanation was wrong, and the explanation is what the screen
+  reads out (NFR-08).
+- **Rejected: implementing 67 as a special case in `rollChosenDie`.** One card's rule inside the turn
+  manager, which is the layer that holds no rules.
+- → Ch. 05
+
+### 2026-08-31: The 29 rules sentences were written by Claude Code, and that is Product Owner work
+
+- **Chosen:** every card has a `text` key in both locales, describing the rule that was **implemented**.
+- **Why:** a card with a name and no rules text is a card nobody at the table can play, and the skill hand
+  was about to become clickable. Waiting for the copy would have blocked a finished feature on wording.
+- **What it is not:** final copy. Seven of the 29 differ from the artwork's wording because the rule
+  differs, and every one of those deviations is tabulated in Chapter 05.
+- **Rejected: shipping the cards with titles only**, which is what the previous commit did and was fine
+  while nothing could be played. It stops being fine the moment a player has to choose between two cards.
+- **The locale test checks all 29 have one**, so replacing the wording later is editing text rather than
+  hunting for gaps.
+- → Ch. 05, Ch. 04
+
 ---
 
 ## Challenges

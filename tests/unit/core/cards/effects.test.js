@@ -31,17 +31,27 @@ describe("the effect table is the FR-26 contract", () => {
   });
 
   /**
-   * The count is asserted rather than the list, so this test says how far the implementation has got
-   * without having to be edited for every card. When it reaches `CARD_COUNT` the game is complete.
+   * All 29, which is the assertion that closes issue #38's card work.
+   *
+   * The count is asserted rather than the list, so this one test tracked the implementation from 17 to
+   * 29 without being edited for each card, and it now says the set is complete rather than implying it.
    */
-  it("covers 17 of the 29 cards so far, and says so rather than implying it", () => {
-    expect(Object.keys(EFFECTS)).toHaveLength(17);
-    expect(CARD_COUNT).toBe(29);
+  it("covers all 29 cards", () => {
+    expect(Object.keys(EFFECTS)).toHaveLength(CARD_COUNT);
+
+    for (const cardId of cardIds()) {
+      expect(hasEffect(cardId), `${cardId} has no rule`).toBe(true);
+    }
   });
 
+  /**
+   * The missing-effect branch is unreachable through the shipped catalogue now that all 29 are written,
+   * and it is kept and tested anyway: `hasEffect` is what let the catalogue ship two commits before the
+   * effects, and it is what a 30th card will land on.
+   */
   it("refuses to hand out an effect for a card that has none", () => {
-    expect(hasEffect("action-hyperbeam")).toBe(false);
-    expect(() => effectFor("action-hyperbeam")).toThrow(/has no effect/);
+    expect(hasEffect("action-not-a-card")).toBe(false);
+    expect(() => effectFor("action-not-a-card")).toThrow(/has no effect/);
   });
 });
 

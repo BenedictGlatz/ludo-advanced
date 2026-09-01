@@ -44,12 +44,13 @@
  */
 
 import { applyMove, evaluateTurn } from "../core/movement.js";
+import { findPawn } from "../core/pawns.js";
 import { resolveRoll } from "../core/roll.js";
 import { expireStatuses } from "../core/statuses.js";
 import { expireTraps } from "../core/traps.js";
 import { findWinner } from "../core/win.js";
 import { MATCH_STATUS, TURN_PHASE, boardOf, clearedTurnFields, nextState } from "./game-state.js";
-import { drawFor, skillSquareChanges } from "./skill-turn.js";
+import { drawFor, skillSquareChanges, trapChanges } from "./skill-turn.js";
 
 /**
  * Every function below refuses to run in the wrong phase.
@@ -221,12 +222,18 @@ export function resolveMove(state, deps) {
     return nextState(state, { phase: TURN_PHASE.TURN_END });
   }
 
-  const pawns = applyMove(state.pawns, move);
-  const winner = findWinner(pawns);
+  // Three steps in one transition, and the order is the rule: the pawn arrives, then a trap it walked
+  // into goes off, and only then is the square it is actually standing on asked whether it hands out a
+  // card. A trap can move the pawn, so asking about the skill square first would ask about a square the
+  // pawn is no longer on.
+  const moved = { ...state, pawns: applyMove(state.pawns, move) };
+  const sprung = { ...moved, ...trapChanges(moved, move, deps) };
+  const board = { pawns: sprung.pawns, statuses: sprung.statuses, traps: sprung.traps };
 
+  const winner = findWinner(sprung.pawns);
   if (winner !== null) {
     return nextState(state, {
-      pawns,
+      ...board,
       pendingMove: null,
       winner,
       status: MATCH_STATUS.WON,
@@ -234,10 +241,12 @@ export function resolveMove(state, deps) {
     });
   }
 
+  const landed = findPawn(sprung.pawns, move);
+
   return nextState(state, {
-    pawns,
+    ...board,
     pendingMove: null,
-    ...skillSquareChanges(state, move, deps),
+    ...skillSquareChanges(sprung, { ...move, to: landed.r }, deps),
     phase: TURN_PHASE.TURN_END,
   });
 }

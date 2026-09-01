@@ -21,8 +21,13 @@
  * | 1 | A named number replaces the roll entirely | FR FR |
  * | 2 | Roll once, or twice and keep the higher or lower | Critical Success, Critical Failure |
  * | 3 | Add every extra die, then subtract every penalty die | Angel Die, Devil Die |
- * | 4 | Multiply | Speedrun Any% |
- * | 5 | Never below zero | all of them |
+ * | 4 | A threshold the roll has to clear, or it collapses to zero | 67 |
+ * | 5 | Multiply | Speedrun Any% |
+ * | 6 | Never below zero | all of them |
+ *
+ * **The threshold sits before the multiplier on purpose.** 67 is "roll a six or go nowhere, and if you
+ * do, take double", so the six has to be met by the die's own result rather than by a doubling. Putting
+ * it after the multiplier would let a 3 doubled to 6 pass a test it failed.
  *
  * **Advantage and disadvantage cancel.** Both played means one plain roll, not two rolls with an
  * arbitrary winner. That is the only resolution that does not need a rule about which card was played
@@ -60,6 +65,8 @@ export const ROLL_STEP = Object.freeze({
   ADD_DIE: "add-die",
   /** A die subtracted (Devil Die). */
   SUB_DIE: "sub-die",
+  /** The roll failed a threshold a card set and collapsed to zero (67). */
+  MISSED: "missed",
   /** The whole result multiplied (Speedrun Any%). */
   MULTIPLIER: "multiplier",
   /** The result would have gone below zero and was held there. */
@@ -79,6 +86,7 @@ export function createModifiers() {
     disadvantage: false,
     addDice: [],
     subDice: [],
+    atLeast: 0,
     multiplier: 1,
   };
 }
@@ -150,7 +158,16 @@ export function resolveRoll({ dieMax, modifiers = createModifiers() }, rng) {
     steps.push({ step: ROLL_STEP.SUB_DIE, value: -value, faces });
   }
 
-  if (modifiers.multiplier !== 1) {
+  // 67's gamble: clear the threshold with the dice or move nothing at all. Guarded on `atLeast` being
+  // set, because an unmodified roll pushed below zero by Devil Die is the floor's business, not a miss.
+  if (modifiers.atLeast > 0 && total < modifiers.atLeast) {
+    steps.push({ step: ROLL_STEP.MISSED, value: 0, needed: modifiers.atLeast, rolled: total });
+    total = 0;
+  }
+
+  // Skipped at zero: the arithmetic is the same either way, and the trace is what the screen reads out.
+  // "Missed the six, then times two for nothing" is noise in an explanation meant to be understood.
+  if (modifiers.multiplier !== 1 && total !== 0) {
     total *= modifiers.multiplier;
     steps.push({ step: ROLL_STEP.MULTIPLIER, value: total, factor: modifiers.multiplier });
   }

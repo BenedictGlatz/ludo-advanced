@@ -12,7 +12,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { cardIds } from "../../../src/core/cards/catalogue.js";
-import { CATEGORY } from "../../../src/core/cards/vocabulary.js";
+import { CATEGORY, KIND } from "../../../src/core/cards/vocabulary.js";
 import { REFUSAL } from "../../../src/core/movement.js";
 import { REJECTED } from "../../../src/state/intents.js";
 import {
@@ -119,6 +119,33 @@ describe("every key the code can emit has text in both languages", () => {
     for (const id of cardIds()) {
       expect(german.has(`card.skill.${id}.title`), `de is missing a title for ${id}`).toBe(true);
       expect(english.has(`card.skill.${id}.title`), `en is missing a title for ${id}`).toBe(true);
+    }
+  });
+
+  /**
+   * A name alone does not make a card playable. Until issue #38 gave every card a rule, the locales held
+   * titles and nothing else, and a player looking at "Janky RPG" had no way to find out what it did.
+   *
+   * The text describes the rule that was **implemented**, which is not always the artwork's wording:
+   * three cards deviate and each deviation is recorded in Chapter 05. It is provisional copy and the
+   * Product Owner owns the final wording.
+   */
+  it("gives every one of the 29 skill cards a rules sentence, in both languages", () => {
+    for (const id of cardIds()) {
+      expect(german.has(`card.skill.${id}.text`), `de is missing the text for ${id}`).toBe(true);
+      expect(english.has(`card.skill.${id}.text`), `en is missing the text for ${id}`).toBe(true);
+    }
+  });
+
+  /**
+   * The sub-kind the artwork prints under the banner. `vocabulary.js` transcribed all nineteen from the
+   * artboards including the odd ones, and a kind with no label would render as a raw slug like `d4` on
+   * the card.
+   */
+  it("names every sub-kind the catalogue can hold", () => {
+    for (const kind of Object.values(KIND)) {
+      expect(german.has(`card.kind.${kind}`), `de: ${kind}`).toBe(true);
+      expect(english.has(`card.kind.${kind}`), `en: ${kind}`).toBe(true);
     }
   });
 
