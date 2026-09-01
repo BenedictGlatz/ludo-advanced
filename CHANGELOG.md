@@ -251,6 +251,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   English. The rules sentence of each card is deliberately absent and arrives with the card's effect
 - Section 2.5 of the game design document, the skill fields as a board rule: where they start, why the
   layout is symmetric, why landing counts and crossing does not, and what a respawn excludes
+- **Skill cards can be played, and 17 of the 29 have their rule** (issue #38, FR-23 to FR-26). The
+  action phase accepts an Action card, and an opponent can answer it, the roll, or an announced capture
+  with a Reaction card. The five that change the roll (Critical Success, Critical Failure, Angel Die,
+  Devil Die, Speedrun Any%), the five that act on cards (Pot of Greed, Double Dip, No Take-Backsies,
+  Nühü, Tax Fraud), FR FR, and the six that leave something on a pawn (Rock, Lock In, Built Different,
+  Ragebait, Hold Pawn, The Purge). The hand is not clickable yet, which is issue #34
+- **The reaction window** (FR-24, FR-25). It opens at three moments and only when somebody could
+  actually use it: a window that opened on every roll would put a countdown in front of a game whose
+  ordinary turn is two clicks. Everything played into it resolves when it shuts, in the order it was
+  played, which is what lets Nühü cancel a card without anything having to be undone
+- One card per player per turn, and Double Dip raising that to two for the player who plays it
 - **The action phase**: a turn now stops after the dice card is chosen and before the die is rolled, so
   the active player can play a skill card there (issue #38, FR-23). The player is carried straight
   through it for now, because the skill hand is not clickable yet. The rule it exists for is the Product

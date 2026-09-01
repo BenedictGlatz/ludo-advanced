@@ -81,22 +81,30 @@ export function createSkillPool(rng) {
  * - **The pool and the discard pile are both empty.** Only reachable if every card is in a hand, which
  *   needs 58 cards across four hands of 5. It cannot happen, and it is handled rather than assumed,
  *   because "cannot happen" arguments are how closed accounting quietly stops being closed.
+ *
+ * **`isWanted` narrows what may be drawn**, and exactly one card needs it: Pot of Greed draws two
+ * **Action** cards. Written as a predicate over the card id rather than as a card type, so this module
+ * never has to import the catalogue and stays a set of functions over arrays of strings. When nothing
+ * in the pool is wanted the draw comes back empty, the same as a full hand, which is right: a card that
+ * asks for something the pool has run out of gets nothing rather than getting a substitute.
  */
-export function drawSkillCard(pool, discard, hand, rng) {
+export function drawSkillCard(pool, discard, hand, rng, isWanted = () => true) {
   if (hand.length >= SKILL_HAND_LIMIT) {
     return { pool, discard, hand, drawn: null };
   }
 
   const [source, spent] = pool.length > 0 ? [pool, discard] : [reshuffle(discard, rng), []];
-  if (source.length === 0) {
-    return { pool, discard, hand, drawn: null };
+
+  // The eligible positions, not the eligible cards: the index is what the removal below needs.
+  const wanted = source.map((id, at) => ({ id, at })).filter((entry) => isWanted(entry.id));
+  if (wanted.length === 0) {
+    return { pool: source, discard: spent, hand, drawn: null };
   }
 
-  const index = Math.floor(rng() * source.length);
-  const drawn = source[index];
+  const { id: drawn, at } = wanted[Math.floor(rng() * wanted.length)];
 
   return {
-    pool: source.filter((_, at) => at !== index),
+    pool: source.filter((_, index) => index !== at),
     discard: spent,
     hand: [...hand, drawn],
     drawn,

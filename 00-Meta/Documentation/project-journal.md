@@ -2061,6 +2061,104 @@ to get wrong later.
   start with an accidentally empty pool.
 - → Ch. 06, Ch. 08
 
+### 2026-08-31: Nothing in a reaction window resolves until the window shuts
+
+- **Chosen:** a card played into a window leaves its player's hand at once and its **rule does not run**
+  until the window closes. Then the played cards resolve in the order they were played, and the card that
+  opened the window resolves last.
+- **Why:** nothing in this design can be undone. `pawns`, `statuses` and `traps` are each replaced
+  wholesale by a patch, so "cancel that card" cannot mean reversing an effect that has already run.
+  Because nothing has run, cancelling is simply not running it, and Nühü needs no machinery at all.
+- **A second thing falls out of it for free:** the resolution order needs no rule about which card was
+  played first. The opening card is last because it is the thing being answered.
+- **Rejected: resolving each card as it is played, and giving every effect an inverse.** Fourteen of the
+  29 cards would need one, several of them are not invertible at all (a card that draws from a shuffled
+  pool cannot put the pool back), and every future card would owe one.
+- **Rejected: resolving as played and forbidding cancellation.** Simpler, and it deletes Nühü, which the
+  Product Owner chose along with the other 28.
+- **Cost, stated plainly:** a player who plays a Reaction does not see it take effect immediately. The
+  countdown is on screen while they wait, which is what makes that legible rather than confusing.
+- → Ch. 06
+
+### 2026-08-31: A reaction window is a field, not a phase
+
+- **Chosen:** `state.reactionWindow` is a field, and `dispatch` refuses every intent except the three
+  window ones while it is set.
+- **Why:** a window opens at three different moments, in three different phases, and the phase does not
+  change while it is open. Expressing it as phases would need `waiting-inside-action`,
+  `waiting-inside-roll` and the existing `reaction`, tripling the state machine to say one thing.
+- **The guard is not a nicety, it prevents a deadlock.** `roll-die` opens an on-roll window, so
+  dispatching it again while one is open would open a second window and the turn would never reach the
+  roll. One line in `dispatch` catches that and every case like it, instead of one guard per handler that
+  has to be remembered when a fourth trigger is added.
+- **Rejected: a phase per window.** Three more phases, and `ui/` would have to learn all of them to know
+  that a countdown is on screen.
+- → Ch. 06
+
+### 2026-08-31: A window that nobody could use does not open
+
+- **Chosen:** `openWindow` returns `null` unless some other seat has an unspent card budget **and** holds
+  a Reaction whose triggers include this exact moment **and** that card has a rule implemented.
+- **Why:** an ordinary turn in this game is two clicks. A window that opened on every roll would put a
+  thirty-second countdown in front of all of them, and would show a prompt to players with nothing to
+  press. The same argument makes the on-capture window open only for a move that actually captures.
+- **Rejected: always opening and letting the view hide an empty prompt.** The rules would then depend on
+  the view choosing to skip something, which is exactly the direction the layering forbids.
+- **What it costs:** the eligibility check reads every seat's hand and the catalogue, on every roll. That
+  is at most twenty card lookups in a turn-based game, so it is not a performance question.
+- → Ch. 06
+
+### 2026-08-31: One `play-card` intent for both kinds of card play
+
+- **Chosen:** `play-card` covers an Action card in the action phase and a Reaction in an open window, told
+  apart by whether a window is open.
+- **Why:** a click on a card in a hand is one gesture. The player is not choosing which kind of card play
+  they are performing, and the view should not have to decide either. The test is unambiguous: a window
+  is only ever open when somebody is being asked to answer, and an Action card cannot be played into one.
+- **Rejected: `play-action` and `play-reaction`.** It reads more explicitly in `intents-cards.js` and
+  pushes the same distinction into `ui/`, which would then hold a rule about when each is allowed.
+- → Ch. 06
+
+### 2026-08-31: The order the card checks run in is chosen for the message, not for the code
+
+- **Chosen:** whose turn it is, then whether you hold the card, then whether the card fits the moment,
+  then the budget, then the target.
+- **Why:** more than one thing is often wrong at once, and the player sees only the first reason. Telling
+  somebody "that card needs a target" when it was not even their turn is true and useless. The order runs
+  from the most fundamental refusal to the most recoverable one.
+- **Rejected: cheapest check first**, which would put the budget before the ownership check. Faster by an
+  amount nobody can measure, and worse to read.
+- → Ch. 06
+
+### 2026-08-31: A card effect takes a flat snapshot and returns a flat patch
+
+- **Chosen:** `core/cards/context.js` defines a snapshot and a patch, and `state/skill-play.js` is the
+  only module that translates between them and the state object.
+- **Why:** NFR-01 forbids `core/` from knowing the state object's shape. The payoff is the tests: every
+  card effect is checked with three or four literals. Against the state object each of the 29 would need
+  a started match, a chosen die and a scripted RNG, and the tests would be about the builder.
+- **A patch that names an unknown field throws.** `{ status: [...] }` for `{ statuses: [...] }` is
+  otherwise silently ignored, the card does nothing, and nothing fails. That is the quietest possible bug
+  in a table-driven system.
+- **Rejected: effects taking and returning the state object.** Fewer moving parts, and it makes `core/`
+  depend on `state/`, which is the one dependency direction the whole architecture is built to forbid.
+- **Rejected: effects mutating a draft object.** Convenient, and it would break the frozen state
+  guarantee that makes `ui/` unable to corrupt the board.
+- → Ch. 05, Ch. 06
+
+### 2026-08-31: The target check lives in one place, not in 29 effects
+
+- **Chosen:** `checkTarget` validates what a card's `targets` list asks for, before the effect runs, so
+  every effect may read `context.target.pawn` unguarded.
+- **Why:** 29 guards is 29 chances to write the same rule differently. It also lets the two refusals be
+  told apart properly: "you have not picked a pawn yet" is a prompt and "that pawn is not yours" is a
+  mistake, and the player needs to know which.
+- **Rejected: each effect validating its own target.** Every effect gains three lines that say the same
+  thing, and the view has no single question to ask about what a card still needs.
+- **The one thing the catalogue could not express is a table instead.** 67 needs a die with at least six
+  faces, which is a playability rule and not a target, so it is one line in `skill-play.js`.
+- → Ch. 05
+
 ---
 
 ## Challenges

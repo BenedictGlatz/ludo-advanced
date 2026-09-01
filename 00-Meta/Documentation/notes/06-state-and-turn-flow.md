@@ -303,6 +303,74 @@ took a `skillSquares` one, and the tests that script rolls pass `[]` for both. T
 established twice: **anything that spends the injected RNG at match start needs a test-side off switch,
 or it silently invalidates every scripted test in the project.**
 
+### The reaction window, and the one decision the whole design rests on: 2026-08-31, issue #38
+
+A window opens at three moments and is a **field** rather than a phase:
+
+| Trigger | Opened by | Answered by |
+| --- | --- | --- |
+| `on-card` | An Action card being played | Nühü, The Purge |
+| `on-roll` | The roll, **before** the number is known | Critical Failure, Devil Die, Hold Pawn, The Purge |
+| `on-capture` | A declared move that would capture | Ghost Mode, Uno Reverse, The Purge |
+
+`reaction` was already a phase, for the move. A second phase for "waiting inside the roll" and a third
+for "waiting inside the action phase" would have tripled the machine to express one idea, so the window
+is a field and `dispatch` freezes every other intent while it is set. That guard is one line and it
+catches the case that would otherwise **deadlock**: `roll-die` opens an on-roll window, so dispatching
+it again while one is open would open a second one and the turn would never reach the roll.
+
+#### Nothing resolves until the window shuts, and that is the decision everything else follows from
+
+A card played into a window leaves its player's hand immediately and its **rule does not run** until
+the window closes. Then the played cards resolve in the order they were played, and the card that opened
+the window resolves last.
+
+**The reason is that nothing here can be undone.** `pawns`, `statuses` and `traps` are each replaced
+wholesale by a patch, so "cancel that card" cannot mean reversing an effect that has already run. Because
+nothing has run, cancelling is simply not running it, and Nühü needs no machinery at all.
+
+That also settles the resolution order without a rule about which card was played first: the opening
+card is last because it is the thing being answered.
+
+#### A window that nobody could use does not open
+
+`eligibleSeats` asks three questions of every other seat: is your card budget unspent, do you hold a
+Reaction whose triggers include this moment, and does that card have a rule yet. If nobody answers yes to
+all three, no window opens and the turn carries on.
+
+**This is not an optimisation.** A window that opened every time would put a thirty-second countdown in
+front of every roll of a game whose ordinary turn is two clicks, and it would show a prompt to players
+with nothing to press.
+
+For the same reason `on-capture` opens only when the declared move actually captures. A pawn walking onto
+an empty square is the ordinary turn.
+
+#### The thirty seconds are not in `state/`, and the reason is not tidiness
+
+ESLint forbids `window` and `setTimeout` under `state/`. A rules layer that reads a clock cannot be
+tested, so the countdown runs in `ui/` and dispatches `close-window` when it expires. **A timeout is
+therefore the same thing as every eligible seat declining**, and FR-25's "if everybody declines, play
+continues at once" needs no timer at all: every play and every decline shortens `eligible` by one, a
+seat cannot rejoin, and the last one empties the list.
+
+Not one test in `reaction-window.test.js` mentions time.
+
+#### One intent covers two very different card plays
+
+`play-card` is an Action card in the action phase **and** a Reaction in an open window, told apart by one
+question: is a window open? That is not a shortcut. A window is only ever open when somebody is being
+asked to answer, and an Action card cannot be played into one.
+
+Keeping them one intent matters for the view: a click on a card in a hand is one gesture, and the player
+is not choosing which kind of card play they are performing.
+
+#### The order the checks run in is a usability decision
+
+Whose turn it is, then whether you hold the card, then whether the card fits the moment, then the budget,
+then the target. Every check runs before anything is written, so there is no half-played card to undo.
+The order is chosen so the **most useful** message wins when more than one thing is wrong: telling a
+player "that card needs a target" when it was not even their turn would be true and useless.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

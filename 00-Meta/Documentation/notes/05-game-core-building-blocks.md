@@ -654,6 +654,90 @@ They were written first on purpose, because writing nineteen card effects agains
 not exist is how the substrate ends up shaped by whichever card was written first. The cost is that
 their tests are the only callers until the artboard `4a` commits land.
 
+### The effect engine, and 17 of the 29 cards: 2026-08-31, issue #38
+
+FR-26 says a card's rule and its artwork are matched **by card id**, with neither importing the other.
+That sentence is now three files that do not know about each other:
+
+| Place | Says | File |
+| --- | --- | --- |
+| The catalogue | What a card **is** | `core/cards/catalogue-core.js`, `catalogue-extra.js` |
+| The effect table | What a card **does** | `core/cards/effects/index.js` |
+| The card view | What a card **looks like** | `ui/card-view.js` |
+
+The practical payoff is that a card can exist in one and not the others, and it did: the 29-card
+catalogue shipped two commits before any effect, and the view rendered all of them.
+
+#### An effect takes a flat snapshot, not the game state
+
+NFR-01 forbids `core/` from knowing the shape of the state object, and this is where that rule earns its
+keep rather than merely being obeyed. An effect takes a **context** and returns a **patch**, both flat:
+
+```js
+(context) => ({ modifiers: withModifier(context.modifiers, { addDice: [8] }) })
+```
+
+**Every one of the effect tests is three or four literals.** Against the state object each would need a
+started match, a chosen die and a scripted RNG, and the tests would be about the builder rather than
+about the card. `state/skill-play.js` is the single module that translates, in both directions.
+
+A patch names only the fields it changes, so an effect that touches the roll cannot blank the trap list
+by omission. A patch that names a field that is not on the allowed list **throws**, because a typo like
+`{ status: [...] }` for `{ statuses: [...] }` is otherwise silently ignored: the card does nothing and
+nothing fails.
+
+#### Two patch fields are instructions rather than data
+
+`negate` and `cancelMove` are not board state. They are answers to questions an effect cannot see the
+subject of: "the card that opened this window does not happen" and "the declared move does not happen".
+`skill-play.js` hands both back to the caller untouched, and `reaction-window.js` and `intents.js` act
+on them.
+
+#### The target check is in one place rather than in 29 effects
+
+A card's `targets` list says what the player has to point at. `checkTarget` in `state/skill-play.js` is
+the only thing that checks it, which means every effect may read `context.target.pawn` without guarding
+it. Two rejection reasons rather than one, and the difference matters to the player: **"you have not
+picked a pawn yet" is a prompt and "that pawn is not yours" is a mistake.**
+
+One card needs something the catalogue cannot express. 67 says "roll a 6", which on a D2 or a D4 is not
+unlikely but impossible, so the card is unplayable when the chosen dice card has fewer than six faces.
+That is a **playability** rule and not a target, so it lives in a small table in `skill-play.js` rather
+than in the catalogue.
+
+#### The effects are grouped by mechanic, not by artboard
+
+`roll-effects.js` holds the five that write one entry into the roll chain, `card-effects.js` the five
+that act on hands and budgets, `status-effects.js` the six that leave something on a pawn. Two artboard
+`4a` cards, Speedrun Any% and Tax Fraud, sit with artboard `6a` cards, and that is right: **the artboard
+a card was drawn on is a delivery fact, not a taxonomy.** Grouping by mechanic is also what keeps each
+file well under 300 lines and readable as one idea.
+
+#### A card writes a fact and movement reads it
+
+Not one of the six status cards contains a movement rule, and not one movement rule knows a card by
+name. `action-rock` writes `{ kind: "rock", player, pawn }`; `blockedSquares` in `core/move-rules.js`
+reads it. The tests are split the same way, deliberately: `effects.test.js` asserts that the status is
+written, `move-rules.test.js` asserts that it stops a pawn. Testing both in one place would hide which
+of the two is wrong when it breaks.
+
+#### Three cards were changed from what the artwork says
+
+Each is recorded as a deviation rather than a transcription, with the reason:
+
+| Card | Artwork | Implemented | Why |
+| --- | --- | --- | --- |
+| Hold Pawn | "as its turn begins" | Played into the roll window | Nothing happens at the start of a turn that another player could answer |
+| The Purge | Also reaches pawns already home, and lets you enter an opponent's house | Only the "every landing captures" half | A house is private to one player and no number names another player's house square |
+| Lock In | Labelled `DEFENSIVE`, effect not stated | The pawn cannot be moved **and** cannot be captured | A card that only stopped you moving your own pawn would be a card that only hurts its owner |
+
+#### Negative finding: 12 of 29 cards still have no rule
+
+`hasEffect` is the question both `state/` and `ui/` ask, and a card with no entry can be drawn, held and
+looked at, and is refused when played. The count is **asserted** in the effect test rather than described
+in a comment, so the number in this note cannot go stale silently: when the assertion reads 29 the game
+is complete.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

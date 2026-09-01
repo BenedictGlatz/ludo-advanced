@@ -111,6 +111,20 @@ export function createGameLoop({ initialState, deps, $board, $diceHand, $message
 
     if (state.status !== MATCH_STATUS.RUNNING) return;
 
+    /**
+     * A reaction window is checked before the phase, because a window can be open in three different
+     * phases and the phase itself has not changed while it is.
+     *
+     * Closing it at once is the same thing as every eligible player letting the countdown run out, which
+     * is the honest behaviour while nothing in the browser can play a Reaction card: the skill hand is
+     * not clickable until issue #34. The thirty-second timer replaces this line and nothing else.
+     */
+    if (state.reactionWindow !== null) {
+      if (!apply({ type: INTENT.CLOSE_WINDOW })) return;
+      advance();
+      return;
+    }
+
     // Carried straight through: the action phase and the roll take no input yet.
     if (state.phase === TURN_PHASE.ACTION) {
       if (!apply({ type: INTENT.SKIP_ACTION })) return;
