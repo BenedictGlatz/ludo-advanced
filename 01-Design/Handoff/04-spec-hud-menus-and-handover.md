@@ -295,6 +295,12 @@ choice, for a control that has exactly two values.
 and it is answered here because the HUD, the chrome and two overlay screens all had to name a seat and
 it would have been four more places relying on hue.
 
+> **Correction added by Claude Code on landing, and the mistake was ours.** NFR-12 is **`should have`**,
+> not `must have`. The work order this spec answers said `must have`, so this sentence is repeating a
+> label it was given. Row NFR-12 of `Requirements-Specification.md` reads `S`, and section 3.2 of that
+> document names NFR-12 as one of the last two should-haves to be cut. Nothing about the answer below
+> changes; what changes is how urgent the unfinished half is.
+
 **A shape per seat**, as a clip path rather than a glyph: no font dependency, nothing readable, nothing
 a translator will ever be handed.
 

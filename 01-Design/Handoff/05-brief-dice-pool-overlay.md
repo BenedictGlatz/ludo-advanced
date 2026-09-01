@@ -42,9 +42,9 @@ request to replace it.**
 
 | Id | Screen | What is wanted |
 | --- | --- | --- |
-| — | Dice card pool overview | **New, no screen id.** Every denomination in the pool, how many copies of each, and how many cards are face down in the pool right now |
+| none | Dice card pool overview | **New, no screen id.** Every denomination in the pool, how many copies of each, and how many cards are face down in the pool right now |
 | **S4** | Dice hand | Not redesigned. It is named because the overlay opens from the same decision |
-| — | Chrome | A third always-present control opens the overview. The row itself is D42 of handoff 04 and still open |
+| none | Chrome | A third always-present control opens the overview. The row itself is D42 of handoff 04 and still open |
 
 It is closest to **S10, the rules screen** (FR-35, `should have`, no backlog issue), and it is
 deliberately not that screen. S10 explains dice cards, skill cards and the leaving-start rule in prose.

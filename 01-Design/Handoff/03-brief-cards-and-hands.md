@@ -41,7 +41,7 @@ Screen ids from [Obligations-Book.md](../../00-Meta/Project-Management/Obligatio
 | **S4** | Dice hand | The three drawn cards, face up, and the act of picking one |
 | **S5** | Skill hand | The player's skill cards at rest. **Only the resting state**, see § 7 |
 | **S3** | Board | One addition only: the skill square, a track field that gives a card |
-| — | The shell | The page that holds S3, S4, S5 and S6 at once without scrolling (FR-31) |
+| none | The shell | The page that holds S3, S4, S5 and S6 at once without scrolling (FR-31) |
 
 Plus the thing all of the above are made of: **the card itself**, in its three families (dice card,
 Action card, Reaction card) and, for skill cards, its four categories.

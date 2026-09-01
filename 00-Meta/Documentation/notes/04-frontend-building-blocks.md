@@ -1174,7 +1174,8 @@ requested explicitly in the work order now, and the file's header points at that
 - **Handoff 02 never received a spec at all**, and that had not been recorded as a state anywhere except in
   passing inside brief 04 § 5.1. Eight decisions have no answer: D16, D17, D20, D21, D22, D23, D24, and
   D18 which was re-asked as D40. **D16 is NFR-12**, telling four seats apart without colour, and it is the
-  only open design question in this project that blocks a `must have` requirement.
+  only open design question in this project that blocks a requirement at all. (It was recorded here as a
+  `must have`, which is wrong: NFR-12 is `should have`. Corrected in 01-requirements-and-goals.md.)
 - **`chrome.css`'s header was stale**, and it was stale because of the previous commit rather than
   someone else's: it still described "the two controls" after issue #30 added a third button to the row.
   Corrected. Worth one line in the report, because the header of a placeholder file is the only place its
@@ -1415,9 +1416,10 @@ that reads as finished in a report.
   - **`pool.css` is the last placeholder stylesheet**, 92 lines. Handoff 05's brief has been out since
     2026-09-01 with no spec back. D43, D44, D45 and D47 are open; D46 was answered inside D42.
   - **`.pawn__mark` and about fifteen lines of `pawn.css` are the follow-up that closes D16**, and they
-    were not delivered. Until they are, NFR-12 is a `must have` that is visibly unmet and
-    `greyscale.spec.js` stays marked expected-to-fail. It is the only design item in the project that
-    blocks a requirement rather than a preference.
+    were not delivered. Until they are, NFR-12 is visibly unmet and `greyscale.spec.js` stays marked
+    expected-to-fail. It is the only design item in the project that blocks a requirement rather than a
+    preference. **NFR-12 is `should have`**, not `must have`: that error is corrected in
+    [01-requirements-and-goals.md](01-requirements-and-goals.md) and it had spread to five files.
   - **Handoff 02 still has no spec of its own.** D17, D21, D22, D23 and D24 are unanswered anywhere.
     Spec 04 answered D16 and D20 in passing and said so.
   - **`prompt.css` is 244 lines**, 56 from the NFR-02 limit, and it is the file to watch. Spec 04 § 1

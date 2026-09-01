@@ -312,10 +312,31 @@ the assertion side by side, which is what this table forced.
 
 ### NFR-12 moved for the first time since it was written: 2026-09-01, design handoff 04
 
-NFR-12, "a greyscale screenshot still identifies whose pawns are whose", is a `must have` and has been the
-only requirement in the project that a design decision was actively blocking. Design spec 01's D2 answered
-it by colour alone, and `tests/e2e/greyscale.spec.js` has been marked expected-to-fail since 2026-08-30 so
-that the suite reports a known failure rather than going green over an unmet `must have`.
+NFR-12, "a greyscale screenshot still identifies whose pawns are whose", has been the only requirement in
+the project that a design decision was actively blocking. Design spec 01's D2 answered it by colour alone,
+and `tests/e2e/greyscale.spec.js` has been marked expected-to-fail since 2026-08-30 so that the suite
+reports a known failure rather than going green over an unmet requirement.
+
+**A correction that belongs in this chapter, because it is a requirements fact and it was wrong for three
+days.** NFR-12 was repeatedly called a `must have`, here and in four other files. **It is `S`, should
+have.** Row NFR-12 of [Requirements-Specification.md](../../Project-Management/Requirements-Specification.md)
+reads `S`, and section 3.2 of the same document names it explicitly as one of the last two should-haves to
+be cut, alongside FR-35:
+
+> **Should-haves next**, keeping FR-35 (rules screen) and NFR-12 (colour-independent players) for last,
+> since both are preconditions for the buffer-sprint playtest with people who get no instructions.
+
+The error originated in the risk register, in a row that read "A `must have` requirement ships visibly
+unmet", and spread from there into this chapter, chapter 04, the journal, the design work order and design
+spec 04 itself. **It is worth a paragraph in the report on its own**, and not because it was embarrassing:
+the specification is the only document in the project that assigns MoSCoW labels, and every one of the five
+files that got it wrong was written by somebody reading a *summary* of the requirement rather than the
+requirement. The risk row has been corrected and re-rated from priority 4 to 3, because "no must-have is
+droppable" is a rule NFR-12 is not covered by.
+
+What does **not** change is that the requirement is unmet and that the test says so. A should-have that
+ships unmet is a scope decision the Product Owner is entitled to make; a should-have that ships unmet
+without anybody noticing is the thing the expected-to-fail marker exists to prevent.
 
 **Design spec 04 answered it and did not close it, and the distinction is the interesting part.**
 

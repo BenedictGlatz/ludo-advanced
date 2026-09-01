@@ -25,7 +25,7 @@ and the 213-case Playwright run are green. What that leaves:
 overlay panels, but NFR-12 is measured **on the pawn** and the mark is not there. The spec names what is
 missing: `.pawn__mark`, an empty `<span>` inside `.pawn`, and about fifteen lines of `pawn.css` after it.
 Those fifteen lines were not in the delivery. **That is the only outstanding design item in the project
-that blocks a `must have` requirement**, `greyscale.spec.js` is still marked expected-to-fail because of it,
+that blocks a requirement at all**, `greyscale.spec.js` is still marked expected-to-fail because of it,
 and it has no brief of its own. It is a smaller ask than the handoff 05 spec and it is worth more.
 
 Two notes on landing the delivery, for the next one:
@@ -78,7 +78,9 @@ loop needs an index or something gets quietly dropped, and something already had
 
 **The 02 row is the one worth reading twice.** A brief with no spec is not a brief that was declined, it is
 a brief nobody closed, and one of its eight open items (D16) is the only design question in this project
-that blocks a `must have` requirement.
+that blocks a requirement rather than a preference. **It is `should have`, not `must have`**: that label was
+wrong in this file and in four others, and it is corrected in the risk register and in
+`00-Meta/Documentation/notes/01-requirements-and-goals.md`.
 
 ---
 
@@ -152,7 +154,7 @@ that they are not a design.
 
 | No. | In one line | Brief | Blocks a requirement? |
 | --- | --- | --- | --- |
-| **D16** | Telling four seats apart without relying on colour | 02 | **Yes. NFR-12, `must have`, visibly unsatisfied.** `greyscale.spec.js` measures it and is marked expected-to-fail so the suite reports a known failure instead of going green |
+| **D16** | Telling four seats apart without relying on colour | 02 | **Yes. NFR-12, `should have`, visibly unsatisfied.** `greyscale.spec.js` measures it and is marked expected-to-fail so the suite reports a known failure instead of going green. Answered by spec 04 for the HUD, the chrome and two overlay panels; still open on the pawn, which is where it is measured |
 | D17 | Does the legal-target set read as one group, given the entry-square exception | 02 | No |
 | D20 | Does the four-second refusal minimum become a token | 02 | No |
 | D21 | Does a legal target that captures look different | 02 | No |

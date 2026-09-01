@@ -747,9 +747,37 @@ writing, and it is cheap evidence because both cases are on the record.
 
 **What is still unowned.** The `.pawn__mark` follow-up that closes D16 and NFR-12 is fifteen lines of CSS,
 is named in the spec, was not delivered, and now has **no card, no brief and no owner**. It is the only
-`must have` in the project blocked by a design item, and it is exactly the kind of small named remainder
+requirement in the project blocked by a design item, and it is exactly the kind of small named remainder
 that a board with no card for it loses. Recorded here and in
 [01-requirements-and-goals.md](01-requirements-and-goals.md) so it survives this sprint.
+
+### A MoSCoW label was wrong in five files, and the specification was right all along: 2026-09-01
+
+NFR-12 was called a `must have` in the risk register, in two chapter notes, in the project journal, in the
+design work order and in design spec 04. **It is `S`, should have.** The correction is in
+[01-requirements-and-goals.md](01-requirements-and-goals.md); what belongs in this chapter is how a
+prioritisation fact got wrong in five places at once.
+
+**Nobody read the specification.** Every one of the five wrote the label from a *summary* of the
+requirement: the risk register said it first, the work order took it from the register, and the design spec
+took it from the work order. The requirements specification, the one document in the project that assigns
+MoSCoW labels, says `S` twice, once in the table row and once in section 3.2's cutting order.
+
+Three process points:
+
+1. **A prioritisation claim is not a fact about a requirement, it is a lookup.** Every other kind of claim
+   in these notes carries a reason, and a reason is a defence against being wrong. "NFR-12 is a must have"
+   has no reason attached and nothing to check it against unless the reader goes to the table.
+2. **The register was the origin, and a register is exactly the document to get this wrong in.** A risk row
+   is written to argue that something matters, and inflating the label is the cheapest way to make that
+   argument. The row's own priority score depended on it: `M`/`H` = 4 became `M`/`M` = 3 on correction.
+3. **It cost nothing this time, and that is the point of catching it now.** The remaining work is fifteen
+   lines either way. What it would have cost is a report that claims a must-have requirement shipped unmet,
+   which is a heavier finding than the truth and is one a reader can check in ten seconds.
+
+**The generalisable fix is cheap:** any note that states a requirement's MoSCoW label links to the
+specification row it read it from. That is the same rule chapter 09 already applies to numbers, for the same
+reason, and it makes the claim re-checkable rather than remembered.
 
 ## Decisions
 

@@ -273,8 +273,18 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   `state/` did not change by one line and every coverage figure is identical, which is the cleanest
   measurement of NFR-01's layering the project has produced. **D16 is answered and still not closed**: four
   seat shapes exist and are on the HUD, the chrome and two overlay panels, but not on the pawn, which is
-  where NFR-12 is measured, so `greyscale.spec.js` stays expected-to-fail and the `must have` stays unmet.
+  where NFR-12 is measured, so `greyscale.spec.js` stays expected-to-fail and the requirement stays unmet.
   Sprint 2.
+- **2026-09-01, immediately after**: asked what NFR-12 actually is, and looking it up found that **it is
+  `should have` and had been called `must have` in five files**, including three written that evening and
+  the design spec itself. The requirements specification says `S` in the table row and again in section
+  3.2's cutting order, where NFR-12 is named as one of the last two should-haves to be cut. The chain is
+  traceable: the risk register said it first on 2026-08-30, the design work order took the label from the
+  register, design spec 04 took it from the work order, and the chapter notes took it from all three.
+  Nobody read the specification. All five corrected, and the risk row re-rated from priority 4 to 3,
+  because its score depended on the label. The work it changes is nothing, fifteen lines of `pawn.css`
+  either way; what it would have changed is a report claiming a must-have requirement shipped unmet, which
+  is a heavier finding than the truth and one a reader can check in ten seconds. Sprint 2.
 
 ---
 
