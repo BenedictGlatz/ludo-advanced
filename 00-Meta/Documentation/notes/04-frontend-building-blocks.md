@@ -1151,6 +1151,41 @@ those seven cards are not unavailable, they are the pool. So the wash is taken b
 describing the overview's cards as playable**, which would have been the worse lie: it adds a pointer
 cursor and a hover lift to a card that does nothing when clicked.
 
+### Three briefs open at once needed an index, and writing it found a dropped file: 2026-09-01
+
+`01-Design/Handoff/00-open-requests.md`. Not a brief and not a spec, so it breaks the numbered-pair
+convention deliberately and says so in its own first section. It is a cover sheet: which requests are out,
+which files each owes, in what order they are best answered, and every open decision from D16 to D47 in one
+table with a column for whether it blocks a requirement.
+
+**Why it was needed.** Three requests are outstanding at the same time, two of them sent on the same day,
+and the handoff loop as [01-Design/README.md](../../../01-Design/README.md) describes it has no place to
+record that. A brief with no spec looks identical in a directory listing to a brief whose spec has landed.
+
+**What it found, and this is the point of the exercise.** `src/ui/styles/chrome.css` declares itself a
+placeholder and names D42 of handoff 04 as what is owed. **Brief 04's deliverables table does not list
+it.** Brief 05 lists it only conditionally, "only if D46 restructures the row". So a spec answering D42 in
+prose while leaving the placeholder stylesheet in place would have passed all five landing checks and
+looked complete, and nobody would have noticed until somebody read the file's own header again. It is
+requested explicitly in the work order now, and the file's header points at that request.
+
+**Two smaller things fell out of the same read:**
+
+- **Handoff 02 never received a spec at all**, and that had not been recorded as a state anywhere except in
+  passing inside brief 04 § 5.1. Eight decisions have no answer: D16, D17, D20, D21, D22, D23, D24, and
+  D18 which was re-asked as D40. **D16 is NFR-12**, telling four seats apart without colour, and it is the
+  only open design question in this project that blocks a `must have` requirement.
+- **`chrome.css`'s header was stale**, and it was stale because of the previous commit rather than
+  someone else's: it still described "the two controls" after issue #30 added a third button to the row.
+  Corrected. Worth one line in the report, because the header of a placeholder file is the only place its
+  design debt is written down, so a stale one is worse than a stale comment elsewhere.
+
+**The count is now five placeholder stylesheets**, in the order they appeared: `prompt.css` 183 lines,
+`hud.css` 167, `overlay.css` 185, `chrome.css` 88, `pool.css` 92. Every one composes existing tokens only
+and says so at the top. The pattern behind them is written up under issue #30 above: the handoff loop is
+slower than the implementation loop, and the design request has been scheduled before the code that needs
+it exactly once.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

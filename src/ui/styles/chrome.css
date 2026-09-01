@@ -1,6 +1,7 @@
 /* =============================================================================
-   chrome.css -- the two controls that are on screen the whole time: the
-   language switch (FR-34) and the pause button (FR-07).
+   chrome.css -- the three controls that are on screen the whole time: the
+   language switch (FR-34), the pause button (FR-07) and, since issue #30, the
+   dice card pool overview.
 
    !! THIS FILE WAS NOT WRITTEN BY CLAUDE DESIGN AND IS NOT A DELIVERED SPEC !!
 
@@ -12,15 +13,25 @@
    prompt.css, which is itself composed of tokens, and every value below is a
    token out of tokens.css.
 
-   What is owed by handoff 04:
+   !! AND NO BRIEF ASKED FOR IT: SEE 00-open-requests.md SECTION 2.2 !!
 
-   - D42: where these two controls sit and what the language control should be.
-     It is a single button showing the language you would switch to, parked at
-     the top of the page, which is the least opinionated thing that satisfies
+   Handoff 04 asks about this row in D42 and does not list this file in its
+   deliverables, and handoff 05 lists it only conditionally. So a spec could
+   have answered D42 in prose and left this placeholder in place looking
+   finished. It is requested explicitly in the work order instead.
+
+   What is owed:
+
+   - D42: where these controls sit and what the language control should be. It
+     is a single button showing the language you would switch to, parked at the
+     top of the page, which is the least opinionated thing that satisfies
      FR-34's "at runtime" without competing with the board.
-   - Whether pause and language belong together at all. They are side by side
-     here because both are always reachable, which is a property of when they
-     are used and not of what they do.
+   - D46, new with issue #30: the row now carries three buttons where D42 asked
+     about two, and the turn sentence as well. Whether three is the point at
+     which it needs a different structure is the question.
+   - Whether pause, language and the pool overview belong together at all. They
+     are side by side here because all three are always reachable, which is a
+     property of when they are used and not of what they do.
    - D36: whether the turn sentence belongs in this row. It is here because the
      HUD had no width left for it, which is a measurement and not a design
      judgement. See hud-view.js `turnLine`.
