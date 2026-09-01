@@ -9,7 +9,7 @@ import { expect, test } from "@playwright/test";
 import {
   SEEDS,
   boardState,
-  chooseDiceCard,
+  chooseAndCarryOn,
   firstMovablePawn,
   openMatch,
   pawnPositions,
@@ -25,7 +25,7 @@ import {
  */
 async function openAndChoose(page) {
   const board = await openMatch(page, SEEDS.leavesStartAtOnce);
-  await chooseDiceCard(board);
+  await chooseAndCarryOn(board);
   return board;
 }
 

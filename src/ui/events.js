@@ -75,3 +75,66 @@ export function bindDiceHandEvents($hand, handlers) {
     handlers.onDiceCardActivated(facesOf(this));
   });
 }
+
+/**
+ * Bind the skill hand's handlers. Issue #34.
+ *
+ * The same shape as the dice hand: a third binding root, because the hand is in the rail and not inside
+ * the board, and the same `[data-playable="true"]` filter. `skill-hand-view.js` wrote that attribute
+ * from `playableCards`, which is the dispatcher's own check, so the filter is a fact and not a rule.
+ *
+ * `handlers.onSkillCardActivated(cardId, slot)` gets **both** the card and the slot. The card is what the
+ * intent needs and the slot is what the view needs, because a hand can hold two copies of one card and
+ * marking the played one by id would light up both.
+ */
+export function bindSkillHandEvents($hand, handlers) {
+  const activate = (element) =>
+    handlers.onSkillCardActivated(
+      $(element).attr("data-card-id"),
+      Number($(element).attr("data-slot"))
+    );
+
+  $hand.on("click", '.card[data-playable="true"]', function onClick() {
+    activate(this);
+  });
+
+  $hand.on("keydown", '.card[data-playable="true"]', function onKeydown(event) {
+    if (!isActivationKey(event)) return;
+
+    event.preventDefault();
+    activate(this);
+  });
+}
+
+/**
+ * Bind the prompt strip's buttons. Issues #33 and #34.
+ *
+ * One handler for every button on the strip, told apart by `data-prompt-action`. A `<button>` needs no
+ * keyboard handler of its own: Enter and Space activate it and fire a click, which is exactly why the
+ * strip uses real buttons and the cards and pawns, which cannot be, carry a `keydown` each.
+ *
+ * `handlers.onPromptAction(action, value)` gets the action and, for a target button, what it stands for.
+ */
+export function bindPromptEvents($prompt, handlers) {
+  $prompt.on("click", "[data-prompt-action]", function onClick() {
+    handlers.onPromptAction($(this).attr("data-prompt-action"), $(this).attr("data-prompt-value"));
+  });
+}
+
+/**
+ * Bind the board's picking handlers: a pawn or a square being pointed at for a card. Issue #34.
+ *
+ * A **second** binding on `.board`, kept apart from `bindBoardEvents` because the two answer different
+ * questions and must not be confused. `[data-movable]` means "this pawn can make a move this turn";
+ * `[data-pickable]` means "this is a legal answer to the question the prompt is asking right now". A pawn
+ * can carry either, both, or neither, and the two are written by different modules.
+ */
+export function bindPickEvents($board, handlers) {
+  $board.on("click", '.pawn[data-pickable="true"]', function onClick() {
+    handlers.onPawnPicked(Number($(this).attr("data-player")), pawnOf(this));
+  });
+
+  $board.on("click", '.square--track[data-pickable="true"]', function onClick() {
+    handlers.onSquarePicked(Number($(this).attr("data-square")));
+  });
+}

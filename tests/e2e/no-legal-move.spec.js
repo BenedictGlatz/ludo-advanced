@@ -13,7 +13,7 @@
 
 import { expect, test } from "@playwright/test";
 
-import { SEEDS, boardState, chooseDiceCard, openMatch, playUntil } from "./helpers.js";
+import { SEEDS, boardState, chooseAndCarryOn, openMatch, playUntil } from "./helpers.js";
 
 /**
  * Open the match and pick a dice card, which is what produces the refused turn.
@@ -24,7 +24,7 @@ import { SEEDS, boardState, chooseDiceCard, openMatch, playUntil } from "./helpe
  */
 async function openAndChoose(page, options) {
   const board = await openMatch(page, SEEDS.passesOnTurnOne, options);
-  await chooseDiceCard(board);
+  await chooseAndCarryOn(board);
   return board;
 }
 

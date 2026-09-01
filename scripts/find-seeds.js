@@ -25,8 +25,10 @@
  *   `tests/e2e/helpers.js` clicks, which is the card in slot 0, which is `hand[0]`.
  * - **Choosing a pawn**: the lowest-numbered movable pawn, which is what `firstMovablePawn` selects,
  *   because the view appends pawns in seat and then pawn order and only the active seat is movable.
- * - **Playing a skill card**: never. The hand is not playable until issue #34, and the browser cannot
- *   play one either, so the replay passes on the action phase exactly as the loop does.
+ * - **Playing a skill card**: never. A card played here would change what the RNG is spent on and every
+ *   seed with it, and the end-to-end helpers do not play cards either, for the same reason. The replay
+ *   passes on the action phase and declines every reaction window, which is exactly what a run with
+ *   `?fast=1` does.
  *
  * If any of those three changes, this script has to change with it or the seeds go stale silently.
  *
@@ -53,6 +55,47 @@ function lowestMovablePawn(state) {
   return Math.min(...movablePawns(state));
 }
 
+/** How many automatic steps a turn may take before something is assumed to be looping. */
+const MAX_STEPS = 12;
+
+/**
+ * Take every step the browser takes without asking the player, and stop when a person would be asked.
+ *
+ * Three things happen by themselves in the loop, and this is the replay's copy of that list:
+ *
+ * - a reaction window is shut, which is what `?fast=1` does the instant its zero-length countdown fires
+ * - the action phase is passed on, because this replay never plays a card
+ * - the die is rolled
+ * - a declared move is applied, which is the same `close-window` dispatch
+ *
+ * **Written as a loop rather than as a fixed sequence, because the order is not fixed.** Rolling can
+ * open a window, and closing a window leaves the turn still needing to roll. A straight-line version
+ * missed exactly that and reported "the turn could not be ended" for 330 of 400 seeds.
+ */
+function settle(state, deps) {
+  let current = state;
+
+  for (let step = 0; step < MAX_STEPS; step += 1) {
+    const type =
+      current.reactionWindow !== null
+        ? INTENT.CLOSE_WINDOW
+        : {
+            [TURN_PHASE.ACTION]: INTENT.SKIP_ACTION,
+            [TURN_PHASE.ROLL]: INTENT.ROLL_DIE,
+            // A declared move is applied by closing the window, whether one ever opened or not.
+            [TURN_PHASE.REACTION]: INTENT.CLOSE_WINDOW,
+          }[current.phase];
+
+    if (type === undefined) return { state: current };
+
+    const stepped = dispatch(current, { type }, deps);
+    if (!stepped.accepted) return { failed: `the turn stalled at ${type}` };
+    current = stepped.state;
+  }
+
+  return { failed: `the turn took more than ${MAX_STEPS} automatic steps` };
+}
+
 /**
  * Replay one match and record what happened on which turn.
  *
@@ -75,12 +118,12 @@ function replay(seed, playerCount) {
       state = chosen.state;
     }
 
-    // The action phase and the roll, which the browser also walks through without stopping.
-    for (const type of [INTENT.SKIP_ACTION, INTENT.ROLL_DIE]) {
-      const stepped = dispatch(state, { type }, deps);
-      if (!stepped.accepted) return { failed: `the turn stalled at ${type}`, turns };
-      state = stepped.state;
-    }
+    // Everything the browser walks through without stopping: the action phase, the roll, and any
+    // reaction window that opens on the way. A window is closed at once, which is exactly what a run
+    // with `?fast=1` does when its zero-length countdown expires.
+    const settled = settle(state, deps);
+    if (settled.failed) return { ...settled, turns };
+    state = settled.state;
 
     if (state.phase === TURN_PHASE.ACT) {
       const pawn = lowestMovablePawn(state);
@@ -94,9 +137,10 @@ function replay(seed, playerCount) {
       const played = dispatch(state, { type: INTENT.COMMIT_MOVE, pawn }, deps);
       if (!played.accepted) return { failed: "the move was refused", turns };
 
-      // Declaring a move no longer applies it: the reaction window has to close first.
-      const resolved = dispatch(played.state, { type: INTENT.CLOSE_WINDOW }, deps);
-      if (!resolved.accepted) return { failed: "the reaction window would not close", turns };
+      // Declaring a move no longer applies it. A capture may also have opened a window, and closing
+      // that is the same dispatch as applying the move, so one call covers both.
+      const resolved = settle(played.state, deps);
+      if (resolved.failed) return { ...resolved, turns };
       state = resolved.state;
     } else if (state.refusalReason !== null && found.passed === null) {
       found.passed = state.turnNumber;

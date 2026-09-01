@@ -75,7 +75,9 @@
       "choice": "Pick one of the two options",
       "forward": "Forwards",
       "backward": "Backwards",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "advance": "Four squares forward",
+      "retreat": "Back to the entry square"
     }
   },
   "roll": {

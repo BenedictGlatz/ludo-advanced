@@ -75,7 +75,9 @@
       "choice": "Wähle eine der beiden Möglichkeiten",
       "forward": "Vorwärts",
       "backward": "Rückwärts",
-      "cancel": "Abbrechen"
+      "cancel": "Abbrechen",
+      "advance": "Vier Felder vor",
+      "retreat": "Zurück zum Eingangsfeld"
     }
   },
   "roll": {

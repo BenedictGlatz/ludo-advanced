@@ -60,6 +60,79 @@ function checkHeld(state, seat, cardId) {
 }
 
 /**
+ * Why this card cannot be played right now, or `null`, **ignoring the target**.
+ *
+ * The question `ui/` asks to decide whether a card in a hand is clickable, and the question both
+ * handlers below ask first. Exported so the view and the rules cannot disagree about it: a card the view
+ * offers and the dispatcher refuses is the worst kind of bug in a card game, because the player is told
+ * they may do something and then told they may not.
+ *
+ * **The target is deliberately left out.** A player picks the card and *then* points at something, so a
+ * card that needs a pawn has to be clickable before a pawn has been chosen. `checkTarget` is the second
+ * half and runs when the play is actually dispatched.
+ */
+export function cardRefusal(state, seat, cardId) {
+  const window = state.reactionWindow;
+
+  // Whether this seat may act at all comes first, exactly as the module header sets out. "That card is
+  // not in your hand" is a true and useless thing to tell somebody who was not being asked.
+  if (window === null) {
+    if (state.phase !== TURN_PHASE.ACTION) return REJECTED.WRONG_PHASE;
+    if (seat !== state.activePlayer) return REJECTED.NOT_YOUR_TURN;
+  } else if (!window.eligible.includes(seat)) {
+    return REJECTED.NOT_ELIGIBLE;
+  }
+
+  const held = checkHeld(state, seat, cardId);
+  if (held !== null) return held;
+
+  const card = cardById(cardId);
+  const wanted = window === null ? TYPE.ACTION : TYPE.REACTION;
+
+  if (card.type !== wanted) return REJECTED.CARD_NOT_PLAYABLE_NOW;
+  if (window !== null && !card.triggers.includes(window.trigger)) {
+    return REJECTED.CARD_NOT_PLAYABLE_NOW;
+  }
+
+  const playable = checkPlayable(state, cardId);
+  if (playable !== null) return playable;
+
+  return canPlayCard(state, seat) ? null : REJECTED.CARD_BUDGET_SPENT;
+}
+
+/** Every card in one seat's hand that could be played right now. What the skill hand marks clickable. */
+export function playableCards(state, seat) {
+  return (state.skillHands[seat] ?? []).filter(
+    (cardId) => cardRefusal(state, seat, cardId) === null
+  );
+}
+
+/**
+ * Whose skill hand is on screen, and therefore whose card a click plays.
+ *
+ * In a hot-seat game there is one screen and one skill hand region, so it shows exactly one hand. Normally
+ * the active player's, because they need to see what they are holding while they choose a dice card, not
+ * only in the moment they can play one. During a reaction window it is the first seat still eligible,
+ * because they are the one being asked.
+ *
+ * **Never `null`.** A hand is always on screen, and whether any card in it is *playable* is a separate
+ * question that `playableCards` answers. Conflating the two would blank the hand in every phase but one,
+ * which is exactly the bug the end-to-end spec caught.
+ *
+ * **The window is still one shared thirty-second window** and this does not change that. What it settles
+ * is the *input order*: eligible seats are asked in seat order, because two people cannot both be holding
+ * the mouse, and four hands on one screen would show every hand to everybody. The countdown covers the
+ * whole window rather than restarting per seat.
+ */
+export function seatOnShow(state) {
+  if (state.reactionWindow !== null) {
+    return state.reactionWindow.eligible[0] ?? state.activePlayer;
+  }
+
+  return state.activePlayer;
+}
+
+/**
  * An Action card, played by the active player in the action phase (FR-23).
  *
  * The card leaves the hand and the budget is spent **immediately**, and then one of two things happens:
@@ -74,18 +147,8 @@ function checkHeld(state, seat, cardId) {
 function playActionCard(state, intent, deps) {
   const seat = intent.seat ?? state.activePlayer;
 
-  if (state.phase !== TURN_PHASE.ACTION) return reject(state, REJECTED.WRONG_PHASE);
-  if (seat !== state.activePlayer) return reject(state, REJECTED.NOT_YOUR_TURN);
-
-  const held = checkHeld(state, seat, intent.cardId);
-  if (held !== null) return reject(state, held);
-
-  const card = cardById(intent.cardId);
-  if (card.type !== TYPE.ACTION) return reject(state, REJECTED.CARD_NOT_PLAYABLE_NOW);
-
-  const playable = checkPlayable(state, intent.cardId);
-  if (playable !== null) return reject(state, playable);
-  if (!canPlayCard(state, seat)) return reject(state, REJECTED.CARD_BUDGET_SPENT);
+  const refusal = cardRefusal(state, seat, intent.cardId);
+  if (refusal !== null) return reject(state, refusal);
 
   const badTarget = checkTarget(state, intent.cardId, intent.target, seat);
   if (badTarget !== null) return reject(state, badTarget);
@@ -112,22 +175,10 @@ function playActionCard(state, intent, deps) {
  * cancellation with nothing to undo is only possible if nothing has happened yet.
  */
 function playReactionCard(state, intent) {
-  const window = state.reactionWindow;
   const seat = intent.seat;
 
-  if (!window.eligible.includes(seat)) return reject(state, REJECTED.NOT_ELIGIBLE);
-
-  const held = checkHeld(state, seat, intent.cardId);
-  if (held !== null) return reject(state, held);
-
-  const card = cardById(intent.cardId);
-  if (card.type !== TYPE.REACTION || !card.triggers.includes(window.trigger)) {
-    return reject(state, REJECTED.CARD_NOT_PLAYABLE_NOW);
-  }
-
-  const playable = checkPlayable(state, intent.cardId);
-  if (playable !== null) return reject(state, playable);
-  if (!canPlayCard(state, seat)) return reject(state, REJECTED.CARD_BUDGET_SPENT);
+  const refusal = cardRefusal(state, seat, intent.cardId);
+  if (refusal !== null) return reject(state, refusal);
 
   const badTarget = checkTarget(state, intent.cardId, intent.target, seat);
   if (badTarget !== null) return reject(state, badTarget);

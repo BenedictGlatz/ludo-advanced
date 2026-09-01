@@ -674,6 +674,54 @@ happens to **the board**, while the cases left behind assert what happens to **t
 Worth recording because NFR-02 applies to tests as well as to source, and this is the first test file in
 the project to hit the limit.
 
+### The end-to-end suite grew a fourth waiting point, and the seed script caught up: 2026-08-31, issue #34
+
+A turn now has **three** places it waits for a person rather than two: the dice card, the action phase,
+and the pawn. Every spec written before issue #38 assumed the second one did not exist.
+
+The fix is one helper, `carryOn`, and the thing worth recording is that it **asks the board rather than
+assuming**: the loop skips the action phase by itself whenever the active player holds no playable card,
+so a spec cannot know in advance whether the button will be there. Eleven specs needed one extra line
+each and none of them needed rewriting.
+
+#### `skill-hand.spec.js` deliberately pins no situation
+
+Every other end-to-end spec plays a pinned seed and asserts an exact outcome. That cannot work for a card
+hand: a hand is drawn one card per turn out of 58, so "seed 83 holds Hyperbeam on turn 4" is a fact about
+the shuffle, and the seeds have already had to be repinned three times for exactly that kind of reason.
+
+So these seven cases assert the **mechanism** and branch on whatever the shuffle produced: a card is
+offered or it is not, clicking one either resolves it or asks for a target, cancelling gives it back.
+`test.skip` with a stated reason is used where a branch does not apply, so a skipped case says which
+situation did not come up rather than passing silently.
+
+#### The seed replay had to be rewritten as a loop, and 330 seeds said so
+
+`scripts/find-seeds.js` walked the automatic steps of a turn as a **straight line**: pass the action
+phase, roll, commit, close. Issue #38 made that order not fixed, because rolling can open a reaction
+window and closing a window leaves the turn still needing to roll.
+
+The symptom was loud and specific: "the turn could not be ended" for **330 of 400 seeds**, and the
+remaining 70 produced a different set of pinned seeds. Rewritten as a loop that asks what the state needs
+next, it reproduces all five pinned seeds exactly, which is the cross-check that matters: the script and
+the browser spend the injected RNG identically, and neither had to be told the other's answer.
+
+**The near miss is the lesson.** The 70 seeds that still worked produced a plausible-looking block of
+output. Pasting it in would have repinned every seed in the suite to values derived from a broken replay,
+and the tests would have gone green on them.
+
+### Coverage after issue #38
+
+`ui/` is still not unit tested and that is unchanged and deliberate: `vitest.config.js` runs with
+`environment: "node"` as the second half of NFR-01's criterion, so a `ui/` unit test would need a DOM
+configured and would weaken that guarantee. The five new `ui/` modules are covered through Playwright
+instead.
+
+**What that costs, stated rather than implied:** `ui/timers.js` has no test of its own, and the one
+behaviour it exists for, two named timers not cancelling each other, is exercised only indirectly by a
+reaction window opening during a handover pause. That situation is reachable in play and no test forces
+it.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

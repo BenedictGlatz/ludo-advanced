@@ -1,0 +1,181 @@
+/* =============================================================================
+   prompt.css -- the strip that asks the player a question, and the board's
+   "point at something" state.
+
+   !! THIS FILE WAS NOT WRITTEN BY CLAUDE DESIGN AND IS NOT A DELIVERED SPEC !!
+
+   CLAUDE.md says Claude Code does not invent design rules and asks when a
+   specification is missing for something it has to build. One is missing here:
+   design spec 03 covered the cards and the two hands and stopped, and issue #38
+   needed two controls it does not describe, the reaction prompt and the target
+   picker.
+
+   So this file invents nothing and composes only what already exists. Every
+   colour, space, radius, shadow, font and duration below is a token out of
+   tokens.css, and the shapes are the ones already on the page: the refusal
+   strip's placement from spec 01, the panel chrome from app.css, and the hint
+   ring move-hints.js already uses for a legal move.
+
+   What is owed by design handoff 04, and is deliberately not guessed at here:
+
+   - What a countdown looks like. Right now it is a number in the numeric font.
+     There is no ring, no bar and no urgency state, because "urgent" is a colour
+     and a motion decision and neither is this side's to make.
+   - Whether the prompt belongs at the foot of the page at all, or in the rail
+     under the skill hand.
+   - How a pickable pawn should differ from a movable one. Both are rings today,
+     in two different tokens, and telling them apart is a design question.
+   - D33, still open with the Product Owner: is an opponent's hand shown at all
+     during a reaction window, and is the card count public?
+
+   Recorded in 00-Meta/Documentation/notes/04-frontend-building-blocks.md.
+   ========================================================================== */
+
+/* --- The strip itself. It takes the foot of the page, in a fourth grid row
+       under the refusal strip.
+
+       The row is stated rather than left to implicit placement, so that the
+       strip appearing cannot land it somewhere else on the page. It costs no
+       height when nothing is being asked, because the strip is display:none
+       then, and app.css gives row 1 to `1fr`, so the board's row gives the
+       space up rather than the page growing. shell.spec.js measures that
+       rather than trusting it. --- */
+
+.app > .prompt {
+  grid-area: 4 / 1 / 5 / 3;
+  justify-self: center;
+}
+
+.prompt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+  min-height: var(--space-7);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-panel);
+  border: var(--border-card) solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+}
+
+/* Nothing is being asked, so the strip takes no room at all rather than sitting
+   there empty. An empty plate reads as a control that has stopped working. */
+.prompt[data-mode="none"] {
+  display: none;
+}
+
+.prompt__line {
+  margin: 0;
+  font-weight: var(--weight-medium);
+}
+
+/* --- The countdown. A number, in the font the rolls use, so it reads as part
+       of the same game and not as browser chrome. --- */
+
+.prompt__clock:not(:empty) {
+  padding: 0 var(--space-2);
+  background: var(--card-result-bg);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-num);
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-strong);
+  color: var(--color-text);
+}
+
+/* --- The buttons. The dice cards and the pawns are divs with a tabindex,
+       because a card is not a button. These are real buttons, so they get Enter
+       and Space and a focus ring for free. --- */
+
+.prompt__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.prompt__button {
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-surface);
+  border: var(--border-ink) solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-piece);
+  font: inherit;
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    background var(--motion-feedback) var(--ease-ui),
+    box-shadow var(--motion-feedback) var(--ease-ui);
+}
+
+.prompt__button:hover {
+  background: var(--color-hint-soft);
+  box-shadow: var(--shadow-lift);
+}
+
+.prompt__button:focus-visible {
+  outline: var(--border-thick) solid var(--color-focus);
+  outline-offset: var(--space-1);
+}
+
+/* The number buttons FR FR needs. Up to twenty of them, so they get the compact
+   treatment rather than each carrying a word's worth of padding. */
+.prompt[data-mode="target"] .prompt__button {
+  min-width: var(--space-6);
+  text-align: center;
+}
+
+/* --- Aiming a card at the board.
+
+       `data-picking` on the board and `data-pickable` on each candidate is the
+       same shape move-hints.js already writes for a legal move. The ring is
+       --color-skill rather than --color-hint, so that "this answers the card"
+       and "this is where the move goes" are not the same mark. Which of the two
+       reads as more urgent is a design question and is owed by handoff 04. --- */
+
+.board[data-picking] .pawn:not([data-pickable="true"]),
+.board[data-picking] .square--track:not([data-pickable="true"]) {
+  opacity: var(--ink-dim);
+}
+
+.board[data-picking] [data-pickable="true"] {
+  cursor: pointer;
+}
+
+.pawn[data-pickable="true"] {
+  box-shadow:
+    0 0 0 var(--border-thick) var(--color-skill),
+    var(--shadow-piece);
+}
+
+.square--track[data-pickable="true"] {
+  background: var(--color-skill-soft);
+  box-shadow: inset 0 0 0 var(--border-ink) var(--color-skill);
+}
+
+/* --- Below the design resolution the foot of the page is already stacking, so
+       the strip only has to stop being a pill and start being a block. Same
+       breakpoint as app.css, for the same reason. --- */
+
+@media (max-width: 84rem), (orientation: portrait) {
+  .prompt {
+    border-radius: var(--radius-card);
+  }
+}
+
+/* --- Reduced motion. The strip has one transition and it is on a button, so
+       there is little to turn off, and it is turned off anyway: NFR-11 is a
+       promise about the whole page and not about the parts that were expensive
+       to animate. --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .prompt__button {
+    transition: none;
+  }
+}

@@ -251,6 +251,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   English. The rules sentence of each card is deliberately absent and arrives with the card's effect
 - Section 2.5 of the game design document, the skill fields as a board rule: where they start, why the
   layout is symmetric, why landing counts and crossing does not, and what a respawn excludes
+- **The skill hand is playable** (issue #34, FR-23 to FR-26). Click a card and it either resolves at
+  once or the game asks what to aim it at: one of your pawns, an opponent's, a square, a direction, a
+  number, an opponent, or one of two options. Sixteen of the 29 cards need a target and two need two of
+  them. Cancelling half way through costs nothing, because nothing is played until every target is in
+- **The reaction window on screen**, with the thirty-second countdown FR-25 asks for and a Decline button.
+  A window shuts the moment everybody has answered, without waiting out the clock
+- **A prompt strip under the board** that asks whatever the game is waiting for: play a card or carry on,
+  react or decline, or point at something. **It is the one thing on screen with no design specification
+  behind it**: it composes existing tokens only, and what design handoff 04 still owes is written into
+  the top of `src/ui/styles/prompt.css`
+- `tests/e2e/skill-hand.spec.js`, eight cases covering the card flows a unit test cannot reach, including
+  playing a card from the keyboard alone (NFR-08) and the page still fitting on one screen while the
+  prompt is up
 - **All 29 skill cards now have their rule** (issue #38, FR-26, FR-28, FR-29). The last twelve needed
   three mechanics the board did not have: a pawn can be moved without making a move (Yeet, Aight Imma
   Head Out, Let Him Cook, Ghost Mode, Uno Reverse), objects can sit on a square and either fire or block
@@ -297,6 +310,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A turn now waits for the player in three places rather than two**: the dice card, the action phase,
+  and the pawn. The action phase is skipped automatically when the player holds nothing playable, so it
+  never stalls a turn
+- `ui/timers.js` replaced the game loop's single timer slot. With a countdown running beside the handover
+  pause, whichever was scheduled second would have silently cancelled the first
 - **Leaving the start area now needs the die's highest number or better, not exactly that number**
   (FR-09, issue #38). Nothing changes for a match played without skill cards, because a plain roll can
   never go above the maximum. It changes everything for a card that adds to the roll: under the old

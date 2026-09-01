@@ -12,7 +12,15 @@
 import { expect, test } from "@playwright/test";
 
 import { POOL_COMPOSITION } from "../../src/core/dice-pool.js";
-import { SEEDS, boardState, chooseDiceCard, diceHand, openMatch, playTurn } from "./helpers.js";
+import {
+  SEEDS,
+  boardState,
+  carryOn,
+  chooseDiceCard,
+  diceHand,
+  openMatch,
+  playTurn,
+} from "./helpers.js";
 
 /** The seven denominations the pool can deal, as strings, because attributes are strings. */
 const DENOMINATIONS = POOL_COMPOSITION.map((entry) => String(entry.faces));
@@ -65,6 +73,11 @@ test.describe("the dice hand", () => {
     await middle.click();
     await expect.poll(async () => (await boardState(board)).die).toBe(faces);
 
+    // Choosing no longer rolls: issue #38 put the action phase in between, so the roll is one step
+    // further on. That the die is already set and the roll is not is exactly the split working.
+    expect((await boardState(board)).roll).toBe(0);
+    await carryOn(board);
+
     // FR-20: the roll is between 1 and that card's face count, and it belongs to the card that
     // produced it, which is what the badge on the card says (D32).
     const { roll } = await boardState(board);
@@ -78,6 +91,7 @@ test.describe("the dice hand", () => {
     const hand = diceHand(board);
 
     await chooseDiceCard(board);
+    await carryOn(board);
 
     // Exactly one card is the chosen one, and none of the three is offered any more: a second pick
     // in the same turn would be a second roll, and FR-19 gives the player one.

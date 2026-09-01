@@ -665,6 +665,102 @@ nothing uses yet, so nothing is missing on screen today. Seven paragraphs of fla
 languages is copy, and copy for cards the Product Owner chose is the Product Owner's to approve, not
 something to invent while wiring a hand. Recorded as outstanding, not as done.
 
+### The skill hand became playable, and the prompt strip has no design behind it: 2026-08-31, issue #34
+
+Five new modules in `ui/`, and one of them is the first thing in this project built **without** a design
+specification. That is recorded here rather than glossed over, because it is the one place the design
+process broke down.
+
+| Module | What it owns |
+| --- | --- |
+| `ui/skill-hand-view.js` | The hand of cards, clickable |
+| `ui/prompt-view.js` | The strip that asks a question: action phase, reaction window, target |
+| `ui/target-picker.js` | Collecting what a card is aimed at |
+| `ui/card-controls.js` | The gestures and the thirty-second clock |
+| `ui/timers.js` | More than one thing waiting at once |
+
+#### The view does not decide what is playable, it asks
+
+`playableCards(state, seat)` comes from `state/`, and it is built on the **same** `cardRefusal` the
+dispatcher checks first. So a card the hand offers is a card the dispatcher accepts, by construction.
+
+The failure that avoids is the worst kind in a card game: the player is told they may play something and
+then told they may not. Two copies of five rules would drift the first time one of them changed.
+
+#### The prompt strip is one element with three jobs
+
+The action phase, the reaction window and "point at something" all show in the same strip. Three separate
+regions would each be empty most of the time and would move the board when they appeared, which is the
+one thing FR-31's single-screen layout cannot afford.
+
+Its grid row is **stated** rather than left to implicit placement, and `skill-hand.spec.js` measures that
+the page still does not scroll while the strip is up. `shell.spec.js` measures the start of a match, when
+the strip is hidden and costs nothing, so it could not have caught this.
+
+#### `prompt.css` was written by Claude Code, and that is a process failure worth naming
+
+`CLAUDE.md` says Claude Code does not invent design rules and asks when a specification is missing. One
+is missing: design spec 03 covered the cards and the two hands and stopped, and issue #38 needed two
+controls it does not describe.
+
+What was done instead of inventing: **every colour, space, radius, shadow, font and duration in
+`prompt.css` is an existing token**, and every shape is one already on the page (the refusal strip's
+placement from spec 01, the panel chrome from `app.css`, the ring `move-hints.js` writes for a legal
+move). The file's own header says all of this in the first thirty lines, so nobody can mistake it for a
+delivered spec.
+
+**What is owed by handoff 04**, and is deliberately not guessed at:
+
+- What a countdown looks like. It is a number today: no ring, no bar, no urgency state, because "urgent"
+  is a colour and a motion decision.
+- Whether the prompt belongs at the foot of the page or in the rail under the skill hand.
+- How a pickable pawn should differ from a movable one. Both are rings today, in two different tokens.
+- D33, still open with the Product Owner: is an opponent's hand shown at all during a reaction window,
+  and is the card count public?
+
+#### One hand on screen, and the bug that settled which
+
+There is one screen and one skill hand region, so it shows one hand. The first implementation showed the
+hand of "the seat being asked to act", which is `null` in every phase except the action phase, so **the
+hand was blank while the player chose a dice card**. The end-to-end spec caught it on its first run.
+
+The fix separates two questions that had been conflated: *whose hand is on screen* (the active player, or
+during a window the first eligible seat) and *which cards are playable* (`playableCards`). A hand is
+always on screen. Whether anything in it can be clicked is a different fact.
+
+#### The half-finished card play lives in `ui/` and not in the state
+
+A card that has been clicked and has no target yet is a fact about a mouse. It disappears if the player
+changes their mind, and nothing has been dispatched, so **cancelling is free**: there is no intent to
+undo and the rules layer never knew.
+
+Putting it in the frozen state object would have made the rules layer hold a presentation fact, and would
+have needed a "cancel that card play" intent whose only job is to undo something that never happened.
+
+#### The selection is marked by slot and not by card id
+
+A hand can hold both copies of one card. Marking the one being played by id lit up two of them, and the
+player would have had no way to tell which one the game thought they meant.
+
+#### Four target kinds cannot be pointed at
+
+A pawn and a square are clicked on the board. A direction, one of two options, a number and "which
+opponent" are not things on the board, so they become buttons in the strip.
+
+`number` is the awkward one, and FR FR is its only user. It offers **one button per face of the chosen
+die** rather than a text field, because a text field needs validation, a submit and a keyboard, and the
+die has at most twenty faces.
+
+#### `timers.js` had to become a registry, and the reason is a bug that had not happened yet
+
+`game-loop.js` had one timer slot and a `later()` that cleared it unconditionally. That was right while
+the only thing ever waiting was the handover pause. With a countdown running at the same time, whichever
+was scheduled second would silently cancel the first, and the symptom would be a turn that never hands
+over or a window that never shuts.
+
+Named timers make that unwriteable: `set("handover", ...)` and `set("reaction", ...)` cannot cancel each
+other, and setting the same name twice replaces itself, which is what a countdown being redrawn wants.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

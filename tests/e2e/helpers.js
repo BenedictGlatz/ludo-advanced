@@ -33,8 +33,10 @@
  * was one command, which is the whole reason `scripts/find-seeds.js` was written down. The first two
  * seeds below survived all three changes by coincidence and the other three did not.
  *
- * `?fast=1` collapses the two pauses in the turn loop to zero. It changes the waiting and nothing
- * else: the same intents run in the same order.
+ * `?fast=1` collapses **three** waits in the turn loop to zero: the pause after a move, the pause after
+ * a refusal, and since issue #38 the thirty-second reaction window. It changes the waiting and nothing
+ * else: the same intents run in the same order, and a window still opens. A run with `?fast=1` simply
+ * behaves as though every eligible player declined at once, which is a situation the rules already have.
  */
 
 import { expect } from "@playwright/test";
@@ -109,10 +111,20 @@ export function diceHand(board) {
 }
 
 /**
+ * The prompt strip, which is where the action phase and the reaction window ask their questions.
+ *
+ * Beside the board like the hands, for the same reason: it is not inside `.board`.
+ */
+export function prompt(board) {
+  return board.page().locator(".prompt");
+}
+
+/**
  * Pick the dice card in slot 0 and wait until choosing has actually happened.
  *
- * Choosing also rolls, because `intents.js` runs steps 3 to 5 as one intent, so the phase afterwards
- * is `act` when something can move and `turn-end` when nothing can.
+ * **Choosing no longer rolls.** Until issue #38 `choose-die` ran steps 3 to 5 as one intent; the action
+ * phase now sits in that gap, so the phase after this is `action` when the player holds a playable card
+ * and `act` or `turn-end` when they do not. `carryOn` below is the other half.
  *
  * **The wait cannot be "the phase is no longer `choose`", and that mistake cost half a test run.**
  * With `?fast=1` a turn nobody can move in rolls, passes, hands over and draws the next hand inside
@@ -135,6 +147,45 @@ export async function chooseDiceCard(board) {
       { timeout: 15_000 }
     )
     .toBe(true);
+}
+
+/**
+ * Press "carry on" if the turn is waiting in the action phase, and do nothing if it is not.
+ *
+ * A no-op most of the time, which is the point: the loop skips the action phase by itself whenever the
+ * active player holds no playable card, so a spec cannot know in advance whether the button will be
+ * there. Asking the board rather than assuming is what keeps every spec that predates issue #38 working
+ * with one extra line.
+ *
+ * **It plays no card.** These helpers drive the turn, and a card played here would change the RNG
+ * sequence and invalidate every pinned seed. Playing cards is `skill-hand.spec.js`'s job.
+ */
+export async function carryOn(board) {
+  const { phase, turnNumber } = await boardState(board);
+  if (phase !== "action") return;
+
+  await prompt(board).locator('[data-prompt-action="skip"]').click();
+
+  await expect
+    .poll(
+      async () => {
+        const now = await boardState(board);
+        return now.phase !== "action" || now.turnNumber > turnNumber || now.status !== "running";
+      },
+      { timeout: 15_000 }
+    )
+    .toBe(true);
+}
+
+/**
+ * Choose a dice card and then get past the action phase, which is what most specs actually want.
+ *
+ * Two steps where issue #31 had one. Kept as a pair rather than folded into `chooseDiceCard`, because a
+ * spec that is *about* the action phase needs to stop between them.
+ */
+export async function chooseAndCarryOn(board) {
+  await chooseDiceCard(board);
+  await carryOn(board);
 }
 
 /**
@@ -183,6 +234,7 @@ export async function playTurn(board) {
   const { turnNumber, phase } = await boardState(board);
 
   if (phase === "choose") await chooseDiceCard(board);
+  await carryOn(board);
   if ((await boardState(board)).phase === "act") await moveFirstMovablePawn(board);
 
   await waitPastTurn(board, turnNumber);
@@ -208,6 +260,12 @@ export async function playUntil(board, done, maxSteps = 400) {
 
     if (phase === "choose") {
       await chooseDiceCard(board);
+      await carryOn(board);
+      continue;
+    }
+
+    if (phase === "action") {
+      await carryOn(board);
       continue;
     }
 

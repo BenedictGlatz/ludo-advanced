@@ -17,12 +17,16 @@
  * arithmetic that turns a seed into numbers is `createSeededRng` in `core/dice-source.js`, because
  * that is arithmetic; deciding that the seed comes out of a URL is composition, and that is here.
  *
- * ## What is still stubbed
+ * ## Nothing here is stubbed any more
  *
- * The dice source is the real twenty-card pool as of issue #30, and as of issue #31 the player picks
- * which of the three drawn cards gets rolled, so issue #37 is complete. The skill hand region is
- * mounted and **empty**: design spec 03 styles it, the card pool and the catalogue exist in `core/`,
- * and the wiring that draws a card into a hand is issue #38.
+ * The dice source is the real twenty-card pool (issue #30) and the player picks which of the three drawn
+ * cards gets rolled (issue #31), so issue #37 is complete. The skill hand holds real cards, all 29 of them
+ * have their rule, and the reaction window and its thirty-second clock are wired up, so issue #38 is
+ * complete too.
+ *
+ * Five regions are mounted: the board, the dice hand, the skill hand, the prompt strip and the refusal
+ * strip. The prompt strip is the one with **no design specification behind it**, and that is recorded
+ * rather than hidden: see the header of `ui/prompt-view.js`.
  */
 
 import $ from "jquery";
@@ -34,6 +38,8 @@ import { matchDeps, startMatch } from "./state/match.js";
 import { renderBoard } from "./ui/board-view.js";
 import { renderDiceHand } from "./ui/dice-hand-view.js";
 import { createGameLoop } from "./ui/game-loop.js";
+import { renderPrompt } from "./ui/prompt-view.js";
+import { renderSkillHand } from "./ui/skill-hand-view.js";
 
 import "./ui/styles/tokens.css";
 import "./ui/styles/app.css";
@@ -45,12 +51,19 @@ import "./ui/styles/card.css";
 import "./ui/styles/card-state.css";
 import "./ui/styles/hand.css";
 import "./ui/styles/refusal.css";
+import "./ui/styles/prompt.css";
 
 /** Player counts a match can start with (FR-01). Anything else in the URL falls back to four. */
 const PLAYER_COUNTS = [2, 3, 4];
 
-/** How long a Playwright run waits, in milliseconds, when `?fast=1` is set. */
-const FAST_DELAYS = { afterMove: 0, afterRefusal: 0 };
+/**
+ * How long a Playwright run waits, in milliseconds, when `?fast=1` is set.
+ *
+ * `reaction` is the thirty-second window collapsed to nothing, which is the difference between a suite
+ * that takes a minute and one that takes half an hour. It changes the waiting and nothing else: the window
+ * still opens, and a run with `?fast=1` behaves exactly as though every eligible player declined at once.
+ */
+const FAST_DELAYS = { afterMove: 0, afterRefusal: 0, reaction: 0 };
 
 /**
  * The three settings the address bar may carry.
@@ -71,32 +84,27 @@ export function readOptions(search) {
 }
 
 /**
- * Build the page: the four regions design spec 03 laid out as D30.
+ * Build the page: the four regions design spec 03 laid out as D30, plus the prompt strip.
  *
- * Board on the left, the two hands stacked in a rail on the right, the refusal strip across the
- * foot. The plate elements are `.app__dice` and `.app__skill`; the hand itself goes inside, because
- * `app.css` styles the plate and `hand.css` styles the row of cards, and keeping those two jobs on
- * two elements is what lets the plate carry the "it is your turn" ring without touching the cards.
+ * Board on the left, the two hands stacked in a rail on the right, the refusal strip across the foot. The
+ * plate elements are `.app__dice` and `.app__skill`; the hand itself goes inside, because `app.css`
+ * styles the plate and `hand.css` styles the row of cards, and keeping those two jobs on two elements is
+ * what lets the plate carry the "it is your turn" ring without touching the cards.
  *
- * **The skill hand region is mounted empty.** It is a region with a plate and no cards until issue
- * #38 draws one. Mounting it now rather than later is what makes the layout the one FR-31 asks for:
- * a rail that grows a second row halfway through the sprint would move the board.
+ * **The prompt strip is the fifth region and it has no design specification.** It shares the foot of the
+ * page with the refusal strip, and it is the one thing on screen composed only of existing tokens rather
+ * than from a delivered spec. Recorded in the header of `ui/prompt-view.js` and in Chapter 04.
  */
-function mount($root, $board, $diceHand) {
-  const $message = $("<div>", { class: "move-refusal" });
-  const $skillHand = $("<div>", { class: "hand hand--skill" })
-    .attr("data-count", 0)
-    .attr("data-active", "false");
-
+function mount($root, parts) {
   const $app = $("<div>", { class: "app" }).append(
-    $("<div>", { class: "app__board" }).append($board),
-    $("<div>", { class: "app__dice" }).append($diceHand),
-    $("<div>", { class: "app__skill" }).append($skillHand),
-    $message
+    $("<div>", { class: "app__board" }).append(parts.$board),
+    $("<div>", { class: "app__dice" }).append(parts.$diceHand),
+    $("<div>", { class: "app__skill" }).append(parts.$skillHand),
+    parts.$prompt,
+    parts.$message
   );
 
   $root.empty().append($app);
-  return $message;
 }
 
 /**
@@ -113,16 +121,20 @@ export async function boot(root = "#app", search = window.location.search) {
   const deps = matchDeps(createSeededRng(options.seed), createDicePool());
   const state = startMatch(options.playerCount, deps);
 
-  const $board = renderBoard(state);
-  const $diceHand = renderDiceHand(deps.diceSource.handSize);
-  const $message = mount($(root), $board, $diceHand);
+  const parts = {
+    $board: renderBoard(state),
+    $diceHand: renderDiceHand(deps.diceSource.handSize),
+    $skillHand: renderSkillHand(),
+    $prompt: renderPrompt(),
+    $message: $("<div>", { class: "move-refusal" }),
+  };
+
+  mount($(root), parts);
 
   const loop = createGameLoop({
     initialState: state,
     deps,
-    $board,
-    $diceHand,
-    $message,
+    ...parts,
     delays: options.fast ? FAST_DELAYS : {},
   });
 

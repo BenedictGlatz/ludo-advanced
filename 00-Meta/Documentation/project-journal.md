@@ -2227,6 +2227,71 @@ to get wrong later.
   hunting for gaps.
 - → Ch. 05, Ch. 04
 
+### 2026-08-31: `prompt.css` was written by Claude Code, against the rule, and it is recorded not hidden
+
+- **Chosen:** `src/ui/styles/prompt.css` exists, written on this side, composing only tokens that already
+  exist in `tokens.css` and shapes already on the page.
+- **Why:** `CLAUDE.md` says Claude Code invents no design rules and asks when a specification is missing.
+  One is missing: design spec 03 covered the cards and the two hands and stopped, and issue #38 needs a
+  reaction prompt and a target picker that it does not describe. Asking would have blocked the last
+  commit of the two issues on a design round.
+- **What was done instead of inventing:** no colour, size, spacing, radius, font or duration is chosen.
+  Every value is an existing token and every shape is borrowed from the refusal strip, the panel chrome
+  or the legal-move ring. The file's own header says so in its first thirty lines, so it cannot be
+  mistaken for a delivered spec.
+- **Rejected: sending a brief and waiting.** Correct process, and it would leave issue #38 unfinished
+  with no working way to play a card.
+- **Rejected: no styling at all, unstyled buttons on the page.** It would be visibly not this game, and
+  it would make the four regions the design *does* cover look broken next to it.
+- **Four things are named as owed by handoff 04** rather than guessed: what a countdown looks like, where
+  the strip belongs, how a pickable pawn differs from a movable one, and D33.
+- → Ch. 04
+
+### 2026-08-31: A hand is always on screen, and playability is a separate question
+
+- **Chosen:** `seatOnShow(state)` never returns `null`. Which cards in that hand can be clicked is
+  `playableCards(state, seat)`.
+- **Why:** the first version fused the two into "the seat being asked to act", which is nothing in every
+  phase but the action phase, so the skill hand was **blank while the player chose a dice card**. A player
+  needs to see what they hold in order to choose, not only in the moment they can play it.
+- **How it was found:** the first run of `skill-hand.spec.js`, on its cheapest assertion, "the hand holds
+  the card the turn drew". Worth recording because that case looked like a formality when it was written.
+- **Rejected: showing all four hands.** One screen, hot seat: it would show every hand to everybody.
+- → Ch. 04
+
+### 2026-08-31: A half-finished card play lives in `ui/`, never in the game state
+
+- **Chosen:** the clicked card and the targets collected so far are held in `ui/target-picker.js`.
+  Nothing is dispatched until every target is in.
+- **Why:** it is a fact about a mouse. It disappears if the player changes their mind, and because no
+  intent has been sent, **cancelling is free**: there is nothing to undo and the rules layer never knew a
+  card had been clicked.
+- **Rejected: a `select-card` intent and a `cancel-card` intent.** It puts a presentation fact in the
+  frozen state object and adds an intent whose only job is to undo something that never happened.
+- **Marked by slot and not by card id**, because a hand can hold both copies of one card and marking by
+  id lit up two of them.
+- → Ch. 04
+
+### 2026-08-31: The action phase is skipped when there is nothing to play
+
+- **Chosen:** the loop dispatches `skip-action` by itself when the active player holds no playable card,
+  and waits when they do.
+- **Why:** this is not a design choice, it is the difference between a working game and a hung one. A loop
+  that always waited would stall every turn in which the player has an empty hand, which is most early
+  turns.
+- **What it costs:** a spec cannot know in advance whether the "carry on" button will be there, which is
+  why the end-to-end helper asks the board rather than assuming.
+- → Ch. 04, Ch. 08
+
+### 2026-08-31: A number target is one button per face, not a text field
+
+- **Chosen:** FR FR's "name a number" is rendered as one button per face of the chosen dice card.
+- **Why:** a text field needs validation, a submit, a keyboard and an error state for a number outside the
+  die's range. The die has at most twenty faces, so the buttons **are** the validation, and a number the
+  card cannot use is not offered.
+- **Rejected: a number input.** Fewer elements on screen and four more states to design and test.
+- → Ch. 04
+
 ---
 
 ## Challenges
