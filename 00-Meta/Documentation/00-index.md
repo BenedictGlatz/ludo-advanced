@@ -25,8 +25,8 @@ Read [reference/style-reference.md](reference/style-reference.md) before writing
 | 04 | [04-frontend-building-blocks.md](notes/04-frontend-building-blocks.md) | `src/ui/`, `src/i18n/`: components, rendering, event binding, localisation | ready: every screen built, all six design handoffs recorded, no placeholder stylesheet left |
 | 05 | [05-game-core-building-blocks.md](notes/05-game-core-building-blocks.md) | `src/core/`: board topology, movement, capture, dice card pool, skill cards | partial: board, movement, capture, both card pools and the effect engine recorded |
 | 06 | [06-state-and-turn-flow.md](notes/06-state-and-turn-flow.md) | `src/state/`: the seam between core and ui, turn flow, state transitions | partial: the state object, the intents and the turn flow recorded |
-| 07 | [07-tooling.md](notes/07-tooling.md) | npm scripts, package management, ESLint, Prettier, Vite dev/prod build, deployment | partial: the toolchain is installed and recorded; CI is still issue #68 |
-| 08 | [08-quality.md](notes/08-quality.md) | Unit tests, coverage, E2E, CI/CD, code comments | partial: strategy, Definition of Done and both suites recorded; figures live in Ch. 09; CI does not exist yet |
+| 07 | [07-tooling.md](notes/07-tooling.md) | npm scripts, package management, ESLint, Prettier, Vite dev/prod build, deployment | partial: the toolchain is installed and recorded, CI landed 2026-09-02; no deployment target decided |
+| 08 | [08-quality.md](notes/08-quality.md) | Unit tests, coverage, E2E, CI/CD, code comments | partial: strategy, Definition of Done, both suites and CI recorded; figures live in Ch. 09 |
 | 09 | [09-source-code-overview.md](notes/09-source-code-overview.md) | Size and metrics: **the only chapter where numbers live** | ready: measured 2026-09-02, next to the commands that produced it |
 | 10 | [10-ai-driven-engineering.md](notes/10-ai-driven-engineering.md) | How AI was used in the workflow, what it was good and bad at | conventions, tool split and the precondition finding recorded; the honest assessment waits for real experience |
 | 11 | [11-project-report.md](notes/11-project-report.md) | Plan vs actual, challenges, lessons learned | empty |
@@ -162,8 +162,12 @@ Standing list. Resolve and delete, or move into the chapter that answers it.
   once the field exists and burn-down stays impossible**, because it needs dated status transitions the
   plain single-select `Sprint` field cannot provide. Both are blocked on the same missing `project`
   token scope: see [02-project-management.md](notes/02-project-management.md#board).
-- **No CI/CD pipeline and no deployment target** have been decided. Both are normal report chapters;
-  if they stay absent, Chapter 08 says so and explains why rather than omitting the topic.
+- ~~**No CI/CD pipeline**~~ **landed 2026-09-02, issue #68.** `.github/workflows/build-check.yml` runs
+  the five gates of section 6 of the test plan on every pull request into `dev` or `main`. Two limits
+  are recorded in Chapter 08 rather than glossed: Edge stays a local check, and the check reports
+  without blocking a merge until a branch-protection ruleset exists. **No deployment target has been
+  decided** and that half of this entry stands: it is a normal report chapter, and if it stays absent
+  Chapter 07 says so and explains why rather than omitting the topic.
 - **Licence is undetermined** (`README.md` says "To be determined"). Since 2026-08-09 this is a named
   condition of the feasibility verdict rather than a loose end: the repository is already public and
   the deployment candidates assume it stays that way.

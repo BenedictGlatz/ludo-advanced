@@ -65,8 +65,9 @@ for (const [d,x] of Object.entries(a))
 
 # 6. Longest files: evidence for the 300-line rule. CSS counts, so it is in the pattern.
 #    Scoped and null-delimited since 2026-09-01, see the correction below.
+#    The workflow file joined the pattern on 2026-09-02, see the note below.
 git ls-files -z 'src/*.js' 'src/*.css' 'tests/*.js' 'scripts/*.js' '*.config.js' \
-  | xargs -0 wc -l | sort -rn | sed -n '2,7p'
+  '.github/*.yml' | xargs -0 wc -l | sort -rn | sed -n '2,7p'
 
 # 7. Stylesheet lines. Added 2026-08-30, when src/ui/styles/ stopped being empty.
 git ls-files -z 'src/*.css' | xargs -0 wc -l | sort -rn
@@ -79,6 +80,14 @@ npx playwright test --list --project=chromium 2>&1 | tail -1
 applies to "source, tests and config", and a stylesheet is source: the delivered `board.css` was the
 first file in the project to come near the limit, and a JavaScript-only command would not have seen
 it.
+
+**Command 6 changed again on 2026-09-02**, for the second half of the same sentence. NFR-02 says
+"source, tests **and config**", and `.github/workflows/build-check.yml` from issue #68 is config that
+no pattern in this file was looking at. `.github/*.yml` is now in the list. Measured on 2026-09-02
+after the change: the workflow is **116 lines**, so it does not appear in the top six and the six
+longest files are unchanged. That is the useful outcome to record. **A pattern that only gets widened
+after a file grows too long measures nothing**, and this one was widened while the answer was still
+boring.
 
 **Two corrections to the commands this file was created with**, both found by running them:
 

@@ -424,6 +424,16 @@ review away.
   Product Owner has been asked to cut it), #68 the CI workflow (2 points), and the review and merge of
   this branch. **That is the plan-versus-actual story of this project in one line**, and it is a schedule
   finding rather than a success: the estimates were built for people writing the code by hand.
+- **A sixth issue moved from Sprint 3 into Sprint 2 the same day: #68, the CI workflow, 2 points.** It was
+  created on 2026-09-02 during this closeout precisely so the board would carry it before Sprint 3 began,
+  and then it was built on 2026-09-02 as well, on `feature/68-ci-build-check` off `dev`. The reason is
+  the one the line above already gives: Sprint 3's implementation half had nothing left to block it.
+  **This makes Sprint 3's planned implementation half exactly one item, #40 audio, which the Product
+  Owner has been asked to cut.** The honest reading is not that the team is fast, it is that the
+  estimate of 35 points for that half described a different way of working, and the log now says so for
+  the sixth time rather than once. It also moves the Sprint 2 figure again, to 75 points of `Done` work
+  against 72 planned, and the four reasons the 2026-09-02 decision block gives for why that number is
+  not a velocity all still apply, with this as a fifth instance of the same cause.
 
 - **The plan's Step 4 was committed in the reverse of the order it names.** It asks for
   `feat(movement)` closing #28 and then `feat(capture)` closing #29. `movement.js` imports
