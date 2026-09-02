@@ -242,5 +242,16 @@ export function clearedTurnFields() {
     reactionWindow: null,
     /** The card that opened the current window and has not resolved yet. */
     pendingCard: null,
+
+    /**
+     * The id of a card whose effect an It's Not That Deep's aura cancelled, or `null` (FR-30).
+     *
+     * A turn-level field beside `refusalReason` rather than something derived, because it cannot be
+     * derived: the card is spent and its effect never ran, so afterwards the board looks exactly as it
+     * would have if the player had done nothing at all. Without this the player has no way to tell a
+     * nullified card from a bug, and `core/cards/context.js` already names a quiet no-op as "the
+     * quietest possible bug in a system like this".
+     */
+    nullifiedCard: null,
   };
 }

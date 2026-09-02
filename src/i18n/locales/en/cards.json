@@ -124,7 +124,7 @@
       },
       "action-not-that-deep": {
         "title": "It's Not That Deep",
-        "text": "Lay a trap on a square. Whoever touches it is pushed back one square."
+        "text": "Lay a trap on a square. Whoever touches it is pushed back one square, and while it lies there it cancels enemy offensive cards aimed within three squares of it."
       },
       "action-let-him-cook": {
         "title": "Let Him Cook",

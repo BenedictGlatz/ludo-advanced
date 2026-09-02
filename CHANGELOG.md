@@ -366,6 +366,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **It's Not That Deep pushes you back one square, not a D6** (issue #45, FR-30). The card is named
   after how small it is and it now behaves that way. It rolls no die at all, so the outcome is something
   you can plan around
+- **It's Not That Deep also protects the ground around it**, which is the half of the card that was
+  printed on it but had never been built. While it lies there, an opponent's offensive card aimed within
+  three squares of it does nothing, which is seven squares of cover. The card is still spent: you could
+  not see the trap, and that is what the trap is for. The game says which card was cancelled, because
+  otherwise it looks exactly like a bug
 - **Big Ah Rock lasts three rounds instead of two, and it now knocks a pawn back** (issue #45, FR-30).
   Dropping the boulder also shoves the nearest enemy pawn behind it three squares backwards, which is
   the half of the card that was printed on it but had never been built. A pawn already standing on the

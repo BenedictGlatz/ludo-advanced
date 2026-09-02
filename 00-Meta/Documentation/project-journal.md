@@ -3084,6 +3084,44 @@ to get wrong later.
   first hit in a backwards run, with no distance arithmetic and no sort.
 - → Ch. 05
 
+### 2026-09-02: The nullification aura is checked in `resolveCard`, not in the `negate` instruction
+
+- **Chosen:** `resolveCard` in `state/skill-play.js` asks whether an It's Not That Deep's aura covers the
+  square the card acts on, and returns an empty change set plus `nullified: true` when it does.
+- **Why:** it is the single place any card's rule actually runs. `playActionCard` calls it once and
+  `closeWindow` calls it per played card plus once for the card that opened the window, so one check
+  covers every path. It also reads the board **at resolve time**, which is the honest reading of an
+  aura: the board can change between a card being played into a window and that window shutting.
+- **Rejected: the `negate` instruction and `reaction-window.js`.** This is the one that looks right.
+  `negate` already means "the card that opened this window does not resolve", which is the exact effect
+  wanted. It fails for two reasons: it **only reaches anything while a window is open**, and an
+  offensive card played when nobody can react resolves immediately with no window in existence, so half
+  the plays would slip past. And `negate` is produced by an effect somebody played, while nothing plays
+  an aura, so carrying it that way would mean minting a phantom card play and putting a fictional entry
+  in the discard pile.
+- **Rejected: checking inside each effect.** Not expressible: an effect is a pure function of a context
+  snapshot returning a patch, and the board cannot tell it "do nothing". All 29 would have to ask, which
+  is the opposite of why `checkTarget` is one place and not 29.
+- → Ch. 05, Ch. 06
+
+### 2026-09-02: A nullified card is spent, and the state gained a field to say so
+
+- **Chosen:** the card leaves the hand and goes to the discard pile even though its effect never ran,
+  and a turn-level `nullifiedCard` records which card it was.
+- **Why the card is spent:** the player could not see the trap, and losing the card is the punishment
+  the trap exists for. It also matches the decision `discardChanges` already carries, that a cancelled
+  card stays in the discard pile because it was played.
+- **Why the field is needed:** because it is spent silently, the board afterwards looks **exactly** as
+  it would if the player had done nothing at all. The evidence is precisely what is missing, so it
+  cannot be derived, and without it a nullified card is indistinguishable from a bug.
+- **Rejected: refusing the play instead**, which would tell the player where an invisible trap is by
+  process of elimination and make the card worthless. **Rejected: resolving silently**, which
+  `core/cards/context.js` already names as "the quietest possible bug in a system like this".
+- **One simplification stated rather than hidden:** a window resolving two nullified offensive cards
+  records only the last. Possible, vanishingly rare, and one readable message beats a list nothing was
+  built to display.
+- → Ch. 05, Ch. 06
+
 ### 2026-09-02: Placement legality is a new target kind, not a per-card check
 
 - **Chosen:** `TARGET.FREE_SQUARE`, a new value in the card vocabulary meaning "a track square that can

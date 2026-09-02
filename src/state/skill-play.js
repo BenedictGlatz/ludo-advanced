@@ -36,6 +36,7 @@
 import { assertPatch, createContext } from "../core/cards/context.js";
 import { effectFor } from "../core/cards/effects/index.js";
 import { discardCard } from "../core/skill-pool.js";
+import { nullifiedBy } from "./card-legality.js";
 
 /**
  * The snapshot of `state` that one played card sees.
@@ -87,10 +88,37 @@ const FIELD_FOR = Object.freeze({
 /**
  * Run one card's rule and turn its answer into a changes object.
  *
- * Returns `{ changes, negate, cancelMove }`. The caller spreads `changes` into `nextState` and decides
- * what to do about the two instructions.
+ * Returns `{ changes, negate, cancelMove, nullified }`. The caller spreads `changes` into `nextState`
+ * and decides what to do about the instructions.
+ *
+ * ## The It's Not That Deep aura is checked here, and this is the only place it could be
+ *
+ * An offensive card aimed within three squares of an It's Not That Deep does nothing. Two seams were
+ * considered and rejected before this one:
+ *
+ * - **Inside the effect.** Impossible in the shape the effects have: an effect is a pure function of a
+ *   context snapshot returning a patch, and there is no way for the board to tell it "do nothing".
+ *   Twenty-nine effects would each have to ask, which is the opposite of why `checkTarget` is one place.
+ * - **The `negate` instruction and `reaction-window.js`.** `negate` only reaches anything while a window
+ *   is open, and an offensive card played when nobody can react resolves immediately in
+ *   `playActionCard` with no window in existence. Half the plays would slip past. `negate` is also
+ *   produced by an effect somebody played, and nothing plays the aura, so carrying it that way would
+ *   mean minting a phantom card play and putting a fictional entry in the discard pile.
+ *
+ * This function is the single place any card's rule actually runs: `playActionCard` calls it once, and
+ * `closeWindow` calls it per played card and again for the card that opened the window. One check here
+ * covers every path, and it reads the board **at resolve time**, which is the honest reading of an aura.
+ *
+ * **The card is spent, not refused.** That matches the decision `discardChanges` already carries: a
+ * cancelled card stays in the discard pile, because it was played. The player could not see the trap,
+ * and losing the card is the punishment the trap exists for. Because it is spent silently, the caller
+ * has to be able to say so, which is why `nullified` is returned rather than swallowed.
  */
 export function resolveCard(state, entry, deps) {
+  if (nullifiedBy(state, entry) !== null) {
+    return { changes: {}, negate: false, cancelMove: false, nullified: true };
+  }
+
   const context = contextFor(state, entry, deps);
   const patch = assertPatch(effectFor(entry.cardId)(context), entry.cardId);
 
@@ -99,7 +127,12 @@ export function resolveCard(state, entry, deps) {
     if (Object.hasOwn(patch, from)) changes[to] = patch[from];
   }
 
-  return { changes, negate: patch.negate === true, cancelMove: patch.cancelMove === true };
+  return {
+    changes,
+    negate: patch.negate === true,
+    cancelMove: patch.cancelMove === true,
+    nullified: false,
+  };
 }
 
 /**

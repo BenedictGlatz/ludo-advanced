@@ -141,12 +141,14 @@ export function closeWindow(state, deps) {
   let current = state;
   let negated = false;
   let cancelMove = false;
+  let nullifiedCard = null;
 
   for (const entry of window?.played ?? []) {
     const result = resolveCard(current, entry, deps);
     current = nextState(current, result.changes);
     negated = negated || result.negate;
     cancelMove = cancelMove || result.cancelMove;
+    if (result.nullified) nullifiedCard = entry.cardId;
   }
 
   // The card that opened the window resolves last, and only if nothing cancelled it (Nühü).
@@ -154,10 +156,14 @@ export function closeWindow(state, deps) {
     const result = resolveCard(current, state.pendingCard, deps);
     current = nextState(current, result.changes);
     cancelMove = cancelMove || result.cancelMove;
+    if (result.nullified) nullifiedCard = state.pendingCard.cardId;
   }
 
+  // The **last** card an aura cancelled, not a list. A window resolving two nullified offensive cards
+  // is possible and vanishingly rare, and one message the player can read beats a list nobody built a
+  // place for. Recorded as a known simplification rather than left to be discovered.
   return {
-    state: nextState(current, { reactionWindow: null, pendingCard: null }),
+    state: nextState(current, { reactionWindow: null, pendingCard: null, nullifiedCard }),
     trigger: window?.trigger ?? null,
     cancelMove,
     negated,

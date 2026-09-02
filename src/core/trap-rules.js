@@ -27,9 +27,10 @@
  */
 
 import { TRACK_LENGTH } from "./board.js";
-import { pawnsOnSquare } from "./displacement.js";
+import { pawnsOnSquare, squareOf } from "./displacement.js";
+import { ringDistance } from "./path.js";
 import { EXCLUDED_SQUARES } from "./skill-squares.js";
-import { trapAt } from "./traps.js";
+import { TRAP_KIND, trapAt } from "./traps.js";
 
 /**
  * Why a square cannot take an object, as i18next keys.
@@ -87,5 +88,68 @@ export function trapPlacementRefusal(pawns, traps, square) {
 export function placeableSquares(pawns, traps) {
   return Array.from({ length: TRACK_LENGTH }, (_, square) => square).filter(
     (square) => trapPlacementRefusal(pawns, traps, square) === null
+  );
+}
+
+/**
+ * How far It's Not That Deep reaches, in track squares, in either direction round the ring.
+ *
+ * The card's own text: "offensive cards played within 3 squares of it are nullified". Three either way
+ * plus the trap's own square is seven squares of protection, which is a sixth of the board, and that is
+ * what the card is worth: it went from a D6 pushback to a single square, and this is what it got instead.
+ */
+export const NULLIFY_RADIUS = 3;
+
+/**
+ * The absolute square a card acts on, or `null` when it acts on no square at all.
+ *
+ * The aura has to be measured against something, and different cards name their target differently. One
+ * rule covers all of them: **a card names a square, or it names a pawn and the pawn is standing on a
+ * square.** So Janky RPG measures the square it aimed at, Yeet measures where its victim is standing,
+ * and Hyperbeam measures where the shooter is.
+ *
+ * `null` is a real answer and not a failure. 67 is an offensive card that names nothing on the board at
+ * all: it is a gamble on your own roll. It can therefore never be nullified, which is right, because
+ * there is no "where" for the aura to compare itself to.
+ *
+ * A pawn in a start area or a house also answers `null`, through `squareOf`. Neither is a shared square,
+ * so no trap can be near it.
+ */
+export function squareActedOn(pawns, target) {
+  if (Number.isInteger(target.square)) return target.square;
+  if (target.pawn === undefined || target.pawn === null) return null;
+
+  const pawn = pawns.find(
+    (entry) => entry.player === target.pawn.player && entry.pawn === target.pawn.pawn
+  );
+
+  return pawn === undefined ? null : squareOf(pawn);
+}
+
+/**
+ * The It's Not That Deep whose aura covers `square`, or `null`.
+ *
+ * Three things about it, and each is a decision rather than an implementation detail:
+ *
+ * - **Only this one trap kind projects an aura.** A Banana Peel does nothing until stepped on. The kind
+ *   is checked here rather than kept as a separate list, because one entry is not a list.
+ * - **The distance is measured round the ring**, so square 39 and square 2 are three apart. See
+ *   `ringDistance`.
+ * - **A trap never nullifies its own owner's cards.** This mirrors `firstTrapOnPath`'s existing
+ *   exemption, whose comment already carries the reason: a card that punishes the player who played it
+ *   is a card nobody plays. Without it, laying an It's Not That Deep would make three of your own cards
+ *   unusable in the region you had just claimed.
+ *
+ * **The trap is not consumed by nullifying.** It stays until a pawn steps on it, which is the Product
+ * Owner's decision and is what makes the card area denial rather than a one-shot shield.
+ */
+export function nullifyingTrap(traps, square, actor) {
+  return (
+    traps.find(
+      (entry) =>
+        entry.kind === TRAP_KIND.NOT_THAT_DEEP &&
+        entry.owner !== actor &&
+        ringDistance(entry.square, square) <= NULLIFY_RADIUS
+    ) ?? null
   );
 }

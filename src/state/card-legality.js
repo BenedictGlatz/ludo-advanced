@@ -28,8 +28,13 @@
 
 import { PAWNS_PER_PLAYER, TRACK_LENGTH } from "../core/board.js";
 import { cardById } from "../core/cards/catalogue.js";
-import { TARGET } from "../core/cards/vocabulary.js";
-import { placeableSquares, trapPlacementRefusal } from "../core/trap-rules.js";
+import { CATEGORY, TARGET } from "../core/cards/vocabulary.js";
+import {
+  nullifyingTrap,
+  placeableSquares,
+  squareActedOn,
+  trapPlacementRefusal,
+} from "../core/trap-rules.js";
 import { REJECTED } from "./rejections.js";
 
 /**
@@ -146,6 +151,25 @@ export function checkPlayable(state, cardId) {
  * Answers all forty for a card that takes any square, and `null` for a card that wants no square at all,
  * so the caller can tell "every square" from "not asking about squares".
  */
+/**
+ * The It's Not That Deep that stops this card play doing anything, or `null`.
+ *
+ * Asked at the moment the card **resolves**, not when it is played, which is the honest reading of an
+ * aura: it is a fact about the board, and the board can change between a card being played into a
+ * reaction window and that window closing.
+ *
+ * Only `CATEGORY.OFFENSIVE` cards are affected, which is the card's own wording. Six of the 29 are
+ * offensive, and the category is already in the catalogue, so the rule needs no new data.
+ */
+export function nullifiedBy(state, entry) {
+  const card = cardById(entry.cardId);
+  if (card?.category !== CATEGORY.OFFENSIVE) return null;
+
+  const square = squareActedOn(state.pawns, entry.target ?? {});
+
+  return square === null ? null : nullifyingTrap(state.traps, square, entry.seat);
+}
+
 export function pickableSquares(state, cardId) {
   const kinds = cardById(cardId).targets;
 

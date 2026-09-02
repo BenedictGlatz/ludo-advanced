@@ -1037,7 +1037,7 @@ the four square cards were affected, and **none of the three was in the deviatio
 | Card | The rulebook and the artwork | What the code did | Now |
 | --- | --- | --- | --- |
 | Banana Peel | Stunned, loses its next turn | Sent the pawn back to its start area | A `STATUS.STUNNED` for one round |
-| It's Not That Deep | 1 back, plus offensive cards nullified within 3 squares | Pushed back a D6, no aura | Pushed back exactly 1. The aura lands separately |
+| It's Not That Deep | 1 back, plus offensive cards nullified within 3 squares | Pushed back a D6, no aura | Pushed back exactly 1, and the aura is built |
 | Big Ah Rock | 3 rounds, plus the enemy pawn behind knocked back 3 | 2 rounds, no knockback | 3 rounds, and the knockback is built |
 
 #### The two card texts that had started describing the code
@@ -1214,6 +1214,72 @@ squares asserting that what the picker offers and what `checkTarget` accepts are
 The module is separate from `traps.js` because the question has a different shape: it needs the **pawns**
 and the board's topology as well as the list, and `traps.js`'s value is that every function in it takes
 the list and nothing else.
+
+### The first rule in the project measured as a radius: 2026-09-02, issue #45
+
+It's Not That Deep's second half, which the artwork always printed and the code never had: "offensive
+cards played within 3 squares of it are nullified". Three either way plus the trap's own square is seven
+squares of protection, a sixth of the board, and that is what the card is worth now that its pushback
+is a single square.
+
+**Why it is worth a section rather than a line.** Every other rule in `core/` is about one square, one
+pawn or one walk. This is the first that is about a **region**, and the first that applies without
+anything happening: a Banana Peel does nothing until a pawn steps on it, and this one is in force the
+whole time it lies there.
+
+#### Three things had to be decided before it could be written
+
+| Question | Answer, and why |
+| --- | --- |
+| Measured against **what**? | The square the card acts on: the square it named, or the square the pawn it named is standing on. So Janky RPG measures its aimed square, Yeet measures its victim's, and Hyperbeam measures the shooter's |
+| Measured **how** on a ring? | The shorter way round, via a new `ringDistance` in `path.js`. Subtracting the numbers would call square 39 and square 2 thirty-seven apart, so the aura would be the wrong shape at exactly one place on the board |
+| Does nullifying **use up** the trap? | No, by Product Owner decision. It stays until a pawn steps on it, which is what makes the card area denial rather than a one-shot shield. It is also why the chain in `core/enter.js` needs a cap at all: this is the first trap that survives doing something |
+
+Two smaller answers fall out of rules that already existed. **67 can never be nullified**, because it is
+an offensive card that names nothing on the board at all: it is a gamble on your own roll, so
+`squareActedOn` answers `null` and there is no "where" to compare. And **a trap does not nullify its own
+owner's cards**, mirroring `firstTrapOnPath`'s existing exemption, whose comment already carries the
+reason: a card that punishes the player who played it is a card nobody plays.
+
+#### Where the check had to go, and the two seams that were wrong
+
+The aura is checked in `resolveCard` in `state/skill-play.js`. Both alternatives were considered and
+both are recorded, because the reasoning is the useful part:
+
+- **Inside the effect.** Not possible in the shape the effects have. An effect is a pure function of a
+  context snapshot returning a patch, and there is no way for the board to tell it "do nothing". All 29
+  would have to ask, which is the opposite of why `checkTarget` is one place and not 29.
+- **The `negate` instruction, through `reaction-window.js`.** This is the one that looks right and is
+  not. `negate` already means "the card that opened this window does not resolve", which is exactly the
+  effect wanted. But it **only reaches anything while a window is open**, and an offensive card played
+  when nobody is eligible to react resolves immediately in `playActionCard` with no window in existence.
+  Half the plays would have slipped past. `negate` is also produced by an effect somebody played, and
+  nothing plays an aura, so carrying it that way would mean minting a phantom card play and putting a
+  fictional entry in the discard pile.
+
+`resolveCard` is the single place any card's rule actually runs, on both paths, which is what makes one
+check enough. It also reads the board **at resolve time** rather than at play time, which is the honest
+reading of an aura: the board can change between a card being played into a window and that window
+shutting.
+
+#### The card is spent, and that is why a new state field exists
+
+A nullified card leaves the hand and goes to the discard pile. That follows the decision `discardChanges`
+already carries, that a cancelled card stays discarded because it was played, and it is the point of the
+trap: the player could not see it, and losing the card is the punishment.
+
+**Because it is spent silently, the board afterwards looks exactly as it would if the player had done
+nothing at all.** So `nullifiedCard` joined the turn-level fields in `game-state.js`. It cannot be
+derived, because the evidence is precisely what is missing, and `core/cards/context.js` already names a
+quiet no-op as "the quietest possible bug in a system like this".
+
+That field is also the one place this issue was caught by an existing test rather than by a new one.
+`game-state.test.js` asserts the cleared-fields list item by item, so forgetting to clear the new field
+failed a test immediately instead of leaking a stale card id into the next player's turn.
+
+**One simplification, recorded rather than hidden:** a reaction window that resolves two nullified
+offensive cards records only the last one. It is possible and vanishingly rare, and one message a player
+can read beats a list nothing was built to display.
 
 ## Decisions
 

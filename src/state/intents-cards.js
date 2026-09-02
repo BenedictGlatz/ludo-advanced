@@ -164,7 +164,16 @@ function playActionCard(state, intent, deps) {
     return accept(nextState(spent, { reactionWindow: window, pendingCard: entry }));
   }
 
-  return accept(nextState(spent, resolveCard(spent, entry, deps).changes));
+  const result = resolveCard(spent, entry, deps);
+
+  // A nullified card is spent and its effect never ran, so the board afterwards looks exactly as it
+  // would if the player had done nothing. The field is how the view can say what happened.
+  return accept(
+    nextState(spent, {
+      ...result.changes,
+      nullifiedCard: result.nullified ? entry.cardId : null,
+    })
+  );
 }
 
 /**

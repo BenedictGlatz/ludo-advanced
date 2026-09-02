@@ -124,7 +124,7 @@
       },
       "action-not-that-deep": {
         "title": "It's Not That Deep",
-        "text": "Lege eine Falle auf ein Feld. Wer sie berührt, wird ein Feld zurückgeschoben."
+        "text": "Lege eine Falle auf ein Feld. Wer sie berührt, wird ein Feld zurückgeschoben, und solange sie dort liegt, hebt sie gegnerische Angriffskarten im Umkreis von drei Feldern auf."
       },
       "action-let-him-cook": {
         "title": "Let Him Cook",
