@@ -3064,6 +3064,26 @@ to get wrong later.
   a pawn actually crosses that kind of trap, which in a card game can be many matches later.
 - → Ch. 05
 
+### 2026-09-02: "The enemy pawn directly behind you" means behind the rock, not behind your pawn
+
+- **Chosen:** Big Ah Rock's knockback searches backwards from the **rock's own square**, against the
+  placing player's direction of travel, and hits the first foreign pawn it finds anywhere on the ring.
+  The rock's own square is excluded, so a pawn already standing there is still not moved.
+- **Why:** the pawn it hits is the one the boulder has just trapped, which is what makes the card's two
+  halves one card rather than two effects sharing a name. It is also the only reading a player can see:
+  the boulder is on screen, so the pawn behind it is obvious.
+- **Rejected: behind the placing player's own pawn**, which is what "behind **you**" says most literally.
+  It puts the knockback wherever that pawn happens to be standing, which can be the far side of the
+  board from the boulder, and with four own pawns it needs a further rule about which one "you" is.
+- **Rejected: only the one square directly behind**, which is the most literal reading of "directly".
+  Easiest to explain and it would almost never fire, so half the card would be decoration.
+- **Two things the board topology answered for free**, worth recording as evidence for the report that
+  the early work on `board.js` keeps paying: `absoluteSquare` increases with `r` for all four seats, so
+  "against the placing player's direction" is a single direction with no per-player branch; and
+  `pawnsOnSquares` already answers in the order the squares were given, so "nearest one behind" is the
+  first hit in a backwards run, with no distance arithmetic and no sort.
+- → Ch. 05
+
 ### 2026-09-02: A pushed pawn stops before anything it cannot share a square with
 
 - **Chosen:** a shove walks square by square and stops on the square **before** the first thing the pawn

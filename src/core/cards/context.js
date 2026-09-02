@@ -159,3 +159,26 @@ export function pawnIn(context, ref) {
 export function handOf(context, seat) {
   return context.hands[seat] ?? [];
 }
+
+/**
+ * The six fields of a context that `core/enter.js` calls a `world`.
+ *
+ * A projection and not a new concept, which is the useful part: every one of the six is already in
+ * `CONTEXT_FIELDS`, and the three lists a world may change are already in `PATCH_FIELDS`. **So a card
+ * that moves a pawn through the trap trigger needs no addition to either vocabulary**, and its effect
+ * stays a pure function of a snapshot returning a patch, like the other 28.
+ *
+ * It sits here beside `pawnIn` and `handOf` for the same reason they do: they are the three questions a
+ * card effect asks about the shape of its own snapshot, and a card should not have to know that the
+ * answer is spelled differently one layer down.
+ */
+export function worldIn(context) {
+  return {
+    pawns: context.pawns,
+    statuses: context.statuses,
+    traps: context.traps,
+    turnNumber: context.turnNumber,
+    playerCount: context.playerCount,
+    rng: context.rng,
+  };
+}

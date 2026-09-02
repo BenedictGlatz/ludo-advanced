@@ -1038,7 +1038,7 @@ the four square cards were affected, and **none of the three was in the deviatio
 | --- | --- | --- | --- |
 | Banana Peel | Stunned, loses its next turn | Sent the pawn back to its start area | A `STATUS.STUNNED` for one round |
 | It's Not That Deep | 1 back, plus offensive cards nullified within 3 squares | Pushed back a D6, no aura | Pushed back exactly 1. The aura lands separately |
-| Big Ah Rock | 3 rounds, plus the enemy pawn behind knocked back 3 | 2 rounds, no knockback | Landing in a later commit |
+| Big Ah Rock | 3 rounds, plus the enemy pawn behind knocked back 3 | 2 rounds, no knockback | 3 rounds, and the knockback is built |
 
 #### The two card texts that had started describing the code
 
@@ -1065,6 +1065,52 @@ respects a boulder, and the second trap going off is the uncommon case.
 
 It also removes one draw from the injected RNG per firing, which is why three scripted-roll tests had to
 be re-counted. Chapter 08 has the general version of that problem.
+
+#### Big Ah Rock's knockback, and a direction that needed no per-player logic
+
+The second half of the card, which had never been built: "a square becomes a boulder for 3 turns, **and
+the enemy pawn directly behind you is knocked back 3**". The Product Owner's reading is that "behind"
+means behind the **rock**, against the placing player's direction of travel, first foreign pawn found
+wins. The rejected reading, behind the placing player's own *pawn*, would put the effect wherever that
+pawn happened to be standing rather than where the boulder is, which is hard to explain and harder to
+see.
+
+**Two implementation details worth the report, and both are cases of the topology already having the
+answer.**
+
+`absoluteSquare(player, r)` increases with `r` for **all four** seats, because every seat's entry square
+is just an offset into the same ring. So "against the placing player's direction of travel" is a single
+direction, `-1`, and needs no per-player branch at all. That is the board topology paying off for the
+fourth or fifth time in this chapter: a rule that sounds relative to a player turns out to be absolute.
+
+`pawnsOnSquares` answers "in the order the squares were given", which is already documented in
+`displacement.js`. So walking `squareRun(square, -1, TRACK_LENGTH - 1)` and taking the first foreign
+pawn out of the answer *is* "nearest one behind", with no distance arithmetic and no sort. The
+`- 1` on the length is what stops the run one short of the rock's own square, which keeps the
+long-standing promise that a pawn already standing there is not moved.
+
+The knockback goes through `shove`, so it inherits the whole of `slide.js`: it stops before a boulder,
+it resolves a capture, it floors at the entry square, and it can set off a trap of its own. A card that
+shunted a pawn on top of another one would be laying a corruption the rest of the rules cannot read.
+
+**One ordering decision, recorded because it makes no difference today.** The rock is placed *before* the
+knockback resolves, so the push happens on the board the card has already changed. The victim is pushed
+away from the rock rather than towards it, so no current rule can tell. It is still the right order: a
+push resolved against a board that does not yet contain the thing the same card just put down is wrong
+the moment anything else moves.
+
+#### `worldIn` is a projection, and that is why the card vocabulary did not have to grow
+
+The knockback needs six fields that `core/enter.js` calls a `world`. **Every one of the six was already
+in `CONTEXT_FIELDS`, and the three lists it writes were already in `PATCH_FIELDS`.** So a card that moves
+a pawn through the trap trigger needed no new context field, no new patch field, and no new `TRIGGER`
+value: its effect is still a pure function of a snapshot returning a patch, like the other 28.
+
+That is worth noticing rather than passing over. The context and patch vocabularies were designed for 29
+specific cards, and the first mechanic added after them fitted without widening either. `worldIn` sits
+beside `pawnIn` and `handOf` for the same reason those exist: they are the questions a card asks about
+the shape of its own snapshot, and a card should not have to know that the answer is spelled differently
+one layer down.
 
 **How the drift happened is the interesting part, and it was not carelessness.** Epic #38 implemented
 nineteen cards in one pass, five of which needed mechanics that did not exist. These three are exactly
