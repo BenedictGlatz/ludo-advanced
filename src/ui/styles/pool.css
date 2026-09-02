@@ -1,103 +1,195 @@
 /* =============================================================================
-   pool.css -- the dice card pool overview, issue #30.
+   pool.css -- the dice card pool overview, the sixth content of the overlay.
+   Depends on tokens.css, card.css and overlay.css.
+   Reasoning is in 01-Design/Handoff/05-spec-dice-pool-overlay.md, D43 to D47.
 
-   !! THIS FILE WAS NOT WRITTEN BY CLAUDE DESIGN AND IS NOT A DELIVERED SPEC !!
-
-   **It is the last file left in this state.** There were five of them, and
-   design handoff 04 replaced prompt.css, hud.css, chrome.css and overlay.css on
-   2026-09-01. This one belongs to handoff 05, whose brief is out as
-   01-Design/Handoff/05-brief-dice-pool-overlay.md and has had no spec back.
-   The rule from CLAUDE.md is the same as it was: Claude Code does not invent
-   design rules and asks when a specification is missing.
-
-   Nothing here is invented. It sets no colour at all, and its one size factor
-   is 0.62, which was the skill hand's --card-u out of hand.css when this file
-   was written. Note that D35 has since put that factor back to 0.68, so 0.62 is
-   now a number that exists only here, which is one more reason to replace it.
-   Every other length is a token out of tokens.css.
-
-   What is owed by design handoff 05, and is deliberately not guessed at:
-
-   - D43: seven cards at once, at what size and in what arrangement. This lays
-     them out four and three at what used to be the skill hand's card size,
-     because that shows all seven denominations without a scroll and reused a
-     factor that already shipped. It is a layout that fits, not a layout that
-     was designed: the bottom row is short and nothing here says whether that
-     reads as deliberate.
-   - D44: how the copy count is shown. It is the third tag on the card, which
-     states the number but not the proportion, and the weighting of the pool is
-     the most useful thing the screen could communicate.
-   - D45: where the face-down sentence sits and how loud it is. It is in the
-     .overlay__text slot, unchanged, because that number barely moves. See
-     section 4.2 of the brief before making it prominent.
-   - D47: whether the overview also opens from the dice hand. Nothing here
-     depends on the answer either way.
-
-   D46 is answered and is off this list. Design spec 04 took it inside D42: the
-   row carries three controls, ordered pool, language, pause, and the pool
-   button is the only one with a coloured edge.
-
-   Recorded in 00-Meta/Documentation/notes/04-frontend-building-blocks.md.
+   Replaces the placeholder Claude Code wrote for issue #30. Two things change
+   and one is kept. The card factor is 0.68 and not 0.62, because 04-spec D35
+   already established that 0.62 puts the kind pill under 9px. The copy count
+   is drawn as the depth of a stack, so the weighting of the pool is a shape
+   and not seven numbers. The correction to the unplayable wash is kept as it
+   was written, because it was right.
    ========================================================================== */
 
-/* --- The panel has to be wider than the 30rem every other screen uses, because
-       four cards side by side do not fit in it. 48rem is that arithmetic and
-       nothing else: 4 x 0.62 x 16.25rem of card, three gaps, two paddings.
+/* --- The panel. 54.5rem is arithmetic, not taste: four cards at 11.05rem,
+       three gaps at 1.5rem, 1.275rem for the deepest stack to lean into, and
+       the panel's own 2rem of padding on each side. Five cards cannot fit in
+       that width, which is what makes the wrap deterministic rather than a
+       consequence of the viewport.
 
-       Set through --overlay-panel-w rather than by overriding `width`, because
-       that is the handle overlay.css offers for exactly this and it is what the
-       setup and handover screens already widen themselves with. --- */
+       Set through --overlay-panel-w and not by overriding `width`, because
+       that is the handle overlay.css offers and it is what the setup and
+       handover screens already widen themselves with. --- */
 
 .overlay[data-screen="pool"] .overlay__panel {
-  --overlay-panel-w: 48rem;
+  --overlay-panel-w: 54.5rem;
 }
 
-/* --- The card region. Empty on every screen but this one, and `:empty` is what
-       keeps the panel's flex gap from doubling on the other five. --- */
+/* --- The card region. Empty on every screen but this one, and `:empty` is
+       what keeps the panel's flex gap from doubling on the other five. --- */
 
 .overlay__cards:empty {
   display: none;
 }
 
-.overlay__cards {
-  --card-u: 0.62;
+/* Four cards, then three. The short row is centred on the same axis as the
+   title, the sentence and the button, so it reads as the panel's own column
+   and not as a grid that ran out of cards. Flex and not grid for exactly
+   that reason: `justify-content` centres a short final row, four fixed
+   columns cannot.
 
-  display: grid;
-  grid-template-columns: repeat(4, max-content);
-  gap: var(--space-2);
+   The right and bottom padding is the room the deepest stack leans into. It
+   is inside the box on purpose: it keeps the optical centre of a row on the
+   panel's centre line, which a stack drawn outside the box would pull right. */
+.overlay__cards {
+  --card-u: 0.68;
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
   justify-content: center;
-  max-width: 100%;
+  box-sizing: border-box;
+  width: 100%;
+  padding-right: calc(var(--card-u) * 1.875rem);
+  padding-bottom: calc(var(--card-u) * 1.875rem);
 }
 
-/* The cards here are not playable, so `card-view.js` writes data-playable="false"
-   on them, and card-state.css washes such a card out with
-   `filter: saturate(0.5)`. On a hand that is correct and it is D29: a card you
-   cannot play right now should recede. On this screen it states something false,
-   because these seven cards are not unavailable, they are the pool.
+/* --- The copy count, as depth (D44).
 
-   So the wash is taken back off. This is a correction rather than a design
-   choice, and it is the one place where this file overrides a delivered spec.
-   The alternative was to describe these cards as playable, which would have been
-   a worse lie: it adds a pointer cursor and a hover lift to a card that does
-   nothing when clicked.
+       The number itself stays in the third tag, because it is a locale string
+       and NFR-03 keeps it out of the CSS. What the tag cannot say is the
+       proportion, and the proportion is the reason the screen exists: a hand
+       of three is a good hand or a poor one depending on a distribution that
+       runs 2, 3, 4, 4, 3, 2, 2. So the card is drawn as the pile it stands
+       for, and a player who reads no numbers at all still sees that the
+       middle of the pool is twice the thickness of its ends.
 
-   Nothing else is touched. The card keeps its focus ring, because it is still in
-   the tab order and NFR-08 wants that visible when a keyboard reaches it, and
-   whether a non-interactive card belongs in the tab order at all is a question
-   for the spec rather than for this stylesheet. */
+       Each sheet is two hard shadows: the sheet's face, then its ink edge
+       2px further out. No blur, same offset direction as --shadow-card, so
+       the pile is lit the way every other object in the game is. The last
+       shadow is the pile's own drop shadow and it replaces the card's.
+
+       Keyed on data-copies, which this spec asks the contract to add. A count
+       the CSS does not have a rule for falls back to the single card in
+       card.css, which is the right failure: one card is a card, not a lie
+       about the pool. --- */
+
+.overlay__cards .card[data-copies="2"] {
+  box-shadow:
+    calc(var(--card-u) * 0.4375rem) calc(var(--card-u) * 0.4375rem) 0 var(--card-face),
+    calc(var(--card-u) * 0.625rem) calc(var(--card-u) * 0.625rem) 0 var(--color-ink),
+    calc(var(--card-u) * 1rem) calc(var(--card-u) * 1rem) 0 var(--ink-dim);
+}
+
+.overlay__cards .card[data-copies="3"] {
+  box-shadow:
+    calc(var(--card-u) * 0.4375rem) calc(var(--card-u) * 0.4375rem) 0 var(--card-face),
+    calc(var(--card-u) * 0.625rem) calc(var(--card-u) * 0.625rem) 0 var(--color-ink),
+    calc(var(--card-u) * 0.875rem) calc(var(--card-u) * 0.875rem) 0 var(--card-face),
+    calc(var(--card-u) * 1.0625rem) calc(var(--card-u) * 1.0625rem) 0 var(--color-ink),
+    calc(var(--card-u) * 1.4375rem) calc(var(--card-u) * 1.4375rem) 0 var(--ink-dim);
+}
+
+.overlay__cards .card[data-copies="4"] {
+  box-shadow:
+    calc(var(--card-u) * 0.4375rem) calc(var(--card-u) * 0.4375rem) 0 var(--card-face),
+    calc(var(--card-u) * 0.625rem) calc(var(--card-u) * 0.625rem) 0 var(--color-ink),
+    calc(var(--card-u) * 0.875rem) calc(var(--card-u) * 0.875rem) 0 var(--card-face),
+    calc(var(--card-u) * 1.0625rem) calc(var(--card-u) * 1.0625rem) 0 var(--color-ink),
+    calc(var(--card-u) * 1.3125rem) calc(var(--card-u) * 1.3125rem) 0 var(--card-face),
+    calc(var(--card-u) * 1.5rem) calc(var(--card-u) * 1.5rem) 0 var(--color-ink),
+    calc(var(--card-u) * 1.875rem) calc(var(--card-u) * 1.875rem) 0 var(--ink-dim);
+}
+
+/* --- The band. Every card on this screen is a dice card and the panel is
+       titled with that fact, so "Würfelkarte" on all seven is a label that
+       says what the heading said. It gives up its half of the band, and the
+       denomination gets the whole of it: at 0.68 the two labels together put
+       both of them in an ellipsis, which is the one outcome worth avoiding.
+       The string stays in the DOM contract and in the locale file, because
+       the same card in a hand still needs it. --- */
+
+.overlay__cards .card__type {
+  display: none;
+}
+
+.overlay__cards .card__kind {
+  overflow: visible;
+}
+
+/* A tag is a pill and a pill does not wrap: "Reichweite 1 bis 12" broken
+   over two lines reads as two tags. The longest of them is 19 characters,
+   which fits the card's inner width at this factor with room to spare. */
+.overlay__cards .card__tag {
+  white-space: nowrap;
+}
+
+/* The last tag is the copy count and it is the only line on the card that is
+   about the pool rather than about the die. It takes the dice family's wash
+   instead of the shared one, so the eye can find the same tag on all seven
+   cards without reading any of them.
+
+   Selected as the last tag and not as the third, because a W2 and a W4 cannot
+   roll a six and so carry no "Start frei bei 6" line: the count is reliably
+   last and it is not reliably third. */
+.overlay__cards .card__tag:last-child {
+  background: var(--card-dice-wash);
+  border-color: var(--color-ink);
+}
+
+/* --- The cards here are not playable, so `card-view.js` writes
+       data-playable="false" and card-state.css washes such a card out with
+       `filter: saturate(0.5)`. On a hand that is correct and it is D29: a card
+       you cannot play right now should recede. On this screen it states
+       something false, because these seven cards are not unavailable, they
+       are the pool.
+
+       So the wash comes back off. This is the one place in the delivery where
+       a stylesheet overrides a decision of an earlier spec, and it is a
+       correction rather than a preference. Describing the cards as playable
+       instead would have been the worse lie: it adds a pointer cursor and a
+       hover lift to a card that does nothing when clicked.
+
+       Carried over from the placeholder unchanged, because it was right. --- */
+
 .overlay__cards .card[data-playable="false"] {
   filter: none;
   cursor: default;
 }
 
-/* Two rows of cards is roughly 480px, and under about 800px of viewport height
-   the panel would grow past the sheet. Scrolling inside the panel is the honest
-   fallback: it keeps the button reachable, which matters more than seeing all
-   seven cards at once on a screen this short. Section 2.8 of the brief is about
-   the design resolution of 1440x900, where nothing scrolls. */
+/* The lift and the hover transition in card.css are about a card you can pick
+   up. Nothing here can be picked up, so the card is a flat object and the
+   only thing that still moves on it is the focus ring. */
+.overlay__cards .card {
+  transition: none;
+}
+
+/* --- Below the design resolution. Section 2.8 of the brief is a statement
+       about 1440 by 900, where nothing scrolls and all seven denominations
+       are on screen. Under about 50rem of viewport height two rows of cards
+       plus the panel's furniture do not fit on the sheet, and scrolling
+       inside the panel is the honest fallback: it keeps the button reachable,
+       which matters more than seeing all seven at once on a screen that
+       short. The scroll region is keyboard reachable because the panel is
+       focusable through its button and the cards are in the flow. --- */
+
 @media (height <= 50rem) {
   .overlay[data-screen="pool"] .overlay__panel {
     max-height: 100%;
     overflow-y: auto;
+  }
+}
+
+/* Narrow, and the factor is the one thing that does not give way. D35 fixed
+   the floor at 0.68, below which the kind pill lands under 9px, and a small
+   viewport is not a reason to break a card. So the panel takes what width it
+   can get and the row wraps to three cards, or two, which costs a scroll
+   inside the panel and nothing else. Section 2.8 is a statement about 1440 by
+   900, where all seven are on screen at once; below that the honest trade is
+   fewer cards per row and a reachable button, not seven cards nobody can
+   read. */
+@media (max-width: 60rem) {
+  .overlay[data-screen="pool"] .overlay__panel {
+    --overlay-panel-w: 100%;
   }
 }

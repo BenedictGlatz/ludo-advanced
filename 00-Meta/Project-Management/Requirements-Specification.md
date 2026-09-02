@@ -120,7 +120,7 @@ labels currently prioritise titles.
 | NFR-09 † | The RNG used for dice rolls and card draws is injectable, so tests are deterministic. | A test supplies a fixed sequence and asserts an exact board state. | M | NFG-05 |
 | NFR-10 † | Supported: current and previous major versions of Chrome, Firefox and Edge on desktop. Mobile and tablet are **out of scope for the MVP**. | The E2E suite passes on the named desktop browsers. | S | NFG-06 |
 | NFR-11 † | A player action produces visible feedback within 100 ms. No frame-rate target is set, since the game is turn-based. | Measured on the reference machine during the buffer-sprint playtest. | S | NFG-08 |
-| NFR-12 † | Players are distinguishable **without relying on colour alone**: shape, pattern or label as well. | A greyscale screenshot still identifies each player's pawns. | S | none |
+| NFR-12 † | Players are distinguishable **without relying on colour alone**: shape, pattern or label as well. | A greyscale screenshot still identifies each player's pawns. **Met 2026-09-02**: a shape per seat on the pawns, design handoff 06, checked by `tests/e2e/greyscale.spec.js`. | S | none |
 
 ---
 
@@ -234,10 +234,12 @@ recorded anywhere in the existing documents.
   one-pager or anywhere else. It is marked `W`, *won't have this time*, on the grounds that an
   unspecified mechanic cannot be built. If the Product Owner wants it, it needs rules first and the
   priority changes.
-- **NFR-12, colour-independent player distinction.** Colour is the primary way players are told
-  apart in Ludo, which makes this a real question for this game rather than a generic accessibility
-  checkbox. Per [CLAUDE.md](../../CLAUDE.md) the visual solution belongs to Claude Design; this
-  specification only states the requirement.
+- ~~**NFR-12, colour-independent player distinction.**~~ **Answered 2026-09-02.** Colour is the primary
+  way players are told apart in Ludo, which made this a real question for this game rather than a generic
+  accessibility checkbox. Per [CLAUDE.md](../../CLAUDE.md) the visual solution belonged to Claude Design,
+  and the answer is a shape per seat: circle, triangle, square, diamond, on the pawns and everywhere else
+  a seat is named. What is left for the Product Owner is a confirmation in row 8 of the sign-off table in
+  [Game-Design-Document.md](Game-Design-Document.md), not a decision about how to meet the requirement.
 
 ---
 

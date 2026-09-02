@@ -286,6 +286,19 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   either way; what it would have changed is a report claiming a must-have requirement shipped unmet, which
   is a heavier finding than the truth and one a reader can check in ten seconds. Sprint 2.
 
+- **2026-09-02**: **design handoffs 05 and 06 came back in one delivery and both landed.** Four files:
+  `pool.css` replacing the last placeholder stylesheet, `pawn.css` amended with the seat mark, and the two
+  specs. **NFR-12 is met**: the shape is on the piece and `greyscale.spec.js` asserts four different
+  computed `clip-path` values across the seats, in colour and under a greyscale filter, with no
+  expected-failure marker left anywhere in the suite. Two DOM changes the specs asked for by name were
+  wired rather than styled around: `data-copies` on the overview card, which draws the pool's weighting as
+  the depth of a stack, and `tabindex` made conditional on a card being playable, which took seven dead tab
+  stops out of the pool screen. **Board hygiene the same day**: #31 to #35 closed by hand with their
+  reason, their `Sprint`, `Status`, `Start Date` and `End Date` set from the delivering commits, epics #37
+  and #38 moved to Done, #40 moved to Sprint 3, and **issue #68 created for the CI workflow**, which was
+  the last must-have work with no card. The #40 audio decision went to the Product Owner as a comment with
+  both options costed. Sprint 2.
+
 ---
 
 ## Decisions
@@ -2797,6 +2810,87 @@ to get wrong later.
   were listed in, and it would have had Claude Design idle for the three weekdays left in Sprint 2 and the
   specs landing in the last days before the 2026-09-11 freeze.
 - → Ch. 02, Ch. 04
+
+### 2026-09-02: The luminance threshold is retired rather than lowered, and the number moves to the notes
+
+- **Chosen:** with the seat shape on the piece, the first case of `greyscale.spec.js` stops measuring the
+  palette and starts asserting the acceptance criterion: sixteen marks with a non-zero box, one shape per
+  seat, four different shapes, all of it repeated under `filter: grayscale(1)`. The 1.30 luminance case is
+  deleted. The 1.146 measurement and the derivation of 1.30 move into
+  `notes/01-requirements-and-goals.md` next to NFR-12 and into `notes/08-quality.md`.
+- **Why:** the threshold measured a proxy. While colour was the only identifier, the spread of the four
+  hues in greyscale **was** NFR-12, and falling short of 1.30 was a fact about the palette. With the shape
+  on the piece the requirement is met another way, and what is left is a threshold nothing is trying to
+  reach: a test that reports a known failure forever is how a suite learns to be ignored.
+- **Rejected: keeping it as a weaker check at 1.10.** That is the only lower threshold that both passes
+  today and means anything, and against a measured 1.146 it leaves four per cent of headroom. It would
+  fire on a colour tweak that harms nothing, while the regression actually worth catching, two seats
+  reducing to the same grey, has to cross the 1.0 case that is already in the file and stays.
+- **Rejected: re-spreading the palette as well**, which was D2's other way out. Darkening blue and
+  lightening green a step buys a margin the shape now provides, and costs the four hues that came from the
+  layout template verbatim, every screenshot in the notes, handoff 01's sign-off and a Product Owner
+  decision. A palette change should have a reason of its own.
+- **What it costs, stated:** the visible reminder that the palette is thin. A number in a notes file is
+  read less often than a red line in a test run. That is the trade, and it is worth making once the thing
+  the red line was about is satisfied.
+- → Ch. 01, Ch. 08
+
+### 2026-09-02: A card is focusable when it is playable, which is a rule replacing a proxy
+
+- **Chosen:** `card-view.js` writes `tabindex="0"` when `card.playable === true` and `-1` otherwise. It
+  used to key on the card having an id.
+- **Why:** the id test was a proxy for one case, the empty skill-hand slot of spec 04, and it silently got
+  the other case wrong. The seven cards on the pool overview all have ids and none of them can be played,
+  so a keyboard user tabbed through seven stops where `Enter` did nothing before reaching the button that
+  closes the panel. Design spec 05 section 5 named it. The playable flag is what both cases actually mean:
+  an empty slot is not playable either, so one rule covers both.
+- **Rejected: excluding the pool screen by selector**, for example by keying on the overlay. It would fix
+  the symptom on the one screen that has it today and leave the next unplayable card display to rediscover
+  it. NFR-08 is about keyboard reachability in general, not about this panel.
+- **Rejected: leaving the stops in and letting the focus ring explain them.** A focus ring on something
+  that does nothing is a state that lies. `card-state.css` still styles `:focus-visible` and it now only
+  ever appears on cards a player can act on.
+- → Ch. 04, Ch. 08
+
+### 2026-09-02: The delivered stylesheets were copied file by file again, and the mockup folder was not
+
+- **Chosen:** only the four files the delivery's README listed as changed were copied into the repository:
+  `pool.css`, `pawn.css` and the two specs. The package's `mockup/src/ui/styles/` folder holds twelve
+  stylesheets, ten of them unchanged copies read from `dev` so the mockup runs standalone, and none of
+  those ten was touched. Both mockup folders, `handoff-04/` and `handoff-05/`, were deleted after review.
+- **Why:** this is the rule that was written after handoff 04, and this is the first delivery it was
+  applied to prospectively rather than after a near miss. Handoff 04 shipped a `board.css` that predated
+  the NFR-02 split into three files; copying the folder would have reverted that split silently and
+  nothing in the test suite would have failed. The work order now asks every delivery to state the date
+  and tree its snapshot was taken from, and this one did: `dev` at tree `991ee06c` on 2026-09-02.
+- **Rejected: copying the whole folder and reverting what looks wrong afterwards.** That is the version of
+  this process that failed once. A stylesheet that is subtly older than the repository is not visible in a
+  diff anybody reads at the end of a merge, and the cost of being wrong is a silent regression in a file
+  nobody thinks changed.
+- **The generalisable point for the report:** an AI delivery arrives as a folder of plausible files, and
+  the expensive question is not whether each file is good but which of them the sender actually intended
+  to change. Asking the sender to say so in writing is cheaper than diffing twelve files, and it is the
+  only part of this loop that is a checklist rather than a judgement.
+- → Ch. 04, Ch. 02
+
+### 2026-09-02: The Sprint 2 board is corrected rather than left as the plan wrote it
+
+- **Chosen:** #31 to #35 carry `Sprint 2`, `Done`, and start and end dates taken from the author date of
+  the commit that delivered them. The project plan had scheduled all five into the Sprint 3
+  implementation half.
+- **Why:** the board is the single source of truth for sprint membership (decided 2026-08-22) and it is
+  what velocity is computed from. Leaving them in Sprint 3 would book work delivered on 2026-08-31 and
+  2026-09-01 into a sprint that had not started, which is a worse distortion than the one it avoids.
+- **Rejected: leaving the plan's assignment on the board so the plan stays visible.** The plan-versus-actual
+  gap is worth keeping, but the sprint log is where it belongs, and it is recorded there in prose that a
+  reader can check. A board field cannot hold "planned for Sprint 3, delivered in Sprint 2" and a sentence
+  can.
+- **What this makes the Sprint 2 figure:** 73 points of `Done` work against 72 planned, and the number is
+  not a velocity. Three separate findings already say why (no effort is measured, #30's points describe
+  work done on another day, and two design deliveries carry no points at all), and this decision adds a
+  fourth cause rather than removing one: five issues that were planned for the next sprint are counted in
+  this one. **The figure is printed with all four reasons next to it or not printed at all.**
+- → Ch. 02
 
 ---
 

@@ -351,6 +351,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Every player now has a shape as well as a colour, and the shape is on the pieces** (design handoff 06,
+  NFR-12). Each seat's pawns carry a small ink badge: a circle, a triangle, a square or a diamond,
+  matching the shape that seat already had on the scoreboard and in the top bar. It sits low on the piece
+  so the two eyes stay where they were, and it travels with the pawn through every state. The point is a
+  board you can still read when you cannot tell red from green, or on a black and white printout
+- **The dice card pool overview is drawn by its designed stylesheet** (design handoff 05). What a player
+  notices: each of the seven cards is now drawn as the little stack of copies the pool actually holds, so
+  a W6 visibly sits on a thicker pile than a W20 and the weighting of the pool can be seen rather than
+  counted. The cards are bigger, the short second row is centred under the first, the word "Würfelkarte"
+  is gone from cards on a screen already titled with it, and the copy count is the one tag that stands out
+- **The keyboard skips cards it cannot play.** Tabbing across the pool overview used to stop on all seven
+  cards before reaching the button that closes it, and pressing Enter on them did nothing
 - **The game has a designed look for the whole of its interface** (design handoff 04). The four regions that
   were drawn by placeholder stylesheets are drawn by real ones now: the top bar, the scoreboard, the prompt
   strip and the five screens. What a player notices, in rough order: the reaction countdown is a ring that

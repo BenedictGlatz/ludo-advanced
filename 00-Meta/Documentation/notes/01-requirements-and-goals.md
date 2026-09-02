@@ -357,10 +357,47 @@ everyone else's fifteen pieces at 85 % opacity while one seat was on turn. It wa
 "whose turn is it" cues that touched all sixteen pawns, so it was spending contrast on every piece that was
 not the active seat's, which is a budget NFR-12 has none of.
 
-**The report sentence this is for:** a `must have` that is measured by an automated test, and that has been
+**The report sentence this is for:** a requirement that is measured by an automated test, and that has been
 failing visibly for three days rather than quietly, moved because the test made the gap impossible to
 forget. Row 8 of design spec 01's sign-off table recorded it as a question, and the question is what carried
 it into the next handoff.
+
+### NFR-12 is met: 2026-09-02, design handoff 06
+
+The mark is on the piece. `.pawn__mark` is an ink shape at 38 % of the pawn, clipped per seat to a circle,
+a triangle, a square or a diamond, sitting low on the disc so it clears the eyes. `greyscale.spec.js`
+asserts the four shapes in colour and again under a greyscale filter, and it carries no expected-failure
+marker. The requirement's acceptance criterion, "a greyscale screenshot still identifies each player's
+pawns", is satisfied by something a screenshot can show rather than by a contrast measurement standing in
+for it.
+
+| | |
+| --- | --- |
+| Requirement | NFR-12, `should have` ([Requirements-Specification.md](../../Project-Management/Requirements-Specification.md) row NFR-12) |
+| Answered by | Design spec 06, D48 to D50, which closes D16 of handoff 02 |
+| Open from | 2026-08-30, when D2 removed the non-colour identifier. **Three days** |
+| Closed by | Four shapes on the pieces, plus the same four already on the HUD, the chrome and two overlay panels from spec 04 |
+| Test | `tests/e2e/greyscale.spec.js`, first case, passing in all three browsers with no expected failure |
+
+**The two numbers that stop being asserted, kept here on purpose.** The retired luminance case measured
+the four seat colours in greyscale: the worst pair was red against blue at **1.146**, ten levels apart out
+of 255, against a threshold of **1.30** derived as the best an evenly spread four-value palette can reach
+over the range these hues span. Both figures live here now, next to the requirement, because the palette
+did not change and the thinness is still true. **Anybody proposing to move a seat colour has to read them
+first.** The derivation itself is in [08-quality.md](08-quality.md).
+
+**The palette was deliberately not re-spread**, which was D2's other way out. Darkening blue and
+lightening green a step would buy a margin the shape now provides, and it would cost the four hues that
+came from the layout template verbatim, every screenshot in these notes, handoff 01's sign-off and a
+Product Owner decision. If the palette is ever re-spread it should be for a reason of its own and not to
+satisfy a requirement that is already met by other means.
+
+**The report sentence.** The only requirement in this project that a design decision actively blocked was
+closed by the same loop that created it: the identifier was delivered in handoff 01, removed on request,
+recorded as a question in a sign-off table, re-asked as a numbered decision in handoff 02, half answered
+in handoff 04, and closed in handoff 06 with a brief that existed only because a test kept failing in
+public. **No issue on the board tracks any of that**, which is the same finding chapter 02 records about
+the design loop generating work without generating cards for it.
 
 ### FR-31's arithmetic was redone, and the requirement got cheaper: 2026-09-01, design handoff 04
 

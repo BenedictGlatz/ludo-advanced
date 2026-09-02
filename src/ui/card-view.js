@@ -36,6 +36,11 @@ import $ from "jquery";
  * Listed rather than derived, because the CSS may only target what the contract in design brief 03
  * section 3.1 names. A description carrying a key that is not in this list is ignored on purpose:
  * a typo should not quietly invent an attribute no stylesheet reads.
+ *
+ * `copies` is the one entry added since: design spec 05 section 5 asked for `data-copies` on the pool
+ * overview card, an integer, so `pool.css` can draw the card as a stack of that depth (D44). Only the
+ * overview sets it; a card in a hand has no `copies` and the attribute stays absent, which is what makes
+ * the same card in a hand draw as a single card.
  */
 const IDENTITY = {
   id: "data-card-id",
@@ -43,6 +48,7 @@ const IDENTITY = {
   type: "data-card-type",
   category: "data-card-category",
   faces: "data-faces",
+  copies: "data-copies",
 };
 
 /**
@@ -66,6 +72,7 @@ function setAttribute($element, name, value) {
  *
  * `tabindex` is here for the same reason it is on a pawn: `card-state.css` styles `:focus-visible`,
  * and a focus state on an element the keyboard cannot reach is a state that never happens (NFR-08).
+ * `updateCard` then decides per render whether the stop stays, see there.
  */
 export function createCard() {
   const $banner = $("<div>", { class: "card__banner" }).append(
@@ -145,12 +152,19 @@ export function updateCard($card, card) {
   $card.attr("data-playable", String(card.playable === true));
   $card.attr("data-selected", String(card.selected === true));
 
-  // An empty slot leaves the tab order, and that is the JavaScript half of an answer design spec 04
-  // gave: an empty slot in the skill hand is not an unplayable card and not a face-down one, it is the
-  // outline of where a card would go. `hand.css` draws it, but CSS cannot take an element out of the tab
-  // order, so a keyboard user would otherwise stop on up to four holes on the way across the hand
-  // (NFR-08). Keyed on the id being absent, which is what `skill-hand-view.js`'s `emptySlot` produces.
-  $card.attr("tabindex", card.id === null || card.id === undefined ? -1 : 0);
+  // Only a card that can be played is in the tab order. Two answers from two specs meet here:
+  //
+  // - Design spec 04: an empty slot in the skill hand is not an unplayable card and not a face-down one,
+  //   it is the outline of where a card would go. `hand.css` draws it, but CSS cannot take an element out
+  //   of the tab order, so a keyboard user would otherwise stop on up to four holes on the way across the
+  //   hand (NFR-08). An empty slot has no id, which is what `skill-hand-view.js`'s `emptySlot` produces.
+  // - Design spec 05, section 5: a card nothing can be done with is not a tab stop either. On the pool
+  //   overview seven of them sat between the player and the one button that closes the panel, and a
+  //   stop that `Enter` does nothing on tells a keyboard user nothing.
+  //
+  // Both fold into one rule: a card is focusable exactly when it is playable, and an empty slot is never
+  // playable. The focus ring in `card-state.css` keeps working for the cards that keep the stop.
+  $card.attr("tabindex", card.playable === true ? 0 : -1);
 
   setArt($card, card);
 

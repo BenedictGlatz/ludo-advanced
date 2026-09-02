@@ -47,13 +47,20 @@ import { OVERLAY_ACTION, OVERLAY_SCREEN } from "./overlay-vocabulary.js";
  * The copy count is a **third tag** on top of the two every dice card carries. It is passed in rather
  * than built into `diceCardDescription`, because "4 mal im Pool" is a fact about the pool and not about
  * the card, and the same card in a hand must not claim it.
+ *
+ * The same number goes out a second time as `copies`, which `card-view.js` writes as `data-copies`.
+ * Design spec 05 (D44) draws the card as the pile it stands for, so a W6 visibly stands on more sheets
+ * than a W2 and the weighting of the pool is readable as a shape before a single tag is read. The tag
+ * states the number, the attribute drives the depth; they answer different questions, and neither one
+ * is derived from the other in the stylesheet.
  */
 function poolCards() {
-  return POOL_COMPOSITION.map((entry) =>
-    diceCardDescription(entry.faces, {
+  return POOL_COMPOSITION.map((entry) => ({
+    ...diceCardDescription(entry.faces, {
       tags: [t("card.dice.copies", { copies: entry.copies })],
-    })
-  );
+    }),
+    copies: entry.copies,
+  }));
 }
 
 /**

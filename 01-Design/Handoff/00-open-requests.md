@@ -6,21 +6,31 @@
 
 ---
 
-## Status on 2026-09-02: two briefs open, and the order between them
+## Status on 2026-09-02, evening: nothing is owed
 
-| Brief | Owes | State |
+**Handoffs 05 and 06 were both answered in one delivery and both landed the same day.** The four files are
+in the repository, the five landing checks were run, and the two DOM changes the specs asked for by name
+are wired: `data-copies` on the pool overview card, and `tabindex` made conditional on a card being
+playable. Both mockup folders, `handoff-04/` and `handoff-05/`, were reviewed and deleted.
+
+| Brief | Answered by | Result |
 | --- | --- | --- |
-| [06-brief-pawn-mark.md](06-brief-pawn-mark.md) | `06-spec-pawn-mark.md`, `pawn.css` amended. D48, D49, D50 | **Open, sent 2026-09-02. Answer this one first.** It closes D16 and with it NFR-12, the only design item that blocks a requirement. The `<span class="pawn__mark">` it needs is in the DOM as of the same commit |
-| [05-brief-dice-pool-overlay.md](05-brief-dice-pool-overlay.md) | `05-spec-dice-pool-overlay.md`, `pool.css`. D43, D44, D45, D47 | **Open, sent 2026-09-01.** Second. `pool.css` is the last placeholder stylesheet |
+| [06-brief-pawn-mark.md](06-brief-pawn-mark.md) | [06-spec-pawn-mark.md](06-spec-pawn-mark.md) | **Closed.** D48, D49, D50, and D16 with them. `pawn.css` amended. **NFR-12 is met**, and `greyscale.spec.js` runs green with no expected-failure marker for the first time since 2026-08-30 |
+| [05-brief-dice-pool-overlay.md](05-brief-dice-pool-overlay.md) | [05-spec-dice-pool-overlay.md](05-spec-dice-pool-overlay.md) | **Closed.** D43, D44, D45, D47. `pool.css` replaced, and it was the **last placeholder stylesheet in the project** |
 
-**Why this order.** 06 is about fifteen lines and closes a `should have` requirement whose test has been
-marked expected-to-fail since 2026-08-30. 05 is a panel and closes a preference. If both can be answered
-in one delivery, answer both; if only one, 06. Sprint 3's feature freeze is **2026-09-11**; a spec that
-lands after it becomes documentation rather than a shipped stylesheet.
+**What this means for the loop.** Five stylesheets were written by Claude Code and should not have been,
+and none of them is left. Every rule in the project's CSS now comes from a numbered decision in a spec.
 
-**What Claude Code is doing meanwhile, so nothing here is waited on:** board hygiene, the #40 audio
-decision with the Product Owner, and the documentation sweep for the Sprint 2 close. None of that touches
-`src/ui/styles/`, so a delivery can land at any time without a merge conflict in the stylesheets.
+**What is still open, and none of it blocks a requirement:** D17, D21, D22, D23 and D24 from handoff 02,
+which never received a spec of its own, and the fonts still loading from Google Fonts since spec 01
+section 5. Spec 06 also names one improvement it deliberately did not make: the seat-to-shape mapping now
+repeats in four stylesheets and belongs in the one `[data-player="N"]` block in `board.css`, which a
+delivery touching that file should do.
+
+**One note for the next delivery, since this one got it right.** The package stated the date and the tree
+its unchanged copies were read from, which is what the rule added after handoff 04 asks for, and only the
+four files it declared changed were copied in. That rule now has a clean application as well as the near
+miss that produced it.
 
 ## Status after handoff 04
 
@@ -90,8 +100,8 @@ loop needs an index or something gets quietly dropped, and something already had
 | 02 Board review | [02-brief](02-brief-board-review.md) | *none* | **Open since 2026-08-30, and no spec was ever returned.** D19 was answered inside spec 03 and D18 was re-asked as D40 in brief 04. Eight decisions have no answer anywhere |
 | 03 Cards and hands | [03-brief](03-brief-cards-and-hands.md) | [03-spec](03-spec-cards-and-hands.md) | **Closed.** Landed 2026-08-31 |
 | 04 HUD, menus and handover | [04-brief](04-brief-hud-menus-and-handover.md) | [04-spec](04-spec-hud-menus-and-handover.md) | **Closed.** Landed 2026-09-01. D16 answered for the page furniture, not for the pawn |
-| 05 Dice card pool overlay | [05-brief](05-brief-dice-pool-overlay.md) | *owed* | **Open, sent 2026-09-01.** D43 to D47; D46 answered inside D42 |
-| 06 The seat mark on the pawn | [06-brief](06-brief-pawn-mark.md) | *owed* | **Open, sent 2026-09-02.** D48 to D50. Closes D16 |
+| 05 Dice card pool overlay | [05-brief](05-brief-dice-pool-overlay.md) | [05-spec](05-spec-dice-pool-overlay.md) | **Closed.** Landed 2026-09-02. D43 to D47; D46 answered inside D42 |
+| 06 The seat mark on the pawn | [06-brief](06-brief-pawn-mark.md) | [06-spec](06-spec-pawn-mark.md) | **Closed.** Landed 2026-09-02. D48 to D50, and D16 with them |
 
 **The 02 row is the one worth reading twice.** A brief with no spec is not a brief that was declined, it is
 a brief nobody closed, and one of its eight open items (D16) is the only design question in this project
@@ -131,6 +141,9 @@ order they appeared.
 | `overlay.css` | 185 | D38, D39, D40 | Yes, brief 04 |
 | `chrome.css` | 88 | D42, and now D46 | **No. This is the omission.** |
 | `pool.css` | 92 | D43, D44, D45, D46 | Yes, brief 05 |
+
+> **All five are replaced as of 2026-09-02.** Four went with handoff 04 and `pool.css` with handoff 05.
+> The table is kept as the record of what the loop was asked to fix.
 
 **`chrome.css` is the finding.** Brief 04 asks about the chrome in D42 and `chrome.css` names D42 in its
 header, but the file is absent from brief 04 § 6 and brief 05 only lists it conditionally, "only if D46
@@ -174,7 +187,7 @@ deliver the 06 spec.** It is fifteen lines and it closes a requirement.
 
 | No. | In one line | Brief | Blocks a requirement? |
 | --- | --- | --- | --- |
-| **D16** | Telling four seats apart without relying on colour | 02 | **Yes. NFR-12, `should have`, visibly unsatisfied.** `greyscale.spec.js` measures it and is marked expected-to-fail so the suite reports a known failure instead of going green. Answered by spec 04 for the HUD, the chrome and two overlay panels; still open on the pawn, which is where it is measured. **Re-asked as D48 to D50 in brief 06 on 2026-09-02**, with the `.pawn__mark` element now in the DOM |
+| ~~**D16**~~ | Telling four seats apart without relying on colour | 02 | **Closed 2026-09-02, and NFR-12 with it.** Answered by spec 04 for the HUD, the chrome and two overlay panels, re-asked as D48 to D50 in brief 06, and closed by spec 06 with the shape on the piece. `greyscale.spec.js` asserts four different shapes and carries no expected-failure marker |
 | D17 | Does the legal-target set read as one group, given the entry-square exception | 02 | No |
 | D20 | Does the four-second refusal minimum become a token | 02 | No |
 | D21 | Does a legal target that captures look different | 02 | No |
@@ -189,14 +202,14 @@ deliver the 06 spec.** It is fifteen lines and it closes a requirement.
 | D40 | The win screen, and the orange strip that also says it. Was D18 | 04 | No |
 | D41 | The 36 illustrations against the two skins | 04 | No |
 | D42 | The two, now **three**, persistent controls | 04 | No |
-| D43 | Seven cards at once: what size, what arrangement | 05 | No, but § 2.8 of brief 05 is a hard constraint on the answer |
-| D44 | How the copy count is shown, and whether the weighting is readable as a shape | 05 | No |
-| D45 | Where the face-down sentence sits, and how loud it is | 05 | No |
-| D46 | A third chrome button. Answer with D42 if that is easier | 05 | No |
-| D47 | Does the pool overview also open from the dice hand | 05 | No |
-| **D48** | Size and placement of the seat mark on the pawn, and what happens to the eyes of D14 | 06 | **Yes. NFR-12.** This is the answer that closes D16 |
-| **D49** | The mark through the five pawn states: selected at 1.14, captured at 0.82 and 70 %, movable loop, focus, reduced motion | 06 | Yes, with D48: a mark that vanishes in a state is not on the piece |
-| D50 | What happens to the luminance-only measurement in `greyscale.spec.js` once the shape is on the piece: retire, keep as a weaker check, or re-spread the palette as well | 06 | No. It decides what the test asserts, not whether the requirement is met |
+| ~~D43~~ | Seven cards at once: what size, what arrangement | 05 | **Closed.** Four then three at `--card-u: 0.68` in a 54.5rem panel, centred |
+| ~~D44~~ | How the copy count is shown, and whether the weighting is readable as a shape | 05 | **Closed.** Both: the number stays in the tag and the card is drawn as the pile it stands for |
+| ~~D45~~ | Where the face-down sentence sits, and how loud it is | 05 | **Closed.** It stays where it is, unchanged, because the number barely moves |
+| ~~D46~~ | A third chrome button. Answer with D42 if that is easier | 05 | **Closed** inside D42, and spec 05 confirms three buttons need no new structure |
+| ~~D47~~ | Does the pool overview also open from the dice hand | 05 | **Closed. No**, and `hand.css` is untouched |
+| ~~**D48**~~ | Size and placement of the seat mark on the pawn, and what happens to the eyes of D14 | 06 | **Closed.** 38 % of the piece, low on the disc, ink, and the creature is unchanged |
+| ~~**D49**~~ | The mark through the five pawn states: selected at 1.14, captured at 0.82 and 70 %, movable loop, focus, reduced motion | 06 | **Closed.** It takes part in none of them, which is a decision with the capture state's 2.16:1 named as its cost |
+| ~~D50~~ | What happens to the luminance-only measurement in `greyscale.spec.js` once the shape is on the piece: retire, keep as a weaker check, or re-spread the palette as well | 06 | **Closed. Retired**, the four-different-greys case kept as the palette floor, and the 1.146 figure moved into the notes |
 
 Four more items are open from spec 03 § 5 and brief 04 § 5.1 and are not numbered: what the reaction
 countdown looks like, whether the prompt strip belongs at the foot or in the rail, how a pickable pawn

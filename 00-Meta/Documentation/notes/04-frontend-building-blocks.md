@@ -1385,6 +1385,78 @@ that reads as finished in a report.
 - **Still open, unchanged:** `pool.css` as the last placeholder, handoff 05's D43 to D47, and D17, D21 to
   D24 from handoff 02.
 
+### Handoffs 05 and 06 landed together, and the last placeholder stylesheet is gone: 2026-09-02
+
+Both specs came back in one delivery, in the order the work order asked for: `06-spec-pawn-mark.md`
+answering D48, D49 and D50, and `05-spec-dice-pool-overlay.md` answering D43, D44, D45 and D47. Four
+files landed, `pool.css`, `pawn.css` and the two specs, and the package's own README named which
+stylesheets it had copied only so the mockup would run.
+
+**The design loop is closed.** Five stylesheets in `src/ui/styles/` were written by Claude Code and
+should not have been, and as of today **none of them is left**: `prompt.css`, `hud.css`, `chrome.css`
+and `overlay.css` went with handoff 04 and `pool.css` with handoff 05. Every rule in the project's CSS
+now comes from a numbered decision in a spec, which is the state chapter 04 has been describing as a
+target since 2026-08-30.
+
+**What the pawn mark is, and why ink rather than the seat colour.** `.pawn__mark` is an absolutely
+positioned span at 38 % of the piece, clipped to the seat's shape and filled with `--color-ink`. It sits
+between 48 % and 86 % of the disc's height, below the eyes, which occupy 19 % to 41 %. This is the one
+place in the game where the mark is **not** the seat colour: on a HUD plate the ground is neutral and the
+mark has to carry the seat, but on the piece the ground is already the seat colour, so the seat is said
+by the disc and the mark only has to be legible against it. The spec measures 3.67:1 at the worst seat in
+Picnic against 2.74:1 for the same four shapes on the HUD, which is the argument for measuring NFR-12 on
+the piece rather than anywhere else.
+
+**The mark takes part in none of the five pawn states, and that is a decision (D49).** It inherits the
+piece's transform, so it scales with `data-selected` to 1.14 and dims with `data-captured` to 0.82 and
+70 % opacity; the breathe loop and the focus ring both sit on `::before`, outside the disc, and never
+reach it. The one number that does not clear 3:1 is the capture state at about 2.16:1, and the spec keeps
+it: it lasts 320 ms, collapses to 1 ms under reduced motion, and describes a pawn that is leaving the
+board. **The negative finding is recorded rather than rounded away**, which is what makes the rest of the
+table trustworthy.
+
+**Four repeats of the seat-to-shape mapping now exist**, in `hud.css`, `chrome.css`, `overlay.css` and
+`pawn.css`. The spec names the fix and deliberately does not do it: `board.css` already has one bare
+`[data-player="N"]` block that supplies `--player`, and `--seat-shape` belongs in it. It was left out
+because `board.css` has since been split three ways and a delivery touching it has to be read against the
+split rather than against a snapshot. Worth one sentence in the report about a known duplication carried
+on purpose with the reason written down.
+
+**The pool overview: the copy count became a shape (D44).** The number stays in the third tag, because it
+is a locale string and NFR-03 keeps it out of the CSS. What the tag cannot say is the proportion, so the
+card is also drawn as the pile it stands for, one hard-shadow sheet per copy behind the top card. A W6 or
+a W8 stands on four sheets and a W2 on two, so the middle of the pool is visibly twice the thickness of
+its ends before a single word is read. The weighting of the pool, which is the whole reason the screen
+exists, is legible without reading.
+
+**Seven cards at 0.68, four then three, centred (D43).** The placeholder guessed 0.62, which D35 had
+already ruled out as the point where the kind pill drops under 9 px. The panel is 54.5rem because four
+cards at 11.05rem plus three gaps plus the stack's lean plus the padding come to 53.98rem, so the wrap
+after the fourth card is arithmetic rather than a consequence of the viewport. The container is flex and
+not grid for one reason: `justify-content` centres a short final row and four fixed columns cannot.
+
+**Two DOM changes the specs asked for by name, both wired rather than styled around:**
+
+- **`data-copies` on the overview card**, an integer, the same number the third tag states in words.
+  `pool-screen.js` passes `copies` and `card-view.js` writes it through the same `IDENTITY` table every
+  other identity attribute goes through. A card in a hand has no `copies`, so the attribute is absent and
+  the card draws as a single card, which is the right failure.
+- **`tabindex` is now conditional on the card being playable.** It used to be keyed on the card having an
+  id, which took empty skill-hand slots out of the tab order (spec 04) but left seven unplayable pool
+  cards in it. Spec 05 section 5 called that wrong and it is: seven tab stops sat between a keyboard user
+  and the one button that closes the panel, and `Enter` did nothing on any of them. One rule now covers
+  both cases, since an empty slot is never playable.
+
+**D47 was answered no, and the reason is about timing rather than cost.** The overview does not open from
+the dice hand. The cost of the second door is paid at the wrong moment: FR-19 puts the game's central
+decision on the dice plate, and a control there offers the player to leave the choice and read a table.
+The chrome row is far enough away to be deliberate. `hand.css` is untouched, and the spec names the one
+element to add if the Product Owner disagrees.
+
+**Still open after this delivery, and the list is short:** D17, D21, D22, D23 and D24 from handoff 02,
+which still has no spec of its own, and the fonts still loading from Google Fonts since spec 01 section 5.
+None of them blocks a requirement.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -1440,12 +1512,15 @@ that reads as finished in a report.
     mute half of S11 now that audio is deferred. Neither is in issue #39 and neither is forgotten: both
     are named here so the board's silence about them is on the record.
 - **Open after handoff 04, and this is the whole list:**
-  - **`pool.css` is the last placeholder stylesheet**, 92 lines. Handoff 05's brief has been out since
-    2026-09-01 with no spec back. D43, D44, D45 and D47 are open; D46 was answered inside D42.
-  - **`.pawn__mark` and about fifteen lines of `pawn.css` are the follow-up that closes D16**, and they
+  - ~~**`pool.css` is the last placeholder stylesheet**, 92 lines. Handoff 05's brief has been out since
+    2026-09-01 with no spec back. D43, D44, D45 and D47 are open; D46 was answered inside D42.~~
+    **Closed 2026-09-02 by handoff 05.** No placeholder stylesheet is left in the project.
+  - ~~**`.pawn__mark` and about fifteen lines of `pawn.css` are the follow-up that closes D16**, and they
     were not delivered. Until they are, NFR-12 is visibly unmet and `greyscale.spec.js` stays marked
     expected-to-fail. It is the only design item in the project that blocks a requirement rather than a
-    preference. **NFR-12 is `should have`**, not `must have`: that error is corrected in
+    preference.~~ **Closed 2026-09-02 by handoff 06.** The mark is on the piece, `greyscale.spec.js`
+    asserts the four shapes and carries no expected-failure marker, and NFR-12 is met. **NFR-12 is
+    `should have`**, not `must have`: that error is corrected in
     [01-requirements-and-goals.md](01-requirements-and-goals.md) and it had spread to five files.
   - **Handoff 02 still has no spec of its own.** D17, D21, D22, D23 and D24 are unanswered anywhere.
     Spec 04 answered D16 and D20 in passing and said so.

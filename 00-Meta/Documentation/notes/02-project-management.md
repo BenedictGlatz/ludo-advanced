@@ -779,6 +779,60 @@ Three process points:
 specification row it read it from. That is the same rule chapter 09 already applies to numbers, for the same
 reason, and it makes the claim re-checkable rather than remembered.
 
+### The board was three days behind the code, and what that cost: 2026-09-02
+
+At the start of the Sprint 2 closeout the board read `0 / 2`, `0 / 3` and `1 / 3` on the three
+implementation epics while nearly all of their children were built, tested and merged. **Nothing was
+wrong with the code and nothing was wrong with the board's design.** Three separate mechanics produced it,
+and each one is a finding of a different kind.
+
+| Cause | Kind of failure |
+| --- | --- |
+| `Closes #n` only fires on a merge into the **default branch**, which is `main`. Pull request #66 went into `dev`, so #30 to #35 stayed open with their closing commits merged | A tool behaving exactly as documented, against a branching model the documentation was not read for |
+| The three epics were closed by hand on GitHub, but their board `Status` was never moved, so they sat in `In Progress` with no open work behind two of them | Two places hold the same fact, and only one of them was updated |
+| `Sprint` was empty on #31 and #33 to #35, and #32 read `Sprint 0` | A field nobody fills in until somebody needs to read it |
+
+**What was done on 2026-09-02.** #31 to #35 closed by hand, each with a comment saying why the automatic
+close did not fire. `Sprint` set to Sprint 2, `Status` to Done, and `Start Date` and `End Date` set from
+the **author date of the delivering commit** rather than the close date, which is the same rule the
+2026-08-29 back-fill used for Sprint 1. Epics #37 and #38 moved to Done. #40 moved to Sprint 3. #30 was
+left In Progress until the merge, because the project's own Definition of Done counts an issue as done
+when it is merged and reviewed, and closing it early would be exactly the "committed but not done" gap the
+sprint log warns about.
+
+**The cost is not the twenty minutes of clicking.** It is that between 2026-08-31 and 2026-09-02 **every
+figure read off the board was wrong**, and nobody could have known by looking. A velocity, a burn-down or
+a sprint review taken in that window would have described a project that had delivered almost nothing.
+The board was not lying about anything anybody had told it.
+
+**The generalisable fix, and it is cheap:** the closing step of a merge into `dev` has to include closing
+the issues by hand and moving their cards, because the automation that would otherwise do it is
+structurally unable to fire before the release. That is one line in the Definition of Done and it is
+where it now belongs. **Rejected: making `dev` the default branch so `Closes` fires.** It would fix the
+symptom and break the meaning of `main` as the always-playable branch, which is the more valuable of the
+two rules.
+
+### The last must-have work with no card got one: 2026-09-02, issue #68
+
+The CI build-check workflow was named in `Brainstorming.md`, sized at 2 points in `Effort-Estimation.md`,
+scheduled into the Sprint 3 implementation half by `Project-Plan.md` section 2.2, and given its five gates
+in section 6 of the test plan. **It appeared on the board in none of those forms**, so the last piece of
+unscheduled must-have work in the project was visible in four documents and invisible in the one artefact
+the team actually looks at. It is now issue #68, `4-implementation`, `must have`, Sprint 3, 2 points.
+
+**This is the second time this pattern has been recorded this fortnight**, and the two cases are worth
+comparing because the cause is the same and the visibility is not:
+
+| Work with no card | How it was noticed |
+| --- | --- |
+| Design handoff 04, a full day of work | While writing the note about why the board showed no movement |
+| The CI workflow, 2 points | While opening the board to fix something else entirely |
+
+Both were found by accident, three days apart, and neither would have been found by any check the process
+contains. **The honest conclusion for the report is not "we should be more careful".** It is that a Kanban
+board tracks requests, and any work that arrives without somebody filing a request is structurally
+invisible to it: design deliveries and infrastructure are the two kinds this project generates.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -824,4 +878,9 @@ reason, and it makes the claim re-checkable rather than remembered.
   scope. What is still open is not the definition but its **adoption**: no sprint has been closed
   against it, and the three of us have not confirmed it in a planning slot.
 - Whether a CI build-validation workflow (`build-check.yml`, planned in `Brainstorming.md`) gets
-  implemented. If not, say so in Chapter 08 with a reason.
+  implemented. If not, say so in Chapter 08 with a reason. **2026-09-02: it now has an issue, #68**, 2
+  points, Sprint 3, so the decision is at least on the board. Whether it lands before the 2026-09-11
+  feature freeze is still open.
+- **Whether #40 audio is cut**, asked of the Product Owner on 2026-09-02 with both options costed and a
+  recommendation to cut under the drop order. Due 2026-09-06. Until it is answered, epic #39 cannot move
+  to Done and Sprint 3's scope is 5 points or 2.

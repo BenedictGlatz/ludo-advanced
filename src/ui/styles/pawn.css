@@ -54,6 +54,58 @@
   box-shadow: var(--shadow-piece);
 }
 
+/* --- The seat mark (D16, NFR-12). An empty <span>, the first child of
+       .pawn, carrying the seat's shape from tokens.css. The follow-up that
+       04-spec section 5 asked for: the HUD, the chrome and two overlay panels
+       got the mark on 2026-09-01 and the piece did not, and the piece is
+       where NFR-12 is actually measured.
+
+       Ink, and not white and not a lightened seat colour, because the mark
+       sits on the seat colour itself rather than on a neutral plate. That is
+       the whole reason it measures better here than anywhere else in the game:
+       greyscale contrast against its own ground is 3.67:1 at the worst seat
+       (blue) in Picnic and 5.16:1 in Night In, against 2.74:1 for the same
+       four shapes on the HUD. The numbers are in 06-spec section 4.
+
+       Low and centred, so it clears the eyes: the mark spans 48% to 86% of
+       the disc and the eyes sit between 19% and 41%. It is a badge on a
+       creature's front, which is why it can be this size without reading as
+       a third eye.
+
+       z-index is what puts it over the face. Both pseudo-elements are at
+       auto, so paint order decides, and ::after is painted last of the
+       three. One line settles it.
+
+       Nothing in the five states needed a rule of its own (D49): the mark
+       inherits the piece's transform, so it scales with data-selected and
+       dims with data-captured, and the breathe loop and the focus ring are
+       both on ::before, outside the disc, and never reach it. --- */
+
+.pawn[data-player="0"] {
+  --seat-shape: var(--seat-shape-0);
+}
+.pawn[data-player="1"] {
+  --seat-shape: var(--seat-shape-1);
+}
+.pawn[data-player="2"] {
+  --seat-shape: var(--seat-shape-2);
+}
+.pawn[data-player="3"] {
+  --seat-shape: var(--seat-shape-3);
+}
+
+.pawn__mark {
+  position: absolute;
+  bottom: 14%;
+  left: 50%;
+  z-index: 1;
+  width: 38%;
+  height: 38%;
+  background: var(--color-ink);
+  clip-path: var(--seat-shape, circle(50% at 50% 50%));
+  translate: -50% 0;
+}
+
 /* The state ring. Sits behind the piece, and is the only thing the four
    interactive states change. */
 .pawn::before {

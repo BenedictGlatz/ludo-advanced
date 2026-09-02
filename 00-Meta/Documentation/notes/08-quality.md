@@ -284,7 +284,7 @@ Seven spec files, run against the production build in Chromium, Firefox and Edge
 | `capture.spec.js` | Landing on an opponent sends it home and takes its square | FR-11 |
 | `no-legal-move.spec.js` | The turn passes and the reason is on screen, in German | FR-14, NFR-08, NFR-03 |
 | `win.spec.js` | A whole match, clicked through, ends with a full house and names the winner | FR-05, SG1 |
-| `greyscale.spec.js` | The four seats told apart without colour | NFR-12 |
+| `greyscale.spec.js` | The four seats told apart without colour. Asserts four different shapes on the pieces since 2026-09-02; measured the palette's greyscale contrast before that | NFR-12 |
 
 #### Every spec fixes the RNG, and the seeds were measured rather than guessed
 
@@ -306,7 +306,45 @@ minimum is part of what it is testing.
 animation has run, so waiting for it would be a race. A pawn going from the track back to `r = 0` is
 the rule itself and is not transient at all.
 
-#### Negative finding: `greyscale.spec.js` fails, and is marked as expected to fail
+#### Resolved 2026-09-02: what `greyscale.spec.js` measures now, and what it used to
+
+> The section below is the state from 2026-08-30 to 2026-09-02 and is **kept unchanged** as the record
+> of it. What follows here is what replaced it.
+
+Design handoff 06 put a shape per seat on the piece, so NFR-12 is met by a non-colour identifier rather
+than by the palette. That changes what the test can honestly assert, and D50 of the spec decided it
+explicitly rather than leaving the old case running against a threshold nothing was trying to reach.
+
+**The first case now asserts the acceptance criterion as it is written.** For all sixteen pawns: the mark
+has a non-zero rendered box, its computed `clip-path` is not `none`, the four pawns of one seat share one
+shape, and the four seats have four different shapes. The whole block then runs a second time under
+`html { filter: grayscale(1) }`. The filter changes what a pixel looks like and not what a box measures,
+so the assertions are identical and the greyscale run is the criterion's own wording rather than a proxy
+for it.
+
+**The 1.30 luminance case is retired.** Its threshold was derived, not invented: four values spread evenly
+in contrast-ratio terms across the range these hues span, blue at 0.2543 to yellow at 0.6336 relative
+luminance, gives three equal steps of the cube root of 2.246, which is 1.31. The measured worst pair was
+**1.146**, red against blue, ten greyscale levels apart out of 255. Both numbers are kept here and next to
+NFR-12 in [01-requirements-and-goals.md](01-requirements-and-goals.md), because a figure that is no longer
+asserted is a figure nobody re-runs, and the next person who proposes moving a seat colour needs it.
+
+**Rejected: keeping it as a weaker check with a lower threshold.** 1.10 is the only threshold that both
+passes today and means anything, and against a measured 1.146 that is four per cent of headroom. It would
+fire on a colour tweak that harms nothing, while a real regression, two seats reducing to the same grey,
+has to cross the 1.0 case that is already there. A guard that thin is a maintenance cost.
+
+**What is kept** is the case asserting every pair clears 1.0, which is the floor below which the board
+would be unreadable rather than merely hard, plus the both-skins case and the screenshot attachment.
+
+**The process point worth the report.** From 2026-08-30 the suite carried one permanently red test on
+purpose, so that an unmet requirement could not go quietly green. It stayed red for three days, it is
+named in the sprint log, the risk register and three chapter notes, and it is what carried the question
+into handoff 06. **There is now no expected failure anywhere in this project's test suites.** The pattern
+is worth stating in general: an expected-failure marker is a way of writing a known gap into the one
+artefact that gets run every day, and its whole value is that removing it requires fixing the thing.
+
+#### Negative finding, 2026-08-30 to 2026-09-02: `greyscale.spec.js` fails, and is marked as expected to fail
 
 NFR-12 asks for a second, non-colour identifier per player. D2 of design handoff 01 delivers colour
 alone. The measurement, taken 2026-08-30 from the live tokens:

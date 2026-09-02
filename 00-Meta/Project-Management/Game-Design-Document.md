@@ -782,17 +782,35 @@ decisions of their own, and section 7.3 explains both.
 | 10 | FR-09 | Leaving the start area becomes `roll >= dieMax`, because Angel Die can push a roll above the die's maximum | | |
 | 11 | FR-11 | Backward movement from a card stops at the first track square and never returns a pawn to its start area | | |
 | 7 | FR-37 | No energy or resource system in the MVP | | |
-| 8 | NFR-12 | **Answered as a question, not a rule.** Design handoff 01 (D2) delivers colour only and no second identifier. Confirm NFR-12 as met by pawn lightness alone, or require a non-colour identifier to be reinstated | | |
+| 8 | NFR-12 | **Now a rule, 2026-09-02.** Each seat has a **shape** as well as a colour: circle, triangle, square, diamond. It sits on the pawn, on the scoreboard, in the top bar and on the win and handover screens. Confirm that this is the second identifier NFR-12 asks for | | |
 
-**Row 8 is the one row that changed on 2026-08-30, and it did not get an answer.** Claude Design was
-asked for a non-colour player identifier, first delivered one as a per-seat pawn silhouette, and then
-removed it on request in favour of colour alone. What is left is lightness: the four seat colours
-rank yellow, green, red, blue in oklch lightness, and three of the four sit within 0.08 of each
-other. That may or may not satisfy NFR-12's acceptance criterion, which is that a greyscale
-screenshot still identifies whose pawns are whose, and **it has not been measured yet**: the
-Playwright check is written but cannot run until the board renders. D2 of the spec names the two ways
-out in order of cost, nudging green and blue apart or reinstating a second identifier. Both are
-decisions for the Product Owner, which is why this row records the question rather than a rule.
+**Row 8 changed twice, and the second change is the answer.** On 2026-08-30 it recorded a question:
+Claude Design was asked for a non-colour player identifier, first delivered one as a per-seat pawn
+silhouette, and then removed it on request in favour of colour alone. That left lightness alone to carry
+the requirement, and the Playwright check measured it as soon as the board rendered: the worst pair of
+seat colours, red against blue, reduces to greys 1.146 apart, and three of the four yards are effectively
+the same grey.
+
+**On 2026-09-02 the row became a rule.** Each seat now has a shape as well as a colour, filled in ink and
+placed low on the pawn's disc so it reads as a badge on the creature's front rather than as a third eye:
+
+| Seat | Colour | Shape |
+| --- | --- | --- |
+| 0 | red | circle |
+| 1 | yellow | triangle |
+| 2 | green | square |
+| 3 | blue | diamond |
+
+The same four shapes appear on the scoreboard, in the top bar and on the win and handover screens, so the
+seat is named the same way everywhere. The palette was **not** changed: D2's other way out, nudging green
+and blue apart, was considered and rejected, because the shape provides the margin and the four hues come
+from the layout template and are cited across the documentation. The reasoning is in
+`01-Design/Handoff/06-spec-pawn-mark.md`, D48 to D50.
+
+**What the Product Owner is asked to confirm** is narrower than before: not whether the requirement can be
+met by colour alone, but whether a shape per seat is the second identifier NFR-12 means. The greyscale
+screenshot the criterion names is produced by `tests/e2e/greyscale.spec.js` on every run and is attached
+to the report.
 
 ---
 
