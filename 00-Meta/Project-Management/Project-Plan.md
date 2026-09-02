@@ -364,6 +364,16 @@ The third row is the one worth reading: a written test plan does not lower the l
 slipping, because no CI runs the gates it describes. Leaving a rating alone when the artefact exists
 is a judgement, and it is recorded as one.
 
+**Settled 2026-09-02, issue #68, and this is the half that makes the judgement above worth anything.**
+`.github/workflows/build-check.yml` landed and runs all five gates on every pull request, so the
+condition this row named for itself was met and the row moved from M/M/3 to L/M/2 in
+[03-Risk-Analysis.md](03-Risk-Analysis.md). A register that announces its own trigger in advance and
+then honours it is a different artefact from one adjusted in hindsight, and after the project is
+finished the two are indistinguishable unless both halves are written down. Closing that risk created a
+smaller one, recorded in the same file under *Risks added 2026-09-02*: the check reports on a pull
+request but does not block a merge, because that needs a branch-protection ruleset that still does not
+exist.
+
 ### 5.3 Risks this plan creates
 
 Every plan adds risk by committing to something. All five were **added to

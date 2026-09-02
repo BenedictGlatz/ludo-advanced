@@ -299,6 +299,19 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   the last must-have work with no card. The #40 audio decision went to the Product Owner as a comment with
   both options costed. Sprint 2.
 
+- **2026-09-02**: **the project has CI.** `.github/workflows/build-check.yml` for issue #68, on
+  `feature/68-ci-build-check` off `dev`. Two jobs on every pull request into `dev` or `main`: `checks`
+  runs the four fast gates (lint, unit tests, coverage against the NFR-05 floor, production build) and
+  `e2e` runs the Playwright suite once per engine, chromium and firefox, gated behind `checks`. **The
+  gates did not change and none of them was new**: what changed is that they no longer depend on
+  somebody remembering, so step 4 of the Definition of Done stopped being an agreement between three
+  people. Two documents that had prepared a sentence for the case that CI never landed were updated
+  rather than emptied, and the *Test coverage discipline slips* risk row was re-rated M/M/3 to L/M/2 on
+  the trigger the row had named for itself on 2026-08-22. Two limits recorded rather than glossed: the
+  `msedge` project of NFR-10 stays a local per-release check, and the check reports on a pull request
+  without blocking a merge, because that needs a repository ruleset. Sprint 2, delivered out of the
+  Sprint 3 plan.
+
 ---
 
 ## Decisions
@@ -2891,6 +2904,83 @@ to get wrong later.
   fourth cause rather than removing one: five issues that were planned for the next sprint are counted in
   this one. **The figure is printed with all four reasons next to it or not printed at all.**
 - → Ch. 02
+
+### 2026-09-02: Edge is left out of CI rather than installed onto the runner
+
+- **Chosen:** the `e2e` job runs a matrix over `chromium` and `firefox` only. The `msedge` project stays
+  in `playwright.config.js` and stays a local check, run once per release as the release level of the
+  Definition of Done already requires.
+- **Why:** `msedge` drives the **system** Edge rather than a browser Playwright manages, so a Linux
+  runner has to acquire Edge before it can run that project at all. That install is the one step in the
+  workflow that depends on a third-party package feed for a browser nobody in the team develops in, and
+  it would be the most likely thing to turn a pull request red for a reason unrelated to the change.
+- **Rejected: `npx playwright install msedge` on `ubuntu-latest`.** It works, and it makes the most
+  fragile step in the file also the least valuable one. Edge and Chromium share an engine, so the third
+  project buys coverage of Edge's shell rather than of a different renderer.
+- **Rejected: a second `windows-latest` job for Edge alone.** Honest coverage of all three engines, paid
+  for with a second runner type, a slower cold start and a Windows-only path problem waiting to be
+  discovered. Not worth it inside a 2-point issue.
+- **What this makes NFR-10:** two thirds automated, one third disciplined. That sentence goes in the
+  report next to the requirement rather than a claim that CI covers the browser matrix.
+- → Ch. 08
+
+### 2026-09-02: The five gates stay five steps, including the one that duplicates work
+
+- **Chosen:** the `checks` job runs `npm test` and then `npm run test:coverage` as two separate steps,
+  even though the second runs the identical unit suite with a coverage reporter attached.
+- **Why:** the five steps map one to one onto the five gates named in section 6 of
+  `Test-Plan-and-Quality-Strategy.md`. A reader of the workflow, and a traceability table in the report,
+  can point at each gate and find a step with that name. The duplication costs a measured 3.26 s of
+  runner time.
+- **Rejected: collapsing them into `npm run test:coverage` alone.** It is the tidier file, and it turns
+  five documented gates into four steps, which then needs a footnote explaining the arithmetic. Three
+  seconds is cheaper than a footnote nobody will trust.
+- **The decision is written into the file itself**, in the comment block at the top, because the whole
+  risk of this choice is that someone reads it as an oversight and removes it.
+- → Ch. 08
+
+### 2026-09-02: The coverage floor stays in `vitest.config.js` and is not repeated in CI
+
+- **Chosen:** the workflow runs `npm run test:coverage` and configures no threshold of its own. NFR-05's
+  80 % lives in `vitest.config.js`, in one place.
+- **Why:** CI must fail for reasons a developer can reproduce with the same command on their own
+  machine. A threshold set in the workflow means the local run and the CI run enforce different things,
+  which produces the worst kind of red build: one that nobody can make red locally.
+- **Rejected: a `--coverage.thresholds.lines=80` flag in the workflow step**, which reads as more
+  explicit about what CI enforces and is exactly the duplication that goes stale.
+- **The same argument applies to the browsers, the viewport and the retry count**, all of which are in
+  `playwright.config.js` and none of which the workflow overrides. The workflow's job is to decide *when*
+  the gates run. What they check belongs to the tooling.
+- → Ch. 08, Ch. 07
+
+### 2026-09-02: One retry stays in CI, and the flaky count is made visible instead
+
+- **Chosen:** `retries: 1` under CI is unchanged, and the `e2e` job uploads `playwright-report/` on
+  success as well as on failure, with `if: ${{ !cancelled() }}`.
+- **Why:** this journal and Ch. 08 recorded on 2026-09-01 that four failures in the full suite were
+  worker contention rather than defects, and named the dangerous version of that as the one that happens
+  in CI, where a retry hides it and the suite gets slowly less reliable with nobody able to say when it
+  started. Playwright does not report a retried pass as a pass: it reports it as **flaky**. The problem
+  was never the retry, it was that nobody could see the flaky count. An uploaded report can be looked at.
+- **Rejected: `retries: 0` in CI.** It makes every contention blip a red pull request, and the predictable
+  human response is to press re-run until it goes green. That is the same blindness reached by a route
+  that also wastes everyone's time.
+- **Rejected: pinning `workers` to make contention impossible.** Already rejected once, on 2026-09-01,
+  for the same reason: it slows all 213 tests to fix two.
+- → Ch. 08
+
+### 2026-09-02: CI pins Node 24, and the `engines` floor is left unverified on purpose
+
+- **Chosen:** `node-version: "24"`, matching the version the team develops on. `package.json` keeps
+  `engines: ">=20"`.
+- **Why:** the value of CI here is that it runs what the developers run. A second version would be
+  defending a compatibility promise this project does not make: nothing is published as a package, the
+  artefact is a static build served from `dist/`, and no consumer chooses their own Node version.
+- **Rejected: a matrix over Node 20 and 24.** It doubles the fast job, which is the job whose speed is
+  its entire purpose, to test a claim that has no reader.
+- **The consequence is stated rather than hidden:** the `>=20` floor in `package.json` is now checked by
+  nothing, and it should be read as documentation of intent, not as a tested guarantee.
+- → Ch. 07, Ch. 08
 
 ---
 

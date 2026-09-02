@@ -1066,6 +1066,98 @@ started rather than discovered afterwards: nothing in this delivery consumes RNG
 confirmed it. That is the third change in a row where the prediction was made in advance, after the first
 two cost 45 minutes and then 5 minutes as post-mortems.
 
+### CI/CD exists: 2026-09-02, issue #68
+
+`.github/workflows/build-check.yml`, well inside the NFR-02 limit; the line count is in
+[09-source-code-overview.md](09-source-code-overview.md), next to the command that produces it, which
+gained `.github/*.yml` on the same day and for this file. It is the answer to the question this chapter has
+carried open since it was created, and the sentence it replaces is the one three documents had already
+written for the case that it never landed.
+
+**What changed is not the gates. It is who runs them.** Every one of the five gates already worked and
+every one already ran green. What none of them had was a trigger that does not depend on a person
+remembering. Step 4 of the Definition of Done was an agreement between three people; from this commit
+it is a condition of a pull request.
+
+#### What runs, and on which trigger
+
+Trigger: `pull_request` into `dev` or `main`, plus `workflow_dispatch` for manual re-runs. Not on
+`push`, because the branching model routes everything through a pull request anyway and a push trigger
+would double every run.
+
+| Gate | Command | Job |
+| --- | --- | --- |
+| 1 | `npm run lint` | `checks` |
+| 2 | `npm test` | `checks` |
+| 3 | `npm run test:coverage` | `checks` |
+| 4 | `npm run build` | `checks` |
+| 5 | `npx playwright test --project=<engine>` | `e2e`, one job per engine |
+
+**Two jobs and not one, and `e2e` declares `needs: checks`.** `checks` answers in a couple of minutes,
+which is the feedback that is actually useful while a pull request is open. `e2e` is the slow half and
+must not delay it. The dependency is also thrift: a broken lint rule should not cost two browser
+downloads. Rejected: one job running all five gates in sequence, which is simpler to read and makes
+the fast answer wait for the slow one.
+
+#### Gates 2 and 3 are the same test suite, on purpose
+
+`npm run test:coverage` runs the identical unit suite that `npm test` runs, only with the v8 reporter
+and the NFR-05 threshold attached. Two steps is therefore a measured 3.26 s of duplicated work.
+
+It stays, because the five steps map one to one onto the five gates named in section 6 of the test
+plan, and a traceability table that needs a footnote explaining why five became four is worse value
+than three seconds of runner time. The workflow says so in a comment at the top of the file, so that
+the next person to read it does not tidy away something deliberate.
+
+#### The coverage floor is not configured in CI, and that is the point
+
+NFR-05's 80 % lives in `vitest.config.js` and nowhere else. CI runs `npm run test:coverage`, the same
+command a developer runs, and gets the same failure for the same reason. **A threshold configured in
+the workflow instead would mean the local command and the CI command enforce different things**, which
+is the failure mode where CI is red and nobody can reproduce it.
+
+#### Which gates stay local, and why
+
+The issue asked for this list explicitly, and it is the honest half of the entry.
+
+| Not in CI | Why | When it does run |
+| --- | --- | --- |
+| The `msedge` project of NFR-10 | It drives the **system** Edge rather than a Playwright-managed build, and a Linux runner has no Edge. Rejected: `npx playwright install msedge` on Ubuntu, the most fragile step in the file for the smallest gain, and a second `windows-latest` runner for one engine. | Locally, once per release, per the Definition of Done's release level |
+| `npm run format` | Prettier is not one of the five named gates, and it ignores `*.md` and `00-Meta/`, so a `--check` gate would police a fraction of the repository. Adding it is a new rule and belongs in its own issue. | On demand, by whoever edits code |
+| The manual playtest | It is evidence about game feel, not a regression check. Section 3 of the test plan already says so. | Buffer sprint |
+| NFR-11, feedback within 100 ms | Measured once, during that playtest. | Buffer sprint |
+| NFR-12, the greyscale check | Verified once per release. The automated part of it is in `greyscale.spec.js` and does run in CI; what stays manual is a person looking at the screen. | Per release |
+
+**So NFR-10 is two thirds automated and one third disciplined**, and that is the plainest way to say
+it. Chromium and Firefox are gated by a machine, Edge by a checklist.
+
+#### Node 24, and a claim nothing checks
+
+The workflow pins `node-version: 24`, matching the machines the team develops on. `package.json`
+declares `engines: ">=20"`, and **nothing in this project verifies that floor**. Rejected: a matrix
+over 20 and 24, which doubles the fast job to defend a compatibility promise this project never makes
+to anyone. Nothing here is published as a package; the artefact is a static build.
+
+#### `retries: 1` stays, and the report upload is why
+
+This chapter recorded on 2026-09-01 that the dangerous version of a contention failure is the one that
+happens in CI, "where `retries: 1` would have hidden it entirely and the suite would have been slowly
+getting less reliable with nobody able to say when it started". That risk is now real and the retry
+value did not change.
+
+**The answer is not a different number, it is a readable artefact.** Playwright reports a test that
+failed once and passed on the retry as **flaky**, not as a pass, and the workflow uploads
+`playwright-report/` on success as well as on failure with `if: ${{ !cancelled() }}`. So the flaky
+count is in a place somebody can look at. Rejected: `retries: 0` in CI, which turns every contention
+blip into a red pull request and trains people to press re-run, which is the same blindness by a
+different route.
+
+#### Verification
+
+Written and locally verified on 2026-09-02: gates 1 to 4 green on the `dev` merge base, e2e run over
+chromium and firefox. **What the CI run itself proved is recorded below once it has actually run**, and
+until then this section claims nothing about the runner.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -1084,19 +1176,32 @@ two cost 45 minutes and then 5 minutes as post-mortems.
   *without being told*. A test can check that the text is on screen, in the right region, in the right
   language and for long enough to read. Whether a person reads it is a playtest, and the playtest has
   not happened.
-- **No CI/CD pipeline exists.** `Brainstorming.md` proposes a `build-check.yml` build-validation
-  workflow on every PR, plus optional playable build artifacts. Nothing is implemented. If the
-  project ships without CI, this chapter says so plainly and gives the reason: the sample report
-  scored well doing exactly that with its missing formatter. **2026-08-22:** the five gates such a
-  workflow would run are now named in section 6 of the test plan (lint, test, coverage against the
-  NFR-05 floor, build, E2E on the NFR-10 browsers), and so is the sentence the report uses if it never
-  lands: the gates were enforced by discipline rather than by a machine, which is a weaker control and
-  is named as one. The workflow itself is still not written.
-- **The *Test coverage discipline slips* risk row was deliberately not re-rated** when the test plan
-  landed, 2026-08-22. A document describing gates does not run them, so the likelihood of the risk is
-  unchanged by writing it down. Only the mitigation column was updated, to point at the plan and the
-  Definition of Done. Worth stating in the report as a case of a mitigation recorded without a rating
-  change, since the two are usually assumed to move together.
+- ~~**No CI/CD pipeline exists.**~~ **Closed 2026-09-02, issue #68.** The history of this entry is
+  worth keeping intact, because it is a three-step record rather than a single fact.
+  **2026-08-04:** `Brainstorming.md` proposes a `build-check.yml` build-validation workflow on every
+  PR, plus optional playable build artifacts. Nothing is implemented. **2026-08-22:** the five gates
+  such a workflow would run are named in section 6 of the test plan, and so is the sentence the report
+  uses if it never lands, that the gates were enforced by discipline rather than by a machine, which
+  is a weaker control and is named as one. The workflow itself is still not written. **2026-09-02:**
+  it is written, and the facts section above has the shape and the reasons. The prepared sentence is
+  not needed and is deliberately left standing in section 6 of the test plan, marked as superseded:
+  it is the evidence that the weaker alternative had been thought through rather than overlooked.
+  The playable build artifacts of the original proposal are still not implemented and are still out
+  of scope.
+- ~~**The *Test coverage discipline slips* risk row was deliberately not re-rated**~~ **Re-rated
+  2026-09-02, on the trigger the row itself named.** When the test plan landed on 2026-08-22 only the
+  mitigation column moved, with the reason written into the row: a document describing gates does not
+  run them, so writing it down does not change the likelihood. The row ended with the sentence *"The
+  rating moves when `build-check.yml` lands, not when the plan is written."* It has landed and the
+  row moved from M/M/3 to L/M/2. **This is the entry the report should quote**, because a register
+  that names its own trigger in advance and then honours it is a different artefact from one that
+  gets adjusted in hindsight, and the two are indistinguishable once the project is finished.
+- **The `build-check` check is not a required status check yet.** It reports on a pull request and it
+  does not block a merge: making it blocking is a repository ruleset, which needs a token with
+  `admin` scope and is not part of issue #68. Section 7 of the test plan already records that no
+  branch-protection ruleset is configured, and what the absence of one cost on 2026-08-09 when pull
+  request #48 was merged without approval. **So the control is currently advisory**, and that
+  distinction belongs in the report rather than a claim that CI gates the merge.
 - ~~No decision on whether Playwright runs against the dev server or the production build.~~
   **Decided 2026-08-29 in `playwright.config.js`, exactly where the test plan said it would be:
   against the production build.** The `webServer` block runs `npm run build && npm run preview` on

@@ -348,6 +348,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   of three dealt cards is only a decision if you can see what the twenty behind them look like: a D2 gets a
   pawn out of the start area half the time and a D20 one time in twenty. The match stops while the screen is
   open and carries on where it left off
+- **A continuous integration workflow** (issue #68), `.github/workflows/build-check.yml`. Every pull
+  request into `dev` or `main` now runs the five quality gates by itself: ESLint, the unit test suite,
+  the coverage run against the 80 % floor for `src/core/` and `src/state/`, the production build, and
+  the end-to-end suite in Chromium and Firefox. Nothing about the gates changed, only who runs them:
+  until now every one of them ran because somebody remembered. The Edge run of the browser matrix stays
+  a local check, because it drives the system browser and the runner has no Edge, and the check reports
+  on a pull request without blocking the merge until a branch-protection ruleset is configured
 
 ### Changed
 

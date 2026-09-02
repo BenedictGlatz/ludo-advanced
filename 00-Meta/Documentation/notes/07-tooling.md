@@ -263,7 +263,10 @@ expands them:
 | `board.css` | 269 | 429 | Split into `board.css` plus `board-regions.css`, handoff 03 |
 
 - **Both were caught by hand**, by running `wc -l` after formatting. Nothing in `npm run lint` would
-  have said a word, and nothing in CI would either.
+  have said a word, and nothing in CI would either. **Still true after CI landed on 2026-09-02.** The
+  workflow of issue #68 runs `npm run lint`, so it inherits exactly this blind spot: the 300-line limit
+  of NFR-02 is checked by people, not by either gate. Adding CI did not change that, and it is worth
+  saying so rather than letting a green check imply more than it covers.
 - **The candidate fix is a stylesheet linter**, which is a new dev dependency and therefore needs
   asking first under the rules in `CLAUDE.md`. Not installed, not decided, recorded as open.
 - **The cheap fix that needs no dependency** is a line in the design brief template saying the size
@@ -285,6 +288,41 @@ is not obviously a competing setting.** `{ ...devices["Desktop Chrome"] }` reads
 browser" and also silently sets a viewport, a user agent, a device scale factor and more.
 
 The fix is ordering, not values: the project-level `viewport` now comes after the spread.
+
+### The toolchain got a second place to run, and no second place to be configured: 2026-09-02, issue #68
+
+`.github/workflows/build-check.yml` is the first piece of tooling in this project that runs somewhere
+other than a developer's laptop. What belongs in this chapter is not which gates it runs, which is
+[08-quality.md](08-quality.md), but **one rule about where settings live**, because it is the rule that
+decides whether CI stays trustworthy.
+
+**The workflow configures nothing that a tool already configures.** It sets no coverage threshold: the
+80 % floor is in `vitest.config.js`. It sets no browser list, viewport or retry count: those are in
+`playwright.config.js`. It runs `npm run lint`, `npm test`, `npm run test:coverage`, `npm run build` and
+`npx playwright test --project=<engine>`, which are the commands a developer runs. Its only job is to
+decide **when** they run.
+
+**Why that matters more than it sounds.** The moment a setting exists in both the config and the
+workflow, the two drift, and the symptom is the worst class of build failure there is: red in CI, green
+on every machine, with nobody able to reproduce it. Ordering the fix rather than duplicating the value
+is the same lesson as the viewport bug directly above, one layer further out.
+
+Two divergences between a local run and a CI run are deliberate and are worth knowing about:
+
+- **`CI=true`** is set by GitHub Actions, and `playwright.config.js` already branches on it: `forbidOnly`
+  turns on, so a forgotten `test.only` fails the run instead of quietly skipping 72 tests; `retries`
+  becomes 1; the HTML reporter is added; `reuseExistingServer` turns off.
+- **Node is pinned to 24** in the workflow, matching the development machines, while `package.json`
+  declares `engines: ">=20"`. **That floor is now checked by nothing** and should be read as a statement
+  of intent. Rejected: a version matrix, which doubles the fast job to defend a compatibility promise
+  this project makes to no one, since the artefact is a static build rather than a published package.
+
+**The two things the workflow does configure are both about runners, not about tools**:
+`actions/setup-node@v4` with `cache: npm`, which caches the npm download directory between runs and is
+the single cheapest thing in the file, and `npx playwright install --with-deps <engine>`, which fetches
+one browser per matrix job instead of all three. Browser binaries are deliberately **not** cached: a
+cache key that goes stale against a Playwright version produces the "Executable doesn't exist" failure
+this project already lost time to on 2026-08-30, and a fresh download is about a minute.
 
 ## Decisions
 

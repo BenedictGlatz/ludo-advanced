@@ -214,6 +214,22 @@ skipped under pressure, which is why it is numbered rather than implied.
 
 ## 6 CI/CD
 
+> **Updated 2026-09-02, issue #68. This section's opening claim is no longer true and the section is
+> kept as written rather than rewritten.** `.github/workflows/build-check.yml` exists and runs on every
+> pull request into `dev` or `main`. The five numbered gates below are the five steps of the workflow,
+> in this order, so the list is now a description instead of a proposal. Three things about the delivered
+> workflow are not in the text below and are recorded in
+> [notes/08-quality.md](../Documentation/notes/08-quality.md):
+>
+> - **Gate 5 runs `chromium` and `firefox` only.** The `msedge` project of NFR-10 drives the system Edge,
+>   which a Linux runner does not have, so it stays a local check run once per release. NFR-10 is
+>   therefore two thirds automated and one third disciplined.
+> - **The check reports without blocking.** Making it a required status check is a repository ruleset,
+>   which section 7 below notes is still not configured. The control is advisory until it is.
+> - **The paragraph beginning "What the report says if it never lands" is superseded and stays put.** It
+>   is the evidence that the weaker alternative was thought through in advance rather than discovered
+>   afterwards, which is worth more to the report than a tidy section.
+
 **None exists.** No workflow file, no pipeline, no automated run of anything.
 
 The intent on record is in [Brainstorming.md](../../Brainstorming.md): a build-validation workflow at
