@@ -11,9 +11,9 @@
  * whoever is in the way, Hyperbeam sends a whole run of pawns home, and none of those is something the
  * pawn's owner chose or could refuse.
  *
- * So there is a second, blunter way to change a pawn's position, and it is deliberately blunt: it
- * checks nothing about legality, because the card is the authority. What it does enforce is the two
- * things that are properties of the **board** rather than of any rule:
+ * So there is a second way to change a pawn's position, one that checks nothing about legality because
+ * the card is the authority. What it does enforce is the two things that are properties of the **board**
+ * rather than of any rule:
  *
  * - a pawn never lands outside `0` to `HOME_R`
  * - a pawn pushed backwards stops at `r = 1` and never re-enters its start area
@@ -27,32 +27,27 @@
  *
  * A card that is *meant* to send a pawn home says so and calls `sendHome`, which is a different
  * function for exactly that reason.
+ *
+ * ## `displace` lived here and issue #45 removed it
+ *
+ * This module used to export a `displace(pawns, ref, delta)` that applied the two clamps above and
+ * nothing else. Issue #45 gave trap-driven pushes a chain reaction, so a push now has to stop in front
+ * of a boulder, resolve a capture on the square it lands on, and set off whatever it crossed. That is
+ * `core/slide.js`, and once it existed **every one of the five displacement cards wanted it**: a card
+ * that quietly slid a pawn through a boulder was a bug in each of them, not a simpler variant.
+ *
+ * So `displace` was left with no callers and was deleted rather than kept as an alternative nobody
+ * should pick. `PUSHBACK_FLOOR` stays here, because it is the game decision above and `slide.js` applies
+ * the identical clamp. What is left in this module is the three things that are still simply true of a
+ * pawn list, plus `sendHome`, which is deliberately not a slide: walking a captured pawn back to its
+ * yard would count every square in between and fire the traps on them.
  */
 
-import { HOME_R, REGION, START_R, absoluteSquare, region } from "./board.js";
+import { REGION, START_R, absoluteSquare, region } from "./board.js";
 import { withPawnAt } from "./pawns.js";
 
 /** The furthest back a card can push a pawn. Not the start area: see the module note. */
 export const PUSHBACK_FLOOR = START_R + 1;
-
-/**
- * A new pawn list with one pawn moved `delta` squares, clamped.
- *
- * Forwards is capped at `HOME_R`, so a card cannot overshoot a pawn out of the board. That is a
- * **cap and not a refusal**, unlike FR-13's exact-count rule for an ordinary move: FR-13 exists so a
- * player cannot walk a pawn home carelessly, and a card that shoves a pawn is not the player walking.
- *
- * Backwards stops at `PUSHBACK_FLOOR`. A pawn still in its start area does not move at all: there is
- * nowhere behind it, and pushing it forwards out of the yard would be a free pass past FR-09.
- */
-export function displace(pawns, ref, delta) {
-  const pawn = pawns.find((entry) => entry.player === ref.player && entry.pawn === ref.pawn);
-  if (pawn === undefined || pawn.r === START_R) return pawns;
-
-  const target = Math.min(HOME_R, Math.max(PUSHBACK_FLOOR, pawn.r + delta));
-
-  return withPawnAt(pawns, ref, target);
-}
 
 /** A new pawn list with one pawn back in its start area. What a capture does, and what Hyperbeam does. */
 export function sendHome(pawns, ref) {

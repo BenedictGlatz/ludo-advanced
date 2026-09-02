@@ -114,7 +114,7 @@ export function bigAhRock(context) {
   const victim = pawnBehind(context, context.target.square);
   if (victim === null) return placed;
 
-  // Through `shove` rather than `displace`, so the knockback respects blockers, resolves a capture, and
+  // Through `shove` rather than a bare clamp, so the knockback respects blockers, resolves a capture, and
   // can set off a trap of its own. A boulder that shunted a pawn on top of another one would be laying
   // a corruption the rest of the rules cannot read.
   return { ...placed, ...shove({ ...worldIn(context), traps: placed.traps }, victim, -KNOCKBACK) };

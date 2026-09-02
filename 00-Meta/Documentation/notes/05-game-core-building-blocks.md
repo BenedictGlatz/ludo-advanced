@@ -1215,6 +1215,34 @@ The module is separate from `traps.js` because the question has a different shap
 and the board's topology as well as the list, and `traps.js`'s value is that every function in it takes
 the list and nothing else.
 
+### A planned split turned out to have no second side: `displace` was deleted: 2026-09-02, issue #45
+
+The plan for the chain reaction was that `core/slide.js` would be the careful push, used by traps, and
+`displace` in `core/displacement.js` would stay the blunt one, used by the five cards that move a pawn
+without a move. Two functions, two audiences, and the plan said so explicitly.
+
+**That was wrong, and finding out cost nothing because the coverage report said so.** After the last
+card was routed through `shove`, `displacement.js` dropped to 60 per cent line coverage with
+`displace`'s body as the only gap. A grep confirmed it: no file imported it, and there had never been a
+`displacement.test.js` either.
+
+**Why every caller wanted the careful version.** `displace` applied two clamps and checked nothing
+else, so a card using it could slide a pawn straight through a Big Ah Rock, or stop it on a square
+another pawn was already standing on. Once `slide.js` existed, each of those was recognisable as a bug
+in Yeet, in Aight Imma Head Out and in Let Him Cook rather than as a simpler variant of a push. There
+was no card for which "ignore the boulder" was the intended reading.
+
+So it was deleted rather than kept as an alternative nobody should pick. `PUSHBACK_FLOOR` stays in
+`displacement.js`, because the backwards floor is a game decision with its own journal entry and
+`slide.js` applies the identical clamp. `sendHome` also stays and is deliberately **not** a slide:
+walking a captured pawn back to its yard would count every square in between and fire the traps on
+them.
+
+**The finding worth carrying into the report** is not that a function was deleted. It is that the plan
+predicted a two-sided split and the code only ever grew one side, and the thing that noticed was a
+coverage percentage dropping on a file nobody had edited. A line count would not have shown it and a
+passing test suite did not.
+
 ### The first rule in the project measured as a radius: 2026-09-02, issue #45
 
 It's Not That Deep's second half, which the artwork always printed and the code never had: "offensive

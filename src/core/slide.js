@@ -7,12 +7,18 @@
  *
  * That module's header says, in so many words, that it "checks nothing about legality, because the card
  * is the authority", and enforces only the two things that are properties of the board rather than of
- * any rule. **That sentence is the reason eleven cards can safely call it**, and it would stop being
- * true the moment blockers and captures were added to it.
+ * any rule. Adding blockers and captures to it would have made that sentence false for every one of its
+ * callers at once, so the careful version is a module of its own.
  *
- * So `displace` stays blunt and this module is the careful one. A trap that shoves a pawn is not a card
- * being deliberately blunt, it is the board resolving a consequence, and a consequence has to leave the
- * board in a state the rest of the rules can read.
+ * A trap that shoves a pawn is not a card being deliberately blunt, it is the board resolving a
+ * consequence, and a consequence has to leave the board in a state the rest of the rules can read.
+ *
+ * **The blunt version turned out to have no remaining use.** `displacement.js` used to export
+ * `displace`, and the plan was that the five displacement cards would keep calling it while only traps
+ * used this module. Once this existed, every one of the five wanted it: a card that slid a pawn through
+ * a boulder was a bug in each of them rather than a simpler variant. So `displace` was left with no
+ * callers and issue #45 deleted it. `PUSHBACK_FLOOR` is still imported from there, because the backwards
+ * floor is a game decision and this module applies the identical clamp.
  *
  * ## The bug this exists to close
  *
@@ -89,7 +95,8 @@ function impassable(pawns, board, ref, r, blocked) {
 /**
  * The relative position a push of `delta` really ends on.
  *
- * The clamp is `displace`'s and is deliberately identical: forwards is capped at `HOME_R`, backwards
+ * The clamp is the one `displace` used to apply and is deliberately identical: forwards is capped at
+ * `HOME_R`, backwards
  * stops at `PUSHBACK_FLOOR` so a pushback never substitutes for a capture, and a pawn in its start area
  * does not move at all. Only after the clamp does the walk look for something in the way, so a slide
  * cannot be blocked by a square it was never going to reach.

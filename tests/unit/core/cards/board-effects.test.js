@@ -110,7 +110,7 @@ describe("Let Him Cook rolls a D12 and runs", () => {
   });
 
   /**
-   * Where the artwork's `RISKY` label lives. `displace` alone would clamp at `HOME_R`, which would make
+   * Where the artwork's `RISKY` label lives. A bare clamp at `HOME_R` would make
    * this a free win for any pawn near home, so the overshoot is checked in the card and costs the lap.
    *
    * Deliberately harsher than FR-13, which merely refuses an overshooting move: a move the player chose

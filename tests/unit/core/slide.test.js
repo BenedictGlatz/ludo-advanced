@@ -1,7 +1,8 @@
 /**
  * Where a pushed pawn stops. Issue #45, requirement FR-30.
  *
- * `displacement.test.js` still owns the blunt version, `displace`, which clamps and nothing else. This
+ * `displacement.js` used to own a blunt `displace` that clamped and nothing else. Issue #45 deleted it,
+ * because once this module existed every caller wanted it. This
  * file covers the careful one, and every case is about a square the pawn is *not* allowed to end on.
  *
  * ## Reading the coordinates
@@ -166,7 +167,7 @@ describe("what the slide may and may not share a square with", () => {
   });
 });
 
-describe("the two clamps, which are displace's and deliberately identical", () => {
+describe("the two clamps, inherited unchanged from the deleted displace", () => {
   it("caps a forward push at the deepest house square", () => {
     const pawns = pawnsAt(4, { "0.0": 42 });
 

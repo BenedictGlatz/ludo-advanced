@@ -65,7 +65,7 @@ describe("Yeet can throw a pawn onto a trap, which its own card text promises", 
   });
 
   /**
-   * A boulder stops the throw, which `displace` could not express at all: the pawn used to slide
+   * A boulder stops the throw, which the old `displace` could not express at all: the pawn used to slide
    * straight through.
    *
    * The boulder is on absolute 2, which for seat 2 is `r = 23`. The throw walks `r = 24`, then `r = 23`,

@@ -3084,6 +3084,23 @@ to get wrong later.
   first hit in a backwards run, with no distance arithmetic and no sort.
 - → Ch. 05
 
+### 2026-09-02: `displace` was deleted rather than kept as the blunt alternative
+
+- **Chosen:** delete `displace` from `core/displacement.js`. `core/slide.js` is the only way a pawn is
+  pushed now, for traps and for all five displacement cards.
+- **Why:** the plan kept both, `slide` for traps and `displace` for cards. After the last card was
+  routed through `shove` nothing imported `displace` at all, and no test had ever covered it. The
+  reason every caller wanted the careful version is that `displace` checked nothing: a card using it
+  could slide a pawn through a Big Ah Rock or stop it on an occupied square. There is no card for
+  which "ignore the boulder" is the intended reading, so the blunt version had no audience.
+- **Rejected: keeping it for future use.** A function nobody should pick, kept in case somebody does,
+  is an invitation to reintroduce the bug it was replaced for. **Rejected: keeping it and excluding it
+  from coverage**, which hides the evidence that it is dead.
+- **How it was noticed, which is the part worth keeping:** the coverage report. `displacement.js` fell
+  to 60 per cent lines on a file nobody had edited, with `displace`'s body as the only gap. A passing
+  test suite did not show it and a line count would not have either.
+- → Ch. 05, Ch. 08
+
 ### 2026-09-02: The nullification aura is checked in `resolveCard`, not in the `negate` instruction
 
 - **Chosen:** `resolveCard` in `state/skill-play.js` asks whether an It's Not That Deep's aura covers the

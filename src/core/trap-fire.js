@@ -25,7 +25,7 @@
  *
  * One place performs the displacement, and it is the place that also knows about blockers and captures
  * (`core/slide.js`, reached through `core/enter.js`). Before this, each trap kind moved the pawn itself
- * with `displace`, which checks neither, so a slide could pass through a boulder and land on top of an
+ * with the old `displace`, which checked neither, so a slide could pass through a boulder and land on top of an
  * occupied square. Three rules each doing their own arithmetic is three chances to get it wrong; one
  * number handed to one walker is none.
  *

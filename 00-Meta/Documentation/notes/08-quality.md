@@ -1218,6 +1218,39 @@ everything untouched, which is correct for a blocker and also swallowed a missin
 trap kind in complete silence. **A test that asserted a silent no-op was locking in the thing that made
 the silence possible.** Chapter 05 has the rest.
 
+### The coverage report found dead code that a green suite and a line count both missed: 2026-09-02, issue #45
+
+Worth its own entry because it is the first time in this project that a coverage percentage found
+something rather than merely recording something.
+
+**What happened.** Issue #45 added `core/slide.js`, a push that respects blockers and resolves
+captures, and the plan was that `displace` in `core/displacement.js` would stay as the blunt push the
+five displacement cards used. After the last card was routed through the new path, `npm run
+test:coverage` reported `displacement.js` at **60 per cent lines**, with the body of `displace` as the
+only gap, on a file that had barely been edited.
+
+**Why nothing else would have caught it.** The suite was green, because a function nobody calls breaks
+no test. `npm run lint` was clean, because an exported function with no importer is not an unused
+variable. The 300-line check was happy, because the file got smaller. And a grep for the name returned
+plenty of hits, all of them in prose: the module headers and four test comments all mentioned
+`displace` as the thing `slide.js` was being contrasted with, which reads exactly like a live
+reference.
+
+**Two things this says about the setup, and they point in opposite directions.**
+
+- The `all: true` setting in `vitest.config.js` is what made this visible. Its comment says it exists
+  so that "a module nobody tested is simply absent from the report" cannot happen. That was written
+  about untested files; it turns out to catch unreachable ones too.
+- **A directory-level floor would have hidden it.** `src/core/` as a whole never dropped below 98 per
+  cent, so the 80 per cent threshold NFR-05 asks for was never close to failing. The number that
+  mattered was the per-file column, and the per-file table is the one the `text` reporter prints
+  **empty** on this setup, which is the defect already recorded further up this chapter. It was read
+  out of `coverage/coverage-summary.json` instead.
+
+**What was done about it** is in chapter 05 and the journal: `displace` was deleted, `PUSHBACK_FLOOR`
+and `sendHome` stayed. `src/core/` came out at 99.51 per cent lines afterwards with every function
+covered, and the figures go in chapter 09 next to the command that produced them.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
