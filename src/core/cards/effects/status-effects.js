@@ -1,5 +1,5 @@
 /**
- * The six cards that leave something behind on a pawn. Issue #38, requirements FR-26 and FR-29.
+ * The six cards that leave something behind on a pawn. Issue #38, requirements FR-26 and FR-28.
  *
  * Pure `core/`: every function takes a snapshot and returns a patch. See
  * [../context.js](../context.js) for both shapes.

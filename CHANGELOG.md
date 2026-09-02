@@ -264,7 +264,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/e2e/skill-hand.spec.js`, eight cases covering the card flows a unit test cannot reach, including
   playing a card from the keyboard alone (NFR-08) and the page still fitting on one screen while the
   prompt is up
-- **All 29 skill cards now have their rule** (issue #38, FR-26, FR-28, FR-29). The last twelve needed
+- **All 29 skill cards now have their rule** (issue #38, FR-26 and FR-28). The last twelve needed
   three mechanics the board did not have: a pawn can be moved without making a move (Yeet, Aight Imma
   Head Out, Let Him Cook, Ghost Mode, Uno Reverse), objects can sit on a square and either fire or block
   (Banana Peel, Oil Spill, It's Not That Deep, Big Ah Rock), and a card can hit a run of squares at once
@@ -582,3 +582,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/e2e/pawn-leaves-start.spec.js` held a live "first movable pawn" locator across the two clicks that end a
   turn, so after the handover it was asserting against a different pawn that happened to also be at `r = 0`. It had
   been passing on timing
+- **Twelve files cited the wrong requirement.** Everything issue #38 built was labelled FR-29, which is the
+  *expanded* skill card set and belongs to issue #44. The trap requirement is FR-30 and the finished MVP card
+  set is FR-28. Corrected across seven source files, five test files and one changelog entry, and it is not a
+  blanket substitution: the traps now cite FR-30, the rest cite FR-26 and FR-28
+- **Two comments claimed the skill square was invisible**, which stopped being true on 2026-08-31 when design
+  decision D27 was answered and the teal diamond shipped. One was the doc comment on `markSkillSquares`, the
+  other a paragraph in documentation chapter 04. Both said the stylesheet reading the attribute did not exist
+- `src/core/cards/catalogue-extra.js` still said "no effect is implemented yet". All 29 cards have had a rule
+  since 2026-08-31

@@ -1,5 +1,5 @@
 /**
- * States that last longer than the card that caused them. Issue #38, requirement FR-29.
+ * States that last longer than the card that caused them. Issue #38, requirements FR-26 and FR-28.
  *
  * Pure `core/`: no DOM, no state object, no randomness of its own.
  *

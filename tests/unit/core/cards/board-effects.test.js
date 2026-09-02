@@ -1,5 +1,5 @@
 /**
- * The eight cards that move pawns. Issue #38, requirements FR-26 and FR-29.
+ * The eight cards that move pawns. Issue #38, requirements FR-26 and FR-28.
  *
  * Split from `effects.test.js` at the seam the effects files themselves use: the cards there write a
  * modifier, a hand or a status, and the cards here move pawns or sweep several squares at once. Every

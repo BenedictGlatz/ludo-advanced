@@ -3,14 +3,17 @@
  *
  * Transcribed from `01-Design/Handoff/Card artwork design planning/Card Art.dc.html`, artboard `4a`.
  *
- * These are the cards that need mechanics the game does not have: traps on squares, blockers that stop
+ * These are the cards that needed mechanics the game did not have: traps on squares, blockers that stop
  * a pawn passing through, backward movement, statuses with a duration, and effects over several
- * squares at once. The ten cards in `catalogue-core.js` need none of that.
+ * squares at once. The ten cards in `catalogue-core.js` needed none of that. All five mechanics were
+ * built by the end of issue #38.
  *
- * **This file is data only.** No effect is implemented yet, and the entries here are what the target
- * picker and the card view read. Five of the nineteen carry a note because the artwork describes
- * something the board model cannot express; each note says what was read instead, and Chapter 05
- * carries the reasons in full.
+ * **This file is data only**, and that has not changed: the entries here are what the target picker and
+ * the card view read, and a card's rule lives in `effects/` matched by id. What *has* changed is the
+ * sentence this comment used to carry, "no effect is implemented yet". Every one of the 29 cards has had
+ * a rule since 2026-08-31, and `effects/index.js` is the table that proves it. Five of the nineteen
+ * still carry a note because the artwork describes something the board model cannot express; each note
+ * says what was read instead, and Chapter 05 carries the reasons in full.
  *
  * ## Two names had to be changed to be usable as ids
  *

@@ -1,6 +1,6 @@
 /**
  * The four cards that put something on a square, and what happens when a pawn touches it.
- * Issue #38, requirements FR-26 and FR-29.
+ * Issue #38, requirements FR-26, FR-28 and FR-30.
  *
  * Pure `core/`. The four placement functions take a snapshot and return a patch, like every other
  * effect. `fireTrap` is different and the difference is worth naming: it is not a card effect at all.

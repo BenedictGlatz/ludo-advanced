@@ -1,5 +1,5 @@
 /**
- * Things that sit on a square rather than on a pawn. Issue #38, requirement FR-29.
+ * Things that sit on a square rather than on a pawn. Issue #38, requirements FR-28 and FR-30.
  *
  * Pure `core/`: no DOM, no state object, no randomness.
  *

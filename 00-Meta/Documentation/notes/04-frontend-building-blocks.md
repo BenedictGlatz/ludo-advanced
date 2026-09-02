@@ -484,6 +484,10 @@ letter in front of it is language.
 is rewritten on every board update rather than only when the set changes, because a used-up square moves
 and the work is one attribute on 40 elements. Tracking what changed would be more code than it saves.
 
+> **Superseded on 2026-09-02 by the correction two sections below.** D27 was answered and the skill
+> square has rendered since 2026-08-31. The paragraph is kept because the *pattern* it describes is
+> load-bearing and issue #45 reuses it, not because its claim is still true.
+
 **Nothing on screen shows it yet, and that is the blocker rather than an omission.** Decision D27 of
 design handoff 03 is open: skill squares are meant to be purple, and `--color-hint` already uses purple
 for a legal target square. A square can be both at once, so which reading wins is a design decision and
@@ -1456,6 +1460,75 @@ element to add if the Product Owner disagrees.
 **Still open after this delivery, and the list is short:** D17, D21, D22, D23 and D24 from handoff 02,
 which still has no spec of its own, and the fonts still loading from Google Fonts since spec 01 section 5.
 None of them blocks a requirement.
+
+### Brief 07 sent, and it is the first one that is about a preference rather than a requirement: 2026-09-02, issue #45
+
+[07-brief-trap-marker.md](../../../01-Design/Handoff/07-brief-trap-marker.md), D51 to D60. The design loop
+had been empty for a few hours, since handoffs 05 and 06 landed the same day.
+
+**What it asks for and why it exists.** The trap mechanic shipped with epic #38 on 2026-08-31: objects sit
+on the shared track squares, they fire when a pawn crosses them, and one of them refuses a move outright.
+**Not one file under `src/ui/` reads `state.traps`.** So the game has been enforcing rules the player
+cannot see. Issue #45 rebuilds those rules to match the Game Design Document and, on the Product Owner's
+decision, makes every trap and blocker public with its owner shown, which turns an invisible rule into a
+rendering job.
+
+**FR-30 is a `could have`, so this brief blocks nothing.** That is worth recording because every brief
+since 02 has been able to claim otherwise, and brief 06 closed the last requirement-blocking design item
+in the project. This one is a preference, and it is being asked anyway because the alternative is shipping
+a mechanic the player has to infer.
+
+**One deviation ships before the brief is answered, deliberately.** A trap firing has to be announced: the
+new Banana Peel applies a status instead of moving the pawn, so without a message the player commits a
+move, sees the pawn arrive exactly where they aimed it, and silently loses their next turn. The only
+message region that exists is the D9 refusal strip, painted in `--color-warn`, the colour the game
+reserves for "you cannot do that". A trap going off is not a refusal, and announcing it in orange repeats
+the defect D40 fixed when it took the win message out of that strip.
+
+It ships in the wrong colour anyway. Three options and what each costs:
+
+| Option | Cost |
+| --- | --- |
+| **Ship the announcement in the refusal orange** (chosen) | The hue is wrong until D55 lands. Cosmetic debt with a brief already open against it |
+| Wait for handoff 07 | A Banana Peel eats a player's turn in silence for as long as the wait lasts, which is a bug and not a preference |
+| Invent a third, neutral treatment | `CLAUDE.md` forbids this side from taking a design decision, and this is squarely one |
+
+The seam it uses was already there and unused: `showMessage` has always written both `data-reason-key` and
+`data-message-kind` on the strip, and `refusal.css` reads only the first. So `data-message-kind="trap"`
+costs no new markup, and D55 has a hook to answer into.
+
+**Everything else about the issue ships without waiting**, on the D27 pattern the correction below is
+about: `data-trap`, `data-trap-kind`, `data-trap-aura`, the owner's `data-player` on a new
+`.square__trap` span, `data-statuses` on every pawn, and a Playwright suite that asserts all of them.
+Unstyled and invisible, which is the honest position, and the same one `data-skill-square` held for a day.
+
+### A correction: this chapter said the skill square was invisible for two days after it was not: 2026-09-02, issue #45
+
+The section "Two attributes joined the DOM contract, and one of them is invisible on purpose" is dated
+2026-08-31 and was true when it was written. **It stopped being true the same day.** D27 was answered in
+[03-spec-cards-and-hands.md](../../../01-Design/Handoff/03-spec-cards-and-hands.md): the skill square is a
+mark and not a fill, an ink-outlined teal diamond inset 24 per cent, stepping back to 30 per cent on a
+square that is also a legal target so that the target ring stays the widest thing on the field. Teal
+rather than the purple the earlier material described, because violet is `--color-hint` and every
+legal-move highlight and focus ring already uses it. It has shipped in `board.css` ever since.
+
+**The claim survived in two places for two days**: that paragraph, and the doc comment on
+`markSkillSquares` in `src/ui/board-view.js`, which said in so many words that the stylesheet reading the
+attribute did not exist. Both are corrected in the commit that carries this entry. The original paragraph
+is marked rather than deleted, because the pattern it describes is the useful part.
+
+**Why this is worth a chapter entry rather than a silent edit.** It is the first case in the project of a
+note going stale by being *overtaken* rather than by being wrong, and it found itself only because issue
+#45 went looking for a precedent to copy. Two lessons, and the second is the one for the report:
+
+1. **A note that describes a blocker needs revisiting when the blocker clears**, and nothing in the
+   process prompted that. The design loop's own index, `00-open-requests.md`, was updated correctly on the
+   day; the chapter note was not, because the two are updated by different steps.
+2. **The pattern the stale paragraph described is exactly right and is now used a second time.** Put the
+   attribute in the DOM, let the stylesheet wait for the decision, and neither side has to guess. Issue
+   #45 ships every trap attribute that way, unstyled, against handoff 07. So the paragraph was worth
+   keeping and its claim was worth marking, which is why it is a quotation with a note on top and not a
+   deletion.
 
 ## Decisions
 

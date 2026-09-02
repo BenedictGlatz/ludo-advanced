@@ -213,10 +213,16 @@ export function updateBoard($board, state) {
  * the two writes are one attribute each on 40 elements. Tracking what changed would be more code than
  * the work it saves.
  *
- * **Nothing on screen shows this yet.** The attribute is in the DOM contract of design handoff 03 and
- * the stylesheet that reads it does not exist: decision D27 of that brief is open, because skill
- * squares are meant to be purple and `--color-hint` already uses purple for a legal target square. A
- * square can be both at once, so which one wins is a design decision and not one this file may take.
+ * **This renders, and the comment that used to say it did not was two days out of date.** D27 of
+ * handoff 03 was open when this function was written and is answered in
+ * `01-Design/Handoff/03-spec-cards-and-hands.md`: an ink-outlined teal diamond at `inset: 24%`,
+ * stepping back to `inset: 30%` on a square that is also a legal target, so the target ring stays the
+ * widest thing on the field. Teal and not the purple the earlier material described, because violet is
+ * `--color-hint` and every legal-move highlight already uses it. It ships in `board.css`.
+ *
+ * The pattern is worth keeping in mind, because issue #45 reuses it for the trap marks: **the
+ * attribute goes into the DOM while the stylesheet waits.** That is what let this side and the design
+ * side work at the same time without either guessing.
  */
 function markSkillSquares($board, skillSquares) {
   $board.find(".square--track").each(function markSquare() {

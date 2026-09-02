@@ -1,5 +1,5 @@
 /**
- * What happens between a declared move and the end of a turn. Issue #38, FR-22 and FR-29.
+ * What happens between a declared move and the end of a turn. Issue #38, FR-22 and FR-30.
  *
  * `resolveMove` does three things in one transition and the **order** is the rule:
  *

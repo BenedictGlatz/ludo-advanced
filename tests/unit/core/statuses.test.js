@@ -1,5 +1,5 @@
 /**
- * Statuses with a duration. Issue #38, requirement FR-29.
+ * Statuses with a duration. Issue #38, requirements FR-26 and FR-28.
  *
  * The whole module is arithmetic over a list, so every test here is a literal in and a literal out.
  * What is worth testing is not the filtering, it is the two decisions the filtering encodes: that a

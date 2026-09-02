@@ -1,6 +1,6 @@
 /**
  * The four cards that put something on a square, and what happens when a pawn walks into it.
- * Issue #38, requirements FR-26 and FR-29.
+ * Issue #38, requirements FR-26, FR-28 and FR-30.
  *
  * Split from `board-effects.test.js` when that file passed 300 lines. The seam is the one the source
  * uses: `trap-effects.js` is the only effects file with **two** halves to test, the placement and the
