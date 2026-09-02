@@ -881,6 +881,39 @@ Both are closed by `tests/unit/core/dice-distribution.test.js`, and how the tole
 is that **the test's name was accurate and its assertion was not.** It was called `rollDie (FR-20)` and
 it sat next to the requirement id for two days, which is exactly the state in which nobody re-reads it.
 
+### `blockedSquares` moved to the module whose subject it is: 2026-09-02, issue #45
+
+A refactor with no behaviour change, done first and on its own so that the seam is a reviewable commit
+rather than noise inside a feature. `blockedSquares` left `move-rules.js` for `traps.js`.
+
+**Why it belonged there and not where it was.** It answers "which absolute squares may nothing cross
+right now", and its own comment was already entirely about how the two sources of that answer are
+stored: a Big Ah Rock is an entry in the trap list with a square of its own, a Rock is a status on a pawn
+whose square is wherever that pawn is standing this instant. Both halves of that explanation are
+`traps.js`'s subject. It sat in `move-rules.js` because that is where the first caller happened to be.
+
+**Two things it buys, and the second is the one that forced it.**
+
+1. `move-rules.js` came down far enough to take the new `STUNNED` refusal without approaching NFR-02's
+   300-line limit.
+2. `core/slide.js`, which issue #45 adds, has to ask about blockers. With `blockedSquares` in
+   `move-rules.js`, a **displacement** module would have had to import the **move rules**, which is the
+   wrong way round: displacement is what cards do to a pawn without a move, and it has no business
+   knowing how a legal move is evaluated. With the function in `traps.js` both callers ask the same
+   module the same question.
+
+**It is re-exported from `move-rules.js`**, the way that file already re-exports `TRAP_KIND` and the way
+`movement.js` re-exports `MOVE_KIND` and `REFUSAL`. Not politeness: `move-rules.test.js` imports it from
+there, and **the test file was not touched.** That is the proof the move was pure, and it is the reason
+the commit is worth being separate. A refactor whose test file has to change is not a refactor.
+
+One incidental tidy: the literal `40` in the Rock filter became `TRACK_LENGTH`, which is the constant it
+had always meant.
+
+**Rejected alternative:** compressing `move-rules.js` to make room instead. `CLAUDE.md` forbids meeting
+the line limit by deleting comments or whitespace, and in this codebase the header comments are the part
+worth keeping. The limit is there to force a seam to be found, and there was a real one here.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
