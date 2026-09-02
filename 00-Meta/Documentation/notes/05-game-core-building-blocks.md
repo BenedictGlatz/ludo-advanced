@@ -1099,6 +1099,31 @@ away from the rock rather than towards it, so no current rule can tell. It is st
 push resolved against a board that does not yet contain the thing the same card just put down is wrong
 the moment anything else moves.
 
+#### Which cards route through the choke point, and which have nothing to route
+
+Three of the five displacement cards now go through `shove`: Yeet, Aight Imma Head Out and Let Him Cook.
+So does Big Ah Rock's knockback, and so does the trap chain. That is the whole of "every movement fires
+traps".
+
+**Four cards were deliberately left alone, and the silence needed writing down**, because a card that
+fires no trap looks exactly like a card somebody forgot to wire up:
+
+| Card | Why it has nothing to route |
+| --- | --- |
+| Hyperbeam | Its only effect on a pawn is `sendHome` |
+| Janky RPG | Same |
+| Ghost Mode | Cancels a move; moves nothing |
+| Uno Reverse | Cancels a move and calls `sendHome` |
+| Let Him Cook's **overshoot** branch | `sendHome`, unlike its run branch |
+
+A start area is not a tile. That is the rule, and Hyperbeam is the case that shows why it has to be:
+it can send four pawns home at once, and if going home counted as a walk it would fire every trap
+between those four pawns and their yards. So the exception is not a convenience, it is load bearing.
+
+**It is asserted, not assumed.** `movement-traps.test.js` has a case for Hyperbeam and one for Janky RPG
+proving they set off nothing, and one for Let Him Cook's overshoot. A negative that is only true because
+nobody wired it up is a negative that stops being true the first time somebody tidies the imports.
+
 #### `worldIn` is a projection, and that is why the card vocabulary did not have to grow
 
 The knockback needs six fields that `core/enter.js` calls a `world`. **Every one of the six was already

@@ -20,6 +20,19 @@
  * Neither filters the mover's own pawns out of what it sweeps, and that is the design rather than an
  * omission: a card that sends four pawns home with no risk to its owner would be the only card anybody
  * ever played.
+ *
+ * ## Neither of them fires a trap, and that is not an oversight (issue #45)
+ *
+ * Issue #45 routed the three cards in `displacement-effects.js` through `core/enter.js`, so that
+ * card-driven movement sets off traps as FR-30 requires. **These two were deliberately left alone.**
+ *
+ * The only thing either does to a pawn is `sendHome`, and a start area is not a tile. Sending a pawn home
+ * is the one arrival in the game that sets off nothing, for a reason worth keeping in view: walking a
+ * pawn from `r = 17` to `r = 0` counts seventeen squares backwards, so Hyperbeam, which can send four
+ * pawns home at once, would detonate every trap between them and their yards.
+ *
+ * So routing these through the choke point would be a no-op wrapped in an import. Said here because the
+ * silence would otherwise read as a card somebody forgot.
  */
 
 import { rollDie } from "../../dice-source.js";

@@ -10,8 +10,8 @@
  * | --- | --- | --- |
  * | Banana Peel | A trap | The pawn is stunned and loses its next turn |
  * | Oil Spill | A trap | The pawn slides 3 to 5 further and skips the skill square it lands on |
- * | It's Not That Deep | A trap | The pawn is pushed back |
- * | Big Ah Rock | A blocker | Nothing passes it while it stands |
+ * | It's Not That Deep | A trap | The pawn is pushed back one square |
+ * | Big Ah Rock | A blocker | Nothing passes it while it stands. It also knocks the pawn behind it back 3, **on placement** rather than on being touched |
  *
  * ## Why `fireTrap` left this file in issue #45
  *
