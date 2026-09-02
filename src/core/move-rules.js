@@ -72,6 +72,8 @@ export const REFUSAL = {
   ALREADY_HOME: "move.refused.already-home",
   /** Hold Pawn: this pawn is out of the running for one turn. */
   HELD: "move.refused.held",
+  /** Banana Peel: this pawn walked into a trap and loses this turn. */
+  STUNNED: "move.refused.stunned",
   /** Lock In: this pawn's own player may not move it. */
   LOCKED: "move.refused.locked",
   /** A Rock or a Big Ah Rock stands somewhere on the way. */
@@ -156,6 +158,12 @@ export function evaluatePawn(pawns, mover, roll, dieMax, board = EMPTY_BOARD) {
   }
   if (hasStatus(board.statuses, STATUS.HELD, mover)) {
     return { pawn: mover.pawn, move: null, reason: REFUSAL.HELD };
+  }
+  // Banana Peel. Same shape as Hold Pawn on purpose: one pawn drops out and the other three are
+  // untouched. A separate reason rather than reusing HELD, because the player needs to know a trap did
+  // it: Hold Pawn is something an opponent played at them, a stun is something they walked into.
+  if (hasStatus(board.statuses, STATUS.STUNNED, mover)) {
+    return { pawn: mover.pawn, move: null, reason: REFUSAL.STUNNED };
   }
   if (hasStatus(board.statuses, STATUS.LOCKED, mover)) {
     return { pawn: mover.pawn, move: null, reason: REFUSAL.LOCKED };

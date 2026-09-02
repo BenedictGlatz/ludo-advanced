@@ -13,7 +13,6 @@
 
 import { describe, expect, it } from "vitest";
 
-import { START_R } from "../../../src/core/board.js";
 import { fixedDieSource } from "../../../src/core/dice-source.js";
 import { findPawn } from "../../../src/core/pawns.js";
 import { STATUS } from "../../../src/core/statuses.js";
@@ -58,7 +57,11 @@ describe("a trap on the way", () => {
     });
     const resolved = resolveMove(state, deps());
 
-    expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(START_R);
+    // The pawn finishes its move. A Banana Peel takes its next turn, not its position, so the only
+    // evidence the trap fired is the status and the empty trap list. Before issue #45 this asserted
+    // START_R, because the card used to send the pawn home.
+    expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(15);
+    expect(resolved.statuses[0]).toMatchObject({ kind: STATUS.STUNNED, player: 0, pawn: 0 });
     expect(resolved.traps).toEqual([]);
   });
 
@@ -87,7 +90,12 @@ describe("a trap on the way", () => {
   });
 
   /**
-   * Only the first trap on the walk, so one move has one outcome.
+   * Only the first trap on the walk, so one move has one outcome. The Banana Peel on square 12 is
+   * nearer than the It's Not That Deep on 16, and a stun moves nothing, so the far trap is never
+   * walked into and is still standing afterwards.
+   *
+   * This case is worth keeping exactly as it was framed: it is the one that proves a single move
+   * cannot have two outcomes, which the chain introduced in issue #45 makes easy to get wrong.
    */
   it("fires the nearest of two traps and leaves the far one standing", () => {
     const state = declared({
@@ -98,7 +106,8 @@ describe("a trap on the way", () => {
     });
     const resolved = resolveMove(state, deps());
 
-    expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(START_R);
+    expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(18);
+    expect(resolved.statuses[0].kind).toBe(STATUS.STUNNED);
     expect(resolved.traps).toHaveLength(1);
     expect(resolved.traps[0].kind).toBe(TRAP_KIND.NOT_THAT_DEEP);
   });
@@ -106,25 +115,32 @@ describe("a trap on the way", () => {
 
 describe("the order of trap and skill square", () => {
   /**
-   * The case the ordering exists for. The pawn walks onto a skill square, and a trap on the way pushes it
-   * off again. An implementation that asked about the skill square first would hand out a card for a
+   * The case the ordering exists for. The pawn walks onto a skill square, and a trap on the way pushes
+   * it off again. An implementation that asked about the skill square first would hand out a card for a
    * square the pawn is no longer standing on.
    *
-   * Seat 0's r = 15 is absolute square 14, the skill square. The Banana Peel on square 12 sends the pawn
-   * home before it can collect anything.
+   * **This case had to be rebuilt in issue #45 and it is worth knowing why.** It used to use a Banana
+   * Peel, which sent the pawn home. Under the Game Design Document's rule a Banana Peel stuns and moves
+   * nothing, so the pawn would now land on the skill square and collect the card, and the test would
+   * have asserted the opposite of what it is for. Nothing about the step order changed; the fixture
+   * simply stopped demonstrating it.
+   *
+   * It's Not That Deep replaces it, because a pushback still moves the pawn off where it landed. Seat
+   * 0's `r = 15` is absolute 14, the skill square; the trap on absolute 12 is crossed at `r = 13` and
+   * pushes the pawn back a scripted D6 of 3, to `r = 12`, which is absolute 11 and not a skill square.
    */
   it("asks about the square the pawn is really standing on, not the one the move named", () => {
     const state = declared({
       from: 11,
       to: 15,
       pawns: pawnsAt(2, { "0.0": 11 }),
-      traps: [trap(TRAP_KIND.BANANA_PEEL, 12)],
+      traps: [trap(TRAP_KIND.NOT_THAT_DEEP, 12)],
       skillSquares: [14],
       skillPool: ["action-angel-die"],
     });
-    const resolved = resolveMove(state, deps());
+    const resolved = resolveMove(state, deps([[3, 6]]));
 
-    expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(START_R);
+    expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(12);
     expect(resolved.skillSquares).toEqual([14]);
     expect(resolved.skillHands[0]).toEqual([]);
   });

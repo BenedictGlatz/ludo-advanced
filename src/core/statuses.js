@@ -60,6 +60,14 @@ export const STATUS = Object.freeze({
   PURGE: "purge",
   /** Oil Spill: this pawn skips the skill square it lands on. */
   SLIPPERY: "slippery",
+  /**
+   * Banana Peel: this pawn loses its next turn.
+   *
+   * Read by `evaluatePawn` exactly the way `HELD` is, so only the pawn sits out and its owner's other
+   * three are unaffected. That is the Product Owner's reading of the card text, and the alternative
+   * (skipping the seat's whole turn) is recorded as rejected in the project journal.
+   */
+  STUNNED: "stunned",
 });
 
 /**

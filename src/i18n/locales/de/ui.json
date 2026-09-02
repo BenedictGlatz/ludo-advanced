@@ -75,6 +75,7 @@
       "overshoot": "Der Wurf ist zu hoch: ins Ziel geht es nur mit der genauen Zahl.",
       "already-home": "Diese Figur ist schon im Ziel und wird nicht mehr gezogen.",
       "held": "Diese Figur wird festgehalten und setzt diesen Zug aus.",
+      "stunned": "Diese Figur ist in eine Falle getreten und setzt diesen Zug aus.",
       "locked": "Diese Figur ist eingesperrt und darf nicht gezogen werden.",
       "blocked": "Auf dem Weg liegt ein Stein. Da kommt niemand vorbei.",
       "protected": "Die Figur auf dem Zielfeld ist geschützt und kann nicht geschlagen werden.",

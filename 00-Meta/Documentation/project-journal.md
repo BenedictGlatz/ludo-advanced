@@ -2982,6 +2982,88 @@ to get wrong later.
   nothing, and it should be read as documentation of intent, not as a tested guarantee.
 - → Ch. 07, Ch. 08
 
+### 2026-09-02: The Game Design Document wins over the shipped code for all four square cards
+
+- **Chosen:** where the implemented rule and the Game Design Document's section 7.2 disagree, the
+  document is right and the **code** changes. Product Owner decision, taken on 2026-09-02 for issue #45.
+  Three of the four square cards were affected: Banana Peel, It's Not That Deep and Big Ah Rock.
+- **How the drift happened, because it is the part worth learning from.** None of the three was a
+  mistake anybody made knowingly. Epic #38 implemented nineteen cards in one pass, five of which needed
+  mechanics that did not exist, and the three that drifted are exactly the three whose printed rule
+  needed a mechanic that *still* did not exist afterwards: a status that costs a turn, a rule measured
+  in a radius, and a knockback that searches the board. Each was quietly replaced by the nearest thing
+  the engine could already express. **`sendHome` instead of a stun. A D6 instead of "1 back plus an
+  aura". Two rounds and no knockback instead of three and one.**
+- **Why the drift was worse than any of the three substitutions.** Section 7.3 of that document is a
+  table of six cards whose printed text the board model cannot express, each with the reading that was
+  built instead and the reason. That table is the project's mechanism for exactly this situation, and
+  **none of these three was in it.** So the rulebook said one thing, the game did another, the locale
+  files described the code, and nothing anywhere recorded a choice. A deviation on the record is a
+  decision; the same deviation off the record is just a bug with good manners.
+- **Rejected: keep the code and amend the document.** It is much the cheaper option, and it was
+  rejected because it makes the rulebook a description of an implementation. The document is the Product
+  Owner's artefact and the artwork's text is its source; a card that reads "stunned and loses its next
+  turn" in the player's hand should not have to be rewritten because the engine found it awkward.
+- **The cost is real and is stated rather than buried:** the game gets easier. Banana Peel was the only
+  trap that sent a pawn home, which cost a full lap, and it now costs one turn for one pawn. That is a
+  balance change nobody has playtested. It is in the changelog under Changed for that reason.
+- → Ch. 01, Ch. 05
+
+### 2026-09-02: A Banana Peel stuns the pawn, not the seat
+
+- **Chosen:** a new `STATUS.STUNNED` on `{ player, pawn }`, read by `evaluatePawn` exactly the way
+  `STATUS.HELD` already is. The pawn drops out of the move choice for one of its owner's turns and that
+  owner's other three pawns are unaffected.
+- **Why:** the card text is "the next pawn to cross it is stunned and loses **its** next turn", so the
+  pawn is what the sentence is about. It also needs no new step in the turn sequence: Hold Pawn
+  established this shape and `evaluatePawn` already had two guards of the same form, so the whole rule
+  is one status, one refusal reason and one three-line guard.
+- **Rejected: skip the seat's whole turn**, which is the more literal reading of "loses its next turn"
+  if "its" is taken loosely. It needs a new skip step in `turn-manager.js`, a message of its own, and it
+  is disproportionate: a trap catches one pawn of four and would cost the player all four. A
+  `could have` card should not be the harshest thing in the game.
+- **One deadline subtlety, recorded because it looks like an off-by-one and is not.** The status lasts
+  until `turnNumber + turnsForRounds(1, playerCount) + 1`. `hasStatus` applies while
+  `turnNumber < until`, and a trap sprung during a dice move fires under the **active** seat's own pawn,
+  so the turn to be missed is a full round away and `until` has to exceed it. The same expression also
+  costs exactly one turn when a card sprang the trap under somebody else's pawn, whose next turn is
+  sooner. One expression, no branch, and a test at two, three and four seats.
+- → Ch. 05
+
+### 2026-09-02: A trap chain is bounded at six, and the cap is not what makes it terminate
+
+- **Chosen:** `TRAP_CHAIN_LIMIT = 6` in `core/enter.js`. On reaching it the trap is left standing and
+  **unfired**, so the board stays honest and the player can still see it.
+- **Why 6:** it is the longest chain a real board can build. Three trap kinds actually fire, the pool
+  holds two copies of every card, so at most six firing traps can be on the board at once. The cap
+  therefore never truncates a legal outcome.
+- **What the cap is actually for, stated honestly:** it is **not** what makes the recursion terminate.
+  Every firing calls `removeTrap`, so each link consumes an entry and the chain is already bounded by
+  the length of the trap list. The cap guards against a future trap kind that survives its own firing,
+  which this very issue makes plausible: It's Not That Deep now survives *nullifying* something and is
+  only consumed by being stepped on. Writing that down matters, because a cap whose reason is
+  misremembered as "otherwise it loops" is a cap somebody later removes after proving it cannot loop.
+- **Rejected: a cap of 1**, which is the "no chaining at all" the Product Owner decided against.
+  **Rejected: a cap of 40**, one per square, which is a number with no reason behind it.
+- → Ch. 05
+
+### 2026-09-02: A trap kind with no rule stops the game at boot rather than at the wrong moment
+
+- **Chosen:** `core/trap-fire.js` holds a frozen table of one rule per trap kind, plus a loop that runs
+  **at import** and throws if any non-blocker kind has no entry. A blocker reaching `fireTrap` throws as
+  well.
+- **Why:** what this replaced was a closed `switch` whose `default:` returned everything untouched. That
+  branch existed for blockers, which share the list and never fire. It therefore also swallowed a
+  missing rule for a *new* kind in complete silence, and the module's own header promised the opposite:
+  "a fifth trap is a line there and a case here". The failure would have surfaced as a trap that did
+  nothing, on some later turn, with nothing pointing at the cause.
+- **Why at import and not on the first call:** it fails on the day the kind is added rather than on the
+  turn somebody walks into one. `assertCatalogue` already sets this pattern, and it is the same
+  argument: a check that runs when the module loads is a check nobody can route around.
+- **Rejected: a throwing `default:` in the `switch`.** Better than silence, but it still only fires when
+  a pawn actually crosses that kind of trap, which in a card game can be many matches later.
+- → Ch. 05
+
 ### 2026-09-02: A pushed pawn stops before anything it cannot share a square with
 
 - **Chosen:** a shove walks square by square and stops on the square **before** the first thing the pawn

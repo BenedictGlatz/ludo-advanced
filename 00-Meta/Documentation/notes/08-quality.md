@@ -1158,6 +1158,66 @@ Written and locally verified on 2026-09-02: gates 1 to 4 green on the `dev` merg
 chromium and firefox. **What the CI run itself proved is recorded below once it has actually run**, and
 until then this section claims nothing about the runner.
 
+### A rule change destroyed a test that had nothing wrong with it: 2026-09-02, issue #45
+
+Eight cases went red when the trap rules were rebuilt, all of them predicted before the work started.
+Seven were ordinary: an assertion named the old behaviour, the behaviour changed, the assertion was
+rewritten. **The eighth is the one worth the report**, and it is a kind of test failure this project had
+not met before.
+
+`move-resolution.test.js` has one case whose whole purpose is to prove the **step order** inside
+`resolveMove`: the pawn arrives, then a trap fires and can move it again, and only then is the square it
+is *actually standing on* asked whether it hands out a card. Chapter 05 calls that order a rule, and it
+is invisible in nearly every other test, because a trap and a skill square rarely meet. So this case put
+them in each other's way on purpose: the pawn walked onto skill square 14 and a Banana Peel on square 12
+knocked it home before it could collect.
+
+**The test was correct, valuable, well commented, and it stopped testing anything.** Banana Peel now
+stuns instead of sending the pawn home, and a stun does not move the pawn. So the pawn would have landed
+on the skill square and collected the card, and the assertion `skillHands[0]).toEqual([])` would have
+failed for a reason that had nothing to do with the step order. Worse, the plausible "fix" is to change
+the expected hand to contain the card, which would leave the file with a green test whose comment claims
+it proves an ordering it no longer touches.
+
+It was rebuilt with It's Not That Deep, whose pushback still moves the pawn off where it landed, so the
+ordering is demonstrated again. The rewritten case carries a paragraph saying what happened, because the
+next person to change a trap rule will hit exactly this.
+
+**Two lessons, and the second is the uncomfortable one.**
+
+1. **A test can be destroyed by a rule change that has nothing to do with what it was testing.** The
+   step order did not change. Only the fixture's ability to demonstrate it did. Nothing in a green or red
+   signal distinguishes that from an ordinary expectation change.
+2. **The dangerous direction is the one where the test still passes.** Had Banana Peel been changed to
+   something that moved the pawn *slightly* rather than not at all, this case would have gone green with
+   a fixture that no longer put a trap and a skill square in each other's way, and nobody would have
+   looked. The only defence is that the comment above it says what the case is *for*, in words, so a
+   reader can check the fixture against the intent. That is an argument for the comment density this
+   codebase uses, from a case where it actually paid.
+
+#### Where the trap tests live now
+
+`fireTrap` moved to `core/trap-fire.js` and its tests moved with it, into
+`tests/unit/core/trap-fire.test.js`.
+The walk it sends a pawn on is a separate file, `tests/unit/core/enter.test.js`, and the two are split
+along the same seam as the source: one asserts the **decision** a trap makes, the other asserts where the
+pawn **ends up**. That is the split `notes/05` already records for the status cards, where the effect test
+asserts the status is written and `move-rules.test.js` asserts it stops a pawn. It exists so that a
+failure says which of the two halves is wrong.
+
+`cards/trap-effects.test.js` keeps the placement half and shrank accordingly. Two new files rather than
+growth in the old ones, and that was not a stylistic choice: `intents-cards.test.js` is close enough to
+the 300-line NFR-02 limit that it cannot take a case, and the same is true of
+`cards/effects.test.js`.
+
+#### One inverted assertion, which is the good kind
+
+`trap-effects.test.js` had a case named "does nothing at all for a blocker, and leaves it standing". It
+now reads `expect(() => ...).toThrow()`. The old behaviour was a `switch` whose `default:` returned
+everything untouched, which is correct for a blocker and also swallowed a missing rule for any future
+trap kind in complete silence. **A test that asserted a silent no-op was locking in the thing that made
+the silence possible.** Chapter 05 has the rest.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

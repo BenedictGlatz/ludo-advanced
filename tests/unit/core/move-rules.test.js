@@ -69,6 +69,54 @@ describe("Hold Pawn and Lock In take one pawn out of the choice", () => {
   });
 });
 
+describe("a Banana Peel's stun takes one pawn out of the choice too (issue #45)", () => {
+  /**
+   * The Product Owner's reading of "the next pawn to cross it is stunned and loses its next turn":
+   * **only that pawn sits out.** Its owner's other three are unaffected, which is exactly the shape
+   * Hold Pawn already has, so there is no new step in the turn sequence.
+   */
+  it("drops the stunned pawn and leaves its owner's others alone", () => {
+    const pawns = pawnsAt(4, { "0.0": 12, "0.1": 14, "0.2": 16 });
+    const board = boardWith([status(STATUS.STUNNED, 0, 0)]);
+    const moves = legalMoves(pawns, 0, 3, 6, board);
+
+    expect(moves.map((move) => move.pawn)).toEqual([1, 2]);
+  });
+
+  /**
+   * A reason of its own rather than reusing `HELD`, and the difference matters to the player: Hold
+   * Pawn is something an opponent played at them, a stun is something they walked into. The turn-level
+   * answer only collapses to one reason when every pawn was refused for the same one.
+   */
+  it("says a trap did it, not that the pawn is being held", () => {
+    const pawns = pawnsAt(4, { "0.0": 12 });
+    const board = boardWith([status(STATUS.STUNNED, 0, 0)]);
+    const result = evaluateTurn(pawns, 0, 3, 6, board);
+
+    expect(result.refusals).toContainEqual({ player: 0, pawn: 0, reason: REFUSAL.STUNNED });
+  });
+
+  /**
+   * The turn-level answer, which only collapses to one reason when **every** pawn was refused for the
+   * same one (FR-14). All four have to be on the track and stunned: a fixture with three pawns still
+   * in the start area answers `NONE_AVAILABLE`, because they are refused for needing the maximum and
+   * two different reasons do not describe a turn.
+   */
+  it("describes the whole turn when every pawn is stunned", () => {
+    const pawns = pawnsAt(4, { "0.0": 12, "0.1": 14, "0.2": 16, "0.3": 18 });
+    const board = boardWith([
+      status(STATUS.STUNNED, 0, 0),
+      status(STATUS.STUNNED, 0, 1),
+      status(STATUS.STUNNED, 0, 2),
+      status(STATUS.STUNNED, 0, 3),
+    ]);
+    const result = evaluateTurn(pawns, 0, 3, 6, board);
+
+    expect(result.moves).toEqual([]);
+    expect(result.reason).toBe(REFUSAL.STUNNED);
+  });
+});
+
 describe("Ragebait forces the taunted pawn to move", () => {
   /**
    * The one card whose effect is about the relationship between a player's moves rather than about a

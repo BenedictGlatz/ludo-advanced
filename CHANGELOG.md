@@ -358,6 +358,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Banana Peel no longer sends a pawn home. It stuns it** (issue #45, FR-30). The pawn that walks into
+  one finishes its move and then loses its next turn, which is what the card in your hand has always
+  said and what the rulebook has always said. Only that pawn sits out: you still move your other three.
+  **The game gets easier as a result**, and that is a deliberate trade: sending a pawn home cost a full
+  lap, which made the cheapest trap in the game as harsh as a capture
+- **A trap can now set off another trap.** If a trap pushes your pawn and the push crosses a second
+  trap, that one fires too, up to a limit of six in one chain. Two consequences a player will notice:
+  a push that lands on an opponent now **captures** it, and a push is **stopped** by a boulder instead
+  of sliding through it
+- **Traps fire on any movement, not just on your dice move** (FR-30). Yeet, Aight Imma Head Out and Let
+  Him Cook can all push a pawn onto a trap now, which is what Yeet's own card text promises. A captured
+  pawn on its way home still sets off nothing
 - **Every player now has a shape as well as a colour, and the shape is on the pieces** (design handoff 06,
   NFR-12). Each seat's pawns carry a small ink badge: a circle, a triangle, a square or a diamond,
   matching the shape that seat already had on the scoreboard and in the top bar. It sits low on the piece

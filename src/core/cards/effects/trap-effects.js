@@ -2,49 +2,36 @@
  * The four cards that put something on a square, and what happens when a pawn touches it.
  * Issue #38, requirements FR-26, FR-28 and FR-30.
  *
- * Pure `core/`. The four placement functions take a snapshot and return a patch, like every other
- * effect. `fireTrap` is different and the difference is worth naming: it is not a card effect at all.
+ * Pure `core/`. Four placement functions, each taking a snapshot and returning a patch like every
+ * other effect. **This file only puts things down.** What happens when a pawn walks into one of them
+ * is `core/trap-fire.js`, and how far the pawn then travels is `core/slide.js`.
  *
  * | Card | What it puts down | What it does when touched |
  * | --- | --- | --- |
- * | Banana Peel | A trap | The pawn goes back to its start area |
+ * | Banana Peel | A trap | The pawn is stunned and loses its next turn |
  * | Oil Spill | A trap | The pawn slides 3 to 5 further and skips the skill square it lands on |
- * | It's Not That Deep | A trap | The pawn is pushed back a D6 |
+ * | It's Not That Deep | A trap | The pawn is pushed back |
  * | Big Ah Rock | A blocker | Nothing passes it while it stands |
  *
- * ## Why `fireTrap` is here and not in `traps.js`
+ * ## Why `fireTrap` left this file in issue #45
  *
- * `core/traps.js` owns the **list**: what is on which square, which entries block, which one a walk hits
- * first. It deliberately knows nothing about what any of them does, so that a fifth trap is a line there
- * and a case here.
+ * It was here because a trap's behaviour belongs with the card that laid it, and that was a fair
+ * argument while the file was small and the two halves did not need each other. Both changed:
  *
- * `fireTrap` owns the **effects**, and it is called from `state/`'s move resolution rather than from a
- * card play. That makes it the only function in `core/cards/effects/` that is not a card effect, and it
- * is here because a trap's behaviour belongs with the card that laid it. Splitting the two halves of
- * Banana Peel across two files to satisfy a naming convention would be worse.
+ * - `bigAhRock` gained a knockback, so this file now has to reach `core/enter.js`, and `core/enter.js`
+ *   reaches the firing rules. Keeping both halves here would be an import cycle, not a convenience.
+ * - The firing rules stopped writing pawn positions at all and now hand back a distance, which is a
+ *   different kind of thing from a card effect's patch and reads badly next to four of them.
  *
- * ## A trap fires on crossing, not only on landing
- *
- * This is the one place in the project that looks at the whole walk, and the reason it is worth the
- * exception: a trap that only fired on an exact landing would almost never fire. A D20 crosses twenty
- * squares and lands on one.
- *
- * The skill squares work the other way round, on landing only, and that difference is deliberate. A
- * skill square is a reward, so making it collectable in bulk by taking the biggest die would undo the
- * point of the dice pool. A trap is a punishment, and a punishment you can jump over is not one.
+ * `core/traps.js` still owns the **list**: what is on which square, which entries block, which one a
+ * walk hits first. So the three modules split cleanly: the list, the placement, the consequence.
  */
 
-import { rollDie } from "../../dice-source.js";
-import { displace, sendHome } from "../../displacement.js";
-import { STATUS, addStatus, turnsForRounds } from "../../statuses.js";
-import { TRAP_KIND, placeTrap, removeTrap } from "../../traps.js";
+import { turnsForRounds } from "../../statuses.js";
+import { TRAP_KIND, placeTrap } from "../../traps.js";
 
 /** How long a Big Ah Rock stands, in rounds. */
 export const BIG_ROCK_ROUNDS = 2;
-
-/** The die It's Not That Deep pushes back by, and the slide Oil Spill gives. */
-export const NOT_THAT_DEEP_DIE = 6;
-export const OIL_SLIDE = Object.freeze({ min: 3, max: 5 });
 
 /** One object placed on the target square, as a patch. */
 function place(context, kind, until = null) {
@@ -87,59 +74,4 @@ export function bigAhRock(context) {
   const until = context.turnNumber + turnsForRounds(BIG_ROCK_ROUNDS, context.playerCount);
 
   return place(context, TRAP_KIND.BIG_AH_ROCK, until);
-}
-
-/**
- * One trap goes off under one pawn.
- *
- * Takes and returns the three lists it can touch, so `state/` spreads the answer into the next state.
- * Not a card effect: it is called from move resolution, and the pawn it fires at is whoever walked into
- * it rather than a target somebody chose.
- *
- * **The trap is removed whether or not it changed anything.** A trap is single use, and a trap that
- * survived because the pawn it caught happened to be unmovable would sit there being a surprise twice.
- */
-export function fireTrap({ pawns, statuses, traps, trap, mover, turnNumber, rng }) {
-  const cleared = removeTrap(traps, trap.square);
-
-  switch (trap.kind) {
-    case TRAP_KIND.BANANA_PEEL:
-      return { pawns: sendHome(pawns, mover), statuses, traps: cleared };
-
-    case TRAP_KIND.NOT_THAT_DEEP:
-      return {
-        pawns: displace(pawns, mover, -rollDie(NOT_THAT_DEEP_DIE, rng)),
-        statuses,
-        traps: cleared,
-      };
-
-    case TRAP_KIND.OIL_SPILL: {
-      // 3 to 5 squares: a D3 rolled and offset, so the slide is still one draw from the injected RNG.
-      const slide = OIL_SLIDE.min + rollDie(OIL_SLIDE.max - OIL_SLIDE.min + 1, rng) - 1;
-
-      return {
-        pawns: displace(pawns, mover, slide),
-        /**
-         * The pawn slid rather than walked, so the square it stops on hands out no card (FR-22).
-         *
-         * A status lasting exactly this turn, rather than a flag returned to the caller. Both would
-         * work for the skill-square check that happens two lines later, and the status is also the
-         * honest record: the pawn *did* slide this turn, and the view can say so.
-         */
-        statuses: addStatus(statuses, {
-          kind: STATUS.SLIPPERY,
-          player: mover.player,
-          pawn: mover.pawn,
-          until: turnNumber + 1,
-          source: "action-oil-spill",
-        }),
-        traps: cleared,
-      };
-    }
-
-    default:
-      // A blocker. Nothing should ever walk onto one, because `blockedSquares` refuses the move first,
-      // and a rule that relies on another rule having run is a rule that breaks when the order changes.
-      return { pawns, statuses, traps };
-  }
 }

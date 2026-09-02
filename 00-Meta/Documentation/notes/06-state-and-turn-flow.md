@@ -417,6 +417,54 @@ The handover overlay names the player it is passing to, and it has to name the s
 about to hand the turn to. A second walk over `state.seats` in `ui/` would be a second answer to the same
 question, and the two would disagree the first time turn order changes.
 
+### `trapChanges` lost its rule and kept its signature: 2026-09-02, issue #45
+
+The trap check used to live here in full: this layer walked the path, picked the trap and fired it. All
+of that moved into `core/enter.js`, and what is left is three lines that hold no rule at all.
+
+**Why it moved.** FR-30 says a trap fires when a pawn *enters* a tile, and this was the only place that
+checked. So a trap fired for a dice move and for nothing else, and four cards that move pawns fired
+none. Chapter 05 has the finding; the state-layer half of it is that **`state/` had been holding a rule,
+which it is not supposed to do.** `skill-turn.js`'s own header says it "holds no rules: every question is
+asked of `core/` and the answer is written into a changes object". That was true of the other four
+functions in the file and had quietly stopped being true of this one.
+
+**The signature and the return shape are deliberately unchanged**, and the reason is a line count.
+`turn-manager.js` was at exactly 300 lines, the NFR-02 limit. Keeping `trapChanges(state, move, deps)`
+answering the same `{ pawns, statuses, traps }` meant `resolveMove` needed no edit, so the file that had
+no room did not need any. Worth noting as a technique: **an interface kept stable on purpose is what
+lets a refactor stop at the module that needed it.**
+
+**One fact most likely to be forgotten later:** a trap now fires from **two** call sites where there was
+one. `resolveMove` for a dice move, and the card-driven path for Yeet, Aight Imma Head Out and Let Him
+Cook. Both go through `core/enter.js`, which is the point, but anybody adding a third way to move a pawn
+has to route it through there too or it will silently fire nothing.
+
+#### `worldOf` is here and not next to `boardOf`
+
+`core/enter.js` wants six fields: the three lists it may change, plus `turnNumber`, `playerCount` and
+`rng`. That projection is called a `world`, and it is a superset of the `{ statuses, traps }` pair the
+movement rules already call a `board`, so it can be handed straight to `slidePawn` with no repacking.
+
+It lives in `skill-turn.js` rather than in `game-state.js` next to `boardOf`, which is where the other
+state-to-core projection sits. The reason is `deps`: a world needs the injected RNG, and
+**`game-state.js` mentions `deps` nowhere at all.** Putting the first `deps`-aware function into the
+state-shape module would cost that file its one clean property, and every function in `skill-turn.js`
+already takes `deps`. Rejected alternative: `boardOf(state, deps)`, which would have made every existing
+caller pass something none of them has.
+
+#### The step order inside `resolveMove` is now four things, not three
+
+1. the pawn arrives, and a captured pawn goes home
+2. a trap it walked into goes off
+3. **that trap's push resolves its own capture and can set off one more trap**, up to the chain limit
+4. the square the pawn is *actually standing on* is asked whether it hands out a card
+
+Step 3 is new and step 4 is why the order still matters: the skill square is asked last, about the
+position the pawn really ended on, which is read back off the pawn list rather than off the move. A
+chain can move the pawn several times, so reading it off the declared move would be wrong in a new way
+that it was not wrong before.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

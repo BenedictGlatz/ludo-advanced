@@ -75,6 +75,7 @@
       "overshoot": "The roll is too high: getting home needs the exact number.",
       "already-home": "This pawn is home and does not move again.",
       "held": "This pawn is being held and sits this turn out.",
+      "stunned": "This pawn slipped on a trap and sits this turn out.",
       "locked": "This pawn is locked in and may not be moved.",
       "blocked": "There is a rock in the way. Nothing gets past it.",
       "protected": "The pawn on that square is protected and cannot be captured.",

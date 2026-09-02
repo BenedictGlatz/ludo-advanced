@@ -1,30 +1,21 @@
 /**
- * The four cards that put something on a square, and what happens when a pawn walks into it.
- * Issue #38, requirements FR-26, FR-28 and FR-30.
+ * The four cards that put something on a square. Issue #38, requirements FR-26, FR-28 and FR-30.
  *
- * Split from `board-effects.test.js` when that file passed 300 lines. The seam is the one the source
- * uses: `trap-effects.js` is the only effects file with **two** halves to test, the placement and the
- * firing, and the firing is not a card effect at all. It is called from move resolution.
+ * Split from `board-effects.test.js` when that file passed 300 lines. **This file now covers the
+ * placement only**, which is all `trap-effects.js` still does: issue #45 moved the firing rules out to
+ * `core/trap-fire.js`, and their tests went with them.
  */
 
 import { describe, expect, it } from "vitest";
 
-import { START_R } from "../../../../src/core/board.js";
 import { createContext } from "../../../../src/core/cards/context.js";
 import { effectFor } from "../../../../src/core/cards/effects/index.js";
-import { fireTrap } from "../../../../src/core/cards/effects/trap-effects.js";
-import { STATUS } from "../../../../src/core/statuses.js";
 import { TRAP_KIND } from "../../../../src/core/traps.js";
-import { pawnsAt, rngForDice } from "../../../helpers/fixtures.js";
+import { rngForDice } from "../../../helpers/fixtures.js";
 
 /** Run one card, with the RNG scripted as `[[roll, faces], ...]`. */
 function play(cardId, fields = {}, dice = []) {
   return effectFor(cardId)(createContext({ rng: rngForDice(dice), ...fields }));
-}
-
-/** Where one pawn ended up in a patch's pawn list. */
-function at(patch, player, pawn) {
-  return patch.pawns.find((entry) => entry.player === player && entry.pawn === pawn).r;
 }
 
 describe("the four cards that put something on a square", () => {
@@ -58,66 +49,8 @@ describe("the four cards that put something on a square", () => {
   });
 });
 
-describe("a trap going off", () => {
-  const mover = { player: 0, pawn: 0 };
-  const trapOn = (kind, square = 12) => ({ kind, square, owner: 2, until: null });
-
-  function fire(kind, r, dice = []) {
-    return fireTrap({
-      pawns: pawnsAt(4, { "0.0": r }),
-      statuses: [],
-      traps: [trapOn(kind)],
-      trap: trapOn(kind),
-      mover,
-      turnNumber: 7,
-      rng: rngForDice(dice),
-    });
-  }
-
-  it("Banana Peel sends the pawn back to its start area", () => {
-    const result = fire(TRAP_KIND.BANANA_PEEL, 13);
-
-    expect(at(result, 0, 0)).toBe(START_R);
-  });
-
-  it("It's Not That Deep pushes the pawn back a D6", () => {
-    const result = fire(TRAP_KIND.NOT_THAT_DEEP, 13, [[4, 6]]);
-
-    expect(at(result, 0, 0)).toBe(9);
-  });
-
-  /**
-   * Oil Spill slides the pawn **and** marks it, so the square it stops on hands out no skill card. A card
-   * whose whole point is speed should not also be the best way to farm cards.
-   */
-  it("Oil Spill slides the pawn forward and marks it as having slid", () => {
-    // The slide is 3 plus a D3 minus 1, so a 1 on the D3 is the shortest slide.
-    const result = fire(TRAP_KIND.OIL_SPILL, 13, [[1, 3]]);
-
-    expect(at(result, 0, 0)).toBe(16);
-    expect(result.statuses[0]).toMatchObject({
-      kind: STATUS.SLIPPERY,
-      player: 0,
-      pawn: 0,
-      until: 8,
-    });
-  });
-
-  it("clears the trap off the board, whatever it did", () => {
-    for (const kind of [TRAP_KIND.BANANA_PEEL, TRAP_KIND.OIL_SPILL]) {
-      expect(fire(kind, 13, [[1, 6]]).traps).toEqual([]);
-    }
-  });
-
-  /**
-   * A blocker is in the same list and must not behave like a trap. Nothing should ever walk onto one,
-   * because `blockedSquares` refuses the move first, and a rule that relies on another rule having run is
-   * a rule that breaks when the order changes.
-   */
-  it("does nothing at all for a blocker, and leaves it standing", () => {
-    const result = fire(TRAP_KIND.BIG_AH_ROCK, 13);
-
-    expect(at(result, 0, 0)).toBe(13);
-    expect(result.traps).toHaveLength(1);
-  });
-});
+/**
+ * The firing half of these four cards is now `tests/unit/core/trap-fire.test.js`, and the walk a fired
+ * trap sends the pawn on is `tests/unit/core/enter.test.js`. Both moved with the code in issue #45:
+ * `fireTrap` left this module for `core/trap-fire.js` and stopped writing pawn positions at all.
+ */

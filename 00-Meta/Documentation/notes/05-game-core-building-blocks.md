@@ -731,6 +731,11 @@ Each is recorded as a deviation rather than a transcription, with the reason:
 | The Purge | Also reaches pawns already home, and lets you enter an opponent's house | Only the "every landing captures" half | A house is private to one player and no number names another player's house square |
 | Lock In | Labelled `DEFENSIVE`, effect not stated | The pawn cannot be moved **and** cannot be captured | A card that only stopped you moving your own pawn would be a card that only hurts its owner |
 
+> **This table was incomplete and issue #45 found out how.** Three *more* cards had been changed from
+> what the artwork and the rulebook say, and none of them was written down here: Banana Peel, It's Not
+> That Deep and Big Ah Rock. See "The rules the code had quietly rewritten" below. The three rows above
+> are deviations that were decided; those three were deviations that simply happened.
+
 #### Negative finding: 12 of 29 cards still have no rule
 
 `hasEffect` is the question both `state/` and `ui/` ask, and a card with no entry can be drawn, held and
@@ -778,6 +783,11 @@ Said plainly: **a reward you can farm is broken, and a punishment you can jump o
 
 Only the **first** trap on a walk fires, so one move has one outcome, and a trap never fires under a pawn
 belonging to the player who laid it. A card that punishes its own player is a card nobody plays.
+
+> **Half of that is superseded.** "Only the first trap on a walk fires" is still exactly true, and it is
+> now the load-bearing half. **"One move has one outcome" is not:** since issue #45 a trap that moves the
+> pawn starts a new walk, which can fire a trap of its own, up to a bounded chain. The section below
+> restates both properly.
 
 #### The order inside `resolveMove` is a rule, and it is invisible in almost every test
 
@@ -962,6 +972,115 @@ clamp runs **before** the walk, so a slide is never stopped by something on a sq
 reach. And `slideStop` answers the pawn's *current* position when nothing can happen, instead of
 returning a "did it move" flag: the caller compares `from` and `to`, which it needs anyway to ask what
 the pawn crossed. Both are cases of letting the data answer the question rather than adding a signal.
+
+### One place a pawn enters a square, and the rules that stopped being spread out: 2026-09-02, issue #45
+
+Two new modules and one that shrank. `core/enter.js` is the choke point, `core/trap-fire.js` holds the
+firing rules, and `core/cards/effects/trap-effects.js` is down to what it says on the tin: four cards
+that put something on a square.
+
+#### The rule was only as complete as the list of call sites, and the list was one
+
+FR-30 says a trap fires when a pawn **enters** a tile. Until this commit the check lived in
+`state/skill-turn.js` and was called from exactly one place, `resolveMove`. So a trap fired for a dice
+move and for nothing else. Yeet, Aight Imma Head Out and Let Him Cook could push a pawn straight over a
+Banana Peel and nothing happened, and **Yeet's own printed card text says "or forward onto a trap, if
+you're feeling mean"**, which the game could not do.
+
+That is the general shape of the finding, and it is worth the report: a rule implemented at its call
+sites is a rule whose completeness nobody can check. Moving it behind one function makes "every
+movement fires traps" a property of the code instead of a claim about a list.
+
+#### No trap kind writes a pawn position any more
+
+The seam the whole issue hangs off. `fireTrap` used to move the pawn itself, with `displace`, which
+checks neither blockers nor captures. Now it returns the two lists it can change plus a **number**:
+
+```js
+{ statuses, traps, slide }   // slide is 0 when the trap moves nothing
+```
+
+One place performs the displacement, and it is the place that knows about blockers and captures. Three
+rules each doing their own arithmetic is three chances to get it wrong; one number handed to one walker
+is none. It also made the Banana Peel rule change almost free, because a stun is simply `slide: 0`.
+
+#### The chain, and what actually bounds it
+
+A trap that moves the pawn starts a **new** walk from where the pawn was pushed to, and that walk can
+fire a trap of its own. The two halves call each other, which is why they share a file rather than
+being split into two:
+
+```
+enterSquares -> fireTrap -> slide != 0 -> shove -> slidePawn -> enterSquares -> ...
+```
+
+Two properties, and the second is the one that is easy to state wrongly:
+
+- **Only the first trap on any one walk fires.** A move crossing two Banana Peels sets off the near one
+  and stops. That is unchanged and is what keeps a single walk from having two outcomes.
+- **The chain is bounded at `TRAP_CHAIN_LIMIT = 6`, and the cap is not what makes it terminate.** Every
+  firing calls `removeTrap`, so each link consumes an entry and the recursion is already bounded by the
+  length of the trap list. The cap guards against a future trap kind that survives its own firing,
+  which this issue itself makes plausible. The journal block spells that out, because a cap whose reason
+  is misremembered as "otherwise it loops" is a cap somebody later deletes after proving it cannot loop.
+
+Two arrivals set off nothing at all, and both are implemented by *structure* rather than by a condition:
+a pawn going home, because `sendHome` is a different function that never reaches the choke point; and a
+slide that moved nothing, because there is no walk to ask about and asking about a zero-length one would
+re-fire the trap that had just gone off.
+
+#### The rules the code had quietly rewritten
+
+The Product Owner decided that the Game Design Document wins wherever it and the code disagree. Three of
+the four square cards were affected, and **none of the three was in the deviation table above**:
+
+| Card | The rulebook and the artwork | What the code did | Now |
+| --- | --- | --- | --- |
+| Banana Peel | Stunned, loses its next turn | Sent the pawn back to its start area | A `STATUS.STUNNED` for one round |
+| It's Not That Deep | 1 back, plus offensive cards nullified within 3 squares | Pushed back a D6, no aura | Landing in a later commit |
+| Big Ah Rock | 3 rounds, plus the enemy pawn behind knocked back 3 | 2 rounds, no knockback | Landing in a later commit |
+
+**How the drift happened is the interesting part, and it was not carelessness.** Epic #38 implemented
+nineteen cards in one pass, five of which needed mechanics that did not exist. These three are exactly
+the three whose printed rule needed a mechanic that *still* did not exist after that work: a status that
+costs a turn, a rule measured in a radius, and a knockback that searches the board. Each was replaced by
+the nearest thing the engine could already express, and the substitution was never recorded.
+
+**The mechanism to record it existed and was not used.** Section 7.3 of the Game Design Document is a
+table of six cards whose printed text the board cannot express, each with the reading built instead and
+the reason. That is precisely the right home for all three. A deviation on the record is a decision; the
+same deviation off the record is a bug with good manners, and the locale files had already started
+describing the code rather than the game.
+
+#### The stun, and one deadline that looks like an off-by-one
+
+`STATUS.STUNNED` is read by `evaluatePawn` exactly the way `STATUS.HELD` is, so **only the caught pawn
+sits out** and its owner's other three are unaffected. No new step in the turn sequence, because Hold
+Pawn had already established the shape. It gets its own refusal reason rather than reusing `held`,
+because the two are different things to the player: Hold Pawn is something an opponent played at them, a
+stun is something they walked into.
+
+The deadline is `turnNumber + turnsForRounds(1, playerCount) + 1`. The `+ 1` is not a fencepost error.
+`hasStatus` applies while `turnNumber < until`, and a trap sprung during a dice move fires under the
+**active** seat's own pawn, so the turn to be missed is a full round away and `until` must exceed it. The
+same expression also costs exactly one turn when a card sprang the trap under another seat's pawn, whose
+next turn is sooner than a round away. One expression, no branch, and a test at two, three and four
+seats so that a hard-coded four could not have hidden a two-player bug.
+
+#### A missing rule now stops the game at boot
+
+`fireTrap`'s closed `switch` is gone. In its place is a frozen table of one rule per kind, plus a loop
+that runs **at import** and throws if any non-blocker kind has no entry.
+
+What the `switch` did wrong is worth naming precisely, because it looked correct: its `default:` returned
+everything untouched, which is right for a blocker, since blockers share the list and never fire. So the
+same branch also swallowed a missing rule for a *new* kind, in silence, while the module's header
+promised "a fifth trap is a line there and a case here". The failure would have appeared as a trap that
+did nothing, several matches later. `assertCatalogue` already set the pattern: check the table against
+the vocabulary once, when the module loads, so the failure lands on the day the kind was added.
+
+A blocker reaching `fireTrap` now throws too. Two guards already stand between a blocker and that
+function, so arriving anyway means one of them broke, and an exception says which.
 
 ## Decisions
 
