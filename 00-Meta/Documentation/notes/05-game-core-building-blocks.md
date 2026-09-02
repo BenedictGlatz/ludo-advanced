@@ -914,6 +914,55 @@ had always meant.
 the line limit by deleting comments or whitespace, and in this codebase the header comments are the part
 worth keeping. The limit is there to force a seam to be found, and there was a real one here.
 
+### A second way to move a pawn, and why `displace` could not become it: 2026-09-02, issue #45
+
+`core/slide.js`. Two functions, `slideStop` and `slidePawn`. Nothing calls them yet; they land on their
+own so that the rule they carry can be tested before anything depends on it.
+
+**The problem it closes.** `displace` clamps a pawn's position and does nothing else. That is deliberate
+and its header says so: "it checks nothing about legality, because the card is the authority." Eleven of
+the 29 cards call it, and that sentence is why they safely can. What it means in practice is that before
+this, **an Oil Spill slide or a Yeet could put a pawn onto a square that already held one and leave both
+there.**
+
+The two halves of that bug behave very differently, and the asymmetry is the interesting part:
+
+| Two pawns on one square | Caught by | When |
+| --- | --- | --- |
+| Different players | `captureTarget` **throws**, because FR-11 makes it impossible | The next time anything lands there |
+| The **same** player | Nothing. That function filters to opponents | Never |
+
+So the loud case was already loud, and the quiet case could corrupt the board indefinitely. Inside a
+house column it would break the FR-05 win condition, because two pawns stacked on one house square means
+the four house squares can never all be filled, and the symptom would appear many turns later with
+nothing pointing at the cause.
+
+**Why a new module rather than making `displace` careful.** Adding blockers and captures to `displace`
+would falsify the one sentence that makes it safe to call from eleven places. So `displace` stays blunt
+for the cards that want blunt, and the shove that a *trap* performs is a different function. The
+distinction is real: a card being deliberately reckless is the card's authority; a trap firing is the
+board resolving a consequence, and a consequence has to leave the board in a state the other rules can
+still read.
+
+**The rule, in one line: a pushed pawn stops on the square before the first thing it cannot share.**
+Three things count, and two of them are rules that already existed somewhere else:
+
+| What | The rule it reuses |
+| --- | --- |
+| A Rock or a Big Ah Rock | `blockedSquares`, which is why that function moved into `traps.js` first |
+| A pawn of the pushed pawn's own player | FR-12, via `isSameSquare`, which is also what forces all four house squares to be filled |
+| A pawn carrying `STATUS.ARMOURED` | `moveOnto`'s existing reasoning: a pawn that cannot be captured cannot be landed on either |
+
+Both decisions behind it are in the journal, including the rejected step-back loop and the cost: **Yeet
+and Aight Imma Head Out now stop short in board states where they used to overlap two pawns silently.**
+That is a stronger invariant, and it is written down so it cannot later be argued as a regression.
+
+**One design detail worth carrying into the report**, because it is the same shape of answer twice. The
+clamp runs **before** the walk, so a slide is never stopped by something on a square it was not going to
+reach. And `slideStop` answers the pawn's *current* position when nothing can happen, instead of
+returning a "did it move" flag: the caller compares `from` and `to`, which it needs anyway to ask what
+the pawn crossed. Both are cases of letting the data answer the question rather than adding a signal.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

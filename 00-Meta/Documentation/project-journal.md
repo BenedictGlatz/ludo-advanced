@@ -2982,6 +2982,46 @@ to get wrong later.
   nothing, and it should be read as documentation of intent, not as a tested guarantee.
 - → Ch. 07, Ch. 08
 
+### 2026-09-02: A pushed pawn stops before anything it cannot share a square with
+
+- **Chosen:** a shove walks square by square and stops on the square **before** the first thing the pawn
+  may not stand on. Three things count: a Rock or Big Ah Rock, a pawn of the pushed pawn's own player,
+  and a pawn carrying `STATUS.ARMOURED`. `core/slide.js`, new in issue #45.
+- **Why:** it is one walk and one rule, and two of the three are not new rules at all. FR-12 already
+  forbids two of one player's pawns sharing a square, and `moveOnto` already reasons that "a pawn that
+  cannot be captured cannot be landed on either, because the alternative is two pawns sharing a square".
+  A shove is a different way of arriving, not a different board.
+- **What it closes, and this is the reason it was worth doing now:** before this, an Oil Spill slide or a
+  Yeet could put a pawn on an occupied square and leave both there. Two pawns of **different** players
+  is caught later, loudly: `captureTarget` throws because FR-11 makes it impossible. Two pawns of the
+  **same** player is caught by nothing, because that function filters to opponents. So the board could
+  go quietly corrupt, and inside a house column it would break the FR-05 win condition several turns
+  later, with no way to trace it back.
+- **Rejected: let the slide pass over them and only refuse to stop on them**, stepping back a square at a
+  time until it finds somewhere legal. That needs a retreat loop which can itself be blocked, so it is
+  three rules where this is one, and it can end a *forward* slide behind where the pawn started, which no
+  card says happens.
+- **The cost, stated:** Yeet and Aight Imma Head Out now stop short in board states where they used to
+  overlap two pawns silently. Somebody could read that as a regression. It is a strictly stronger
+  invariant, and this block is the record that it was a decision.
+- → Ch. 05
+
+### 2026-09-02: Going home is never a slide, and that is how "a captured pawn sets off nothing" is implemented
+
+- **Chosen:** `sendHome` stays a separate function and never routes through `core/slide.js` or through the
+  trap trigger. A pawn arriving at `r = 0` is not treated as having entered any square.
+- **Why:** FR-30 says a trap fires when a pawn **enters** a tile, and the Product Owner's decision on
+  2026-09-02 extended that to every kind of movement. A start area is not a tile. Implementing the
+  exception by *separating the two paths* rather than by filtering inside one of them means there is no
+  condition that can be got wrong: the code that fires traps is simply never reached.
+- **What the alternative would actually have done:** walking a pawn from `r = 17` to `r = 0` counts
+  seventeen squares backwards, so a captured pawn would set off every trap between where it was standing
+  and its own yard, on its way to being punished. Hyperbeam sends up to four pawns home at once, so one
+  card could have detonated the whole board.
+- **Rejected: one displacement function with a `firesTraps` flag.** The flag would have to be passed
+  correctly by eleven call sites, and the failure mode is silent in both directions.
+- → Ch. 05
+
 ---
 
 ## Challenges
