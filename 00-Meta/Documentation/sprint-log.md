@@ -356,6 +356,14 @@ own Definition of Done not one of these issues is done: the board still shows th
 That gap between "committed" and "done" is the whole remaining risk in this sprint, and it is one
 review away.
 
+- **2026-09-02:** the Sprint 2 closeout opened with a brief rather than with the board. Design brief 06
+  (`01-Design/Handoff/06-brief-pawn-mark.md`, the seat shape on the pawn, closing D16 and NFR-12) went out
+  first, the work order was re-ordered to 06 before 05, and the `.pawn__mark` element the brief needs went
+  into `board-view.js` in the same commit with an end-to-end case asserting it. Reason, recorded in the
+  journal: two of the five closeout steps wait on Claude Design and the other three do not touch the
+  stylesheets, so sending first turns the whole closeout window into design time. No points booked; NFR-12
+  has no issue and was never estimated.
+
 **Divergence and reasons**: *open, filled as it happens*
 
 - **The plan's Step 4 was committed in the reverse of the order it names.** It asks for

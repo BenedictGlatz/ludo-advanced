@@ -316,6 +316,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (S7), the main menu (S1), match setup (S2), pause (S8), win (S9) and a new handover screen for the
   moment between two turns at a shared screen. Eight open decisions, D35 to D42, plus the eleven items
   that were left open by handoffs 02 and 03 and had been drifting since
+- **Design handoff 06** (`01-Design/Handoff/06-brief-pawn-mark.md`), asking for the seat's shape on the
+  pawn itself, which is where NFR-12 is measured and the one place the shape is not yet. Three open
+  decisions, D48 to D50. Every pawn now carries an empty mark element for the stylesheet to fill, so
+  nothing is visible until the spec lands. The work order to Claude Design puts this brief ahead of
+  handoff 05
 - **Players are named on screen** (issue #39): "Spieler 2 (Grün)", the number counting from 1 in seat
   order and the colour naming the pieces on the board. German and English
 - **The game says whose turn it is** (issue #35). A sentence in the top bar, "Spieler 1 (Rot) ist am

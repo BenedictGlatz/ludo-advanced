@@ -2774,6 +2774,30 @@ to get wrong later.
   layers at once, and nobody had to remember which.
 - → Ch. 04
 
+### 2026-09-02: The design briefs go out before the Sprint 2 closeout, and the pawn mark is asked for as a brief
+
+- **Chosen:** brief 06 (the seat shape on the pawn, closing D16 and NFR-12) is written and sent on the first
+  day of the closeout, ahead of board hygiene, the #40 audio decision, the documentation sweep and the
+  merge. Handoff 05 stays open behind it, and the work order now says 06 first, 05 second. The one code
+  change the brief needs, the empty `<span class="pawn__mark">`, ships in the same commit so Claude Design
+  works against real markup.
+- **Why:** the closeout has five steps and two of them wait on Claude Design. Nothing in the other three
+  touches `src/ui/styles/`, so the two halves can run in parallel with no merge conflict. Sending the brief
+  first buys the whole closeout window as design time. The Sprint 2 plan used the same lever for handoff 01
+  and the sprint log records that it was the one scheduling move that worked.
+- **Why 06 before 05:** 06 closes a `should have` requirement whose test has been marked expected-to-fail
+  since 2026-08-30. 05 replaces a placeholder stylesheet for a screen that already works. Fifteen lines
+  that close a requirement come before a panel that closes a preference.
+- **Rejected: writing the fifteen lines of `pawn.css` here.** Spec 04 named the element and the tokens, and
+  `hud.css` shows the pattern, so it was tempting. It would still mean choosing the mark's size on a piece
+  that scales with the board and deciding what happens to the eyes of D14, and both are design decisions
+  `CLAUDE.md` puts on the other side of the line. The Sprint 2 plan drew the same line for the board's DOM
+  contract, and it held.
+- **Rejected: closing out first and sending the briefs after the merge.** That is the order the five steps
+  were listed in, and it would have had Claude Design idle for the three weekdays left in Sprint 2 and the
+  specs landing in the last days before the 2026-09-11 freeze.
+- → Ch. 02, Ch. 04
+
 ---
 
 ## Challenges

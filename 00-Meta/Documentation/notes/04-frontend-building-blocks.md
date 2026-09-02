@@ -1358,6 +1358,33 @@ supposed to be, a return to the menu or a recorded outcome, is a rule question a
 recorded because a styled, translated, tested screen that no player can reach is exactly the kind of thing
 that reads as finished in a report.
 
+### Brief 06 sent, and the pawn got the element it was waiting for: 2026-09-02, NFR-12
+
+- **What went out:** [06-brief-pawn-mark.md](../../../01-Design/Handoff/06-brief-pawn-mark.md), asking for
+  the seat shape on the piece. Three decisions, D48 (size, placement, and what happens to the eyes of
+  D14), D49 (the mark through the five pawn states) and D50 (what happens to the luminance-only
+  measurement in `greyscale.spec.js` once a shape exists). It is the follow-up spec 04 § 5 named as "one
+  `<span>` and about fifteen lines", and it is the first brief with no board issue behind it: NFR-12 has
+  none, and the design system epic #3 it extends was closed on 2026-08-30.
+- **What changed in the code, ahead of the answer:** `board-view.js` now builds every `.pawn` with an
+  empty `<span class="pawn__mark">` inside it. The pawn's two pseudo-elements were both taken, `::after`
+  by the body and `::before` by the state ring, so the mark had to be a real element. It is a DOM
+  contract change and not a design rule: it says an element exists, not what it looks like. A new case in
+  `tests/e2e/board-renders.spec.js` asserts one mark per pawn with no text in it. Nothing is visible.
+- **Why the brief went out before the closeout work rather than after it.** The remaining Sprint 2 work
+  (board hygiene, the #40 decision, the documentation sweep, the merge) does not touch `src/ui/styles/`,
+  and the two open briefs cannot be answered from this side. Sending first and working in parallel is the
+  same lever the Sprint 2 plan used for handoff 01, and it is recorded in the work order.
+- **The work order was re-ordered:** 06 before 05, because 06 closes a requirement and 05 a preference.
+  `00-open-requests.md` carries the new order at the top and keeps the old one struck through, so the
+  reasoning of 2026-09-01 stays readable.
+- **What the brief says the test will become**, so that the spec is written against the assertion: one
+  mark per pawn with a non-zero box, the same computed `clip-path` within a seat and a different one
+  across seats, both holding under `filter: grayscale(1)`. The 1.146 luminance figure moves into the notes
+  as history unless D50 keeps it.
+- **Still open, unchanged:** `pool.css` as the last placeholder, handoff 05's D43 to D47, and D17, D21 to
+  D24 from handoff 02.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
