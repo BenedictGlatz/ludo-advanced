@@ -90,9 +90,18 @@ export function blockedSquares(pawns, board) {
 /**
  * A new list with one object placed, replacing whatever was on that square.
  *
- * Replacing rather than refusing, because the refusal belongs one layer up: `state/` will not let a
- * player target a square that is already taken, and by the time a rule gets here the question is
- * settled. Two objects on one square is the situation this makes impossible.
+ * Replacing rather than refusing, because the refusal belongs one layer up. Two objects on one square is
+ * the situation this makes impossible, whatever the layers above do.
+ *
+ * **This comment used to claim the refusal already existed, and it did not.** Until issue #45 it said
+ * that "`state/` will not let a player target a square that is already taken", while `checkTarget`'s
+ * entire test for a track square was that the number was between 0 and 39. So a player could lay a trap
+ * on top of an existing one and this function would silently delete it.
+ *
+ * It is true now: `core/trap-rules.js` holds the three placement rules and `state/card-legality.js`
+ * enforces them through the `FREE_SQUARE` target kind. Worth leaving the history in, because the bug was
+ * not the missing check. It was a comment describing a guarantee that another layer was supposed to
+ * provide and that nothing checked either layer for.
  */
 export function placeTrap(traps, trap) {
   return [...traps.filter((entry) => entry.square !== trap.square), trap];

@@ -32,7 +32,7 @@ export const EXTRA_CARDS = [
     type: TYPE.ACTION,
     category: CATEGORY.BLOCKING,
     kind: KIND.TRAP,
-    targets: [TARGET.TRACK_SQUARE],
+    targets: [TARGET.FREE_SQUARE],
     triggers: [TRIGGER.ACTION_PHASE],
   },
   {
@@ -68,7 +68,7 @@ export const EXTRA_CARDS = [
     type: TYPE.ACTION,
     category: CATEGORY.BLOCKING,
     kind: KIND.UPGRADE,
-    targets: [TARGET.TRACK_SQUARE],
+    targets: [TARGET.FREE_SQUARE],
     triggers: [TRIGGER.ACTION_PHASE],
   },
   {
@@ -78,7 +78,7 @@ export const EXTRA_CARDS = [
     type: TYPE.ACTION,
     category: CATEGORY.BLOCKING,
     kind: KIND.TRAP,
-    targets: [TARGET.TRACK_SQUARE],
+    targets: [TARGET.FREE_SQUARE],
     triggers: [TRIGGER.ACTION_PHASE],
   },
   {
@@ -109,6 +109,11 @@ export const EXTRA_CARDS = [
   {
     // "Both neighbours" is unambiguous on the ring and not in a house, so this is playable on a track
     // square only, with neighbours `(square +/- 1) mod 40`.
+    //
+    // The one square-targeting card that keeps `TRACK_SQUARE` rather than moving to `FREE_SQUARE` in
+    // issue #45, and the distinction is the point: this card **fires at** a square, it does not occupy
+    // one. Aiming it at a square that already holds a trap, or that a pawn is standing on, is exactly
+    // what it is for. The other four leave an object behind and need the square to be free.
     id: "action-janky-rpg",
     type: TYPE.ACTION,
     category: CATEGORY.OFFENSIVE,
@@ -145,7 +150,7 @@ export const EXTRA_CARDS = [
     type: TYPE.ACTION,
     category: CATEGORY.BLOCKING,
     kind: KIND.TRAP,
-    targets: [TARGET.TRACK_SQUARE],
+    targets: [TARGET.FREE_SQUARE],
     triggers: [TRIGGER.ACTION_PHASE],
   },
   {

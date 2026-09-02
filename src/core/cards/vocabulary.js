@@ -82,8 +82,22 @@ export const TARGET = Object.freeze({
   NONE: "none",
   OWN_PAWN: "own-pawn",
   ENEMY_PAWN: "enemy-pawn",
-  /** One of the 40 shared track squares. */
+  /** One of the 40 shared track squares. Any of them: Janky RPG fires at a square, it does not occupy one. */
   TRACK_SQUARE: "track-square",
+  /**
+   * A shared track square that can take an object: no trap or blocker on it, no pawn standing on it,
+   * and not one of the four entry squares.
+   *
+   * A target kind of its own rather than an extra check on `TRACK_SQUARE`, because the catalogue's
+   * `targets` list is already the contract between a card and the target picker. "An empty track
+   * square" is an honest kind of thing to point at, and expressing it here means `checkTarget` and the
+   * picker read the same answer from `core/trap-rules.js` and cannot disagree.
+   *
+   * Rejected alternative: a table of card ids in `state/` saying which ones also need the square to be
+   * free. That puts a list of cards next to a rule, where the catalogue already answers the question by
+   * data, and it would have had to be kept in step with the catalogue by hand.
+   */
+  FREE_SQUARE: "free-square",
   /** Forwards or backwards. */
   DIRECTION: "direction",
   /** A number the player names instead of rolling, as FR FR does. */

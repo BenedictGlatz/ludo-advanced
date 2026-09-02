@@ -1179,6 +1179,42 @@ the vocabulary once, when the module loads, so the failure lands on the day the 
 A blocker reaching `fireTrap` now throws too. Two guards already stand between a blocker and that
 function, so arriving anyway means one of them broke, and an exception says which.
 
+### A comment that described a guarantee nothing provided: 2026-09-02, issue #45
+
+`core/trap-rules.js` is new and holds three rules about where an object may be put down. The rules
+themselves are ordinary; **how the gap was found is the part worth the report.**
+
+`placeTrap` in `core/traps.js` replaces whatever is on the square rather than refusing, and its comment
+explained why: "the refusal belongs one layer up: `state/` will not let a player target a square that is
+already taken, and by the time a rule gets here the question is settled."
+
+**`state/` did no such thing.** `checkTarget`'s entire test for a track square was that the number was
+between 0 and 39. So a player could lay a trap directly on top of an opponent's and this function would
+silently delete it, which is a card doing something no card in the set is supposed to be able to do.
+
+That is a class of bug rather than a slip, and it is worth naming in the report: **a comment that
+describes a guarantee some other layer is supposed to provide is a comment that nothing checks.** It
+reads as documentation of a decision, it was written in good faith, and it survived review precisely
+because it sounded like the layering working correctly. Neither module was wrong on its own. The claim
+that joined them was.
+
+Two things follow for how the rest of the notes should be read. Comments of the form "X is handled
+elsewhere" are the ones to distrust when auditing, and a test that had crossed the seam would have
+caught this one immediately: `trap-placement.test.js` now exists and its last case walks all forty
+squares asserting that what the picker offers and what `checkTarget` accepts are the same set.
+
+#### The three rules, and where each reason comes from
+
+| Refused | Reason |
+| --- | --- |
+| A square already holding a trap or blocker | One object per square is what makes "what is on square 17" answerable, and refusing stops a card being used to delete an opponent's trap |
+| A square a pawn is standing on | A trap fires when something **enters** its square, so one laid under a pawn already there does nothing until that pawn leaves and comes all the way back round the ring. It looks like a play and is a wasted card |
+| The four entry squares | `EXCLUDED_SQUARES`, reused from the skill squares, whose own comment already carries the reason: the entry square is the busiest a player has, so a trap there would fire far more often than one anywhere else and would punish one quarter of the board for existing |
+
+The module is separate from `traps.js` because the question has a different shape: it needs the **pawns**
+and the board's topology as well as the list, and `traps.js`'s value is that every function in it takes
+the list and nothing else.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

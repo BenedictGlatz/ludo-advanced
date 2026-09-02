@@ -23,20 +23,19 @@
  * them would make Nühü and Ghost Mode do nothing, so `applyPatch` hands them back and
  * `reaction-window.js` acts on them.
  *
- * ## The target check is here and not in 29 effects
+ * ## The target check is one place and not 29, and it now lives next door
  *
- * A card's `targets` list says what the player has to point at. `checkTarget` is the one place that
+ * A card's `targets` list says what the player has to point at, and `checkTarget` is the one place that
  * checks it, so every effect may read `context.target.pawn` without guarding it. That is 29 guards
  * saved, and more importantly one place for the rule rather than 29 chances to write it differently.
+ *
+ * **It moved to `card-legality.js` in issue #45** and is re-exported from the foot of this file, so no
+ * caller changed. That module's header carries the reason for the split.
  */
 
-import { PAWNS_PER_PLAYER, TRACK_LENGTH } from "../core/board.js";
 import { assertPatch, createContext } from "../core/cards/context.js";
 import { effectFor } from "../core/cards/effects/index.js";
-import { TARGET } from "../core/cards/vocabulary.js";
-import { cardById } from "../core/cards/catalogue.js";
 import { discardCard } from "../core/skill-pool.js";
-import { REJECTED } from "./rejections.js";
 
 /**
  * The snapshot of `state` that one played card sees.
@@ -119,87 +118,14 @@ export function discardChanges(state, seat, cardId) {
   };
 }
 
-/** Is `ref` a real pawn of a real seat? Whose it is, is the caller's question. */
-function isPawnRef(state, ref) {
-  if (typeof ref !== "object" || ref === null) return false;
-  if (!state.seats.includes(ref.player)) return false;
-
-  return Number.isInteger(ref.pawn) && ref.pawn >= 0 && ref.pawn < PAWNS_PER_PLAYER;
-}
-
 /**
- * One target kind checked. `true` when the player pointed at something the card can act on.
+ * Re-exported so every existing caller and test kept working when the legality half moved out.
  *
- * `OWN_PAWN` and `ENEMY_PAWN` both read `target.pawn` and differ only in whose it must be. Sharing the
- * key rather than having `ownPawn` and `enemyPawn` is what lets an effect read `context.target.pawn`
- * without knowing which of the two its own card asked for.
+ * `intents-cards.js`, `reaction-window.js`, `ui/target-picker.js` and `skill-play.test.js` all read
+ * these from here, and none of them was edited by the split. The precedent is `move-rules.js`, which
+ * re-exports `TRAP_KIND` and `blockedSquares` for the same reason.
+ *
+ * The seam is in `card-legality.js`'s header: this file translates between two shapes, that one answers
+ * whether a play is legal, and the two never spoke to each other.
  */
-function isTargetPresent(state, kind, target, seat) {
-  switch (kind) {
-    case TARGET.NONE:
-      return true;
-    case TARGET.OWN_PAWN:
-      return isPawnRef(state, target.pawn) && target.pawn.player === seat;
-    case TARGET.ENEMY_PAWN:
-      return isPawnRef(state, target.pawn) && target.pawn.player !== seat;
-    case TARGET.TRACK_SQUARE:
-      return Number.isInteger(target.square) && target.square >= 0 && target.square < TRACK_LENGTH;
-    case TARGET.DIRECTION:
-      return target.direction === 1 || target.direction === -1;
-    case TARGET.NUMBER:
-      return Number.isInteger(target.number) && target.number >= 1;
-    case TARGET.PLAYER:
-      return state.seats.includes(target.player) && target.player !== seat;
-    case TARGET.CHOICE:
-      return typeof target.choice === "string" && target.choice.length > 0;
-    default:
-      return false;
-  }
-}
-
-/**
- * Does this card have every target it needs, and are they all real?
- *
- * Returns `null` when the target is fine, or the rejection reason. Two reasons rather than one, because
- * "you have not picked a pawn yet" and "that pawn does not exist" are different situations for the
- * player: the first is a prompt and the second is a mistake.
- */
-export function checkTarget(state, cardId, target = {}, seat) {
-  const card = cardById(cardId);
-  const named = Object.keys(target).length > 0;
-
-  for (const kind of card.targets) {
-    if (isTargetPresent(state, kind, target, seat)) continue;
-    return named ? REJECTED.BAD_TARGET : REJECTED.NEEDS_TARGET;
-  }
-
-  return null;
-}
-
-/**
- * The smallest die a card can be played on, for the one card that has a floor.
- *
- * 67 says "roll a 6". On a D2 or a D4 that is not unlikely, it is impossible, so the card is not
- * playable at all when the chosen dice card has fewer than six faces. That is a playability rule and not
- * a target, which is why it cannot live in the catalogue's `targets` list.
- *
- * A table rather than a special case in the handler, so the second card that needs one is a line here.
- */
-export const MINIMUM_DIE = Object.freeze({ "action-sixty-seven": 6 });
-
-/**
- * Can this card be played at all, right now, leaving aside the target and the budget?
- *
- * Returns `null` or a rejection reason. Separate from `checkTarget` because the two answer different
- * questions and the player needs to be told which: "that card cannot do anything with a D4" is not the
- * same message as "you have not picked a pawn yet".
- */
-export function checkPlayable(state, cardId) {
-  const minimum = MINIMUM_DIE[cardId];
-
-  if (minimum !== undefined && (state.chosenDie ?? 0) < minimum) {
-    return REJECTED.CARD_NOT_PLAYABLE_NOW;
-  }
-
-  return null;
-}
+export { MINIMUM_DIE, checkPlayable, checkTarget, pickableSquares } from "./card-legality.js";

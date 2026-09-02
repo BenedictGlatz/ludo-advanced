@@ -3084,6 +3084,27 @@ to get wrong later.
   first hit in a backwards run, with no distance arithmetic and no sort.
 - → Ch. 05
 
+### 2026-09-02: Placement legality is a new target kind, not a per-card check
+
+- **Chosen:** `TARGET.FREE_SQUARE`, a new value in the card vocabulary meaning "a track square that can
+  take an object". The four cards that leave something standing on a square use it; `action-janky-rpg`
+  keeps `TARGET.TRACK_SQUARE` and stays playable on all forty.
+- **Why:** the catalogue's `targets` list is already the contract between a card and the target picker,
+  so this is expressed where the question is already answered, by data. "An empty track square" is an
+  honest kind of thing to point at. And the distinction it draws is real rather than administrative:
+  **Janky RPG fires *at* a square, it does not occupy one**, so aiming it at an occupied square is
+  exactly what the card is for.
+- **Rejected: a table of card ids in `state/`** saying which cards also need the square to be free. It
+  puts a list of cards next to a rule where the catalogue already answers by data, and it would have to
+  be kept in step with the catalogue by hand.
+- **Rejected: leaving all forty squares clickable and refusing at dispatch.** It offers the player a
+  click the game then takes away, which is the interaction this codebase already avoids for pawns.
+- **One rejection reason and not three.** `core/trap-rules.js` keeps the three causes apart because the
+  view may one day want them, but the play is refused with the existing `BAD_TARGET`. All three lead the
+  player to the same next action, pick a different square, and this project only splits a rejection when
+  the next action differs.
+- → Ch. 05, Ch. 06
+
 ### 2026-09-02: A pushed pawn stops before anything it cannot share a square with
 
 - **Chosen:** a shove walks square by square and stops on the square **before** the first thing the pawn

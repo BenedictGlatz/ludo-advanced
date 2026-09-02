@@ -465,6 +465,42 @@ position the pawn really ended on, which is read back off the pawn list rather t
 chain can move the pawn several times, so reading it off the declared move would be wrong in a new way
 that it was not wrong before.
 
+### `skill-play.js` split at a seam that had been visible for two days: 2026-09-02, issue #45
+
+`state/card-legality.js` is new and holds the legality half. `skill-play.js` keeps the translator and
+re-exports the rest, so `intents-cards.js`, `reaction-window.js`, `ui/target-picker.js` and
+`skill-play.test.js` were all left untouched.
+
+**The seam was not invented for the line count.** The file had two halves that never spoke to each
+other. One translates between the shape of the game state and the shape a card effect sees, which is a
+single well argued idea and is what the file's header is about. The other answers "is this play legal",
+which is a different question with a different audience: the intent handlers ask it after a dispatch, and
+the **target picker** asks it before one, because it has to know what to offer.
+
+What forced it was that FR-30's placement rules land entirely on the second half. Doing them in place
+would have pushed `skill-play.js` toward NFR-02's limit, and splitting at a seam that already exists is
+better than compressing one that does not. That is the same argument as `blockedSquares` moving into
+`traps.js` earlier in this issue, and it is now clearly a pattern worth stating in the report: **the
+300-line limit does not tell you to make files smaller, it tells you to go looking for a seam, and in
+both cases there was a real one being ignored.**
+
+#### `pickableSquares` exists so that `ui/` cannot hold a rule
+
+`ui/target-picker.js` used to mark all forty track squares for any square-targeting card. That was
+correct while one card in 29 wanted a square. Five do now and four of them need the square to be free,
+so the view would have had to work out the difference.
+
+It asks instead. `pickableSquares(state, cardId)` answers the list, derived from the same function
+`checkTarget` uses, so the two cannot disagree. The view writes the answer down as `data-pickable`,
+which is the shape `move-hints.js` already uses for `state.legalMoves`: **the view records an answer
+rather than computing one.**
+
+Two details in it are deliberate. It answers `null` for a card that asks about no square at all, so a
+caller can tell "this card wants no square" from "this card wants a square and there is none left". And
+the picker does **not** re-check the clicked square: only offered squares carry `data-pickable`,
+`events.js` binds the click to that selector, and `checkTarget` refuses an illegal square anyway. Two
+guards are enough, and a third in the middle is the one that goes stale.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

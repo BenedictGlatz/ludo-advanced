@@ -121,6 +121,7 @@
       "own-pawn": "Choose one of your own pawns",
       "enemy-pawn": "Choose an opponent's pawn",
       "track-square": "Choose a square on the track",
+      "free-square": "Choose a free square on the track",
       "direction": "Forwards or backwards?",
       "number": "Name a number",
       "player": "Choose an opponent",

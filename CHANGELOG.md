@@ -374,6 +374,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   trap, that one fires too, up to a limit of six in one chain. Two consequences a player will notice:
   a push that lands on an opponent now **captures** it, and a push is **stopped** by a boulder instead
   of sliding through it
+- **A trap card now offers only the squares it may actually be placed on** (issue #45, FR-30). Four of
+  the forty squares were never sensible targets and one of them was destructive: laying a trap on a
+  square that already held one silently deleted the first, which no card is supposed to be able to do.
+  A trap can no longer go on an occupied square, on a square a pawn is standing on, or on one of the
+  four squares where a player enters the track. Janky RPG is unaffected, because it fires at a square
+  rather than occupying one, so aiming it at an occupied square is the whole point of it
 - **Traps fire on any movement, not just on your dice move** (FR-30). Yeet, Aight Imma Head Out and Let
   Him Cook can all push a pawn onto a trap now, which is what Yeet's own card text promises. A captured
   pawn on its way home still sets off nothing
