@@ -112,6 +112,7 @@ describe("the two arrivals that set off nothing", () => {
       pawns: world.pawns,
       statuses: [],
       traps: [],
+      trapFired: null,
     });
   });
 });
@@ -138,7 +139,7 @@ describe("the chain a trap that moves the pawn starts", () => {
   });
 
   /**
-   * A blocker cuts the chain short, which is the case `displace` could not express at all: the push
+   * A blocker cuts the chain short, which is the case the old `displace` could not express at all: the push
    * used to carry the pawn straight through a boulder.
    *
    * The boulder is on absolute 12, the one square the pushback wants, so the pawn cannot move at all

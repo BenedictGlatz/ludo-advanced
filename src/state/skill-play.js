@@ -15,13 +15,17 @@
  * state  --contextFor-->  snapshot  --effect-->  patch  --applyPatch-->  state
  * ```
  *
- * ## Two of the patch fields are not board state
+ * ## Two of the patch fields are not board state, and a third is not a rule
  *
- * `negate` and `cancelMove` are instructions, and `applyPatch` deliberately does not act on either.
- * They are returned to the caller, because both are decisions about something an effect cannot see:
- * `negate` is about the reaction window and `cancelMove` is about the declared move. Silently dropping
- * them would make Nühü and Ghost Mode do nothing, so `applyPatch` hands them back and
+ * `negate` and `cancelMove` are instructions, and this file deliberately does not write either into
+ * state. They are returned to the caller, because both are decisions about something an effect cannot
+ * see: `negate` is about the reaction window and `cancelMove` is about the declared move. Silently
+ * dropping them would make Nühü and Ghost Mode do nothing, so they are handed back and
  * `reaction-window.js` acts on them.
+ *
+ * `trapFired` is the odd one. It arrives in a patch like the two above, but it **is** written into
+ * state, because it is a report the view has to be able to read: a card that shoves a pawn can set off
+ * a trap, and the player has to be told. `core/enter.js` carries the reason it cannot be derived.
  *
  * ## The target check is one place and not 29, and it now lives next door
  *
@@ -83,6 +87,15 @@ const FIELD_FOR = Object.freeze({
   discard: "skillDiscard",
   cardBudget: "cardBudget",
   reactionsLocked: "reactionsLocked",
+
+  /**
+   * `core/enter.js`'s report, so a trap a **card** set off is announced too (issue #45).
+   *
+   * Yeet, Aight Imma Head Out and Let Him Cook all shove a pawn, and since issue #45 a shove fires
+   * traps. Without this line those firings would change the board and say nothing, which is the one
+   * thing the report exists to prevent.
+   */
+  trapFired: "trapFired",
 });
 
 /**

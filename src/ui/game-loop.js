@@ -59,7 +59,7 @@ import {
   bindSkillHandEvents,
 } from "./events.js";
 import { createRenderer } from "./render.js";
-import { REFUSAL_MIN_MS, createTimers } from "./timers.js";
+import { createTimers, holdAfterTurn } from "./timers.js";
 import { createTurnControls } from "./turn-controls.js";
 
 /**
@@ -129,15 +129,11 @@ export function createGameLoop({
   /**
    * How long to leave the finished turn on screen before passing it on.
    *
-   * Both durations are read out of `tokens.css` since design spec 04 answered D20 and gave the refusal
-   * hold a token of its own. `REFUSAL_MIN_MS` is the fallback for a harness with no stylesheet loaded.
+   * The decision moved into `timers.js` in issue #45, where the game's other named waits already were.
+   * What is left here is reading the tokens off the board, because that needs the element.
    */
   function pauseAfterTurn() {
-    if (state.refusalReason !== null) {
-      return delays.afterRefusal ?? motionMs($board, "--motion-refusal-hold", REFUSAL_MIN_MS);
-    }
-
-    return delays.afterMove ?? motionMs($board, "--motion-capture", 320);
+    return holdAfterTurn(state, delays, (token, fallback) => motionMs($board, token, fallback));
   }
 
   /**

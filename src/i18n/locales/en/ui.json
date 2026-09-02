@@ -83,6 +83,23 @@
       "none-available": "No move is possible with this roll."
     }
   },
+  "trap": {
+    "owned": "{{object}}, laid by {{player}}",
+    "label": {
+      "banana-peel": "Banana Peel",
+      "oil-spill": "Oil Spill",
+      "not-that-deep": "It's Not That Deep",
+      "big-ah-rock": "Big Ah Rock"
+    },
+    "fired": {
+      "banana-peel": "{{player}} slipped on {{owner}}'s Banana Peel and sits the next turn out.",
+      "oil-spill": "{{player}} hit {{owner}}'s Oil Spill and slid {{squares}} squares on.",
+      "not-that-deep": "{{player}} stepped on {{owner}}'s It's Not That Deep and went back one square.",
+      "big-ah-rock": "{{owner}} dropped a Big Ah Rock, and {{player}} was knocked back three squares."
+    },
+    "nullified": "An It's Not That Deep was lying nearby and cancelled that card.",
+    "aura": "Protected by an It's Not That Deep"
+  },
   "intent": {
     "rejected": {
       "match-over": "The match is over.",

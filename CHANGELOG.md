@@ -388,6 +388,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Traps fire on any movement, not just on your dice move** (FR-30). Yeet, Aight Imma Head Out and Let
   Him Cook can all push a pawn onto a trap now, which is what Yeet's own card text promises. A captured
   pawn on its way home still sets off nothing
+- **The game now tells you when a trap goes off**, and who laid it (issue #45, FR-30). This matters most
+  for Banana Peel, which does not move your pawn at all: without a message the pawn would arrive exactly
+  where you aimed it and then silently be unable to move next turn. The message stays on screen for the
+  same four seconds a refusal does, so the handover screen cannot cover it before it is read. **It is
+  currently shown in the orange the game uses for "you cannot do that", which is the wrong colour**: a
+  trap going off is not something you did wrong. Design decision D55 is open against it, and the
+  alternative was leaving a Banana Peel eating turns in silence
+- **A square on the board can now be picked with the keyboard alone** (NFR-08). No square was reachable
+  from the keyboard at all, which nobody noticed while a single card in 29 pointed at one. Four of the
+  five that do are the trap cards, so a keyboard player could not have played a trap
 - **Every player now has a shape as well as a colour, and the shape is on the pieces** (design handoff 06,
   NFR-12). Each seat's pawns carry a small ink badge: a circle, a triangle, a square or a diamond,
   matching the shape that seat already had on the scoreboard and in the top bar. It sits low on the piece

@@ -77,7 +77,10 @@ function markBoard($board, kind, seat, state, cardId) {
     // a view that worked out which ones would be a second copy of the rule, free to disagree with
     // `checkTarget` the moment either changed.
     for (const square of pickableSquares(state, cardId)) {
-      $board.find(`.square--track[data-square="${square}"]`).attr("data-pickable", "true");
+      $board
+        .find(`.square--track[data-square="${square}"]`)
+        .attr("data-pickable", "true")
+        .attr("tabindex", 0);
     }
     return;
   }
@@ -93,10 +96,19 @@ function markBoard($board, kind, seat, state, cardId) {
   }
 }
 
-/** Take every picking mark back off the board. */
+/**
+ * Take every picking mark back off the board.
+ *
+ * The `tabindex` goes with it, so a field is in the tab order only while it is actually an answer to a
+ * question. Forty permanent tab stops on the board would sit between a keyboard player and every
+ * control on the page, which is the defect spec 05 found on the pool overview and this avoids by
+ * construction. A pawn keeps whatever `tabindex` `move-hints.js` gave it, because that one is about
+ * being movable and is not this file's to clear.
+ */
 function clearBoard($board) {
   $board.removeAttr("data-picking");
   $board.find("[data-pickable]").removeAttr("data-pickable");
+  $board.find(".square--track[tabindex]").removeAttr("tabindex");
 }
 
 /**

@@ -253,5 +253,19 @@ export function clearedTurnFields() {
      * quietest possible bug in a system like this".
      */
     nullifiedCard: null,
+
+    /**
+     * The object that just went off, or `null` (FR-30). Shaped
+     * `{ kind, square, owner, player, pawn, squares }`.
+     *
+     * A turn-level field beside `refusalReason`, and it exists for the same reason: the player did
+     * something and the game has to tell them what came of it. It cannot be derived from the board,
+     * because a fired trap has been **removed** from the trap list, and under the new rules a Banana
+     * Peel does not move the pawn at all. So after the fact the board looks exactly as it would if
+     * nothing had happened, while the pawn has quietly lost its next turn.
+     *
+     * Written by `core/enter.js` as a report, which is why it is in `PATCH_FIELDS` next to `negate`.
+     */
+    trapFired: null,
   };
 }

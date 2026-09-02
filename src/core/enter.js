@@ -68,9 +68,25 @@ import { firstTrapOnPath } from "./traps.js";
  */
 export const TRAP_CHAIN_LIMIT = 6;
 
-/** The three lists, unpacked from a world. What both functions return when nothing happens. */
-function boardOf(world) {
-  return { pawns: world.pawns, statuses: world.statuses, traps: world.traps };
+/**
+ * The three lists plus the report, unpacked from a world.
+ *
+ * `trapFired` is `null` when nothing went off. It is a **report and not board state**: by the time a
+ * caller reads the answer, the board no longer shows what happened, because the trap has been removed
+ * and a Banana Peel does not move the pawn at all. `core/cards/context.js` lists it beside `negate` and
+ * `cancelMove` for that reason, and `state/` renames it onto a turn-level field the view can read.
+ *
+ * The whole point is that a trap moves a pawn **without the player having asked**. Under the new rules
+ * a Banana Peel is the extreme case: the pawn arrives exactly where it was aimed and silently loses its
+ * next turn. Without this field that is the game taking a turn away with no explanation.
+ */
+function boardOf(world, trapFired = null) {
+  return {
+    pawns: world.pawns,
+    statuses: world.statuses,
+    traps: world.traps,
+    trapFired,
+  };
 }
 
 /**
@@ -99,10 +115,25 @@ export function enterSquares(world, ref, fromR, toR, depth = 0) {
     rng: world.rng,
   });
 
-  const after = { ...world, statuses: fired.statuses, traps: fired.traps };
-  if (fired.slide === 0) return boardOf(after);
+  // What the view will say. `squares` is the distance the trap asked for rather than the distance the
+  // pawn actually travelled, which differ when a boulder cut the slide short. The intent is what the
+  // sentence is about, and `slidePawn` does not report a reason for stopping.
+  const report = {
+    kind: trap.kind,
+    square: trap.square,
+    owner: trap.owner,
+    player: ref.player,
+    pawn: ref.pawn,
+    squares: Math.abs(fired.slide),
+  };
 
-  return shove(after, ref, fired.slide, depth + 1);
+  const after = { ...world, statuses: fired.statuses, traps: fired.traps };
+  if (fired.slide === 0) return boardOf(after, report);
+
+  // **The first trap is the one reported**, not the last. It is the one the player walked into, and it
+  // is the only one they could have seen coming. A chain is one event as far as the message is
+  // concerned, which is also why the announcement does not try to list the links.
+  return { ...shove(after, ref, fired.slide, depth + 1), trapFired: report };
 }
 
 /**

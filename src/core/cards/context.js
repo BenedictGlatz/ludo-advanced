@@ -72,11 +72,18 @@ export const CONTEXT_FIELDS = Object.freeze([
 ]);
 
 /**
- * Every field an effect may write, plus the two that are instructions rather than data.
+ * Every field an effect may write, plus the three that are reports rather than data.
  *
  * `negate` and `cancelMove` are not board state. They are answers to a question only the caller can
  * act on: "the card that opened this window does not happen" and "the declared move does not happen".
  * An effect cannot do either itself, because neither is a field.
+ *
+ * `trapFired` joined them in issue #45 and is the same kind of thing pointing the other way: not an
+ * instruction to the caller but a **report** from `core/enter.js` saying which object went off and what
+ * it did. It exists because a trap moves a pawn without the player having asked, so the view has to be
+ * able to say so, and by the time the patch is written the board no longer shows what happened: the
+ * trap has been removed and a Banana Peel does not move the pawn at all. It is listed here so that
+ * `assertPatch` lets it through, and `applyPatch` deliberately does not write it to state.
  */
 export const PATCH_FIELDS = Object.freeze([
   "pawns",
@@ -91,6 +98,7 @@ export const PATCH_FIELDS = Object.freeze([
   "reactionsLocked",
   "negate",
   "cancelMove",
+  "trapFired",
 ]);
 
 /**

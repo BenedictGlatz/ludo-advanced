@@ -3084,6 +3084,44 @@ to get wrong later.
   first hit in a backwards run, with no distance arithmetic and no sort.
 - → Ch. 05
 
+### 2026-09-02: A trap announcement ships in the refusal colour, which is the wrong one
+
+- **Chosen:** announce a fired trap and an aura-cancelled card in the existing D9 refusal strip, keyed
+  off the `data-message-kind` seam that was already written and unread, in `--color-warn`.
+- **Why it has to be announced at all:** a trap acts without the player asking, and under the new rules
+  Banana Peel does not move the pawn. It arrives exactly where it was aimed and silently loses its next
+  turn, so with no message the game simply takes a turn away.
+- **Why the colour is wrong:** `--color-warn` is reserved for "you cannot do that". A trap going off is
+  not a refusal, and announcing it in orange repeats the defect D40 fixed when it took the win message
+  out of that same strip.
+- **Rejected: waiting for design handoff 07**, which would leave a Banana Peel eating turns in silence
+  until D55 is answered. **Rejected: inventing a neutral treatment**, which `CLAUDE.md` forbids this
+  side from doing. A cosmetic debt with a brief open against it beats a live bug.
+- → Ch. 04
+
+### 2026-09-02: The trap mark is a real element, because both pseudo-elements were taken
+
+- **Chosen:** an always-present empty `<span class="square__trap">` on all 40 track fields.
+- **Why:** `.square::before` is D27's skill diamond and `.square::after` is the turn-off bar on squares
+  9, 19, 29 and 39, and **all four of those are legal trap targets**. There was no third layer.
+  Building it once with the board rather than when a trap appears is D10: a mark created at the moment
+  it becomes visible has no previous state for a transition to run from.
+- **Rejected: `::after` on the field**, which collides with the turn-off bar on exactly the four squares
+  a trap is most likely to be laid near. **Rejected: creating the span on demand**, which breaks D10.
+- Same situation and same answer as `.pawn__mark` in handoff 06.
+- → Ch. 04
+
+### 2026-09-02: One `data-statuses` list rather than eight boolean attributes
+
+- **Chosen:** a single space-separated attribute on the pawn, matched with `[data-statuses~="stunned"]`.
+- **Why:** a pawn carries several statuses at once, so eight per-kind booleans would be eight
+  write-and-remove pairs per pawn per update, and the whitespace-list operator exists for this.
+- **Rejected: one attribute per kind.** **Rejected: shipping only `stunned`**, the one this issue
+  creates, which would mean revisiting the attribute seven more times.
+- **Worth noting:** nothing was shown for any status before this. A held pawn was simply a pawn without
+  `data-movable`, and a single held pawn among three movable ones was completely silent.
+- → Ch. 04
+
 ### 2026-09-02: `displace` was deleted rather than kept as the blunt alternative
 
 - **Chosen:** delete `displace` from `core/displacement.js`. `core/slide.js` is the only way a pawn is

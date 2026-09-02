@@ -137,6 +137,7 @@ describe("clearedTurnFields", () => {
       reactionWindow: null,
       pendingCard: null,
       nullifiedCard: null,
+      trapFired: null,
     });
   });
 

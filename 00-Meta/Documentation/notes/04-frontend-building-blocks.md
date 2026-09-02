@@ -1502,6 +1502,126 @@ about: `data-trap`, `data-trap-kind`, `data-trap-aura`, the owner's `data-player
 `.square__trap` span, `data-statuses` on every pawn, and a Playwright suite that asserts all of them.
 Unstyled and invisible, which is the honest position, and the same one `data-skill-square` held for a day.
 
+### The board learned about traps, and the strip got a second kind of message: 2026-09-02, issue #45
+
+Five things landed together. The first is a new module, the last two are gaps that had been open since
+the features they belong to shipped.
+
+#### `board-marks.js`, and why it is not `board-view.js`
+
+`board-view.js` was at 252 lines with one mark in it, `markSkillSquares`, and this issue adds three
+more plus the pawn statuses. The seam is not the line count, and stating it properly is what makes the
+split worth having: **`board-view.js` renders the board's own shape**, the grid, the four regions and
+where each pawn is, all of which comes from `board-geometry.js` and the pawn list. **`board-marks.js`
+renders what cards have put on the board.** Different source, changes for different reasons.
+`markSkillSquares` moved across with the new three, so `updateBoard` makes one call and
+`board-view.js` came out at 248 lines rather than growing.
+
+#### The trap mark had to be a real element, and both pseudo-elements were the reason
+
+`.square` has `::before` and `::after` and both were already spent: `::before` is D27's teal skill
+diamond, `::after` is the turn-off bar on squares 9, 19, 29 and 39. **All four of those are legal trap
+targets**, so a trap mark could not borrow either. There was no third layer to give it.
+
+So every one of the 40 track fields now carries an empty `<span class="square__trap">`, built once with
+the board. That is exactly the situation handoff 06 hit on the pawn and solved with `.pawn__mark`, and
+the reason it is built once rather than created when a trap appears is D10: `updateBoard` writes
+attributes and never creates an element, because a mark created at the moment it becomes visible has no
+previous state for a transition to run from.
+
+#### Four attributes, and why not one
+
+| Attribute | Answers |
+| --- | --- |
+| `data-trap` | `trap` or `blocker`, the **behaviour**. A single-use surprise versus a wall that refuses a move for three rounds. This is what D52 keys off, and a fifth kind of object is a line in `core/traps.js` and no CSS at all |
+| `data-trap-kind` | Which of the four objects, for the per-kind mark of D51 |
+| `data-trap-aura` | This field is inside an It's Not That Deep's reach, so an offensive card aimed here does nothing. D58 decides whether it is drawn |
+| `data-player` on the span | The owner. It goes on the span and not the field because `board.css` already turns `[data-player]` on **any** element into `--player` and `--player-soft`, so a `data-trap-owner` would have needed its own four-block mapping and repeated the seat table a fifth time, which spec 06 already flagged |
+
+The owner's accessible name comes from `seatLabel` and not from `owner + 1`. That is not a detail: a
+two-player match seats its players on 0 and 2, so a seat plus one announces "Player 3" for the second
+of two players. `player-labels.js` exists because four places got that wrong at once, and this was very
+nearly the fifth.
+
+**The words live in an `aria-label` on the span.** NFR-03 forbids a user-facing string in a CSS
+`content:` property, and a coloured shape on a square is nothing at all to a screen reader (NFR-08), so
+the object's name and its owner are written there from i18next.
+
+#### `data-statuses`: one whitespace list, not eight booleans
+
+A pawn can carry several statuses at once, so locked plus armoured plus slippery is ordinary. Eight
+per-kind boolean attributes would be eight write-and-remove pairs per pawn per update, and CSS matches
+a whitespace list natively with `[data-statuses~="stunned"]`, which is what that operator is for.
+
+**Nothing was shown for any status before this.** A held pawn was simply a pawn without `data-movable`,
+and the only words a player got came from the turn-level refusal, and only when *every* pawn had been
+refused for the same reason. A single held pawn among three movable ones was silent. Issue #45 creates
+`stunned`, and a stunned pawn losing a turn with no mark and no message would be the game taking a turn
+away without saying so. All eight kinds go into the DOM in one pass so the attribute is written once;
+D56 and D57 cover the two this issue is about and brief 07 lists the other six as owed.
+
+`STATUS.PURGE` is deliberately absent: it applies to the whole board rather than to a pawn, so it
+belongs on `.board`, and it has no mark anywhere either.
+
+#### The announcement, and the colour it ships in
+
+A trap moves a pawn, or takes a turn away, **without the player having asked**. Under the new rules
+Banana Peel is the extreme case: the pawn arrives exactly where it was aimed and silently loses its
+next turn, so with no message the game simply eats a turn.
+
+The seam was already there and unused. `showMessage` has always written both `data-reason-key` and
+`data-message-kind` on the strip, and `refusal.css` reads only the first. The previous version of that
+comment said `kind` was being kept even though the strip had one kind left, because removing it would
+change two end-to-end specs for no gain. **Issue #45 gave it a second kind and vindicated that**, so
+`data-message-kind` is now load-bearing rather than vestigial.
+
+**It ships in `--color-warn`, the colour the game reserves for "you cannot do that", and that is
+wrong.** A trap going off is not a refusal: the player did nothing incorrect. Announcing it in orange
+repeats exactly the defect D40 fixed when it took the win message out of that strip. Three options and
+what each costs:
+
+| Option | Cost |
+| --- | --- |
+| Announce it in the refusal orange (chosen) | The hue is wrong until D55 lands. Cosmetic debt with a brief already open against it |
+| Wait for handoff 07 | A Banana Peel eats a player's turn in silence for as long as the wait lasts, which is a bug and not a preference |
+| Invent a third, neutral treatment | `CLAUDE.md` forbids this side from taking a design decision, and this is squarely one |
+
+**Two state fields make the message possible**, and both exist because the evidence is what is missing.
+`trapFired` names the object that went off: a fired trap has been removed from the list and a Banana
+Peel does not move the pawn, so afterwards the board looks exactly as it would if nothing had happened.
+`nullifiedCard` names a card an aura cancelled, which is the same problem in a different place. Neither
+can be derived, which is why `core/enter.js` reports rather than the view reading back.
+
+**And the message has to survive long enough to be read**, which is why `pauseAfterTurn` moved into
+`timers.js` as `holdAfterTurn`. The loop decides *that* it waits, `timers.js` decides *how long*, and
+that module already owned every other named wait in the game. A trap or a nullified card now gets the
+same long hold D20 gave a refusal. Otherwise the handover screen covers the board on the ordinary move
+timer, while the only evidence is still on screen.
+
+**One limitation, recorded rather than solved:** a trap fired by a **card** resolves mid-turn, the loop
+carries straight on, and that announcement gets no guaranteed time on screen at all. Whether the game
+owes the player a pause there is D60.
+
+#### No field on the board was reachable from the keyboard at all
+
+`bindPickEvents` bound `click` on a pickable field and no `keydown`, and nothing gave a field a
+`tabindex`. Pawns and cards each got a keyboard pair when they became clickable; fields were missed.
+
+That was survivable while one card in 29 pointed at a field. Issue #45 makes it five cards and four of
+them are the trap cards, so **a keyboard player could not play a trap at all**. Both pairs are bound
+now, and `target-picker.js` adds the `tabindex` only while a field is actually pickable: forty
+permanent tab stops on the board would sit between a keyboard user and every control on the page, which
+is the defect spec 05 found on the pool overview. NFR-08. What a focused field looks like is D59, and
+nothing is styled yet.
+
+#### What renders today: nothing
+
+Every attribute above is in the DOM and unstyled, because D51 to D60 are open and `CLAUDE.md` forbids
+this side from answering them. That is the D27 pattern the correction below is about, applied on
+purpose the second time: a Playwright suite can assert the whole mechanic now, and when the spec lands
+it is a stylesheet rather than a rewrite. The announcement is the one exception, because text is not a
+look.
+
 ### A correction: this chapter said the skill square was invisible for two days after it was not: 2026-09-02, issue #45
 
 The section "Two attributes joined the DOM contract, and one of them is invisible on purpose" is dated
