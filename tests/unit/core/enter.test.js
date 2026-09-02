@@ -18,7 +18,6 @@ import { describe, expect, it } from "vitest";
 import { START_R } from "../../../src/core/board.js";
 import { TRAP_CHAIN_LIMIT, enterSquares, shove } from "../../../src/core/enter.js";
 import { STATUS } from "../../../src/core/statuses.js";
-import { NOT_THAT_DEEP_DIE } from "../../../src/core/trap-fire.js";
 import { TRAP_KIND } from "../../../src/core/traps.js";
 import { pawnsAt, rngForDice } from "../../helpers/fixtures.js";
 
@@ -119,53 +118,56 @@ describe("the two arrivals that set off nothing", () => {
 
 describe("the chain a trap that moves the pawn starts", () => {
   /**
-   * The Product Owner's decision: a trap-driven displacement can itself walk into a trap. Seat 0's
-   * pawn is pushed back from `r = 14` by a scripted D6 of 3, landing on `r = 11`, and crosses absolute
-   * 11 and 10 on the way. The Banana Peel on 10 is the second link.
+   * The Product Owner's decision: a trap-driven displacement can itself walk into a trap.
+   *
+   * Seat 0's pawn lands on `r = 14`, absolute 13, where an It's Not That Deep pushes it back one, to
+   * `r = 13`, absolute 12. The Banana Peel on 12 is the second link. Since the pushback became a fixed
+   * 1 the two traps have to be on neighbouring squares for a chain to happen at all, which is itself
+   * worth knowing: the shorter push made chains rarer, not more common.
    */
   it("a pushback that crosses a second trap sets that one off too", () => {
     const world = worldWith({
       pawns: pawnsAt(4, { "0.0": 14 }),
-      traps: [trap(TRAP_KIND.NOT_THAT_DEEP, 13), trap(TRAP_KIND.BANANA_PEEL, 10)],
-      dice: [[3, NOT_THAT_DEEP_DIE]],
+      traps: [trap(TRAP_KIND.NOT_THAT_DEEP, 13), trap(TRAP_KIND.BANANA_PEEL, 12)],
     });
     const result = enterSquares(world, mover, 13, 14);
 
-    expect(rOf(result, 0, 0)).toBe(11);
+    expect(rOf(result, 0, 0)).toBe(13);
     expect(hasStun(result)).toBe(true);
     expect(result.traps).toEqual([]);
   });
 
   /**
-   * A blocker cuts the chain short, which is the case `displace` could not express at all: the slide
+   * A blocker cuts the chain short, which is the case `displace` could not express at all: the push
    * used to carry the pawn straight through a boulder.
+   *
+   * The boulder is on absolute 12, the one square the pushback wants, so the pawn cannot move at all
+   * and stays where its move put it.
    */
-  it("a blocker stops the push and the pawn ends in front of it", () => {
-    const rock = trap(TRAP_KIND.BIG_AH_ROCK, 10);
+  it("a blocker stops the push and the pawn stays in front of it", () => {
+    const rock = trap(TRAP_KIND.BIG_AH_ROCK, 12);
     const world = worldWith({
       pawns: pawnsAt(4, { "0.0": 14 }),
       traps: [trap(TRAP_KIND.NOT_THAT_DEEP, 13), rock],
-      dice: [[3, NOT_THAT_DEEP_DIE]],
     });
     const result = enterSquares(world, mover, 13, 14);
 
-    expect(rOf(result, 0, 0)).toBe(12);
+    expect(rOf(result, 0, 0)).toBe(14);
     expect(result.traps).toEqual([rock]);
   });
 
   /**
-   * The other half of `slide.js`'s rule, reached through a trap rather than a card. Seat 2 at `r = 33`
-   * is on absolute 12, which is seat 0's `r = 13`.
+   * The other half of `slide.js`'s rule, reached through a trap rather than a card. Seat 2 at `r = 34`
+   * is on absolute 13, which is where seat 0's pawn is pushed back to from `r = 15`.
    */
   it("a push that lands on an opponent captures it", () => {
     const world = worldWith({
-      pawns: pawnsAt(4, { "0.0": 15, "2.0": 33 }),
+      pawns: pawnsAt(4, { "0.0": 15, "2.0": 34 }),
       traps: [trap(TRAP_KIND.NOT_THAT_DEEP, 14)],
-      dice: [[2, NOT_THAT_DEEP_DIE]],
     });
     const result = enterSquares(world, mover, 14, 15);
 
-    expect(rOf(result, 0, 0)).toBe(13);
+    expect(rOf(result, 0, 0)).toBe(14);
     expect(rOf(result, 2, 0)).toBe(START_R);
   });
 
@@ -188,21 +190,17 @@ describe("the chain a trap that moves the pawn starts", () => {
    * The cap. It is not what makes the chain terminate, since every firing removes an entry, but it
    * bounds the recursion against a future trap kind that survives its own firing.
    *
-   * Built as a run of It's Not That Deeps on consecutive squares, each pushing back 1 with a scripted
-   * D6 of 1, so the pawn steps off one trap straight onto the next. Seat 0's pawn starts at `r = 32`
-   * and the traps run backwards from absolute 31, which is the square `r = 32` stands on.
-   * `TRAP_CHAIN_LIMIT + 2` are laid and exactly two must survive.
+   * Built as a run of It's Not That Deeps on consecutive squares, each pushing back one, so the pawn
+   * steps off one trap straight onto the next. Seat 0's pawn starts at `r = 32` and the traps run
+   * backwards from absolute 31, which is the square `r = 32` stands on. `TRAP_CHAIN_LIMIT + 2` are laid
+   * and exactly two must survive.
    */
   it("stops at the chain limit and leaves the rest standing and unfired", () => {
     const count = TRAP_CHAIN_LIMIT + 2;
     const traps = Array.from({ length: count }, (_, index) =>
       trap(TRAP_KIND.NOT_THAT_DEEP, 31 - index)
     );
-    const world = worldWith({
-      pawns: pawnsAt(4, { "0.0": 32 }),
-      traps,
-      dice: Array.from({ length: count }, () => [1, NOT_THAT_DEEP_DIE]),
-    });
+    const world = worldWith({ pawns: pawnsAt(4, { "0.0": 32 }), traps });
     const result = enterSquares(world, mover, 31, 32);
 
     expect(result.traps).toHaveLength(count - TRAP_CHAIN_LIMIT);

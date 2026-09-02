@@ -1037,8 +1037,34 @@ the four square cards were affected, and **none of the three was in the deviatio
 | Card | The rulebook and the artwork | What the code did | Now |
 | --- | --- | --- | --- |
 | Banana Peel | Stunned, loses its next turn | Sent the pawn back to its start area | A `STATUS.STUNNED` for one round |
-| It's Not That Deep | 1 back, plus offensive cards nullified within 3 squares | Pushed back a D6, no aura | Landing in a later commit |
+| It's Not That Deep | 1 back, plus offensive cards nullified within 3 squares | Pushed back a D6, no aura | Pushed back exactly 1. The aura lands separately |
 | Big Ah Rock | 3 rounds, plus the enemy pawn behind knocked back 3 | 2 rounds, no knockback | Landing in a later commit |
+
+#### The two card texts that had started describing the code
+
+`en/cards.json` said Banana Peel sends a pawn "back to the start area" and It's Not That Deep pushes it
+"back a D6", in both languages. Both were accurate descriptions of the implementation and neither matched
+the card the player is holding. **They were corrected in the same commits as the rules**, rather than in
+one tidy-up at the end, because a wrong sentence in a player's hand is a worse bug than a wrong constant:
+a constant is invisible until it fires, and the sentence is on screen every time the card is drawn.
+
+Two texts are still incomplete rather than wrong: Oil Spill does not mention that its slide now resolves
+captures and is stopped by a boulder, and Big Ah Rock still says two rounds. Both land with their rules.
+
+#### Losing the D6 changed how often a chain happens, in the direction nobody expected
+
+It's Not That Deep pushed back an average of 3.5 squares and now pushes back exactly 1. The obvious
+reading is that the card got weaker, which it did. The less obvious consequence is about the **chain**
+added in the same issue: two traps now have to be on **neighbouring** squares for a pushback to walk into
+the second one, where a D6 would have reached anything within six.
+
+So the two changes pull against each other, and the net effect is that chains are rare. That is worth
+recording as a balance fact rather than discovered later as a surprise: the chain is a correctness
+mechanism, not a feature the player will see often. It exists so that a push resolves its capture and
+respects a boulder, and the second trap going off is the uncommon case.
+
+It also removes one draw from the injected RNG per firing, which is why three scripted-roll tests had to
+be re-counted. Chapter 08 has the general version of that problem.
 
 **How the drift happened is the interesting part, and it was not carelessness.** Epic #38 implemented
 nineteen cards in one pass, five of which needed mechanics that did not exist. These three are exactly

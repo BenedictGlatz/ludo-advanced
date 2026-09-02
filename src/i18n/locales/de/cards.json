@@ -72,7 +72,7 @@
       },
       "action-banana-peel": {
         "title": "Banana Peel",
-        "text": "Lege eine Falle auf ein Feld. Wer sie berührt, geht zurück ins Startfeld."
+        "text": "Lege eine Falle auf ein Feld. Wer sie berührt, rutscht aus und setzt mit dieser Figur den nächsten Zug aus."
       },
       "action-hyperbeam": {
         "title": "Hyperbeam",
@@ -124,7 +124,7 @@
       },
       "action-not-that-deep": {
         "title": "It's Not That Deep",
-        "text": "Lege eine Falle auf ein Feld. Wer sie berührt, wird um einen W6 zurückgeschoben."
+        "text": "Lege eine Falle auf ein Feld. Wer sie berührt, wird ein Feld zurückgeschoben."
       },
       "action-let-him-cook": {
         "title": "Let Him Cook",

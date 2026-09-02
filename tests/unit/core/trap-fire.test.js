@@ -14,7 +14,7 @@
 import { describe, expect, it } from "vitest";
 
 import { STATUS, turnsForRounds } from "../../../src/core/statuses.js";
-import { NOT_THAT_DEEP_DIE, OIL_SLIDE, fireTrap } from "../../../src/core/trap-fire.js";
+import { NOT_THAT_DEEP_PUSHBACK, OIL_SLIDE, fireTrap } from "../../../src/core/trap-fire.js";
 import { TRAP_KIND } from "../../../src/core/traps.js";
 import { rngForDice } from "../../helpers/fixtures.js";
 
@@ -86,10 +86,17 @@ describe("Banana Peel stuns the pawn instead of moving it", () => {
 });
 
 describe("the two traps that move the pawn hand back a distance", () => {
-  it("It's Not That Deep asks for a backward push", () => {
-    const result = fire(TRAP_KIND.NOT_THAT_DEEP, [[4, NOT_THAT_DEEP_DIE]]);
+  /**
+   * A fixed 1, and it draws no die at all. It used to be a D6, averaging 3.5, which made the card with
+   * the smallest name the second harshest trap in the game. The scripted RNG is deliberately left empty
+   * here: `rngForDice` throws when it is asked for a roll it was not given, so this asserts that no die
+   * is drawn rather than merely that the answer is 1.
+   */
+  it("It's Not That Deep asks for a one-square push and rolls nothing", () => {
+    const result = fire(TRAP_KIND.NOT_THAT_DEEP);
 
-    expect(result.slide).toBe(-4);
+    expect(result.slide).toBe(-NOT_THAT_DEEP_PUSHBACK);
+    expect(result.slide).toBe(-1);
     expect(result.statuses).toEqual([]);
   });
 
@@ -128,7 +135,7 @@ describe("the trap list afterwards", () => {
   it("clears the trap off the board, whatever it decided", () => {
     for (const [kind, dice] of [
       [TRAP_KIND.BANANA_PEEL, []],
-      [TRAP_KIND.NOT_THAT_DEEP, [[1, NOT_THAT_DEEP_DIE]]],
+      [TRAP_KIND.NOT_THAT_DEEP, []],
       [TRAP_KIND.OIL_SPILL, [[1, 3]]],
     ]) {
       expect(fire(kind, dice).traps).toEqual([]);

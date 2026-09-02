@@ -127,7 +127,10 @@ describe("the order of trap and skill square", () => {
    *
    * It's Not That Deep replaces it, because a pushback still moves the pawn off where it landed. Seat
    * 0's `r = 15` is absolute 14, the skill square; the trap on absolute 12 is crossed at `r = 13` and
-   * pushes the pawn back a scripted D6 of 3, to `r = 12`, which is absolute 11 and not a skill square.
+   * pushes the pawn back one, to `r = 14`, which is absolute 13 and not a skill square.
+   *
+   * The empty `deps()` is part of the assertion. `rngForDice` throws when asked for a roll it was not
+   * given, so this also proves the trap draws no die and the skill square was never consumed.
    */
   it("asks about the square the pawn is really standing on, not the one the move named", () => {
     const state = declared({
@@ -138,9 +141,9 @@ describe("the order of trap and skill square", () => {
       skillSquares: [14],
       skillPool: ["action-angel-die"],
     });
-    const resolved = resolveMove(state, deps([[3, 6]]));
+    const resolved = resolveMove(state, deps());
 
-    expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(12);
+    expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(14);
     expect(resolved.skillSquares).toEqual([14]);
     expect(resolved.skillHands[0]).toEqual([]);
   });
@@ -173,11 +176,12 @@ describe("the order of trap and skill square", () => {
    * The other direction, and the reason step 3 is not simply skipped when a trap fired: a trap can push a
    * pawn **onto** a skill square it was never going to reach.
    *
-   * The pawn declares a walk to r = 20 and a Not That Deep on square 12 pushes it back a D6 of 3, to
-   * r = 17, which is absolute square 16.
+   * The pawn declares a walk to r = 20 and an It's Not That Deep on square 12 pushes it back one, to
+   * r = 19, which is absolute square 18.
    *
-   * Three RNG draws in one resolution, which is worth writing out because it is the most this project
-   * spends in a single transition: the trap's D6, the skill square's respawn, and the card drawn.
+   * **Two RNG draws now, and it used to be three.** The trap's D6 is gone since the pushback became a
+   * fixed 1, so what is left is the skill square's respawn and the card drawn. Worth writing out
+   * because a scripted-roll test is only readable if the draws are counted somewhere.
    */
   it("hands out a card for a square a trap pushed the pawn onto", () => {
     const state = declared({
@@ -185,20 +189,19 @@ describe("the order of trap and skill square", () => {
       to: 20,
       pawns: pawnsAt(2, { "0.0": 11 }),
       traps: [trap(TRAP_KIND.NOT_THAT_DEEP, 12)],
-      skillSquares: [16],
+      skillSquares: [18],
       skillPool: ["action-angel-die"],
     });
     const resolved = resolveMove(
       state,
       deps([
-        [3, 6],
         [1, 6],
         [1, 6],
       ])
     );
 
-    expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(17);
-    expect(resolved.skillSquares).not.toContain(16);
+    expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(19);
+    expect(resolved.skillSquares).not.toContain(18);
     expect(resolved.skillHands[0]).toEqual(["action-angel-die"]);
   });
 });

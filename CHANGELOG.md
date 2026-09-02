@@ -363,6 +363,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   said and what the rulebook has always said. Only that pawn sits out: you still move your other three.
   **The game gets easier as a result**, and that is a deliberate trade: sending a pawn home cost a full
   lap, which made the cheapest trap in the game as harsh as a capture
+- **It's Not That Deep pushes you back one square, not a D6** (issue #45, FR-30). The card is named
+  after how small it is and it now behaves that way. It rolls no die at all, so the outcome is something
+  you can plan around
 - **A trap can now set off another trap.** If a trap pushes your pawn and the push crosses a second
   trap, that one fires too, up to a limit of six in one chain. Two consequences a player will notice:
   a push that lands on an opponent now **captures** it, and a push is **stopped** by a boulder instead
@@ -603,3 +606,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   other a paragraph in documentation chapter 04. Both said the stylesheet reading the attribute did not exist
 - `src/core/cards/catalogue-extra.js` still said "no effect is implemented yet". All 29 cards have had a rule
   since 2026-08-31
+- **Two trap cards described the code rather than the game**, in both languages. Banana Peel said the pawn
+  "goes back to the start area" and It's Not That Deep said "pushed back a D6". Neither matched the card
+  the player is holding or the rulebook, and both are corrected along with the rules they describe

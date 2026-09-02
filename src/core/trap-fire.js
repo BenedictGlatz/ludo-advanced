@@ -45,8 +45,18 @@ import { TRAP_KIND, isBlocker, removeTrap } from "./traps.js";
 /** How long a Banana Peel's stun lasts, in rounds. One: the pawn loses its next turn and no more. */
 export const STUN_ROUNDS = 1;
 
-/** The die It's Not That Deep pushes back by, and the slide Oil Spill gives. */
-export const NOT_THAT_DEEP_DIE = 6;
+/**
+ * How far It's Not That Deep pushes back, and the slide Oil Spill gives.
+ *
+ * **The pushback is a fixed 1 and used to be a D6.** The rulebook and the printed card both say "the
+ * pawn that steps on it moves 1 square back", and the joke on the card is the whole point: a huge alarm
+ * for a tiny consequence. A D6 averaging 3.5 made it the second harshest trap in the game and left the
+ * card's name meaning nothing.
+ *
+ * It also stops the trap drawing from the RNG at all, which is why several scripted-roll tests had to be
+ * re-counted when this changed.
+ */
+export const NOT_THAT_DEEP_PUSHBACK = 1;
 export const OIL_SLIDE = Object.freeze({ min: 3, max: 5 });
 
 /**
@@ -80,9 +90,9 @@ function stun({ statuses, mover, turnNumber, playerCount }) {
   };
 }
 
-/** It's Not That Deep: the pawn is pushed backwards. */
-function pushBack({ statuses, rng }) {
-  return { statuses, slide: -rollDie(NOT_THAT_DEEP_DIE, rng) };
+/** It's Not That Deep: the pawn is pushed back one square. Draws no die. */
+function pushBack({ statuses }) {
+  return { statuses, slide: -NOT_THAT_DEEP_PUSHBACK };
 }
 
 /**

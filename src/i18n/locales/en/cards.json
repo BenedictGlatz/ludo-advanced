@@ -72,7 +72,7 @@
       },
       "action-banana-peel": {
         "title": "Banana Peel",
-        "text": "Lay a trap on a square. Whoever touches it goes back to the start area."
+        "text": "Lay a trap on a square. Whoever touches it slips and loses their next turn with that pawn."
       },
       "action-hyperbeam": {
         "title": "Hyperbeam",
@@ -124,7 +124,7 @@
       },
       "action-not-that-deep": {
         "title": "It's Not That Deep",
-        "text": "Lay a trap on a square. Whoever touches it is pushed back a D6."
+        "text": "Lay a trap on a square. Whoever touches it is pushed back one square."
       },
       "action-let-him-cook": {
         "title": "Let Him Cook",
