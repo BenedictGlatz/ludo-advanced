@@ -22,15 +22,15 @@ Read [reference/style-reference.md](reference/style-reference.md) before writing
 | 01 | [01-requirements-and-goals.md](notes/01-requirements-and-goals.md) | Target players, the problem, MVP scope, MoSCoW, what is deliberately out of scope | backlog, MoSCoW and SMART goals transcribed |
 | 02 | [02-project-management.md](notes/02-project-management.md) | Scrum setup, roles, sprints, GitHub Projects board, ceremonies, definition of done | partial: board, roles, schedule, estimation and Roadmap recorded; ceremonies still unrecorded |
 | 03 | [03-tech-stack.md](notes/03-tech-stack.md) | Languages, libraries, versions, why each was chosen, what was rejected | rejected options and the technical feasibility verdict recorded; reasons for the chosen stack still missing |
-| 04 | [04-frontend-building-blocks.md](notes/04-frontend-building-blocks.md) | `src/ui/`, `src/i18n/`: components, rendering, event binding, localisation | partial: the screen inventory recorded; nothing implemented |
-| 05 | [05-game-core-building-blocks.md](notes/05-game-core-building-blocks.md) | `src/core/`: board topology, movement, capture, dice card pool, skill cards | empty |
-| 06 | [06-state-and-turn-flow.md](notes/06-state-and-turn-flow.md) | `src/state/`: the seam between core and ui, turn flow, state transitions | empty |
-| 07 | [07-tooling.md](notes/07-tooling.md) | npm scripts, package management, ESLint, Prettier, Vite dev/prod build, deployment | target state only; local access findings recorded |
-| 08 | [08-quality.md](notes/08-quality.md) | Unit tests, coverage, E2E, CI/CD, code comments | partial: strategy and Definition of Done recorded; nothing measured, since no code exists |
-| 09 | [09-source-code-overview.md](notes/09-source-code-overview.md) | Size and metrics: **the only chapter where numbers live** | empty |
+| 04 | [04-frontend-building-blocks.md](notes/04-frontend-building-blocks.md) | `src/ui/`, `src/i18n/`: components, rendering, event binding, localisation | ready: every screen built, all six design handoffs recorded, no placeholder stylesheet left |
+| 05 | [05-game-core-building-blocks.md](notes/05-game-core-building-blocks.md) | `src/core/`: board topology, movement, capture, dice card pool, skill cards | partial: board, movement, capture, both card pools and the effect engine recorded |
+| 06 | [06-state-and-turn-flow.md](notes/06-state-and-turn-flow.md) | `src/state/`: the seam between core and ui, turn flow, state transitions | partial: the state object, the intents and the turn flow recorded |
+| 07 | [07-tooling.md](notes/07-tooling.md) | npm scripts, package management, ESLint, Prettier, Vite dev/prod build, deployment | partial: the toolchain is installed and recorded; CI is still issue #68 |
+| 08 | [08-quality.md](notes/08-quality.md) | Unit tests, coverage, E2E, CI/CD, code comments | partial: strategy, Definition of Done and both suites recorded; figures live in Ch. 09; CI does not exist yet |
+| 09 | [09-source-code-overview.md](notes/09-source-code-overview.md) | Size and metrics: **the only chapter where numbers live** | ready: measured 2026-09-02, next to the commands that produced it |
 | 10 | [10-ai-driven-engineering.md](notes/10-ai-driven-engineering.md) | How AI was used in the workflow, what it was good and bad at | conventions, tool split and the precondition finding recorded; the honest assessment waits for real experience |
 | 11 | [11-project-report.md](notes/11-project-report.md) | Plan vs actual, challenges, lessons learned | empty |
-| 12 | [12-appendix.md](notes/12-appendix.md) | Tables, figures and code excerpts moved out of the running text | partial: figures 2 to 5 registered, 1 and 6 reserved |
+| 12 | [12-appendix.md](notes/12-appendix.md) | Tables, figures and code excerpts moved out of the running text | partial: figures 2 to 12 registered, 1 and 6 reserved |
 | 13 | [13-ai-index.md](notes/13-ai-index.md) | The AI index: **generated**, never hand-maintained | empty |
 
 Status values: `empty` → `partial` → `ready`. Update the row when a chapter's note becomes usable.

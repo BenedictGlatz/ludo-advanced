@@ -86,7 +86,9 @@ Three obligations that are easy to miss because they are not screens:
   computed in `core/` and handed to the view rather than re-derived while rendering.
 - **Players are distinguishable without colour.** NFR-12 requires a second, non-colour identifier per
   player. The rules layer supplies a stable player identity; which identifier renders it is a Claude
-  Design decision, per section 6.8 of the game design document.
+  Design decision, per section 6.8 of the game design document. **Answered 2026-09-02:** a shape per seat,
+  circle, triangle, square and diamond, on the pawns and on every place that names a seat. Design handoffs
+  04 and 06, and `tests/e2e/greyscale.spec.js` is what checks it.
 
 ### 2.4 Not decided here
 
@@ -209,6 +211,10 @@ Printed rather than smoothed over, because each one is a real obligation this do
   (FR-34, `must have`, with NFR-03) appear in no issue on the board. FR-34 being a must-have
   requirement with no issue is the more serious of the two: the board understates the remaining work
   by that much. Carried into the effort estimation, issue #16.
+  **Update 2026-09-01:** the language half shipped inside issue #39 as a button in the always-present
+  chrome, so the must-have half of this gap is closed although it never got a card. **S10 still has no
+  issue and no design**, and the dice pool overview of handoff 05 covers the dice-card third of what it
+  would have explained, by accident rather than by plan. It is the next MoSCoW decision after #40 audio.
 - ~~**No design specification exists.**~~ **Closed on 2026-08-30.** Design handoff 01 landed under
   issue #3. The reasoning is in
   [01-Design/Handoff/01-spec-foundations-and-board.md](../../01-Design/Handoff/01-spec-foundations-and-board.md),
@@ -216,7 +222,11 @@ Printed rather than smoothed over, because each one is a real obligation this do
   motion, the two skins and every state in the DOM contract. The design system itself is not a
   document: it is `src/ui/styles/tokens.css`, `board.css`, `board-track.css`, `pawn.css` and
   `refusal.css`, which is what the build ships. **This document points at both and absorbs neither.**
-  It covers screens S3 and S6 only; S4, S5, S7 and the menus still have no design and belong to
-  issues #37, #38 and #39.
+  ~~It covers screens S3 and S6 only; S4, S5, S7 and the menus still have no design and belong to
+  issues #37, #38 and #39.~~ **Every screen in the inventory above is designed as of 2026-09-02**, over
+  six handoffs: S3 and S6 in handoff 01, S4 and S5 in handoff 03, S1, S2, S7, S8, S9 and the handover in
+  handoff 04, the dice pool overview in handoff 05, and the seat mark NFR-12 needs in handoff 06.
+  `src/ui/styles/` holds sixteen stylesheets and **none of them is a placeholder** written by Claude Code.
+  S10, the rules screen, has no design because it has no issue and may not be built.
 - **Nothing here is verified**, as stated at the top. The first commit that creates `src/` is the first
   evidence that any of it survives contact with code.

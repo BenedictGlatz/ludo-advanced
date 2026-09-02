@@ -316,6 +316,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (S7), the main menu (S1), match setup (S2), pause (S8), win (S9) and a new handover screen for the
   moment between two turns at a shared screen. Eight open decisions, D35 to D42, plus the eleven items
   that were left open by handoffs 02 and 03 and had been drifting since
+- **Design handoff 06** (`01-Design/Handoff/06-brief-pawn-mark.md`), asking for the seat's shape on the
+  pawn itself, which is where NFR-12 is measured and the one place the shape is not yet. Three open
+  decisions, D48 to D50. Every pawn now carries an empty mark element for the stylesheet to fill, so
+  nothing is visible until the spec lands. The work order to Claude Design puts this brief ahead of
+  handoff 05
 - **Players are named on screen** (issue #39): "Spieler 2 (Grün)", the number counting from 1 in seat
   order and the colour naming the pieces on the board. German and English
 - **The game says whose turn it is** (issue #35). A sentence in the top bar, "Spieler 1 (Rot) ist am
@@ -346,6 +351,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Every player now has a shape as well as a colour, and the shape is on the pieces** (design handoff 06,
+  NFR-12). Each seat's pawns carry a small ink badge: a circle, a triangle, a square or a diamond,
+  matching the shape that seat already had on the scoreboard and in the top bar. It sits low on the piece
+  so the two eyes stay where they were, and it travels with the pawn through every state. The point is a
+  board you can still read when you cannot tell red from green, or on a black and white printout
+- **The dice card pool overview is drawn by its designed stylesheet** (design handoff 05). What a player
+  notices: each of the seven cards is now drawn as the little stack of copies the pool actually holds, so
+  a W6 visibly sits on a thicker pile than a W20 and the weighting of the pool can be seen rather than
+  counted. The cards are bigger, the short second row is centred under the first, the word "Würfelkarte"
+  is gone from cards on a screen already titled with it, and the copy count is the one tag that stands out
+- **The keyboard skips cards it cannot play.** Tabbing across the pool overview used to stop on all seven
+  cards before reaching the button that closes it, and pressing Enter on them did nothing
 - **The game has a designed look for the whole of its interface** (design handoff 04). The four regions that
   were drawn by placeholder stylesheets are drawn by real ones now: the top bar, the scoreboard, the prompt
   strip and the five screens. What a player notices, in rough order: the reaction countdown is a ring that

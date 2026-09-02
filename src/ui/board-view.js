@@ -94,12 +94,18 @@ function house(seat) {
  * It is a direct child of `.board` for its whole life and is never moved into a square, which is the
  * D10 contract change. `tabindex` is what makes the `:focus-visible` ring of D11 reachable: the
  * design specified a keyboard state, so the markup has to be keyboard-reachable for it to exist.
+ *
+ * `.pawn__mark` is the empty element design spec 04 § 5 asked for: the seat's shape (D16, NFR-12) goes
+ * on the piece, and the two pseudo-elements of `pawn.css` are already taken by the body and the state
+ * ring. It carries no text and no attribute of its own; `data-player` on the pawn is what keys it.
+ * Styled by design handoff 06.
  */
 function pawn(seat, index) {
   return $("<div>", { class: "pawn", tabindex: 0 })
     .attr("data-player", seat)
     .attr("data-pawn", index)
-    .attr("data-r", 0);
+    .attr("data-r", 0)
+    .append($("<span>", { class: "pawn__mark" }));
 }
 
 /**

@@ -56,6 +56,13 @@ Likely candidates as the project runs:
 | 9 | The design token reference | [01-spec-foundations-and-board.md](../../../01-Design/Handoff/01-spec-foundations-and-board.md) section 3 | Ch. 04 |
 | 10 | The board renderer, as the browser holds it | Drawn in this file, from `src/ui/board-view.js` | Ch. 04 |
 | 11 | The rendered board: 2, 3 and 4 players, the Night In skin, and greyscale | `01-Design/assets/*.png`, from `node scripts/design-screenshots.js` | Ch. 04, Ch. 08 |
+| 12 | The board in greyscale with the seat shapes on the pieces, the evidence for NFR-12 | The `board-in-greyscale` attachment of `tests/e2e/greyscale.spec.js`, produced on every run | Ch. 01, Ch. 04, Ch. 08 |
+
+**Figure 12 registered on 2026-09-02**, and it is the only figure in this list that a test produces as a
+side effect of asserting something. The same spec file that checks the four seats have four different
+shapes also attaches the screenshot, so the picture in the report and the assertion behind it come from
+one run and cannot drift apart. Figure 11's greyscale frame is the **before** of the same view, taken
+while the seats were told apart by colour alone, and the two are worth printing side by side.
 
 **Figures 8 and 9 registered on 2026-08-30**, both from design handoff 01. Figure 8 is a table and
 not a drawing on purpose: the board's geometry is 40 index-to-cell mappings, and a picture of the

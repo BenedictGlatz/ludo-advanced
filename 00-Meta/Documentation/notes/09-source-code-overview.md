@@ -115,11 +115,55 @@ of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
 
+### Measured 2026-09-02, after design handoffs 05 and 06 landed
+
+Every command in the section above was re-run after the two delivered stylesheets were copied in, the
+`data-copies` attribute was added and `greyscale.spec.js` was rewritten. **This is the current
+measurement**; the ones below it are kept so the growth is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **9374 lines in 64 files** | 2026-09-02, after handoffs 05 and 06 |
+| Stylesheet lines in `src/` | 7 | **2667 lines in 16 files** | 2026-09-02, after handoffs 05 and 06 |
+| Test lines in `tests/` | 2 | **9117 lines in 55 files** | 2026-09-02, after handoffs 05 and 06 |
+| Lines in `src/core/` | 3 | 3669 lines in 27 files, unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Lines in `src/state/` | 3 | 1809 lines in 10 files, unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Lines in `src/ui/` | 3 | **3625 lines in 25 files**, plus 2667 lines of CSS | 2026-09-02, after handoffs 05 and 06 |
+| Unit tests | 4 | **39 test files, 554 tests, all passing** | 2026-09-02, after handoffs 05 and 06 |
+| End-to-end tests | 8 | **73 tests in 14 files per browser, 219 across the three** | 2026-09-02, after handoffs 05 and 06 |
+| Expected failures in the e2e suite | 8 | **none.** The last one, `greyscale.spec.js`, was retired with D50 | 2026-09-02, after handoffs 05 and 06 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.20 % (751/757), unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Coverage of `src/core/`, lines | 5c | 99.59 % (491/493) over 27 files, unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Coverage of `src/state/`, lines | 5c | 98.48 % (260/264) over 10 files, unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Coverage, branches | 5a | 96.01 % (530/552), unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Coverage, functions | 5a | 100 % (273/273), unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Longest file of any kind | 6 | 300 lines, `src/state/turn-manager.js`, unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Longest stylesheet | 7 | 244 lines, `src/ui/styles/prompt.css`, unchanged | 2026-09-02, after handoffs 05 and 06 |
+
+**Four readings, and the second one is what this measurement was taken for.**
+
+1. **`src/core/` and `src/state/` did not move by a single line for the second delivery running**, and
+   every coverage figure is identical to the day before. Two design deliveries in two days touched `ui/`
+   and nothing else. That is the same NFR-01 evidence the 2026-09-01 measurement produced, and a
+   repetition is worth more than a single reading: it says the layering holds under a kind of change that
+   arrives from outside the team.
+2. **The stylesheets grew by 144 lines and the longest one did not change.** `pool.css` went from 92 to
+   195 and `pawn.css` from 166 to 218, which is where the whole growth sits. Both were delivered under
+   250 unformatted lines on purpose, so `npm run format` had little left to expand: the practice the work
+   order asks for in rule 2 is now visible in the numbers three deliveries in a row.
+3. **The e2e suite gained two tests and lost its only expected failure.** 71 to 73 per browser: one case
+   for `data-copies` in `dice-pool.spec.js`, and the first case of `greyscale.spec.js` split its work
+   across colour and greyscale in one test rather than two. The row above is the more interesting one.
+   From 2026-08-30 to 2026-09-02 the suite carried a permanently red case by design, and **there is now
+   no test in this project that is expected to fail**.
+4. **`prompt.css` is still the file to watch at 244 lines**, unchanged, and it is now the third-longest
+   stylesheet by a smaller margin than before: `tokens.css` is 230 and `overlay.css` 228. Nothing is over.
+
 ### Measured 2026-09-01, after design handoff 04 landed
 
 Every command in the section above was re-run after the handoff-04 stylesheets were copied in. This is the
-third measurement of the same day and it is the one that is current; the two below it are kept so the
-growth is readable rather than asserted.
+third measurement of that day; the one above it is current and the ones below it are kept so the growth is
+readable rather than asserted.
 
 | Metric | Command | Value | Taken on |
 | --- | --- | --- | --- |

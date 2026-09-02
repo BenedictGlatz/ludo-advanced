@@ -44,6 +44,8 @@ describe("the pool overview", () => {
     for (const [index, entry] of POOL_COMPOSITION.entries()) {
       expect(cards[index].id).toBe(`dice-d${entry.faces}`);
       expect(cards[index].tags.at(-1)).toContain(String(entry.copies));
+      // Design spec 05 D44: the same number a second time, as the depth of the stack `pool.css` draws.
+      expect(cards[index].copies).toBe(entry.copies);
     }
   });
 

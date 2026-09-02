@@ -82,6 +82,40 @@ Two flows are named and **not** scheduled, so that the gap is a decision rather 
 pause and abandon (FR-07) is covered by E11's reset assertions only, and mute (FR-41) has no flow
 because audio has no test strategy in this plan. Both are `should have`.
 
+### 3.1 Which spec file covers which flow, measured 2026-09-02
+
+The table above was written on 2026-08-22, before any spec file existed. This one says where each flow
+actually lives, so the plan can be checked rather than believed. Read from `tests/e2e/`, fourteen files.
+
+| # | Flow | Spec file |
+| --- | --- | --- |
+| E1 | Start a match with 2, 3 and 4 players | `match-flow.spec.js`, `board-renders.spec.js` |
+| E2 | Take a full turn | `match-flow.spec.js`, `dice-hand.spec.js` |
+| E3 | Pick a dice card | `dice-hand.spec.js`, `dice-pool.spec.js` |
+| E4 | Leave the start area | `pawn-leaves-start.spec.js` |
+| E5 | Capture an opponent's pawn | `capture.spec.js` |
+| E6 | Play an Action card | `skill-hand.spec.js` |
+| E7 | Play a Reaction card in an open window | **No spec file.** See below |
+| E8 | A turn with no legal move | `no-legal-move.spec.js` |
+| E9 | Legal moves are shown before committing | `pawn-moves.spec.js`, `pawn-leaves-start.spec.js` |
+| E10 | Win the match | `win.spec.js`, `match-flow.spec.js` |
+| E11 | Restart from the win screen | `match-flow.spec.js` |
+| E12 | Switch the locale at runtime | `hud.spec.js`, `match-flow.spec.js`, `dice-pool.spec.js` |
+
+**E7 is the one flow with no end-to-end coverage, and it is the most complex rule in the game.** The
+reaction window is covered at unit level in `tests/unit/state/reaction-window.test.js`, so the rule is
+tested; what is not tested is the flow through a browser, where the window has to open, prompt every
+eligible holder in turn order and hold the triggering action until each has played or declined. It is
+named here rather than left to be noticed: **an untested player-facing flow is a known gap, and this one
+is a should-have mechanic that a playtester will exercise on their first capture.**
+
+**Five spec files serve no flow in the table**, which is the opposite check and is worth as much:
+`shell.spec.js` (FR-31, one screen with no scrolling), `hud.spec.js` (FR-36), `handover.spec.js` (the
+screen that only exists because skill cards are secret), `greyscale.spec.js` (NFR-12) and
+`board-renders.spec.js` (the board's topology). Four of the five test non-functional requirements, which
+is why the flow list derived from FR ids did not predict them. **The flow list is not wrong, it is
+narrower than the suite**, and the report should say which of the two it is quoting.
+
 ---
 
 ## 4 Unit test cases for the settled edge cases

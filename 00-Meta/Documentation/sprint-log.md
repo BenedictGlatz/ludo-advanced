@@ -334,13 +334,34 @@ available cut. **That is no longer what the board says**, see point 1 above.
   - **Two defects found while landing it**, both by the spec's own requirements rather than by the code: the
     handover was uncovering the leaving player's secret hand for one frame, and the chrome's seat marker was
     being written by one file and erased by another. Both fixed and both tested.
-- **This Delivered list has a hole between 2026-08-30 and 2026-09-01.** Issues #31, #32, #33, #34, #35,
-  #38, #39 and #41 all landed in that window and none of them has an entry here, although their facts
-  are in the chapter notes and the journal's decision blocks. Not reconstructed by whoever wrote the
-  #30 entry, because a sprint log written from someone else's commits is a guess. It is the same gap the
-  2026-08-30 entry in [project-journal.md](project-journal.md) records for the session log, which makes
-  it a pattern rather than an oversight: **the per-change documentation step is being done in the
-  chapter notes and skipped in the two chronological logs.**
+- **This Delivered list had a hole between 2026-08-30 and 2026-09-01.** Issues #31, #32, #33, #34, #35,
+  #38, #39 and #41 all landed in that window with no entry here, although their facts were in the chapter
+  notes and the journal's decision blocks. It is the same gap the 2026-08-30 entry in
+  [project-journal.md](project-journal.md) records for the session log, which makes it a pattern rather
+  than an oversight: **the per-change documentation step was being done in the chapter notes and skipped
+  in the two chronological logs.**
+
+  **Filled on 2026-09-02, and it was safe to fill.** The concern recorded above was that a sprint log
+  written from somebody else's commits is a guess. Every commit in the window is authored by `lbolender`,
+  checked with `git log --date=short --format='%h %ad %an %s'`, so this is the author writing their own
+  log two days late rather than reconstructing anybody else's work. Two days late is still late, and the
+  entries below are dated by the commit rather than by today.
+
+  | Date | Issue | What landed |
+  | --- | --- | --- |
+  | 2026-08-31 | #38 (epic) | The rules substrate the skill cards stand on: the roll as an ordered chain of modifiers, turn-counted statuses, traps and blockers on the shared squares, and movement answering questions about squares a move passes over |
+  | 2026-08-31 | #32 (5) | The 29-card catalogue and the closed 58-card pool, plus the eight skill squares on the board and the locale split into `ui` and `cards` files |
+  | 2026-08-31 | #31 (5) | Design spec 03 landed and the player picks the die: the card component behind all three families, the dice hand, and the choose step added to the turn |
+  | 2026-09-01 | #33 (13) | The effect engine, the reaction window and all 29 cards over two commits, plus the action phase splitting commit from resolve in the turn flow |
+  | 2026-09-01 | #34 (5) | The skill hand made playable, with the target picker |
+  | 2026-09-01 | #39 (epic) | The 36 card illustrations extracted from the artboard, players named on screen, and the language switch put in the chrome |
+  | 2026-09-01 | #35 (2) | The HUD: whose turn it is in words, and each seat's pawn and card counts |
+  | 2026-09-01 | #41 (5) | The menu, match setup, handover, pause, win and restart flow, with no page reload |
+
+  **The lesson is about when, not whether.** Every one of these has its facts recorded somewhere; what was
+  missing was the sequence, and the sequence is the only thing a chapter note cannot reconstruct. The two
+  chronological logs are the artefacts that show pace, which is exactly what the report's
+  plan-versus-actual chapter is built from.
 
 **Note on booking #30's points.** The estimate for #30 reads "`core/dice-pool.js`: the 20-card
 composition as a single data definition, the draw of 3, the return and reshuffle, with the RNG taken as
@@ -356,7 +377,53 @@ own Definition of Done not one of these issues is done: the board still shows th
 That gap between "committed" and "done" is the whole remaining risk in this sprint, and it is one
 review away.
 
+- **2026-09-02:** the Sprint 2 closeout opened with a brief rather than with the board. Design brief 06
+  (`01-Design/Handoff/06-brief-pawn-mark.md`, the seat shape on the pawn, closing D16 and NFR-12) went out
+  first, the work order was re-ordered to 06 before 05, and the `.pawn__mark` element the brief needs went
+  into `board-view.js` in the same commit with an end-to-end case asserting it. Reason, recorded in the
+  journal: two of the five closeout steps wait on Claude Design and the other three do not touch the
+  stylesheets, so sending first turns the whole closeout window into design time. No points booked; NFR-12
+  has no issue and was never estimated.
+
+- **2026-09-02:** **design handoffs 05 and 06 both landed, in one delivery.** `pool.css` replaced the last
+  placeholder stylesheet and `pawn.css` gained the seat mark, with `05-spec-dice-pool-overlay.md` and
+  `06-spec-pawn-mark.md` answering D43 to D50. **NFR-12 is met** and `greyscale.spec.js` runs green with no
+  expected-failure marker for the first time since 2026-08-30. Two DOM changes the specs asked for by name
+  were wired: `data-copies` on the pool card and `tabindex` conditional on a card being playable. **No
+  story points**, for the same reason handoff 04 booked none: the design loop generates work without
+  generating cards, and NFR-12 was never estimated by anybody.
+- **2026-09-02, the board caught up with the code.** #31, #32, #33, #34 and #35 closed by hand with a
+  comment naming why (`Closes #n` only fires on a merge into `main`), their `Sprint` set to Sprint 2, their
+  `Status` to Done and their dates set from the author date of the delivering commit. Epics #37 and #38
+  moved to Done. #40 moved to Sprint 3. **#68 created**, the CI build-check workflow, 2 points, Sprint 3:
+  it was the last must-have work in the project with no card at all, named in three documents and on the
+  board in none of them. #30 stays In Progress until the merge, by the project's own Definition of Done.
+- **The Sprint 2 figure, read off the board after the corrections above:**
+
+  ```bash
+  gh project item-list 3 --owner BenedictGlatz --format json --limit 100 \
+    | node -e "const j=JSON.parse(require('fs').readFileSync(0));const a={};for(const i of j.items){if(i.status!=='Done')continue;const s=i.sprint||'none';a[s]=(a[s]||0)+(i['story Points']||0)}console.log(a)"
+  ```
+
+  **73 points marked Done in Sprint 2**, read 2026-09-02, with #30's 3 points still outside it. **This is
+  not a velocity and must not be used as one**, and there are now four independent reasons rather than
+  three: no effort is measured anywhere; #30's points describe work done on a different day; two design
+  deliveries did a day's work each for no points; and five of the issues counted here were planned for
+  Sprint 3 and pulled forward. The figure is printed with all four next to it or not printed at all.
+
 **Divergence and reasons**: *open, filled as it happens*
+
+- **Five issues moved from Sprint 3 into Sprint 2, after the fact.** #31, #32, #33, #34 and #35 were
+  scheduled into the Sprint 3 implementation half by section 2.2 of
+  [Project-Plan.md](../Project-Management/Project-Plan.md), and all five were built on 2026-08-31 and
+  2026-09-01 because the state layer finished early and nothing blocked them. The board now says Sprint 2,
+  which is where the work happened. The plan is not edited to match: the gap between what was planned and
+  what happened is the finding, and this is the sentence that holds it.
+- **Sprint 3's implementation half is nearly empty before it starts.** It was planned as 35 points over
+  five weekdays, and six of its seven items are delivered. What is left is #40 audio (3 points, and the
+  Product Owner has been asked to cut it), #68 the CI workflow (2 points), and the review and merge of
+  this branch. **That is the plan-versus-actual story of this project in one line**, and it is a schedule
+  finding rather than a success: the estimates were built for people writing the code by hand.
 
 - **The plan's Step 4 was committed in the reverse of the order it names.** It asks for
   `feat(movement)` closing #28 and then `feat(capture)` closing #29. `movement.js` imports
@@ -420,12 +487,19 @@ review away.
   everything" and "no file over 300 lines", disagreed on a file that was compliant when it was
   written.
 
-- **NFR-12 is not met, and the sprint closes with it not met.** The design tells players apart by
+- ~~**NFR-12 is not met, and the sprint closes with it not met.** The design tells players apart by
   colour alone after the non-colour identifier was removed on request. Red and blue are ten
   greyscale levels apart out of 255. `greyscale.spec.js` measures it, fails, and is marked as
   expected to fail so the suite reports a known failure rather than going green. Row 8 of the
   Product Owner sign-off table carries the question. **This is a `must have` requirement that is
-  visibly unsatisfied and is being carried, not closed.**
+  visibly unsatisfied and is being carried, not closed.**~~
+
+  **Closed on 2026-09-02, and the entry is kept because how it closed is the interesting part.** The
+  requirement was open for three days and is met: design handoff 06 put a shape per seat on the piece and
+  the test now asserts the acceptance criterion instead of a proxy for it. Two corrections to what the
+  struck-through text says: NFR-12 is **`should have`**, not `must have`, an error that had spread to five
+  files and was found on 2026-09-01; and the thing that carried the requirement to a close was the
+  expected-failure marker itself, which made the gap impossible to forget in three days of daily test runs.
 
 - **The dice pool balance in section 5 of the game design document is knowingly out of date**,
   because it was derived against a 58-step journey and the journey is now 44. It is flagged in the
@@ -463,6 +537,18 @@ review away.
 | --- | --- | --- | --- | --- |
 | Implementation half | 2026-09-07 → 2026-09-11 | 5 | #32, #33, #34, #35, #40, #41, the CI workflow | 35 |
 | Closing window | 2026-09-14 → 2026-09-17 | 4 | See the closing-window entry below | 23 |
+
+> **Board scope read 2026-09-02, and it is two items.** #40 audio (3 points, Todo) and **#68, the CI
+> build-check workflow (2 points, Todo, created 2026-09-02)**. Five of the seven planned implementation
+> items, #32 to #35 and #41, were delivered in Sprint 2 and are booked there. **5 points against five
+> weekdays**, where the plan wrote 35, and the Product Owner has been asked to cut #40 by 2026-09-06.
+>
+> The plan's 35-point line is left standing above rather than edited. The difference between the two
+> figures is the plan-versus-actual comparison this sprint contributes, and rewriting the plan to match
+> what happened would delete it.
+>
+> **What is genuinely left is not on the board and is not points.** The review and merge of the Sprint 2
+> branch into `dev`, the decision about a `dev` to `main` release, and everything in the closing window.
 
 **35 points against 5 weekdays is 7 per weekday, against a required average of 4.9.** The imbalance is
 recorded rather than smoothed: it is where the must-have set stops fitting, and printing it on the

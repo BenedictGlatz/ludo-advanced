@@ -165,5 +165,28 @@ test.describe("the dice card pool overview", () => {
     await expect(page.locator(".overlay__cards .card__result")).toHaveText(
       Array(POOL_COMPOSITION.length).fill("")
     );
+
+    // Design spec 05, section 5: a card nothing can be done with is not a tab stop. Before this, seven
+    // stops sat between a keyboard user and the one button that closes the panel.
+    await expect(page.locator('.overlay__cards .card[tabindex="0"]')).toHaveCount(0);
+  });
+
+  test("carries the copy count as an attribute, so the card can be drawn as a pile (D44)", async ({
+    page,
+  }) => {
+    await openMatch(page, SEEDS.leavesStartAtOnce);
+    await openPool(page);
+
+    // The tag states the number in words and `data-copies` states it as an integer; `pool.css` reads the
+    // attribute to stack the card. The two must agree, and both come from `POOL_COMPOSITION`.
+    for (const { faces: side, copies } of POOL_COMPOSITION) {
+      await expect(page.locator(`.overlay__cards .card[data-faces="${side}"]`)).toHaveAttribute(
+        "data-copies",
+        String(copies)
+      );
+    }
+
+    // A card in a hand never carries it: the count is a fact about the pool, not about the card.
+    await expect(page.locator(".hand .card[data-copies]")).toHaveCount(0);
   });
 });

@@ -1,29 +1,25 @@
 /**
  * NFR-12, measured. "A greyscale screenshot still identifies whose pawns are whose."
  *
- * ## Why this file exists in the shape it does
+ * ## What this file asserts, and what it used to
  *
- * NFR-12 asks for a second, non-colour identifier per player. Design handoff 01 first answered it
- * with a per-seat pawn silhouette and then, on request, removed it: D2 tells players apart by colour
- * alone. What is left is the acceptance criterion above, and the spec is explicit that it might not
- * be met, that the margin is thin, and that this test is the thing that settles it.
+ * NFR-12 asks for a second, non-colour identifier per player. Design handoff 01 first answered it with a
+ * per-seat pawn silhouette and then, on request, removed it: D2 told players apart by colour alone. From
+ * 2026-08-30 to 2026-09-02 the first test in this file therefore measured the greyscale contrast of the
+ * four seat colours against a 1.30 floor, measured 1.146 at the worst pair, and carried `test.fail()` so
+ * the suite reported a known failure instead of going green over an unmet requirement.
  *
- * It does not settle it in the design's favour. The first test below **is expected to fail** and is
- * marked as such, so the suite reports it as a known failure rather than going green over a
- * requirement that is not met. If somebody widens the palette, Playwright reports an unexpected pass,
- * which is exactly the signal wanted.
+ * Design handoff 06 (D48 to D50) put a shape per seat on the piece: `.pawn__mark`, an ink shape clipped
+ * to `--seat-shape-0` to `--seat-shape-3`, a circle, a triangle, a square and a diamond. The requirement
+ * is now met another way, so the first test asserts the acceptance criterion as it is written: every pawn
+ * carries a mark, the mark has a shape, the shape is the same within a seat and different across seats,
+ * and none of that changes under a greyscale filter.
  *
- * ## Where the 1.30 threshold comes from, since a made-up number would prove nothing
- *
- * Four colours have six pairs, and what matters is the **worst** pair. The best a four-value palette
- * can do is to spread the four evenly, in contrast-ratio terms, across whatever luminance range it
- * spans. These four span from blue at 0.2543 to yellow at 0.6336 relative luminance, a ratio of
- * `(0.6336 + 0.05) / (0.2543 + 0.05) = 2.246`. Spread evenly that is three equal steps, so each step
- * is the cube root, **1.31**.
- *
- * So 1.30 is not a target picked to be reachable or to be strict. It is very nearly the best these
- * four hues can achieve without changing which colours they are, which is what makes falling short of
- * it a fact about the palette rather than about the threshold.
+ * The 1.30 luminance case is retired, as D50 decided. The 1.146 figure and the derivation of the 1.30
+ * threshold live in `00-Meta/Documentation/notes/01-requirements-and-goals.md` next to NFR-12 and in
+ * `notes/08-quality.md`, where the next person who proposes moving a seat colour will find them. What is
+ * kept is the second case below, the floor of four different greys: two seats reducing to the same grey is
+ * the regression worth catching, and it passes today.
  */
 
 import { expect, test } from "@playwright/test";
@@ -31,6 +27,7 @@ import { expect, test } from "@playwright/test";
 import { SEEDS, openMatch } from "./helpers.js";
 
 const SEAT_TOKENS = ["--color-p0", "--color-p1", "--color-p2", "--color-p3"];
+const SEATS = [0, 1, 2, 3];
 
 /** Read the four seat colours off `:root` and reduce each to its relative luminance. */
 async function seatLuminance(page) {
@@ -75,22 +72,60 @@ function pairs(seats) {
   return result;
 }
 
+/**
+ * For every pawn on the board: its seat, the rendered box of its mark and the computed `clip-path`.
+ *
+ * `getComputedStyle` resolves the `var()` chain, so what comes back is the literal shape and not the
+ * token name. That is what lets the test compare shapes across seats without knowing the four values,
+ * which stay the design's to change.
+ */
+async function pawnMarks(board) {
+  return board.locator(".pawn").evaluateAll((pawns) =>
+    pawns.map((pawn) => {
+      const mark = pawn.querySelector(".pawn__mark");
+      const box = mark.getBoundingClientRect();
+
+      return {
+        seat: Number(pawn.getAttribute("data-player")),
+        width: box.width,
+        height: box.height,
+        clipPath: window.getComputedStyle(mark).clipPath,
+      };
+    })
+  );
+}
+
+/** The asserting half of NFR-12, run once in colour and once under the greyscale filter. */
+function expectSeatsIdentifiable(marks) {
+  expect(marks).toHaveLength(16);
+
+  for (const mark of marks) {
+    expect(mark.width, `seat ${mark.seat} mark width`).toBeGreaterThan(0);
+    expect(mark.height, `seat ${mark.seat} mark height`).toBeGreaterThan(0);
+    expect(mark.clipPath, `seat ${mark.seat} has a shape`).not.toBe("none");
+  }
+
+  const shapeOf = SEATS.map((seat) => {
+    const shapes = new Set(marks.filter((mark) => mark.seat === seat).map((mark) => mark.clipPath));
+    expect(shapes.size, `seat ${seat} uses one shape for all four pawns`).toBe(1);
+    return [...shapes][0];
+  });
+
+  expect(new Set(shapeOf).size, "the four seats have four different shapes").toBe(4);
+}
+
 test.describe("NFR-12: the board in greyscale", () => {
-  test("separates all four seats by at least 1.30 in greyscale", async ({ page }) => {
-    // Measured on 2026-08-30: the worst pair is red against blue at **1.146**, which is greys 147
-    // and 137 out of 255, ten levels apart. Red against green is second worst at 1.263. The other
-    // four pairs are fine. D2 of the design spec names the two ways out, in order of cost: darken
-    // blue and lighten green a step, or reinstate a non-colour identifier. Both are Product Owner
-    // decisions, which is why row 8 of the sign-off table records a question and not a rule.
-    test.fail(
-      true,
-      "D2 answers NFR-12 by colour alone; the red and blue greys are 10 levels apart"
-    );
+  test("gives every seat its own shape on the piece, in colour and in greyscale", async ({
+    page,
+  }) => {
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
 
-    await openMatch(page, SEEDS.leavesStartAtOnce);
-    const worst = pairs(await seatLuminance(page)).sort((a, b) => a.ratio - b.ratio)[0];
+    expectSeatsIdentifiable(await pawnMarks(board));
 
-    expect(worst.ratio, `worst pair: ${worst.pair}`).toBeGreaterThanOrEqual(1.3);
+    // The filter changes what a pixel looks like and not what a box measures, so the same assertions hold
+    // and the run under the filter is the acceptance criterion's own wording: a greyscale screenshot.
+    await page.addStyleTag({ content: "html { filter: grayscale(1); }" });
+    expectSeatsIdentifiable(await pawnMarks(board));
   });
 
   test("does at least give the four seats four different greys", async ({ page }) => {
@@ -98,7 +133,8 @@ test.describe("NFR-12: the board in greyscale", () => {
     const seats = await seatLuminance(page);
 
     // The floor below which the board would be unreadable rather than merely hard: two seats that
-    // reduce to the same grey are not telling anybody anything. This one passes.
+    // reduce to the same grey are not telling anybody anything. This one passes. D50 keeps it as the
+    // palette's floor after the 1.30 case was retired.
     for (const { pair, ratio } of pairs(seats)) {
       expect(ratio, pair).toBeGreaterThan(1.0);
     }
@@ -128,7 +164,7 @@ test.describe("NFR-12: the board in greyscale", () => {
       contentType: "image/png",
     });
 
-    // The picture is evidence for handoff 02, not an assertion. What can be asserted about it is
+    // The picture is evidence for handoffs 02 and 06, not an assertion. What can be asserted about it is
     // that there was a board to photograph.
     await expect(board.locator(".pawn")).toHaveCount(16);
   });
