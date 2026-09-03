@@ -391,16 +391,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The game now tells you when a trap goes off**, and who laid it (issue #45, FR-30). This matters most
   for Banana Peel, which does not move your pawn at all: without a message the pawn would arrive exactly
   where you aimed it and then silently be unable to move next turn. The message stays on screen for the
-  same four seconds a refusal does, so the handover screen cannot cover it before it is read. **It is
-  currently shown in the orange the game uses for "you cannot do that", which is the wrong colour**: a
-  trap going off is not something you did wrong. Design decision D55 is open against it, and the
-  alternative was leaving a Banana Peel eating turns in silence
+  same four seconds a refusal does, so the handover screen cannot cover it before it is read. It shipped
+  in the orange the game uses for "you cannot do that", which was the wrong colour for something you did
+  not do wrong; **design handoff 07 fixed that**, and the message now has its own quieter voice
 - **Every trap and blocker is public** (issue #45, FR-30). Whoever lays one, everyone at the table can see
   where it is and whose it is. The rulebook's "face-down" It's Not That Deep is gone: four people share
   one screen, so a hidden trap was never really hidden, and a trap nobody can see cannot be avoided,
-  which is the only thing that makes its protective aura a choice rather than a fine. Nothing is drawn on
-  the board yet, because that look is design decision D51 to D60; the information is in the page and the
-  game says so in words when one goes off
+  which is the only thing that makes its protective aura a choice rather than a fine
+- **Traps, blockers, the protected zone and two pawn conditions are now drawn on the board** (design
+  handoff 07). Until now all of it was in the page and none of it was visible. What a player sees:
+  - **A trap is a small chip in the bottom-left corner of the field**, in the colour of whoever laid it
+    and carrying that player's shape, so you can tell your own traps from everybody else's at a glance.
+    That matters because a trap never goes off under a pawn of the player who laid it. The three kinds of
+    trap look the same on purpose: at that size, next to everything else a field can be carrying, the
+    thing worth reading is that something is there and whose it is
+  - **A Big Ah Rock is the same object grown to cover the field, with square corners.** A trap is a small
+    thing lying on the path; a blocker is the path being gone, and the size difference says it with no
+    legend needed
+  - **The seven fields an It's Not That Deep protects are hatched**, so you can see the zone your
+    offensive card would be swallowed by before you spend it
+  - **A stunned pawn tips over and goes dull.** It is the only piece on the board that is not standing
+    upright, which is what makes a Banana Peel visible at all: it does not move your pawn, so the tipped
+    piece and the message are the only evidence that your turn was taken away
+  - **A pawn that slid on an Oil Spill wears a small tag** on its shoulder, as a reminder of why the
+    field it stopped on handed it no card
+- **A field you can click is reachable from the keyboard and shows its focus** (NFR-08, design handoff 07)
 - **A square on the board can now be picked with the keyboard alone** (NFR-08). No square was reachable
   from the keyboard at all, which nobody noticed while a single card in 29 pointed at one. Four of the
   five that do are the trap cards, so a keyboard player could not have played a trap

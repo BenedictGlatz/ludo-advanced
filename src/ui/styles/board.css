@@ -2,9 +2,15 @@
    Geometry is derived in 01-Design/Handoff/01-spec-foundations-and-board.md (D3).
    The skill square is D27 of 03-spec-cards-and-hands.md.
 
-   Two files were split off this one, both for NFR-02 and both at a real seam:
+   Three files were split off this one, all for NFR-02 and all at a real seam:
    board-track.css holds the 40 index-to-cell placements, board-regions.css
-   holds the yards, the houses and the slots. Load both after this one. */
+   holds the yards, the houses and the slots, board-trap.css holds the objects
+   a card puts on a field. Load all three after this one.
+
+   Amended on 2026-09-03, 07-spec-trap-marker.md: --seat-shape joins the seat
+   mapping below, the turn-off bar takes a z-index, the skill diamond steps
+   back for a trap as well as for a ring, and the pickable field and its
+   keyboard focus are at the foot of this file (D59). */
 
 .board,
 .board * {
@@ -39,23 +45,34 @@
     var(--shadow-region);
 }
 
-/* One mapping from seat number to colour. Every region and every pawn takes
-   its colour from here, so a player's identity is set once (D2). */
+/* One mapping from seat number to colour and to shape. Every region, every
+   pawn, every HUD plate and now every trap takes its identity from here, so a
+   player is described once (D2, D16).
+
+   --seat-shape moved in on 2026-09-03, the follow-up 06-spec section 6 named:
+   it was repeated in hud.css, chrome.css, overlay.css and pawn.css, and D53
+   puts a seat mark on a fifth element. All four repeats are deleted; the
+   elements that read --seat-shape now inherit it from the ancestor carrying
+   data-player, which is the element they already take --player from. */
 [data-player="0"] {
   --player: var(--color-p0);
   --player-soft: var(--color-p0-soft);
+  --seat-shape: var(--seat-shape-0);
 }
 [data-player="1"] {
   --player: var(--color-p1);
   --player-soft: var(--color-p1-soft);
+  --seat-shape: var(--seat-shape-1);
 }
 [data-player="2"] {
   --player: var(--color-p2);
   --player-soft: var(--color-p2-soft);
+  --seat-shape: var(--seat-shape-2);
 }
 [data-player="3"] {
   --player: var(--color-p3);
   --player-soft: var(--color-p3-soft);
+  --seat-shape: var(--seat-shape-3);
 }
 
 /* --- Squares --- */
@@ -111,6 +128,7 @@
 .square[data-turnoff-of="3"]::after {
   content: "";
   position: absolute;
+  z-index: 2;
   border-radius: var(--radius-pill);
   background: var(--marked);
 }
@@ -191,7 +209,60 @@
 }
 
 /* Inside the pulsing ring the diamond steps back a little, so the ring is
-   still the widest thing on the field. */
-.square[data-skill-square="true"][data-legal-target="true"]::before {
+   still the widest thing on the field. A trap chip standing in the foot-left
+   corner gets the same step back, and for the same reason: at 30 per cent the
+   diamond's lower left edge passes the chip's corner within a hair rather
+   than taking a bite out of it (D54). One value, three conditions. */
+.square[data-skill-square="true"][data-legal-target="true"]::before,
+.square[data-skill-square="true"][data-pickable="true"]::before,
+.square[data-skill-square="true"][data-trap]::before {
   inset: 30%;
+}
+
+/* --- A field the player may click to answer a card (D59). Violet, which is
+       the same "you may click this" the legal move target uses, because the
+       two are never on screen together: a move target answers a die that has
+       been rolled, a pickable field answers a card that is mid-play. Teaching
+       one vocabulary twice is cheaper for the player than teaching two.
+
+       The difference is the pulse, and the pulse is D7's, not this state's.
+       Six move targets pulse so that they read as one group inside a move
+       already under way. A trap card offers up to 36 fields at once, and 36
+       pulsing fields is a board that flashes rather than a board that asks a
+       question.
+
+       The four fields a trap card refuses are not painted as refused. They
+       are simply not offered, which is the same signal the other 29 cards
+       already use, and the refusal strip answers a click on one of them. --- */
+
+.square--track[data-pickable="true"] {
+  cursor: pointer;
+  background-color: var(--color-hint-soft);
+  box-shadow: inset 0 0 0 var(--border-thick) var(--color-hint);
+}
+
+/* An entry square keeps its owner's colour when it is offered, exactly as it
+   does when it is a legal move target: the offer is the ring, never the
+   fill (D7). */
+.square--track[data-pickable="true"][data-entry-of="0"],
+.square--track[data-pickable="true"][data-entry-of="1"],
+.square--track[data-pickable="true"][data-entry-of="2"],
+.square--track[data-pickable="true"][data-entry-of="3"] {
+  background-color: var(--marked);
+}
+
+/* Keyboard focus on a field (D11, NFR-08). A field is reachable from the
+   keyboard for the first time in this issue, and both the offer above and
+   D11's focus ring are --color-hint, so focus cannot be told from offered by
+   hue. It is told apart by construction: the offer is an inset ring, focus is
+   two rings outside the field with a surface-coloured gap between them, which
+   is the pawn's focus treatment at field scale. The field lifts a layer so
+   the outer ring is not clipped by its neighbours. */
+.square--track:focus-visible {
+  z-index: var(--layer-region);
+  outline: none;
+  box-shadow:
+    inset 0 0 0 var(--border-thick) var(--color-hint),
+    0 0 0 max(2px, calc(var(--cell) * 0.05)) var(--color-focus),
+    0 0 0 max(4px, calc(var(--cell) * 0.09)) var(--color-surface);
 }

@@ -34,16 +34,25 @@
  * have their rule, and the reaction window and its thirty-second clock are wired up, so issue #38 is
  * complete too.
  *
- * ## Every region on screen now has a design behind it, except one
+ * ## Every region on screen has a design behind it
  *
- * Design handoff 04 landed on 2026-09-01 and replaced the four interim stylesheets that used to be
- * listed here: the prompt strip, the HUD, the chrome and the overlay. **`pool.css` is the one left**, and
- * it is the request that handoff 05 has not answered yet.
+ * That paragraph used to say "except one" and name `pool.css` as the last interim stylesheet Claude Code
+ * had written. Handoff 05 answered it on 2026-09-02 and handoff 06 closed the pawn mark with it, so
+ * **every rule in this project's CSS now comes from a numbered decision in a spec.** Handoff 07 added
+ * `board-trap.css` on 2026-09-03 and kept that true.
  *
- * The import order below is the one 04-spec § 1 asks for, and two entries in it are load-bearing rather
+ * The import order below is the one 04-spec § 1 asks for, and three entries in it are load-bearing rather
  * than tidy. `prompt.css` has to come after `app.css`, because both place `.prompt` on the grid and at
  * equal specificity the later file wins. `handover.css` has to come after `overlay.css`, because it
- * overrides the sheet's transition to none, which is the whole of D39's concealment.
+ * overrides the sheet's transition to none, which is the whole of D39's concealment. `board-trap.css` has
+ * to come after `board.css`, because it reads the one seat mapping that file owns.
+ *
+ * **One ordering is a known conflict rather than a decision**, and it is written down here because the
+ * cascade is the only place it is visible. `prompt.css` styles a pickable field in the skill teal and
+ * dims every field that is not offered, which handoff 04 delivered; `board.css` now styles the same
+ * field violet with nothing dimmed, which handoff 07's D59 delivered. `prompt.css` loads later and wins,
+ * so the D59 block is inert. Two specs answered one question in opposite directions, the loop had no way
+ * to notice, and reconciling them is D61. See `01-Design/Handoff/08-brief-pickable-field.md`.
  */
 
 import $ from "jquery";
@@ -57,6 +66,7 @@ import "./ui/styles/tokens.css";
 import "./ui/styles/board.css";
 import "./ui/styles/board-track.css";
 import "./ui/styles/board-regions.css";
+import "./ui/styles/board-trap.css";
 import "./ui/styles/pawn.css";
 import "./ui/styles/refusal.css";
 import "./ui/styles/card.css";

@@ -35,21 +35,22 @@
     background-color var(--motion-feedback) var(--ease-ui);
 }
 
+/* --seat-shape was mapped here as well until 2026-09-03, and the four lines
+   were deleted when 07-spec moved the mapping into the one [data-player="N"]
+   block in board.css. That selector is unscoped, so .hud__seat inherits the
+   shape from itself; the --seat-color line stays, because this file uses its
+   own name for the fill rather than board.css's --player. */
 .hud__seat[data-player="0"] {
   --seat-color: var(--color-p0);
-  --seat-shape: var(--seat-shape-0);
 }
 .hud__seat[data-player="1"] {
   --seat-color: var(--color-p1);
-  --seat-shape: var(--seat-shape-1);
 }
 .hud__seat[data-player="2"] {
   --seat-color: var(--color-p2);
-  --seat-shape: var(--seat-shape-2);
 }
 .hud__seat[data-player="3"] {
   --seat-color: var(--color-p3);
-  --seat-shape: var(--seat-shape-3);
 }
 
 /* --- The name line, and the seat mark that carries D16.

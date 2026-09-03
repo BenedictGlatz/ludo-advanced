@@ -3267,6 +3267,52 @@ to get wrong later.
 
 ---
 
+### 2026-09-03: Handoff 07 landed whole, with D59 left dormant rather than patched
+
+- **Chosen:** the five delivered stylesheets were copied in unchanged, including the `board.css` block
+  answering D59, even though that block is overridden by `prompt.css` and therefore does nothing. The
+  conflict goes back to Claude Design as D61.
+- **Why:** `prompt.css` lines 190 to 222 have answered "what does a pickable field look like" since
+  2026-09-01, in the other direction: teal, with every non-offered field dimmed. D59 says violet with no
+  dimming and explicitly rejects both of those by name. `prompt.css` loads later, so it wins. Landing the
+  package whole means no file is edited against its delivery, the board keeps a treatment that is already
+  coherent, and the one part of D59 with no competitor, the keyboard focus on a field, takes effect anyway
+  and closes the NFR-08 gap.
+- **Rejected: deleting the conflicting rules from `prompt.css` so D59 takes effect.** The earlier rule
+  covers the **pawn** as well as the field and D59 speaks only about the field, so this buys a violet field
+  next to a teal pawn, and non-offered fields undimmed next to non-offered pawns dimmed. Reconciling those
+  is a design decision and `CLAUDE.md` forbids this side from taking one.
+- **Rejected: holding `board.css` back until D61 is answered.** `board.css` also carries the `--seat-shape`
+  consolidation that `board-trap.css` depends on for the owner's shape inside the chip, so holding it would
+  ship a trap mark that cannot say whose it is, which touches NFR-12. The cost of holding is larger than
+  the cost of a dormant block.
+- **The cost, stated:** the D59 block is dead CSS in the repository until D61 is answered. That is recorded
+  in `main.js`'s own import comment, where the cascade order is visible, rather than only in a note.
+- → Ch. 04
+
+---
+
+### 2026-09-03: The seat shape moved to one mapping, and a test was written for the fallback
+
+- **Chosen:** the four `data-player` to `--seat-shape` rules were deleted from `pawn.css`, `hud.css`,
+  `chrome.css` and `overlay.css`, leaving the single unscoped `[data-player="N"]` block in `board.css` to
+  supply every consumer by inheritance. This is the follow-up spec 06 § 6 named and brief 07 § 6 asked for.
+- **Why:** the mapping was repeated five times and D53 was about to put a seat mark on a sixth element. The
+  surviving selector is unscoped, so it reaches the HUD and the chrome although they sit outside `.board`,
+  and every consumer takes `--seat-shape` from the same ancestor it already takes `--player` from.
+- **What made this worth a decision block rather than a tidy-up:** it fails **silently**. Each consumer
+  writes `clip-path: var(--seat-shape, circle(50%))`, so a broken inheritance chain renders four identical
+  circles instead of throwing or blanking. Every `clip-path` assertion in the suite was on `.pawn__mark`,
+  so nothing would have caught it.
+- **Rejected: doing the consolidation without a test**, on the grounds that the delivery says it is safe
+  and the board renders. That is exactly the argument that would have shipped it broken.
+- **Consequence worth generalising:** removing duplication also removes the redundancy that was covering
+  for a mistake. Four copies of a rule fail loudly one at a time; one shared rule fails silently
+  everywhere at once. The test to write is for the fallback the change made reachable.
+- → Ch. 08
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

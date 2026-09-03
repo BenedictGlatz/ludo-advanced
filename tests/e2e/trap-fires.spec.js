@@ -21,6 +21,7 @@ import { expect, test } from "@playwright/test";
 
 import { SEEDS, chooseDiceCard, openMatch } from "./helpers.js";
 import {
+  chipRatio,
   pawnStatuses,
   playCardAndAwaitSquare,
   playUntilTrapFires,
@@ -113,27 +114,84 @@ test.describe("the one-screen layout (FR-31)", () => {
   });
 });
 
-test.describe("nothing is styled yet, and the spec says so", () => {
+test.describe("the object standing on a field", () => {
   /**
-   * A deliberate negative assertion, and the reason it is worth a case: design brief 07 asks for ten
-   * decisions and none is answered, so a trap is in the DOM and invisible. **If this case starts
-   * failing, the spec has landed**, and that is the moment to check the marks against the DOM contract
-   * in section 3 of the brief rather than to delete this test.
+   * **This case used to be a deliberate negative and it did its job.**
    *
-   * The pawn's own mark is the control: that one *is* styled, by handoff 06, so a zero box here would
-   * mean the harness is measuring wrong rather than that the trap is unstyled.
+   * It asserted that `.square__trap` had a box of exactly zero, because design brief 07 was out with ten
+   * unanswered decisions and a trap was in the DOM and invisible. Its own comment said that if the case
+   * ever started failing, the spec had landed and the right move was to check the marks against the DOM
+   * contract rather than to delete the test. Handoff 07 landed on 2026-09-03, the case went red on the
+   * first run after it, and this is that check.
+   *
+   * Three assertions, and the second is the one that matters most. A box proves something painted. The
+   * **ratio** proves it is the 30 per cent chip D51 specified rather than merely something, and it is a
+   * ratio and not a pixel count so that it survives a change to `--board-size`. The `clip-path` proves
+   * the owner's seat shape is inside it, which is what D53 answers and what NFR-12 rests on: a chip that
+   * said whose it was by colour alone would pass the first two assertions and fail the requirement.
+   *
+   * The pawn's own mark stays as the control. It has been styled since handoff 06, so a zero there would
+   * mean the harness is measuring wrong rather than that the chip is missing.
    */
-  test("the trap span has no box until the stylesheet arrives", async ({ page }) => {
+  test("draws the trap as a chip carrying its owner's shape", async ({ page }) => {
     const board = await openMatch(page, SEEDS.leavesStartAtOnce, withStack(["action-banana-peel"]));
 
     await chooseDiceCard(board);
     await playCardAndAwaitSquare(board, "action-banana-peel");
     await square(board, 17).click();
 
-    const trapBox = await square(board, 17).locator(".square__trap").boundingBox();
-    expect(trapBox?.width ?? 0).toBe(0);
+    const field = square(board, 17);
+
+    // **Polled and not measured once, and the reason is worth knowing.** The chip is at `scale: 0.4`
+    // and `opacity: 0` until its field carries `[data-trap]`, and it grows in over `--motion-capture`
+    // (D55). A single measurement taken right after the click reads the *start* of that transition, so
+    // the first version of this case measured 0.12 of the field and looked like a broken stylesheet.
+    await expect.poll(() => chipRatio(field)).toBeGreaterThan(0.2);
+    expect(await chipRatio(field)).toBeLessThan(0.4);
+
+    const shape = await field
+      .locator(".square__trap")
+      .evaluate((span) => window.getComputedStyle(span, "::before").clipPath);
+    expect(shape).not.toBe("none");
 
     const pawnMark = await board.locator(".pawn .pawn__mark").first().boundingBox();
     expect(pawnMark?.width ?? 0).toBeGreaterThan(0);
+  });
+
+  /**
+   * D52's whole message is the size difference, so the size difference is what this asserts.
+   *
+   * A trap is a small thing lying on a path and a blocker is the path being gone: 30 per cent of the
+   * field against 76. The second variable is the corner, square instead of round, and it is worth
+   * asserting too because it is the one that stops a 76 per cent chip reading as a large trap.
+   *
+   * Both objects are laid in one match so the comparison is against a real chip on the same board at the
+   * same board size, rather than against a number copied out of the spec.
+   */
+  test("draws a blocker as a wall rather than as a large trap", async ({ page }) => {
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce, withStack(["action-big-ah-rock"]));
+
+    await chooseDiceCard(board);
+    await playCardAndAwaitSquare(board, "action-big-ah-rock");
+    await square(board, 17).click();
+
+    await expect(square(board, 17)).toHaveAttribute("data-trap", "blocker");
+
+    const field = square(board, 17);
+
+    // The size is the message. A trap covers 30 per cent of the field, asserted in the case above on
+    // this same viewport; a blocker covers 76, which is the field being gone rather than an object
+    // lying on it. Anything over 0.6 is a wall and anything under 0.4 is a chip, so the two cases
+    // cannot pass each other's assertion by accident. Polled for the same reason as the trap chip.
+    await expect.poll(() => chipRatio(field)).toBeGreaterThan(0.6);
+
+    // The second variable, and the one that stops a large chip reading as a large trap: a squared
+    // corner. Asserted against the object's own width rather than against a token value, because a
+    // pill radius is by definition at least half the box and a squared one is well under it.
+    const chip = await field.locator(".square__trap").boundingBox();
+    const radius = await field
+      .locator(".square__trap")
+      .evaluate((span) => Number.parseFloat(window.getComputedStyle(span).borderTopLeftRadius));
+    expect(radius).toBeLessThan((chip?.width ?? 0) / 2);
   });
 });

@@ -1327,6 +1327,85 @@ trap list, which is why the caller could not simply spread its answer. It now re
 `{ pawns, statuses, traps, trapFired }` always, so `resolveMove` uses it as it stands. That kept
 `turn-manager.js` at exactly 300 lines, which it was already sitting on.
 
+### A test written to fail later actually failed later: 2026-09-03, handoff 07
+
+**This is the cleanest thing in the suite's history and it is worth the entry.**
+
+When issue #45 shipped the trap attributes with no stylesheet, `trap-fires.spec.js` was given a
+deliberate negative case: `.square__trap` must have a bounding box of exactly zero, because design brief
+07 was out and nothing was drawn. The case carried its own instructions in a comment: "**If this case
+starts failing, the spec has landed**, and that is the moment to check the marks against the DOM contract
+in section 3 of the brief rather than to delete this test." It also carried a control, the pawn's own
+mark, which is styled: a zero there would mean the harness was measuring wrong rather than that the trap
+was unstyled.
+
+Handoff 07 landed on 2026-09-03. The first run after the copy produced **exactly one failure**, that case,
+`Expected: 0, Received: 6.5626220703125`. Every other one of the 86 cases stayed green, which is itself
+the useful part: it says the five stylesheets changed what the board looks like and nothing about what it
+does.
+
+Three things a negative assertion of this kind buys, and none of them is obvious in advance:
+
+1. **It dates the landing.** The suite says when the mechanic stopped being invisible, without anybody
+   writing that down.
+2. **It hands the next person the instruction.** The comment is read at the moment it is needed, by
+   whoever is looking at a red test, which is the only moment anybody reads a comment.
+3. **It is a check on the delivery, not just on the code.** A stylesheet that had landed and drawn nothing
+   would have left the case green, and green would have been wrong.
+
+The case was rewritten into its opposite rather than deleted, as its comment asked. It now asserts three
+things, and the second is the one worth having: a non-zero box proves something painted, the **ratio** of
+chip to field proves it is the 30 per cent chip D51 specified rather than merely something, and a
+non-`none` `clip-path` proves the owner's seat shape is inside it, which is what NFR-12 rests on. A chip
+that said whose it was by colour alone would pass the first two and fail the requirement.
+
+**A ratio and not a pixel count**, because `--cell` is derived from `--board-size` and every absolute
+number in the suite would have to be rewritten the day the board is resized. That is the same reasoning
+`greyscale.spec.js` uses when it compares shapes across seats instead of naming the four values: the
+numbers stay the design's to change.
+
+### The measurement that read a transition instead of a box: 2026-09-03, handoff 07
+
+**The first version of the rewritten chip case measured 0.12 of a field and looked like a stylesheet that
+had not landed.** It had landed. The chip sits at `scale: 0.4` and `opacity: 0` until its field carries
+`[data-trap]`, and it grows in over `--motion-capture`, which is D55's answer: an object appearing and an
+object being used up are the same transition run in two directions. A single `boundingBox()` taken right
+after the click reads the **start** of that transition, and 0.30 times 0.4 is 0.12.
+
+The blocker case failed the same way and gave the diagnosis away: it measured 0.31 where it expected 0.76,
+and 0.76 times 0.4 is 0.304. Two wrong numbers that are both exactly 0.4 of the right one are a transform,
+not a broken selector.
+
+The fix is `expect.poll` rather than a wait: the assertion retries until the box settles, which also
+documents that the mark animates in. It lives in `chipRatio` in `trap-helpers.js` with the reason written
+next to it, because this is a trap that will catch the next person measuring anything on this board.
+**Every mark handoff 07 delivered transitions in**, so it applies to the status tag as much as to the chip.
+
+**Why no existing case had hit it.** Everything the suite asserted about a trap until now was an
+attribute, and `toHaveAttribute` retries on its own. The moment a spec measures a pixel it inherits the
+stylesheet's timing, and that is a different contract.
+
+### An insurance case against the only silent failure in the delivery: 2026-09-03, handoff 07
+
+Handoff 07 consolidated the seat-shape mapping: five stylesheets each held their own copy of the four
+`data-player` to `--seat-shape` rules, and now one unscoped block in `board.css` supplies all of them by
+inheritance. **Nothing in the suite would have noticed if that broke.**
+
+The complete set of `clip-path` assertions in `tests/` was six lines, all in `greyscale.spec.js`, all
+about `.pawn__mark`. The four consumers each write `clip-path: var(--seat-shape, circle(50%))`, with a
+circle fallback. So a broken inheritance chain does not throw, does not blank anything and does not fail a
+test: every seat becomes a circle, the game keeps rendering, and NFR-12 is quietly untrue.
+
+`greyscale.spec.js` gained one case asserting that the four HUD plates compute four different
+`clip-path` values. The HUD because it is the consumer on screen in every match; the chrome carries the
+same mark and the two overlay panels only appear on a win or a handover. It is the same assertion
+`expectSeatsIdentifiable` already makes for the pawns, pointed at a second element.
+
+**The general point, and it is the report-worthy one.** A refactor that removes duplication also removes
+the redundancy that was covering for a mistake. Four copies of a rule fail loudly one at a time; one
+shared rule fails silently everywhere at once. The test to write is not for the change, it is for the
+fallback the change made reachable.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -148,6 +148,13 @@
   /* The refusal message holds for four seconds (D20, now a token). */
   --motion-refusal-hold: 4s;
 
+  /* A trap announcement holds for two seconds before the turn may carry on
+     (D60). Shorter than the refusal, because a refusal follows the player's
+     own click and they are already looking at the board, while a trap fired
+     by a card interrupts a turn that is under way. Long enough that the strip
+     cannot be missed. The view reads it; no stylesheet does. */
+  --motion-trap-hold: 2s;
+
   /* The reaction window, and the point at which it starts shouting. */
   --clock-window: 30s;
   --clock-urgent: 8s;

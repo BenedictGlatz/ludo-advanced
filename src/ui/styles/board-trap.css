@@ -1,0 +1,128 @@
+/* The objects a card puts on a track field: the three traps, the blocker,
+   the seat that owns each one, and the It's Not That Deep aura.
+   Depends on tokens.css and on the seat mapping in board.css, which supplies
+   --player and --seat-shape to any element carrying data-player.
+
+   Split off board.css on 2026-09-03 for NFR-02 (constraint 13 of brief 07)
+   and at a real seam: board.css draws the board and the states the board
+   itself has, this file draws what the card game leaves standing on it. The
+   pickable field stayed in board.css, because a field being offered is board
+   grammar and happens with no trap in play.
+   Load after board.css and before pawn.css.
+
+   Reasoning: 01-Design/Handoff/07-spec-trap-marker.md, D51 to D55 and D58.
+   No user-facing string here: the object's name and its owner are in the
+   span's aria-label, which i18next writes (NFR-03). */
+
+/* --- The object itself (D51, D53).
+
+       One construction for all four objects, and it is the pawn's: a body in
+       the owner's seat colour with a 3px ink edge, carrying the seat's shape
+       in ink inside it. The measurement 06-spec section 4 made therefore
+       carries over unchanged, 3.67:1 at the worst seat in Picnic and 5.16:1
+       in Night In, which is what keeps NFR-12 true with the marks present.
+
+       The chip stands in the foot-left corner rather than in the middle of
+       the field, because the middle of a field belongs to the pawn standing
+       on it and to D27's skill diamond, and a corner is the one part of a
+       1-cell field that nothing else has claimed.
+
+       The three trap kinds look identical, and that is the answer to D51
+       rather than an omission: at 30 per cent of a cell, beside a diamond, a
+       ring and possibly a pawn, a per-kind geometry would be a distinction
+       the player cannot read in the moment. What is worth reading at a glance
+       is that something is there and whose it is, because a trap does not
+       fire under a pawn of the seat that placed it. Which kind it is comes
+       from the aria-label, from the card that was played, and, for the one
+       kind whose reach matters before it fires, from the aura below. --- */
+
+.square__trap {
+  position: absolute;
+  left: 6%;
+  bottom: 6%;
+  z-index: 1;
+  width: 30%;
+  height: 30%;
+  border: var(--border-hair) solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  background: var(--player, var(--color-dormant));
+  box-shadow: var(--shadow-piece);
+  opacity: 0;
+  scale: 0.4;
+  transition:
+    opacity var(--motion-capture) var(--ease-capture),
+    scale var(--motion-capture) var(--ease-capture);
+}
+
+/* The owner's shape, ink on the seat colour. clip-path removes a border along
+   with everything outside the shape, which is the finding from 04-spec D16,
+   so the edge is on the body and the shape inside it needs none. */
+.square__trap::before {
+  content: "";
+  position: absolute;
+  inset: 22%;
+  background: var(--color-ink);
+  clip-path: var(--seat-shape, circle(50% at 50% 50%));
+}
+
+/* A field with no object renders nothing: the span above is already at zero
+   opacity, so the 40 empty spans constraint 11 asks for cost one invisible
+   box each and no paint. An object appearing and an object being used up are
+   the same transition run in the two directions (D55), over --motion-capture,
+   which is the piece-leaving-the-board timing the captured pawn uses. It
+   collapses to 1ms under prefers-reduced-motion through the token. */
+.square[data-trap] .square__trap {
+  opacity: 1;
+  scale: 1;
+}
+
+/* --- The blocker (D52). Same object, two variables changed: it covers the
+       field instead of a corner of it, and its corners are square. A trap is
+       a small thing lying on a path; a blocker is the path being gone. The
+       size difference is the whole message and it is legible at a glance,
+       which a difference of inner geometry would not be.
+
+       data-trap="blocker" is confirmed rather than replaced by the
+       data-blocked="true" that 01-spec section 5 predicted: which object is
+       standing there and whether one is standing there are one fact, and one
+       attribute is what keeps "one object per field" true in the DOM.
+
+       It stops short of the field's edge so the turn-off bar on squares 9,
+       19, 29 and 39 stays visible over it. Those four are legal trap targets
+       and board.css gives the bar a z-index for this. --- */
+
+.square[data-trap="blocker"] .square__trap {
+  left: 12%;
+  bottom: 12%;
+  width: 76%;
+  height: 76%;
+  border-width: var(--border-ink);
+  border-radius: var(--radius-sm);
+}
+
+.square[data-trap="blocker"] .square__trap::before {
+  inset: 30%;
+}
+
+/* --- The aura (D58). Up to seven contiguous fields in which an offensive
+       card does nothing. Drawn, because a player who cannot see it cannot
+       avoid spending a card inside it, which is the whole point of the card
+       that made it.
+
+       A hatch and not a tint: background-image is the one paint layer on
+       .square that nothing else uses, so the aura costs no pseudo-element, no
+       box-shadow and no background-color, and it survives on an entry square,
+       on a home-column field and under the legal-target fill without a single
+       override. --color-text and not --color-ink, because it has to stay
+       visible on the plum field of Night In, and --color-text is the ink that
+       inverts with the skin. Seven fields of texture read as one region; seven
+       fields of colour would read as a second board. --- */
+
+.square[data-trap-aura="true"] {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 calc(var(--cell) * 0.07),
+    color-mix(in oklab, var(--color-text) 22%, transparent) calc(var(--cell) * 0.07)
+      calc(var(--cell) * 0.11)
+  );
+}
