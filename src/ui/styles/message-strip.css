@@ -1,6 +1,14 @@
-/* S6: move refusal. Split out of board.css along a real seam: S6 is its own
+/* The message strip. Split out of board.css along a real seam: S6 is its own
    screen in the Obligations Book, and board.css was at the NFR-02 limit.
    CSS styles the container; i18next supplies the text. Depends on tokens.css.
+
+   Named refusal.css and .move-refusal until 2026-09-03, because a refusal was
+   the only thing it said. D55 gave it a second voice and handoff 11's D73 a
+   third, so two of the three kinds it now carries are not refusals at all and
+   the name had been wrong for two decisions. Renamed to match
+   data-message-kind, which is the seam the three are told apart by.
+   --layer-refusal in tokens.css still carries the old name and belongs to
+   Claude Design, so it is asked there rather than changed from here.
 
    Amended on 2026-09-01, 04-spec D35: the strip used to hold a full-width
    grid row at the foot of the page, 46 px of it, permanently, faded to
@@ -10,7 +18,7 @@
    over the pieces it is about. app.css makes .app__board the containing
    block. */
 
-.move-refusal {
+.message-strip {
   position: absolute;
   bottom: calc(var(--space-4) * -1);
   left: 50%;
@@ -35,7 +43,7 @@
     translate var(--motion-feedback) var(--ease-ui);
 }
 
-.move-refusal::before {
+.message-strip::before {
   content: "";
   flex: none;
   width: var(--space-4);
@@ -44,7 +52,7 @@
   background: var(--color-warn);
 }
 
-.move-refusal[data-reason-key]:not([data-reason-key=""]) {
+.message-strip[data-reason-key]:not([data-reason-key=""]) {
   opacity: 1;
   translate: -50% 0;
 }
@@ -69,10 +77,10 @@
        How long it stays is --motion-trap-hold, which the view holds the turn
        for; the strip itself only fades (D60). --- */
 
-.move-refusal[data-message-kind="trap"] {
+.message-strip[data-message-kind="trap"] {
   background: var(--color-panel);
 }
 
-.move-refusal[data-message-kind="trap"]::before {
+.message-strip[data-message-kind="trap"]::before {
   background: var(--color-ink);
 }

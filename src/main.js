@@ -79,7 +79,7 @@ import "./ui/styles/board-track.css";
 import "./ui/styles/board-regions.css";
 import "./ui/styles/board-trap.css";
 import "./ui/styles/pawn.css";
-import "./ui/styles/refusal.css";
+import "./ui/styles/message-strip.css";
 import "./ui/styles/card.css";
 import "./ui/styles/card-state.css";
 import "./ui/styles/hand.css";

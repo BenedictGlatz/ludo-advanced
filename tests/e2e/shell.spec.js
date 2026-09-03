@@ -19,7 +19,7 @@ import { expect, test } from "@playwright/test";
 import { SEEDS, diceHand, openMatch } from "./helpers.js";
 
 /** The four regions of section 2.2 of the obligations book that this slice actually renders. */
-const REGIONS = [".app__board", ".app__dice", ".app__skill", ".move-refusal"];
+const REGIONS = [".app__board", ".app__dice", ".app__skill", ".message-strip"];
 
 test.describe("the shell at the design resolution", () => {
   test("runs at 1440 by 900, which is what the design is drawn for", async ({ page }) => {

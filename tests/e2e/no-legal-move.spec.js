@@ -37,7 +37,7 @@ test.describe("a turn with no legal move", () => {
     page,
   }) => {
     const board = await openAndChoose(page, { fast: false });
-    const message = page.locator(".move-refusal");
+    const message = page.locator(".message-strip");
 
     // The turn went straight from rolling to its end, with no `act` phase in between.
     await expect(board).toHaveAttribute("data-phase", "turn-end");
@@ -60,14 +60,14 @@ test.describe("a turn with no legal move", () => {
 
     // NFR-03: the text comes from the locale file, never from the rules and never from a stylesheet.
     // The rules produced the key `move.refused.needs-maximum` and knew no language at all.
-    await expect(page.locator(".move-refusal")).toHaveText(
+    await expect(page.locator(".message-strip")).toHaveText(
       "Zum Verlassen des Startfeldes brauchst du die höchste Zahl des Würfels."
     );
   });
 
   test("leaves the reason on screen long enough to read, then hands over", async ({ page }) => {
     const board = await openAndChoose(page, { fast: false });
-    const message = page.locator(".move-refusal");
+    const message = page.locator(".message-strip");
 
     const { activePlayer } = await boardState(board);
     await expect(message).toBeVisible();
@@ -93,7 +93,7 @@ test.describe("a turn with no legal move", () => {
 
   test("clears the reason once the next player has something to do", async ({ page }) => {
     const board = await openMatch(page, SEEDS.passesOnTurnOne);
-    const message = page.locator(".move-refusal");
+    const message = page.locator(".message-strip");
 
     // Sooner or later somebody can move, and at that moment the refusal must be gone: a reason
     // belonging to a turn that is over is worse than no reason. The turns have to be played rather
