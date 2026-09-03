@@ -124,10 +124,66 @@ of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
 
+### Measured 2026-09-03, after design handoff 10 landed
+
+Every command in the section above was re-run after the handoff landed and before the closing commit.
+**This is the current measurement**; the ones below it are kept so the growth is readable rather than
+asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **10952 lines in 71 files** | 2026-09-03, after handoff 10 |
+| Stylesheet lines in `src/` | 7 | **3268 lines in 18 files** | 2026-09-03, after handoff 10 |
+| Test lines in `tests/` | 2 | **12570 lines in 72 files** | 2026-09-03, after handoff 10 |
+| Lines in `src/core/` | 3 | 4411 lines in 31 files, unchanged | 2026-09-03, after handoff 10 |
+| Lines in `src/state/` | 3 | 2016 lines in 11 files, unchanged | 2026-09-03, after handoff 10 |
+| Lines in `src/ui/` | 3 | **4203 lines in 27 files**, plus 3268 lines of CSS | 2026-09-03, after handoff 10 |
+| Unit tests | 4 | 50 test files, 689 tests, all passing, unchanged | 2026-09-03, after handoff 10 |
+| End-to-end tests | 8 | **101 tests in 19 files per browser, 303 across the three** | 2026-09-03, after handoff 10 |
+| Expected failures in the e2e suite | 8 | none | 2026-09-03, after handoff 10 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.17 % (839/846), unchanged | 2026-09-03, after handoff 10 |
+| Coverage of `src/core/`, lines | 5c | 99.47 % (565/568) over 31 files, unchanged | 2026-09-03, after handoff 10 |
+| Coverage of `src/state/`, lines | 5c | 98.56 % (274/278) over 11 files, unchanged | 2026-09-03, after handoff 10 |
+| Coverage, branches | 5a | 96.07 %, unchanged | 2026-09-03, after handoff 10 |
+| Coverage, functions | 5a | 100 %, unchanged | 2026-09-03, after handoff 10 |
+| Longest file of any kind | 6 | 300 lines, `src/state/turn-manager.js`, unchanged | 2026-09-03, after handoff 10 |
+| Longest stylesheet | 7 | 283 lines, `src/ui/styles/pawn.css`, unchanged | 2026-09-03, after handoff 10 |
+
+**Five readings.**
+
+1. **The rules layers did not move by a line and no coverage figure changed**, for the third measurement
+   in a row. `src/core/` and `src/state/` are byte-identical and all five coverage percentages are the
+   same. Three consecutive deliveries have now changed what the player sees without touching a rule,
+   which is the layering argument in `CLAUDE.md` producing evidence rather than being asserted.
+2. **A new stylesheet arrived and the set grew by 125 lines**, 3143 to 3268 across 17 files to 18.
+   `card-reveal.css` is 82 of those lines and the remaining 43 are net across four files, three of which
+   **shrank**: D69 deleted the sideways fan out and D65 deleted nothing but re-pointed six selectors.
+   `hand.css` went from 200 to 208 despite losing two rules, because the comment that records what was
+   deleted is longer than the rules were. That is deliberate and it is the same trade the layout fixes
+   made: a deleted rule with no note is a rule somebody re-adds.
+3. **`tokens.css` is at 281 lines and is now the file to watch**, from 265, 19 lines from NFR-02's limit
+   and second only to `pawn.css`. The two new tokens are 2 of the 16 lines; the rest is D68's reasoning
+   for the number and for why the delay stays out of the reduced-motion block. **The seam is already
+   visible if it has to be cut**: the motion block is self-contained and would split cleanly into a
+   `motion.css`. Naming it now costs nothing and naming it under pressure costs a bad cut.
+4. **The e2e suite gained 4 cases in one new file**, 97 to 101 per browser and 291 to 303 across the
+   three, for 192 test lines. That is 48 lines per case against a project average nearer 30, and the
+   reason is the same one Chapter 08 records: none of the four could assert an attribute, so each carries
+   the measurement it is built on, and two carry a helper explaining why the obvious approach does not
+   work. **There is now 1.15 lines of test JavaScript for every line of source JavaScript**, 12570
+   against 10952, up from 1.13 at the previous measurement. Counting the 3268 lines
+   of CSS on the source side turns that round, 14220 against 12570, which is the more honest comparison
+   and is why this table reports the two separately.
+5. **`src/ui/` grew by 40 JavaScript lines for two attributes**, 4163 to 4203, and 34 of those are
+   comment. The code is four `.attr` calls, two object fields and one `??`. What the comments carry is
+   the thing that would otherwise be reconstructed from a diff: why `data-face` may not be `data-active`,
+   and why the tab stop is a field on the card rather than a check inside the shared component.
+
 ### Measured 2026-09-03, after the four layout fixes
 
-Every command in the section above was re-run after the layout fixes and before the commit. **This is
-the current measurement**; the ones below it are kept so the growth is readable rather than asserted.
+**Superseded by the block above on the same day**, after design handoff 10 landed. Kept because it is
+the measurement of the layout fixes, and the block above is the measurement of the handoff that came
+after them.
 
 | Metric | Command | Value | Taken on |
 | --- | --- | --- | --- |
