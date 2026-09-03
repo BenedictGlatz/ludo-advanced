@@ -14,6 +14,12 @@
  *
  * The one exception is the announcement, which is text and not a look, so it is asserted as text.
  *
+ * **Handoff 07 landed on 2026-09-03 and none of that changed here.** The paint has its own spec,
+ * `trap-marks.spec.js`, because an attribute check and a computed-style check fail for different reasons
+ * and a case that does both cannot say which half broke. The keyboard cases moved to
+ * `field-keyboard.spec.js` at the same time: they were here because four of the five field-targeting
+ * cards are trap cards, and none of them is about a trap.
+ *
  * ## Why `?stack=` exists
  *
  * A trap card is 4 ids out of 29 and the flow needs two turns to line up: one to lay the trap and
@@ -40,7 +46,6 @@ import {
   pawnStatuses,
   pickableSquares,
   playCardAndAwaitSquare,
-  skillHand,
   square,
   trackSquares,
 } from "./trap-helpers.js";
@@ -175,47 +180,6 @@ test.describe("every player can see every trap", () => {
     });
   });
 });
-
-test.describe("a field can be picked from the keyboard (NFR-08)", () => {
-  /**
-   * A new capability rather than a regression check. **No field on the board was reachable from the
-   * keyboard at all** before this issue: `bindPickEvents` bound `click` and no `keydown`, and nothing
-   * gave a field a `tabindex`. That was survivable while one card in 29 pointed at a field, and four of
-   * the five that do are the trap cards, so a keyboard player could not have played a trap.
-   */
-  test("lays a trap with Enter alone", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce, withStack(["action-banana-peel"]));
-
-    await chooseDiceCard(board);
-
-    // The card is reached with the keyboard too, so the whole gesture is keyboard-only.
-    await skillHand(board).locator('.card[data-card-id="action-banana-peel"]').first().focus();
-    await page.keyboard.press("Enter");
-    await expect(board).toHaveAttribute("data-picking", "free-square");
-
-    await square(board, 17).focus();
-    await page.keyboard.press("Enter");
-
-    await expect(square(board, 17)).toHaveAttribute("data-trap-kind", "banana-peel");
-  });
-
-  /**
-   * A field is in the tab order only while it is an answer to a question. Forty permanent tab stops on
-   * the board would sit between a keyboard player and every control on the page, which is the defect
-   * design spec 05 found on the pool overview.
-   */
-  test("takes the fields back out of the tab order afterwards", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce, withStack(["action-banana-peel"]));
-
-    await chooseDiceCard(board);
-    await playCardAndAwaitSquare(board, "action-banana-peel");
-    await expect(board.locator(".square--track[tabindex]")).toHaveCount(36);
-
-    await square(board, 17).click();
-    await expect(board.locator(".square--track[tabindex]")).toHaveCount(0);
-  });
-});
-
 test.describe("the board keeps its shape", () => {
   /** Forty fields, forty spans, built once with the board and never re-created (D10). */
   test("every track field carries an empty trap span", async ({ page }) => {

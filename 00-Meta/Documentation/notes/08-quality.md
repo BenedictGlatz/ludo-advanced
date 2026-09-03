@@ -1327,6 +1327,219 @@ trap list, which is why the caller could not simply spread its answer. It now re
 `{ pawns, statuses, traps, trapFired }` always, so `resolveMove` uses it as it stands. That kept
 `turn-manager.js` at exactly 300 lines, which it was already sitting on.
 
+### A test written to fail later actually failed later: 2026-09-03, handoff 07
+
+**This is the cleanest thing in the suite's history and it is worth the entry.**
+
+When issue #45 shipped the trap attributes with no stylesheet, `trap-fires.spec.js` was given a
+deliberate negative case: `.square__trap` must have a bounding box of exactly zero, because design brief
+07 was out and nothing was drawn. The case carried its own instructions in a comment: "**If this case
+starts failing, the spec has landed**, and that is the moment to check the marks against the DOM contract
+in section 3 of the brief rather than to delete this test." It also carried a control, the pawn's own
+mark, which is styled: a zero there would mean the harness was measuring wrong rather than that the trap
+was unstyled.
+
+Handoff 07 landed on 2026-09-03. The first run after the copy produced **exactly one failure**, that case,
+`Expected: 0, Received: 6.5626220703125`. Every other one of the 86 cases stayed green, which is itself
+the useful part: it says the five stylesheets changed what the board looks like and nothing about what it
+does.
+
+Three things a negative assertion of this kind buys, and none of them is obvious in advance:
+
+1. **It dates the landing.** The suite says when the mechanic stopped being invisible, without anybody
+   writing that down.
+2. **It hands the next person the instruction.** The comment is read at the moment it is needed, by
+   whoever is looking at a red test, which is the only moment anybody reads a comment.
+3. **It is a check on the delivery, not just on the code.** A stylesheet that had landed and drawn nothing
+   would have left the case green, and green would have been wrong.
+
+The case was rewritten into its opposite rather than deleted, as its comment asked. It now asserts three
+things, and the second is the one worth having: a non-zero box proves something painted, the **ratio** of
+chip to field proves it is the 30 per cent chip D51 specified rather than merely something, and a
+non-`none` `clip-path` proves the owner's seat shape is inside it, which is what NFR-12 rests on. A chip
+that said whose it was by colour alone would pass the first two and fail the requirement.
+
+**A ratio and not a pixel count**, because `--cell` is derived from `--board-size` and every absolute
+number in the suite would have to be rewritten the day the board is resized. That is the same reasoning
+`greyscale.spec.js` uses when it compares shapes across seats instead of naming the four values: the
+numbers stay the design's to change.
+
+### The measurement that read a transition instead of a box: 2026-09-03, handoff 07
+
+**The first version of the rewritten chip case measured 0.12 of a field and looked like a stylesheet that
+had not landed.** It had landed. The chip sits at `scale: 0.4` and `opacity: 0` until its field carries
+`[data-trap]`, and it grows in over `--motion-capture`, which is D55's answer: an object appearing and an
+object being used up are the same transition run in two directions. A single `boundingBox()` taken right
+after the click reads the **start** of that transition, and 0.30 times 0.4 is 0.12.
+
+The blocker case failed the same way and gave the diagnosis away: it measured 0.31 where it expected 0.76,
+and 0.76 times 0.4 is 0.304. Two wrong numbers that are both exactly 0.4 of the right one are a transform,
+not a broken selector.
+
+The fix is `expect.poll` rather than a wait: the assertion retries until the box settles, which also
+documents that the mark animates in. It lives in `chipRatio` in `trap-helpers.js` with the reason written
+next to it, because this is a trap that will catch the next person measuring anything on this board.
+**Every mark handoff 07 delivered transitions in**, so it applies to the status tag as much as to the chip.
+
+**Why no existing case had hit it.** Everything the suite asserted about a trap until now was an
+attribute, and `toHaveAttribute` retries on its own. The moment a spec measures a pixel it inherits the
+stylesheet's timing, and that is a different contract.
+
+### Three ways to measure a mark wrongly, all three found in one afternoon: 2026-09-03, handoff 07
+
+`trap-marks.spec.js` is the first spec in the project whose subject is **paint** rather than a decision,
+and writing it produced three false failures in a row. All three were the test being wrong, not the
+stylesheet, and all three are the kind of mistake that reads as a broken delivery.
+
+**1. A box measured during a transition.** Covered in its own entry above. Every mark in the delivery
+arrives through a transition, so a single measurement taken after the click reads its starting value. The
+tell was arithmetic: two wrong numbers that are both exactly 0.4 of the right one are a transform.
+
+**2. A hidden element still has a box.** The status tag's first case asserted a zero width on a pawn with
+no status, copying the trap chip's zero-versus-non-zero measurement. It failed at 6.8 pixels. The tag is
+hidden by `opacity: 0` and `scale: 0.4`, not by `display: none`, because an element with no box has no
+previous state to transition from, so a hidden tag still measures about 15 per cent of the piece. **The
+chip's case only worked because it predated the stylesheet**: with no CSS at all the span genuinely had
+zero width, and the same assertion stops meaning "hidden" the moment a rule exists. `opacity` is what the
+rule changes, so `opacity` is what to read.
+
+**3. Sixteen different transforms cannot be compared as a set.** Every pawn already carries a translate
+and a scale, so no two transforms are equal and "the stunned one differs" is true of all sixteen. What
+D56 actually promises is narrower: no other piece shares this one's **rotation**. A
+`matrix(a, b, c, d, e, f)` that has only been translated and scaled has `b` at zero and `a` equal to `d`
+whatever it was translated or scaled by, so the two shear terms answer it without the test knowing the
+angle, and the angle stays the design's to change.
+
+**The general rule these three add up to**, and it is worth carrying into any future spec that measures:
+**assert the property the rule changes, and compare rather than name.** A box is the wrong reading of an
+opacity rule; a whole transform is the wrong reading of a rotation rule; and a literal `rgb()` value is
+the wrong reading of a token choice. Every case in the file compares a mark against another mark, against
+a field with nothing on it, or against a token read off `:root`.
+
+### A flaky test that was right to be flaky, because both of its readings were wrong: 2026-09-03, handoff 07
+
+**The most instructive failure of the whole landing, and it found a defect the plan had explicitly ruled
+out.** It is worth the space because the test was not merely wrong, it was wrong in a way that passed.
+
+The case was meant to assert that a field focused from the keyboard is drawn differently from a field
+that is merely offered, which is D59's answer: the offer is a ring inside the field, focus is two rings
+outside it with a gap between them. It **passed** whenever its own file ran and **failed** in Chromium
+and Edge inside the full three-browser run, twice, always at the paint and never at the focus.
+
+The plan's reading was that this was contention, and the first fix drove the whole gesture from the
+keyboard, since `:focus-visible` is the browser's own judgement about whether a keyboard is in use and one
+mouse click anywhere in the run flips it. That did not help. The second fix asked the browser directly
+with `field.matches(":focus-visible")` and skipped when the answer was no. **That is when the failure
+finally printed a value**, and the value was the answer:
+
+```
+Expected: not "rgb(15, 156, 147) 0px 0px 0px 4.032px inset"
+```
+
+`rgb(15, 156, 147)` is `--color-skill`, the teal `prompt.css` paints an offered field in. The focused
+field was drawn identically to the offered one, because `prompt.css`'s
+`.square--track[data-pickable="true"]` and `board.css`'s `.square--track:focus-visible` have the **same
+specificity**, one class and one qualifier each, both are built from `box-shadow`, and `prompt.css` loads
+later. **D59's focus rule never paints**, and the landing plan had said in as many words that the focus
+was the one part of D59 with no competitor.
+
+**Why the earlier versions passed.** `box-shadow` transitions over `--motion-feedback`, and a poll that
+stops at the first difference cannot tell "a new rule applied" from "the old value is still on its way".
+The assertion succeeded on a value that was interpolating between the offer and nothing, and the settled
+value was always the same one. A poll for *difference* is a poll that will find one somewhere in any
+transition, which is a general trap and not a detail of this case.
+
+Three things came out of it:
+
+1. **The case is now a deliberate negative** asserting the focused field is drawn identically to the
+   offered one, so it goes red the day D61 lands. Third use of that pattern in this project, second time
+   it records a conflict rather than an absence.
+2. **It re-reads both fields on every attempt**, so neither side of the comparison can be mid-transition.
+   That is the third measurement trap the handoff produced, after the box-during-transition and the
+   hidden-element-still-has-a-box.
+3. **D61 changed status**, from a preference to a blocker on the second half of NFR-08. A field can be
+   reached with Tab and gives no sign of being reached. Nothing in the suite had ever asserted a focus
+   treatment on a field, because until issue #45 no field could be focused.
+
+**The lesson worth carrying.** A test that passes in isolation and fails under load is usually reported as
+flake and given a `test.slow()`. This one was a real defect wearing a flake's clothes, and what
+distinguished it was reading the failure's *value* rather than its frequency. The two fixes that came
+before that were both reasonable and both wrong.
+
+### `traps.spec.js` had to split, and the seam was not the line count: 2026-09-03, handoff 07
+
+The new cases took `traps.spec.js` to 301 lines, one over NFR-02, which ESLint's `max-lines` caught rather
+than a review. Two files came out of it and neither split is about size:
+
+- **`trap-marks.spec.js`** takes the computed-style cases. An attribute check says the rules layer got it
+  right and a computed value says the stylesheet did, so a case that does both cannot say which half
+  broke when it goes red.
+- **`field-keyboard.spec.js`** takes the NFR-08 cases. They were in a trap spec because four of the five
+  cards that point at a field are trap cards, and **none of the cases is about a trap**. The Banana Peel
+  in them is the cheapest way to put the board into its picking state and any of the five would do.
+
+Worth noting for the next person: `tests/e2e/helpers.js` is at 295 lines, five from the limit, which is
+why every new driving helper this issue needed went into `trap-helpers.js` instead.
+
+### The suite's contention flake is still there, and it moved: 2026-09-03, handoff 07
+
+One case failed on Firefox in a full run and passed alone in all three browsers and in the next full run:
+"still offers all forty fields to Janky RPG", which this issue did not touch. This is the contention
+already recorded above for 2026-09-01, when four failures turned out to be load rather than defects. It is
+worth noting again for one reason: **the suite grew from 258 cases to 279 with this handoff**, and the
+flake is a function of how many browsers are competing rather than of what any case does. The next spec
+file is a good moment to look at worker counts rather than to add a `test.slow()` to whichever case draws
+the short straw.
+
+### Outstanding coverage, stated rather than skipped: the D60 hold has no end-to-end test: 2026-09-03, handoff 07
+
+**The two-second hold a trap announcement gets when a card fires it is proved by unit tests and by nothing
+else, and that is a deliberate gap with a reason.**
+
+`tests/unit/ui/mid-turn-hold.test.js` has twelve cases and covers every branch: nothing announced returns
+zero, a trap and a nullified card each return the token, a refusal returns zero (which is the one place
+the two hold functions differ in kind and the case most likely to be broken by somebody symmetrising
+them), an override of exactly zero is honoured rather than treated as absent, the other two delay keys do
+not reach this branch, and the fallback is two seconds with no stylesheet.
+
+**Why there is no end-to-end case.** Every Playwright spec runs with `?fast=1`, which collapses the hold
+to zero on purpose, exactly as it already collapses the reaction window and the refusal pause. So the run
+that could observe the wait is the run that has switched it off. `openMatch` does accept `{ fast: false }`,
+but a non-fast run also restores the thirty-second reaction window, so observing two seconds costs half a
+minute of wall clock per case and needs `test.slow()`.
+
+**This is not new and that is the point.** D20's four-second refusal minimum has never had an end-to-end
+test either, for the same reason and since 2026-08-30. The suite proves that a message appears; how long
+it is guaranteed to stay is a question about a number, and a number is what a unit test is for. Writing it
+down here is the alternative to letting it look like an oversight.
+
+**What is genuinely untested**, and it is one thing rather than the whole decision: that `refresh()` runs
+before the hold. With the hold collapsed there is no observable window in which to check that the strip
+was drawn first, so the ordering rests on the code and its comment. The failure mode is visible the moment
+anybody plays the game with the hold on, which is the argument for the manual check in the verification
+list rather than for a slow spec.
+
+### An insurance case against the only silent failure in the delivery: 2026-09-03, handoff 07
+
+Handoff 07 consolidated the seat-shape mapping: five stylesheets each held their own copy of the four
+`data-player` to `--seat-shape` rules, and now one unscoped block in `board.css` supplies all of them by
+inheritance. **Nothing in the suite would have noticed if that broke.**
+
+The complete set of `clip-path` assertions in `tests/` was six lines, all in `greyscale.spec.js`, all
+about `.pawn__mark`. The four consumers each write `clip-path: var(--seat-shape, circle(50%))`, with a
+circle fallback. So a broken inheritance chain does not throw, does not blank anything and does not fail a
+test: every seat becomes a circle, the game keeps rendering, and NFR-12 is quietly untrue.
+
+`greyscale.spec.js` gained one case asserting that the four HUD plates compute four different
+`clip-path` values. The HUD because it is the consumer on screen in every match; the chrome carries the
+same mark and the two overlay panels only appear on a win or a handover. It is the same assertion
+`expectSeatsIdentifiable` already makes for the pawns, pointed at a second element.
+
+**The general point, and it is the report-worthy one.** A refactor that removes duplication also removes
+the redundancy that was covering for a mistake. Four copies of a rule fail loudly one at a time; one
+shared rule fails silently everywhere at once. The test to write is not for the change, it is for the
+fallback the change made reachable.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

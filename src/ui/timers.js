@@ -65,20 +65,73 @@ export const REFUSAL_MIN_MS = 4000;
  * `delays` lets a test override either without a stylesheet, and `REFUSAL_MIN_MS` is the fallback when
  * no stylesheet has loaded at all.
  *
- * Whether a trap fired **mid-turn** by a card deserves a hold of its own is a separate question, and it
- * is open as D60 of design brief 07. The loop carries straight on from the action phase today, so that
- * announcement gets no guaranteed time on screen.
+ * A trap fired **mid-turn** by a card is the other half of this and it is `holdMidTurn` below. It was
+ * open as D60 of design brief 07 when this comment was first written; design spec 07 answered it on
+ * 2026-09-03 with a shorter number and its own token.
  */
 export function holdAfterTurn(state, delays, readToken) {
   if (state.refusalReason !== null) {
     return delays.afterRefusal ?? readToken("--motion-refusal-hold", REFUSAL_MIN_MS);
   }
 
-  if (state.trapFired !== null || state.nullifiedCard !== null) {
+  if (announcement(state) !== null) {
     return delays.afterTrap ?? readToken("--motion-refusal-hold", REFUSAL_MIN_MS);
   }
 
   return delays.afterMove ?? readToken("--motion-capture", 320);
+}
+
+/**
+ * How long a mid-turn announcement is guaranteed on screen. The fallback, not the number.
+ *
+ * D60 puts the number in `--motion-trap-hold`, and this is what to use when no stylesheet has loaded,
+ * which happens in a test harness rather than in a browser. Same arrangement as `REFUSAL_MIN_MS`.
+ */
+export const TRAP_HOLD_MS = 2000;
+
+/**
+ * What the message strip is currently announcing, or `null`.
+ *
+ * One definition, because three callers need the same answer and two of them are in another file. A
+ * trap that went off outranks a card an aura cancelled, which matches the order `move-hints.js` prints
+ * them in: both cannot be true of one event.
+ *
+ * **It returns the value and not a boolean**, and `card-controls.js` depends on that. The value is the
+ * frozen object `resolveMove` produced, so comparing two calls by identity answers "is this still the
+ * same announcement I already held for", which is what stops one announcement being held twice.
+ */
+export function announcement(state) {
+  return state.trapFired ?? state.nullifiedCard ?? null;
+}
+
+/**
+ * How long to hold the turn after a card announced something, before carrying on. `0` means carry on now.
+ *
+ * The other half of `holdAfterTurn`: that one is asked when the turn has ended, this one mid-turn.
+ *
+ * ## Why the two are different numbers
+ *
+ * D60's argument, and it is D20's with a shorter answer. A refusal follows the player's own click, so
+ * they are already looking at the board and four seconds is a minimum for reading something they asked
+ * for. A trap fired by a card interrupts a turn that is under way and arrives unasked, so what it needs
+ * is a **guaranteed** window rather than a long one. Two seconds cannot be missed and does not turn a
+ * turn with two traps in it into a slideshow.
+ *
+ * ## Why a refusal gets nothing here
+ *
+ * `holdAfterTurn` holds for a refusal and this deliberately does not, which is the one place the two
+ * functions are not symmetrical. A refusal mid-action-phase is not an announcement: the player asked for
+ * something and was told no, and they are still holding the controls. Copying the branch across would be
+ * the natural mistake and there is a test pinning it.
+ *
+ * `--motion-trap-hold` is a reading time and not a motion, which is why the token sits outside
+ * `tokens.css`'s `prefers-reduced-motion` block: a player who asked for less movement has not asked for
+ * less time to read.
+ */
+export function holdMidTurn(state, delays, readToken) {
+  if (announcement(state) === null) return 0;
+
+  return delays.afterTrapCard ?? readToken("--motion-trap-hold", TRAP_HOLD_MS);
 }
 
 /**

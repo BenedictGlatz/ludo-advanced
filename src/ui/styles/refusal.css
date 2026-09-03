@@ -48,3 +48,31 @@
   opacity: 1;
   translate: -50% 0;
 }
+
+/* --- The trap announcement (D55, brief 07 section 4.4). data-message-kind is
+       an existing seam: showMessage has always written it and no stylesheet
+       read it. Issue #45 starts writing "trap" into it, and this is the rule
+       that stops a trap arriving in the refusal orange.
+
+       A trap firing is not a refusal. The player did nothing wrong, and the
+       announcement is the only reason a Banana Peel is not the game eating a
+       turn for no reason. --color-warn is the colour reserved for "you cannot
+       do that", and putting news in it repeats the defect D40 fixed when it
+       took the win message out of this strip.
+
+       So the game has two voices in one component: orange with an orange dot
+       is a refusal, the panel colour with an ink dot is the game reporting
+       something that happened. No new token, no second component, and the
+       strip keeps its ink border, its hard shadow and its position, so it is
+       recognisably the same object saying a different kind of thing.
+
+       How long it stays is --motion-trap-hold, which the view holds the turn
+       for; the strip itself only fades (D60). --- */
+
+.move-refusal[data-message-kind="trap"] {
+  background: var(--color-panel);
+}
+
+.move-refusal[data-message-kind="trap"]::before {
+  background: var(--color-ink);
+}

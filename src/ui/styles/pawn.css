@@ -19,7 +19,7 @@
       calc(var(--pawn-col, 0) * var(--cell) - 50%),
       calc(var(--pawn-row, 0) * var(--cell) - 50%)
     )
-    scale(var(--pawn-scale));
+    scale(var(--pawn-scale)) rotate(var(--pawn-tilt, 0deg));
   transition:
     transform var(--motion-move) var(--ease-move),
     opacity var(--motion-feedback) var(--ease-ui);
@@ -81,18 +81,10 @@
        dims with data-captured, and the breathe loop and the focus ring are
        both on ::before, outside the disc, and never reach it. --- */
 
-.pawn[data-player="0"] {
-  --seat-shape: var(--seat-shape-0);
-}
-.pawn[data-player="1"] {
-  --seat-shape: var(--seat-shape-1);
-}
-.pawn[data-player="2"] {
-  --seat-shape: var(--seat-shape-2);
-}
-.pawn[data-player="3"] {
-  --seat-shape: var(--seat-shape-3);
-}
+/* The four rules that mapped data-player to --seat-shape here were deleted on
+   2026-09-03 and moved into the one [data-player="N"] block in board.css,
+   which is the follow-up 06-spec section 6 named. The pawn inherits
+   --seat-shape from itself now, the same way it already inherits --player. */
 
 .pawn__mark {
   position: absolute;
@@ -194,6 +186,79 @@
    one fact, it is the only one that touches all sixteen pieces, and it costs
    contrast on every pawn that is not the active seat's, which is exactly what
    NFR-12 and D16 cannot afford. The yard halo in board.css keeps the job. */
+
+/* --- Pawn statuses (D56, D57). data-statuses is a space-separated list, so
+       a pawn can carry two of these at once and both have to be readable
+       together. Two treatments, because the two facts are not the same size:
+       a status that stops the pawn changes the piece, a status that only
+       changes what a field hands the pawn is a tag stuck on the piece.
+
+       Nothing else on the pawn is available. Both pseudo-elements are taken,
+       the disc by ::after and the state ring by ::before, and .pawn__mark is
+       the seat mark, which is the one thing on the board that may not change
+       to mean something else. So the tag is a second empty span, named in
+       section 5 of the spec the way 04-spec named three and 06-spec one. --- */
+
+/* stunned: this pawn loses its next turn. It tips over, and its fill mixes
+   toward --color-dormant, the value the game already uses for a thing that is
+   present and not available. The seat colour stays under the mix and the ink
+   mark is untouched, so the piece is still identifiable while it is out.
+
+   The tilt is what makes it unmistakable rather than merely dull: it is the
+   only piece on the board that is not upright, it reads at a glance and it
+   reads in greyscale. It is a static transform and not a loop, so
+   prefers-reduced-motion has nothing to stop. A stunned pawn is also not
+   data-movable, which is true of eleven other pieces on a four-seat board and
+   is why the absent breathe ring could not carry this on its own. */
+.pawn[data-statuses~="stunned"] {
+  --pawn-tilt: -9deg;
+  cursor: default;
+}
+
+.pawn[data-statuses~="stunned"]::after {
+  background-color: color-mix(in oklab, var(--player) 58%, var(--color-dormant));
+}
+
+/* slippery: the pawn slid rather than walked, so the field it stopped on
+   hands out no card. One turn, and its only consequence has already happened
+   by the time the player reads the mark, which is why it is a tag and not a
+   change to the piece.
+
+   The tag is a dormant disc with an ink skid inside it, sitting on the disc's
+   upper right shoulder, clear of the eyes and of the seat mark at the foot.
+   It is the slot for the six statuses this issue does not answer: they take
+   the same box with their own inner geometry, one at a time, in an order the
+   spec that answers them sets. */
+.pawn__status {
+  position: absolute;
+  top: -8%;
+  right: -8%;
+  z-index: 2;
+  width: 38%;
+  height: 38%;
+  border: var(--border-hair) solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-dormant);
+  opacity: 0;
+  scale: 0.4;
+  transition:
+    opacity var(--motion-feedback) var(--ease-ui),
+    scale var(--motion-feedback) var(--ease-ui);
+}
+
+.pawn__status::before {
+  content: "";
+  position: absolute;
+  inset: 36% 14%;
+  border-radius: var(--radius-pill);
+  background: var(--color-ink);
+  rotate: -35deg;
+}
+
+.pawn[data-statuses~="slippery"] .pawn__status {
+  opacity: 1;
+  scale: 1;
+}
 
 /* --- Keyboard focus. Desktop only does not mean mouse only (D11). --- */
 

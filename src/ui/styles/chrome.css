@@ -41,21 +41,21 @@
   white-space: nowrap;
 }
 
+/* --seat-shape was mapped here as well until 2026-09-03, and the four lines
+   were deleted when 07-spec moved the mapping into the one [data-player="N"]
+   block in board.css. That selector is unscoped, so the chrome row inherits
+   the shape although it sits outside .board. The --seat-color line stays. */
 .app__chrome[data-player="0"] {
   --seat-color: var(--color-p0);
-  --seat-shape: var(--seat-shape-0);
 }
 .app__chrome[data-player="1"] {
   --seat-color: var(--color-p1);
-  --seat-shape: var(--seat-shape-1);
 }
 .app__chrome[data-player="2"] {
   --seat-color: var(--color-p2);
-  --seat-shape: var(--seat-shape-2);
 }
 .app__chrome[data-player="3"] {
   --seat-color: var(--color-p3);
-  --seat-shape: var(--seat-shape-3);
 }
 
 .app__chrome[data-player] .chrome__turn::before {

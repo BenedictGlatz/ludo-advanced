@@ -7,10 +7,14 @@
  *
  * ## Why any of this needs a helper at all
  *
- * A trap is only visible through attributes. Design brief 07 is out and unanswered, so `board.css` has
- * no rule for `[data-trap]` and nothing is painted. That is deliberate and it is what makes these
- * helpers the whole test surface: everything a player will eventually see is in the DOM today, so the
- * mechanic can be asserted end to end before a single line of CSS exists.
+ * A trap was only visible through attributes when this file was written. Design brief 07 was out and
+ * unanswered, `board.css` had no rule for `[data-trap]`, and nothing was painted. That is what made
+ * these helpers the whole test surface: everything a player would eventually see was already in the
+ * DOM, so the mechanic could be asserted end to end before a single line of CSS existed.
+ *
+ * **Design handoff 07 landed on 2026-09-03 and the attributes are now drawn**, so the attribute helpers
+ * below are joined by `chipRatio`, which measures. The attribute half is still the bulk of it and still
+ * the right default: an attribute says what the game decided, a pixel says how it was drawn.
  */
 
 import { expect } from "@playwright/test";
@@ -36,6 +40,26 @@ export function square(board, index) {
 /** Every field that may be clicked to answer the question the prompt is asking. */
 export function pickableSquares(board) {
   return board.locator('.square--track[data-pickable="true"]');
+}
+
+/**
+ * How much of a field the object standing on it covers, as a fraction of the field's own width.
+ *
+ * **A ratio and not a pixel count**, because `--cell` is derived from `--board-size` and every absolute
+ * number would have to be rewritten the day the board is resized. D51 gives a trap 30 per cent of the
+ * field and D52 gives a blocker 76, and those two numbers are far enough apart that a ratio tells them
+ * apart with room to spare.
+ *
+ * **Always poll this rather than calling it once.** The chip is at `scale: 0.4` until its field carries
+ * `[data-trap]` and it grows in over `--motion-capture` (D55), so a measurement taken straight after
+ * the click reads the beginning of the transition. That cost real time once: the first version of the
+ * chip case measured 0.12 and read as a stylesheet that had not landed.
+ */
+export async function chipRatio(field) {
+  const chip = await field.locator(".square__trap").boundingBox();
+  const cell = await field.boundingBox();
+
+  return (chip?.width ?? 0) / (cell?.width ?? 1);
 }
 
 /**

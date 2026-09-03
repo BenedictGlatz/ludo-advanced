@@ -128,6 +128,44 @@ test.describe("NFR-12: the board in greyscale", () => {
     expectSeatsIdentifiable(await pawnMarks(board));
   });
 
+  /**
+   * **Insurance against the one change in design handoff 07 that fails with no symptom.**
+   *
+   * Until 2026-09-03 five stylesheets each mapped `data-player` to `--seat-shape` with their own copy of
+   * the four rules. 07-spec moved the mapping into the single `[data-player="N"]` block in `board.css`
+   * and deleted the four copies in `pawn.css`, `hud.css`, `chrome.css` and `overlay.css`, which is the
+   * follow-up 06-spec § 6 asked for. Every consumer now inherits the shape from an ancestor.
+   *
+   * That works because the surviving selector is **unscoped**, so it reaches the HUD and the chrome
+   * although they sit outside `.board`. If it ever stops working, every consumer falls back to the
+   * `circle(50%)` written into its own `clip-path` declaration, and **the game keeps rendering**: four
+   * identical circles, one per seat, and NFR-12 quietly broken. No assertion in this suite noticed that
+   * before this case, because every clip-path check was on `.pawn__mark`.
+   *
+   * The HUD is the consumer chosen because it is on screen in every match. The chrome carries the same
+   * mark and the two overlay panels only appear on a win or a handover.
+   */
+  test("keeps the seat shape on the HUD, which now inherits it", async ({ page }) => {
+    await openMatch(page, SEEDS.leavesStartAtOnce);
+
+    const shapes = await page.locator(".hud__seat").evaluateAll((seats) =>
+      seats.map((seat) => ({
+        seat: Number(seat.getAttribute("data-player")),
+        clipPath: window.getComputedStyle(seat.querySelector(".hud__name"), "::before").clipPath,
+      }))
+    );
+
+    expect(shapes).toHaveLength(4);
+    for (const { seat, clipPath } of shapes) {
+      expect(clipPath, `HUD seat ${seat} has a shape`).not.toBe("none");
+    }
+
+    expect(
+      new Set(shapes.map((shape) => shape.clipPath)).size,
+      "the four HUD plates have four different shapes"
+    ).toBe(4);
+  });
+
   test("does at least give the four seats four different greys", async ({ page }) => {
     await openMatch(page, SEEDS.leavesStartAtOnce);
     const seats = await seatLuminance(page);

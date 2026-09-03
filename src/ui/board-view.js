@@ -114,13 +114,23 @@ function house(seat) {
  * on the piece, and the two pseudo-elements of `pawn.css` are already taken by the body and the state
  * ring. It carries no text and no attribute of its own; `data-player` on the pawn is what keys it.
  * Styled by design handoff 06.
+ *
+ * `.pawn__status` is the second one, asked for by name in design spec 07 § 5 (D57), and it is here for
+ * the same reason there is a first one: **the piece has nothing left to draw on.** Both pseudo-elements
+ * are taken and `.pawn__mark` is the seat mark, which is the one thing on the board that may not come to
+ * mean something else. So a status that has to be visible needs a box of its own.
+ *
+ * Both spans are built once and never touched again, which is D10's contract and not tidiness: a mark
+ * created at the moment a status appears has no previous state to transition from, so it would arrive
+ * fully drawn however the stylesheet is written. They render nothing until the pawn carries a status,
+ * the same way the 40 `.square__trap` spans render nothing on an empty field.
  */
 function pawn(seat, index) {
   return $("<div>", { class: "pawn", tabindex: 0 })
     .attr("data-player", seat)
     .attr("data-pawn", index)
     .attr("data-r", 0)
-    .append($("<span>", { class: "pawn__mark" }));
+    .append($("<span>", { class: "pawn__mark" }), $("<span>", { class: "pawn__status" }));
 }
 
 /**

@@ -1650,6 +1650,188 @@ note going stale by being *overtaken* rather than by being wrong, and it found i
    keeping and its claim was worth marking, which is why it is a quotation with a note on top and not a
    deletion.
 
+### Handoff 07 landed, and two of this chapter's own deviations closed: 2026-09-03, issue #45
+
+**All ten decisions came back, D51 to D60.** The package was five stylesheets: `board.css` amended,
+`board-trap.css` new, `pawn.css`, `refusal.css` and `tokens.css` amended. It read against the same tree
+handoffs 05 and 06 landed on and said so, which is the rule added after handoff 04. Checked on arrival: no
+em dash anywhere in the spec, the README or the five files; every token it reads already existed; no file
+over 300 lines, `pawn.css` closest at 283; nothing added to a `content:` property.
+
+**The trap is drawn as a pawn, and that is the answer worth recording.** D51 and D53 gave the object the
+piece's own construction: a body in the owner's seat colour, a hair ink edge, the seat's shape in ink
+inside it, the hard offset shadow underneath. A trap is a thing standing on the board that belongs to a
+player, which is what a pawn is, so the game has one grammar for that and reuses it. Two consequences the
+spec draws out and neither is obvious: a player learns nothing new, and the greyscale measurement spec 06
+made carries over unchanged instead of needing a second one. The blocker is the same object with two
+variables changed, 76 per cent of the field instead of 30 and square corners instead of round, which makes
+the size difference the whole message and needs no legend.
+
+**The three trap kinds look identical, on purpose.** At 30 per cent of a cell, beside D27's diamond, inside
+D7's ring and possibly under a pawn, a per-kind geometry is a distinction the player cannot read in the
+moment they need it. What is worth reading at a glance is that something is there and whose it is, because
+a trap does not fire under a pawn of the seat that placed it. Which kind it is stays in the `aria-label`.
+That is a design answer that made the markup **simpler** than the side asking for it had assumed, which is
+the opposite of how the round trip usually goes: `data-trap-kind` is now in the DOM and deliberately unread
+by any stylesheet, and the spec's § 6 says so rather than leaving it looking forgotten.
+
+**Two deviations recorded in this chapter are now closed.**
+
+| Recorded | Closed by |
+| --- | --- |
+| The trap announcement ships in `--color-warn`, the colour reserved for "you cannot do that" | **D55.** Two declarations: the strip's ground becomes `--color-panel` and its dot `--color-ink` when `data-message-kind="trap"`. Orange with an orange dot is a refusal, the panel colour with an ink dot is the game reporting something that happened. Same box, same border, same position, so it is recognisably the same object saying a different kind of thing |
+| A trap fired by a card gets no guaranteed time on screen | **D60**, and it needed code rather than CSS. See the next entry |
+
+The `data-message-kind` seam is what made D55 cost two declarations instead of a component. It had been
+written by `showMessage` and read by nothing since handoff 01, and the comment that kept it said only that
+removing it would change two end-to-end specs for no gain. It is now load-bearing twice over.
+
+**One element was needed and named rather than styled around**, which is the fourth time a spec has done
+that (04-spec named three, 06-spec one). `.pawn__status`, an empty span after `.pawn__mark`, because a
+stunned pawn changes the piece and a slippery one needs a tag, and the piece had nothing left to draw on:
+both pseudo-elements are taken by the disc and the state ring, and `.pawn__mark` is the seat mark, which is
+the one thing on the board that may not come to mean something else.
+
+**The `--seat-shape` consolidation is the change in this delivery that fails with no symptom.** Five
+stylesheets each held their own copy of the four `data-player` to `--seat-shape` rules. 07-spec moved the
+mapping into the single unscoped `[data-player="N"]` block in `board.css` and deleted the copies, which is
+the follow-up 06-spec § 6 named. Every consumer inherits it now, including the HUD and the chrome, which
+sit outside `.board`. **If that inheritance ever breaks, the game keeps rendering:** every consumer falls
+back to the `circle(50%)` in its own `clip-path` declaration, so four seats become four identical circles
+and NFR-12 is quietly broken. No assertion in the suite would have noticed, because every clip-path check
+was on `.pawn__mark`. `greyscale.spec.js` gained a case for the HUD, which is the consumer on screen in
+every match. That is the cheapest insurance available against the only silent failure in the drop.
+
+### D60 was the one answer that needed code, and it is a wait nothing on screen reports: 2026-09-03, issue #45
+
+Nine of the ten decisions were stylesheets. **D60 was a behaviour change**, and it is the only part of
+handoff 07 where the design asked the view to do something rather than to stop drawing something.
+
+**The problem it fixes, traced rather than assumed.** `state.trapFired` survives a phase change; it is
+cleared only by `clearedTurnFields()` when the turn ends. So the announcement is not lost by time passing.
+What loses it is the **next** `resolveMove`, whose `trapChanges` always writes a fresh `trapFired`, and
+that is `null` on almost every move. After a card is played the loop's `advance()` runs straight on, skips
+the action phase, rolls the die and reaches `act`, where the pawn hints appear. A player who commits a
+move inside two seconds empties the strip themselves.
+
+The dice-move case never had this problem, because `holdAfterTurn` already holds the finished turn before
+the handover screen covers it. The card case had no wait of any kind.
+
+**Where the wait went, and the seam it kept.** `timers.js` gained `holdMidTurn` beside `holdAfterTurn`,
+because that module already owned every named wait in the game and its header states the division: the
+loop decides *that* it waits, `timers.js` decides *how long*. `card-controls.js` gained one `carryOn`
+function that replaced all four of its `resume()` calls, because a trap can fire on two different resolve
+paths (`playActionCard` resolves immediately when no reaction window opens, `closeWindow` resolves the
+played cards when the window shuts) and more than one call site can produce an announcement.
+
+**Three details, each of which was wrong in an earlier draft, and all three are the kind that would have
+shipped silently.**
+
+1. **`refresh()` has to come first.** `apply` changes the state and draws nothing, so a bare delayed
+   `resume()` holds for two seconds with the strip not yet on screen at all. That is worse than no hold.
+2. **A zero hold has to be no hold, not a zero-millisecond timer.** `?fast=1` overrides the duration to 0,
+   and `timers.set(..., 0)` defers `advance()` to a macrotask. Every end-to-end spec in the suite was
+   written against the ordering this file has today, so the zero case resumes synchronously.
+3. **One announcement is held once.** Because `trapFired` is a turn-level field, it is still set when the
+   player presses Skip during the hold, and that second pass would schedule another two seconds. A marker
+   holding the last announcement fixes it, compared by identity against the frozen object the rules layer
+   produced. This is why `announcement(state)` returns the value rather than a boolean.
+
+**It delays the loop and does not block input, and that is a decision.** While the hold runs the phase is
+still `action`: `turn-controls.js` ignores a pawn click outside `choose` and `act`, and `applyMoveHints`
+paints nothing, so there is nothing on the board to click. What the player can still do is play another
+card or press Skip, and either ends the hold early. That is the reading D9 already gave this strip, "until
+the player's next action, and at minimum": a deliberate click is the player saying they have read it. The
+alternative, swallowing input for two seconds, needs either a new attribute in the DOM contract or a
+live-looking button that does nothing, and what a disabled prompt looks like is a design decision this
+side may not take. It is also the only version of the change that can leave the game feeling stuck.
+
+**`--motion-trap-hold` is two seconds and not four, and the reason is worth keeping.** D20 gave a refusal
+four, because a refusal follows the player's own click and they are already looking at the board. A trap
+fired by a card interrupts a turn that is under way and arrives unasked, so what it needs is a
+*guaranteed* window rather than a long one. Two seconds cannot be missed and does not turn a turn with two
+traps in it into a slideshow. The token also sits outside `tokens.css`'s `prefers-reduced-motion` block,
+which spec 07 argues for directly: it is a reading time and not a motion, and a player who asked for less
+movement has not asked for less time to read.
+
+**One consequence nobody decided and it is correct anyway.** Pausing during the hold loses it:
+`loop.pause()` clears every timer and `loop.resume()` re-enters the phase. The turn is not stuck and the
+announcement is still in the state, so it is still drawn; only the guarantee is gone. That is the right
+answer for a player who chose to stop looking at the board.
+
+### A negative finding: two specs answered one question in opposite directions: 2026-09-03, issue #45
+
+**D59, the pickable field, is answered against a rule handoff 04 already delivered, and the loop had no
+way to notice.** This is the most instructive thing in the whole handoff and it is worth the space.
+
+`prompt.css` lines 190 to 222 have answered "what does a pickable field look like" since 2026-09-01. It
+paints an offered track field in the skill teal and dims every field and pawn that is **not** offered to
+`opacity: 0.45`. D59 answers the same question with violet and no dimming, and it explicitly rejects both
+of the earlier answers by name: "*Rejected: a second hue for picking, teal*", because a field can be a
+skill square and pickable at once, and "*Rejected: the refused fields dimmed or hatched*".
+
+Neither side was careless. Brief 07 asked D59 as the fourth unnumbered leftover of `00-open-requests.md`
+§ 4, which had been on the open list since spec 03 § 5 and had genuinely never been *answered in a spec*.
+It had been **implemented** in the meantime, in a file whose own comment says it is answering that
+leftover. So the open list was right that no spec covered it and wrong that nothing did.
+
+**The clue was in this chapter already, in a note about line counts.** The entry for handoff 04 records
+that spec 04 § 1 names the seam to cut if `prompt.css` goes over 300 lines: "the `.board[data-picking]`
+block at the end, which is **board CSS living in a prompt file**". A block of board rules in the prompt's
+stylesheet was noticed, written down, and filed as a size risk rather than as a place where two decisions
+could collide. Nobody joined the two facts, and there was no step in the process that would.
+
+Three consequences, and the third is why this could not be patched from this side:
+
+1. `prompt.css` loads after `board.css`, so at equal specificity the earlier answer wins and **D59's block
+   is inert**. The board looks exactly as it did while aiming a card.
+2. `prompt.css:219` uses the `background` **shorthand**, which resets `background-image`. So a field that
+   is inside an It's Not That Deep aura and offered by a card loses its hatch, which is D58 quietly failing
+   on the fields the player most needs to see it on.
+3. The earlier rule covers the **pawn** as well as the field, and D59 speaks only about the field. Deleting
+   the field half leaves a pickable pawn teal and a pickable field violet, with non-offered pawns dimmed
+   and non-offered fields not. Choosing how those go together is a design decision, and `CLAUDE.md`
+   forbids this side from taking one.
+
+There is also a consequence nobody has decided: the dimming applies to 34 of the 36 fields a trap card
+offers, so it dims the trap chips at exactly the moment D51 says whose trap it is matters most.
+
+**So the package landed whole and untouched and the block lies dormant**, which the Product Owner chose
+over patching it. The reasoning: the board keeps a treatment that is already coherent, and no file is
+edited against its delivery. The alternative, deleting the earlier rules, buys a violet field and an
+incoherent pawn. **D61 is open against it**, with the file, the line numbers, the cascade order and the
+shorthand finding in `08-brief-pickable-field.md`.
+
+**A correction, made the same day and worth leaving visible.** The plan for this landing said the keyboard
+focus was "the one part of D59 that has no competitor" and would take effect regardless, closing the
+NFR-08 gap. **That was wrong, and the end-to-end suite is what found it.** `prompt.css`'s
+`.square--track[data-pickable="true"]` and `board.css`'s `.square--track:focus-visible` have the *same*
+specificity, one class and one qualifier each, and both are built from `box-shadow`, which is the property
+the offer and the focus rings share. So `prompt.css` wins the focus rule too: **a focused field is drawn
+exactly like an unfocused offered one**, and a keyboard player cannot see where they are.
+
+The way it was found is worth as much as the fact. The first version of the case asserted that a focused
+field differs from an offered one, and it **passed** when its file ran alone and failed under load. Both
+readings were wrong: `box-shadow` transitions over `--motion-feedback`, so the comparison succeeded while
+the value was still interpolating between the two. A poll that stops at the first difference cannot tell
+"a new rule applied" from "the old value is still on its way".
+
+So the case is now a deliberate negative that asserts the focused field is drawn identically to the
+offered one, and it will go red the day D61 lands. That is the third time this pattern has been used and
+the second time it has been used to record a conflict rather than an absence.
+
+**What this changes about NFR-08.** The keyboard *reach* closed in issue #45 and is real: a field takes a
+`tabindex` while it is offered and answers Enter. The keyboard *state* has not closed, and D61 now blocks
+NFR-08's second half rather than being a preference. That is a change of status and it is corrected in
+`00-open-requests.md` and in the brief.
+
+**The process lesson, which is the report-worthy part.** The design loop's guard against a dropped request
+is `00-open-requests.md`, and it works: it caught the missing `chrome.css` on the day it was written. It
+has no guard against the opposite failure, a question answered twice, because it tracks *what was asked*
+and not *what the repository already does*. A brief lists the DOM contract and the constraints; it does not
+list the rules that already exist for the element it is about. Adding that to § 2 of the next brief is
+cheap, and it is the only change that would have caught this one.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -1719,7 +1901,21 @@ note going stale by being *overtaken* rather than by being wrong, and it found i
     Spec 04 answered D16 and D20 in passing and said so.
   - **`prompt.css` is 244 lines**, 56 from the NFR-02 limit, and it is the file to watch. Spec 04 § 1
     names the seam to cut if it goes over: the `.board[data-picking]` block at the end, which is board CSS
-    living in a prompt file.
+    living in a prompt file. **That block turned out to be more than a size risk**: it holds an answer to
+    the same question D59 answers, in the other direction. See the negative finding above, and D61.
+  - **D61 is open**, and it is the only thing from handoff 07 that did not land: how D59's violet pickable
+    field reconciles with the teal one `prompt.css` has painted since 2026-09-01, and what happens to the
+    pawn half of the same rule. `08-brief-pickable-field.md` is out. **It blocks the second half of
+    NFR-08**: the same cascade collision swallows D59's keyboard focus treatment, so a field can be
+    reached with Tab and gives no sign of being reached. The reach itself works and shipped with #45.
+  - **The six pawn statuses other than `stunned` and `slippery`** are in the DOM and unstyled: `held`,
+    `rock`, `ghost`, `locked`, `armoured`, `ragebait`. D57 gives them a box and a position on
+    `.pawn__status` and says the next spec sets their inner geometry and their order. `STATUS.PURGE` is
+    board-scoped and still has no element anywhere.
+  - **`--color-dormant` now does three jobs**: a card that cannot be played, the status tag's ground, and
+    the mix on a stunned pawn's disc. Spec 07 § 8 noticed it and deliberately left it, because the three
+    never appear on one element. It is cheap to fix early and expensive late, and the pass that answers
+    the remaining six statuses is when to look, since they all take the same ground.
   - **The abandoned win screen is unreachable from the interface.** See the negative finding above.
 - A card's visual presentation belongs here and its rule belongs in Chapter 05; the two are matched
   by card id. Worth stating explicitly in the report, because it is the clearest example of the

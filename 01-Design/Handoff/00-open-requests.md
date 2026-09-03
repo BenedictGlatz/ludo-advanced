@@ -2,7 +2,50 @@
 
 **From:** Claude Code
 **To:** Claude Design
-**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02**
+**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, and on 2026-09-03**
+
+---
+
+## Status on 2026-09-03: handoff 07 is closed, and answering it opened one question
+
+**[07-spec-trap-marker.md](07-spec-trap-marker.md) landed.** All ten decisions came back, D51 to D60,
+and nine of them are on screen. Five stylesheets: `board.css` amended, `board-trap.css` new, `pawn.css`,
+`refusal.css` and `tokens.css` amended, plus a `--motion-trap-hold` token the view reads. The five
+landing checks passed, the one element the spec named by name is wired (`.pawn__status`), and the four
+`--seat-shape` repeats in `hud.css`, `chrome.css` and `overlay.css` are deleted as § 2 asked.
+
+**Two things this closed that were live defects rather than preferences.** D55 took the trap announcement
+out of `--color-warn`, the colour reserved for "you cannot do that", which had been shipping wrong on
+purpose since 2026-09-02 with a note against it in `notes/04`. D60 gave a trap fired by a card two
+seconds of guaranteed time on screen, which the game had simply not been giving the player.
+
+| Brief | Owes | State |
+| --- | --- | --- |
+| [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, plus whichever of `prompt.css` and `board.css` the answer touches | **Open.** Sent 2026-09-03 |
+
+**One decision did not land, and it is not a delivery problem.** D59 answers "what does a pickable field
+look like" with violet and no dimming. `prompt.css` has answered the same question since handoff 04 with
+teal and a dim, at the same specificity, and it loads later, so the D59 block is inert. Neither side could
+have known: brief 07 asked D59 as an item this file's own § 4 listed as never answered **in a spec**, and
+it had been implemented in the meantime.
+
+**It blocks NFR-08's second half, which makes it the first requirement-blocking design item since brief
+06 closed one on 2026-09-02.** The offer and the focus rings are both built from `box-shadow`, so the same
+collision swallows D59's keyboard focus treatment: a field can be reached with Tab and gives no sign of
+being reached. The reach itself shipped with issue #45 and works.
+
+**The package landed whole and untouched anyway**, which the Product Owner chose over deleting the earlier
+rules (that would leave a teal pawn beside a violet field, which is a design decision) or holding
+`board.css` back (it carries the `--seat-shape` consolidation `board-trap.css` needs). Two places in the
+repository record the current state: `src/main.js`'s import comment, where the cascade order is visible,
+and a deliberate negative assertion in `tests/e2e/field-keyboard.spec.js` that is **meant to start
+failing** when D61 is answered.
+
+**One change to how a brief is written comes out of this.** A brief lists the DOM contract and the
+constraints; it does not list the rules that already exist for the element it is about. This file guards
+against a request being dropped and has no guard against a question being answered twice, because it
+tracks what was asked and not what the repository already does. § 2 of brief 08 does list them, and the
+next brief should too.
 
 ---
 
@@ -133,7 +176,8 @@ loop needs an index or something gets quietly dropped, and something already had
 | 04 HUD, menus and handover | [04-brief](04-brief-hud-menus-and-handover.md) | [04-spec](04-spec-hud-menus-and-handover.md) | **Closed.** Landed 2026-09-01. D16 answered for the page furniture, not for the pawn |
 | 05 Dice card pool overlay | [05-brief](05-brief-dice-pool-overlay.md) | [05-spec](05-spec-dice-pool-overlay.md) | **Closed.** Landed 2026-09-02. D43 to D47; D46 answered inside D42 |
 | 06 The seat mark on the pawn | [06-brief](06-brief-pawn-mark.md) | [06-spec](06-spec-pawn-mark.md) | **Closed.** Landed 2026-09-02. D48 to D50, and D16 with them |
-| 07 Traps, blockers and pawn statuses | [07-brief](07-brief-trap-marker.md) | *none yet* | **Open.** Sent 2026-09-02 for issue #45. D51 to D60. Blocks no requirement: FR-30 is a `could have` |
+| 07 Traps, blockers and pawn statuses | [07-brief](07-brief-trap-marker.md) | [07-spec](07-spec-trap-marker.md) | **Closed.** Landed 2026-09-03. D51 to D60, all ten answered. Nine are on screen; D59 is inert because `prompt.css` answers the same question and loads later, which is now D61 |
+| 08 The pickable field | [08-brief](08-brief-pickable-field.md) | *none yet* | **Open.** Sent 2026-09-03. D61, one question with four parts. **Blocks NFR-08's second half**: a field can be tabbed to and gives no sign of it |
 
 **The 02 row is the one worth reading twice.** A brief with no spec is not a brief that was declined, it is
 a brief nobody closed, and one of its eight open items (D16) is the only design question in this project
@@ -242,23 +286,32 @@ deliver the 06 spec.** It is fifteen lines and it closes a requirement.
 | ~~**D48**~~ | Size and placement of the seat mark on the pawn, and what happens to the eyes of D14 | 06 | **Closed.** 38 % of the piece, low on the disc, ink, and the creature is unchanged |
 | ~~**D49**~~ | The mark through the five pawn states: selected at 1.14, captured at 0.82 and 70 %, movable loop, focus, reduced motion | 06 | **Closed.** It takes part in none of them, which is a decision with the capture state's 2.16:1 named as its cost |
 | ~~D50~~ | What happens to the luminance-only measurement in `greyscale.spec.js` once the shape is on the piece: retire, keep as a weaker check, or re-spread the palette as well | 06 | **Closed. Retired**, the four-different-greys case kept as the palette floor, and the 1.146 figure moved into the notes |
-| **D51** | What a trap looks like on a field. Three kinds, one shape language or three | 07 | No |
-| **D52** | How a blocker reads differently from a trap. Confirms or replaces `data-trap="blocker"`, which spec 01 § 5 predicted as `data-blocked="true"` | 07 | No |
-| **D53** | Whether and how the owning seat is shown on a 1-cell field, given that NFR-12 forbids colour alone | 07 | No, but the answer must keep `greyscale.spec.js` green |
-| **D54** | How three marks on one field coexist: trap, D27's skill diamond, D7's legal-target ring | 07 | No |
-| **D55** | What a trap firing looks like, and what the announcement is. **The one that fixes a deviation already shipping**: the announcement is currently in the refusal orange, and a trap going off is not a refusal | 07 | No, but it is a live defect rather than a preference |
-| **D56** | How a stunned pawn reads. The first status mark on a pawn in the project | 07 | No |
-| **D57** | How the Oil Spill `SLIPPERY` status reads. Answerable with D56 | 07 | No |
-| **D58** | Whether the It's Not That Deep aura is drawn, and how. Seven contiguous fields | 07 | No |
-| **D59** | What a pickable field looks like, and its keyboard state. Also answers the third unnumbered leftover below, asked for a field | 07 | Indirectly: NFR-08, since no field is keyboard-reachable today |
-| **D60** | Whether a trap announcement gets a hold token, and whether the game waits for a mid-turn one. D20 is the precedent | 07 | No |
+| ~~**D51**~~ | What a trap looks like on a field. Three kinds, one shape language or three | 07 | **Closed.** A chip in the field's foot-left corner at 30 per cent, built exactly like a pawn: seat fill, hair ink edge, seat shape in ink, piece shadow. **The three kinds look identical on purpose**, and the kind stays in the `aria-label`, so `data-trap-kind` is in the DOM and deliberately unread |
+| ~~**D52**~~ | How a blocker reads differently from a trap. Confirms or replaces `data-trap="blocker"`, which spec 01 § 5 predicted as `data-blocked="true"` | 07 | **Closed.** `data-trap="blocker"` confirmed. The same object at 76 per cent with square corners: a trap is a small thing lying on the path, a blocker is the path being gone. It stops 12 per cent short of the edge so the turn-off bar stays visible over it |
+| ~~**D53**~~ | Whether and how the owning seat is shown on a 1-cell field, given that NFR-12 forbids colour alone | 07 | **Closed.** Shown, by the seat colour as the chip's fill and the seat's shape in ink inside it, off the one mapping in `board.css`. The cost is stated: the shape is 10 px at the design size and 6 px at the board's floor, so at the floor the owner reads by colour alone. NFR-12 is measured on the pawn and unaffected |
+| ~~**D54**~~ | How three marks on one field coexist: trap, D27's skill diamond, D7's legal-target ring | 07 | **Closed. Nothing gives way.** The ring is the field's own edge, the diamond is centred, the chip is in a corner, and D27's existing step back to `inset: 30%` absorbs the one place two of them meet |
+| ~~**D55**~~ | What a trap firing looks like, and what the announcement is. **The one that fixes a deviation already shipping**: the announcement is currently in the refusal orange, and a trap going off is not a refusal | 07 | **Closed, and it was a live defect rather than a preference.** The chip fades and scales over `--motion-capture` in both directions, and the strip gets a second voice on the `data-message-kind` seam: the panel colour with an ink dot. Two declarations, no new token, no new component |
+| ~~**D56**~~ | How a stunned pawn reads. The first status mark on a pawn in the project | 07 | **Closed.** The piece tips nine degrees and its fill mixes 58 per cent toward `--color-dormant`. The tilt is the point: it is the only piece on the board not upright, so it reads at a glance and in greyscale. The seat mark is untouched |
+| ~~**D57**~~ | How the Oil Spill `SLIPPERY` status reads. Answerable with D56 | 07 | **Closed**, with D56 as one pawn-status decision. A dormant disc with an ink skid on the piece's upper right shoulder, on a new `.pawn__status` span the spec named and Claude Code added. **It is the slot for the six statuses this issue does not answer** |
+| ~~**D58**~~ | Whether the It's Not That Deep aura is drawn, and how. Seven contiguous fields | 07 | **Closed. Drawn**, as a 45 degree hatch in `--color-text` at 22 per cent on `background-image`, the one paint layer on `.square` nothing else used. Seven fields of texture read as one region; seven of colour would read as a second board |
+| **D59** | What a pickable field looks like, and its keyboard state. Also answers the third unnumbered leftover below, asked for a field | 07 | **Answered, not landed. This is now D61.** Violet with no dimming, and focus as two rings outside the field. `prompt.css` has answered the same question in teal with a dim since handoff 04, at equal specificity, and loads later, so the whole block is inert. See the status block at the top of this file |
+| ~~**D60**~~ | Whether a trap announcement gets a hold token, and whether the game waits for a mid-turn one. D20 is the precedent | 07 | **Closed. Yes to both.** `--motion-trap-hold: 2s`, and the view holds the turn for it when a trap fires from a card. Two seconds and not D20's four, because a refusal follows the player's own click and this arrives unasked. It needed code rather than CSS |
+
+| **D61** | How the pickable field and the pickable pawn are drawn, given that handoff 04 and D59 answered the same question in opposite directions. Four parts: which answer wins for the field, what a focused field looks like, whether the pawn follows, and what happens to the dim | 08 | **Yes, and it is the only one open that does.** NFR-08's second half: the collision swallows D59's focus treatment as well as its fill, so a field can be reached with Tab and gives no sign of it |
 
 Four more items are open from spec 03 § 5 and brief 04 § 5.1 and are not numbered: what the reaction
 countdown looks like, whether the prompt strip belongs at the foot or in the rail, how a pickable pawn
 differs from a movable one, and what an **empty hand slot** looks like. The last one is visible in any
 screenshot of a hand holding one card and currently renders as a blank card, which is neither of the two
-answers the existing specs give. The third is now asked properly as **D59**, for a field rather than for a
-pawn, because issue #45 makes four of the five field-targeting cards trap cards.
+answers the existing specs give.
+
+**The third one is the cautionary tale of this file and it is worth reading twice.** It was asked properly
+as **D59**, for a field rather than for a pawn, because issue #45 made four of the five field-targeting
+cards trap cards. D59 was answered, and the answer could not land: **the item had already been
+implemented**, on 2026-09-01, in `prompt.css`, in a block whose own comment says it is answering this
+exact leftover. So this list was right that no spec covered it and wrong that nothing did, and the loop
+had no step that would have caught the difference. It is now **D61**, and § 2 of brief 08 lists the rules
+that already exist for the element it asks about, which is the change that would have prevented it.
 
 ---
 

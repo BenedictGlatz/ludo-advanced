@@ -3267,6 +3267,93 @@ to get wrong later.
 
 ---
 
+### 2026-09-03: Handoff 07 landed whole, with D59 left dormant rather than patched
+
+- **Chosen:** the five delivered stylesheets were copied in unchanged, including the `board.css` block
+  answering D59, even though that block is overridden by `prompt.css` and therefore does nothing. The
+  conflict goes back to Claude Design as D61.
+- **Why:** `prompt.css` lines 190 to 222 have answered "what does a pickable field look like" since
+  2026-09-01, in the other direction: teal, with every non-offered field dimmed. D59 says violet with no
+  dimming and explicitly rejects both of those by name. `prompt.css` loads later, so it wins. Landing the
+  package whole means no file is edited against its delivery and the board keeps a treatment that is
+  already coherent.
+- **A correction to this block's own reasoning, made the same day.** The plan claimed the keyboard focus
+  was the one part of D59 with no competitor and would take effect regardless. It does not: the two
+  selectors have equal specificity and both are built from `box-shadow`, so `prompt.css` wins the focus
+  rule as well and a focused field is drawn exactly like an unfocused offered one. That makes **D61 a
+  blocker for the second half of NFR-08** rather than a preference, which is a change of status and is
+  corrected in `00-open-requests.md`. The keyboard reach itself works and shipped with issue #45.
+- **Rejected: deleting the conflicting rules from `prompt.css` so D59 takes effect.** The earlier rule
+  covers the **pawn** as well as the field and D59 speaks only about the field, so this buys a violet field
+  next to a teal pawn, and non-offered fields undimmed next to non-offered pawns dimmed. Reconciling those
+  is a design decision and `CLAUDE.md` forbids this side from taking one.
+- **Rejected: holding `board.css` back until D61 is answered.** `board.css` also carries the `--seat-shape`
+  consolidation that `board-trap.css` depends on for the owner's shape inside the chip, so holding it would
+  ship a trap mark that cannot say whose it is, which touches NFR-12. The cost of holding is larger than
+  the cost of a dormant block.
+- **The cost, stated:** the D59 block is dead CSS in the repository until D61 is answered. That is recorded
+  in `main.js`'s own import comment, where the cascade order is visible, rather than only in a note.
+- → Ch. 04
+
+---
+
+### 2026-09-03: The D60 hold delays the loop and does not block input
+
+- **Chosen:** when a trap fires from a card, `card-controls.js` draws the announcement and then delays the
+  turn by `--motion-trap-hold` before carrying on. The player can still play another card or press Skip,
+  and either ends the hold early.
+- **Why:** while the hold runs the phase is still `action`, so `turn-controls.js` ignores a pawn click and
+  `applyMoveHints` paints nothing. There is nothing on the board to click, which means the only input the
+  hold could block is a deliberate one. D9 already reads this strip as staying "until the player's next
+  action, and at minimum" for a duration, so a deliberate click is the player saying they have read it.
+- **Rejected: swallowing input for the two seconds.** It needs either a new attribute in the DOM contract
+  or a live-looking prompt button that does nothing, and what a disabled prompt looks like is a design
+  decision `CLAUDE.md` forbids this side from taking. It is also the only version of the change that can
+  leave the game feeling stuck.
+- **The detail that was a bug in an earlier draft:** one announcement has to be held once. `trapFired` is
+  a turn-level field cleared only at the end of the turn, so it is still set when the player presses Skip
+  mid-hold, and that pass would schedule a second two seconds. A marker comparing the last announcement by
+  identity fixes it, which is why `announcement(state)` returns the value and not a boolean.
+- → Ch. 04
+
+---
+
+### 2026-09-03: `afterTrapCard` is a fourth delay key rather than a reuse of `afterTrap`
+
+- **Chosen:** `FAST_DELAYS` gained a fourth key for the mid-turn hold, beside `afterMove`, `afterRefusal`
+  and `reaction`.
+- **Why:** the two waits read different tokens. `afterTrap` is the wait once the turn has ended and reads
+  `--motion-refusal-hold`; the new one is mid-turn and reads `--motion-trap-hold`, which D60 sets to two
+  seconds precisely because the two events differ in who caused them. One key for both would tie two
+  numbers the design deliberately separated.
+- **Rejected: reusing `afterTrap` so `?fast=1` needed no new key.** It would remove the freedom a unit
+  test already pins one level up, namely collapsing one hold while keeping the other, and `?fast=1` is the
+  one place that freedom is used.
+- → Ch. 04
+
+---
+
+### 2026-09-03: The seat shape moved to one mapping, and a test was written for the fallback
+
+- **Chosen:** the four `data-player` to `--seat-shape` rules were deleted from `pawn.css`, `hud.css`,
+  `chrome.css` and `overlay.css`, leaving the single unscoped `[data-player="N"]` block in `board.css` to
+  supply every consumer by inheritance. This is the follow-up spec 06 § 6 named and brief 07 § 6 asked for.
+- **Why:** the mapping was repeated five times and D53 was about to put a seat mark on a sixth element. The
+  surviving selector is unscoped, so it reaches the HUD and the chrome although they sit outside `.board`,
+  and every consumer takes `--seat-shape` from the same ancestor it already takes `--player` from.
+- **What made this worth a decision block rather than a tidy-up:** it fails **silently**. Each consumer
+  writes `clip-path: var(--seat-shape, circle(50%))`, so a broken inheritance chain renders four identical
+  circles instead of throwing or blanking. Every `clip-path` assertion in the suite was on `.pawn__mark`,
+  so nothing would have caught it.
+- **Rejected: doing the consolidation without a test**, on the grounds that the delivery says it is safe
+  and the board renders. That is exactly the argument that would have shipped it broken.
+- **Consequence worth generalising:** removing duplication also removes the redundancy that was covering
+  for a mistake. Four copies of a rule fail loudly one at a time; one shared rule fails silently
+  everywhere at once. The test to write is for the fallback the change made reachable.
+- → Ch. 08
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

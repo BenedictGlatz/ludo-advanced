@@ -15,7 +15,12 @@
  * | --- | --- |
  * | `reaction` | Fires once, at the deadline, and dispatches `close-window` |
  * | `reaction-tick` | Fires every second, only so the number on screen changes |
+ * | `announcement` | The D60 hold: a trap fired by a card gets two seconds before the turn carries on |
  * | `handover` (the loop's) | The pause after a finished turn |
+ *
+ * **`announcement` is deliberately not cleared by `stopClock`.** `syncClock` calls that on every advance
+ * where no window is open, so clearing the hold there would cancel it the instant it was set. It is
+ * cleared by `stop()` and by the loop's own `clearAll`, which is what a torn-down or paused match needs.
  *
  * **A timeout and "everybody declined" are the same dispatch**, which is what FR-25 asks for: if everyone
  * declines the window shuts at once without waiting, and if the clock runs out it shuts as though they
@@ -28,8 +33,10 @@
 
 import { INTENT } from "../state/intents.js";
 import { INTENT_CARD, seatOnShow } from "../state/intents-cards.js";
+import { motionMs } from "./board-view.js";
 import { PROMPT_ACTION } from "./prompt-view.js";
 import { createTargetPicker } from "./target-picker.js";
+import { announcement, holdMidTurn } from "./timers.js";
 
 /** How long a reaction window stays open (FR-25). The Product Owner's number. */
 export const REACTION_WINDOW_MS = 30_000;
@@ -55,6 +62,12 @@ export function createCardControls({
 }) {
   /** When the open window shuts, as a timestamp, or `null` when no window is open. */
   let deadline = null;
+
+  /** The announcement `carryOn` has already held for, so that one message is not held twice. */
+  let held = null;
+
+  /** Durations belong to `tokens.css`, so they are read off the board rather than written here. */
+  const readToken = (token, fallback) => motionMs($board, token, fallback);
 
   function windowMs() {
     return delays.reaction ?? REACTION_WINDOW_MS;
@@ -97,11 +110,57 @@ export function createCardControls({
       "reaction",
       () => {
         stopClock();
-        if (apply({ type: INTENT.CLOSE_WINDOW })) resume();
+        if (apply({ type: INTENT.CLOSE_WINDOW })) carryOn();
       },
       windowMs()
     );
     timers.set("reaction-tick", tick, TICK_MS);
+  }
+
+  /**
+   * Carry the turn on, after giving a mid-turn announcement its guaranteed time on screen (D60).
+   *
+   * Every call to `resume` in this file goes through here, including the two that cannot produce an
+   * announcement on their own. That is the point: the marker below makes the extra two free, and one
+   * function is what stops the next call site somebody adds from forgetting.
+   *
+   * ## Three details, each of which was a bug in an earlier draft
+   *
+   * **`refresh()` comes first.** `apply` changes the state and draws nothing, so a bare delay would hold
+   * for two seconds with the strip not yet on screen at all, which is the opposite of what D60 asks for.
+   *
+   * **Zero resumes synchronously rather than through the registry.** `?fast=1` overrides the hold to 0,
+   * and `timers.set(..., 0)` would defer `advance()` to a macrotask. Every end-to-end spec in the suite
+   * was written against the ordering this file has today, so a zero hold has to be no hold at all.
+   *
+   * **`held` stops one announcement being held twice.** `trapFired` is a turn-level field, cleared only
+   * when the turn ends, so it is still set when the player presses Skip during the hold. Without the
+   * marker that second pass would see an announcement and schedule another two seconds. The comparison
+   * is by identity against the frozen object the rules layer produced. `nullifiedCard` is a card id, so
+   * the same card nullified twice in one turn compares equal and holds once, which is the right answer
+   * for the player: it is the same sentence on screen either way.
+   *
+   * **It delays the loop and does not block input**, which is deliberate. While it runs the phase is
+   * still `action`: `turn-controls.js` ignores a pawn click outside `choose` and `act`, and
+   * `applyMoveHints` paints nothing, so there is nothing on the board to click. What the player can
+   * still do is play another card or press Skip, and either ends the hold early. That is the reading D9
+   * already gave this strip: it stays until the player's next action. A deliberate click is the player
+   * saying they have read it.
+   */
+  function carryOn() {
+    refresh();
+
+    const showing = announcement(getState());
+    const ms = showing === held ? 0 : holdMidTurn(getState(), delays, readToken);
+
+    held = showing;
+
+    if (ms <= 0) {
+      resume();
+      return;
+    }
+
+    timers.set("announcement", resume, ms);
   }
 
   /** Every target is in, so the card can finally be played. */
@@ -111,7 +170,7 @@ export function createCardControls({
       return;
     }
 
-    resume();
+    carryOn();
   }
 
   const picker = createTargetPicker({ $board, onReady, onChange: refresh });
@@ -135,7 +194,7 @@ export function createCardControls({
 
     switch (action) {
       case PROMPT_ACTION.SKIP:
-        if (apply({ type: INTENT.SKIP_ACTION })) resume();
+        if (apply({ type: INTENT.SKIP_ACTION })) carryOn();
         return;
       case PROMPT_ACTION.DECLINE:
         onDecline(state);
@@ -158,7 +217,7 @@ export function createCardControls({
    * eligible list. Otherwise the next seat is asked with the same deadline still running.
    */
   function onDecline(state) {
-    if (apply({ type: INTENT_CARD.DECLINE_REACTION, seat: seatOnShow(state) })) resume();
+    if (apply({ type: INTENT_CARD.DECLINE_REACTION, seat: seatOnShow(state) })) carryOn();
   }
 
   return {
@@ -182,6 +241,7 @@ export function createCardControls({
     /** Stop everything. Called when the loop stops, so a torn-down match leaves no clock running. */
     stop() {
       stopClock();
+      timers.clear("announcement");
       picker.cancel();
     },
   };

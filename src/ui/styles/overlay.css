@@ -74,23 +74,25 @@
 
 /* --- A panel that is about one seat. Win and handover only: the contract
        puts data-player on those two and nowhere else. The seat is said
-       twice, as a colour and as the D16 shape, so it survives greyscale. --- */
+       twice, as a colour and as the D16 shape, so it survives greyscale.
+
+       --seat-shape was mapped here as well until 2026-09-03, and the four
+       lines were deleted when 07-spec moved the mapping into the one
+       [data-player="N"] block in board.css. That selector is unscoped and
+       matches .overlay itself, so the panel inherits the shape from its
+       parent. The --seat-color line stays. --- */
 
 .overlay[data-player="0"] .overlay__panel {
   --seat-color: var(--color-p0);
-  --seat-shape: var(--seat-shape-0);
 }
 .overlay[data-player="1"] .overlay__panel {
   --seat-color: var(--color-p1);
-  --seat-shape: var(--seat-shape-1);
 }
 .overlay[data-player="2"] .overlay__panel {
   --seat-color: var(--color-p2);
-  --seat-shape: var(--seat-shape-2);
 }
 .overlay[data-player="3"] .overlay__panel {
   --seat-color: var(--color-p3);
-  --seat-shape: var(--seat-shape-3);
 }
 
 .overlay[data-player] .overlay__panel {
