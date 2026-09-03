@@ -17,6 +17,21 @@
 /* --- One seat plate. The same chrome as the hand plates in app.css, so the
        HUD reads as part of the table. --- */
 
+/* min-width and not width since 2026-09-03, sent back to Claude Design as
+   D63. D37 fixed the plate at 15.5rem, which leaves 218 px of content box.
+   Measured, the four numbers need 278: four uppercase labels (START,
+   STRECKE, ZIEL, KARTEN), four values, 36 px of outer gaps, 16 px of inner
+   gaps and 12 px for the hairline the cards count sits behind. Nothing in
+   that line can shrink (white-space: nowrap, no min-width: 0) and nothing
+   clips it, so the last item ended up 45 px past the plate's edge and the
+   next plate painted over it: seats 1 and 2 read "1 KA" and only the last
+   seat, with nothing to its right, read "KARTEN".
+
+   The plate now grows to its content, 15.5rem is the floor, and it measures
+   308 px. All four still come out the same width, because they hold the same
+   labels and single-digit values, so D37's "one fixed size, and the row
+   centres rather than stretching" still holds. Four of them plus their gaps
+   are 1268 px in the stage's 1552 px of content width. */
 .hud__seat {
   --seat-color: var(--color-dormant);
   display: flex;
@@ -24,7 +39,8 @@
   flex-direction: column;
   gap: var(--space-1);
   box-sizing: border-box;
-  width: 15.5rem;
+  width: auto;
+  min-width: 15.5rem;
   padding: var(--space-1) var(--space-3);
   background: var(--color-surface);
   border: var(--border-card) solid var(--color-ink);

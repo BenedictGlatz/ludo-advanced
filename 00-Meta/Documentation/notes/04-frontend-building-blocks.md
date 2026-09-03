@@ -1832,6 +1832,94 @@ and not *what the repository already does*. A brief lists the DOM contract and t
 list the rules that already exist for the element it is about. Adding that to § 2 of the next brief is
 cheap, and it is the only change that would have caught this one.
 
+### Four layout defects a test round found, and the page got a stage: 2026-09-03, no issue
+
+**The Product Owner played a round on their own laptop and reported four things in one message.** Three
+were defects with a measurable cause, one was a preference, and all four had the same root: the layout was
+only ever measured at 1440 by 900.
+
+**1. The page scrolled.** Everything in the shell except the board is measured in `rem`, so the rail costs
+a fixed 705 px and the page 820 px of height, up to D35's 882 px with the prompt strip up, whatever the
+window does. Only the board is fluid, which is all D6 ever promised. Measured on the reporting laptop, 1438
+by 770 CSS px (a 2876 by 1750 panel at 200 % Windows scaling): the page was 820 px tall in a 770 px window,
+so 50 px of scrolling before the game asks anything and 112 px once it does. FR-31 was met at exactly one
+window size and nowhere else, and `shell.spec.js` only ever looked at that one.
+
+**The answer is a stage, and it is one line of CSS because the layout is already in `rem`.**
+`html { font-size: min(calc(100vw / 100), calc(100vh / 56.25)) }` makes 1rem one per cent of the stage
+width, so a stage of 100 by 56.25rem is 16:9 at any size and every length in the project scales with it.
+`#app` is the frame and paints the bars in `--color-ink`; `--board-size` keeps D6's two percentages, 82 %
+of the height and 44 % of the width, and only what they are a percentage of changes. Nothing else was
+re-measured, and at 1440 by 900 the board still comes out at 634 px, exactly as before, with 45 px of bar
+above and below.
+
+- **Why 1600 by 900 and not 1440 by 810.** D35's height budget is 882 px and it is measured; 810 cannot
+  carry it, and making it fit would mean re-deciding every card size in D26. 900 keeps the budget that
+  already works and 1600 is what makes it 16:9.
+- **Rejected: `transform: scale()` with a factor computed in JavaScript.** It needs a resize listener in
+  `ui/` and renders text at a fractional scale, which is blurry at every factor that is not a whole number.
+- **Rejected: making the rail fluid in `vh` instead.** That is D26 and D35 both re-opened, and both are
+  design decisions rather than ours.
+- **Negative finding, and it is a real cost.** The stage overrides the text size the reader set in their
+  browser, and above the 84rem breakpoint a small window makes everything evenly small instead of
+  reflowing. Below that breakpoint the stage is off and D30's stacked layout is untouched, `rem` in a media
+  query being 16 px by definition and not the root's computed size.
+
+**2. The card count per seat was cut off.** D37 pins the seat plate at 15.5rem, which leaves 218 px of
+content box. Measured, the four numbers need 278: four uppercase labels (`START`, `STRECKE`, `ZIEL`,
+`KARTEN`), four values, 36 px of outer gaps, 16 px of inner gaps and 12 px for the hairline the cards count
+sits behind. Nothing in that line can shrink, because `.hud__count` is `white-space: nowrap` with no
+`min-width: 0`, and nothing clips it, so the last item ended 45 px past the plate's edge and the **next
+plate painted over it**. Three of four seats read "1 KA" and only the last one, with nothing to its right,
+read "KARTEN". The plate now takes `min-width: 15.5rem` and grows to its content, which measures 308 px;
+all four still come out identical, because they hold the same labels and single-digit values, so D37's "one
+size, and the row centres rather than stretching" survives. Four plates plus gaps are 1268 px of the
+stage's 1552.
+
+**The `hud-view.js` comments were reasoning from a seat row of 332 px**, which is issue #39's layout and
+has not existed since D37. Both are corrected to the measured numbers. A comment with a stale measurement
+in it is worse than no comment: it was read as a reason not to look again.
+
+**3. An empty slot in the skill hand was drawn as a card.** `card-state.css` gives every card in a hand
+with `data-active="false"` the back's dashed inner frame as `::before` and its violet diamond as
+`::after`. `hand.css` draws an empty slot as a dashed silhouette and hides `> *`, the real children, and
+**a pseudo-element is not a child**, so the four empty slots wore a card back's furniture inside an empty
+slot's outline. At the inactive hand's 82 per cent overlap only 32 px of a slot is exposed and the diamond
+is 67 px wide, which is why it read as a pile of clipped diamonds. Two lines of `content: none` fix it, and
+they win on load order exactly as this file's `background` and `border` already do.
+
+**The same look had a second half nobody had reported yet.** A slot is a later sibling than the cards to
+its left and every card sits at `--layer-card`, so DOM order put the slot on top and **its dashed border
+was drawn straight across the face of the last real card in the hand**. Visible in the Product Owner's own
+screenshot of the action cards, once it was known to look for. An empty slot is now `z-index: 0`: a place
+where a card would go cannot cover a card that is there.
+
+**4. The overlap in the fan looked wrong, and the reported cause was not the actual one.** The request was
+to turn the stacking order around so the left card lies on top. The order is not what is broken: every card
+is at `--layer-card`, DOM order breaks the tie, the card on the right lies on top, and that is what leaves
+the **left** strip of each card exposed with its band and its title on it, which is what D28 chose on
+purpose. What is broken is the depth cue. `card.css` casts the card's hard shadow down and to the right, so
+in a fan every shadow but the last one is hidden under the next card: the row loses its edges and the
+overlap reads as a rendering fault. Cast to the left it lands on the card underneath. One sign as a custom
+property, `--shadow-dir`, flips all four shadow declarations, and the dice hand keeps its shadow on the
+right because its three cards have a real gap and never overlap.
+
+- **Rejected: the order the Product Owner asked for.** It fixes the shadow too, and it exposes the
+  right-hand strip of every covered card instead of the left, so the kind pill survives and the title and
+  the `AKTION`/`REAKTION` label are what gets cut. The trade was put to the Product Owner with both looks
+  drawn out and the shadow was chosen.
+- **Left standing, and it is for the brief:** the overlap table follows `data-count` while the hand always
+  builds five slots, so a hand of three is **wider** than a hand of five, 714 px against 672. It overflowed
+  the old 734 px rail and fits the stage's 824 px, so it is not urgent, but two specs disagree.
+
+**Three of the four fixes change a numbered design decision**, which `CLAUDE.md` does not allow this side
+to do quietly. The Product Owner chose to land them and confirm afterwards: D62 for the stage against D6
+and D30, D63 for the plate against D37, D64 for the shadow. `09-brief-layout-and-fan.md` carries them,
+together with two findings that need no code: `data-active` on the skill hand means "some card is playable"
+and not "this is the seat on turn", so D33's hot-seat privacy hangs on the wrong state and your own hand is
+face down during your own turn, and Baloo 2 and Nunito are declared in `tokens.css` and loaded by nothing,
+so no pixel measurement in any spec was taken against the metrics the game actually renders (D24).
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

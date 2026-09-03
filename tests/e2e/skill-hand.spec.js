@@ -18,7 +18,15 @@
 
 import { expect, test } from "@playwright/test";
 
-import { SEEDS, boardState, carryOn, chooseDiceCard, openMatch, prompt } from "./helpers.js";
+import {
+  SEEDS,
+  boardState,
+  carryOn,
+  chooseDiceCard,
+  diceHand,
+  openMatch,
+  prompt,
+} from "./helpers.js";
 
 /** The skill hand, in the rail beside the board. */
 function skillHand(board) {
@@ -44,6 +52,72 @@ test.describe("the skill hand", () => {
 
     await expect(hand).toHaveAttribute("data-count", "1");
     await expect(hand.locator(".card[data-card-id]")).toHaveCount(1);
+  });
+
+  /**
+   * An empty slot is an outline, not a card back, and until 2026-09-03 it was both at once.
+   *
+   * `card-state.css` gives every card in a hand with `data-active="false"` the back's dashed inner
+   * frame as `::before` and its violet diamond as `::after`. `hand.css` draws an empty slot as a
+   * dashed silhouette and hides `> *`, which is the real children and not the pseudo-elements, so
+   * the four empty slots wore a card back's furniture inside an empty slot's outline. At 82 per cent
+   * overlap that is a row of clipped diamonds, which is what the Product Owner saw and reported.
+   */
+  test("draws an empty slot as an outline and not as a card back", async ({ page }) => {
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    const hand = skillHand(board);
+
+    await expect(hand.locator(".card:not([data-card-id])")).toHaveCount(4);
+
+    const furniture = await hand
+      .locator(".card:not([data-card-id])")
+      .evaluateAll((slots) =>
+        slots.flatMap((slot) =>
+          ["::before", "::after"].map((part) => window.getComputedStyle(slot, part).content)
+        )
+      );
+
+    expect(furniture).not.toHaveLength(0);
+    for (const content of furniture) {
+      expect(content).toBe("none");
+    }
+
+    // And it stays under the cards. A slot is a later sibling than the cards to its left, so DOM
+    // order used to paint its dashed border across the face of the last real card in the hand.
+    const layers = await hand.locator(".card").evaluateAll((cards) =>
+      cards.map((card) => ({
+        empty: !card.hasAttribute("data-card-id"),
+        layer: Number(window.getComputedStyle(card).zIndex),
+      }))
+    );
+    const lowestCard = Math.min(...layers.filter((c) => !c.empty).map((c) => c.layer));
+
+    for (const slot of layers.filter((c) => c.empty)) {
+      expect(slot.layer).toBeLessThan(lowestCard);
+    }
+  });
+
+  /**
+   * The fan's shadow falls to the left, and the dice row's still falls to the right.
+   *
+   * The cards in the fan overlap, the card on the right lies on top, and the shadow was cast down
+   * and to the right, so every shadow but the last one was hidden under the next card. The row lost
+   * its edges and the overlap read as a rendering fault. The three dice cards have a real gap and
+   * keep the shadow on the right, which is what makes this two assertions instead of one.
+   */
+  test("casts the fan's shadow to the left and the dice row's to the right", async ({ page }) => {
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+
+    // The first offset in a computed box-shadow is the horizontal one. Read off a card that is
+    // neither selected nor hovered, because both of those declare a shadow list of their own.
+    const offsetX = (locator) =>
+      locator.evaluate((card) => {
+        const shadow = window.getComputedStyle(card).boxShadow;
+        return Number(shadow.match(/-?\d+(?:\.\d+)?px/)[0].replace("px", ""));
+      });
+
+    expect(await offsetX(skillHand(board).locator(".card[data-card-id]").first())).toBeLessThan(0);
+    expect(await offsetX(diceHand(board).locator(".card").first())).toBeGreaterThan(0);
   });
 
   /**

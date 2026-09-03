@@ -93,18 +93,46 @@
   --weight-strong: 800;
   --tracking-wide: 0.08em;
 
-  /* --- Board geometry (D6). No fixed target resolution; one fluid unit. --- */
+  /* --- The stage (Claude Code, 2026-09-03, sent back as D62).
+
+         D6 answers "what resolution is this drawn for" with "none, the board
+         is one fluid unit", and that answer only covers the board. Everything
+         else on the page is rem, so the rail costs a fixed 705 px and the page
+         820 px of height with nothing being asked, and D35's 882 with the
+         prompt strip up, whatever the window does. Every window shorter than
+         that scrolls, which is FR-31 broken on any laptop that is not 900 px
+         tall. Measured at 1438 by 770: 50 px of scrolling, 112 with a prompt.
+
+         So the page is drawn on a stage of a fixed 16:9 shape instead, and
+         app.css fits the stage to the window by making 1rem one per cent of
+         the stage width. 100 by 56.25rem is 1600 by 900 at the default text
+         size: the 900 keeps D35's height budget, which is measured and
+         tested, and 1600 is what makes it 16:9. --- */
+
+  --stage-w: 100rem;
+  --stage-h: 56.25rem;
+
+  /* --- Board geometry (D6). One fluid unit, now measured against the stage
+         instead of against the window. --- */
 
   /* Reverted to 44vw by Claude Design on 2026-09-01, D35 of handoff 04.
      Issue #39 had taken it to 39vw to buy a HUD row and a chrome row. The
      answer to D35 pays for both rows out of the foot of the page instead: the
      refusal strip and the prompt strip stop holding 116 px of grid, so the
-     board keeps its size. The arithmetic is in 04-spec § D35. */
-  --board-size: clamp(24rem, min(82vh, 44vw), 60rem);
+     board keeps its size. The arithmetic is in 04-spec § D35.
+
+     The two percentages below are D6's own, unchanged: 82 % of the height and
+     44 % of the width. What changed is only what they are a percentage of, the
+     stage rather than the viewport, so the board is 44rem and stops depending
+     on the shape of the window. */
+  --board-size: clamp(24rem, min(calc(var(--stage-h) * 0.82), calc(var(--stage-w) * 0.44)), 60rem);
   --cell: calc(var(--board-size) / 11);
   --pawn-size: calc(var(--cell) * 0.78);
   --pawn-scale: 1;
   --slot-size: calc(var(--cell) * 0.8);
+  /* D6's smallest in-spec viewport. It now describes the stage, which is
+     always in spec, and the window below the 84rem breakpoint, where the
+     stacked layout of D30 takes over and scrolling is allowed again. */
   --board-min-width: 80rem;
   --board-min-height: 45rem;
 

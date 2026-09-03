@@ -1,26 +1,78 @@
 /* The shell: the page that holds the chrome, the HUD, the board, the two
-   hands and the two transient strips at once, with no scrolling at 1440 by
-   900 (FR-31). Depends on tokens.css.
-   Reasoning is in 03-spec-cards-and-hands.md D30 and 04-spec D35.
+   hands and the two transient strips at once, with no scrolling (FR-31).
+   Depends on tokens.css.
+   Reasoning is in 03-spec-cards-and-hands.md D30 and 04-spec D35, and the
+   stage below is Claude Code's, sent back to Claude Design as D62.
+
+   "No scrolling at 1440 by 900" is what this file used to say, and the shape
+   of the window is no longer part of the promise: the layout is drawn on a
+   16:9 stage that is fitted to the window, with bars on whichever axis has
+   room to spare.
 
    Board left, both hands in a rail on the right. Two full-width rows above
    them: the chrome, then the HUD. Nothing below them, which is the change:
    the refusal strip and the prompt strip used to cost 116 px of grid whether
    they were saying anything or not, and now each one sits with its subject.
-   The arithmetic that buys the board back its 44vw is in 04-spec § D35. */
+   The arithmetic that buys the board back its 44 % is in 04-spec § D35. It
+   was 44vw until the stage landed and is 44 % of the stage width now. */
+
+/* --- The stage, and why the page has one (Claude Code, 2026-09-03, sent
+       back to Claude Design as D62).
+
+       Everything in this layout except the board is measured in rem, so the
+       rail costs a fixed 705 px and the page 820 px of height with nothing
+       being asked, up to D35's 882 with the prompt strip up, however large
+       the window is. That is fine at 1440 by 900, which is the one size the
+       suite measured, and it scrolls on anything shorter. Measured on the
+       laptop that reported it, 1438 by 770, which is a 2876 by 1750 panel at
+       200 % Windows scaling: the page was 820 px tall in a 770 px window, so
+       50 px of scrolling before the game asks anything and 112 once it does.
+
+       The fix is one line, and it works because the layout is already in rem:
+       1rem becomes one per cent of the stage width, so the whole page is one
+       object that scales, exactly as the board already was. Nothing inside
+       this file or any other had to be re-measured.
+
+       Rejected: transform: scale() with a factor computed in JavaScript. It
+       needs a resize listener in ui/ and it renders text at a fractional
+       scale, which is blurry at every factor that is not a whole number.
+       Rejected: making the rail fluid instead, in vh. That is every card size
+       in D26 and every number in D35 re-decided, and both are design
+       decisions rather than ours. --- */
+
+html {
+  /* The stage is 100 by 56.25rem, which is 1600 by 900 at the default text
+     size and therefore 16:9. min() picks the axis that is the tight one: the
+     width when the window is 16:9 or taller, the height when it is wider. */
+  font-size: min(calc(100vw / 100), calc(100vh / 56.25));
+}
 
 body {
   margin: 0;
 }
 
+/* The frame around the stage. The bars are --color-ink, the darkest thing in
+   the palette, because a bar is not a surface the game happens on and no
+   token for one exists. overflow is what guarantees FR-31 now: a stage that
+   somehow does not fit is clipped, never scrolled. */
+#app {
+  display: grid;
+  place-items: center;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--color-ink);
+}
+
 .app {
+  position: relative;
   display: grid;
   grid-template-columns: auto minmax(28rem, 1fr);
   grid-template-rows: auto auto 1fr auto auto;
   gap: var(--space-4) var(--space-5);
   box-sizing: border-box;
-  width: 100%;
-  min-height: 100vh;
+  width: var(--stage-w);
+  height: var(--stage-h);
   padding: var(--space-5);
   font-family: var(--font-ui);
   color: var(--color-text);
@@ -92,6 +144,23 @@ body {
        narrower than three dice cards. --- */
 
 @media (max-width: 84rem), (orientation: portrait) {
+  /* The stage is off below the breakpoint, so the text goes back to whatever
+     size the reader's browser is set to. 100 % and not 16px: a percentage is
+     a percentage of the user's own setting, a pixel value overrides it.
+
+     rem inside a media query is always 16 px by definition, never the root's
+     computed size, so the 84rem above is 1344 px whatever this rule does. The
+     query cannot loop on itself. */
+  html {
+    font-size: 100%;
+  }
+
+  #app {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
   .app {
     /* --cell is derived from --board-size on :root, so it has to be
        re-derived here or the grid keeps the desktop cell. */
@@ -99,6 +168,9 @@ body {
     --cell: calc(var(--board-size) / 11);
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto;
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
     overflow-y: auto;
   }
 

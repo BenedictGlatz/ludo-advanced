@@ -9,8 +9,12 @@
    you cannot (menu, setup, handover).
    ========================================================================== */
 
+/* absolute and not fixed since 2026-09-03: app.css draws the page on a 16:9
+   stage with bars around it, and a fixed sheet is positioned against the
+   window, so it covered the bars as well and the letterbox disappeared every
+   time the menu opened. .app is the containing block for it. */
 .overlay {
-  position: fixed;
+  position: absolute;
   z-index: var(--layer-overlay);
   display: grid;
   place-content: center;

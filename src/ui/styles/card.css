@@ -21,6 +21,11 @@
   --pad: calc(var(--card-u) * 0.875rem);
   --ink-w: calc(var(--card-u) * 0.1875rem);
   --lift: calc(var(--card-u) * -0.5rem);
+  /* Which side the hard shadow falls on, as a sign rather than four rewritten
+     lengths. It is 1 everywhere, and -1 in the skill fan, because there the
+     card to the right lies on top and a shadow cast to the right is hidden
+     under it. See hand.css. */
+  --shadow-dir: 1;
   position: relative;
   z-index: var(--layer-card);
   display: flex;
@@ -35,7 +40,8 @@
   background: var(--card-face);
   border: calc(var(--card-u) * 0.25rem) solid var(--color-ink);
   border-radius: calc(var(--card-u) * 1.375rem);
-  box-shadow: calc(var(--card-u) * 0.5rem) calc(var(--card-u) * 0.5rem) 0 var(--ink-dim);
+  box-shadow: calc(var(--card-u) * 0.5rem * var(--shadow-dir)) calc(var(--card-u) * 0.5rem) 0
+    var(--ink-dim);
   transition:
     transform var(--motion-feedback) var(--ease-ui),
     box-shadow var(--motion-feedback) var(--ease-ui),

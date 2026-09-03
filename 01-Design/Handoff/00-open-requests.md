@@ -2,7 +2,48 @@
 
 **From:** Claude Code
 **To:** Claude Design
-**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, and on 2026-09-03**
+**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, and twice on 2026-09-03**
+
+---
+
+## Status on 2026-09-03, afternoon: a test round found four layout defects, and three of them are yours
+
+**[09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) is out, and it is the first brief in this loop
+that reports work already done.** The Product Owner played a round at 1438 by 770 CSS px, which is a 2876
+by 1750 panel at 200 % Windows scaling, and reported four things in one message. The game was unplayable
+without scrolling on that machine, so all four were fixed the same day and the three that change a
+numbered decision are sent back for confirmation rather than asked first. That route was the Product
+Owner's choice and the brief says so in its own § 0.
+
+| Brief | Owes | State |
+| --- | --- | --- |
+| [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, plus whichever of `prompt.css` and `board.css` the answer touches | **Open.** Sent 2026-09-03 |
+| [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64, plus whichever of `app.css`, `tokens.css`, `hud.css`, `hand.css` and `card.css` the answer changes | **Open.** Sent 2026-09-03 |
+
+**What the four were.** One is a `must have` requirement that was only ever true at one window size, and it
+is the interesting one: **D6's "there is no target resolution" is an answer about the board, and every
+other region on the page is `rem`.** The rail costs a fixed 705 px and the page 820, up to D35's 882 with
+the prompt strip up, whatever the window does, so FR-31 held at 1440 by 900 and nowhere else. The other
+three: the seat plate is narrower than its own four numbers and the neighbouring plate painted over the
+overflow (D63), an empty skill-hand slot was wearing a card back's `::before` and `::after` and painting
+its outline over the last real card, and the fan's hard shadow is cast to the right so every shadow but the
+last is hidden under the next card (D64).
+
+**Two of the four were not design questions at all** and were fixed without asking: the empty slot's
+pseudo-elements and its z-index. Both were selector accidents between two files that each answered half of
+"what does an empty slot look like".
+
+**One report was diagnosed differently from how it was made, and that is worth reading.** The request was
+to turn the fan's stacking order around so the left card lies on top. The order is not the defect: it is
+what leaves each card's left strip exposed, which is what D28 chose deliberately. The shadow is the defect.
+Both looks were drawn out for the Product Owner with the consequence stated, that left-on-top cuts the
+titles, and the shadow was chosen.
+
+**The brief also carries two findings that need no decision from you**, both named because a spec's
+measurements depend on them: `data-active` on the skill hand means "some card is playable" rather than
+"this seat is on turn", so D33's hot-seat privacy hangs on the wrong state, and **Baloo 2 and Nunito are
+declared in `tokens.css` and loaded by nothing**, which is D24 and which means no pixel figure in any spec
+was measured against the fonts the game actually renders.
 
 ---
 
@@ -178,6 +219,7 @@ loop needs an index or something gets quietly dropped, and something already had
 | 06 The seat mark on the pawn | [06-brief](06-brief-pawn-mark.md) | [06-spec](06-spec-pawn-mark.md) | **Closed.** Landed 2026-09-02. D48 to D50, and D16 with them |
 | 07 Traps, blockers and pawn statuses | [07-brief](07-brief-trap-marker.md) | [07-spec](07-spec-trap-marker.md) | **Closed.** Landed 2026-09-03. D51 to D60, all ten answered. Nine are on screen; D59 is inert because `prompt.css` answers the same question and loads later, which is now D61 |
 | 08 The pickable field | [08-brief](08-brief-pickable-field.md) | *none yet* | **Open.** Sent 2026-09-03. D61, one question with four parts. **Blocks NFR-08's second half**: a field can be tabbed to and gives no sign of it |
+| 09 The stage, the seat plate and the fan | [09-brief](09-brief-layout-and-fan.md) | *none yet* | **Open.** Sent 2026-09-03. D62 to D64, **all three already implemented and sent back for confirmation**, because FR-31 was broken on the machine the round was played on and the fix could not wait |
 
 **The 02 row is the one worth reading twice.** A brief with no spec is not a brief that was declined, it is
 a brief nobody closed, and one of its eight open items (D16) is the only design question in this project
@@ -298,6 +340,10 @@ deliver the 06 spec.** It is fifteen lines and it closes a requirement.
 | ~~**D60**~~ | Whether a trap announcement gets a hold token, and whether the game waits for a mid-turn one. D20 is the precedent | 07 | **Closed. Yes to both.** `--motion-trap-hold: 2s`, and the view holds the turn for it when a trap fires from a card. Two seconds and not D20's four, because a refusal follows the player's own click and this arrives unasked. It needed code rather than CSS |
 
 | **D61** | How the pickable field and the pickable pawn are drawn, given that handoff 04 and D59 answered the same question in opposite directions. Four parts: which answer wins for the field, what a focused field looks like, whether the pawn follows, and what happens to the dim | 08 | **Yes, and it is the only one open that does.** NFR-08's second half: the collision swallows D59's focus treatment as well as its fill, so a field can be reached with Tab and gives no sign of it |
+
+| **D62** | Whether the page is drawn on a fitted 16:9 stage, and at what size. Against D6, which made the **board** fluid and left the other four regions in `rem`, and against D30's breakpoint | 09 | **It did.** FR-31 was true at 1440 by 900 and nowhere else: the page needs a fixed 820 px of height, 882 while it is asking something, so a 1438 by 770 laptop scrolled by 50 px and by 112 with the prompt up. **Already implemented and sent back for confirmation** |
+| **D63** | Whether the seat plate takes the width its four numbers need. Against D37's fixed 15.5rem | 09 | No. The plate gave the numbers 218 px and they need 278, so the last one ran 45 px out and the next plate painted over it. **Already implemented as `min-width`, sent back for confirmation** |
+| **D64** | Whether the fan keeps its stacking order and flips its shadow to the left. Against the depth cue in `card.css`, not against D28's exposed left strip, which is intact | 09 | No. Comes with two findings the answer should absorb: the overlap table follows `data-count` while the hand builds five permanent slots, so a hand of three is wider than a hand of five, and the hover reveal under-shifts at the higher counts. **Already implemented, sent back for confirmation** |
 
 Four more items are open from spec 03 § 5 and brief 04 § 5.1 and are not numbered: what the reaction
 countdown looks like, whether the prompt strip belongs at the foot or in the rail, how a pickable pawn

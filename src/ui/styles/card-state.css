@@ -46,13 +46,15 @@
 .card[data-playable="true"]:focus-visible {
   z-index: var(--layer-card-raised);
   transform: translateY(calc(var(--lift) * 2));
-  box-shadow: calc(var(--card-u) * 0.5rem) calc(var(--card-u) * 0.875rem) 0 var(--ink-dim);
+  box-shadow: calc(var(--card-u) * 0.5rem * var(--shadow-dir)) calc(var(--card-u) * 0.875rem) 0
+    var(--ink-dim);
 }
 
 .card[data-playable="false"] {
   cursor: default;
   filter: saturate(0.5) contrast(0.97);
-  box-shadow: calc(var(--card-u) * 0.25rem) calc(var(--card-u) * 0.25rem) 0 var(--ink-dim);
+  box-shadow: calc(var(--card-u) * 0.25rem * var(--shadow-dir)) calc(var(--card-u) * 0.25rem) 0
+    var(--ink-dim);
 }
 
 .card[data-selected="true"] {
@@ -60,7 +62,7 @@
   transform: translateY(calc(var(--lift) * 2.5));
   box-shadow:
     0 0 0 calc(var(--card-u) * 0.25rem) var(--color-focus),
-    calc(var(--card-u) * 0.5rem) calc(var(--card-u) * 1rem) 0 var(--ink-dim);
+    calc(var(--card-u) * 0.5rem * var(--shadow-dir)) calc(var(--card-u) * 1rem) 0 var(--ink-dim);
 }
 
 .card:focus-visible {

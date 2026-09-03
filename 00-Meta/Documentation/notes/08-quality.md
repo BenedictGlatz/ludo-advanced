@@ -1540,6 +1540,46 @@ the redundancy that was covering for a mistake. Four copies of a rule fail loudl
 shared rule fails silently everywhere at once. The test to write is not for the change, it is for the
 fallback the change made reachable.
 
+### A layout test that only knew one window, and the assertion that measured the wrong box: 2026-09-03, no issue
+
+**`shell.spec.js` had been guarding FR-31 at exactly one window size, and it says so in its own first
+case:** "runs at 1440 by 900, which is what the design is drawn for". That case exists to stop a Playwright
+device descriptor from silently overriding the viewport, which had happened once. It also had the effect
+nobody planned: the suite proved the page does not scroll at 1440 by 900 and said nothing at all about any
+other shape, and every fixed height in the layout is in `rem`, so height is the axis that breaks. The
+Product Owner found it on a 1438 by 770 laptop, which is 50 px of scrolling with nothing being asked and
+112 px with the prompt strip up.
+
+**The new case iterates four window shapes rather than adding a second number**: wider than 16:9, exactly
+16:9, the reference stage, and taller than 16:9. It asserts no overflow on either axis, that the stage is
+16:9 to two decimal places, and that it is centred, which is what puts the spare room into bars. Four
+shapes and not four resolutions, because the defect is about the **ratio** and a list of popular
+resolutions would have missed the one the reporter was using.
+
+**One assertion in the same round was written wrong and passed in both directions, which is the finding
+worth keeping.** The HUD case was first written against `.hud__counts`, the `ul` that holds the four
+numbers. That box is a block box: it stays inside the plate however far its children stick out of it. The
+measurement said the line was 218 px wide and 15 px *inside* the plate, both before and after the fix,
+while the last list item was 45 px outside it. **A green assertion about the wrong element is worse than no
+assertion**, and the only reason it was caught is that the same measuring run printed the plate width and
+the number line's width side by side and the two did not add up.
+
+So the case measures the four `.hud__count` items against the plate, in both languages and at two, three
+and four seats. German is the longer label set and English is the one the design was drawn in; the seat
+counts matter because the plate is now wider and the row still has to hold four of them.
+
+**The measuring harness was a throwaway spec, deliberately.** It injected the pre-fix CSS with
+`page.addStyleTag` and printed the same numbers before and after in one run, which is what makes "278 px
+needed against 218 px available" and "50 px of scrolling" measurements rather than arithmetic. It was
+deleted in the same session: it produces evidence, not assertions, and the same rule
+`scripts/design-screenshots.js` already states applies to it.
+
+**Two smaller cases came with the CSS**: an empty slot in the skill hand has no card-back pseudo-elements
+and sits below every real card, and a card in the fan casts its shadow to the left while a dice card casts
+it to the right. Both read `getComputedStyle`, and the second one reads the *first* offset out of the
+`box-shadow` string, so it deliberately reads a card that is neither selected nor hovered: those two states
+declare a shadow list that starts with a focus ring at offset zero.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

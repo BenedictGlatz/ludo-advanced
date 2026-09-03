@@ -621,6 +621,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The game no longer scrolls on a window that is not 900 px tall.** Everything except the board was
+  measured in text units, so the page needed a fixed 820 px of height, up to 882 px while it was asking
+  something, however large the window was. On a 1438 by 770 laptop that was 50 px of scrolling before the
+  game asked anything and 112 px once it did, and the only size ever measured was 1440 by 900. The layout
+  is now drawn on a stage of a fixed 16:9 shape that is fitted to the window, with bars on whichever side
+  has room to spare
+- **The card counts in the player bar are readable again.** The four numbers per seat needed 278 px and
+  their plate gave them 218, so the last one ran 45 px out of the plate and the next seat's plate painted
+  over it. Three of four players read "1 KA" instead of "1 KARTEN". The plate now takes the width its
+  numbers need
+- **An empty slot in the skill hand is no longer drawn as a card.** The four places where a card would go
+  wore a card back's dashed frame and its violet diamond on top of their own outline, so an empty hand read
+  as a pile of clipped diamonds, and the outlines were painted across the face of the last real card in the
+  hand
+- **The overlapping cards in the skill hand read as a stack rather than as a glitch.** The card on the right
+  lies on top, which is what keeps every card's name visible, but the shadow was cast to the right and so
+  disappeared underneath the next card. Cast to the left it lands on the card it is lying on, and every card
+  in the fan has a visible edge again
 - **The handover screen no longer shows the leaving player's skill cards to the arriving one.** For one
   frame after the Ready button, the screen uncovered the hand of the player who had just finished before
   swapping it for the new player's. Nobody would have called it a bug from watching it, and it defeated the

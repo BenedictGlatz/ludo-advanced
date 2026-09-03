@@ -65,7 +65,30 @@
   transition: translate var(--motion-feedback) var(--ease-ui);
 }
 
+/* The fan's shadow falls to the left, and this is the whole of the fix for
+   "the overlap looks wrong" (2026-09-03, sent back as D64).
+
+   The reading order is unchanged and stays D28's: every card is at
+   --layer-card, so DOM order breaks the tie and the card on the right lies on
+   top, which is what leaves the left strip of each card exposed with its band
+   and its title on it. What was wrong is the depth cue. The card's hard
+   shadow is cast down and to the right, so in a fan every shadow but the last
+   one is hidden under the next card, the row loses its edges and the overlap
+   reads as a rendering fault instead of a stack. Cast to the left it lands on
+   the card underneath, which is exactly where a shadow belongs.
+
+   The dice hand keeps the shadow on the right: its three cards have a real
+   gap and never overlap, and the shadow is not hiding behind anything.
+
+   Rejected: turning the order around so the left card lies on top, which is
+   what the Product Owner asked for first. It makes the shadow correct too,
+   and it exposes the right-hand strip of every covered card instead of the
+   left one, so the kind pill survives and the title and the ACTION/REACTION
+   label are the parts that get cut. D28 chose which strip stays visible on
+   purpose, and a fan of cards nobody can read the names of is a worse trade
+   than a shadow. */
 .hand--skill .card {
+  --shadow-dir: -1;
   transition:
     transform var(--motion-feedback) var(--ease-ui),
     box-shadow var(--motion-feedback) var(--ease-ui),
@@ -142,6 +165,13 @@
        because the slot the hand builds already has none. --- */
 
 .hand--skill .card:not([data-card-id]) {
+  /* Under every real card, which is the second half of the same fix as the
+     pseudo-elements below. A slot is a later sibling than the cards to its
+     left and every card sits at --layer-card, so DOM order put the slot on
+     top and its dashed border was drawn straight across the face of the last
+     card in the hand. A place where a card would go cannot cover a card that
+     is there. */
+  z-index: 0;
   background: none;
   border: var(--border-card) dashed color-mix(in srgb, var(--color-ink) 32%, transparent);
   box-shadow: none;
@@ -150,4 +180,21 @@
 
 .hand--skill .card:not([data-card-id]) > * {
   visibility: hidden;
+}
+
+/* And the two pseudo-elements, which is the half that was missing until
+   2026-09-03. card-state.css gives every card in a hand with
+   data-active="false" the back's dashed inner frame (::before) and its violet
+   diamond (::after). The rule above hides `> *`, the real children, and a
+   pseudo-element is not one, so an empty slot in an inactive hand wore both
+   looks at once: a dashed silhouette with a card back's frame and diamond
+   inside it. At --overlap 0.82 only 32 px of each slot is exposed and the
+   diamond is 67 px wide, so the row read as a pile of clipped diamonds.
+
+   Same specificity as the card-state.css rules, and this file loads later
+   (main.js), which is what settles it, exactly as for background and border
+   above. An empty slot is not a card, so it has no back either. */
+.hand--skill .card:not([data-card-id])::before,
+.hand--skill .card:not([data-card-id])::after {
+  content: none;
 }
