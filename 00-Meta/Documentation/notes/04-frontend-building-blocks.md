@@ -1920,6 +1920,80 @@ and not "this is the seat on turn", so D33's hot-seat privacy hangs on the wrong
 face down during your own turn, and Baloo 2 and Nunito are declared in `tokens.css` and loaded by nothing,
 so no pixel measurement in any spec was taken against the metrics the game actually renders (D24).
 
+### A player cannot read a card in their own hand, for two unrelated reasons: 2026-09-03
+
+The request was that hovering an Action or Reaction card should turn it over so its text can be read.
+Looking for the place to put that found two independent reasons the text is unreachable, and neither of
+them is a missing hover rule. Both go out as `10-brief-card-reveal-on-hover.md`, D65 to D69.
+
+#### 1. The own hand is face down for most of every turn, because one attribute answers two questions
+
+`skill-hand-view.js` writes `data-active` on the hand from `playableCards(state, seat).length > 0`, so the
+attribute means "some card here can be played this instant". `card-state.css` reads the same attribute as
+"this hand is not yours" and draws every card in it as a back, and `hand.css` then closes the row up to
+D33's 82 per cent overlap. `intents-cards.js` refuses every card while the phase is not `action`.
+Multiplied out: **the player's own five cards are a row of backs through the dice card choice and through
+the move, and again in the action phase once the card budget is spent.**
+
+- **The state layer had already fixed this exact confusion and the stylesheet undid it.**
+  `intents-cards.js` says of the seat whose hand is shown that "whether any card in it is *playable* is a
+  separate question ... Conflating the two would blank the hand in every phase but one, which is exactly
+  the bug the end-to-end spec caught." That is the same mistake, one layer up, described in advance. It
+  was caught in `state/` by a test and came back through the cascade, where nothing was looking.
+- **The back is not what enforces D33.** Hot-seat secrecy is the handover curtain plus one ordering rule:
+  `session-actions.js` passes the turn **before** taking the curtain down, and its comment names D33 and
+  D39 as the reason. A hand belonging to somebody else is therefore never on screen with the board
+  visible, so every case this back fires on is the player's own hand. `app.css` already dims the whole
+  plate in the same state, so the region says "I am not asking you anything" twice, once in a way that
+  also hides what the player owns.
+- **Negative finding, and it is a real cost.** This was already on record. `09-brief` § 4 and the entry
+  above both name it, as one of two findings that "need no code from you". That filing was right about the
+  cause and wrong about the consequence, so it stayed a tidiness note for a day instead of becoming a
+  question. It is **D65** now and the earlier note is superseded.
+- **Negative finding, second one, and it is why this survived two sprints.** There is **no test on the
+  hover behaviour anywhere in the suite**, and nothing asserts `data-active` against the turn phase.
+  `skill-hand.spec.js` checks the empty slot, the shadow direction and keyboard play; the fan's hover
+  rules in `hand.css` lines 62 to 66 are unasserted. A CSS-only interaction with no test is invisible to
+  everything except somebody playing a round.
+- **Rejected: simply deleting the card back.** It is a change to how something looks and `CLAUDE.md`
+  forbids this side from taking that decision. Asked as D65 instead.
+
+#### 2. Even face up, the rules paragraph is not legible at hand size
+
+`card.css` hides `.card__text` on anything that is not `.card--full`, and the reason is arithmetic rather
+than taste. On the fitted stage at the 1440 by 900 design resolution the root is 14.4 px, the skill hand's
+factor is 0.68, so the card's own font size is 9.79 px and the paragraph at `0.875em` of that is
+**8.57 px**. The comment in `card.css` states the same conclusion at "near 9 px".
+
+- **So a turn on its own would not have answered the request.** A card that rotates in place is the same
+  size afterwards and its paragraph is still under 9 px. The reveal needs a size decision, which is why
+  D66 puts three mechanisms in front of the answer instead of one: grow in place, a genuine turn, or a
+  detail card at the reference size beside the hand.
+- The paragraph is readable in the dice pool overview and in the reaction prompt, both `.card--full`.
+  Neither is reachable while a player is looking at their own hand deciding what to do.
+- **"Shows the paragraph" and "is the reference size" are welded together** in one selector, which is what
+  makes this a contract question rather than a value: `card.css` gates the paragraph on the size class.
+  Code offers to split them so the answer can put the paragraph on a card at any size.
+- **A third thing has no feedback at all today.** `card-state.css` keys both hover and focus on
+  `[data-playable="true"]`, so an Action card you hold but cannot play right now does nothing when you
+  point at it. That is the card a player most often wants to read. It is D67, and it collides with
+  `card-view.js` giving an unplayable card `tabindex="-1"`, so the keyboard cannot reach a card **in order
+  to read it** (NFR-08).
+
+#### What it would cost to build, which is why the brief went out first
+
+- **Independent of the answer:** `skill-hand-view.js` writes a new `data-face`, `card-state.css` rehangs
+  the back selector onto it and unhooks hover from playability, `hand.css` follows the overlap, `card.css`
+  splits the paragraph off the size class, `card-view.js` revisits `tabindex`.
+- **Only if D66 picks a genuine two sided turn:** `card-view.js` grows a `preserve-3d` wrapper with a
+  front and a back, **every rule targeting `.card > *` breaks** (`card-state.css`, `hand.css`), the back's
+  `::before` and `::after` move onto real elements, `pool.css` and the reaction prompt come along, and
+  three checks in `skill-hand.spec.js` that read those pseudo-elements are rewritten. There is no
+  `perspective`, `transform-style` or `rotateY` anywhere in the project today.
+- **Rejected: implement first and send it back for confirmation**, which is what handoff 09 did the same
+  day. At 09 the open items were three numbers. Here D66 may rebuild the card's DOM, and building that
+  twice costs more than waiting for the answer.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -2005,6 +2079,24 @@ so no pixel measurement in any spec was taken against the metrics the game actua
     never appear on one element. It is cheap to fix early and expensive late, and the pass that answers
     the remaining six statuses is when to look, since they all take the same ground.
   - **The abandoned win screen is unreachable from the interface.** See the negative finding above.
+- **Open after handoff 10, and D65 is the one that hides information from a player:**
+  - **D65. Does the player's own skill hand stay face down when nothing is playable?** The defect in the
+    facts section above. It needs no drawing, it is one question about one attribute, and the other four
+    cannot be usefully answered before it. Half of D33 comes back with the answer.
+  - **D66. What a revealed card looks like, and by which mechanism.** Three routes with very different
+    costs: grow in place, a genuine two sided turn, or a detail card at the reference size. Only the
+    second one touches the DOM contract, and it touches a lot of it.
+  - **D67. Does an unplayable card reveal, and what is its focus state?** Blocks the reading half of
+    NFR-08: `card-view.js` gives such a card `tabindex="-1"`, so the keyboard cannot reach it to read it.
+  - **D68. Which token times the reveal, and what survives reduced motion.** D8 and D12 own motion; D20
+    and D60 are the precedent that a new duration gets a number rather than being invented in a
+    stylesheet.
+  - **D69. Does the reveal replace the sideways fan out or join it?** Carried over from D64, where the
+    numbers were taken: the shift is 43.5 px and the covered strip is 42.4 px at overlap 0.24 and 77.8 px
+    at 0.44, so at the higher counts a card cannot be fully revealed by hovering it.
+  - **No test covers hover anywhere in the suite**, and nothing asserts `data-active` against the turn
+    phase. `tests/e2e/card-reveal.spec.js` is written when the spec lands and carries the regression for
+    D65. Named here because it is the reason the D65 defect survived two sprints.
 - A card's visual presentation belongs here and its rule belongs in Chapter 05; the two are matched
   by card id. Worth stating explicitly in the report, because it is the clearest example of the
   layering rule doing real work.

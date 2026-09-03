@@ -2,7 +2,52 @@
 
 **From:** Claude Code
 **To:** Claude Design
-**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, and twice on 2026-09-03**
+**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, and three times on 2026-09-03**
+
+---
+
+## Status on 2026-09-03, evening: a feature request turned into a defect one status block old
+
+**[10-brief-card-reveal-on-hover.md](10-brief-card-reveal-on-hover.md) is out, D65 to D69.** The request
+was that hovering an Action or Reaction card should turn it over so its text can be read. Looking for the
+place to put that found two reasons a player cannot read a card in their own hand, and neither is the one
+the request described.
+
+| Brief | Owes | State |
+| --- | --- | --- |
+| [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, plus whichever of `prompt.css` and `board.css` the answer touches | **Open.** Sent 2026-09-03 |
+| [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64, plus whichever of `app.css`, `tokens.css`, `hud.css`, `hand.css` and `card.css` the answer changes | **Open.** Sent 2026-09-03 |
+| [10-brief-card-reveal-on-hover.md](10-brief-card-reveal-on-hover.md) | `10-spec-card-reveal-on-hover.md`, plus whichever of `card.css`, `card-state.css` and `hand.css` the answer changes, and a new file if D66 needs more than about thirty lines | **Open.** Sent 2026-09-03 |
+
+**The first reason is a finding this file already carried, one block down, filed too low.** The block above
+lists it among the two findings that need no decision: `data-active` on the skill hand means "some card is
+playable" rather than "this seat is on turn". That was right about the cause. What it missed is the
+consequence. `card-state.css` draws every card in a hand with `data-active="false"` as a back, and
+`intents-cards.js` refuses every card outside the action phase, so **the player's own hand is a row of
+backs through the dice card choice and the move, and again once the card budget is spent.** It is D65 now,
+and the note in the block below is superseded by it.
+
+**And the back is not what enforces D33.** The handover curtain is, together with one ordering rule in
+`session-actions.js` that passes the turn before the curtain comes down. A hand belonging to somebody else
+is never on screen with the board visible, so every case this back fires on is the player's own hand. The
+plate is already dimmed by `app.css` in the same state, so the region says "I am not asking you anything"
+twice, once in a way that also hides what the player owns.
+
+**The second reason is that turning a hand card over would not have helped.** `card.css` shows the rules
+paragraph at the reference size only, and at the hand's factor it computes to 8.57 px at the design
+resolution. So the request needs a size decision, not only a motion, and D66 puts three mechanisms with
+their real costs in front of the answer rather than picking one.
+
+**Nothing was implemented this time**, unlike handoff 09. D66 option 2, a genuine two sided turn, would
+rebuild the card's DOM and break three end-to-end checks, and building that twice costs more than waiting.
+That was the Product Owner's choice.
+
+**Three briefs are open at once now, and the order that gets the most out of the least work is 09, 08,
+10.** Handoff 09 is confirmation of three things already on screen, so it is the cheapest and it unblocks
+nothing else. Handoff 08 is next because D61 is still the only open decision that blocks a requirement,
+NFR-08's second half. Handoff 10 is the largest, and **within it D65 can be answered on its own**: it is
+one question about an attribute, it needs no drawing, and the other four cannot be usefully answered
+before it. If only one thing can be delivered out of this brief, deliver D65.
 
 ---
 
@@ -220,6 +265,7 @@ loop needs an index or something gets quietly dropped, and something already had
 | 07 Traps, blockers and pawn statuses | [07-brief](07-brief-trap-marker.md) | [07-spec](07-spec-trap-marker.md) | **Closed.** Landed 2026-09-03. D51 to D60, all ten answered. Nine are on screen; D59 is inert because `prompt.css` answers the same question and loads later, which is now D61 |
 | 08 The pickable field | [08-brief](08-brief-pickable-field.md) | *none yet* | **Open.** Sent 2026-09-03. D61, one question with four parts. **Blocks NFR-08's second half**: a field can be tabbed to and gives no sign of it |
 | 09 The stage, the seat plate and the fan | [09-brief](09-brief-layout-and-fan.md) | *none yet* | **Open.** Sent 2026-09-03. D62 to D64, **all three already implemented and sent back for confirmation**, because FR-31 was broken on the machine the round was played on and the fix could not wait |
+| 10 Reading a card you are holding | [10-brief](10-brief-card-reveal-on-hover.md) | *none yet* | **Open.** Sent 2026-09-03. D65 to D69. **Nothing implemented**, because D66 may rebuild the card's DOM. D65 asks D33 to be taken back in part, and it blocks the other four |
 
 **The 02 row is the one worth reading twice.** A brief with no spec is not a brief that was declined, it is
 a brief nobody closed, and one of its eight open items (D16) is the only design question in this project
@@ -343,7 +389,13 @@ deliver the 06 spec.** It is fifteen lines and it closes a requirement.
 
 | **D62** | Whether the page is drawn on a fitted 16:9 stage, and at what size. Against D6, which made the **board** fluid and left the other four regions in `rem`, and against D30's breakpoint | 09 | **It did.** FR-31 was true at 1440 by 900 and nowhere else: the page needs a fixed 820 px of height, 882 while it is asking something, so a 1438 by 770 laptop scrolled by 50 px and by 112 with the prompt up. **Already implemented and sent back for confirmation** |
 | **D63** | Whether the seat plate takes the width its four numbers need. Against D37's fixed 15.5rem | 09 | No. The plate gave the numbers 218 px and they need 278, so the last one ran 45 px out and the next plate painted over it. **Already implemented as `min-width`, sent back for confirmation** |
-| **D64** | Whether the fan keeps its stacking order and flips its shadow to the left. Against the depth cue in `card.css`, not against D28's exposed left strip, which is intact | 09 | No. Comes with two findings the answer should absorb: the overlap table follows `data-count` while the hand builds five permanent slots, so a hand of three is wider than a hand of five, and the hover reveal under-shifts at the higher counts. **Already implemented, sent back for confirmation** |
+| **D64** | Whether the fan keeps its stacking order and flips its shadow to the left. Against the depth cue in `card.css`, not against D28's exposed left strip, which is intact | 09 | No. Comes with two findings the answer should absorb: the overlap table follows `data-count` while the hand builds five permanent slots, so a hand of three is wider than a hand of five, and the hover reveal under-shifts at the higher counts. **Already implemented, sent back for confirmation.** The hover finding is carried on as **D69** and is no longer owed here |
+
+| **D65** | Whether the player's own skill hand stays face down when nothing is playable. Against half of D33, which put the back there for hot-seat privacy. Four parts: is the own hand always face up, what still says the region is dormant, does the closed-up overlap survive, and what `.card--back` is still for | 10 | **No, and it is the second one open that does not block a requirement but hides information.** `data-active` means "some card is playable", and `card-state.css` reads it as "this hand is not yours", so the own hand is a row of backs through the dice choice and the move. D33 is enforced by the handover curtain, not by this back. **Blocks D66 to D69**: a face-down card cannot be made readable by hovering |
+| **D66** | What a revealed card looks like, and by which mechanism. Three routes are offered with their real costs and none is chosen: grow in place, a genuine turn, or a detail card at the reference size beside the hand | 10 | No. It is the request itself. A turn alone does not answer it: the rules paragraph computes to 8.57 px at hand size, so the reveal needs a size decision and not only a motion. Option 2 would rebuild the card's DOM and break three end-to-end checks, which is why nothing was implemented first this time |
+| **D67** | Whether a card that cannot be played reveals too, and what the focus state is there | 10 | **Partly, and it is NFR-08.** `card-view.js` gives an unplayable card `tabindex="-1"`, so the keyboard cannot reach a card in order to read it. The reason on record is that a stop where `Enter` does nothing says nothing, and that reason dissolves the moment focus reveals. The change is ready and is not made unasked, because it puts a focus ring on a card you cannot play |
+| **D68** | Which token times the reveal, and what survives `prefers-reduced-motion`. D8 and D12 own motion; D20 and D60 are the precedent that a new duration gets a number | 10 | No. Includes whether there is a delay before the reveal fires, so that sweeping a pointer across a fan of five does not trigger five |
+| **D69** | Whether the reveal replaces the sideways fan out in `hand.css` or joins it | 10 | No. Carried over from D64, where it was measured: the shift is 43.5 px and the covered strip is 42.4 px at overlap 0.24 and 77.8 px at 0.44, so at the higher counts a card cannot be fully revealed by hovering it. A card that grows or turns may not need the neighbours moved at all |
 
 Four more items are open from spec 03 § 5 and brief 04 § 5.1 and are not numbered: what the reaction
 countdown looks like, whether the prompt strip belongs at the foot or in the rail, how a pickable pawn

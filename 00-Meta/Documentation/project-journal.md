@@ -320,6 +320,16 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   numbers instead of arithmetic. Three of the fixes change a numbered design decision, so `09-brief` goes
   back to Claude Design as D62 to D64 for confirmation rather than as a request. Sprint 3.
 
+- **2026-09-03, later**: **a feature request turned into a defect that was already on record.** The ask was
+  that hovering an Action or Reaction card should turn it over so its text can be read. Looking for the
+  place to put it found two unrelated reasons a player cannot read a card in their own hand: the hand is
+  face down for most of every turn, because `data-active` answers "is something playable" and
+  `card-state.css` reads it as "is this hand somebody else's", and the rules paragraph computes to 8.57 px
+  at hand size, so turning a card over would not have helped anyway. `10-brief-card-reveal-on-hover.md`
+  goes out with D65 to D69. **Nothing was implemented**, unlike the round before it, because D66 may
+  rebuild the card's DOM. The first defect had been filed the same day as a finding that "needs no code",
+  which was right about the cause and wrong about the consequence. Sprint 3, no issue on the board.
+
 ---
 
 ## Decisions
@@ -3441,6 +3451,45 @@ to get wrong later.
   "some card is playable" and not "this seat is on turn", so D33's hot-seat privacy hangs on the wrong
   state, and Baloo 2 and Nunito are declared in `tokens.css` and loaded by nothing, so no pixel
   measurement in any spec was taken against the metrics the game renders.
+- → Ch. 04
+
+---
+
+### 2026-09-03: The card back on the player's own hand is a defect, not secrecy, and it is asked rather than deleted
+
+- **Chosen:** the finding goes out as `10-brief-card-reveal-on-hover.md` with five numbered decisions,
+  D65 to D69, and **no code is written this round.** The request behind it was that hovering an Action or
+  Reaction card should turn it over so its text can be read.
+- **Why the request could not simply be built.** Two independent reasons a player cannot read a card in
+  their own hand, and neither is a missing hover rule. First, the hand is already face down for most of
+  every turn: `skill-hand-view.js` writes `data-active` from "is some card playable", `card-state.css`
+  reads the same attribute as "is this hand somebody else's", and `intents-cards.js` refuses every card
+  outside the action phase, so the player's own five cards are backs through the dice choice and the move.
+  Second, turning a hand card over would not have helped: `card.css` shows the rules paragraph at the
+  reference size only, and at the hand's factor it computes to 8.57 px.
+- **Why the back is not secrecy.** D33 is enforced by the handover curtain plus one ordering rule in
+  `session-actions.js`, which passes the turn before the curtain comes down. A hand belonging to somebody
+  else is never on screen with the board visible, so every case this back fires on is the player's own
+  hand, and `app.css` already dims the plate in the same state.
+- **Rejected: deleting the card back.** It is a change to how something looks, and `CLAUDE.md` reserves
+  that for Claude Design. Asked as D65 instead, which is the whole reason the handoff loop exists.
+- **Rejected: implement first and send it back for confirmation**, which is what handoff 09 did earlier
+  the same day and which the Product Owner chose then. At 09 the open items were three numbers on things
+  already on screen. Here D66 may rebuild the card's DOM into a front and a back under a `preserve-3d`
+  wrapper, which breaks every rule targeting `.card > *`, moves the back off two pseudo-elements, pulls in
+  `pool.css` and the reaction prompt, and rewrites three end-to-end checks. Building that twice costs more
+  than waiting for the answer, and this defect is not breaking a requirement the way FR-31 was.
+- **Rejected: fixing only the unreadable paragraph** and leaving the hand face down. It treats the symptom
+  and leaves the cause, and the cause is the one that hides information the player owns.
+- **Negative finding, and it explains the delay:** this was already on record. `09-brief` § 4 named it the
+  same day among two findings that "need no code from you". That filing was right about the cause and
+  wrong about the consequence, so it sat as a tidiness note instead of becoming a question. Promoted to
+  D65 here.
+- **Negative finding, second one:** there is **no test on hover anywhere in the suite**, and nothing
+  asserts `data-active` against the turn phase, which is why a defect visible in every round survived two
+  sprints. `tests/e2e/card-reveal.spec.js` is owed and is written when the spec lands.
+- **Not fixed, and it is in the brief:** D64's measured hover finding, that the sibling shift is 43.5 px
+  against a covered strip of up to 77.8 px, is carried on as D69 rather than answered here.
 - → Ch. 04
 
 ---
