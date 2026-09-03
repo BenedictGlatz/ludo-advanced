@@ -341,6 +341,20 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   shadow and the two empty-slot fixes; two of those three carry an end-to-end case that would have caught
   it. Four new cases in `tests/e2e/card-reveal.spec.js`, which is the first test of a hover state anywhere
   in the suite, 101 per browser and 303 across the three, all green. Sprint 3, no issue on the board.
+- **2026-09-03, late**: **two feature requests in one message, and both went out as briefs rather than as
+  code.** The roll is boring and the main menu is barebones, D70 to D74 and D75 to D80. Both descriptions
+  were accurate and both had something underneath them. The roll has **no animation at all**, and two
+  things nobody had reported: it has no moment of its own, because `advance()` rolls and carries on inside
+  one synchronous pass, so the number is painted in the same frame as the two unkept cards flying back to
+  the pool; and `state.rollSteps`, which exists so the screen can explain a roll three cards had a hand
+  in, is **read by no file under `src/ui/`** although its sentences are written in both languages. That is
+  NFR-08's explanation half, and the third time in three handoffs that a rule ran where nothing rendered
+  it. The menu's finding is an absence: **nothing in this project styles a control you cannot use**, and
+  two of the three requested items are exactly that. Brief 12 is also the first in the loop to ask for
+  **three drawings and a pick**, because "barebones" has no cause to diagnose. Three small locale gaps
+  found on the way and recorded rather than fixed in passing: `ROLL_STEP.MISSED` has no key in either
+  language, and `turn.rolled` and `setup.start` are in both and read by nothing. No code, no changelog
+  entry and no tests, all three for stated reasons. Sprint 3, no issue on the board.
 
 ---
 
@@ -3563,6 +3577,67 @@ to get wrong later.
   `[data-playable="true"]`, so `Enter` on a focused unplayable card does nothing. That is deliberate. The
   stop exists to read the card, not to play it, and the focus ring says "you are here" rather than "you
   may play this".
+- → Ch. 04
+
+---
+
+### 2026-09-03: Brief 11 asks for the roll's animation and its explanation in one handoff
+
+- **Chosen:** one brief covers both what the arrival of the roll looks like (D71) and how a roll that
+  cards changed reads on screen (D73), rather than a brief about the animation and a later one about the
+  breakdown. The Product Owner took this decision after being shown both options.
+- **Why:** the two meet in the same instant and in the same 30 px of screen. `state.rollSteps` has existed
+  since issue #38 with its sentences translated into both languages and no reader in `ui/`, so the
+  explanation is owed either way. A look designed for a bare number has to be designed a second time when
+  up to nine steps have to appear beside it, and the second design would arrive after the first one has
+  tests and a stylesheet against it. Asking both at once costs one longer brief and no extra round trip.
+- **Why it is also the honest scope:** the request was "the animation is boring", and NFR-08 is a
+  `must have` whose explanation half this half-answers. Delivering only the animation would have left the
+  requirement in the same state and made the brief look complete.
+- **Rejected: two briefs, one per question.** Smaller and faster to answer, and it is the split that looks
+  tidier on the loop's status table. It fails on the reason above: D71's answer constrains D73's and there
+  is no order in which that is not true.
+- **Rejected: asking only for the animation and filing the breakdown as an unnumbered leftover.** That is
+  the shape that produced this file's own cautionary tale, where an unnumbered leftover was implemented in
+  `prompt.css` while the loop still listed it as unanswered. Four such leftovers are still open from spec
+  03 and brief 04 and none of them has moved in three weeks.
+- **The cost, stated:** brief 11 is the longer of the two sent that day and D73 alone could hold up an
+  answer to D71, which is why the brief says explicitly that **D70 is the one to deliver if only one thing
+  can be delivered**. D70 is a duration, it needs no drawing, and it is the only one of the five that
+  blocks code rather than CSS.
+- → Ch. 04
+
+---
+
+### 2026-09-03: Brief 12 asks for three mockups and a choice, which no brief in this loop has done
+
+- **Chosen:** `12-brief-main-menu.md` asks for **three artboards in `handoff-12/`**, each with a sentence
+  saying what it does differently and what it gives up, and the Product Owner picks one. The spec then
+  answers D75 to D80 for the chosen one.
+- **Why:** every brief so far has been written against a defect or a gap, so it could name the cause and
+  ask one question per consequence. "The main menu is barebones" has no cause. The three elements on it
+  are each correct, `menuScreen()`'s own comment gives the right reason for one button, and what is being
+  asked for is a direction. A direction is chosen by looking at alternatives, not by reading a question.
+- **Why it makes the loop's hardest rule easier rather than harder:** the rule most often skipped is that
+  every answer names a rejected alternative, because a finished design reads as an accident without one.
+  Here the two mockups that are not picked **are** the rejected alternatives, already drawn, with their
+  trade-offs written while they were fresh. That is cheaper than reconstructing them after the fact, which
+  is what the documentation rules exist to avoid.
+- **Rejected: asking one open question per aspect, the way every earlier brief did.** It is the
+  established shape and it needs no new convention. It cannot work here: "what should the front door of
+  the game look like" is not a question with a wrong answer, so a single answer would arrive with nothing
+  to compare it against and the Product Owner would be approving the only thing on the table.
+- **Rejected: this side drafting the three variants and asking Claude Design to refine one.** `CLAUDE.md`
+  forbids it in as many words, and it would also be the worse artefact: three variants drawn by the side
+  that owns the DOM would differ in layout and agree on everything that matters.
+- **Rejected: four or five mockups.** More range, and each one thinner. Three is enough for a real choice
+  and few enough that each is worked out, including the unavailable state that D77 cannot be judged
+  without.
+- **The cost, stated:** the mockup folder is the fifth in the project and, like `handoff-04/`,
+  `handoff-05/`, `handoff-07/` and `handoff-10/`, it is deleted after the review. So the drawings that
+  justify the decision do not survive in the repository, only the sentences about them in the spec. That
+  is the same trade the four earlier folders made and it is the reason the spec has to carry the reasons
+  rather than point at the pictures.
 - → Ch. 04
 
 ---

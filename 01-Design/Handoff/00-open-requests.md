@@ -2,7 +2,89 @@
 
 **From:** Claude Code
 **To:** Claude Design
-**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, and four times on 2026-09-03**
+**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, and five times on 2026-09-03**
+
+---
+
+## Status on 2026-09-03, late night: two briefs are out, and one of them asks for three drawings
+
+**[11-brief-roll-animation.md](11-brief-roll-animation.md) and
+[12-brief-main-menu.md](12-brief-main-menu.md) are out, D70 to D80.** Two feature requests from the
+Product Owner in one message: the roll is boring, and the main menu is barebones. Both descriptions are
+accurate, and looking for the place to build each one found something underneath it.
+
+| Brief | Owes | State |
+| --- | --- | --- |
+| [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, plus whichever of `prompt.css` and `board.css` the answer touches | **Open.** Sent 2026-09-03 |
+| [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64, plus whichever of `app.css`, `tokens.css`, `hud.css`, `hand.css` and `card.css` the answer changes | **Open.** Sent 2026-09-03 |
+| [11-brief-roll-animation.md](11-brief-roll-animation.md) | `11-spec-roll-animation.md`, plus whichever of `card-state.css`, `hand.css`, `card.css` and `tokens.css` the answer changes, and a new file if D71 needs more than about thirty lines | **Open.** Sent 2026-09-03 |
+| [12-brief-main-menu.md](12-brief-main-menu.md) | `12-spec-main-menu.md`, **three mockups in `handoff-12/`**, plus whichever of `overlay.css` and `tokens.css` the answer changes, and a new stylesheet if D75 says the menu is its own layout | **Open.** Sent 2026-09-03 |
+
+### The roll turned out to be three things, and only the first one was reported
+
+"A number just appears" is literally what happens: `.card__result` is hidden by `:empty` and gets text
+written into it. The two that were not reported are worse.
+
+**The roll has no moment of its own.** `advance()` in `game-loop.js` lines 209 to 213 rolls and carries
+straight on in the same synchronous pass, so the number is painted in the same frame as the kept card's
+lift and the two unkept cards flying back to the pool. All three parts of "you rolled" happen at once,
+and the one the player is waiting for is the one with no motion on it. The file's own header, lines 26
+and 27, says the `roll` phase exists "so a roll animation has something to hang off", and nothing hangs
+off it. **That sentence went in with `182e5fa` on 2026-09-01** and has been describing something that
+does not exist ever since.
+
+**And a roll that cards changed is an unexplained number.** `state.rollSteps` records the whole chain,
+nine kinds of step, and the sentences for it are written in both languages at `ui.json` lines 153 to
+164. **No file under `src/ui/` reads either.** `turn-manager.js` line 137 says the trace exists "so the
+screen can explain a number that three cards had a hand in (NFR-08)", and it does not. A turn with
+Critical Success, Angel Die and Speedrun Any% in it ends with a 44 on a D20 card and no account of
+where 44 came from. **This is the third `must have` requirement in three handoffs that was half met
+because a rule ran where nothing rendered it**, after `state.traps` in handoff 07 and the face-down own
+hand in handoff 10.
+
+Two gaps of ours go with it and are ours to fix rather than yours to answer: `ROLL_STEP.MISSED` has no
+locale key in either language, so eight of nine steps are translated, and `turn.rolled` sits in both
+files unread.
+
+### The menu's finding is an absence, and it is the reason 12 asks for drawings
+
+**Nothing in this project styles a control you cannot use.** Neither `disabled` nor `aria-disabled`
+appears in any of the eighteen stylesheets or in any file under `src/ui/`. Two of the three menu items
+the Product Owner asked for are exactly that, so D77 has no precedent anywhere to reuse, and it is the
+one decision in the brief that cannot be judged from a description. All three mockups have to show it.
+
+**The three items are not decoration**, and the brief says so with the requirement ids: Hotseat is
+FR-01 and built, Online Multiplayer is FR-42 with no chosen technology and is named in the
+Requirements Specification as the largest available cut, and Settings is S11, which was **deliberately
+split and deleted** on 2026-09-01 with its language half moved into the chrome and only the mute left
+outstanding. So the two unavailable items are unavailable for two different reasons, which is D78.
+
+### One thing about the loop is new, and it is the first brief to ask for a choice
+
+**Brief 12 asks for three mockups and a pick, which no brief has done before.** The reason is that
+"barebones" is not a defect with a cause: the three elements on the menu are each correct, and what is
+being asked for is a direction. The spec then answers D75 to D80 for the mockup that was chosen, and
+**the two that were not chosen are the named rejected alternatives** § 2 of the spec template requires
+anyway. That is the usual rule met by a cheaper route, and it is worth noting as a pattern for the next
+request that is a preference rather than a defect.
+
+**Both briefs name the commit they were read against, `3a8c8bc`.** That is the request the previous
+status block made of the delivery side, and it applies in both directions. Asking for it without doing
+it would have been the wrong way round.
+
+**Nothing was implemented, unlike handoff 09.** That was the Product Owner's choice and the reason is
+in D70: whether the roll is a movement or a hold decides whether `game-loop.js` grows a wait, and that
+file has **7 lines left** before NFR-02's limit. Guessing wrong means building it twice.
+
+**Four briefs are open at once now, which is one more than the count that made this file necessary.**
+The order that gets the most out of the least work is unchanged at the front and grows at the back:
+**09, 08, 11, 12.** Handoff 09 is still confirmation of three things already on screen and still the
+cheapest. Handoff 08 is still the only open decision that blocks a requirement, NFR-08's second half.
+**Handoff 11 comes next because it blocks the other half of the same requirement**, NFR-08's
+explanation half, and because D70 alone unblocks the code: it is one question about a duration, it
+needs no drawing, and the other four cannot be usefully answered before it. **If only one thing can be
+delivered out of brief 11, deliver D70.** Handoff 12 is last because it blocks nothing and because it
+is the one that needs drawing time.
 
 ---
 
@@ -328,6 +410,8 @@ loop needs an index or something gets quietly dropped, and something already had
 | 08 The pickable field | [08-brief](08-brief-pickable-field.md) | *none yet* | **Open.** Sent 2026-09-03. D61, one question with four parts. **Blocks NFR-08's second half**: a field can be tabbed to and gives no sign of it |
 | 09 The stage, the seat plate and the fan | [09-brief](09-brief-layout-and-fan.md) | *none yet* | **Open.** Sent 2026-09-03. D62 to D64, **all three already implemented and sent back for confirmation**, because FR-31 was broken on the machine the round was played on and the fix could not wait |
 | 10 Reading a card you are holding | [10-brief](10-brief-card-reveal-on-hover.md) | [10-spec](10-spec-card-reveal-on-hover.md) | **Closed.** Landed 2026-09-03. D65 to D69, all five answered and all five on screen. The five stylesheets were **merged rather than copied in**, because they had been read against a tree four hours old; one delivered rule in `card-reveal.css` was amended for the same reason. See the status block at the top of this file |
+| 11 The roll | [11-brief](11-brief-roll-animation.md) | *none yet* | **Open.** Sent 2026-09-03. D70 to D74. There is no roll animation, the roll has no moment of its own in the loop, and `state.rollSteps` explains a roll that cards changed and is read by nothing. **Blocks NFR-08's explanation half.** D70 is the one that unblocks the code |
+| 12 The main menu | [12-brief](12-brief-main-menu.md) | *none yet* | **Open.** Sent 2026-09-03. D75 to D80, and **the first brief in the loop that asks for three drawings and a choice between them.** Three menu items, one usable, and nothing in the project styles a control you cannot use |
 
 **The 02 row is the one worth reading twice.** A brief with no spec is not a brief that was declined, it is
 a brief nobody closed, and one of its eight open items (D16) is the only design question in this project
@@ -458,6 +542,19 @@ deliver the 06 spec.** It is fifteen lines and it closes a requirement.
 | ~~**D67**~~ | Whether a card that cannot be played reveals too, and what the focus state is there | 10 | **Closed. Yes to all of it, and NFR-08's reading half is closed with it.** The reveal is keyed on `[data-card-id]` and not on playability, the focus ring is the same ring, the reveal cancels the desaturation so a card is read at full contrast, and nothing needs `Escape`. The tab stop needed a `focusable` field on the card view model rather than a change inside `updateCard`, because the pool overview renders through the same component and spec 05 § 5's reason still stands there |
 | ~~**D68**~~ | Which token times the reveal, and what survives `prefers-reduced-motion`. D8 and D12 own motion; D20 and D60 are the precedent that a new duration gets a number | 10 | **Closed. Two tokens.** `--motion-reveal: 160ms`, between the 90 ms feedback budget and the 240 ms move budget, collapsing to 1 ms under reduced motion because reading a card is feedback. `--motion-reveal-delay: 120ms`, declared per property so the lift is never delayed, and deliberately **not** in the reduced-motion block: it guards against a latch rather than being a movement, the same argument as `--motion-refusal-hold` |
 | ~~**D69**~~ | Whether the reveal replaces the sideways fan out in `hand.css` or joins it | 10 | **Closed. Replaces it, deleted rather than joined.** A revealed card is painted at `--layer-card-raised`, above both its neighbours, so nothing covers the thing being read and there is nothing left for the neighbours to step aside for. It removes a number that had to be right at five different counts, and the second thing that moved when a pointer crossed the fan |
+
+| **D70** | Whether the roll gets a moment of its own, and what measures it. Three parts: is it a movement like `--motion-move` or a hold like `--motion-trap-hold` that the loop actually waits for, how long, and what happens to it under `prefers-reduced-motion` | 11 | Indirectly, and it is the one that unblocks the code. A movement is a stylesheet; a hold is a stylesheet plus a wait in `game-loop.js`, which has 7 lines left. **If only one thing can be delivered out of brief 11, deliver this** |
+| **D71** | What the roll looks like, and by which mechanism. Three routes with their real costs and none is chosen: the number arrives in the 30 px badge, the card performs the roll, or a die becomes its own object | 11 | No, but it is what the request was actually about. FR-33 asks that rolling "produces visible feedback" and today the feedback is a value appearing |
+| **D72** | What replaces `:empty { display: none }` on the roll badge, since an element with `display: none` has no start state to animate from. Three routes, and every one of them is also a small change to our code | 11 | No |
+| **D73** | How a roll that cards changed reads on screen. Four parts: where the breakdown lives, whether the steps arrive one at a time, what happens on an ordinary one-step roll, and whether it stays | 11 | **Yes. NFR-08's explanation half.** `state.rollSteps` holds nine kinds of step, the sentences are written in both languages, and no file under `src/ui/` reads either |
+| **D74** | What survives reduced motion, and what survives the test suite. D12 owns the first; the second is a promise from our side that a hold gets a fifth key in `FAST_DELAYS`, and needs only your confirmation | 11 | No, but NFR-11's 90 ms first-response budget is in it |
+
+| **D75** | Whether the menu is still the overlay panel or becomes its own layout, and whether it gets its own stylesheet. Against D38, whose seam has held for five screens and meets its first content that is not the game stopping to ask a question | 12 | No |
+| **D76** | What the three menu items are as objects: a stack of buttons, tiles, rows, or the game's own card language. Plus whether Hotseat is drawn larger than the two that do not work, and what the tab order is | 12 | No |
+| **D77** | What an item you cannot use looks like, and whether it is `disabled` or `aria-disabled`. **Nothing in this project styles an unusable control**: neither attribute appears in any of the eighteen stylesheets or in any file under `src/ui/`. NFR-12 applies, so it cannot rest on colour | 12 | No. It is the decision with no precedent to reuse, and the reason all three mockups have to show it |
+| **D78** | Whether an unavailable item explains itself and where that text sits. The two unavailable items are unavailable for **different** reasons: FR-42 was never built, and S11 was deliberately deleted with its language half already in the chrome | 12 | No. NFR-03 keeps the sentence out of CSS, so it needs an element we build once the spec names it |
+| **D79** | What else is on the menu. The game's name, which is an `<h2>` at the same size as the word "Paused"; the one sentence; the language button that already floats over the menu at `--layer-chrome`; and whether a place is reserved for S10 without designing it | 12 | No |
+| **D80** | Whether Hotseat still leads to the separate player-count screen S2. **Asked as a confirmation**, because the Product Owner chose to keep the two screens: S2 has its own requirement and acceptance criterion, its three count buttons are already designed, and three end-to-end specs click them | 12 | No |
 
 Four more items are open from spec 03 § 5 and brief 04 § 5.1 and are not numbered: what the reaction
 countdown looks like, whether the prompt strip belongs at the foot or in the rail, how a pickable pawn
