@@ -152,7 +152,8 @@ export function updateCard($card, card) {
   $card.attr("data-playable", String(card.playable === true));
   $card.attr("data-selected", String(card.selected === true));
 
-  // Only a card that can be played is in the tab order. Two answers from two specs meet here:
+  // Who gets a tab stop. Three answers from three specs meet here, and since D67 they no longer fold
+  // into one rule, which is why `focusable` exists as a field of its own:
   //
   // - Design spec 04: an empty slot in the skill hand is not an unplayable card and not a face-down one,
   //   it is the outline of where a card would go. `hand.css` draws it, but CSS cannot take an element out
@@ -160,11 +161,22 @@ export function updateCard($card, card) {
   //   hand (NFR-08). An empty slot has no id, which is what `skill-hand-view.js`'s `emptySlot` produces.
   // - Design spec 05, section 5: a card nothing can be done with is not a tab stop either. On the pool
   //   overview seven of them sat between the player and the one button that closes the panel, and a
-  //   stop that `Enter` does nothing on tells a keyboard user nothing.
+  //   stop that `Enter` does nothing on tells a keyboard user nothing. **That reason still stands there**,
+  //   because nothing in the pool overview reveals on focus.
+  // - Design spec 10, D67: in the skill hand the same reason dissolved. Focus now reveals the card, so
+  //   the stop does something, and the card a player most wants to read is the one they cannot play yet.
+  //   A mouse user could already read it by pointing at it, so restricting the stop would have made the
+  //   reveal a mouse feature, which is NFR-08's exact complaint.
   //
-  // Both fold into one rule: a card is focusable exactly when it is playable, and an empty slot is never
-  // playable. The focus ring in `card-state.css` keeps working for the cards that keep the stop.
-  $card.attr("tabindex", card.playable === true ? 0 : -1);
+  // So the default is unchanged and every caller keeps what it has: focusable exactly when playable.
+  // `skill-hand-view.js` is the one caller that opts out of the default, by setting `focusable` itself.
+  // It is a field on the card and not a check on `card.family` here, because "which regions let you tab
+  // to a card you cannot play" is a fact about a region and not about the shared component.
+  //
+  // Note what this does not change: `events.js` binds `click` and `keydown` on `[data-playable="true"]`,
+  // so `Enter` on a focused unplayable card still does nothing. That is correct. The stop is there to
+  // read the card, not to play it.
+  $card.attr("tabindex", (card.focusable ?? card.playable) === true ? 0 : -1);
 
   setArt($card, card);
 

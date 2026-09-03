@@ -40,7 +40,13 @@ import { t } from "../i18n/index.js";
 import { skillArt } from "./art/index.js";
 import { createCard, updateCard } from "./card-view.js";
 
-/** One card's description, with every string already translated. */
+/**
+ * One card's description, with every string already translated.
+ *
+ * `focusable: true` regardless of `playable`, which is D67. A card in your own hand can be read by
+ * pointing at it or by tabbing to it, so every real card needs a tab stop; `card-view.js` explains why
+ * that is a field on the card rather than a rule inside the shared component.
+ */
 function skillCard(cardId, { playable, selected }) {
   const card = cardById(cardId);
 
@@ -56,6 +62,7 @@ function skillCard(cardId, { playable, selected }) {
     tags: card.category === null ? [] : [t(`card.category.${card.category}`)],
     art: skillArt(cardId),
     playable,
+    focusable: true,
     selected,
   };
 }
@@ -70,7 +77,8 @@ function skillCard(cardId, { playable, selected }) {
 export function renderSkillHand() {
   const $hand = $("<div>", { class: "hand hand--skill" })
     .attr("data-count", 0)
-    .attr("data-active", "false");
+    .attr("data-active", "false")
+    .attr("data-face", "up");
 
   for (let slot = 0; slot < SKILL_HAND_LIMIT; slot += 1) {
     $hand.append(createCard().attr("data-slot", slot));
@@ -79,7 +87,7 @@ export function renderSkillHand() {
   return $hand;
 }
 
-/** A slot with no card in it: emptied of every string, and not playable. */
+/** A slot with no card in it: emptied of every string, not playable, and not a tab stop. */
 function emptySlot() {
   return {
     id: null,
@@ -93,6 +101,7 @@ function emptySlot() {
     tags: [],
     art: null,
     playable: false,
+    focusable: false,
     selected: false,
   };
 }
@@ -116,6 +125,25 @@ export function updateSkillHand($hand, state, selectedSlot = -1) {
 
   $hand.attr("data-count", cards.length);
   $hand.attr("data-active", String(playable.length > 0));
+
+  // Two attributes, two questions, and D65 is the decision that they must not be one attribute.
+  //
+  // `data-active` answers "can something here be played this instant". That is a question about the
+  // rules, it is derived from `playableCards` on the line above, and D36 gave it its meaning: the plate
+  // it sits on lifts when it is true and dims when it is false.
+  //
+  // `data-face` answers "may the person in front of the screen see these cards". That is a question
+  // about who is holding the device. `card-state.css` used to read `data-active` for it and draw a card
+  // back, so the player looked at the back of their own hand through the dice card choice, through the
+  // move, and again once their card budget was spent. `intents-cards.js` had already refused the same
+  // conflation one layer up, in a comment that describes this bug in advance.
+  //
+  // In hot seat play the hand on show is always the viewer's, so this is always "up". Hot-seat secrecy
+  // is not what this attribute buys and never was: `session-actions.js` passes the turn before the
+  // curtain lifts, so a hand belonging to somebody else is never on screen with the board visible.
+  // "down" stays in the contract for the first hand that is genuinely not the viewer's, which is a
+  // spectator view, a replay, or the online mode.
+  $hand.attr("data-face", "up");
   $hand.attr("data-seat", seat);
 
   $hand.children(".card").each(function updateSlot() {

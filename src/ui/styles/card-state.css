@@ -70,11 +70,18 @@
   outline-offset: calc(var(--card-u) * 0.1875rem);
 }
 
-/* --- The back. Used by the pool, the discard pile, and by an inactive
-       skill hand, which is what hot-seat privacy needs (D33). --- */
+/* --- The back. Used by the pool, the discard pile, and by a hand that is
+       not the viewer's, which is what `data-face="down"` says (D65).
+
+       Superseded on 2026-09-03: the six `.hand--skill[data-active="false"]`
+       selectors that stood in this block. `data-active` means "some card here
+       can be played this instant", so the back fired on the player's own hand
+       in every phase but one. Hot-seat secrecy is enforced by the handover
+       curtain and by the ordering rule in `session-actions.js`, never by this
+       paint. --- */
 
 .card--back,
-.hand--skill[data-active="false"] .card {
+.hand--skill[data-face="down"] .card {
   color: transparent;
   background-color: var(--card-back);
   background-image: repeating-linear-gradient(
@@ -87,12 +94,12 @@
 }
 
 .card--back > *,
-.hand--skill[data-active="false"] .card > * {
+.hand--skill[data-face="down"] .card > * {
   visibility: hidden;
 }
 
 .card--back::before,
-.hand--skill[data-active="false"] .card::before {
+.hand--skill[data-face="down"] .card::before {
   content: "";
   position: absolute;
   inset: calc(var(--card-u) * 1rem);
@@ -101,7 +108,7 @@
 }
 
 .card--back::after,
-.hand--skill[data-active="false"] .card::after {
+.hand--skill[data-face="down"] .card::after {
   content: "";
   position: absolute;
   top: 50%;

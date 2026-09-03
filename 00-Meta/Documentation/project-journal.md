@@ -330,6 +330,18 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   rebuild the card's DOM. The first defect had been filed the same day as a finding that "needs no code",
   which was right about the cause and wrong about the consequence. Sprint 3, no issue on the board.
 
+- **2026-09-03, evening**: **handoff 10 came back the same day it went out and landed whole, D65 to D69.**
+  A player can now read the cards in their own hand: the hand stopped being face down, and a card under
+  the pointer or under keyboard focus is magnified to exactly the reference card size, so the rules
+  paragraph is painted at 12.6 px instead of 8.6. No card turns over, which is not what was asked for and
+  is explained rather than glossed: a turn does not change the size, so it does not answer the request.
+  Two attributes were all the code it needed, `data-face` on the hand and a tab stop on every card with an
+  id, plus one new stylesheet and one new import. **The delivery was merged rather than copied in**,
+  because it had been read against the tree of that morning and would have reverted the stage, the fan's
+  shadow and the two empty-slot fixes; two of those three carry an end-to-end case that would have caught
+  it. Four new cases in `tests/e2e/card-reveal.spec.js`, which is the first test of a hover state anywhere
+  in the suite, 101 per browser and 303 across the three, all green. Sprint 3, no issue on the board.
+
 ---
 
 ## Decisions
@@ -3490,6 +3502,67 @@ to get wrong later.
   sprints. `tests/e2e/card-reveal.spec.js` is owed and is written when the spec lands.
 - **Not fixed, and it is in the brief:** D64's measured hover finding, that the sibling shift is 43.5 px
   against a covered strip of up to 77.8 px, is carried on as D69 rather than answered here.
+- → Ch. 04
+
+---
+
+### 2026-09-03: Handoff 10 was merged by hand, because it was read against a tree one commit old
+
+- **Chosen:** the five delivered stylesheets were **not** copied in. Each was diffed against the working
+  tree and only the hunks belonging to D65 to D69 were applied, keeping every change commit `e486bb4` had
+  made to the same four files earlier the same day. One delivered rule was additionally amended, in
+  `card-reveal.css`.
+- **Why:** the delivery states it was read against "the working tree of 2026-09-03", which was true when
+  it was written and stale about four hours later. Copying the files in would have reverted three separate
+  things: the stage tokens `--stage-w` and `--stage-h`, which `app.css` reads for `#app`'s size, so the
+  16:9 stage would have collapsed and FR-31 would have broken again on every window that is not 900 px
+  tall; the `--shadow-dir` sign in three files, so the fan's shadow would have gone back to falling right
+  and hiding under the next card, which is the defect the Product Owner had reported that morning; and the
+  empty slot's `z-index: 0` and `content: none`, so a slot would have painted its dashed border across the
+  last real card again. None of the three has anything to do with what handoff 10 was asked.
+- **Why the amendment to `card-reveal.css`:** it casts a revealed card's hard shadow down and to the
+  right, because it was written before D64 existed. A revealed card is still sitting in the fan, so its
+  shadow would have flipped from left to right under the pointer, which is D64's depth cue defect undone
+  one card at a time. Both offsets now multiply by `--shadow-dir`. The change and its reason are recorded
+  in a note at the top of the delivered spec, the same way handoff 07's link fix was.
+- **Rejected: copying the five files in and re-applying `e486bb4`'s changes on top as a second pass.**
+  Identical end state, and the intermediate tree is broken, so a bisect lands on a commit where the page
+  does not lay out. The diff is also harder to review, because the reviewer sees each hunk twice.
+- **Rejected: sending the package back for a re-cut against the current tree.** The clean answer, and it
+  costs a round trip on work that is already correct. It is also not obviously the right lever: handoff 09
+  is still unconfirmed, so a re-cut would be made against a tree whose own decisions Claude Design has not
+  agreed to yet. The staleness goes back as a finding instead, with the close of handoff 10.
+- **The cost, stated:** the repository now holds a delivered file that differs from what was delivered, in
+  one declaration, and two files whose delivered version this side chose not to take whole. That is worse
+  than a clean copy and it is written down in three places rather than one, so nobody has to reconstruct
+  it from a diff. **The process gap is real and is not closed by this decision:** nothing in the loop lets
+  the receiving side check which tree a delivery was read against, and only diffing caught it.
+- → Ch. 04
+
+---
+
+### 2026-09-03: The tab stop became a field on the card, not a rule inside the shared card component
+
+- **Chosen:** `card-view.js` writes `tabindex` from `(card.focusable ?? card.playable)`. The default is
+  exactly what it was, and `skill-hand-view.js` is the one caller that sets `focusable: true` regardless
+  of playability.
+- **Why:** D67 asks for every card in the skill hand to be reachable with Tab, playable or not, because
+  focus now reveals the card and the card a player most wants to read is the one they cannot play yet.
+  But `updateCard` is shared by three regions, and design spec 05 § 5 took seven dead tab stops **out** of
+  the pool overview for a reason that still stands there: nothing in the pool reveals on focus, so a stop
+  where `Enter` does nothing still tells a keyboard user nothing. `dice-pool.spec.js` asserts that. So one
+  rule can no longer serve both, and the caller is the only place that knows which case it is in.
+- **Rejected: keying it on `card.family === "skill"` inside `card-view.js`.** One line shorter and it puts
+  a fact about a *region*, which regions let you tab to a card you cannot play, inside a component that is
+  supposed to know only what a card is. The pool overview renders skill cards too, so the check would have
+  been wrong there on the first day.
+- **Rejected: making every card focusable and taking the pool's stops out with a second rule.** It
+  reverses a delivered decision to re-implement it somewhere else, and it turns a green assertion in
+  `dice-pool.spec.js` into something that has to be re-earned.
+- **What it does not change, stated:** `events.js` still binds `click` and `keydown` on
+  `[data-playable="true"]`, so `Enter` on a focused unplayable card does nothing. That is deliberate. The
+  stop exists to read the card, not to play it, and the focus ring says "you are here" rather than "you
+  may play this".
 - → Ch. 04
 
 ---

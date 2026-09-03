@@ -50,7 +50,9 @@
 }
 
 /* The reference size, used by the pool overlay and, from handoff 04 on, by
-   the reaction prompt. It is the only size that shows the rules paragraph. */
+   the reaction prompt. It is the size the rules paragraph is written for, and
+   from D66 on it is also the size a revealed hand card is magnified to, so
+   there is one readable card in the game rather than two. */
 .card--full {
   --card-u: 1;
 }
@@ -163,9 +165,10 @@
   height: 100%;
 }
 
-/* At hand size the rules paragraph is gone, so the art takes the space it
-   frees instead of leaving a hole above the tags: the illustration is the
-   fastest thing to recognise in a fan of five (D26). */
+/* While the rules paragraph is hidden the art takes the space it frees
+   instead of leaving a hole above the tags: the illustration is the fastest
+   thing to recognise in a fan of five (D26). A revealed hand card gives that
+   space back, which is the re-flow half of D66; card-reveal.css does it. */
 .card:not(.card--full) .card__art {
   flex: 1 1 auto;
   height: auto;
@@ -198,10 +201,18 @@
   text-wrap: pretty;
 }
 
-/* Only the reference card carries the paragraph. At hand size the same
-   14 px would land near 9 px, so the tag row is the rules there (D26). */
-.card:not(.card--full) .card__text {
+/* The paragraph is hidden by default and shown by whatever puts the card at
+   reading size. Until D66 that was one thing, the reference size, and the two
+   facts were welded into a single negative selector. They are two facts now:
+   the reference size shows the paragraph, and so does a revealed hand card,
+   which card-reveal.css magnifies to exactly that size. Unrevealed at hand
+   size the same 14 px lands near 9 px, so the tag row is the rules (D26). */
+.card__text {
   display: none;
+}
+
+.card--full .card__text {
+  display: block;
 }
 
 .card__tags {

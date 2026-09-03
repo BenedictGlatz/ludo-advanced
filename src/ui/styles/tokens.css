@@ -162,6 +162,16 @@
   --motion-capture: 320ms;
   --motion-pulse: 1200ms;
   --motion-deal-stagger: 60ms;
+
+  /* The reveal of a card in your own hand (D68). 160 ms rather than
+     --motion-feedback, because 47 per cent of growth inside 90 ms is a jump
+     and not a movement, and rather than --motion-move, which is the budget
+     for a piece crossing the board. --motion-reveal-delay is how long the
+     growth waits, so sweeping the pointer across a fan of five does not fire
+     five reveals. The lift still answers inside --motion-feedback with no
+     delay, which is the response NFR-11 measures. */
+  --motion-reveal: 160ms;
+  --motion-reveal-delay: 120ms;
   --ease-ui: cubic-bezier(0.2, 0, 0, 1);
   --ease-move: cubic-bezier(0.34, 1.1, 0.64, 1);
   --ease-capture: cubic-bezier(0.55, 0, 0.85, 0.3);
@@ -261,5 +271,11 @@
     --motion-deal-stagger: 0ms;
     --motion-overlay: 1ms;
     --motion-curtain: 1ms;
+
+    /* The reveal stays and arrives at once (D12, D68): reading a card is
+       feedback. --motion-reveal-delay keeps its value, because it is a guard
+       against a latch and not a movement, the same argument that keeps
+       --motion-refusal-hold and --motion-trap-hold out of this block. */
+    --motion-reveal: 1ms;
   }
 }

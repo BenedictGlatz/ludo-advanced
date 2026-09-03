@@ -1580,6 +1580,52 @@ it to the right. Both read `getComputedStyle`, and the second one reads the *fir
 `box-shadow` string, so it deliberately reads a card that is neither selected nor hovered: those two states
 declare a shadow list that starts with a focus ring at offset zero.
 
+### The first test of a hover state, and what having none had already cost: 2026-09-03, handoff 10
+
+**Until this delivery no test in the suite touched a hover state.** Not in the fan, not on a pawn, not on
+a button. `card-reveal.spec.js` is the first, and the defect it now guards is exactly the kind that
+absence produces: the player's own skill hand was drawn as a row of card backs through most of every turn,
+for two sprints, and every one of the 97 cases stayed green the whole time. **A CSS-only interaction with
+no test is invisible to everything except somebody playing a round**, which is how it was eventually
+found: a Product Owner playing, not a suite failing.
+
+The suite grew from 97 cases per browser to 101, 303 across the three.
+
+**Why the file exists rather than four more cases in `skill-hand.spec.js`.** That file is about *playing*
+a card, FR-23 to FR-26, and it asserts game state. This one is about *reading* one and it asserts computed
+style. The two fail for different reasons and a red test should say which half broke, which is the same
+seam `trap-marks.spec.js` was split off `traps.spec.js` on.
+
+**What is hard about testing this, and it is not the hover.** The reveal writes nothing into the DOM, on
+purpose: it is `:hover` and `:focus-visible` and design spec 10 § 8 asks for `events.js` to stay at `click`
+and `keydown`. So there is no attribute to assert and no state the app can be asked about. Three things
+had to be worked out:
+
+- **The paragraph's size is two numbers multiplied.** D66 magnifies the card rather than re-sizing it, so
+  the computed `font-size` stays the hand-size one, about 8.6 px, and `scale` paints it at 1.47 times
+  that. Reading `font-size` alone would have asserted that nothing had changed and passed.
+- **`:focus-visible` is not `:focus`, and `locator.focus()` does not produce it.** A browser only matches
+  `:focus-visible` on a `div` when the focus arrived from the keyboard, so a script calling `.focus()`
+  moves focus without the reveal, and the case would have failed for a reason that had nothing to do with
+  the CSS. The helper focuses, presses Shift+Tab and presses Tab, which lands on the same element through
+  a real key press. `skill-hand.spec.js`'s existing keyboard case uses plain `.focus()` and is right to:
+  it asserts `Enter`, not a focus ring.
+- **The assertion is a floor and not the number.** 10-spec § 5 puts the paragraph at 12.6 px at the design
+  resolution and 14.0 px at a 16 px root. The case asserts "above 12 px", because the point is that it is
+  readable and because a number would go stale the next time the root moves. That is the same rule the
+  greyscale cases follow: compare, do not name a value.
+
+**The fourth case exists so a class does not become dead CSS.** `.card--reading` is a third trigger next
+to the two pseudo-classes and 10-spec § 6 says the app must never write it. Left unasserted it would have
+been a rule in the repository that nothing reaches. The case pins it and, in the same breath, asserts that
+nothing in `src/` has applied it.
+
+**A stale preview server made all four cases fail once, and it is worth one line.** The suite runs against
+the production build, and `reuseExistingServer` had left a server from an earlier run holding an old
+`dist/`. The failure looked exactly like "the attribute was never written": the element in the error had
+`data-seat` but no `data-face`, which is the code from before the edit. `npm run build` fixed it. Reading
+the failing DOM rather than the assertion is what identified it in one step.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

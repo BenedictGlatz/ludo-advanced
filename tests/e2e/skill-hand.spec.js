@@ -57,11 +57,16 @@ test.describe("the skill hand", () => {
   /**
    * An empty slot is an outline, not a card back, and until 2026-09-03 it was both at once.
    *
-   * `card-state.css` gives every card in a hand with `data-active="false"` the back's dashed inner
-   * frame as `::before` and its violet diamond as `::after`. `hand.css` draws an empty slot as a
-   * dashed silhouette and hides `> *`, which is the real children and not the pseudo-elements, so
-   * the four empty slots wore a card back's furniture inside an empty slot's outline. At 82 per cent
-   * overlap that is a row of clipped diamonds, which is what the Product Owner saw and reported.
+   * `card-state.css` gives every card in a face-down hand the back's dashed inner frame as `::before`
+   * and its violet diamond as `::after`. `hand.css` draws an empty slot as a dashed silhouette and
+   * hides `> *`, which is the real children and not the pseudo-elements, so the four empty slots wore
+   * a card back's furniture inside an empty slot's outline. At 82 per cent overlap that is a row of
+   * clipped diamonds, which is what the Product Owner saw and reported.
+   *
+   * The trigger was `data-active="false"` until D65 re-keyed the back onto `data-face="down"`, which
+   * the viewer's own hand never carries, so the collision is now unreachable in hot seat play. The
+   * `content: none` guard is kept anyway, for the first hand that is genuinely not the viewer's, and
+   * this case is what keeps it honest.
    */
   test("draws an empty slot as an outline and not as a card back", async ({ page }) => {
     const board = await openMatch(page, SEEDS.leavesStartAtOnce);
