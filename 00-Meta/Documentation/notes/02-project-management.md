@@ -833,6 +833,24 @@ contains. **The honest conclusion for the report is not "we should be more caref
 board tracks requests, and any work that arrives without somebody filing a request is structurally
 invisible to it: design deliveries and infrastructure are the two kinds this project generates.
 
+### The first `could have` was delivered, out of drop order and over its estimate: 2026-09-03, issue #45
+
+#45 sits in the block the specification's drop order cuts first and the project plan left unscheduled.
+It was implemented on 2026-09-02 and 2026-09-03 anyway, on a feature branch, before every must-have is
+closed. Two process facts:
+
+- **Why it jumped the queue.** It was not new work. Epic #38 had shipped the trap mechanic on 2026-08-31
+  and it was running with no way for a player to see it. Finishing a running mechanic is a different call
+  from starting an unscheduled one, and that is the distinction the board's MoSCoW label does not carry.
+- **Estimate against outcome.** 5 points on the board; the delivered scope is three new mechanics, a new
+  `core/` module, four file splits, two new spec files and a design brief. The gap is not an estimation
+  error in the usual sense: eight Product Owner decisions in the planning conversation each chose the
+  larger reading, and the estimate predates all eight. Chapter 01 has the list. For the report this is the
+  cleanest example so far of a story-point figure describing an issue title rather than the work.
+
+Design handoff 07 is open as a result, the first brief since 02 that blocks a preference and not a
+requirement. The loop had been empty for a few hours.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

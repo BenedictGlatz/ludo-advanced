@@ -415,6 +415,34 @@ wrong trade and the requirement was the reason it was visible.** FR-31 is one of
 requirements in this project with a number in it, which is what let a test catch the overflow, which is what
 put the arithmetic in the brief, which is what let the designer see that the cut was in the wrong place.
 
+### FR-30 was implemented before every must-have was closed, and its acceptance criterion had to be rewritten first: 2026-09-03, issue #45
+
+Two facts for the scope story, and a third for the requirements story.
+
+**A `could have` shipped ahead of the drop order.** The specification's own drop order lists FR-30 among
+the first things to cut, and section 4.4 of the project plan deliberately left #42 to #46 unscheduled.
+#45 was picked up anyway on 2026-09-02, because it turned out not to be greenfield: epic #38 had built the
+whole trap substrate on 2026-08-31 and it was running invisibly. What #45 actually delivered is closer to
+"finish a mechanic that already shipped" than "add a feature", which is a different risk profile from the
+other four extended features and is why it went first.
+
+**It cost far more than its 5 points, and that was known going in.** The planning conversation put eight
+game-design questions to the Product Owner and every answer went the ambitious way: the rulebook wins over
+the code, full chain reaction, every movement fires a trap, traps are public. That turned three rule
+corrections into three new mechanics, a stun status, a nullification aura and a bounded displacement
+chain, plus a new `core/` choke point and four file splits. The estimate was for the issue as titled; the
+work was for the issue as decided.
+
+**The acceptance criterion was one sentence and not testable.** "A trap placed on a tile fires when a
+pawn enters that tile" says nothing about crossing, about the owner exemption, about where it may be
+laid, or about whether anybody can see it. It was rewritten on 2026-09-02 to name all of those, so that
+`tests/e2e/traps.spec.js` and `trap-fires.spec.js` assert the requirement as written rather than a reading
+of it. The GDD sign-off table gained rows 12 to 14 for the three decisions the artwork never spoke to.
+
+**A balance note, not a defect.** Banana Peel used to send a pawn home and now costs one turn for one
+pawn. It was the only trap that cost a lap, so the game is measurably gentler than it was on 2026-09-01.
+That is a playtesting question and belongs to whoever runs the next session, not to this issue.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

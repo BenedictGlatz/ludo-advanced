@@ -57,7 +57,7 @@ FR-31 asks for.
 | --- | --- | --- | --- | --- |
 | S1 | Main menu | Entry point. Starts a match. **As built on 2026-09-01 it does not reach a settings screen**: the language switch lives in the always-present chrome instead, see S11, and the rules screen still has no issue. | FR-38 | #41 |
 | S2 | Match setup | Choose the player count from 2, 3 or 4 and start the match. | FR-01 | #41 |
-| S3 | Board | The track, the four start areas, the four home columns, the home slots and every pawn, rendered from state. | FR-31, FR-02, FR-08 | #26, #28 |
+| S3 | Board | The track, the four start areas, the four home columns, the home slots and every pawn, rendered from state. Since #45 also the objects standing on a field and the statuses on a pawn, in the DOM and awaiting design handoff 07 for their look. | FR-31, FR-02, FR-08, FR-30 | #26, #28, #45 |
 | S4 | Dice hand | The 3 drawn dice cards, the choice between them, and the roll result. | FR-18, FR-19, FR-31, FR-33 | #30, #31 |
 | S5 | Skill hand | The active player's skill cards, which of them are playable now, and the reaction prompt when a window is open. | FR-23, FR-24, FR-25, FR-31 | #34 |
 | S6 | Move hints and refusal | Highlights the legal-move set before the player commits, and states the reason when there is no legal move or a move is refused. | FR-32, FR-14, NFR-08 | #28 |

@@ -71,7 +71,7 @@ labels currently prioritise titles.
 | FR-27 † | A played card leaves the hand and returns to the pool under a defined rule (discard-and-reshuffle or removal). | Pool accounting is closed: every card is in exactly one of pool, hand or discard at all times. | M | #32 |
 | FR-28 | The MVP skill card set is a finite, agreed list. | The list exists in the rulebook, and every card on it is implemented and tested. | M | #38 |
 | FR-29 | An expanded skill card set beyond the MVP list. | New cards are added by data plus one effect function, with no change to the resolution engine. | C | FG-19, #44 |
-| FR-30 | Trap cards with tile-trigger logic. | A trap placed on a tile fires when a pawn enters that tile. | C | FG-20, #45 |
+| FR-30 | Trap cards with tile-trigger logic. | A trap placed on a tile fires when a pawn enters or crosses that tile by any movement, a dice move or a card's push, and never under a pawn of the player who laid it. It can be laid only on a free, unoccupied, non-entry tile. It is visible to every player with its owner shown, and the game announces it going off. Sharpened 2026-09-02 for #45; the one-sentence version was not testable. | C | FG-20, #45 |
 
 ### 1.5 Interface, feedback and localisation
 

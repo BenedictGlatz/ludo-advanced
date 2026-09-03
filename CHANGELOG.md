@@ -395,6 +395,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   currently shown in the orange the game uses for "you cannot do that", which is the wrong colour**: a
   trap going off is not something you did wrong. Design decision D55 is open against it, and the
   alternative was leaving a Banana Peel eating turns in silence
+- **Every trap and blocker is public** (issue #45, FR-30). Whoever lays one, everyone at the table can see
+  where it is and whose it is. The rulebook's "face-down" It's Not That Deep is gone: four people share
+  one screen, so a hidden trap was never really hidden, and a trap nobody can see cannot be avoided,
+  which is the only thing that makes its protective aura a choice rather than a fine. Nothing is drawn on
+  the board yet, because that look is design decision D51 to D60; the information is in the page and the
+  game says so in words when one goes off
 - **A square on the board can now be picked with the keyboard alone** (NFR-08). No square was reachable
   from the keyboard at all, which nobody noticed while a single card in 29 pointed at one. Four of the
   five that do are the trap cards, so a keyboard player could not have played a trap
@@ -631,6 +637,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   other a paragraph in documentation chapter 04. Both said the stylesheet reading the attribute did not exist
 - `src/core/cards/catalogue-extra.js` still said "no effect is implemented yet". All 29 cards have had a rule
   since 2026-08-31
+- **Four card descriptions described the old rules**, in both languages (issue #45). Banana Peel said the
+  pawn "goes back to the start area", It's Not That Deep said "a D6", Big Ah Rock said "two rounds" and
+  nothing about the knockback, and Oil Spill said nothing about being stopped by a boulder. Every one now
+  says what the card does
 - **Three trap cards described the code rather than the game**, in both languages. Banana Peel said the
   pawn "goes back to the start area", It's Not That Deep said "pushed back a D6", and Big Ah Rock said
   "two rounds" and never mentioned its knockback at all. None matched the card the player is holding or

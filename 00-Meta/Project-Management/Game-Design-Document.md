@@ -682,17 +682,18 @@ over several squares at once.
 | `action-yeet` | Yeet | Action | offensive | enemy pawn | Grab an opponent's pawn within 3 squares and throw it 4 squares backward. |
 | `action-tax-fraud` | Tax Fraud | Action | troll | player | Steal one random skill card from another player's hand. |
 | `action-lock-in` | Lock In | Action | troll | own pawn | Your pawn is immune to capture and to forced movement until your next turn. |
-| `action-not-that-deep` | It's Not That Deep | Action | blocking | track square | A face-down trap. The pawn that steps on it moves 1 square back. Offensive cards played within 3 squares of it are nullified. |
+| `action-not-that-deep` | It's Not That Deep | Action | blocking | track square | A trap. The pawn that steps on it moves 1 square back. Offensive cards played within 3 squares of it are nullified. The artwork says "face-down"; see 7.3 |
 | `action-let-him-cook` | Let Him Cook | Action | movement | own pawn | The pawn skips this turn. Next turn roll twice, take the higher, and double the move. Captured while cooking, both pawns go home. |
 | `action-built-different` | Built Different | Action | movement | own pawn | Armour for 2 turns. Ordinary collisions cannot capture the pawn and attackers bounce 1 square back. |
 | `action-fr-fr` | FR FR | Action | troll | number | Skip the roll and pick any number from 1 to 6. Move that far. |
 | `action-sixty-seven` | 67 | Action | offensive | no | Played before rolling. Roll a 6 and you move 13 instead, and every pawn in the last 7 squares goes home. |
 | `action-ragebait` | Ragebait | Action | troll | enemy pawn | Next turn the target must move toward you if a legal path exists. Fail and it wastes half its roll. |
 
-### 7.3 Six cards the artwork describes and the board model cannot express
+### 7.3 Seven cards the artwork describes and the board model cannot express
 
 Each of these was read as something as close to the printed text as the board allows. The reading is in
-the effect column above; this table is why.
+the effect column above; this table is why. The seventh row is different in kind from the other six: the
+board model *could* express it, and the Product Owner chose not to.
 
 | Card | What the artwork asks for | Why it cannot be built | What is built instead |
 | --- | --- | --- | --- |
@@ -702,6 +703,7 @@ the effect column above; this table is why.
 | Oil Spill | "skipping every skill tile and safe zone" | There are no safe squares in the MVP (FR-15, `could have`). | Slides 3 to 5 forward and triggers no skill square on the way. |
 | Janky RPG | "both neighbour tiles" | Unambiguous on the ring, undefined in a house, where only one of the two neighbours exists. | Playable on a track square only. Neighbours are `(square + 1) mod 40` and `(square - 1) mod 40`. |
 | 67 | "roll a 6" | Impossible on a D2 or a D4. | The card is only playable when the chosen dice card has at least six faces. |
+| It's Not That Deep | "a face-down trap" | Not a model limit: a per-seat render is possible. **Decided against by the Product Owner on 2026-09-02.** Four people share one screen, so hidden information is theatre, and a trap nobody can see cannot be avoided, which is the only way the aura in 7.2 is a choice rather than a fine. | Every trap and blocker is visible to every player, with the seat that laid it shown. |
 
 **Two rules elsewhere in this document have to change because of these cards**, and both are recorded
 in the project journal:
@@ -770,6 +772,11 @@ the same direction: the Product Owner chose the printed card artwork over the ru
 invented for it. Rows 10 and 11 are new and unsigned; they are consequences of that choice rather than
 decisions of their own, and section 7.3 explains both.
 
+**Rows 12 to 14 were decided on 2026-09-02 for issue #45** and are entered here as decided rather than
+proposed, because the Product Owner took them in the planning conversation itself. Row 12 is the one
+that reverses a printed fact, the "face-down" on It's Not That Deep; rows 13 and 14 are rules the artwork
+never spoke to.
+
 | # | Requirement | Proposed rule | Sign-off | Date |
 | --- | --- | --- | --- | --- |
 | 1 | FR-12 | Landing on your own pawn is illegal; no stacking and no blocking | | |
@@ -783,6 +790,9 @@ decisions of their own, and section 7.3 explains both.
 | 11 | FR-11 | Backward movement from a card stops at the first track square and never returns a pawn to its start area | | |
 | 7 | FR-37 | No energy or resource system in the MVP | | |
 | 8 | NFR-12 | **Now a rule, 2026-09-02.** Each seat has a **shape** as well as a colour: circle, triangle, square, diamond. It sits on the pawn, on the scoreboard, in the top bar and on the win and handover screens. Confirm that this is the second identifier NFR-12 asks for | | |
+| 12 | FR-30 | **Decided 2026-09-02.** Every trap and blocker is **public**: visible to every player with the seat that laid it shown. Overrides the artwork's "face-down" on It's Not That Deep; section 7.3 | Decided | 2026-09-02 |
+| 13 | FR-30 | **Decided 2026-09-02.** A trap may not be laid on a square that already holds one, on a square a pawn is standing on, or on one of the four entry squares | Decided | 2026-09-02 |
+| 14 | FR-30 | **Decided 2026-09-02.** A trap fires on **any** movement onto or across its square, including a pawn pushed there by a card, and a push it causes can set off another trap. A captured pawn going home fires nothing | Decided | 2026-09-02 |
 
 **Row 8 changed twice, and the second change is the answer.** On 2026-08-30 it recorded a question:
 Claude Design was asked for a non-colour player identifier, first delivered one as a per-seat pawn
