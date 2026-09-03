@@ -1251,6 +1251,82 @@ reference.
 and `sendHome` stayed. `src/core/` came out at 99.51 per cent lines afterwards with every function
 covered, and the figures go in chapter 09 next to the command that produced them.
 
+### The first end-to-end coverage of a trap, and the bug it found on its first run: 2026-09-03, issue #45
+
+Two new spec files, `traps.spec.js` and `trap-fires.spec.js`, plus `trap-helpers.js`. There had been no
+trap coverage at all: the one `grep -i trap` hit in `tests/e2e/` was the word used figuratively in a
+comment.
+
+#### `?stack=`, and why a seed could not do the job
+
+Every existing spec reaches its situation by seed. That could not work here. A trap card is 4 ids out of
+29, and the flow needs **two** turns to line up: one seat lays the trap, a different seat walks over it.
+`skill-hand.spec.js`'s answer to the odds, assert the mechanism and skip when the shuffle dealt
+something else, cannot cover a two-turn sequence.
+
+Pinning a seed is worse, and `scripts/find-seeds.js` says why in its own header: it never plays a card,
+"because a card played here would change what the RNG is spent on and every seed with it". It cannot
+search for a seed whose shuffle deals a named card, and the seeds it does find have gone stale three
+times already.
+
+`?stack=` is a comma-separated list of card ids that becomes the skill pool. It changes no rule:
+`startMatch` has accepted a stacked pool since issue #38 and its comment already recorded that no
+production caller passed one. Same category as `?seed=` and `?fast=1`, read in `main.js` and nowhere
+else. **Rejected:** exposing `dispatch` on the game loop so Playwright could place a trap directly. A
+test that dispatches into `state/` is not testing a player-facing flow, and it would add a production
+API that exists only for tests.
+
+**One property of the stack that cost a failing test to learn:** it *replaces* the pool, and
+`drawSkillCard` picks a random eligible card out of whatever is there. A stack of two different ids
+therefore makes the first draw a coin flip. The spec that needs a second trap card stacks two copies of
+the same id, which is also what the real pool holds of every card.
+
+#### The two specs are one seam apart
+
+`traps.spec.js` covers **laying** an object and seeing it: one turn, one click. Only the legal 36
+fields are offered, the object and its owner are in the DOM, a blocker reads as a blocker, an occupied
+field is refused, Janky RPG still gets all 40, the object survives the turn passing to another seat, a
+field can be picked from the keyboard, and the tab order is clean afterwards.
+
+`trap-fires.spec.js` covers a trap **going off**, which takes a match played until somebody walks into
+it. It was split off when the first file reached the 300-line limit, and the seam is real: one file
+asserts a click, the other drives a match.
+
+#### The hardest assertion in the suite so far, and why the driving helpers could not make it
+
+Under the new rules a Banana Peel does not move the pawn. Proving it fired means proving something
+about a board that looks exactly like a board where nothing happened. Three things have to hold
+together: the object is gone from the field, the pawn carries `stunned`, and the strip says so.
+
+The third is the one the existing helpers cannot reach. The announcement is a turn-level field, wiped
+when the turn passes, and `playTurn` and `playUntil` both wait past the turn before handing control
+back. By the time either returns the message is gone. `playUntilTrapFires` in `trap-helpers.js` drives
+the four phases itself and reads the strip **straight after the move**, which is the one moment the
+message exists. `waitPastTurn` was exported from `helpers.js` to make that possible.
+
+**Getting the trap to fire at all took a diagnostic run.** With four players, three other seats each
+wait for the die's maximum to leave the yard, and sixty turns went by without one of them crossing the
+trap. Two players halve the turn cycle, and `capturesEarly` is the seed where both seats are on the
+track by turn 4. The spec still guards with `test.skip` for a match that ends first, because that is a
+property of the seed and not of the mechanic, and the skip says which happened.
+
+#### The bug the spec found on its first run
+
+The diagnostic run showed the trap consumed on turn 6 and the strip **empty**. The report was being
+produced by `core/enter.js`, carried through `trapChanges`, and dropped on the last step: `resolveMove`
+repacked three of the four fields by hand into a `board` object and left `trapFired` behind. The pawn
+list was right, the trap list was right, the status was right. The player was told nothing.
+
+**No unit test had caught it because every existing case asserted the board**, and the board was
+correct. Three regression cases now assert the field on the state `resolveMove` returns, including the
+winning-move branch, which returns early with an object of its own and would have lost the message on
+the one turn nobody gets to replay.
+
+The fix was also a small design correction: `trapChanges` used to short-circuit to `{}` on an empty
+trap list, which is why the caller could not simply spread its answer. It now returns the whole
+`{ pawns, statuses, traps, trapFired }` always, so `resolveMove` uses it as it stands. That kept
+`turn-manager.js` at exactly 300 lines, which it was already sitting on.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

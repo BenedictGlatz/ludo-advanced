@@ -34,20 +34,14 @@
 
 import { POOL_SIZE, createDicePool } from "../core/dice-pool.js";
 import { matchDeps, restartMatch, startMatch } from "../state/match.js";
-import { CHROME_ACTION, renderChrome, updateChrome } from "./chrome-view.js";
+import { renderChrome, updateChrome } from "./chrome-view.js";
 import { bindChromeEvents, bindOverlayEvents } from "./events.js";
 import { createGameLoop } from "./game-loop.js";
 import { turnLine } from "./hud-view.js";
 import { screenDescription } from "./overlay-screens.js";
-import {
-  OVERLAY_ACTION,
-  OVERLAY_SCREEN,
-  focusOverlay,
-  renderOverlay,
-  updateOverlay,
-} from "./overlay-view.js";
+import { OVERLAY_SCREEN, focusOverlay, renderOverlay, updateOverlay } from "./overlay-view.js";
 import { emptyParts, matchParts, mount } from "./page.js";
-import { changeLanguage, nextLanguage } from "../i18n/index.js";
+import { createSessionActions } from "./session-actions.js";
 
 /**
  * Drive a whole session: menus, matches and the screens in between.
@@ -59,8 +53,19 @@ import { changeLanguage, nextLanguage } from "../i18n/index.js";
  * - `skipHandover` passes the turn without waiting for the Ready button. Tied to `?fast=1`, for the same
  *   reason that flag already collapses the thirty-second reaction window: the shape of the turn is
  *   identical either way and only the waiting is gone.
+ * - `stack` is a list of skill card ids that becomes the top of the pool, from `?stack=`. It changes no
+ *   rule: `startMatch` has accepted a stacked pool since issue #38 and nothing in production passed one,
+ *   so a test can put a named card in a hand instead of hoping a seed does. `main.js` carries the reason
+ *   a seed could not.
  */
-export function createMatchFlow({ $root, rng, players = null, delays = {}, skipHandover = false }) {
+export function createMatchFlow({
+  $root,
+  rng,
+  players = null,
+  delays = {},
+  skipHandover = false,
+  stack = null,
+}) {
   const session = { $chrome: renderChrome(), $overlay: renderOverlay() };
 
   let screen = OVERLAY_SCREEN.NONE;
@@ -166,10 +171,16 @@ export function createMatchFlow({ $root, rng, players = null, delays = {}, skipH
     loop.start();
   }
 
-  /** A fresh pool for every match, and a fresh match with it. See the header. */
+  /**
+   * A fresh pool for every match, and a fresh match with it. See the header.
+   *
+   * `undefined` rather than `null` for the skill squares, because that is what makes `startMatch` use
+   * its default. `stack` is `null` in every production boot, and `seedSkillCards` shuffles a real pool
+   * when it is not given one.
+   */
   function freshMatch(playerCount) {
     deps = matchDeps(rng, createDicePool());
-    beginMatch(startMatch(playerCount, deps));
+    beginMatch(startMatch(playerCount, deps, undefined, stack ?? undefined));
   }
 
   /**
@@ -204,70 +215,26 @@ export function createMatchFlow({ $root, rng, players = null, delays = {}, skipH
     openScreen(OVERLAY_SCREEN.MENU);
   }
 
-  function onOverlayAction(action, value) {
-    if (action === OVERLAY_ACTION.START) openScreen(OVERLAY_SCREEN.SETUP);
-    if (action === OVERLAY_ACTION.PLAYERS) freshMatch(Number(value));
-    if (action === OVERLAY_ACTION.RESTART) playAgain();
-    if (action === OVERLAY_ACTION.QUIT) quitToMenu();
-
-    if (action === OVERLAY_ACTION.RESUME) {
-      openScreen(OVERLAY_SCREEN.NONE);
-      loop.resume();
-    }
-
-    // **The turn passes before the curtain comes down, and that order is the whole point of the screen.**
-    // `passTurn` is what re-renders the rail for the arriving seat, so closing the overlay first left one
-    // painted frame of the *leaving* player's five skill cards in front of the person picking the device
-    // up, which is the exact leak D33's secrecy rule and D39's handover exist to prevent. Design spec 04
-    // § 5 states it as its one ordering requirement, and no CSS can cover a frame already on screen.
-    //
-    // The guard is not decoration: `passTurn` advances the turn, and an advance can reach `match-over`,
-    // in which case `onMatchOver` has already put the win screen up and there is no curtain left to take
-    // down. Without it, a win on the first move of a turn would be replaced by an empty screen.
-    if (action === OVERLAY_ACTION.READY) {
-      loop.passTurn();
-
-      if (screen === OVERLAY_SCREEN.HANDOVER) openScreen(OVERLAY_SCREEN.NONE);
-    }
-  }
-
   /**
-   * A click on one of the always-present controls.
-   *
-   * Switching language needs nothing but a redraw, because no view caches a translated string: every one
-   * of them rewrites its own text from `t()` on every update. That is what makes FR-34's criterion, "no
-   * string remains in the previous language", true by construction rather than by a list of things to
-   * remember to refresh. Both the shell and the match have to be redrawn, because they are two renders.
+   * What each button means is in `session-actions.js`, which reached for nothing but these seven
+   * operations, so moving it was a move rather than a rewrite. This module owns the session; that one
+   * decides what a click asks of it.
    */
-  function onChromeAction(action) {
-    if (action === CHROME_ACTION.LANGUAGE) {
-      changeLanguage(nextLanguage()).then(() => {
-        drawShell();
-        loop?.refresh();
-      });
-      return;
-    }
-
-    if (action === CHROME_ACTION.PAUSE && loop !== null && screen === OVERLAY_SCREEN.NONE) {
-      loop.pause();
-      openScreen(OVERLAY_SCREEN.PAUSE);
-    }
-
-    // The pool overview pauses too, and that is not politeness. The loop advances the `roll`, `reaction`
-    // and `turn-end` phases on timers of its own, so a player who opened the overview to decide between
-    // three cards would come back to a turn that had moved without them. Closing it is
-    // `OVERLAY_ACTION.RESUME`, handled above, which is why there is no second resume path.
-    if (action === CHROME_ACTION.POOL && loop !== null && screen === OVERLAY_SCREEN.NONE) {
-      loop.pause();
-      openScreen(OVERLAY_SCREEN.POOL);
-    }
-  }
+  const actions = createSessionActions({
+    openScreen,
+    freshMatch,
+    playAgain,
+    quitToMenu,
+    drawShell,
+    getLoop: () => loop,
+    getScreen: () => screen,
+  });
 
   return {
     /** Boot: either straight into a match, or onto the main menu. */
     start() {
-      bindChromeEvents(session.$chrome, { onChromeAction });
-      bindOverlayEvents(session.$overlay, { onOverlayAction });
+      bindChromeEvents(session.$chrome, { onChromeAction: actions.onChromeAction });
+      bindOverlayEvents(session.$overlay, { onOverlayAction: actions.onOverlayAction });
 
       if (players !== null) {
         freshMatch(players);

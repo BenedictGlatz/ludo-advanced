@@ -3084,6 +3084,33 @@ to get wrong later.
   first hit in a backwards run, with no distance arithmetic and no sort.
 - → Ch. 05
 
+### 2026-09-03: `?stack=` is a fourth test-only address-bar parameter
+
+- **Chosen:** a comma-separated list of skill card ids that becomes the skill pool, read in `main.js`
+  and forwarded to `startMatch`, which has accepted a stacked pool since issue #38.
+- **Why:** the trap flows need two turns to line up, one seat laying a trap and another walking into
+  it, and a trap card is 4 ids out of 29. Asserting the mechanism and skipping on a bad shuffle, which
+  is how `skill-hand.spec.js` copes, cannot cover a two-turn sequence.
+- **Rejected: pinning a seed.** `scripts/find-seeds.js` never plays a card, by its own stated policy,
+  so it cannot find a seed that deals a named one, and its seeds have gone stale three times already.
+- **Rejected: exposing `dispatch` on the game loop** so Playwright could place a trap directly. That
+  tests `state/`, not a player-facing flow, and adds a production API that exists only for tests.
+- **What it changes:** nothing about a rule. It is the same category as `?seed=` and `?fast=1`.
+- → Ch. 06, Ch. 08
+
+### 2026-09-03: `trapChanges` always returns the whole board, even when nothing happened
+
+- **Chosen:** `{ pawns, statuses, traps, trapFired }` every time, with `trapFired: null` when no trap
+  fired, instead of the earlier short-circuit to `{}` on an empty trap list.
+- **Why:** the short-circuit meant `resolveMove` could not spread the answer and repacked three fields
+  by hand, and the fourth, the report of what fired, was dropped. The board was correct and the player
+  was told nothing. An end-to-end spec found it on its first run; no unit test had, because every case
+  asserted the board.
+- **Rejected: keeping the short-circuit and adding `trapFired` to the repack.** One more field to keep
+  in step by hand, in a file already at the 300-line limit, and the same mistake waiting to happen the
+  next time the shape grows.
+- → Ch. 06, Ch. 08
+
 ### 2026-09-02: A trap announcement ships in the refusal colour, which is the wrong one
 
 - **Chosen:** announce a fired trap and an aura-cancelled card in the existing D9 refusal strip, keyed

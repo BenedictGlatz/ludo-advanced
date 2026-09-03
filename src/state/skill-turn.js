@@ -145,12 +145,14 @@ function worldOf(state, deps) {
  * rather than through a second copy of it. FR-30 says a trap fires when a pawn *enters* a tile, and a
  * rule spread over call sites is a rule that is only as complete as the list of them.
  *
- * The signature and the returned shape are unchanged on purpose: `turn-manager.js` was at exactly 300
- * lines, the NFR-02 limit, and this let it stay untouched.
+ * **It always returns the whole board**, `{ pawns, statuses, traps, trapFired }`, even when no trap
+ * exists and nothing changed. It used to short-circuit to `{}` on an empty trap list, which saved a
+ * walk that `enterSquares` already skips for itself, and cost something real: `resolveMove` could not
+ * simply use the answer, so it repacked three fields by hand and silently dropped the fourth. The trap
+ * fired, the board was right, and the player was told nothing. Returning one shape always is what makes
+ * the caller a spread rather than a list of field names to keep in step.
  */
 export function trapChanges(state, move, deps) {
-  if (state.traps.length === 0) return {};
-
   return enterSquares(
     worldOf(state, deps),
     { player: move.player, pawn: move.pawn },

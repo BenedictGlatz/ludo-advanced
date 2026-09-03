@@ -224,11 +224,11 @@ export function resolveMove(state, deps) {
 
   // Three steps in one transition, and the order is the rule: the pawn arrives, then a trap it walked
   // into goes off, and only then is the square it is actually standing on asked whether it hands out a
-  // card. A trap can move the pawn, so asking about the skill square first would ask about a square the
-  // pawn is no longer on.
+  // card. A trap can move the pawn, so asking the skill square first would ask about a square the pawn
+  // is no longer on. `board` is `trapChanges`'s whole answer, never repacked: `skill-turn.js` says why.
   const moved = { ...state, pawns: applyMove(state.pawns, move) };
-  const sprung = { ...moved, ...trapChanges(moved, move, deps) };
-  const board = { pawns: sprung.pawns, statuses: sprung.statuses, traps: sprung.traps };
+  const board = trapChanges(moved, move, deps);
+  const sprung = { ...moved, ...board };
 
   const winner = findWinner(sprung.pawns);
   if (winner !== null) {

@@ -80,7 +80,7 @@ import "./ui/styles/pool.css";
 const FAST_DELAYS = { afterMove: 0, afterRefusal: 0, reaction: 0 };
 
 /**
- * The three settings the address bar may carry.
+ * The four settings the address bar may carry.
  *
  * Every one of them falls back rather than throwing. A malformed URL should start a normal game, not
  * a blank page: this is the entry point, so there is nowhere for an error to be reported to yet.
@@ -89,16 +89,38 @@ const FAST_DELAYS = { afterMove: 0, afterRefusal: 0, reaction: 0 };
  * #41. A named count skips the main menu and starts a match at once, which is what keeps every
  * end-to-end spec written before the menu existed working without a line changed. No count means the
  * game boots onto the menu, which is what a player gets.
+ *
+ * ## `stack` is new in issue #45, and it exists because a seed could not do the job
+ *
+ * A comma-separated list of skill card ids that becomes the top of the skill pool, so a test can be
+ * sure the hand it is about to play from holds the card it is testing.
+ *
+ * The trap flows are what forced it. A trap card is 4 ids out of 29, and the flow needs **two** turns
+ * to line up: one to lay the trap, and another for a foreign pawn to walk over it. The existing answer
+ * in `skill-hand.spec.js`, assert the mechanism and skip when the shuffle produced something else, is
+ * no help when the thing under test is a two-turn sequence.
+ *
+ * **Pinning a seed is worse, and `scripts/find-seeds.js` says why in its own header:** it never plays a
+ * card, "because a card played here would change what the RNG is spent on and every seed with it". So
+ * it cannot find such a seed, and the seeds it does find have already gone stale three times.
+ *
+ * It changes no rule. `startMatch` has taken a stacked pool since issue #38 and its comment already
+ * records that no production caller passes one, so this is a parameter finding its user rather than a
+ * new seam. Same category as `?seed=` and `?fast=1`: read here and nowhere else.
  */
 export function readOptions(search) {
   const params = new URLSearchParams(search);
   const seed = Number.parseInt(params.get("seed") ?? "", 10);
   const players = Number.parseInt(params.get("players") ?? "", 10);
+  const stack = params.get("stack");
 
   return {
     seed: Number.isInteger(seed) ? seed : Math.floor(Math.random() * 2 ** 31),
     players: PLAYER_COUNTS.includes(players) ? players : null,
     fast: params.get("fast") === "1",
+    // An empty or absent value is `null` and not `[]`: an empty array is a legitimate thing to hand
+    // `startMatch`, meaning "a pool with no cards in it", and that is not what a missing parameter says.
+    stack: stack === null || stack === "" ? null : stack.split(",").filter((id) => id !== ""),
   };
 }
 
@@ -119,6 +141,7 @@ export async function boot(root = "#app", search = window.location.search) {
     players: options.players,
     delays: options.fast ? FAST_DELAYS : {},
     skipHandover: options.fast,
+    stack: options.stack,
   });
 
   flow.start();

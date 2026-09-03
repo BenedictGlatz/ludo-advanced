@@ -501,6 +501,39 @@ the picker does **not** re-check the clicked square: only offered squares carry 
 `events.js` binds the click to that selector, and `checkTarget` refuses an illegal square anyway. Two
 guards are enough, and a third in the middle is the one that goes stale.
 
+### Two turn-level fields carry what the board cannot show, and one of them was being dropped: 2026-09-03, issue #45
+
+`trapFired` and `nullifiedCard` joined `clearedTurnFields`. Both exist for the same reason
+`refusalReason` does: the player did something and the game has to tell them what came of it, and
+neither can be derived afterwards. A fired trap has been removed from the list, a Banana Peel does not
+move the pawn, and a cancelled card never ran. In each case the board looks exactly as it would if
+nothing had happened.
+
+**`trapFired` is a report from `core/`, which is new.** `core/enter.js` returns it beside the three
+board lists, and `PATCH_FIELDS` in `core/cards/context.js` lists it beside `negate` and `cancelMove`.
+Those two are instructions the caller acts on and never writes to state; `trapFired` is the opposite,
+a fact the caller writes to state and the view reads. `FIELD_FOR` in `skill-play.js` maps it, so a trap
+a **card** set off is announced through the same field as one a dice move set off.
+
+**The hand-off dropped it once.** `resolveMove` repacked `trapChanges`'s answer into a `board` of three
+named fields and the fourth was left behind: the trap fired, every list was right, and the player was
+told nothing. The end-to-end spec found it on its first run and no unit test had, because every case
+asserted the board. The fix went to the source of the awkwardness rather than to the symptom:
+`trapChanges` used to short-circuit to `{}` on an empty trap list, which is why its caller could not
+spread the answer. It now returns the whole shape always, `resolveMove` spreads it, and the file stays
+at its 300 lines. Chapter 08 has the finding in full.
+
+**`?stack=`** arrived in the same commit and touches `state/` only through `startMatch`'s fourth
+argument, which has existed since issue #38 with no production caller. `match-flow.js` passes it through
+and nothing else changed. The reason it exists is a testing question and is recorded in chapter 08 and
+the journal.
+
+**`match-flow.js` split at the same time**, because passing the parameter through pushed it to 308
+lines. `session-actions.js` took the two action routers, `onOverlayAction` and `onChromeAction`. The
+seam is that neither of them touched a closure variable: they read `getScreen()` and call `openScreen()`,
+so moving them was a move rather than a rewrite. `match-flow.js` owns the session; that file decides
+what a click asks of it.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

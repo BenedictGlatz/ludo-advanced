@@ -113,6 +113,60 @@ describe("a trap on the way", () => {
   });
 });
 
+describe("the report that reaches the view", () => {
+  /**
+   * A regression test for a bug an end-to-end spec found and every unit test missed.
+   *
+   * `trapChanges` returns four fields and `resolveMove` used to repack three of them by hand, so the
+   * report of what went off was dropped. Everything about the board was correct: the trap was consumed,
+   * the pawn was stunned, the pawn list was right. **The player was simply told nothing**, and no test
+   * looked at the field, because every existing case asserted the board.
+   *
+   * That is why this asserts the field on the state `resolveMove` returns rather than on
+   * `trapChanges`'s answer: the bug was entirely in the hand-off between the two.
+   */
+  it("carries the fired trap out of resolveMove", () => {
+    const state = declared({
+      from: 11,
+      to: 15,
+      pawns: pawnsAt(2, { "0.0": 11 }),
+      traps: [trap(TRAP_KIND.BANANA_PEEL, 12, 2)],
+    });
+    const resolved = resolveMove(state, deps());
+
+    expect(resolved.trapFired).toEqual({
+      kind: TRAP_KIND.BANANA_PEEL,
+      square: 12,
+      owner: 2,
+      player: 0,
+      pawn: 0,
+      squares: 0,
+    });
+  });
+
+  /** Nothing fired means the field stays null rather than becoming undefined or being left out. */
+  it("leaves the report null when no trap was on the walk", () => {
+    const state = declared({ from: 11, to: 15, pawns: pawnsAt(2, { "0.0": 11 }) });
+
+    expect(resolveMove(state, deps()).trapFired).toBeNull();
+  });
+
+  /**
+   * A trap can fire on the move that wins the match, and that branch returns early with its own object.
+   * Leaving the report out of it would lose the message on the one turn nobody gets to replay.
+   */
+  it("carries the report on a winning move too", () => {
+    const almost = pawnsAt(2, { "0.0": 44, "0.1": 43, "0.2": 42, "0.3": 11 });
+    const state = nextState(
+      declared({ from: 11, to: 15, pawns: almost, traps: [trap(TRAP_KIND.BANANA_PEEL, 12)] }),
+      { pendingMove: { player: 0, pawn: 3, kind: "advance", from: 11, to: 15, captures: null } }
+    );
+    const resolved = resolveMove(state, deps());
+
+    expect(resolved.trapFired?.kind).toBe(TRAP_KIND.BANANA_PEEL);
+  });
+});
+
 describe("the order of trap and skill square", () => {
   /**
    * The case the ordering exists for. The pawn walks onto a skill square, and a trap on the way pushes
