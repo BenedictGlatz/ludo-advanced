@@ -14,6 +14,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { cardIds } from "../../../src/core/cards/catalogue.js";
 import { CATEGORY, KIND } from "../../../src/core/cards/vocabulary.js";
 import { REFUSAL } from "../../../src/core/movement.js";
+import { ROLL_STEP } from "../../../src/core/roll.js";
 import { REJECTED } from "../../../src/state/intents.js";
 import {
   DEFAULT_LOCALE,
@@ -110,6 +111,22 @@ describe("every key the code can emit has text in both languages", () => {
     for (const key of Object.values(REFUSAL)) {
       expect(german.has(key), `de is missing ${key}`).toBe(true);
       expect(english.has(key), `en is missing ${key}`).toBe(true);
+    }
+  });
+
+  /**
+   * **This case exists because the key-set comparison above could not see the gap it closes.**
+   * `roll.step.missed` was absent from **both** files for two sprints, so the two key sets were
+   * identical and agreed with each other about a step that had no sentence anywhere. Nothing failed,
+   * because a missing key makes i18next print the key itself and the breakdown was not on screen yet.
+   *
+   * Comparing the locales against `ROLL_STEP` instead of against each other is what makes the next one
+   * a red test. Same shape and same argument as the refusal case above it.
+   */
+  it("covers every one of the nine roll steps (NFR-08, D73)", () => {
+    for (const step of Object.values(ROLL_STEP)) {
+      expect(german.has(`roll.step.${step}`), `de is missing roll.step.${step}`).toBe(true);
+      expect(english.has(`roll.step.${step}`), `en is missing roll.step.${step}`).toBe(true);
     }
   });
 

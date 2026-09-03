@@ -24,7 +24,9 @@
  * Two things still happen without the player, and both for a stated reason:
  *
  * - **`roll` rolls itself.** There is nothing to decide there. The phase exists so that the on-roll
- *   reaction window has a moment to open in, and so a roll animation has something to hang off.
+ *   reaction window has a moment to open in, and so a roll animation has something to hang off. **The
+ *   second half of that sentence became true on 2026-09-03**, with design spec 11's D70. It had been
+ *   describing something that did not exist since `182e5fa`.
  * - **The turn hands over on its own** only when nobody is watching for it. Since issue #39 the pause
  *   after a move ends in the handover overlay rather than in the next turn: `onHandover` is called and a
  *   person presses Ready. The timer is still there and still uses the design's durations, because a move
@@ -36,20 +38,19 @@
  * when the active player holds no playable card.** Waiting there would stall the game, which is not a
  * design choice but the difference between a working game and a hung one.
  *
- * ## The pauses and the countdown are the design's numbers, not this file's
+ * ## The waiting is not in this file any more
  *
- * The pause after a move is read out of `--motion-capture` in `tokens.css`, so the turn changes when the
- * pawn has actually arrived. The pause after a refused turn is D9's four seconds, and since design spec
- * 04 answered D20 that is `--motion-refusal-hold` and is read the same way. The reaction window is the
- * Product Owner's thirty. All three are overridable, which is what lets a Playwright run take seconds
- * instead of minutes; the shape of the turn is identical either way and only the waiting is shorter.
+ * It used to be, and the durations with it. Since design spec 11's D70 the roll has a hold of its own,
+ * which was the third wait and the one that would have pushed this file past 300 lines, so both of the
+ * waits the loop takes by itself moved to `turn-waits.js`. The reaction window's thirty seconds were
+ * already `card-controls.js`'s, and the branch that reads an open window went there in the same change.
+ * What is left here is the decision to wait, never how long, and never what the waiting looks like.
  */
 
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { INTENT, dispatch } from "../state/intents.js";
 import { playableCards } from "../state/intents-cards.js";
 import { nextSeat } from "../state/turn-manager.js";
-import { motionMs } from "./board-view.js";
 import { createCardControls } from "./card-controls.js";
 import {
   bindBoardEvents,
@@ -59,8 +60,9 @@ import {
   bindSkillHandEvents,
 } from "./events.js";
 import { createRenderer } from "./render.js";
-import { createTimers, holdAfterTurn } from "./timers.js";
+import { createTimers } from "./timers.js";
 import { createTurnControls } from "./turn-controls.js";
+import { createTurnWaits } from "./turn-waits.js";
 
 /**
  * Drive a match. `deps` is the injected `{ rng, diceSource }` pair (NFR-09).
@@ -126,36 +128,14 @@ export function createGameLoop({
     isPicking: () => cards.isPicking(),
   });
 
-  /**
-   * How long to leave the finished turn on screen before passing it on.
-   *
-   * The decision moved into `timers.js` in issue #45, where the game's other named waits already were.
-   * What is left here is reading the tokens off the board, because that needs the element.
-   */
-  function pauseAfterTurn() {
-    return holdAfterTurn(state, delays, (token, fallback) => motionMs($board, token, fallback));
-  }
-
-  /**
-   * A reaction window, handled before the phase, because one can be open in three different phases and
-   * the phase does not change while it is.
-   *
-   * Two ways out, and the loop only takes the first: **`eligible` is empty**, so there is nobody left to
-   * wait for and the window shuts at once (FR-25). The other way is the clock, and `card-controls.js`
-   * owns it. Returning `true` here means "stop, a person is being asked something".
-   */
-  function handleWindow() {
-    if (state.reactionWindow.eligible.length > 0) {
-      cards.syncClock();
-      render();
-      return true;
-    }
-
-    if (!apply({ type: INTENT.CLOSE_WINDOW })) return true;
-    cards.syncClock();
-
-    return false;
-  }
+  const waits = createTurnWaits({
+    parts,
+    timers,
+    delays,
+    getState: () => state,
+    refresh: render,
+    resume: () => advance(),
+  });
 
   /**
    * Hand the turn on and carry straight into the next one.
@@ -180,6 +160,7 @@ export function createGameLoop({
     if (state.status !== MATCH_STATUS.RUNNING) {
       timers.clearAll();
       cards.stop();
+      waits.stop();
 
       // Guarded, because `advance()` is re-entered after every accepted intent and the match-over
       // screen must open once rather than on every pass.
@@ -190,8 +171,17 @@ export function createGameLoop({
       return;
     }
 
+    // **The roll's moment, asked before the phase and not inside the `roll` branch**, because a roll
+    // arrives through two doors: `roll-die` rolls when no card answers it, and `close-window` rolls
+    // when one did. Only the first of those comes back through the branch below. `turn-waits.js`
+    // carries the argument and what it cost to learn.
+    if (waits.needsRollMoment(state)) {
+      waits.showRoll();
+      return;
+    }
+
     if (state.reactionWindow !== null) {
-      if (handleWindow()) return;
+      if (cards.handleWindow()) return;
       advance();
       return;
     }
@@ -219,12 +209,7 @@ export function createGameLoop({
     }
 
     if (state.phase === TURN_PHASE.TURN_END) {
-      // The wait comes first either way. A move has to finish animating and a refusal has to be on
-      // screen long enough to read (D9) **before** the overlay covers the board, so the handover
-      // screen opens on the same timer that used to pass the turn.
-      const next = onHandover === null ? passTurn : () => onHandover(nextSeat(state));
-
-      timers.set("handover", next, pauseAfterTurn());
+      waits.afterTurn(onHandover === null ? passTurn : () => onHandover(nextSeat(state)));
     }
 
     // `choose`, `action` with a card in hand, and `act` are the phases that wait for a person.
@@ -249,10 +234,17 @@ export function createGameLoop({
      */
     refresh: render,
 
-    /** Stop every pending timer. Nothing else in here waits. */
+    /**
+     * Stop every pending timer, and take the throw off the dice hand if one was running.
+     *
+     * The attribute matters as much as the timers: a match torn down mid-roll would otherwise leave a
+     * card frozen part way through its throw, and the next match's first render would find `data-rolling`
+     * already set. `waits.stop()` is what handles that half.
+     */
     stop() {
       timers.clearAll();
       cards.stop();
+      waits.stop();
     },
 
     /**
@@ -272,6 +264,7 @@ export function createGameLoop({
     pause() {
       timers.clearAll();
       cards.stop();
+      waits.stop();
     },
 
     /**

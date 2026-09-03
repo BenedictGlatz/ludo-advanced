@@ -33,10 +33,15 @@
  * was one command, which is the whole reason `scripts/find-seeds.js` was written down. The first two
  * seeds below survived all three changes by coincidence and the other three did not.
  *
- * `?fast=1` collapses **three** waits in the turn loop to zero: the pause after a move, the pause after
- * a refusal, and since issue #38 the thirty-second reaction window. It changes the waiting and nothing
- * else: the same intents run in the same order, and a window still opens. A run with `?fast=1` simply
- * behaves as though every eligible player declined at once, which is a situation the rules already have.
+ * `?fast=1` collapses **five** waits in the turn loop to zero: the pause after a move, the pause after a
+ * refusal, the thirty-second reaction window since issue #38, the two-second hold on a trap a card fired
+ * since issue #45, and the roll's own 900 ms since design spec 11's D70. It changes the waiting and
+ * nothing else: the same intents run in the same order, and a window still opens. A run with `?fast=1`
+ * simply behaves as though every eligible player declined at once, which is a situation the rules
+ * already have.
+ *
+ * The count above said three while there were already four, so `src/main.js`'s `FAST_DELAYS` is the list
+ * that cannot go stale. `roll-animation.spec.js` asks for `fast: false`, because the hold is its subject.
  */
 
 import { expect } from "@playwright/test";

@@ -84,3 +84,61 @@
 .message-strip[data-message-kind="trap"]::before {
   background: var(--color-ink);
 }
+
+/* --- The roll breakdown (D73). A third value on the same seam, and the first
+       message in the game that is a list rather than a sentence.
+       `state.rollSteps` has recorded the chain since the trap epic and no
+       file under src/ui/ read it, which is NFR-08's explanation half.
+
+       It takes the trap's voice and not the refusal's, for the same reason: a
+       roll that three cards had a hand in is the game reporting what
+       happened, and nobody did anything wrong. What it adds is the list.
+
+       The strip waits for the number. Its delay is derived from the roll's
+       own tokens, so it collapses with them under prefers-reduced-motion and
+       costs no third token, and the sentence can never spoil the badge.
+
+       The view writes it only when the chain has two or more steps. One step
+       is an ordinary roll, and "D8: 5" beside a badge reading 5 is noise. The
+       strip speaking is therefore itself the signal that cards changed the
+       roll. How long it stays is not a token: it is replaced by the next
+       message and cleared when the phase leaves act, because the player is
+       reading it while they decide which pawn to move (D73.4). --- */
+
+.message-strip[data-message-kind="roll"] {
+  background: var(--color-panel);
+  transition-delay: calc(var(--motion-roll) + var(--motion-feedback));
+}
+
+.message-strip[data-message-kind="roll"]::before {
+  background: var(--color-ink);
+}
+
+.message-strip__steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.message-strip__step {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+/* The separator between two steps is a shape and not a character: the chain
+   reads in order with no string in a content property (NFR-03) and no glyph
+   that would have to be right in both languages. */
+.message-strip__step + .message-strip__step::before {
+  content: "";
+  flex: none;
+  align-self: center;
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-ink) 45%, transparent);
+}

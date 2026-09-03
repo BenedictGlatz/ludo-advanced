@@ -15,7 +15,6 @@
   "turn": {
     "prompt": "{{player}} to move",
     "chooseDie": "Choose a dice card",
-    "rolled": "Rolled: {{roll}}",
     "selectPawn": "Choose a pawn",
     "end": "End turn"
   },
@@ -159,6 +158,7 @@
       "add-die": "Plus a D{{faces}}: {{value}}",
       "sub-die": "Minus a D{{faces}}: {{value}}",
       "multiplier": "Times {{factor}}: {{value}}",
+      "missed": "Needed at least {{needed}}, rolled {{rolled}}: 0",
       "floor": "Never below 0"
     }
   }
