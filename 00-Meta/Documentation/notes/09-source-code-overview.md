@@ -124,11 +124,62 @@ of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
 
+### Measured 2026-09-03, after design handoff 07 landed
+
+Every command in the section above was re-run on the feature branch after the last handoff 07 commit,
+before the merge. **This is the current measurement**; the ones below it are kept so the growth is
+readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **10902 lines in 71 files** | 2026-09-03, after handoff 07 |
+| Stylesheet lines in `src/` | 7 | **2969 lines in 17 files** | 2026-09-03, after handoff 07 |
+| Test lines in `tests/` | 2 | **12198 lines in 71 files** | 2026-09-03, after handoff 07 |
+| Lines in `src/core/` | 3 | 4411 lines in 31 files, unchanged | 2026-09-03, after handoff 07 |
+| Lines in `src/state/` | 3 | 2016 lines in 11 files, unchanged | 2026-09-03, after handoff 07 |
+| Lines in `src/ui/` | 3 | **4158 lines in 27 files**, plus 2969 lines of CSS | 2026-09-03, after handoff 07 |
+| Unit tests | 4 | **50 test files, 689 tests, all passing** | 2026-09-03, after handoff 07 |
+| End-to-end tests | 8 | **93 tests in 18 files per browser, 279 across the three** | 2026-09-03, after handoff 07 |
+| Expected failures in the e2e suite | 8 | none | 2026-09-03, after handoff 07 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.17 % (839/846), unchanged | 2026-09-03, after handoff 07 |
+| Coverage of `src/core/`, lines | 5c | 99.47 % (565/568) over 31 files, unchanged | 2026-09-03, after handoff 07 |
+| Coverage of `src/state/`, lines | 5c | 98.56 % (274/278) over 11 files, unchanged | 2026-09-03, after handoff 07 |
+| Coverage, branches | 5a | 96.07 %, unchanged | 2026-09-03, after handoff 07 |
+| Coverage, functions | 5a | 100 %, unchanged | 2026-09-03, after handoff 07 |
+| Longest file of any kind | 6 | 300 lines, `src/state/turn-manager.js`, unchanged | 2026-09-03, after handoff 07 |
+| Longest stylesheet | 7 | **283 lines, `src/ui/styles/pawn.css`** | 2026-09-03, after handoff 07 |
+
+**Six readings.**
+
+1. **The rules layers did not move at all**, which is the number that says what kind of change this was.
+   `src/core/` and `src/state/` are identical to the measurement below, and every coverage figure with
+   them. A design handoff should be a stylesheet and not a rule, and this one measurably was.
+2. **The stylesheets grew by 302 lines and by one file**, from 2667 in 16 to 2969 in 17, which is the
+   largest single CSS change since handoff 04. `board-trap.css` is the new file, and `board.css`,
+   `pawn.css`, `refusal.css` and `tokens.css` were amended. Twelve lines came **out**, four from each of
+   `hud.css`, `chrome.css` and `overlay.css`, when the `--seat-shape` mapping was consolidated.
+3. **`prompt.css` is no longer the longest stylesheet and that is worth noticing rather than filing.**
+   `pawn.css` at 283 took the title, 17 from the limit, and design spec 07 § 7 names its next seam: the
+   status block at the foot, which is already a contiguous run. `board.css` is second at 268. Two
+   stylesheets within 32 lines of NFR-02 is the tightest the CSS has ever been.
+4. **`src/ui/` grew by 123 JavaScript lines and no new file.** All of it is comment: the `.pawn__status`
+   span is one line in `board-view.js`, and D60's hold is `holdMidTurn` plus `announcement` in
+   `timers.js` and one `carryOn` in `card-controls.js`. `game-loop.js` is now the third-longest file in
+   the project at 293 and was not touched by this handoff.
+5. **The e2e suite grew by 7 cases per browser and by two files**, 86 to 93 and 16 to 18.
+   `trap-marks.spec.js` holds the five computed-style cases and `field-keyboard.spec.js` the NFR-08 ones,
+   which came out of `traps.spec.js` when it hit 301 lines. **The first pixel assertions in the project's
+   history**: until this handoff nothing outside `greyscale.spec.js` read a computed value.
+6. **One deliberate negative assertion was retired and another was created.** The one saying the trap
+   span had no rendered box went red on the first run after the copy, alone among 86 cases, and was
+   rewritten into its opposite as its own comment asked. The new one says a focused field is drawn
+   identically to an offered one, which is D61's conflict, and is meant to go red when that is answered.
+   Chapter 08 carries both.
+
 ### Measured 2026-09-03, after issue #45
 
-Every command in the section above was re-run on the feature branch after the last #45 commit, before
-the merge. **This is the current measurement**; the ones below it are kept so the growth is readable
-rather than asserted.
+**Superseded by the block above on the same day**, once handoff 07 landed. Kept because it is the
+measurement of the rules work, and the block above is the measurement of the stylesheet that draws it.
 
 | Metric | Command | Value | Taken on |
 | --- | --- | --- | --- |
