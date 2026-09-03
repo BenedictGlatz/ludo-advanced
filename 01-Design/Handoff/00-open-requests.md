@@ -2,7 +2,71 @@
 
 **From:** Claude Code
 **To:** Claude Design
-**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, and five times on 2026-09-03**
+**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, and six times on 2026-09-03**
+
+---
+
+## Status on 2026-09-03, later: handoff 11 landed, and the stale-file problem happened a second time
+
+**[11-spec-roll-animation.md](11-spec-roll-animation.md) is in and closed.** D70 to D74, all five
+answered, all five on screen, and every answer carries a reason and a named rejected alternative,
+fifteen across the five. The roll now has a moment of its own of 900 ms, the kept dice card performs the
+throw, and a roll that cards changed lists its steps in the message strip. **NFR-08's explanation half
+is closed**, which is the second of the three "a rule runs and nothing renders it" findings to be cleared
+after handoff 07's traps.
+
+**What is still owed, after this close.** Three briefs, and the order has not changed: 09 first because
+it confirms three things that are already implemented, then 08, then 12.
+
+| Brief | Owes | State |
+| --- | --- | --- |
+| [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64 | **Open.** Sent 2026-09-03. `tokens.css` now sits at 294 lines after this delivery, and 11-spec § 7 names the seam for the split it will need: everything from `--motion-feedback` to `--ease-curtain` plus the four hold tokens and the whole `prefers-reduced-motion` block moves to `motion.css`, about 60 lines. Worth folding into this answer, since it touches the same file |
+| [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, D61 | **Open.** Sent 2026-09-03 |
+| [12-brief-main-menu.md](12-brief-main-menu.md) | `12-spec-main-menu.md` plus **three mockups** | **Delivered but not reviewed.** The package arrived with handoff 11's. The Product Owner has to choose one of the three before it can be landed, so it is not closed and nothing from it is in `src/` |
+
+**The best answer in the package is D72, and it is the one the brief got wrong.** The brief offered three
+routes and every one of them required `card-state.css`'s `:empty { display: none }` to change. The spec
+found a fourth: write the number into the badge at the **start** of the throw and let the keyframe's
+`backwards` fill hold it invisible until the card lands. An element that is already in the layout has a
+start state to animate from. So `card-state.css`, `card.css` and `hand.css` were not delivered and needed
+no change, and it cost this side zero lines of code, because the badge is filled from `state.roll` by the
+same render that sets the attribute. Both follow from one fact, so they cannot get out of step. **The
+brief's premise was right and its three options were all more expensive than the question deserved**,
+which is worth recording: asking rather than telling is what made the cheaper answer possible.
+
+### One thing is asked back, and it is the same thing as last time
+
+**`tokens.css` was read against a tree older than the commit the package names.** The delivered copy has
+no `--stage-w` and no `--stage-h` and a `--board-size` of `44vw`, so it predates `e486bb4`. Copying it in
+would have reverted D62's fitted 16:9 stage, which is exactly what handoff 10 nearly did to four files.
+Only the two additive hunks were taken and `git diff` was checked for removals.
+
+The close of handoff 10 asked for one word: **name the commit, not the date.** That was done, correctly,
+and it did not help, because naming a commit and re-reading the file at delivery time are two different
+acts. So the ask is sharpened rather than repeated: **deliver an amended file as a diff and not as a
+whole file.** A diff cannot silently carry a reversion, it is a third of the size, and it makes the
+merge that this side has now done twice unnecessary. `refusal.css` in the same package was purely
+additive and merged without a thought, which is the shape to aim for.
+
+### Two names changed on this side, and one is still yours
+
+**`.move-refusal` is now `.message-strip`, and `refusal.css` is `message-strip.css`.** The spec noticed
+it itself under "Noticed and not done": the strip carried two kinds of message that are not refusals and
+this delivery made it three. It landed as a commit of its own, ahead of the feature, so nothing about the
+rename is mixed into the roll. `__steps` and `__step` from D73 use the new prefix. **Future specs should
+name `.message-strip`.**
+
+**`--layer-refusal` still carries the old name** and lives in `tokens.css`, which is yours, so it is
+asked here rather than changed from here. `--motion-refusal-hold` is deliberately left alone: it really
+is the hold a refusal gets.
+
+### One finding for the record, and it needs no answer
+
+The spec's example HTML shows running totals, "Plus a D8: 22". The existing locale sentences interpolate
+the step's **own** value, so it renders "Plus a D8: 5", because `roll.js` stores what each step
+contributed rather than the total after it. The exceptions are `multiplier` and `missed`, where the step
+is the whole result. The sentences are consistent with the data and nothing was changed. It is written
+down because a reader could take the illustration for the contract.
 
 ---
 
@@ -410,7 +474,7 @@ loop needs an index or something gets quietly dropped, and something already had
 | 08 The pickable field | [08-brief](08-brief-pickable-field.md) | *none yet* | **Open.** Sent 2026-09-03. D61, one question with four parts. **Blocks NFR-08's second half**: a field can be tabbed to and gives no sign of it |
 | 09 The stage, the seat plate and the fan | [09-brief](09-brief-layout-and-fan.md) | *none yet* | **Open.** Sent 2026-09-03. D62 to D64, **all three already implemented and sent back for confirmation**, because FR-31 was broken on the machine the round was played on and the fix could not wait |
 | 10 Reading a card you are holding | [10-brief](10-brief-card-reveal-on-hover.md) | [10-spec](10-spec-card-reveal-on-hover.md) | **Closed.** Landed 2026-09-03. D65 to D69, all five answered and all five on screen. The five stylesheets were **merged rather than copied in**, because they had been read against a tree four hours old; one delivered rule in `card-reveal.css` was amended for the same reason. See the status block at the top of this file |
-| 11 The roll | [11-brief](11-brief-roll-animation.md) | *none yet* | **Open.** Sent 2026-09-03. D70 to D74. There is no roll animation, the roll has no moment of its own in the loop, and `state.rollSteps` explains a roll that cards changed and is read by nothing. **Blocks NFR-08's explanation half.** D70 is the one that unblocks the code |
+| 11 The roll | [11-brief](11-brief-roll-animation.md) | [11-spec](11-spec-roll-animation.md) | **Closed.** Landed 2026-09-03. D70 to D74, all five answered and all five on screen. **NFR-08's explanation half is closed with D73.** The package was one new stylesheet and two amendments; `tokens.css` was **merged rather than copied in**, because the delivered copy predated `e486bb4` and would have reverted D62's stage. Second delivery in a row with that problem: see the status block at the top |
 | 12 The main menu | [12-brief](12-brief-main-menu.md) | *none yet* | **Open.** Sent 2026-09-03. D75 to D80, and **the first brief in the loop that asks for three drawings and a choice between them.** Three menu items, one usable, and nothing in the project styles a control you cannot use |
 
 **The 02 row is the one worth reading twice.** A brief with no spec is not a brief that was declined, it is
@@ -543,11 +607,11 @@ deliver the 06 spec.** It is fifteen lines and it closes a requirement.
 | ~~**D68**~~ | Which token times the reveal, and what survives `prefers-reduced-motion`. D8 and D12 own motion; D20 and D60 are the precedent that a new duration gets a number | 10 | **Closed. Two tokens.** `--motion-reveal: 160ms`, between the 90 ms feedback budget and the 240 ms move budget, collapsing to 1 ms under reduced motion because reading a card is feedback. `--motion-reveal-delay: 120ms`, declared per property so the lift is never delayed, and deliberately **not** in the reduced-motion block: it guards against a latch rather than being a movement, the same argument as `--motion-refusal-hold` |
 | ~~**D69**~~ | Whether the reveal replaces the sideways fan out in `hand.css` or joins it | 10 | **Closed. Replaces it, deleted rather than joined.** A revealed card is painted at `--layer-card-raised`, above both its neighbours, so nothing covers the thing being read and there is nothing left for the neighbours to step aside for. It removes a number that had to be right at five different counts, and the second thing that moved when a pointer crossed the fan |
 
-| **D70** | Whether the roll gets a moment of its own, and what measures it. Three parts: is it a movement like `--motion-move` or a hold like `--motion-trap-hold` that the loop actually waits for, how long, and what happens to it under `prefers-reduced-motion` | 11 | Indirectly, and it is the one that unblocks the code. A movement is a stylesheet; a hold is a stylesheet plus a wait in `game-loop.js`, which has 7 lines left. **If only one thing can be delivered out of brief 11, deliver this** |
-| **D71** | What the roll looks like, and by which mechanism. Three routes with their real costs and none is chosen: the number arrives in the 30 px badge, the card performs the roll, or a die becomes its own object | 11 | No, but it is what the request was actually about. FR-33 asks that rolling "produces visible feedback" and today the feedback is a value appearing |
-| **D72** | What replaces `:empty { display: none }` on the roll badge, since an element with `display: none` has no start state to animate from. Three routes, and every one of them is also a small change to our code | 11 | No |
-| **D73** | How a roll that cards changed reads on screen. Four parts: where the breakdown lives, whether the steps arrive one at a time, what happens on an ordinary one-step roll, and whether it stays | 11 | **Yes. NFR-08's explanation half.** `state.rollSteps` holds nine kinds of step, the sentences are written in both languages, and no file under `src/ui/` reads either |
-| **D74** | What survives reduced motion, and what survives the test suite. D12 owns the first; the second is a promise from our side that a hold gets a fifth key in `FAST_DELAYS`, and needs only your confirmation | 11 | No, but NFR-11's 90 ms first-response budget is in it |
+| ~~**D70**~~ | Whether the roll gets a moment of its own, and what measures it. Three parts: is it a movement like `--motion-move` or a hold like `--motion-trap-hold` that the loop actually waits for, how long, and what happens to it under `prefers-reduced-motion` | 11 | **Closed. A hold, and the loop waits for it.** Two tokens: `--motion-roll: 520ms` is the throw and `--motion-roll-hold: 900ms` is what the loop waits. The argument for a hold over a movement is that a stylesheet cannot make a moment out of a frame that has already been painted, so a keyframe would have animated the number while two other cards flew past it. `--motion-roll-hold` stays out of the reduced-motion block, on D20's and D60's argument, and is the third token to do so: a hold is time, not movement |
+| ~~**D71**~~ | What the roll looks like, and by which mechanism. Three routes with their real costs and none is chosen: the number arrives in the 30 px badge, the card performs the roll, or a die becomes its own object | 11 | **Closed. Route 2, the kept dice card is the die and performs the throw**, with route 1's badge arrival kept as its last beat. Route 3 was rejected on meaning rather than on cost: a D8 card already depicts an octahedron, so a second one beside it draws the same object twice in two visual languages. Written on `rotate` and `translate` and never on `transform`, so it composes with the lift that `card-state.css` and `hand.css` write instead of replacing it. No new element and no new view code |
+| ~~**D72**~~ | What replaces `:empty { display: none }` on the roll badge, since an element with `display: none` has no start state to animate from. Three routes, and every one of them is also a small change to our code | 11 | **Closed. Nothing replaces it, and this is the best answer in the delivery.** A fourth route the brief had not offered: write the number into the badge at the **start** of the throw rather than at the end, and let the keyframe's `backwards` fill hold it invisible until the card comes to rest. An element already in the layout has a start state, so `card-state.css`, `card.css` and `hand.css` were not delivered and needed no change. It cost this side zero lines: the badge is filled from `state.roll` by the same render that sets the attribute, because both follow from one fact |
+| ~~**D73**~~ | How a roll that cards changed reads on screen. Four parts: where the breakdown lives, whether the steps arrive one at a time, what happens on an ordinary one-step roll, and whether it stays | 11 | **Closed, and NFR-08's explanation half is closed with it.** A list in the message strip, as a third value of `data-message-kind`, all steps in one paint, and **only from two steps up**: one step is `base`, which is almost every roll, so the strip speaking is itself the signal that cards changed the roll. It takes the trap's voice and not the refusal's, which is D55's seam used a second time. It holds no timer and costs no milliseconds, which is why D70's hold could stay as short as it is |
+| ~~**D74**~~ | What survives reduced motion, and what survives the test suite. D12 owns the first; the second is a promise from our side that a hold gets a fifth key in `FAST_DELAYS`, and needs only your confirmation | 11 | **Closed. Confirmed, `roll: 0`.** Skipping the hold entirely in a test run is acceptable because nothing in the game state depends on it: it changes no value and no rule branches on it. One spec, `roll-animation.spec.js`, pays for the timing at real speed instead of all 333 paying for it. NFR-11's 90 ms is answered by the click and not by the roll, which is D68's structure repeated: the slow thing is never the first thing |
 
 | **D75** | Whether the menu is still the overlay panel or becomes its own layout, and whether it gets its own stylesheet. Against D38, whose seam has held for five screens and meets its first content that is not the game stopping to ask a question | 12 | No |
 | **D76** | What the three menu items are as objects: a stack of buttons, tiles, rows, or the game's own card language. Plus whether Hotseat is drawn larger than the two that do not work, and what the tab order is | 12 | No |

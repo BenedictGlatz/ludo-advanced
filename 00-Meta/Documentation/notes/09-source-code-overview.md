@@ -124,11 +124,73 @@ of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
 
-### Measured 2026-09-03, after design handoff 10 landed
+### Measured 2026-09-03, after design handoff 11 landed
 
 Every command in the section above was re-run after the handoff landed and before the closing commit.
 **This is the current measurement**; the ones below it are kept so the growth is readable rather than
 asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **11389 lines in 73 files** | 2026-09-03, after handoff 11 |
+| Stylesheet lines in `src/` | 7 | **3443 lines in 19 files** | 2026-09-03, after handoff 11 |
+| Test lines in `tests/` | 2 | **13108 lines in 75 files** | 2026-09-03, after handoff 11 |
+| Lines in `src/core/` | 3 | 4411 lines in 31 files, unchanged | 2026-09-03, after handoff 11 |
+| Lines in `src/state/` | 3 | 2016 lines in 11 files, unchanged | 2026-09-03, after handoff 11 |
+| Lines in `src/ui/` | 3 | **4625 lines in 29 files**, plus 3443 lines of CSS | 2026-09-03, after handoff 11 |
+| Unit tests | 4 | **52 test files, 704 tests**, all passing | 2026-09-03, after handoff 11 |
+| End-to-end tests | 8 | **111 tests in 20 files per browser, 333 across the three** | 2026-09-03, after handoff 11 |
+| Expected failures in the e2e suite | 8 | none | 2026-09-03, after handoff 11 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.17 % (839/846), unchanged | 2026-09-03, after handoff 11 |
+| Coverage of `src/core/`, lines | 5c | 99.47 % (565/568) over 31 files, unchanged | 2026-09-03, after handoff 11 |
+| Coverage of `src/state/`, lines | 5c | 98.56 % (274/278) over 11 files, unchanged | 2026-09-03, after handoff 11 |
+| Coverage, branches | 5a | 96.07 %, unchanged | 2026-09-03, after handoff 11 |
+| Coverage, functions | 5a | 100 %, unchanged | 2026-09-03, after handoff 11 |
+| Longest file of any kind | 6 | **300 lines, and there are now two of them**: `tests/e2e/helpers.js` and `src/state/turn-manager.js` | 2026-09-03, after handoff 11 |
+| Longest stylesheet | 7 | **294 lines, `src/ui/styles/tokens.css`** | 2026-09-03, after handoff 11 |
+
+**Six readings, and two of them are warnings.**
+
+1. **The rules layers did not move by a line and no coverage figure changed**, for the fourth
+   measurement in a row. `src/core/` and `src/state/` are byte-identical and all five coverage
+   percentages are the same. **Four consecutive deliveries have changed what the player sees without
+   touching a rule**, and this one is the strongest case yet: handoff 11 put a roll animation on screen
+   and closed half of a `must have` requirement, and the rules layer did not notice. That is the
+   layering argument in `CLAUDE.md` producing evidence rather than being asserted, and it is worth the
+   report's own paragraph.
+2. **Two files are now at exactly 300 lines and two more are at 299**, where there was one file at the
+   ceiling. `tests/e2e/helpers.js` joined `src/state/turn-manager.js` at 300, and
+   `tests/unit/state/intents-cards.test.js` and the new `tests/e2e/roll-animation.spec.js` sit one line
+   below. Nothing is over, so nothing is failing, but a file at the limit is a file where the next
+   comment is a lint error, and `helpers.js` is the one every end-to-end spec imports. **Four files
+   within one line of the limit is the reading to act on before the next handoff**, not after it. It is
+   also a fact about this project's comment density rather than about its logic: all four are mostly
+   prose, which is a deliberate trade and a cost worth naming in the report.
+3. **`tokens.css` is the longest stylesheet for the first time**, at 294, taking the title from
+   `pawn.css`. It was 265 two deliveries ago and 281 one delivery ago, so it has grown twice in a row
+   because both deliveries added motion tokens. It is 6 lines from the limit. 11-spec § 7 names the
+   seam rather than leaving it to be found: the motion tokens plus the four hold tokens plus the whole
+   `prefers-reduced-motion` block move to `motion.css`. **This is the one number in the table that
+   predicts a specific piece of work.**
+4. **`src/ui/` grew by 422 lines and two files**, to `turn-waits.js` and `roll-steps.js`. Both came out
+   of `game-loop.js` needing to stay under 300: it went in at 293 and came out at 286, so the layer got
+   bigger while its largest file got smaller. The stylesheets grew by 175 lines across one new file,
+   `roll.css` at 96, and one amendment to `message-strip.css`.
+5. **The test suites grew faster than the source**, 538 lines of tests against 437 of source, which is
+   the ratio this project has held throughout. Fifteen new unit tests in two new files, ten new
+   end-to-end tests in one new file, and one new case in `locales.test.js`.
+6. **The end-to-end suite crossed 100 tests per browser.** 111 in 20 files, 333 across the three
+   browsers, up from 101 and 19. The full run's wall clock is set by three full-match specs rather than
+   by the count, which Ch. 08 records: they take minutes each and they are the only tests that play a
+   match as a sequence rather than setting up a situation. One of them is what found the only real bug
+   in landing this handoff.
+
+---
+
+### Measured 2026-09-03, after design handoff 10 landed
+
+**Superseded by the block above on the same day**, after design handoff 11 landed. Kept because it is
+the measurement of handoff 10, and it is the one the growth in reading 3 above is measured against.
 
 | Metric | Command | Value | Taken on |
 | --- | --- | --- | --- |

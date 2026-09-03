@@ -355,6 +355,19 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   found on the way and recorded rather than fixed in passing: `ROLL_STEP.MISSED` has no key in either
   language, and `turn.rolled` and `setup.start` are in both and read by nothing. No code, no changelog
   entry and no tests, all three for stated reasons. Sprint 3, no issue on the board.
+- **2026-09-03, later: handoff 11 landed, so the roll has a moment and explains itself.** D70 to D74 came
+  back the same evening and all five went in. Three commits, because the first one is mechanical and had
+  to be separately verifiable: the message strip renamed from `.move-refusal` to `.message-strip`, then
+  the feature, then the close. What landed is `roll.css` (new), two additive amendments, two new modules
+  (`turn-waits.js` and `roll-steps.js`), two new tokens, one new locale key, one deleted one, and
+  **NFR-08's explanation half closed**. D72 turned out to need no code at all, which is the opposite of
+  what the brief had costed. One real bug on the way, found by three unrelated end-to-end specs: a roll
+  arrives through two doors and the first implementation only knew about one, which left the dice hand
+  permanently unclickable from the first turn an opponent held a Reaction that answers the roll.
+  `game-loop.js` came out at 286 lines, below the 293 it went in at. Two new unit files, one new
+  end-to-end spec, one new case in `locales.test.js`; the whole unit suite and the whole
+  end-to-end suite pass on three browsers, with the counts in Ch. 09 next to the commands that produce
+  them. Sprint 3, no issue on the board.
 
 ---
 
@@ -3642,6 +3655,108 @@ to get wrong later.
 
 ---
 
+### 2026-09-03: The roll's moment is asked of the state, not of the phase, because a roll has two doors
+
+- **Chosen:** `advance()` asks `turn-waits.js` "does a roll exist that this turn has not been held for"
+  at the top of the function, before any phase branch, rather than holding the roll inside the `roll`
+  branch right after `apply(ROLL_DIE)`.
+- **Why:** `handleRollDie` does not always roll. When an opponent holds Critical Failure, Devil Die or
+  Hold Pawn it opens the on-roll reaction window and rolls nothing, because those three are played "as
+  any player rolls" and have to be played before the number is known. `resumeAfterWindow` is what rolls
+  once the window shuts, dispatched as `close-window` out of `card-controls.js`, and the loop's `roll`
+  branch is never re-entered on that path. A question about the state catches both doors; a question
+  about the phase catches one.
+- **Why it matters more than a missed animation:** `roll.css` puts `pointer-events: none` on a rolling
+  row and only the hold takes the attribute off, so the missed door left **the dice hand permanently
+  unclickable** from the first turn an opponent drew one of those three cards. It surfaced as three
+  unrelated specs timing out on a click four minutes into a 77-turn match.
+- **The upside, which was not the reason but is real:** the second door now gets the hold as well, and a
+  roll a Devil Die changed is the roll most worth showing.
+- **Rejected: the `roll` branch plus a second hold inside `card-controls.js`.** The obvious local fix,
+  and it puts one rule in two places. The next card that changes when a roll happens has to remember
+  both.
+- **Rejected: clearing `data-rolling` in `updateDiceHand` whenever the phase leaves `roll`.** Cheap, and
+  it fixes the unclickable hand while silently dropping the hold on the second door, so the symptom goes
+  away and the feature stays half built. That is the worse failure, because nothing would report it.
+- **The cost, stated:** the check runs on every `advance()`, which is several times per turn, and it is
+  guarded by a turn-number marker so one roll is never held twice. That marker is the same device
+  `card-controls.js` uses for the D60 announcement hold.
+- → Ch. 04
+
+---
+
+### 2026-09-03: `turn-waits.js` is a new file rather than `game-loop.js` growing past 300 lines
+
+- **Chosen:** the two waits the loop takes by itself, the roll's moment and the pause before the
+  handover, moved into `src/ui/turn-waits.js`. `handleWindow` moved into `card-controls.js` in the same
+  change. `game-loop.js` came out at 286 lines, below the 293 it went in at.
+- **Why:** NFR-02's 300-line limit, and brief 11 had already named the 7 remaining lines as the reason
+  the hold could not be guessed at. The seam is one this file already has twice: `card-controls.js` owns
+  the third wait, the two-second hold on a trap a card fired (D60), so putting the roll's hold beside the
+  handover pause makes the arrangement symmetric instead of arbitrary. The loop decides *that* it waits,
+  `timers.js` decides *how long*, and the new file decides *when*.
+- **Why `handleWindow` went with it:** it was the loop's one branch that reads a reaction window, and
+  `card-controls.js` already owned that window's clock, its prompt and its closing. It was in the wrong
+  file before this change and moving it is what made the arithmetic work without a trick.
+- **Rejected: shortening the comments in `game-loop.js`.** It would have fit and CLAUDE.md forbids it in
+  as many words: when a file approaches the limit, split it along a real seam rather than compressing it.
+  The comments in that file are where the reason for every automatic step lives.
+- **Rejected: putting the roll's hold in `card-controls.js` beside the D60 hold.** The nearest existing
+  home, and the file is named for what a player does with a card. A roll is not a card play, and the
+  three cards that can interrupt it are a coincidence of the mechanism rather than the subject.
+- **Rejected: `timers.js` owning the wait as well as its length.** It has no DOM access on purpose, and
+  the roll's hold has to clear an attribute on the dice hand.
+- **The cost, stated:** one more file in `ui/` and one more indirection between the loop and a
+  `setTimeout`. This is the third time `game-loop.js` has been split at the limit, after
+  `render.js` and the two controls files in issue #39, which is worth a sentence in the report: the
+  limit has produced four real seams and no artificial ones.
+- → Ch. 04
+
+---
+
+### 2026-09-03: The message strip was renamed now rather than left for later
+
+- **Chosen:** `.move-refusal` became `.message-strip` and `refusal.css` became `message-strip.css`, in a
+  commit of its own ahead of the feature. The Product Owner took this decision when asked.
+- **Why:** the name was right while a refusal was the only thing the strip said. D55 gave it a trap's
+  voice and D73 gave it the roll's, so two of the three kinds it carries are not refusals, and the spec
+  reported it itself under "Noticed and not done". The files were open anyway, which is the condition the
+  spec named for doing it.
+- **Why a separate commit:** the rename touches five test files and a mistake in one of them would look
+  like an animation bug. Landing it alone means the existing cases that locate the strip are
+  what verify it, and the feature commit's diff contains only the feature.
+- **Rejected: leaving it.** It costs nothing today and the name is read by every person who opens the
+  file. Two decisions had already gone past it, and a third one making it wrong again is the point at
+  which "later" stops being credible.
+- **Rejected: renaming the two tokens as well.** `--motion-refusal-hold` really is the hold a refusal
+  gets, so it is correct. `--layer-refusal` is a genuine leftover shared by all three kinds, but it
+  lives in `tokens.css`, which belongs to Claude Design, so it was asked there rather than changed from
+  here. Recording it matters: this is a name known to be wrong and deliberately left, which is a
+  negative finding rather than an oversight.
+- → Ch. 04
+
+---
+
+### 2026-09-03: The roll gets its 900 ms even on a turn with no legal move
+
+- **Chosen:** the hold runs whenever a roll happened, including when the roll produces no legal move and
+  the phase goes straight to `turn-end`. Such a turn then costs 4.9 s: 900 ms of roll followed by D20's
+  four-second refusal hold. The Product Owner took this decision when asked.
+- **Why:** one rule, one behaviour. `rollChosenDie` sets the phase to `act` **or** to `turn-end`, and
+  which of the two is a fact about the pawns rather than about the roll. A roll that happened is a roll
+  that happened, and the number is the thing the player is waiting for either way.
+- **Rejected: skipping the hold when the phase goes to `turn-end`.** Saves 900 ms on a turn that is
+  already the longest in the game, and the refusal's four seconds are more than enough time to read a
+  number. It loses on two counts: the roll would have two different lengths depending on what came after
+  it, which is a rule nobody can predict from the screen, and the throw animation would run while an
+  orange refusal was already standing in the strip.
+- **The cost, stated plainly:** the no-legal-move turn goes from 4.0 s to 4.9 s. `passesOnTurnOne` is
+  the seed that shows it, and `no-legal-move.spec.js` is the only spec that plays without `?fast=1`, so
+  it is the only one that pays the extra time.
+- → Ch. 04
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first
@@ -3804,6 +3919,52 @@ to get wrong later.
   closed while a child stayed open, and the child's own code was already merged. Nothing is wrong with
   the code and the board is simply describing a state that ended. Worth one sentence in the project
   management chapter, because "is this done" was not answerable from the board.
+
+- **2026-09-03: A green test run that proved nothing, and a bug it would not have caught anyway.** Two
+  problems in one evening while landing design handoff 11, and the first one is the more embarrassing.
+
+  **The Playwright web server was reused from a session five hours old.** `playwright.config.js` sets
+  `reuseExistingServer: !process.env.CI`, and its command is `npm run build && npm run preview`. If a
+  preview server is already answering on port 4173, **the build never runs**, and `preview` serves
+  whatever is in `dist/` on disk. `dist/` was from 18:14 and the working tree was from 21:40. So the run
+  that reported "24 passed" after the class rename had tested the old bundle: `dist/assets/*.js` still
+  contained `move-refusal` and no `message-strip`, which is how it was eventually proved rather than
+  guessed. The fix is one command, `npm run build`, because `preview` reads from disk on every request
+  and needs no restart. Cost: about 25 minutes, most of it spent doubting the code rather than the
+  harness.
+
+  **The lesson is about the config and not about the mistake.** `reuseExistingServer` exists so a
+  developer does not wait 30 seconds per run, and the price is that a stale server is indistinguishable
+  from a fresh one in the output. Nothing warns. **Every end-to-end run in this project has to be
+  preceded by `npm run build`, or the config has to stop reusing the server.** That is worth a line in
+  the quality chapter, because a suite that can silently test the wrong code is worse than no suite for
+  the one decision it is asked to support.
+
+  **Then the real bug, which the full suite did find.** Three specs, in `win.spec.js` and
+  `match-flow.spec.js`, timed out on a click four minutes into a 77-turn match, reporting
+  `<div class="app__dice"> intercepts pointer events`. The cause: `roll.css` puts `pointer-events: none`
+  on a rolling dice row, and the new hold that takes the attribute off was hanging off the loop's `roll`
+  branch, which a roll does not always come through. When an opponent holds Critical Failure, Devil Die
+  or Hold Pawn, the roll happens inside `close-window` instead, so the attribute was set and never
+  cleared and **the dice hand became permanently unclickable from that turn on.** Cost: about 40 minutes,
+  most of it narrowing down which turn broke by instrumenting a probe spec that plays turns and reports
+  the first one where the attribute sticks in the `choose` phase.
+
+  **Two lessons worth keeping.**
+
+  **The specs that caught it were about winning a match, not about rolling.** Nothing in the new spec
+  file would have found it, because a two-player match only reaches an opponent holding one of three
+  specific Reactions after several turns, and the three long-running specs are the only ones that play
+  that far. That is an argument for keeping a small number of expensive full-match specs even though they
+  cost four minutes each: they are the only tests in the suite that exercise the game as a sequence
+  rather than as a situation.
+
+  **`pointer-events: none` is a dangerous thing to write from an attribute.** A stuck class that changes
+  a colour is a cosmetic defect. A stuck attribute that removes pointer events makes the game
+  unplayable, and it does so silently, with no error and a screen that looks completely normal. Any
+  future attribute that gates input deserves the same treatment the roll's now has: a test that clicks
+  through several turns and asserts the attribute is gone, rather than a test that only checks it
+  appears.
 
 Log anything that cost more than roughly 30 minutes of unplanned work: what happened, what it cost,
 how it was resolved. These become the running prose of Chapter 11, so a sentence of context is worth
