@@ -41,11 +41,15 @@
  * **every rule in this project's CSS now comes from a numbered decision in a spec.** Handoff 07 added
  * `board-trap.css` on 2026-09-03 and kept that true.
  *
- * The import order below is the one 04-spec § 1 asks for, and three entries in it are load-bearing rather
+ * The import order below is the one 04-spec § 1 asks for, and four entries in it are load-bearing rather
  * than tidy. `prompt.css` has to come after `app.css`, because both place `.prompt` on the grid and at
  * equal specificity the later file wins. `handover.css` has to come after `overlay.css`, because it
  * overrides the sheet's transition to none, which is the whole of D39's concealment. `board-trap.css` has
- * to come after `board.css`, because it reads the one seat mapping that file owns.
+ * to come after `board.css`, because it reads the one seat mapping that file owns. `card-reveal.css` has
+ * to come after all three of `card.css`, `card-state.css` and `hand.css`, because it overrides
+ * declarations in each of them and nothing in them overrides it: it is the one state that changes a
+ * card's size and re-flows its insides, which is why 10-spec § 2 split it out rather than making any one
+ * of the three reach into the other two.
  *
  * **One ordering is a known conflict rather than a decision**, and it is written down here because the
  * cascade is the only place it is visible. `prompt.css` styles a pickable field in the skill teal and
@@ -79,6 +83,7 @@ import "./ui/styles/refusal.css";
 import "./ui/styles/card.css";
 import "./ui/styles/card-state.css";
 import "./ui/styles/hand.css";
+import "./ui/styles/card-reveal.css";
 import "./ui/styles/app.css";
 import "./ui/styles/hud.css";
 import "./ui/styles/chrome.css";

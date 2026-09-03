@@ -1,6 +1,11 @@
 /* The two hand rows. Depends on tokens.css and card.css.
    Reasoning is in 01-Design/Handoff/03-spec-cards-and-hands.md, D26, D29,
-   D31 and D33, and 04-spec D35 and § 4.
+   D31 and D33, 04-spec D35 and § 4, and 10-spec D65 and D69.
+
+   Amended on 2026-09-03, D65 and D69: the row no longer reacts to a hover by
+   moving its own cards sideways, and the stack of backs is keyed on
+   `data-face` instead of on `data-active`. What a revealed card looks like is
+   in card-reveal.css, which loads after this file.
 
    Amended on 2026-09-01, D35: issue #39 had taken the two --card-u factors
    from 0.76 and 0.68 down to 0.70 and 0.62 to buy the HUD a grid row, and
@@ -56,32 +61,52 @@
   margin-left: calc(var(--card-u) * -16.25rem * var(--overlap));
 }
 
-/* Reading the fan: the card under the pointer rises out of it and the cards
-   to its right step aside, so a covered card can be read without leaving
-   the row. translate, not transform, so the lift in card.css survives. */
-.hand--skill .card:hover ~ .card,
-.hand--skill .card:focus-visible ~ .card {
-  translate: calc(var(--card-u) * 4rem) 0;
-  transition: translate var(--motion-feedback) var(--ease-ui);
-}
+/* Reading the fan was a sideways step aside until D69: the card under the
+   pointer rose and its right hand neighbours moved out of the way, by
+   4rem * --card-u, which is 43.5 px against a covered strip of up to 77.8 px.
+   It under shifted at every count above four and it is gone. A revealed card
+   is magnified out of the row and stands above it, so there is nothing left
+   for the neighbours to step aside for. card-reveal.css is the whole answer.
+   Superseded on 2026-09-03: the sibling `translate` rule that stood here, its
+   `[data-active="false"]` override, and the `translate` entry in the
+   `.hand--skill .card` transition that existed to carry it. */
 
+/* The fan's shadow falls to the left, and this is the whole of the fix for
+   "the overlap looks wrong" (2026-09-03, sent back as D64).
+
+   The reading order is unchanged and stays D28's: every card is at
+   --layer-card, so DOM order breaks the tie and the card on the right lies on
+   top, which is what leaves the left strip of each card exposed with its band
+   and its title on it. What was wrong is the depth cue. The card's hard
+   shadow is cast down and to the right, so in a fan every shadow but the last
+   one is hidden under the next card, the row loses its edges and the overlap
+   reads as a rendering fault instead of a stack. Cast to the left it lands on
+   the card underneath, which is exactly where a shadow belongs.
+
+   The dice hand keeps the shadow on the right: its three cards have a real
+   gap and never overlap, and the shadow is not hiding behind anything.
+
+   Rejected: turning the order around so the left card lies on top, which is
+   what the Product Owner asked for first. It makes the shadow correct too,
+   and it exposes the right-hand strip of every covered card instead of the
+   left one, so the kind pill survives and the title and the ACTION/REACTION
+   label are the parts that get cut. D28 chose which strip stays visible on
+   purpose, and a fan of cards nobody can read the names of is a worse trade
+   than a shadow.
+
+   The sign is all this rule carries now. It used to repeat the three
+   transitions from card.css as well, only to add `translate` to the list, and
+   D69 deleted the one thing that translated. */
 .hand--skill .card {
-  transition:
-    transform var(--motion-feedback) var(--ease-ui),
-    box-shadow var(--motion-feedback) var(--ease-ui),
-    filter var(--motion-feedback) var(--ease-ui),
-    translate var(--motion-feedback) var(--ease-ui);
+  --shadow-dir: -1;
 }
 
-/* A hand that is not the active seat's is a stack of backs, not a row of
-   faces: in hot-seat the next player is looking at the same screen (D33). */
-.hand--skill[data-active="false"] {
+/* A hand that is not the viewer's is a stack of backs, not a row of faces:
+   in hot-seat the next player is looking at the same screen (D33). Keyed on
+   `data-face` rather than on `data-active` from D65 on, so the closed up
+   overlap applies exactly when there are backs to stack. */
+.hand--skill[data-face="down"] {
   --overlap: 0.82;
-}
-
-.hand--skill[data-active="false"] .card:hover ~ .card,
-.hand--skill[data-active="false"] .card:focus-visible ~ .card {
-  translate: none;
 }
 
 /* --- Dealing, choosing, returning (D31). Three cards arrive, one is kept,
@@ -142,6 +167,13 @@
        because the slot the hand builds already has none. --- */
 
 .hand--skill .card:not([data-card-id]) {
+  /* Under every real card, which is the second half of the same fix as the
+     pseudo-elements below. A slot is a later sibling than the cards to its
+     left and every card sits at --layer-card, so DOM order put the slot on
+     top and its dashed border was drawn straight across the face of the last
+     card in the hand. A place where a card would go cannot cover a card that
+     is there. */
+  z-index: 0;
   background: none;
   border: var(--border-card) dashed color-mix(in srgb, var(--color-ink) 32%, transparent);
   box-shadow: none;
@@ -150,4 +182,27 @@
 
 .hand--skill .card:not([data-card-id]) > * {
   visibility: hidden;
+}
+
+/* And the two pseudo-elements, which is the half that was missing until
+   2026-09-03. card-state.css gives every card in a face down hand the back's
+   dashed inner frame (::before) and its violet diamond (::after). The rule
+   above hides `> *`, the real children, and a pseudo-element is not one, so
+   an empty slot in such a hand wore both looks at once: a dashed silhouette
+   with a card back's frame and diamond inside it. At --overlap 0.82 only
+   32 px of each slot is exposed and the diamond is 67 px wide, so the row
+   read as a pile of clipped diamonds.
+
+   Kept after D65 re-keyed the back from data-active onto data-face. The
+   collision is now unreachable in hot seat play, because the viewer's own
+   hand is never face down, but the guard costs two declarations and the
+   `data-face="down"` case it protects is the one the contract still promises.
+   Deleting it would make the same defect wait for the first spectator view.
+
+   Same specificity as the card-state.css rules, and this file loads later
+   (main.js), which is what settles it, exactly as for background and border
+   above. An empty slot is not a card, so it has no back either. */
+.hand--skill .card:not([data-card-id])::before,
+.hand--skill .card:not([data-card-id])::after {
+  content: none;
 }

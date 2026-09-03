@@ -1540,6 +1540,92 @@ the redundancy that was covering for a mistake. Four copies of a rule fail loudl
 shared rule fails silently everywhere at once. The test to write is not for the change, it is for the
 fallback the change made reachable.
 
+### A layout test that only knew one window, and the assertion that measured the wrong box: 2026-09-03, no issue
+
+**`shell.spec.js` had been guarding FR-31 at exactly one window size, and it says so in its own first
+case:** "runs at 1440 by 900, which is what the design is drawn for". That case exists to stop a Playwright
+device descriptor from silently overriding the viewport, which had happened once. It also had the effect
+nobody planned: the suite proved the page does not scroll at 1440 by 900 and said nothing at all about any
+other shape, and every fixed height in the layout is in `rem`, so height is the axis that breaks. The
+Product Owner found it on a 1438 by 770 laptop, which is 50 px of scrolling with nothing being asked and
+112 px with the prompt strip up.
+
+**The new case iterates four window shapes rather than adding a second number**: wider than 16:9, exactly
+16:9, the reference stage, and taller than 16:9. It asserts no overflow on either axis, that the stage is
+16:9 to two decimal places, and that it is centred, which is what puts the spare room into bars. Four
+shapes and not four resolutions, because the defect is about the **ratio** and a list of popular
+resolutions would have missed the one the reporter was using.
+
+**One assertion in the same round was written wrong and passed in both directions, which is the finding
+worth keeping.** The HUD case was first written against `.hud__counts`, the `ul` that holds the four
+numbers. That box is a block box: it stays inside the plate however far its children stick out of it. The
+measurement said the line was 218 px wide and 15 px *inside* the plate, both before and after the fix,
+while the last list item was 45 px outside it. **A green assertion about the wrong element is worse than no
+assertion**, and the only reason it was caught is that the same measuring run printed the plate width and
+the number line's width side by side and the two did not add up.
+
+So the case measures the four `.hud__count` items against the plate, in both languages and at two, three
+and four seats. German is the longer label set and English is the one the design was drawn in; the seat
+counts matter because the plate is now wider and the row still has to hold four of them.
+
+**The measuring harness was a throwaway spec, deliberately.** It injected the pre-fix CSS with
+`page.addStyleTag` and printed the same numbers before and after in one run, which is what makes "278 px
+needed against 218 px available" and "50 px of scrolling" measurements rather than arithmetic. It was
+deleted in the same session: it produces evidence, not assertions, and the same rule
+`scripts/design-screenshots.js` already states applies to it.
+
+**Two smaller cases came with the CSS**: an empty slot in the skill hand has no card-back pseudo-elements
+and sits below every real card, and a card in the fan casts its shadow to the left while a dice card casts
+it to the right. Both read `getComputedStyle`, and the second one reads the *first* offset out of the
+`box-shadow` string, so it deliberately reads a card that is neither selected nor hovered: those two states
+declare a shadow list that starts with a focus ring at offset zero.
+
+### The first test of a hover state, and what having none had already cost: 2026-09-03, handoff 10
+
+**Until this delivery no test in the suite touched a hover state.** Not in the fan, not on a pawn, not on
+a button. `card-reveal.spec.js` is the first, and the defect it now guards is exactly the kind that
+absence produces: the player's own skill hand was drawn as a row of card backs through most of every turn,
+for two sprints, and every one of the 97 cases stayed green the whole time. **A CSS-only interaction with
+no test is invisible to everything except somebody playing a round**, which is how it was eventually
+found: a Product Owner playing, not a suite failing.
+
+The suite grew from 97 cases per browser to 101, 303 across the three.
+
+**Why the file exists rather than four more cases in `skill-hand.spec.js`.** That file is about *playing*
+a card, FR-23 to FR-26, and it asserts game state. This one is about *reading* one and it asserts computed
+style. The two fail for different reasons and a red test should say which half broke, which is the same
+seam `trap-marks.spec.js` was split off `traps.spec.js` on.
+
+**What is hard about testing this, and it is not the hover.** The reveal writes nothing into the DOM, on
+purpose: it is `:hover` and `:focus-visible` and design spec 10 § 8 asks for `events.js` to stay at `click`
+and `keydown`. So there is no attribute to assert and no state the app can be asked about. Three things
+had to be worked out:
+
+- **The paragraph's size is two numbers multiplied.** D66 magnifies the card rather than re-sizing it, so
+  the computed `font-size` stays the hand-size one, about 8.6 px, and `scale` paints it at 1.47 times
+  that. Reading `font-size` alone would have asserted that nothing had changed and passed.
+- **`:focus-visible` is not `:focus`, and `locator.focus()` does not produce it.** A browser only matches
+  `:focus-visible` on a `div` when the focus arrived from the keyboard, so a script calling `.focus()`
+  moves focus without the reveal, and the case would have failed for a reason that had nothing to do with
+  the CSS. The helper focuses, presses Shift+Tab and presses Tab, which lands on the same element through
+  a real key press. `skill-hand.spec.js`'s existing keyboard case uses plain `.focus()` and is right to:
+  it asserts `Enter`, not a focus ring.
+- **The assertion is a floor and not the number.** 10-spec § 5 puts the paragraph at 12.6 px at the design
+  resolution and 14.0 px at a 16 px root. The case asserts "above 12 px", because the point is that it is
+  readable and because a number would go stale the next time the root moves. That is the same rule the
+  greyscale cases follow: compare, do not name a value.
+
+**The fourth case exists so a class does not become dead CSS.** `.card--reading` is a third trigger next
+to the two pseudo-classes and 10-spec § 6 says the app must never write it. Left unasserted it would have
+been a rule in the repository that nothing reaches. The case pins it and, in the same breath, asserts that
+nothing in `src/` has applied it.
+
+**A stale preview server made all four cases fail once, and it is worth one line.** The suite runs against
+the production build, and `reuseExistingServer` had left a server from an earlier run holding an old
+`dist/`. The failure looked exactly like "the attribute was never written": the element in the error had
+`data-seat` but no `data-face`, which is the code from before the edit. `npm run build` fixed it. Reading
+the failing DOM rather than the assertion is what identified it in one step.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

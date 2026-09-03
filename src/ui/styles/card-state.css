@@ -46,13 +46,15 @@
 .card[data-playable="true"]:focus-visible {
   z-index: var(--layer-card-raised);
   transform: translateY(calc(var(--lift) * 2));
-  box-shadow: calc(var(--card-u) * 0.5rem) calc(var(--card-u) * 0.875rem) 0 var(--ink-dim);
+  box-shadow: calc(var(--card-u) * 0.5rem * var(--shadow-dir)) calc(var(--card-u) * 0.875rem) 0
+    var(--ink-dim);
 }
 
 .card[data-playable="false"] {
   cursor: default;
   filter: saturate(0.5) contrast(0.97);
-  box-shadow: calc(var(--card-u) * 0.25rem) calc(var(--card-u) * 0.25rem) 0 var(--ink-dim);
+  box-shadow: calc(var(--card-u) * 0.25rem * var(--shadow-dir)) calc(var(--card-u) * 0.25rem) 0
+    var(--ink-dim);
 }
 
 .card[data-selected="true"] {
@@ -60,7 +62,7 @@
   transform: translateY(calc(var(--lift) * 2.5));
   box-shadow:
     0 0 0 calc(var(--card-u) * 0.25rem) var(--color-focus),
-    calc(var(--card-u) * 0.5rem) calc(var(--card-u) * 1rem) 0 var(--ink-dim);
+    calc(var(--card-u) * 0.5rem * var(--shadow-dir)) calc(var(--card-u) * 1rem) 0 var(--ink-dim);
 }
 
 .card:focus-visible {
@@ -68,11 +70,18 @@
   outline-offset: calc(var(--card-u) * 0.1875rem);
 }
 
-/* --- The back. Used by the pool, the discard pile, and by an inactive
-       skill hand, which is what hot-seat privacy needs (D33). --- */
+/* --- The back. Used by the pool, the discard pile, and by a hand that is
+       not the viewer's, which is what `data-face="down"` says (D65).
+
+       Superseded on 2026-09-03: the six `.hand--skill[data-active="false"]`
+       selectors that stood in this block. `data-active` means "some card here
+       can be played this instant", so the back fired on the player's own hand
+       in every phase but one. Hot-seat secrecy is enforced by the handover
+       curtain and by the ordering rule in `session-actions.js`, never by this
+       paint. --- */
 
 .card--back,
-.hand--skill[data-active="false"] .card {
+.hand--skill[data-face="down"] .card {
   color: transparent;
   background-color: var(--card-back);
   background-image: repeating-linear-gradient(
@@ -85,12 +94,12 @@
 }
 
 .card--back > *,
-.hand--skill[data-active="false"] .card > * {
+.hand--skill[data-face="down"] .card > * {
   visibility: hidden;
 }
 
 .card--back::before,
-.hand--skill[data-active="false"] .card::before {
+.hand--skill[data-face="down"] .card::before {
   content: "";
   position: absolute;
   inset: calc(var(--card-u) * 1rem);
@@ -99,7 +108,7 @@
 }
 
 .card--back::after,
-.hand--skill[data-active="false"] .card::after {
+.hand--skill[data-face="down"] .card::after {
   content: "";
   position: absolute;
   top: 50%;

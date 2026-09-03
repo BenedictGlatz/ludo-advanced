@@ -115,6 +115,60 @@ test.describe("the HUD", () => {
     expect(after[moved[0]].track).toBe(before[moved[0]].track + 1);
   });
 
+  test("keeps every seat's four numbers inside its own plate, in both languages", async ({
+    page,
+  }) => {
+    // The defect this was written for: D37 pinned the plate at 15.5rem, which leaves 218 px of
+    // content box, and the four numbers need 278 of it. Nothing in that line can shrink and nothing
+    // clipped it, so it ran straight out of the plate and the next plate painted over it. Seats 1
+    // and 2 read "1 KA" on screen and only the last seat, with nothing to its right, read "KARTEN".
+    //
+    // **The four list items are what is measured, not the list.** The `ul` is a block box and stays
+    // inside the plate however far its children stick out of it, so an assertion about `.hud__counts`
+    // passes in both directions and proves nothing. That mistake was made once while writing this.
+    //
+    // Both languages, because the German labels are the longer set (START, STRECKE, ZIEL, KARTEN)
+    // and English is the one the design was drawn in. Two, three and four seats, because the row
+    // centres and a wider plate is only affordable while four of them still fit.
+    for (const players of [2, 3, 4]) {
+      // Seed 1 plays a legal opening at every seat count; which match it is does not matter here.
+      await openMatch(page, { seed: 1, players });
+      await expect(page.locator(".hud__seat")).toHaveCount(players);
+
+      for (const language of ["de", "en"]) {
+        if (language === "en") {
+          await page.locator('.chrome__button[data-action="language"]').click();
+          await expect(page.locator('.chrome__button[data-action="language"]')).toHaveAttribute(
+            "data-lang",
+            "en"
+          );
+        }
+
+        const spills = await page.locator(".hud__seat").evaluateAll((seats) =>
+          seats
+            .map((seat) => {
+              const plate = seat.getBoundingClientRect();
+              const boxes = [...seat.querySelectorAll(".hud__count")].map((count) =>
+                count.getBoundingClientRect()
+              );
+              return {
+                seat: seat.dataset.player,
+                over: Math.round(
+                  Math.max(
+                    ...boxes.map((box) => Math.max(box.right - plate.right, plate.left - box.left))
+                  )
+                ),
+              };
+            })
+            // One pixel of tolerance: the plate's own border is a fraction of a pixel wide.
+            .filter((seat) => seat.over > 1)
+        );
+
+        expect(spills, `${players} seats, ${language}`).toEqual([]);
+      }
+    }
+  });
+
   test("counts the skill cards each seat holds (D33)", async ({ page }) => {
     const board = await openMatch(page, SEEDS.leavesStartAtOnce);
 

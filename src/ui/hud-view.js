@@ -118,11 +118,15 @@ export function updateHud($hud, state) {
     $seat.attr("data-on-turn", String(onTurn));
     $seat.attr("data-finished", String(progress.home === PAWNS_PER_PLAYER));
 
-    // The **short** name, "Spieler 2", and not the full "Spieler 2 (Grün)". Measured: a seat row is
-    // 332 px at the design resolution, the four numbers need 210 of it and the full label needs 107,
-    // which left 86 and clipped it to "Spieler 2 (Gr...". The colour is not lost, because
-    // `hud.css` paints the row's left edge in the seat's own colour, and the turn sentence above
-    // spells the full label out. A number and a colour swatch is what a scoreboard row is.
+    // The **short** name, "Spieler 2", and not the full "Spieler 2 (Grün)". The colour is not
+    // lost, because `hud.css` paints the plate in the seat's own colour and puts the seat's D16
+    // shape next to the name, and the turn sentence above spells the full label out. A number, a
+    // shape and a colour is what a scoreboard row is.
+    //
+    // The arithmetic that used to be here was a seat row of 332 px, from issue #39, and D37 has
+    // since fixed the plate at its own width instead. Remeasured on 2026-09-03: the four numbers
+    // need 278 px, which is why the plate is 308 and not D37's 248, and the full label needs 107.
+    // The short name is still the one that fits without a second line.
     $seat.children(".hud__name").text(seatName(state.seats, seat));
 
     $seat.find(".hud__count").each(function updateCount() {
@@ -141,9 +145,10 @@ export function updateHud($hud, state) {
  * The one sentence that answers the question this whole file exists for: "{{player}} ist am Zug".
  *
  * **It is one sentence for the region and not a chip on every seat row**, and the reason is a
- * measurement. Four seats share 1392 px at the design resolution, so a row has 331 px; a name needs
- * 107, the four numbers need 210, and a per-seat "am Zug" chip needs another 55. It did not fit, and
- * what it did instead was wrap onto a second line and truncate the names to "Spi...".
+ * measurement. A plate is 308 px wide, of which the four numbers need 278 and a name needs 107, and
+ * a per-seat "am Zug" chip needs another 55. It did not fit, and what it did instead was wrap onto a
+ * second line and truncate the names to "Spi...". Four plates plus their gaps are already 1268 px of
+ * the 1552 the row has, so there is no width to find for a fifth thing either.
  *
  * The alternatives were shrinking `--board-size` to buy the height, which is a design trade and not
  * ours, or dropping the words next to the numbers, which makes the numbers meaningless. A sentence is

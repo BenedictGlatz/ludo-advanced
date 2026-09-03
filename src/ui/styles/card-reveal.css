@@ -1,0 +1,82 @@
+/* Reading a card you are holding: the reveal. Depends on tokens.css,
+   card.css, card-state.css and hand.css, and loads after all four.
+   Reasoning is in 01-Design/Handoff/10-spec-card-reveal-on-hover.md, D66 to
+   D69.
+
+   The seam (constraint 6): card.css draws the card's structure, card-state.css
+   draws what happens to a card, hand.css draws the row the cards sit in. This
+   file draws the one state that changes a card's size and re-flows its
+   insides, which is why it is the only file that reads all three.
+
+   The card is magnified to exactly the reference size, calc(1 / --card-u),
+   and its insides re-flow, so a revealed hand card is the same object the
+   pool overview and the reaction prompt already show. The box magnifies and
+   the row does not re-flow: `scale` and not `transform`, so the lift in
+   card-state.css survives, which is the reason hand.css used `translate`.
+
+   Only the skill hand. The dice row renders the same component and is
+   excluded on purpose (D66): a dice card's title is its rule, the three are
+   already at 0.76 and never overlap, and growing one to 1.32 would cover the
+   two it exists to be compared against.
+
+   A hand with `data-face="down"` is excluded by construction rather than by a
+   later override, so no gesture can reveal a card the viewer does not own.
+
+   Amended on landing, 2026-09-03: both box-shadow offsets below multiply by
+   --shadow-dir, which the delivered file did not have because it was read
+   against the tree before D64 landed. A revealed card is still sitting in the
+   fan, so a shadow that flipped from left to right under the pointer would be
+   the depth cue D64 had just fixed, undone for one card at a time. */
+
+.hand--skill:not([data-face="down"]) .card[data-card-id] {
+  transform-origin: 50% 100%;
+  transition:
+    scale var(--motion-reveal) var(--ease-ui),
+    transform var(--motion-feedback) var(--ease-ui),
+    box-shadow var(--motion-feedback) var(--ease-ui),
+    filter var(--motion-feedback) var(--ease-ui);
+  transition-delay: 0ms, 0ms, 0ms, 0ms;
+}
+
+/* The reveal. `.card--reading` is the third trigger and the app never writes
+   it: it is there so a test and a mockup can pin the state, and so the state
+   has a name (D66). Pointing at a card lifts it inside --motion-feedback and
+   the growth follows --motion-reveal-delay later; the lift is extended to a
+   card that cannot be played, because every real card answers now (D67). */
+.hand--skill:not([data-face="down"]) .card[data-card-id]:hover,
+.hand--skill:not([data-face="down"]) .card[data-card-id]:focus-visible,
+.hand--skill:not([data-face="down"]) .card[data-card-id].card--reading {
+  z-index: var(--layer-card-raised);
+  scale: calc(1 / var(--card-u));
+  filter: none;
+  transform: translateY(calc(var(--lift) * 2));
+  box-shadow: calc(var(--card-u) * 0.5rem * var(--shadow-dir)) calc(var(--card-u) * 0.875rem) 0
+    var(--ink-dim);
+  transition-delay: var(--motion-reveal-delay), 0ms, 0ms, 0ms;
+}
+
+/* The re-flow. The paragraph appears at the size it was written for, and the
+   art gives back the space it borrows while the paragraph is hidden. */
+.hand--skill:not([data-face="down"]) .card[data-card-id]:hover .card__text,
+.hand--skill:not([data-face="down"]) .card[data-card-id]:focus-visible .card__text,
+.hand--skill:not([data-face="down"]) .card[data-card-id].card--reading .card__text {
+  display: block;
+}
+
+.hand--skill:not([data-face="down"]) .card[data-card-id]:hover .card__art,
+.hand--skill:not([data-face="down"]) .card[data-card-id]:focus-visible .card__art,
+.hand--skill:not([data-face="down"]) .card[data-card-id].card--reading .card__art {
+  flex: none;
+  height: calc(var(--card-u) * 8rem);
+}
+
+/* A card that is selected and revealed keeps its selection ring: the reveal
+   changes how large the card is, never what the ring is saying. */
+.hand--skill:not([data-face="down"]) .card[data-selected="true"]:hover,
+.hand--skill:not([data-face="down"]) .card[data-selected="true"]:focus-visible,
+.hand--skill:not([data-face="down"]) .card[data-selected="true"].card--reading {
+  transform: translateY(calc(var(--lift) * 2.5));
+  box-shadow:
+    0 0 0 calc(var(--card-u) * 0.25rem) var(--color-focus),
+    calc(var(--card-u) * 0.5rem * var(--shadow-dir)) calc(var(--card-u) * 1rem) 0 var(--ink-dim);
+}

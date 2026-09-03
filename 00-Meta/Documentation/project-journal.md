@@ -312,6 +312,36 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   without blocking a merge, because that needs a repository ruleset. Sprint 2, delivered out of the
   Sprint 3 plan.
 
+- **2026-09-03**: **four layout defects out of one test round on the Product Owner's own laptop**, no
+  issue on the board. The page scrolled on any window that is not 900 px tall, the per-seat card count ran
+  out of its plate and was painted over by the next plate, an empty skill-hand slot was drawn wearing a
+  card back's frame and diamond, and the fan's overlap read as a glitch because the shadow fell the wrong
+  way. Fixed as `fix(ui)`, with new end-to-end cases for all four and a measuring run that produced the
+  numbers instead of arithmetic. Three of the fixes change a numbered design decision, so `09-brief` goes
+  back to Claude Design as D62 to D64 for confirmation rather than as a request. Sprint 3.
+
+- **2026-09-03, later**: **a feature request turned into a defect that was already on record.** The ask was
+  that hovering an Action or Reaction card should turn it over so its text can be read. Looking for the
+  place to put it found two unrelated reasons a player cannot read a card in their own hand: the hand is
+  face down for most of every turn, because `data-active` answers "is something playable" and
+  `card-state.css` reads it as "is this hand somebody else's", and the rules paragraph computes to 8.57 px
+  at hand size, so turning a card over would not have helped anyway. `10-brief-card-reveal-on-hover.md`
+  goes out with D65 to D69. **Nothing was implemented**, unlike the round before it, because D66 may
+  rebuild the card's DOM. The first defect had been filed the same day as a finding that "needs no code",
+  which was right about the cause and wrong about the consequence. Sprint 3, no issue on the board.
+
+- **2026-09-03, evening**: **handoff 10 came back the same day it went out and landed whole, D65 to D69.**
+  A player can now read the cards in their own hand: the hand stopped being face down, and a card under
+  the pointer or under keyboard focus is magnified to exactly the reference card size, so the rules
+  paragraph is painted at 12.6 px instead of 8.6. No card turns over, which is not what was asked for and
+  is explained rather than glossed: a turn does not change the size, so it does not answer the request.
+  Two attributes were all the code it needed, `data-face` on the hand and a tab stop on every card with an
+  id, plus one new stylesheet and one new import. **The delivery was merged rather than copied in**,
+  because it had been read against the tree of that morning and would have reverted the stage, the fan's
+  shadow and the two empty-slot fixes; two of those three carry an end-to-end case that would have caught
+  it. Four new cases in `tests/e2e/card-reveal.spec.js`, which is the first test of a hover state anywhere
+  in the suite, 101 per browser and 303 across the three, all green. Sprint 3, no issue on the board.
+
 ---
 
 ## Decisions
@@ -3351,6 +3381,189 @@ to get wrong later.
   for a mistake. Four copies of a rule fail loudly one at a time; one shared rule fails silently
   everywhere at once. The test to write is for the fallback the change made reachable.
 - → Ch. 08
+
+---
+
+### 2026-09-03: The page got a 16:9 stage, and D6's "no target resolution" turned out to cover only the board
+
+- **Chosen:** the whole layout is drawn on a stage of a fixed 16:9 shape, 100 by 56.25rem, which is 1600
+  by 900 at the default text size. `app.css` fits it to the window with one declaration,
+  `html { font-size: min(calc(100vw / 100), calc(100vh / 56.25)) }`, so 1rem is one per cent of the stage
+  width and every `rem` length in the project scales with the stage. `#app` is the frame and paints the
+  bars in `--color-ink`. Nothing inside the layout was re-measured.
+- **Why:** D6 answered "what resolution is this drawn for" with "none, the board is one fluid unit", and
+  that is true of the board and of nothing else. Every other region is in `rem`, so the rail costs a fixed
+  705 px and the page 820 px of height, up to D35's 882 with the prompt strip up, whatever the window
+  does. Measured on the reporting laptop, 1438 by 770 CSS px: 50 px of scrolling with nothing being asked
+  and 112 px once the game asks. FR-31 was true at exactly one window size, which is also the only size
+  the suite ever measured.
+- **Why 1600 by 900 rather than 1440 by 810:** D35's height budget is 882 px and it is measured in the
+  mockup. 810 cannot carry it, and making it fit means re-deciding every card size in D26. 900 keeps the
+  budget that already works and 1600 is what makes the shape 16:9. At 1440 by 900 the board still comes
+  out 634 px, exactly as before, with 45 px of bar above and below, so no existing measurement moved.
+- **Rejected: `transform: scale()` with a factor computed in JavaScript.** It needs a resize listener in
+  `ui/`, and it renders text at a fractional scale, which is blurry at every factor that is not whole.
+- **Rejected: making the rail fluid in `vh` instead of scaling the stage.** That re-opens D26's card sizes
+  and D35's row heights, both of which are design decisions and not ours to take.
+- **Rejected: an `aspect-ratio` box with no scaling.** It gets the bars and not the fix: the rail's height
+  is in `rem` either way, so a short window still scrolls.
+- **Negative finding, recorded rather than glossed:** the stage overrides the text size the reader set in
+  their browser, and above the 84rem breakpoint a small window makes everything evenly small instead of
+  reflowing. Below the breakpoint the stage is switched off and D30's stacked layout is untouched. The
+  trade is the usual one for a game field and it is the reason this goes back to Claude Design as **D62**.
+- → Ch. 04
+
+---
+
+### 2026-09-03: The seat plate takes the width its numbers need, against D37's fixed 15.5rem
+
+- **Chosen:** `.hud__seat` keeps 15.5rem as a `min-width` and takes `width: auto`.
+- **Why:** D37's fixed plate leaves 218 px of content box and the four numbers need 278, measured. Nothing
+  in that line can shrink, because `.hud__count` is `white-space: nowrap` with no `min-width: 0`, and
+  nothing clips it, so the last item ended 45 px outside the plate and the **next plate painted over it**.
+  Three of four seats read "1 KA" instead of "1 KARTEN". This was reported as "the card count is cut off"
+  and it is not clipping, it is one plate covering another.
+- **Why this still satisfies D37:** the plates hold the same labels and single-digit values, so all four
+  come out identical at 308 px and the row still centres rather than stretching, which is what D37's
+  answer is actually about. Four plates plus gaps are 1268 px of the stage's 1552.
+- **Rejected: shorter labels, or dropping the two redundant counts.** D37 chose to keep all four and says
+  why: they are quiet rather than absent. Changing what the plate says is a design decision; changing how
+  wide it is to fit what it already says is a defect fix.
+- **Rejected: `overflow: hidden` with an ellipsis.** It replaces text that runs into the neighbour with
+  text that is missing, and the number a player reads is the one that would get cut.
+- **A stale measurement was part of the cause.** `hud-view.js` justified its short seat name with "a seat
+  row is 332 px", which is issue #39's layout and has not existed since D37 fixed the plate. Both comments
+  are corrected to the measured numbers. A comment carrying an old measurement reads as a reason not to
+  measure again. Goes back as **D63**.
+- → Ch. 04
+
+---
+
+### 2026-09-03: The fan keeps its stacking order and flips its shadow, which is not what was asked for
+
+- **Chosen:** the skill hand's cards keep DOM order, so the card on the right lies on top, and the hard
+  shadow is cast to the **left** inside the fan only. One custom property, `--shadow-dir`, carries the sign
+  through all four shadow declarations in `card.css` and `card-state.css`.
+- **Why:** the request was to turn the order around so the left card lies on top. The order is not the
+  defect. Every card sits at `--layer-card`, DOM order breaks the tie, and the exposed strip of a covered
+  card is therefore its **left** edge, which is where D28 deliberately put the band and the title. What is
+  broken is the depth cue: the shadow is cast down and to the right, so in a fan every shadow but the last
+  is hidden under the next card, and a row of cards with no edges between them reads as a rendering fault.
+- **Rejected: the order that was asked for.** It fixes the shadow as well, and it exposes the right-hand
+  strip of every covered card instead of the left one, so the kind pill survives and the title and the
+  `AKTION`/`REAKTION` label are what gets cut. Both looks were drawn out for the Product Owner with that
+  consequence stated, and the shadow was chosen. **The rejected option is the one that was requested**,
+  which is exactly why it is written down here.
+- **Rejected: less overlap instead**, which the stage's wider rail would now afford. It hides the
+  reordering rather than answering it, and the overlap is D26's number.
+- **Not fixed, and it is in the brief:** the overlap table follows `data-count` while the hand always
+  builds five slots, so a hand of three is wider than a hand of five, 714 px against 672. Two specs
+  disagree, the stage's rail absorbs both, and the fan's own geometry is Claude Design's to set.
+- Goes back as **D64**, together with two findings that need no code: `data-active` on the skill hand means
+  "some card is playable" and not "this seat is on turn", so D33's hot-seat privacy hangs on the wrong
+  state, and Baloo 2 and Nunito are declared in `tokens.css` and loaded by nothing, so no pixel
+  measurement in any spec was taken against the metrics the game renders.
+- → Ch. 04
+
+---
+
+### 2026-09-03: The card back on the player's own hand is a defect, not secrecy, and it is asked rather than deleted
+
+- **Chosen:** the finding goes out as `10-brief-card-reveal-on-hover.md` with five numbered decisions,
+  D65 to D69, and **no code is written this round.** The request behind it was that hovering an Action or
+  Reaction card should turn it over so its text can be read.
+- **Why the request could not simply be built.** Two independent reasons a player cannot read a card in
+  their own hand, and neither is a missing hover rule. First, the hand is already face down for most of
+  every turn: `skill-hand-view.js` writes `data-active` from "is some card playable", `card-state.css`
+  reads the same attribute as "is this hand somebody else's", and `intents-cards.js` refuses every card
+  outside the action phase, so the player's own five cards are backs through the dice choice and the move.
+  Second, turning a hand card over would not have helped: `card.css` shows the rules paragraph at the
+  reference size only, and at the hand's factor it computes to 8.57 px.
+- **Why the back is not secrecy.** D33 is enforced by the handover curtain plus one ordering rule in
+  `session-actions.js`, which passes the turn before the curtain comes down. A hand belonging to somebody
+  else is never on screen with the board visible, so every case this back fires on is the player's own
+  hand, and `app.css` already dims the plate in the same state.
+- **Rejected: deleting the card back.** It is a change to how something looks, and `CLAUDE.md` reserves
+  that for Claude Design. Asked as D65 instead, which is the whole reason the handoff loop exists.
+- **Rejected: implement first and send it back for confirmation**, which is what handoff 09 did earlier
+  the same day and which the Product Owner chose then. At 09 the open items were three numbers on things
+  already on screen. Here D66 may rebuild the card's DOM into a front and a back under a `preserve-3d`
+  wrapper, which breaks every rule targeting `.card > *`, moves the back off two pseudo-elements, pulls in
+  `pool.css` and the reaction prompt, and rewrites three end-to-end checks. Building that twice costs more
+  than waiting for the answer, and this defect is not breaking a requirement the way FR-31 was.
+- **Rejected: fixing only the unreadable paragraph** and leaving the hand face down. It treats the symptom
+  and leaves the cause, and the cause is the one that hides information the player owns.
+- **Negative finding, and it explains the delay:** this was already on record. `09-brief` § 4 named it the
+  same day among two findings that "need no code from you". That filing was right about the cause and
+  wrong about the consequence, so it sat as a tidiness note instead of becoming a question. Promoted to
+  D65 here.
+- **Negative finding, second one:** there is **no test on hover anywhere in the suite**, and nothing
+  asserts `data-active` against the turn phase, which is why a defect visible in every round survived two
+  sprints. `tests/e2e/card-reveal.spec.js` is owed and is written when the spec lands.
+- **Not fixed, and it is in the brief:** D64's measured hover finding, that the sibling shift is 43.5 px
+  against a covered strip of up to 77.8 px, is carried on as D69 rather than answered here.
+- → Ch. 04
+
+---
+
+### 2026-09-03: Handoff 10 was merged by hand, because it was read against a tree one commit old
+
+- **Chosen:** the five delivered stylesheets were **not** copied in. Each was diffed against the working
+  tree and only the hunks belonging to D65 to D69 were applied, keeping every change commit `e486bb4` had
+  made to the same four files earlier the same day. One delivered rule was additionally amended, in
+  `card-reveal.css`.
+- **Why:** the delivery states it was read against "the working tree of 2026-09-03", which was true when
+  it was written and stale about four hours later. Copying the files in would have reverted three separate
+  things: the stage tokens `--stage-w` and `--stage-h`, which `app.css` reads for `#app`'s size, so the
+  16:9 stage would have collapsed and FR-31 would have broken again on every window that is not 900 px
+  tall; the `--shadow-dir` sign in three files, so the fan's shadow would have gone back to falling right
+  and hiding under the next card, which is the defect the Product Owner had reported that morning; and the
+  empty slot's `z-index: 0` and `content: none`, so a slot would have painted its dashed border across the
+  last real card again. None of the three has anything to do with what handoff 10 was asked.
+- **Why the amendment to `card-reveal.css`:** it casts a revealed card's hard shadow down and to the
+  right, because it was written before D64 existed. A revealed card is still sitting in the fan, so its
+  shadow would have flipped from left to right under the pointer, which is D64's depth cue defect undone
+  one card at a time. Both offsets now multiply by `--shadow-dir`. The change and its reason are recorded
+  in a note at the top of the delivered spec, the same way handoff 07's link fix was.
+- **Rejected: copying the five files in and re-applying `e486bb4`'s changes on top as a second pass.**
+  Identical end state, and the intermediate tree is broken, so a bisect lands on a commit where the page
+  does not lay out. The diff is also harder to review, because the reviewer sees each hunk twice.
+- **Rejected: sending the package back for a re-cut against the current tree.** The clean answer, and it
+  costs a round trip on work that is already correct. It is also not obviously the right lever: handoff 09
+  is still unconfirmed, so a re-cut would be made against a tree whose own decisions Claude Design has not
+  agreed to yet. The staleness goes back as a finding instead, with the close of handoff 10.
+- **The cost, stated:** the repository now holds a delivered file that differs from what was delivered, in
+  one declaration, and two files whose delivered version this side chose not to take whole. That is worse
+  than a clean copy and it is written down in three places rather than one, so nobody has to reconstruct
+  it from a diff. **The process gap is real and is not closed by this decision:** nothing in the loop lets
+  the receiving side check which tree a delivery was read against, and only diffing caught it.
+- → Ch. 04
+
+---
+
+### 2026-09-03: The tab stop became a field on the card, not a rule inside the shared card component
+
+- **Chosen:** `card-view.js` writes `tabindex` from `(card.focusable ?? card.playable)`. The default is
+  exactly what it was, and `skill-hand-view.js` is the one caller that sets `focusable: true` regardless
+  of playability.
+- **Why:** D67 asks for every card in the skill hand to be reachable with Tab, playable or not, because
+  focus now reveals the card and the card a player most wants to read is the one they cannot play yet.
+  But `updateCard` is shared by three regions, and design spec 05 § 5 took seven dead tab stops **out** of
+  the pool overview for a reason that still stands there: nothing in the pool reveals on focus, so a stop
+  where `Enter` does nothing still tells a keyboard user nothing. `dice-pool.spec.js` asserts that. So one
+  rule can no longer serve both, and the caller is the only place that knows which case it is in.
+- **Rejected: keying it on `card.family === "skill"` inside `card-view.js`.** One line shorter and it puts
+  a fact about a *region*, which regions let you tab to a card you cannot play, inside a component that is
+  supposed to know only what a card is. The pool overview renders skill cards too, so the check would have
+  been wrong there on the first day.
+- **Rejected: making every card focusable and taking the pool's stops out with a second rule.** It
+  reverses a delivered decision to re-implement it somewhere else, and it turns a green assertion in
+  `dice-pool.spec.js` into something that has to be re-earned.
+- **What it does not change, stated:** `events.js` still binds `click` and `keydown` on
+  `[data-playable="true"]`, so `Enter` on a focused unplayable card does nothing. That is deliberate. The
+  stop exists to read the card, not to play it, and the focus ring says "you are here" rather than "you
+  may play this".
+- → Ch. 04
 
 ---
 

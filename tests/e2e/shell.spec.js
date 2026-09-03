@@ -77,6 +77,58 @@ test.describe("the shell at the design resolution", () => {
     }
   });
 
+  test("fits a 16:9 stage into four window shapes and scrolls in none of them", async ({
+    page,
+  }) => {
+    // The case this spec missed. Every region except the board is measured in rem, so the rail
+    // costs a fixed 705 px and the page 820 px of height whatever the window does, and the three
+    // assertions above only ever looked at 1440 by 900. The Product Owner's laptop is 1438 by 770,
+    // a 2876 by 1750 panel at 200 % Windows scaling: measured there, the page scrolled by 50 px
+    // with nothing being asked and by 112 with the prompt strip up. The stage in app.css is the
+    // answer, so the window shapes are the test.
+    const WINDOWS = [
+      { width: 1438, height: 770 }, // the laptop that found this, wider than 16:9
+      { width: 1920, height: 1080 }, // 16:9 exactly, no bars at all
+      { width: 1600, height: 900 }, // the reference stage, so the scale is 1
+      { width: 1512, height: 982 }, // taller than 16:9, bars above and below
+    ];
+
+    for (const size of WINDOWS) {
+      await page.setViewportSize(size);
+
+      const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+      await expect(diceHand(board).locator(".card")).toHaveCount(3);
+      await expect
+        .poll(async () => page.locator(".hand--dice").getAttribute("data-count"))
+        .toBe("3");
+
+      const label = `${size.width} by ${size.height}`;
+      const overflow = await page.evaluate(() => {
+        const root = document.documentElement;
+        return {
+          vertical: root.scrollHeight - root.clientHeight,
+          horizontal: root.scrollWidth - root.clientWidth,
+        };
+      });
+
+      expect(overflow.vertical, `${label} scrolls vertically`).toBeLessThanOrEqual(0);
+      expect(overflow.horizontal, `${label} scrolls sideways`).toBeLessThanOrEqual(0);
+
+      // The stage is 16:9 and centred, which is what puts the spare room into bars. One pixel of
+      // tolerance, because the root font size the stage is built from is a fraction of a pixel.
+      const stage = await page.locator(".app").boundingBox();
+      expect(stage.width / stage.height, `${label} is not 16:9`).toBeCloseTo(16 / 9, 2);
+      expect(stage.width, `${label} stage wider than the window`).toBeLessThanOrEqual(
+        size.width + 1
+      );
+      expect(stage.height, `${label} stage taller than the window`).toBeLessThanOrEqual(
+        size.height + 1
+      );
+      expect(stage.x * 2 + stage.width, `${label} stage off centre`).toBeCloseTo(size.width, 0);
+      expect(stage.y * 2 + stage.height, `${label} stage off centre`).toBeCloseTo(size.height, 0);
+    }
+  });
+
   test("stacks the regions and allows scrolling below the breakpoint", async ({ page }) => {
     // The other half of D30, and the reason the test above is not simply "nothing ever scrolls".
     // FR-31 asks for one screen at the design resolution, not at every size.
