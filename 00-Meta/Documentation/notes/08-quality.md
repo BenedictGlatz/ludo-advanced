@@ -1385,6 +1385,34 @@ next to it, because this is a trap that will catch the next person measuring any
 attribute, and `toHaveAttribute` retries on its own. The moment a spec measures a pixel it inherits the
 stylesheet's timing, and that is a different contract.
 
+### Outstanding coverage, stated rather than skipped: the D60 hold has no end-to-end test: 2026-09-03, handoff 07
+
+**The two-second hold a trap announcement gets when a card fires it is proved by unit tests and by nothing
+else, and that is a deliberate gap with a reason.**
+
+`tests/unit/ui/mid-turn-hold.test.js` has twelve cases and covers every branch: nothing announced returns
+zero, a trap and a nullified card each return the token, a refusal returns zero (which is the one place
+the two hold functions differ in kind and the case most likely to be broken by somebody symmetrising
+them), an override of exactly zero is honoured rather than treated as absent, the other two delay keys do
+not reach this branch, and the fallback is two seconds with no stylesheet.
+
+**Why there is no end-to-end case.** Every Playwright spec runs with `?fast=1`, which collapses the hold
+to zero on purpose, exactly as it already collapses the reaction window and the refusal pause. So the run
+that could observe the wait is the run that has switched it off. `openMatch` does accept `{ fast: false }`,
+but a non-fast run also restores the thirty-second reaction window, so observing two seconds costs half a
+minute of wall clock per case and needs `test.slow()`.
+
+**This is not new and that is the point.** D20's four-second refusal minimum has never had an end-to-end
+test either, for the same reason and since 2026-08-30. The suite proves that a message appears; how long
+it is guaranteed to stay is a question about a number, and a number is what a unit test is for. Writing it
+down here is the alternative to letting it look like an oversight.
+
+**What is genuinely untested**, and it is one thing rather than the whole decision: that `refresh()` runs
+before the hold. With the hold collapsed there is no observable window in which to check that the strip
+was drawn first, so the ordering rests on the code and its comment. The failure mode is visible the moment
+anybody plays the game with the hold on, which is the argument for the manual check in the verification
+list rather than for a slow spec.
+
 ### An insurance case against the only silent failure in the delivery: 2026-09-03, handoff 07
 
 Handoff 07 consolidated the seat-shape mapping: five stylesheets each held their own copy of the four

@@ -416,6 +416,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **A pawn that slid on an Oil Spill wears a small tag** on its shoulder, as a reminder of why the
     field it stopped on handed it no card
 - **A field you can click is reachable from the keyboard and shows its focus** (NFR-08, design handoff 07)
+- **A trap set off by a card now holds the turn for two seconds** (design handoff 07). A trap sprung by
+  your dice move already stayed on screen until the handover; one sprung by a card resolved in the middle
+  of your turn and the game carried straight on, so the message could be gone before you read it. Two
+  seconds rather than the four a refusal gets, because a refusal follows your own click and this does not.
+  Playing another card or pressing Skip ends the wait early
 - **A square on the board can now be picked with the keyboard alone** (NFR-08). No square was reachable
   from the keyboard at all, which nobody noticed while a single card in 29 pointed at one. Four of the
   five that do are the trap cards, so a keyboard player could not have played a trap

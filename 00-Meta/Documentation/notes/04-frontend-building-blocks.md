@@ -1702,6 +1702,63 @@ and NFR-12 is quietly broken. No assertion in the suite would have noticed, beca
 was on `.pawn__mark`. `greyscale.spec.js` gained a case for the HUD, which is the consumer on screen in
 every match. That is the cheapest insurance available against the only silent failure in the drop.
 
+### D60 was the one answer that needed code, and it is a wait nothing on screen reports: 2026-09-03, issue #45
+
+Nine of the ten decisions were stylesheets. **D60 was a behaviour change**, and it is the only part of
+handoff 07 where the design asked the view to do something rather than to stop drawing something.
+
+**The problem it fixes, traced rather than assumed.** `state.trapFired` survives a phase change; it is
+cleared only by `clearedTurnFields()` when the turn ends. So the announcement is not lost by time passing.
+What loses it is the **next** `resolveMove`, whose `trapChanges` always writes a fresh `trapFired`, and
+that is `null` on almost every move. After a card is played the loop's `advance()` runs straight on, skips
+the action phase, rolls the die and reaches `act`, where the pawn hints appear. A player who commits a
+move inside two seconds empties the strip themselves.
+
+The dice-move case never had this problem, because `holdAfterTurn` already holds the finished turn before
+the handover screen covers it. The card case had no wait of any kind.
+
+**Where the wait went, and the seam it kept.** `timers.js` gained `holdMidTurn` beside `holdAfterTurn`,
+because that module already owned every named wait in the game and its header states the division: the
+loop decides *that* it waits, `timers.js` decides *how long*. `card-controls.js` gained one `carryOn`
+function that replaced all four of its `resume()` calls, because a trap can fire on two different resolve
+paths (`playActionCard` resolves immediately when no reaction window opens, `closeWindow` resolves the
+played cards when the window shuts) and more than one call site can produce an announcement.
+
+**Three details, each of which was wrong in an earlier draft, and all three are the kind that would have
+shipped silently.**
+
+1. **`refresh()` has to come first.** `apply` changes the state and draws nothing, so a bare delayed
+   `resume()` holds for two seconds with the strip not yet on screen at all. That is worse than no hold.
+2. **A zero hold has to be no hold, not a zero-millisecond timer.** `?fast=1` overrides the duration to 0,
+   and `timers.set(..., 0)` defers `advance()` to a macrotask. Every end-to-end spec in the suite was
+   written against the ordering this file has today, so the zero case resumes synchronously.
+3. **One announcement is held once.** Because `trapFired` is a turn-level field, it is still set when the
+   player presses Skip during the hold, and that second pass would schedule another two seconds. A marker
+   holding the last announcement fixes it, compared by identity against the frozen object the rules layer
+   produced. This is why `announcement(state)` returns the value rather than a boolean.
+
+**It delays the loop and does not block input, and that is a decision.** While the hold runs the phase is
+still `action`: `turn-controls.js` ignores a pawn click outside `choose` and `act`, and `applyMoveHints`
+paints nothing, so there is nothing on the board to click. What the player can still do is play another
+card or press Skip, and either ends the hold early. That is the reading D9 already gave this strip, "until
+the player's next action, and at minimum": a deliberate click is the player saying they have read it. The
+alternative, swallowing input for two seconds, needs either a new attribute in the DOM contract or a
+live-looking button that does nothing, and what a disabled prompt looks like is a design decision this
+side may not take. It is also the only version of the change that can leave the game feeling stuck.
+
+**`--motion-trap-hold` is two seconds and not four, and the reason is worth keeping.** D20 gave a refusal
+four, because a refusal follows the player's own click and they are already looking at the board. A trap
+fired by a card interrupts a turn that is under way and arrives unasked, so what it needs is a
+*guaranteed* window rather than a long one. Two seconds cannot be missed and does not turn a turn with two
+traps in it into a slideshow. The token also sits outside `tokens.css`'s `prefers-reduced-motion` block,
+which spec 07 argues for directly: it is a reading time and not a motion, and a player who asked for less
+movement has not asked for less time to read.
+
+**One consequence nobody decided and it is correct anyway.** Pausing during the hold loses it:
+`loop.pause()` clears every timer and `loop.resume()` re-enters the phase. The turn is not stuck and the
+announcement is still in the state, so it is still drawn; only the guarantee is gone. That is the right
+answer for a player who chose to stop looking at the board.
+
 ### A negative finding: two specs answered one question in opposite directions: 2026-09-03, issue #45
 
 **D59, the pickable field, is answered against a rule handoff 04 already delivered, and the loop had no

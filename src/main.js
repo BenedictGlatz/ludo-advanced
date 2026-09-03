@@ -86,8 +86,14 @@ import "./ui/styles/pool.css";
  * `reaction` is the thirty-second window collapsed to nothing, which is the difference between a suite
  * that takes a minute and one that takes half an hour. It changes the waiting and nothing else: the window
  * still opens, and a run with `?fast=1` behaves exactly as though every eligible player declined at once.
+ *
+ * `afterTrapCard` is D60's two-second hold, collapsed the same way. It is a **fourth** key and not a reuse
+ * of `afterTrap`, although both are about a trap: `afterTrap` is the wait once the turn has ended and
+ * reads `--motion-refusal-hold`, this one is the mid-turn wait and reads `--motion-trap-hold`. Two
+ * different numbers for two events that differ in who caused them, and a unit test pins that each can be
+ * collapsed without the other.
  */
-const FAST_DELAYS = { afterMove: 0, afterRefusal: 0, reaction: 0 };
+const FAST_DELAYS = { afterMove: 0, afterRefusal: 0, afterTrapCard: 0, reaction: 0 };
 
 /**
  * The four settings the address bar may carry.

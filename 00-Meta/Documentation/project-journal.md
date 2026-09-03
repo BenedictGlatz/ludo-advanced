@@ -3292,6 +3292,42 @@ to get wrong later.
 
 ---
 
+### 2026-09-03: The D60 hold delays the loop and does not block input
+
+- **Chosen:** when a trap fires from a card, `card-controls.js` draws the announcement and then delays the
+  turn by `--motion-trap-hold` before carrying on. The player can still play another card or press Skip,
+  and either ends the hold early.
+- **Why:** while the hold runs the phase is still `action`, so `turn-controls.js` ignores a pawn click and
+  `applyMoveHints` paints nothing. There is nothing on the board to click, which means the only input the
+  hold could block is a deliberate one. D9 already reads this strip as staying "until the player's next
+  action, and at minimum" for a duration, so a deliberate click is the player saying they have read it.
+- **Rejected: swallowing input for the two seconds.** It needs either a new attribute in the DOM contract
+  or a live-looking prompt button that does nothing, and what a disabled prompt looks like is a design
+  decision `CLAUDE.md` forbids this side from taking. It is also the only version of the change that can
+  leave the game feeling stuck.
+- **The detail that was a bug in an earlier draft:** one announcement has to be held once. `trapFired` is
+  a turn-level field cleared only at the end of the turn, so it is still set when the player presses Skip
+  mid-hold, and that pass would schedule a second two seconds. A marker comparing the last announcement by
+  identity fixes it, which is why `announcement(state)` returns the value and not a boolean.
+- → Ch. 04
+
+---
+
+### 2026-09-03: `afterTrapCard` is a fourth delay key rather than a reuse of `afterTrap`
+
+- **Chosen:** `FAST_DELAYS` gained a fourth key for the mid-turn hold, beside `afterMove`, `afterRefusal`
+  and `reaction`.
+- **Why:** the two waits read different tokens. `afterTrap` is the wait once the turn has ended and reads
+  `--motion-refusal-hold`; the new one is mid-turn and reads `--motion-trap-hold`, which D60 sets to two
+  seconds precisely because the two events differ in who caused them. One key for both would tie two
+  numbers the design deliberately separated.
+- **Rejected: reusing `afterTrap` so `?fast=1` needed no new key.** It would remove the freedom a unit
+  test already pins one level up, namely collapsing one hold while keeping the other, and `?fast=1` is the
+  one place that freedom is used.
+- → Ch. 04
+
+---
+
 ### 2026-09-03: The seat shape moved to one mapping, and a test was written for the fallback
 
 - **Chosen:** the four `data-player` to `--seat-shape` rules were deleted from `pawn.css`, `hud.css`,
