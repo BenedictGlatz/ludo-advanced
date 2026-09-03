@@ -1797,11 +1797,33 @@ There is also a consequence nobody has decided: the dimming applies to 34 of the
 offers, so it dims the trap chips at exactly the moment D51 says whose trap it is matters most.
 
 **So the package landed whole and untouched and the block lies dormant**, which the Product Owner chose
-over patching it. The reasoning: the board keeps a treatment that is already coherent, no file is edited
-against its delivery, and the one part of D59 that has no competitor, the keyboard focus on a field, takes
-effect anyway and closes the NFR-08 gap. The alternative, deleting the earlier rules, buys a violet field
-and an incoherent pawn. **D61 is open against it**, with the file, the line numbers, the cascade order and
-the shorthand finding in `08-brief-pickable-field.md`.
+over patching it. The reasoning: the board keeps a treatment that is already coherent, and no file is
+edited against its delivery. The alternative, deleting the earlier rules, buys a violet field and an
+incoherent pawn. **D61 is open against it**, with the file, the line numbers, the cascade order and the
+shorthand finding in `08-brief-pickable-field.md`.
+
+**A correction, made the same day and worth leaving visible.** The plan for this landing said the keyboard
+focus was "the one part of D59 that has no competitor" and would take effect regardless, closing the
+NFR-08 gap. **That was wrong, and the end-to-end suite is what found it.** `prompt.css`'s
+`.square--track[data-pickable="true"]` and `board.css`'s `.square--track:focus-visible` have the *same*
+specificity, one class and one qualifier each, and both are built from `box-shadow`, which is the property
+the offer and the focus rings share. So `prompt.css` wins the focus rule too: **a focused field is drawn
+exactly like an unfocused offered one**, and a keyboard player cannot see where they are.
+
+The way it was found is worth as much as the fact. The first version of the case asserted that a focused
+field differs from an offered one, and it **passed** when its file ran alone and failed under load. Both
+readings were wrong: `box-shadow` transitions over `--motion-feedback`, so the comparison succeeded while
+the value was still interpolating between the two. A poll that stops at the first difference cannot tell
+"a new rule applied" from "the old value is still on its way".
+
+So the case is now a deliberate negative that asserts the focused field is drawn identically to the
+offered one, and it will go red the day D61 lands. That is the third time this pattern has been used and
+the second time it has been used to record a conflict rather than an absence.
+
+**What this changes about NFR-08.** The keyboard *reach* closed in issue #45 and is real: a field takes a
+`tabindex` while it is offered and answers Enter. The keyboard *state* has not closed, and D61 now blocks
+NFR-08's second half rather than being a preference. That is a change of status and it is corrected in
+`00-open-requests.md` and in the brief.
 
 **The process lesson, which is the report-worthy part.** The design loop's guard against a dropped request
 is `00-open-requests.md`, and it works: it caught the missing `chrome.css` on the day it was written. It
@@ -1883,8 +1905,9 @@ cheap, and it is the only change that would have caught this one.
     the same question D59 answers, in the other direction. See the negative finding above, and D61.
   - **D61 is open**, and it is the only thing from handoff 07 that did not land: how D59's violet pickable
     field reconciles with the teal one `prompt.css` has painted since 2026-09-01, and what happens to the
-    pawn half of the same rule. `08-brief-pickable-field.md` is out. It blocks no requirement, and the
-    board keeps the treatment it already had until it is answered.
+    pawn half of the same rule. `08-brief-pickable-field.md` is out. **It blocks the second half of
+    NFR-08**: the same cascade collision swallows D59's keyboard focus treatment, so a field can be
+    reached with Tab and gives no sign of being reached. The reach itself works and shipped with #45.
   - **The six pawn statuses other than `stunned` and `slippery`** are in the DOM and unstyled: `held`,
     `rock`, `ghost`, `locked`, `armoured`, `ragebait`. D57 gives them a box and a position on
     `.pawn__status` and says the next spec sets their inner geometry and their order. `STATUS.PURGE` is

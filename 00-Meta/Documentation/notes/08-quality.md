@@ -1385,6 +1385,112 @@ next to it, because this is a trap that will catch the next person measuring any
 attribute, and `toHaveAttribute` retries on its own. The moment a spec measures a pixel it inherits the
 stylesheet's timing, and that is a different contract.
 
+### Three ways to measure a mark wrongly, all three found in one afternoon: 2026-09-03, handoff 07
+
+`trap-marks.spec.js` is the first spec in the project whose subject is **paint** rather than a decision,
+and writing it produced three false failures in a row. All three were the test being wrong, not the
+stylesheet, and all three are the kind of mistake that reads as a broken delivery.
+
+**1. A box measured during a transition.** Covered in its own entry above. Every mark in the delivery
+arrives through a transition, so a single measurement taken after the click reads its starting value. The
+tell was arithmetic: two wrong numbers that are both exactly 0.4 of the right one are a transform.
+
+**2. A hidden element still has a box.** The status tag's first case asserted a zero width on a pawn with
+no status, copying the trap chip's zero-versus-non-zero measurement. It failed at 6.8 pixels. The tag is
+hidden by `opacity: 0` and `scale: 0.4`, not by `display: none`, because an element with no box has no
+previous state to transition from, so a hidden tag still measures about 15 per cent of the piece. **The
+chip's case only worked because it predated the stylesheet**: with no CSS at all the span genuinely had
+zero width, and the same assertion stops meaning "hidden" the moment a rule exists. `opacity` is what the
+rule changes, so `opacity` is what to read.
+
+**3. Sixteen different transforms cannot be compared as a set.** Every pawn already carries a translate
+and a scale, so no two transforms are equal and "the stunned one differs" is true of all sixteen. What
+D56 actually promises is narrower: no other piece shares this one's **rotation**. A
+`matrix(a, b, c, d, e, f)` that has only been translated and scaled has `b` at zero and `a` equal to `d`
+whatever it was translated or scaled by, so the two shear terms answer it without the test knowing the
+angle, and the angle stays the design's to change.
+
+**The general rule these three add up to**, and it is worth carrying into any future spec that measures:
+**assert the property the rule changes, and compare rather than name.** A box is the wrong reading of an
+opacity rule; a whole transform is the wrong reading of a rotation rule; and a literal `rgb()` value is
+the wrong reading of a token choice. Every case in the file compares a mark against another mark, against
+a field with nothing on it, or against a token read off `:root`.
+
+### A flaky test that was right to be flaky, because both of its readings were wrong: 2026-09-03, handoff 07
+
+**The most instructive failure of the whole landing, and it found a defect the plan had explicitly ruled
+out.** It is worth the space because the test was not merely wrong, it was wrong in a way that passed.
+
+The case was meant to assert that a field focused from the keyboard is drawn differently from a field
+that is merely offered, which is D59's answer: the offer is a ring inside the field, focus is two rings
+outside it with a gap between them. It **passed** whenever its own file ran and **failed** in Chromium
+and Edge inside the full three-browser run, twice, always at the paint and never at the focus.
+
+The plan's reading was that this was contention, and the first fix drove the whole gesture from the
+keyboard, since `:focus-visible` is the browser's own judgement about whether a keyboard is in use and one
+mouse click anywhere in the run flips it. That did not help. The second fix asked the browser directly
+with `field.matches(":focus-visible")` and skipped when the answer was no. **That is when the failure
+finally printed a value**, and the value was the answer:
+
+```
+Expected: not "rgb(15, 156, 147) 0px 0px 0px 4.032px inset"
+```
+
+`rgb(15, 156, 147)` is `--color-skill`, the teal `prompt.css` paints an offered field in. The focused
+field was drawn identically to the offered one, because `prompt.css`'s
+`.square--track[data-pickable="true"]` and `board.css`'s `.square--track:focus-visible` have the **same
+specificity**, one class and one qualifier each, both are built from `box-shadow`, and `prompt.css` loads
+later. **D59's focus rule never paints**, and the landing plan had said in as many words that the focus
+was the one part of D59 with no competitor.
+
+**Why the earlier versions passed.** `box-shadow` transitions over `--motion-feedback`, and a poll that
+stops at the first difference cannot tell "a new rule applied" from "the old value is still on its way".
+The assertion succeeded on a value that was interpolating between the offer and nothing, and the settled
+value was always the same one. A poll for *difference* is a poll that will find one somewhere in any
+transition, which is a general trap and not a detail of this case.
+
+Three things came out of it:
+
+1. **The case is now a deliberate negative** asserting the focused field is drawn identically to the
+   offered one, so it goes red the day D61 lands. Third use of that pattern in this project, second time
+   it records a conflict rather than an absence.
+2. **It re-reads both fields on every attempt**, so neither side of the comparison can be mid-transition.
+   That is the third measurement trap the handoff produced, after the box-during-transition and the
+   hidden-element-still-has-a-box.
+3. **D61 changed status**, from a preference to a blocker on the second half of NFR-08. A field can be
+   reached with Tab and gives no sign of being reached. Nothing in the suite had ever asserted a focus
+   treatment on a field, because until issue #45 no field could be focused.
+
+**The lesson worth carrying.** A test that passes in isolation and fails under load is usually reported as
+flake and given a `test.slow()`. This one was a real defect wearing a flake's clothes, and what
+distinguished it was reading the failure's *value* rather than its frequency. The two fixes that came
+before that were both reasonable and both wrong.
+
+### `traps.spec.js` had to split, and the seam was not the line count: 2026-09-03, handoff 07
+
+The new cases took `traps.spec.js` to 301 lines, one over NFR-02, which ESLint's `max-lines` caught rather
+than a review. Two files came out of it and neither split is about size:
+
+- **`trap-marks.spec.js`** takes the computed-style cases. An attribute check says the rules layer got it
+  right and a computed value says the stylesheet did, so a case that does both cannot say which half
+  broke when it goes red.
+- **`field-keyboard.spec.js`** takes the NFR-08 cases. They were in a trap spec because four of the five
+  cards that point at a field are trap cards, and **none of the cases is about a trap**. The Banana Peel
+  in them is the cheapest way to put the board into its picking state and any of the five would do.
+
+Worth noting for the next person: `tests/e2e/helpers.js` is at 295 lines, five from the limit, which is
+why every new driving helper this issue needed went into `trap-helpers.js` instead.
+
+### The suite's contention flake is still there, and it moved: 2026-09-03, handoff 07
+
+One case failed on Firefox in a full run and passed alone in all three browsers and in the next full run:
+"still offers all forty fields to Janky RPG", which this issue did not touch. This is the contention
+already recorded above for 2026-09-01, when four failures turned out to be load rather than defects. It is
+worth noting again for one reason: **the suite grew from 258 cases to 279 with this handoff**, and the
+flake is a function of how many browsers are competing rather than of what any case does. The next spec
+file is a good moment to look at worker counts rather than to add a `test.slow()` to whichever case draws
+the short straw.
+
 ### Outstanding coverage, stated rather than skipped: the D60 hold has no end-to-end test: 2026-09-03, handoff 07
 
 **The two-second hold a trap announcement gets when a card fires it is proved by unit tests and by nothing

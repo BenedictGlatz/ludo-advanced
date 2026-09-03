@@ -3275,9 +3275,14 @@ to get wrong later.
 - **Why:** `prompt.css` lines 190 to 222 have answered "what does a pickable field look like" since
   2026-09-01, in the other direction: teal, with every non-offered field dimmed. D59 says violet with no
   dimming and explicitly rejects both of those by name. `prompt.css` loads later, so it wins. Landing the
-  package whole means no file is edited against its delivery, the board keeps a treatment that is already
-  coherent, and the one part of D59 with no competitor, the keyboard focus on a field, takes effect anyway
-  and closes the NFR-08 gap.
+  package whole means no file is edited against its delivery and the board keeps a treatment that is
+  already coherent.
+- **A correction to this block's own reasoning, made the same day.** The plan claimed the keyboard focus
+  was the one part of D59 with no competitor and would take effect regardless. It does not: the two
+  selectors have equal specificity and both are built from `box-shadow`, so `prompt.css` wins the focus
+  rule as well and a focused field is drawn exactly like an unfocused offered one. That makes **D61 a
+  blocker for the second half of NFR-08** rather than a preference, which is a change of status and is
+  corrected in `00-open-requests.md`. The keyboard reach itself works and shipped with issue #45.
 - **Rejected: deleting the conflicting rules from `prompt.css` so D59 takes effect.** The earlier rule
   covers the **pawn** as well as the field and D59 speaks only about the field, so this buys a violet field
   next to a teal pawn, and non-offered fields undimmed next to non-offered pawns dimmed. Reconciling those

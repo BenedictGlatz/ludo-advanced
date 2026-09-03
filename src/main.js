@@ -53,6 +53,13 @@
  * field violet with nothing dimmed, which handoff 07's D59 delivered. `prompt.css` loads later and wins,
  * so the D59 block is inert. Two specs answered one question in opposite directions, the loop had no way
  * to notice, and reconciling them is D61. See `01-Design/Handoff/08-brief-pickable-field.md`.
+ *
+ * **Moving `board-trap.css` later would not fix that and must not be tried.** The collision is between
+ * `prompt.css` and `board.css`, on `box-shadow` and `background`, at equal specificity, and it swallows
+ * D59's keyboard focus rule along with its fill. Reordering the imports to win it would silently take a
+ * design decision that D61 exists to ask, and it would move a file whose position `board-trap.css`
+ * depends on. `traps.spec.js` carries a case that asserts the current, wrong outcome and will go red the
+ * day D61 lands.
  */
 
 import $ from "jquery";

@@ -415,7 +415,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     piece and the message are the only evidence that your turn was taken away
   - **A pawn that slid on an Oil Spill wears a small tag** on its shoulder, as a reminder of why the
     field it stopped on handed it no card
-- **A field you can click is reachable from the keyboard and shows its focus** (NFR-08, design handoff 07)
+  Two things handoff 07 designed are **not** visible yet, and both are the same conflict: a field you can
+  click keeps the colour it had, and a field you have tabbed to still gives no sign of it. An earlier
+  stylesheet answers both questions and overrides the new one, so the two answers have gone back to the
+  designer as D61. Reaching a field with the keyboard works; seeing which one you have reached does not
 - **A trap set off by a card now holds the turn for two seconds** (design handoff 07). A trap sprung by
   your dice move already stayed on screen until the handover; one sprung by a card resolved in the middle
   of your turn and the game carried straight on, so the message could be gone before you read it. Two
