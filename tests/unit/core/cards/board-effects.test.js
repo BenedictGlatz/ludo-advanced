@@ -1,5 +1,5 @@
 /**
- * The eight cards that move pawns. Issue #38, requirements FR-26 and FR-29.
+ * The eight cards that move pawns. Issue #38, requirements FR-26 and FR-28.
  *
  * Split from `effects.test.js` at the seam the effects files themselves use: the cards there write a
  * modifier, a hand or a status, and the cards here move pawns or sweep several squares at once. Every
@@ -110,7 +110,7 @@ describe("Let Him Cook rolls a D12 and runs", () => {
   });
 
   /**
-   * Where the artwork's `RISKY` label lives. `displace` alone would clamp at `HOME_R`, which would make
+   * Where the artwork's `RISKY` label lives. A bare clamp at `HOME_R` would make
    * this a free win for any pawn near home, so the overshoot is checked in the card and costs the lap.
    *
    * Deliberately harsher than FR-13, which merely refuses an overshooting move: a move the player chose

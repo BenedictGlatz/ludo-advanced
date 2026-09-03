@@ -220,7 +220,7 @@ planning chapter describes, so the gap between it and the executed sprint has to
 | 42 | Online Multiplayer & Lobby System | 13 | Todo |
 | 43 | LLM-Powered Bot API Integration | 8 | Todo |
 | 44 | Expanded Skill Card Set | 3 | Todo |
-| 45 | Trap Card System & Tile Trigger Logic | 5 | Todo |
+| 45 | Trap Card System & Tile Trigger Logic | 5 | In Progress, committed 2026-09-03 on its feature branch |
 | 46 | Classic vs. Custom Game Modes (Rule Toggles) | 5 | Todo |
 
 > **The epic in row 39 was renamed on 2026-09-01**, from *UI / UX, Audio & Game State*, when audio was
@@ -357,6 +357,7 @@ available cut. **That is no longer what the board says**, see point 1 above.
   | 2026-09-01 | #39 (epic) | The 36 card illustrations extracted from the artboard, players named on screen, and the language switch put in the chrome |
   | 2026-09-01 | #35 (2) | The HUD: whose turn it is in words, and each seat's pawn and card counts |
   | 2026-09-01 | #41 (5) | The menu, match setup, handover, pause, win and restart flow, with no page reload |
+  | 2026-09-03 | #45 (5) | The trap rules brought back to the rulebook after three had drifted, a chain reaction and one choke point for entering a square, traps and pawn statuses in the DOM, the announcement, placement limits, keyboard picking of a field, the first trap end-to-end coverage, and design brief 07 sent. **The first `could have` delivered**, and it cost well over its 5 points: eight Product Owner decisions turned a finish-the-mechanic issue into three new mechanics |
 
   **The lesson is about when, not whether.** Every one of these has its facts recorded somewhere; what was
   missing was the sequence, and the sequence is the only thing a chapter note cannot reconstruct. The two

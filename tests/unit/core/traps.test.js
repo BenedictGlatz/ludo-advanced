@@ -1,5 +1,5 @@
 /**
- * Objects that sit on a square. Issue #38, requirement FR-29.
+ * Objects that sit on a square. Issue #38, requirements FR-28 and FR-30.
  *
  * The interesting cases are the two exclusions: a trap does not fire under its owner's own pawn, and a
  * blocker is not a trap even though it is in the same list.

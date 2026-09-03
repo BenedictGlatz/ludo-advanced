@@ -1,5 +1,5 @@
 /**
- * The five cards that move a pawn without a move. Issue #38, requirements FR-26 and FR-29.
+ * The five cards that move a pawn without a move. Issue #38, requirements FR-26 and FR-28.
  *
  * Pure `core/`: every function takes a snapshot and returns a patch. See
  * [../context.js](../context.js) for both shapes.
@@ -8,7 +8,6 @@
  *
  * They all write `pawns`, and none of them goes through `evaluateTurn`. A pawn shoved by Yeet is not
  * making a move: nobody chose it, no legality was checked, and its owner cannot refuse it.
- * `core/displacement.js` is the blunt instrument that does it, and it carries the reason it is blunt.
  *
  * | Card | Type | What it does |
  * | --- | --- | --- |
@@ -18,20 +17,36 @@
  * | Ghost Mode | Reaction | The capture about to happen does not happen |
  * | Uno Reverse | Reaction | The capture happens to the attacker instead |
  *
+ * ## The three that move a pawn along the track now go through `shove` (issue #45)
+ *
+ * They used to call `displace` directly, which clamps a position and checks nothing else. FR-30 says a
+ * trap fires when a pawn **enters** a tile, and these three enter tiles, so they fired nothing. Yeet's
+ * own printed text says "or forward onto a trap, if you're feeling mean", which the game could not do.
+ *
+ * `shove` in `core/enter.js` is the choke point. Going through it means all three now stop before a
+ * boulder, resolve a capture on the square they land on, and set off whatever they crossed. So a patch
+ * from these three names three fields rather than one, which is harmless: a patch replaces a whole list
+ * from the same snapshot, so an unchanged `traps` is identical to omitting it.
+ *
+ * ## The two that send a pawn home still do not, and that is the exception
+ *
+ * `letHimCook`'s overshoot and both Reaction cards call `sendHome`, which never reaches the choke point.
+ * A start area is not a tile, so a captured or crashed pawn sets off nothing on its way there. The rule
+ * is implemented by the two paths being **separate functions** rather than by a condition inside one, so
+ * there is no flag anybody can pass wrongly.
+ *
  * ## The backwards floor is the same for all of them
  *
- * `displace` stops at `r = 1` and never re-enters a start area, which is a decision recorded in the
+ * The clamp stops at `r = 1` and never re-enters a start area, which is a decision recorded in the
  * project journal: if a pushback could send a pawn home, all three of these would be cheap substitutes
  * for a capture, and capture is the mechanic the whole game is built around.
- *
- * The two cards that **do** send a pawn home say so and call `sendHome`. That is a different function
- * for exactly that reason.
  */
 
 import { HOME_R, START_R } from "../../board.js";
 import { rollDie } from "../../dice-source.js";
-import { displace, sendHome } from "../../displacement.js";
-import { pawnIn } from "../context.js";
+import { sendHome } from "../../displacement.js";
+import { shove } from "../../enter.js";
+import { pawnIn, worldIn } from "../context.js";
 
 /** The die Yeet rolls, and the one Let Him Cook rolls. The artwork's numbers. */
 export const YEET_DIE = 6;
@@ -53,7 +68,7 @@ export const HEAD_OUT = Object.freeze({ ADVANCE: "advance", RETREAT: "retreat" }
 export function yeet(context) {
   const steps = rollDie(YEET_DIE, context.rng);
 
-  return { pawns: displace(context.pawns, context.target.pawn, -steps) };
+  return shove(worldIn(context), context.target.pawn, -steps);
 }
 
 /**
@@ -72,11 +87,9 @@ export function headOut(context) {
 
   if (pawn === undefined || pawn.r === START_R) return {};
 
-  if (context.target.choice === HEAD_OUT.RETREAT) {
-    return { pawns: displace(context.pawns, ref, 1 - pawn.r) };
-  }
+  const steps = context.target.choice === HEAD_OUT.RETREAT ? 1 - pawn.r : HEAD_OUT_STEPS;
 
-  return { pawns: displace(context.pawns, ref, HEAD_OUT_STEPS) };
+  return shove(worldIn(context), ref, steps);
 }
 
 /**
@@ -102,7 +115,7 @@ export function letHimCook(context) {
     return { pawns: sendHome(context.pawns, ref) };
   }
 
-  return { pawns: displace(context.pawns, ref, steps) };
+  return shove(worldIn(context), ref, steps);
 }
 
 /**

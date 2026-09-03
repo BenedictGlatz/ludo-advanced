@@ -33,6 +33,7 @@ import {
   entrySquare,
   turnOffSquare,
 } from "../core/board.js";
+import { applyBoardMarks } from "./board-marks.js";
 import { pawnCentre } from "./board-geometry.js";
 
 const SEATS = Array.from({ length: MAX_PLAYERS }, (_, seat) => seat);
@@ -53,7 +54,21 @@ export function motionMs($board, token, fallback) {
   return raw.endsWith("ms") ? value : value * 1000;
 }
 
-/** The 40 shared track fields, with the eight that belong to somebody marked. */
+/**
+ * The 40 shared track fields, with the eight that belong to somebody marked.
+ *
+ * `.square__trap` is the empty element design brief 07 asks for, and it is on **every** field from the
+ * moment the board is built, whether anything is standing there or not. Two reasons, and the second is
+ * the one that forced it:
+ *
+ * 1. **D10's contract.** `updateBoard` writes attributes and never creates an element, which is what
+ *    makes a CSS transition possible: a mark that is created when a trap appears has no previous state
+ *    to animate from. The span costs 40 empty elements and renders nothing without `[data-trap]`.
+ * 2. **Both pseudo-elements of `.square` are already taken.** `::before` is D27's skill diamond and
+ *    `::after` is the turn-off bar on squares 9, 19, 29 and 39, all four of which are legal trap
+ *    targets. There was no third layer to give the mark, which is the same situation `.pawn__mark`
+ *    solved for the piece in design handoff 06.
+ */
 function trackSquares() {
   const entries = new Map(SEATS.map((seat) => [entrySquare(seat), seat]));
   const turnOffs = new Map(SEATS.map((seat) => [turnOffSquare(seat), seat]));
@@ -64,7 +79,7 @@ function trackSquares() {
     if (entries.has(index)) $square.attr("data-entry-of", entries.get(index));
     if (turnOffs.has(index)) $square.attr("data-turnoff-of", turnOffs.get(index));
 
-    return $square;
+    return $square.append($("<span>", { class: "square__trap" }));
   });
 }
 
@@ -199,33 +214,14 @@ export function updateBoard($board, state) {
   // seat 2 and back to seat 0 between two polls. The turn number cannot go back.
   $board.attr("data-turn", state.turnNumber);
 
-  markSkillSquares($board, state.skillSquares);
+  // Everything that cards have put on the board: the skill squares, the objects standing on a field,
+  // the fields an aura protects, and the statuses stuck to a pawn. Moved out to `board-marks.js` in
+  // issue #45, which added three marks to the one that was here. The seam: this file renders the
+  // board's own shape, that one renders what has been put on it.
+  applyBoardMarks($board, state);
 
   const captured = state.pawns.filter((entry) => placePawn($board, entry));
   markCaptured($board, captured);
-}
-
-/**
- * Put `data-skill-square="true"` on the eight squares that hand out a card, and take it off the ones
- * that no longer do (FR-22).
- *
- * Rewritten on every update rather than only when the set changes, because a used-up square moves and
- * the two writes are one attribute each on 40 elements. Tracking what changed would be more code than
- * the work it saves.
- *
- * **Nothing on screen shows this yet.** The attribute is in the DOM contract of design handoff 03 and
- * the stylesheet that reads it does not exist: decision D27 of that brief is open, because skill
- * squares are meant to be purple and `--color-hint` already uses purple for a legal target square. A
- * square can be both at once, so which one wins is a design decision and not one this file may take.
- */
-function markSkillSquares($board, skillSquares) {
-  $board.find(".square--track").each(function markSquare() {
-    const $square = $(this);
-    const isSkillSquare = skillSquares.includes(Number($square.attr("data-square")));
-
-    if (isSkillSquare) $square.attr("data-skill-square", "true");
-    else $square.removeAttr("data-skill-square");
-  });
 }
 
 /**

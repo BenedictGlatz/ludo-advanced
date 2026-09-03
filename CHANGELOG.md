@@ -264,7 +264,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/e2e/skill-hand.spec.js`, eight cases covering the card flows a unit test cannot reach, including
   playing a card from the keyboard alone (NFR-08) and the page still fitting on one screen while the
   prompt is up
-- **All 29 skill cards now have their rule** (issue #38, FR-26, FR-28, FR-29). The last twelve needed
+- **All 29 skill cards now have their rule** (issue #38, FR-26 and FR-28). The last twelve needed
   three mechanics the board did not have: a pawn can be moved without making a move (Yeet, Aight Imma
   Head Out, Let Him Cook, Ghost Mode, Uno Reverse), objects can sit on a square and either fire or block
   (Banana Peel, Oil Spill, It's Not That Deep, Big Ah Rock), and a card can hit a run of squares at once
@@ -358,6 +358,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Banana Peel no longer sends a pawn home. It stuns it** (issue #45, FR-30). The pawn that walks into
+  one finishes its move and then loses its next turn, which is what the card in your hand has always
+  said and what the rulebook has always said. Only that pawn sits out: you still move your other three.
+  **The game gets easier as a result**, and that is a deliberate trade: sending a pawn home cost a full
+  lap, which made the cheapest trap in the game as harsh as a capture
+- **It's Not That Deep pushes you back one square, not a D6** (issue #45, FR-30). The card is named
+  after how small it is and it now behaves that way. It rolls no die at all, so the outcome is something
+  you can plan around
+- **It's Not That Deep also protects the ground around it**, which is the half of the card that was
+  printed on it but had never been built. While it lies there, an opponent's offensive card aimed within
+  three squares of it does nothing, which is seven squares of cover. The card is still spent: you could
+  not see the trap, and that is what the trap is for. The game says which card was cancelled, because
+  otherwise it looks exactly like a bug
+- **Big Ah Rock lasts three rounds instead of two, and it now knocks a pawn back** (issue #45, FR-30).
+  Dropping the boulder also shoves the nearest enemy pawn behind it three squares backwards, which is
+  the half of the card that was printed on it but had never been built. A pawn already standing on the
+  square the boulder lands on is still not moved
+- **A trap can now set off another trap.** If a trap pushes your pawn and the push crosses a second
+  trap, that one fires too, up to a limit of six in one chain. Two consequences a player will notice:
+  a push that lands on an opponent now **captures** it, and a push is **stopped** by a boulder instead
+  of sliding through it
+- **A trap card now offers only the squares it may actually be placed on** (issue #45, FR-30). Four of
+  the forty squares were never sensible targets and one of them was destructive: laying a trap on a
+  square that already held one silently deleted the first, which no card is supposed to be able to do.
+  A trap can no longer go on an occupied square, on a square a pawn is standing on, or on one of the
+  four squares where a player enters the track. Janky RPG is unaffected, because it fires at a square
+  rather than occupying one, so aiming it at an occupied square is the whole point of it
+- **Traps fire on any movement, not just on your dice move** (FR-30). Yeet, Aight Imma Head Out and Let
+  Him Cook can all push a pawn onto a trap now, which is what Yeet's own card text promises. A captured
+  pawn on its way home still sets off nothing
+- **The game now tells you when a trap goes off**, and who laid it (issue #45, FR-30). This matters most
+  for Banana Peel, which does not move your pawn at all: without a message the pawn would arrive exactly
+  where you aimed it and then silently be unable to move next turn. The message stays on screen for the
+  same four seconds a refusal does, so the handover screen cannot cover it before it is read. **It is
+  currently shown in the orange the game uses for "you cannot do that", which is the wrong colour**: a
+  trap going off is not something you did wrong. Design decision D55 is open against it, and the
+  alternative was leaving a Banana Peel eating turns in silence
+- **Every trap and blocker is public** (issue #45, FR-30). Whoever lays one, everyone at the table can see
+  where it is and whose it is. The rulebook's "face-down" It's Not That Deep is gone: four people share
+  one screen, so a hidden trap was never really hidden, and a trap nobody can see cannot be avoided,
+  which is the only thing that makes its protective aura a choice rather than a fine. Nothing is drawn on
+  the board yet, because that look is design decision D51 to D60; the information is in the page and the
+  game says so in words when one goes off
+- **A square on the board can now be picked with the keyboard alone** (NFR-08). No square was reachable
+  from the keyboard at all, which nobody noticed while a single card in 29 pointed at one. Four of the
+  five that do are the trap cards, so a keyboard player could not have played a trap
 - **Every player now has a shape as well as a colour, and the shape is on the pieces** (design handoff 06,
   NFR-12). Each seat's pawns carry a small ink badge: a circle, a triangle, a square or a diamond,
   matching the shape that seat already had on the scoreboard and in the top bar. It sits low on the piece
@@ -582,3 +628,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/e2e/pawn-leaves-start.spec.js` held a live "first movable pawn" locator across the two clicks that end a
   turn, so after the handover it was asserting against a different pawn that happened to also be at `r = 0`. It had
   been passing on timing
+- **Twelve files cited the wrong requirement.** Everything issue #38 built was labelled FR-29, which is the
+  *expanded* skill card set and belongs to issue #44. The trap requirement is FR-30 and the finished MVP card
+  set is FR-28. Corrected across seven source files, five test files and one changelog entry, and it is not a
+  blanket substitution: the traps now cite FR-30, the rest cite FR-26 and FR-28
+- **Two comments claimed the skill square was invisible**, which stopped being true on 2026-08-31 when design
+  decision D27 was answered and the teal diamond shipped. One was the doc comment on `markSkillSquares`, the
+  other a paragraph in documentation chapter 04. Both said the stylesheet reading the attribute did not exist
+- `src/core/cards/catalogue-extra.js` still said "no effect is implemented yet". All 29 cards have had a rule
+  since 2026-08-31
+- **Four card descriptions described the old rules**, in both languages (issue #45). Banana Peel said the
+  pawn "goes back to the start area", It's Not That Deep said "a D6", Big Ah Rock said "two rounds" and
+  nothing about the knockback, and Oil Spill said nothing about being stopped by a boulder. Every one now
+  says what the card does
+- **Three trap cards described the code rather than the game**, in both languages. Banana Peel said the
+  pawn "goes back to the start area", It's Not That Deep said "pushed back a D6", and Big Ah Rock said
+  "two rounds" and never mentioned its knockback at all. None matched the card the player is holding or
+  the rulebook, and each is corrected along with the rule it describes

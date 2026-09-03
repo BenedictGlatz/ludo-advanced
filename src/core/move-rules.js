@@ -35,11 +35,11 @@
  *    rejected as an invalid input; it is now an ordinary outcome with its own refusal reason.
  */
 
-import { HOME_R, START_R, absoluteSquare, isFinished, isSameSquare } from "./board.js";
+import { HOME_R, START_R, isFinished, isSameSquare } from "./board.js";
 import { captureTarget } from "./capture.js";
 import { squaresCrossed } from "./path.js";
-import { STATUS, hasStatus, statusesOfKind } from "./statuses.js";
-import { TRAP_KIND, isBlocker } from "./traps.js";
+import { STATUS, hasStatus } from "./statuses.js";
+import { TRAP_KIND, blockedSquares } from "./traps.js";
 
 /** The board with no card effects on it. Every match before issue #38 played on exactly this. */
 export const EMPTY_BOARD = Object.freeze({ statuses: [], traps: [] });
@@ -72,6 +72,8 @@ export const REFUSAL = {
   ALREADY_HOME: "move.refused.already-home",
   /** Hold Pawn: this pawn is out of the running for one turn. */
   HELD: "move.refused.held",
+  /** Banana Peel: this pawn walked into a trap and loses this turn. */
+  STUNNED: "move.refused.stunned",
   /** Lock In: this pawn's own player may not move it. */
   LOCKED: "move.refused.locked",
   /** A Rock or a Big Ah Rock stands somewhere on the way. */
@@ -83,26 +85,6 @@ export const REFUSAL = {
   /** The pawns are blocked for different reasons, so no single one describes the turn (FR-14). */
   NONE_AVAILABLE: "move.refused.none-available",
 };
-
-/**
- * Every absolute track square nothing may cross right now.
- *
- * Two sources, and they are stored differently on purpose. A Big Ah Rock is an entry in `traps` with a
- * square of its own. A Rock is a **status on a pawn**, so its square is wherever that pawn happens to
- * be standing this instant. Storing the Rock's square would be storing a copy of a pawn position that
- * goes stale the moment the pawn walks, which is exactly the kind of quiet duplication the state layer
- * is built to avoid.
- */
-export function blockedSquares(pawns, board) {
-  const fromTraps = board.traps.filter((trap) => isBlocker(trap.kind)).map((trap) => trap.square);
-
-  const fromRocks = statusesOfKind(board.statuses, STATUS.ROCK)
-    .map((status) => pawns.find((p) => p.player === status.player && p.pawn === status.pawn))
-    .filter((pawn) => pawn !== undefined && pawn.r > START_R && pawn.r <= 40)
-    .map((pawn) => absoluteSquare(pawn.player, pawn.r));
-
-  return [...new Set([...fromTraps, ...fromRocks])];
-}
 
 /**
  * Another pawn of the same player standing where this one wants to land, or `null`.
@@ -177,6 +159,12 @@ export function evaluatePawn(pawns, mover, roll, dieMax, board = EMPTY_BOARD) {
   if (hasStatus(board.statuses, STATUS.HELD, mover)) {
     return { pawn: mover.pawn, move: null, reason: REFUSAL.HELD };
   }
+  // Banana Peel. Same shape as Hold Pawn on purpose: one pawn drops out and the other three are
+  // untouched. A separate reason rather than reusing HELD, because the player needs to know a trap did
+  // it: Hold Pawn is something an opponent played at them, a stun is something they walked into.
+  if (hasStatus(board.statuses, STATUS.STUNNED, mover)) {
+    return { pawn: mover.pawn, move: null, reason: REFUSAL.STUNNED };
+  }
   if (hasStatus(board.statuses, STATUS.LOCKED, mover)) {
     return { pawn: mover.pawn, move: null, reason: REFUSAL.LOCKED };
   }
@@ -239,5 +227,15 @@ export function applyRagebait(moves, board) {
   return taunted.length > 0 ? taunted : moves;
 }
 
-/** Re-exported so callers reading traps and movement together have one import. */
-export { TRAP_KIND };
+/**
+ * Re-exported so callers reading traps and movement together have one import.
+ *
+ * `blockedSquares` joined this line in issue #45, when it moved into `traps.js`. It answers "what is on
+ * which square", which is that module's whole subject, and its own comment was already entirely about
+ * how the two sources are stored. Moving it also let `core/slide.js` ask about blockers without a
+ * displacement module having to depend on the move rules.
+ *
+ * The re-export is not politeness: `tests/unit/core/move-rules.test.js` imports it from here, and a
+ * pure move is one that leaves its callers and its tests untouched.
+ */
+export { TRAP_KIND, blockedSquares };

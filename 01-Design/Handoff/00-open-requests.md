@@ -2,7 +2,38 @@
 
 **From:** Claude Code
 **To:** Claude Design
-**Date:** 2026-09-01, **updated the same evening, and again 2026-09-02**
+**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02**
+
+---
+
+## Status on 2026-09-02, late: one brief is out again
+
+**[07-brief-trap-marker.md](07-brief-trap-marker.md) was sent for issue #45.** The loop was empty for a
+few hours and is not any more. D51 to D60 are open and are in the table in § 4.
+
+| Brief | Owes | State |
+| --- | --- | --- |
+| [07-brief-trap-marker.md](07-brief-trap-marker.md) | `07-spec-trap-marker.md`, plus amendments to `board.css`, `pawn.css` and `refusal.css` | **Open.** Sent 2026-09-02 |
+
+**What it is about.** The trap mechanic shipped with epic #38 on 2026-08-31 and not one file under
+`src/ui/` reads `state.traps`, so the game has been enforcing rules the player cannot see. Issue #45
+rebuilds those rules to match the Game Design Document and makes every trap and blocker public with its
+owner shown, which turns an invisible rule into a rendering job with ten open looks in it.
+
+**It blocks no requirement.** FR-30 is a `could have`, so this is the first brief since 02 that is about a
+preference rather than a requirement. Brief 06 closed the last requirement-blocking item.
+
+**Two of the ten are worth more than the rest, and the brief says so.** **D55** is what a trap firing looks
+like, and it carries a deviation that is already shipping: the announcement goes into the D9 refusal strip,
+which is painted in `--color-warn`, the colour reserved for "you cannot do that". A trap going off is not a
+refusal. The alternative was leaving a Banana Peel silently eating a player's turn, and `CLAUDE.md` forbids
+this side from inventing a third treatment, so it shipped wrong on purpose and D55 fixes it. **D59** is what
+a pickable field looks like: `[data-pickable]` on a field is styled by nothing today, no field is reachable
+from the keyboard at all, and four of the five field-targeting cards are the trap cards.
+
+**Everything else about #45 ships without waiting.** All the attributes in the brief's § 3 go into the DOM
+unstyled, along with the announcement text and a full Playwright suite that asserts them. That is the D27
+precedent on purpose: markup now, stylesheet when the spec lands.
 
 ---
 
@@ -102,6 +133,7 @@ loop needs an index or something gets quietly dropped, and something already had
 | 04 HUD, menus and handover | [04-brief](04-brief-hud-menus-and-handover.md) | [04-spec](04-spec-hud-menus-and-handover.md) | **Closed.** Landed 2026-09-01. D16 answered for the page furniture, not for the pawn |
 | 05 Dice card pool overlay | [05-brief](05-brief-dice-pool-overlay.md) | [05-spec](05-spec-dice-pool-overlay.md) | **Closed.** Landed 2026-09-02. D43 to D47; D46 answered inside D42 |
 | 06 The seat mark on the pawn | [06-brief](06-brief-pawn-mark.md) | [06-spec](06-spec-pawn-mark.md) | **Closed.** Landed 2026-09-02. D48 to D50, and D16 with them |
+| 07 Traps, blockers and pawn statuses | [07-brief](07-brief-trap-marker.md) | *none yet* | **Open.** Sent 2026-09-02 for issue #45. D51 to D60. Blocks no requirement: FR-30 is a `could have` |
 
 **The 02 row is the one worth reading twice.** A brief with no spec is not a brief that was declined, it is
 a brief nobody closed, and one of its eight open items (D16) is the only design question in this project
@@ -210,12 +242,23 @@ deliver the 06 spec.** It is fifteen lines and it closes a requirement.
 | ~~**D48**~~ | Size and placement of the seat mark on the pawn, and what happens to the eyes of D14 | 06 | **Closed.** 38 % of the piece, low on the disc, ink, and the creature is unchanged |
 | ~~**D49**~~ | The mark through the five pawn states: selected at 1.14, captured at 0.82 and 70 %, movable loop, focus, reduced motion | 06 | **Closed.** It takes part in none of them, which is a decision with the capture state's 2.16:1 named as its cost |
 | ~~D50~~ | What happens to the luminance-only measurement in `greyscale.spec.js` once the shape is on the piece: retire, keep as a weaker check, or re-spread the palette as well | 06 | **Closed. Retired**, the four-different-greys case kept as the palette floor, and the 1.146 figure moved into the notes |
+| **D51** | What a trap looks like on a field. Three kinds, one shape language or three | 07 | No |
+| **D52** | How a blocker reads differently from a trap. Confirms or replaces `data-trap="blocker"`, which spec 01 § 5 predicted as `data-blocked="true"` | 07 | No |
+| **D53** | Whether and how the owning seat is shown on a 1-cell field, given that NFR-12 forbids colour alone | 07 | No, but the answer must keep `greyscale.spec.js` green |
+| **D54** | How three marks on one field coexist: trap, D27's skill diamond, D7's legal-target ring | 07 | No |
+| **D55** | What a trap firing looks like, and what the announcement is. **The one that fixes a deviation already shipping**: the announcement is currently in the refusal orange, and a trap going off is not a refusal | 07 | No, but it is a live defect rather than a preference |
+| **D56** | How a stunned pawn reads. The first status mark on a pawn in the project | 07 | No |
+| **D57** | How the Oil Spill `SLIPPERY` status reads. Answerable with D56 | 07 | No |
+| **D58** | Whether the It's Not That Deep aura is drawn, and how. Seven contiguous fields | 07 | No |
+| **D59** | What a pickable field looks like, and its keyboard state. Also answers the third unnumbered leftover below, asked for a field | 07 | Indirectly: NFR-08, since no field is keyboard-reachable today |
+| **D60** | Whether a trap announcement gets a hold token, and whether the game waits for a mid-turn one. D20 is the precedent | 07 | No |
 
 Four more items are open from spec 03 § 5 and brief 04 § 5.1 and are not numbered: what the reaction
 countdown looks like, whether the prompt strip belongs at the foot or in the rail, how a pickable pawn
 differs from a movable one, and what an **empty hand slot** looks like. The last one is visible in any
 screenshot of a hand holding one card and currently renders as a blank card, which is neither of the two
-answers the existing specs give.
+answers the existing specs give. The third is now asked properly as **D59**, for a field rather than for a
+pawn, because issue #45 makes four of the five field-targeting cards trap cards.
 
 ---
 

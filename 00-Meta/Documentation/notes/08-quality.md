@@ -1158,6 +1158,175 @@ Written and locally verified on 2026-09-02: gates 1 to 4 green on the `dev` merg
 chromium and firefox. **What the CI run itself proved is recorded below once it has actually run**, and
 until then this section claims nothing about the runner.
 
+### A rule change destroyed a test that had nothing wrong with it: 2026-09-02, issue #45
+
+Eight cases went red when the trap rules were rebuilt, all of them predicted before the work started.
+Seven were ordinary: an assertion named the old behaviour, the behaviour changed, the assertion was
+rewritten. **The eighth is the one worth the report**, and it is a kind of test failure this project had
+not met before.
+
+`move-resolution.test.js` has one case whose whole purpose is to prove the **step order** inside
+`resolveMove`: the pawn arrives, then a trap fires and can move it again, and only then is the square it
+is *actually standing on* asked whether it hands out a card. Chapter 05 calls that order a rule, and it
+is invisible in nearly every other test, because a trap and a skill square rarely meet. So this case put
+them in each other's way on purpose: the pawn walked onto skill square 14 and a Banana Peel on square 12
+knocked it home before it could collect.
+
+**The test was correct, valuable, well commented, and it stopped testing anything.** Banana Peel now
+stuns instead of sending the pawn home, and a stun does not move the pawn. So the pawn would have landed
+on the skill square and collected the card, and the assertion `skillHands[0]).toEqual([])` would have
+failed for a reason that had nothing to do with the step order. Worse, the plausible "fix" is to change
+the expected hand to contain the card, which would leave the file with a green test whose comment claims
+it proves an ordering it no longer touches.
+
+It was rebuilt with It's Not That Deep, whose pushback still moves the pawn off where it landed, so the
+ordering is demonstrated again. The rewritten case carries a paragraph saying what happened, because the
+next person to change a trap rule will hit exactly this.
+
+**Two lessons, and the second is the uncomfortable one.**
+
+1. **A test can be destroyed by a rule change that has nothing to do with what it was testing.** The
+   step order did not change. Only the fixture's ability to demonstrate it did. Nothing in a green or red
+   signal distinguishes that from an ordinary expectation change.
+2. **The dangerous direction is the one where the test still passes.** Had Banana Peel been changed to
+   something that moved the pawn *slightly* rather than not at all, this case would have gone green with
+   a fixture that no longer put a trap and a skill square in each other's way, and nobody would have
+   looked. The only defence is that the comment above it says what the case is *for*, in words, so a
+   reader can check the fixture against the intent. That is an argument for the comment density this
+   codebase uses, from a case where it actually paid.
+
+#### Where the trap tests live now
+
+`fireTrap` moved to `core/trap-fire.js` and its tests moved with it, into
+`tests/unit/core/trap-fire.test.js`.
+The walk it sends a pawn on is a separate file, `tests/unit/core/enter.test.js`, and the two are split
+along the same seam as the source: one asserts the **decision** a trap makes, the other asserts where the
+pawn **ends up**. That is the split `notes/05` already records for the status cards, where the effect test
+asserts the status is written and `move-rules.test.js` asserts it stops a pawn. It exists so that a
+failure says which of the two halves is wrong.
+
+`cards/trap-effects.test.js` keeps the placement half and shrank accordingly. Two new files rather than
+growth in the old ones, and that was not a stylistic choice: `intents-cards.test.js` is close enough to
+the 300-line NFR-02 limit that it cannot take a case, and the same is true of
+`cards/effects.test.js`.
+
+#### One inverted assertion, which is the good kind
+
+`trap-effects.test.js` had a case named "does nothing at all for a blocker, and leaves it standing". It
+now reads `expect(() => ...).toThrow()`. The old behaviour was a `switch` whose `default:` returned
+everything untouched, which is correct for a blocker and also swallowed a missing rule for any future
+trap kind in complete silence. **A test that asserted a silent no-op was locking in the thing that made
+the silence possible.** Chapter 05 has the rest.
+
+### The coverage report found dead code that a green suite and a line count both missed: 2026-09-02, issue #45
+
+Worth its own entry because it is the first time in this project that a coverage percentage found
+something rather than merely recording something.
+
+**What happened.** Issue #45 added `core/slide.js`, a push that respects blockers and resolves
+captures, and the plan was that `displace` in `core/displacement.js` would stay as the blunt push the
+five displacement cards used. After the last card was routed through the new path, `npm run
+test:coverage` reported `displacement.js` at **60 per cent lines**, with the body of `displace` as the
+only gap, on a file that had barely been edited.
+
+**Why nothing else would have caught it.** The suite was green, because a function nobody calls breaks
+no test. `npm run lint` was clean, because an exported function with no importer is not an unused
+variable. The 300-line check was happy, because the file got smaller. And a grep for the name returned
+plenty of hits, all of them in prose: the module headers and four test comments all mentioned
+`displace` as the thing `slide.js` was being contrasted with, which reads exactly like a live
+reference.
+
+**Two things this says about the setup, and they point in opposite directions.**
+
+- The `all: true` setting in `vitest.config.js` is what made this visible. Its comment says it exists
+  so that "a module nobody tested is simply absent from the report" cannot happen. That was written
+  about untested files; it turns out to catch unreachable ones too.
+- **A directory-level floor would have hidden it.** `src/core/` as a whole never dropped below 98 per
+  cent, so the 80 per cent threshold NFR-05 asks for was never close to failing. The number that
+  mattered was the per-file column, and the per-file table is the one the `text` reporter prints
+  **empty** on this setup, which is the defect already recorded further up this chapter. It was read
+  out of `coverage/coverage-summary.json` instead.
+
+**What was done about it** is in chapter 05 and the journal: `displace` was deleted, `PUSHBACK_FLOOR`
+and `sendHome` stayed. `src/core/` came out at 99.51 per cent lines afterwards with every function
+covered, and the figures go in chapter 09 next to the command that produced them.
+
+### The first end-to-end coverage of a trap, and the bug it found on its first run: 2026-09-03, issue #45
+
+Two new spec files, `traps.spec.js` and `trap-fires.spec.js`, plus `trap-helpers.js`. There had been no
+trap coverage at all: the one `grep -i trap` hit in `tests/e2e/` was the word used figuratively in a
+comment.
+
+#### `?stack=`, and why a seed could not do the job
+
+Every existing spec reaches its situation by seed. That could not work here. A trap card is 4 ids out of
+29, and the flow needs **two** turns to line up: one seat lays the trap, a different seat walks over it.
+`skill-hand.spec.js`'s answer to the odds, assert the mechanism and skip when the shuffle dealt
+something else, cannot cover a two-turn sequence.
+
+Pinning a seed is worse, and `scripts/find-seeds.js` says why in its own header: it never plays a card,
+"because a card played here would change what the RNG is spent on and every seed with it". It cannot
+search for a seed whose shuffle deals a named card, and the seeds it does find have gone stale three
+times already.
+
+`?stack=` is a comma-separated list of card ids that becomes the skill pool. It changes no rule:
+`startMatch` has accepted a stacked pool since issue #38 and its comment already recorded that no
+production caller passed one. Same category as `?seed=` and `?fast=1`, read in `main.js` and nowhere
+else. **Rejected:** exposing `dispatch` on the game loop so Playwright could place a trap directly. A
+test that dispatches into `state/` is not testing a player-facing flow, and it would add a production
+API that exists only for tests.
+
+**One property of the stack that cost a failing test to learn:** it *replaces* the pool, and
+`drawSkillCard` picks a random eligible card out of whatever is there. A stack of two different ids
+therefore makes the first draw a coin flip. The spec that needs a second trap card stacks two copies of
+the same id, which is also what the real pool holds of every card.
+
+#### The two specs are one seam apart
+
+`traps.spec.js` covers **laying** an object and seeing it: one turn, one click. Only the legal 36
+fields are offered, the object and its owner are in the DOM, a blocker reads as a blocker, an occupied
+field is refused, Janky RPG still gets all 40, the object survives the turn passing to another seat, a
+field can be picked from the keyboard, and the tab order is clean afterwards.
+
+`trap-fires.spec.js` covers a trap **going off**, which takes a match played until somebody walks into
+it. It was split off when the first file reached the 300-line limit, and the seam is real: one file
+asserts a click, the other drives a match.
+
+#### The hardest assertion in the suite so far, and why the driving helpers could not make it
+
+Under the new rules a Banana Peel does not move the pawn. Proving it fired means proving something
+about a board that looks exactly like a board where nothing happened. Three things have to hold
+together: the object is gone from the field, the pawn carries `stunned`, and the strip says so.
+
+The third is the one the existing helpers cannot reach. The announcement is a turn-level field, wiped
+when the turn passes, and `playTurn` and `playUntil` both wait past the turn before handing control
+back. By the time either returns the message is gone. `playUntilTrapFires` in `trap-helpers.js` drives
+the four phases itself and reads the strip **straight after the move**, which is the one moment the
+message exists. `waitPastTurn` was exported from `helpers.js` to make that possible.
+
+**Getting the trap to fire at all took a diagnostic run.** With four players, three other seats each
+wait for the die's maximum to leave the yard, and sixty turns went by without one of them crossing the
+trap. Two players halve the turn cycle, and `capturesEarly` is the seed where both seats are on the
+track by turn 4. The spec still guards with `test.skip` for a match that ends first, because that is a
+property of the seed and not of the mechanic, and the skip says which happened.
+
+#### The bug the spec found on its first run
+
+The diagnostic run showed the trap consumed on turn 6 and the strip **empty**. The report was being
+produced by `core/enter.js`, carried through `trapChanges`, and dropped on the last step: `resolveMove`
+repacked three of the four fields by hand into a `board` object and left `trapFired` behind. The pawn
+list was right, the trap list was right, the status was right. The player was told nothing.
+
+**No unit test had caught it because every existing case asserted the board**, and the board was
+correct. Three regression cases now assert the field on the state `resolveMove` returns, including the
+winning-move branch, which returns early with an object of its own and would have lost the message on
+the one turn nobody gets to replay.
+
+The fix was also a small design correction: `trapChanges` used to short-circuit to `{}` on an empty
+trap list, which is why the caller could not simply spread its answer. It now returns the whole
+`{ pawns, statuses, traps, trapFired }` always, so `resolveMove` uses it as it stands. That kept
+`turn-manager.js` at exactly 300 lines, which it was already sitting on.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Communication
 
-!!IMPORTANT!! This project is being developed by 4th semester university students. Please adapt your language to this, so we can understand what you are trying to convey. There is no point in condensing information so that we cannot understand that.
+!!IMPORTANT!! This project is being developed by 4th semester university students. Please adapt your language to this, so we can understand what you are trying to convey. There is no point in condensing information so much that we cannot understand that.
 Please keep this in mind when answering questions or writing documentation.
 
 ## Tone & Readability

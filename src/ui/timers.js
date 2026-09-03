@@ -44,6 +44,44 @@
 export const REFUSAL_MIN_MS = 4000;
 
 /**
+ * How long to leave the finished turn on screen before the handover screen covers it.
+ *
+ * Moved out of `game-loop.js` in issue #45, and the seam is not the line count: **the loop decides
+ * *that* it waits, this module decides *how long*.** Every other named wait in the game was already
+ * here, and this was the last duration left in the loop.
+ *
+ * Three cases, longest first, because they are checked in order and a refusal outranks a report:
+ *
+ * 1. **A refusal** holds for `--motion-refusal-hold`, which is D20's answer: the strip stays until the
+ *    player's next action and at minimum for four seconds.
+ * 2. **A trap that went off, or a card an aura cancelled** get the same hold. This is new in issue #45
+ *    and it is the point of the whole announcement: a Banana Peel does not move the pawn, so if the
+ *    handover screen covers the board on the ordinary move timer, the only evidence that a turn was
+ *    taken away is gone before anybody reads it. It is exactly the argument D9 made for a refusal,
+ *    applied to something that happened rather than something that was refused.
+ * 3. **An ordinary move** waits `--motion-capture`, long enough for the piece to finish travelling.
+ *
+ * Both durations are read out of `tokens.css` rather than written here, so the design owns the numbers.
+ * `delays` lets a test override either without a stylesheet, and `REFUSAL_MIN_MS` is the fallback when
+ * no stylesheet has loaded at all.
+ *
+ * Whether a trap fired **mid-turn** by a card deserves a hold of its own is a separate question, and it
+ * is open as D60 of design brief 07. The loop carries straight on from the action phase today, so that
+ * announcement gets no guaranteed time on screen.
+ */
+export function holdAfterTurn(state, delays, readToken) {
+  if (state.refusalReason !== null) {
+    return delays.afterRefusal ?? readToken("--motion-refusal-hold", REFUSAL_MIN_MS);
+  }
+
+  if (state.trapFired !== null || state.nullifiedCard !== null) {
+    return delays.afterTrap ?? readToken("--motion-refusal-hold", REFUSAL_MIN_MS);
+  }
+
+  return delays.afterMove ?? readToken("--motion-capture", 320);
+}
+
+/**
  * A set of named timers.
  *
  * `window` is read from the caller's scope rather than injected, which is the same choice `game-loop.js`

@@ -75,12 +75,30 @@
       "overshoot": "The roll is too high: getting home needs the exact number.",
       "already-home": "This pawn is home and does not move again.",
       "held": "This pawn is being held and sits this turn out.",
+      "stunned": "This pawn slipped on a trap and sits this turn out.",
       "locked": "This pawn is locked in and may not be moved.",
       "blocked": "There is a rock in the way. Nothing gets past it.",
       "protected": "The pawn on that square is protected and cannot be captured.",
       "no-steps": "The roll came out at 0. Nobody moves this turn.",
       "none-available": "No move is possible with this roll."
     }
+  },
+  "trap": {
+    "owned": "{{object}}, laid by {{player}}",
+    "label": {
+      "banana-peel": "Banana Peel",
+      "oil-spill": "Oil Spill",
+      "not-that-deep": "It's Not That Deep",
+      "big-ah-rock": "Big Ah Rock"
+    },
+    "fired": {
+      "banana-peel": "{{player}} slipped on {{owner}}'s Banana Peel and sits the next turn out.",
+      "oil-spill": "{{player}} hit {{owner}}'s Oil Spill and slid {{squares}} squares on.",
+      "not-that-deep": "{{player}} stepped on {{owner}}'s It's Not That Deep and went back one square.",
+      "big-ah-rock": "{{owner}} dropped a Big Ah Rock, and {{player}} was knocked back three squares."
+    },
+    "nullified": "An It's Not That Deep was lying nearby and cancelled that card.",
+    "aura": "Protected by an It's Not That Deep"
   },
   "intent": {
     "rejected": {
@@ -120,6 +138,7 @@
       "own-pawn": "Choose one of your own pawns",
       "enemy-pawn": "Choose an opponent's pawn",
       "track-square": "Choose a square on the track",
+      "free-square": "Choose a free square on the track",
       "direction": "Forwards or backwards?",
       "number": "Name a number",
       "player": "Choose an opponent",

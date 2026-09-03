@@ -24,12 +24,10 @@
  * and draws a card is one new state object rather than three.
  */
 
-import { fireTrap } from "../core/cards/effects/trap-effects.js";
-import { squaresCrossed } from "../core/path.js";
+import { enterSquares } from "../core/enter.js";
 import { createSkillPool, drawSkillCard } from "../core/skill-pool.js";
 import { consumeSkillSquare, skillSquareLandedOn } from "../core/skill-squares.js";
 import { STATUS, expireStatuses, hasStatus } from "../core/statuses.js";
-import { firstTrapOnPath } from "../core/traps.js";
 
 /** How many cards a seat may play in one turn unless a card says otherwise (FR-23). */
 export const DEFAULT_CARD_BUDGET = 1;
@@ -116,36 +114,51 @@ export function skillSquareChanges(state, move, deps) {
 }
 
 /**
- * The trap part of resolving a move: nothing, or one trap going off under the pawn that walked into it.
+ * A `world` for `core/enter.js`: the three lists it may change, plus the three facts it reads.
  *
- * `state` here must already have the **moved** pawn list in it, because a trap acts on where the pawn
- * ended up and `displace` looks the pawn up by identity. `turn-manager.js` passes the post-move state
- * for exactly that reason.
- *
- * **The whole walk is checked, not just the destination.** That is the one exception to the rule the rest
- * of the project follows, and `core/cards/effects/trap-effects.js` carries the reason: a trap that only
- * fired on an exact landing would almost never fire, because a D20 crosses twenty squares and lands on
- * one. The skill squares work the other way round, on landing only, and that difference is deliberate.
- *
- * Only the **first** trap on the path fires. A move that crosses two Banana Peels sets off the near one
- * and stops there, which keeps one move from having two outcomes.
+ * Deliberately **not** next to `boardOf` in `game-state.js`, even though that is where the other
+ * state-to-core projection lives. This one needs `deps` for the RNG, and `game-state.js` mentions
+ * `deps` nowhere at all: putting the first `deps`-aware function into the state-shape module would
+ * cost that file its one clean property. Every function in this file already takes `deps`.
  */
-export function trapChanges(state, move, deps) {
-  if (state.traps.length === 0) return {};
-
-  const crossed = squaresCrossed(move.player, move.from, move.to);
-  const trap = firstTrapOnPath(state.traps, crossed, move);
-  if (trap === null) return {};
-
-  return fireTrap({
+function worldOf(state, deps) {
+  return {
     pawns: state.pawns,
     statuses: state.statuses,
     traps: state.traps,
-    trap,
-    mover: { player: move.player, pawn: move.pawn },
     turnNumber: state.turnNumber,
+    playerCount: state.playerCount,
     rng: deps.rng,
-  });
+  };
+}
+
+/**
+ * The trap part of resolving a move: nothing, or a trap going off under the pawn that walked into it.
+ *
+ * `state` here must already have the **moved** pawn list in it, because a trap acts on where the pawn
+ * ended up and the slide looks the pawn up by identity. `turn-manager.js` passes the post-move state
+ * for exactly that reason.
+ *
+ * **This function is now three lines and holds no rule at all**, which is the point of issue #45. It
+ * used to walk the path, pick the trap and fire it, from the one place in the project that did. All of
+ * that moved into `core/enter.js`, so that card-driven movement fires traps through the same code
+ * rather than through a second copy of it. FR-30 says a trap fires when a pawn *enters* a tile, and a
+ * rule spread over call sites is a rule that is only as complete as the list of them.
+ *
+ * **It always returns the whole board**, `{ pawns, statuses, traps, trapFired }`, even when no trap
+ * exists and nothing changed. It used to short-circuit to `{}` on an empty trap list, which saved a
+ * walk that `enterSquares` already skips for itself, and cost something real: `resolveMove` could not
+ * simply use the answer, so it repacked three fields by hand and silently dropped the fourth. The trap
+ * fired, the board was right, and the player was told nothing. Returning one shape always is what makes
+ * the caller a spread rather than a list of field names to keep in step.
+ */
+export function trapChanges(state, move, deps) {
+  return enterSquares(
+    worldOf(state, deps),
+    { player: move.player, pawn: move.pawn },
+    move.from,
+    move.to
+  );
 }
 
 /** How many cards `seat` may play this turn: one, unless a card has raised it (Double Dip). */

@@ -82,3 +82,19 @@ export function squareRun(square, direction, count) {
     (_, index) => (square + direction * (index + 1) + TRACK_LENGTH * (count + 1)) % TRACK_LENGTH
   );
 }
+
+/**
+ * The shortest way round the ring between two absolute squares, 0 to 20.
+ *
+ * It's Not That Deep nullifies offensive cards aimed "within 3 squares of it", and on a ring that has to
+ * mean the shorter of the two ways round: square 39 and square 2 are three apart, not thirty-seven.
+ * Subtracting the numbers would make the aura the wrong shape at exactly one place on the board, which
+ * is the sort of bug that shows up once in fifty matches and is never reproduced.
+ *
+ * The maximum is 20, half the ring, because past that the other way round is shorter.
+ */
+export function ringDistance(a, b) {
+  const gap = Math.abs(a - b) % TRACK_LENGTH;
+
+  return Math.min(gap, TRACK_LENGTH - gap);
+}

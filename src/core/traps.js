@@ -1,5 +1,5 @@
 /**
- * Things that sit on a square rather than on a pawn. Issue #38, requirement FR-29.
+ * Things that sit on a square rather than on a pawn. Issue #38, requirements FR-28 and FR-30.
  *
  * Pure `core/`: no DOM, no state object, no randomness.
  *
@@ -21,8 +21,9 @@
  * Big Ah Rock is stored here: it is dropped on a square and stays there on its own. **Rock is not.**
  * Rock turns one of your own pawns into a blocker, so the blocked square moves when the pawn moves,
  * and storing a square would be storing a copy of the pawn's position that goes stale the moment it
- * walks. `blockedSquares` therefore takes both: the entries in this list, and the squares that pawns
- * carrying the Rock status are standing on right now.
+ * walks. `blockedSquares`, below, therefore takes both: the entries in this list, and the squares that
+ * pawns carrying the Rock status are standing on right now. It is the one function here that reads
+ * pawns, and it is why this module imports `board.js` and `statuses.js` at all.
  *
  * ## The shape of an entry
  *
@@ -37,6 +38,9 @@
  * - `until` is a turn number, or `null` for "until something steps on it". Big Ah Rock is the one
  *   entry with a deadline; the three traps wait as long as it takes.
  */
+
+import { START_R, TRACK_LENGTH, absoluteSquare } from "./board.js";
+import { STATUS, statusesOfKind } from "./statuses.js";
 
 /** What a square can be holding. One per square, never two. */
 export const TRAP_KIND = Object.freeze({
@@ -59,11 +63,45 @@ export function isBlocker(kind) {
 }
 
 /**
+ * Every absolute track square nothing may cross right now.
+ *
+ * Two sources, and they are stored differently on purpose. A Big Ah Rock is an entry in this list with
+ * a square of its own. A Rock is a **status on a pawn**, so its square is wherever that pawn happens to
+ * be standing this instant. Storing the Rock's square would be storing a copy of a pawn position that
+ * goes stale the moment the pawn walks, which is exactly the kind of quiet duplication the state layer
+ * is built to avoid.
+ *
+ * Lived in `move-rules.js` until issue #45 and is re-exported from there, so no caller changed. It
+ * belongs here because it answers "what is on which square", which is this module's subject, and
+ * because `core/slide.js` needs it: a displacement module depending on the move rules would have been
+ * the wrong way round.
+ */
+export function blockedSquares(pawns, board) {
+  const fromTraps = board.traps.filter((trap) => isBlocker(trap.kind)).map((trap) => trap.square);
+
+  const fromRocks = statusesOfKind(board.statuses, STATUS.ROCK)
+    .map((status) => pawns.find((p) => p.player === status.player && p.pawn === status.pawn))
+    .filter((pawn) => pawn !== undefined && pawn.r > START_R && pawn.r <= TRACK_LENGTH)
+    .map((pawn) => absoluteSquare(pawn.player, pawn.r));
+
+  return [...new Set([...fromTraps, ...fromRocks])];
+}
+
+/**
  * A new list with one object placed, replacing whatever was on that square.
  *
- * Replacing rather than refusing, because the refusal belongs one layer up: `state/` will not let a
- * player target a square that is already taken, and by the time a rule gets here the question is
- * settled. Two objects on one square is the situation this makes impossible.
+ * Replacing rather than refusing, because the refusal belongs one layer up. Two objects on one square is
+ * the situation this makes impossible, whatever the layers above do.
+ *
+ * **This comment used to claim the refusal already existed, and it did not.** Until issue #45 it said
+ * that "`state/` will not let a player target a square that is already taken", while `checkTarget`'s
+ * entire test for a track square was that the number was between 0 and 39. So a player could lay a trap
+ * on top of an existing one and this function would silently delete it.
+ *
+ * It is true now: `core/trap-rules.js` holds the three placement rules and `state/card-legality.js`
+ * enforces them through the `FREE_SQUARE` target kind. Worth leaving the history in, because the bug was
+ * not the missing check. It was a comment describing a guarantee that another layer was supposed to
+ * provide and that nothing checked either layer for.
  */
 export function placeTrap(traps, trap) {
   return [...traps.filter((entry) => entry.square !== trap.square), trap];

@@ -136,6 +136,8 @@ describe("clearedTurnFields", () => {
       reactionsLocked: false,
       reactionWindow: null,
       pendingCard: null,
+      nullifiedCard: null,
+      trapFired: null,
     });
   });
 

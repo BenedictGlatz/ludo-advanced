@@ -417,6 +417,123 @@ The handover overlay names the player it is passing to, and it has to name the s
 about to hand the turn to. A second walk over `state.seats` in `ui/` would be a second answer to the same
 question, and the two would disagree the first time turn order changes.
 
+### `trapChanges` lost its rule and kept its signature: 2026-09-02, issue #45
+
+The trap check used to live here in full: this layer walked the path, picked the trap and fired it. All
+of that moved into `core/enter.js`, and what is left is three lines that hold no rule at all.
+
+**Why it moved.** FR-30 says a trap fires when a pawn *enters* a tile, and this was the only place that
+checked. So a trap fired for a dice move and for nothing else, and four cards that move pawns fired
+none. Chapter 05 has the finding; the state-layer half of it is that **`state/` had been holding a rule,
+which it is not supposed to do.** `skill-turn.js`'s own header says it "holds no rules: every question is
+asked of `core/` and the answer is written into a changes object". That was true of the other four
+functions in the file and had quietly stopped being true of this one.
+
+**The signature and the return shape are deliberately unchanged**, and the reason is a line count.
+`turn-manager.js` was at exactly 300 lines, the NFR-02 limit. Keeping `trapChanges(state, move, deps)`
+answering the same `{ pawns, statuses, traps }` meant `resolveMove` needed no edit, so the file that had
+no room did not need any. Worth noting as a technique: **an interface kept stable on purpose is what
+lets a refactor stop at the module that needed it.**
+
+**One fact most likely to be forgotten later:** a trap now fires from **two** call sites where there was
+one. `resolveMove` for a dice move, and the card-driven path for Yeet, Aight Imma Head Out and Let Him
+Cook. Both go through `core/enter.js`, which is the point, but anybody adding a third way to move a pawn
+has to route it through there too or it will silently fire nothing.
+
+#### `worldOf` is here and not next to `boardOf`
+
+`core/enter.js` wants six fields: the three lists it may change, plus `turnNumber`, `playerCount` and
+`rng`. That projection is called a `world`, and it is a superset of the `{ statuses, traps }` pair the
+movement rules already call a `board`, so it can be handed straight to `slidePawn` with no repacking.
+
+It lives in `skill-turn.js` rather than in `game-state.js` next to `boardOf`, which is where the other
+state-to-core projection sits. The reason is `deps`: a world needs the injected RNG, and
+**`game-state.js` mentions `deps` nowhere at all.** Putting the first `deps`-aware function into the
+state-shape module would cost that file its one clean property, and every function in `skill-turn.js`
+already takes `deps`. Rejected alternative: `boardOf(state, deps)`, which would have made every existing
+caller pass something none of them has.
+
+#### The step order inside `resolveMove` is now four things, not three
+
+1. the pawn arrives, and a captured pawn goes home
+2. a trap it walked into goes off
+3. **that trap's push resolves its own capture and can set off one more trap**, up to the chain limit
+4. the square the pawn is *actually standing on* is asked whether it hands out a card
+
+Step 3 is new and step 4 is why the order still matters: the skill square is asked last, about the
+position the pawn really ended on, which is read back off the pawn list rather than off the move. A
+chain can move the pawn several times, so reading it off the declared move would be wrong in a new way
+that it was not wrong before.
+
+### `skill-play.js` split at a seam that had been visible for two days: 2026-09-02, issue #45
+
+`state/card-legality.js` is new and holds the legality half. `skill-play.js` keeps the translator and
+re-exports the rest, so `intents-cards.js`, `reaction-window.js`, `ui/target-picker.js` and
+`skill-play.test.js` were all left untouched.
+
+**The seam was not invented for the line count.** The file had two halves that never spoke to each
+other. One translates between the shape of the game state and the shape a card effect sees, which is a
+single well argued idea and is what the file's header is about. The other answers "is this play legal",
+which is a different question with a different audience: the intent handlers ask it after a dispatch, and
+the **target picker** asks it before one, because it has to know what to offer.
+
+What forced it was that FR-30's placement rules land entirely on the second half. Doing them in place
+would have pushed `skill-play.js` toward NFR-02's limit, and splitting at a seam that already exists is
+better than compressing one that does not. That is the same argument as `blockedSquares` moving into
+`traps.js` earlier in this issue, and it is now clearly a pattern worth stating in the report: **the
+300-line limit does not tell you to make files smaller, it tells you to go looking for a seam, and in
+both cases there was a real one being ignored.**
+
+#### `pickableSquares` exists so that `ui/` cannot hold a rule
+
+`ui/target-picker.js` used to mark all forty track squares for any square-targeting card. That was
+correct while one card in 29 wanted a square. Five do now and four of them need the square to be free,
+so the view would have had to work out the difference.
+
+It asks instead. `pickableSquares(state, cardId)` answers the list, derived from the same function
+`checkTarget` uses, so the two cannot disagree. The view writes the answer down as `data-pickable`,
+which is the shape `move-hints.js` already uses for `state.legalMoves`: **the view records an answer
+rather than computing one.**
+
+Two details in it are deliberate. It answers `null` for a card that asks about no square at all, so a
+caller can tell "this card wants no square" from "this card wants a square and there is none left". And
+the picker does **not** re-check the clicked square: only offered squares carry `data-pickable`,
+`events.js` binds the click to that selector, and `checkTarget` refuses an illegal square anyway. Two
+guards are enough, and a third in the middle is the one that goes stale.
+
+### Two turn-level fields carry what the board cannot show, and one of them was being dropped: 2026-09-03, issue #45
+
+`trapFired` and `nullifiedCard` joined `clearedTurnFields`. Both exist for the same reason
+`refusalReason` does: the player did something and the game has to tell them what came of it, and
+neither can be derived afterwards. A fired trap has been removed from the list, a Banana Peel does not
+move the pawn, and a cancelled card never ran. In each case the board looks exactly as it would if
+nothing had happened.
+
+**`trapFired` is a report from `core/`, which is new.** `core/enter.js` returns it beside the three
+board lists, and `PATCH_FIELDS` in `core/cards/context.js` lists it beside `negate` and `cancelMove`.
+Those two are instructions the caller acts on and never writes to state; `trapFired` is the opposite,
+a fact the caller writes to state and the view reads. `FIELD_FOR` in `skill-play.js` maps it, so a trap
+a **card** set off is announced through the same field as one a dice move set off.
+
+**The hand-off dropped it once.** `resolveMove` repacked `trapChanges`'s answer into a `board` of three
+named fields and the fourth was left behind: the trap fired, every list was right, and the player was
+told nothing. The end-to-end spec found it on its first run and no unit test had, because every case
+asserted the board. The fix went to the source of the awkwardness rather than to the symptom:
+`trapChanges` used to short-circuit to `{}` on an empty trap list, which is why its caller could not
+spread the answer. It now returns the whole shape always, `resolveMove` spreads it, and the file stays
+at its 300 lines. Chapter 08 has the finding in full.
+
+**`?stack=`** arrived in the same commit and touches `state/` only through `startMatch`'s fourth
+argument, which has existed since issue #38 with no production caller. `match-flow.js` passes it through
+and nothing else changed. The reason it exists is a testing question and is recorded in chapter 08 and
+the journal.
+
+**`match-flow.js` split at the same time**, because passing the parameter through pushed it to 308
+lines. `session-actions.js` took the two action routers, `onOverlayAction` and `onChromeAction`. The
+seam is that neither of them touched a closure variable: they read `getScreen()` and call `openScreen()`,
+so moving them was a move rather than a rewrite. `match-flow.js` owns the session; that file decides
+what a click asks of it.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

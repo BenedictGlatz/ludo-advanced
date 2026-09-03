@@ -26,6 +26,7 @@ import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { movablePawns } from "../state/turn-manager.js";
 import { t } from "../i18n/index.js";
 import { pawnElement } from "./board-view.js";
+import { seatLabel } from "./player-labels.js";
 
 /**
  * The square a move lands on.
@@ -100,13 +101,48 @@ export function applyMoveHints($board, state) {
  * status branches are gone from here, and `match-over` is now the win screen's business alone. See
  * `overlay-screens.js`.
  *
- * `kind` stays, even though the strip has exactly one kind left, because it is the seam the region is
- * told apart by and removing it would be a change to two end-to-end specs for no gain.
+ * `kind` stays, even though the strip had exactly one kind left, because it is the seam the region is
+ * told apart by and removing it would be a change to two end-to-end specs for no gain. **Issue #45
+ * gave it a second kind and vindicated keeping it**, so `data-message-kind` is now load-bearing rather
+ * than vestigial.
+ *
+ * ## The two new kinds, and the colour they ship in
+ *
+ * A trap going off and a card being cancelled by an aura are both things that happen **to** the player
+ * without them asking. Under the new rules Banana Peel is the extreme case: the pawn arrives exactly
+ * where it was aimed and silently loses its next turn, so with no message the game simply eats a turn.
+ *
+ * They are announced in this strip, which is painted in `--color-warn`, the colour the game reserves
+ * for "you cannot do that". **That is wrong and it ships anyway**, which is a deviation and not an
+ * oversight. The three options were: announce it in the wrong colour, wait for design handoff 07 and
+ * leave a Banana Peel eating turns in silence until then, or invent a third neutral treatment, which
+ * `CLAUDE.md` forbids this side from doing. D55 of brief 07 is open against it.
+ *
+ * The three branches are mutually exclusive in practice. A refusal means no move was possible, and a
+ * trap only fires on a move that happened. The order below is nonetheless deliberate: a refusal is
+ * about what the player may do next and outranks a report about what already happened.
  */
 function message(state) {
   if (state.refusalReason !== null) {
     return { kind: "refusal", key: state.refusalReason, options: {} };
   }
+
+  if (state.trapFired !== null) {
+    return {
+      kind: "trap",
+      key: `trap.fired.${state.trapFired.kind}`,
+      options: {
+        player: seatLabel(state.seats, state.trapFired.player),
+        owner: seatLabel(state.seats, state.trapFired.owner),
+        squares: state.trapFired.squares,
+      },
+    };
+  }
+
+  if (state.nullifiedCard !== null) {
+    return { kind: "trap", key: "trap.nullified", options: {} };
+  }
+
   return null;
 }
 

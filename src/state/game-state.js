@@ -242,5 +242,30 @@ export function clearedTurnFields() {
     reactionWindow: null,
     /** The card that opened the current window and has not resolved yet. */
     pendingCard: null,
+
+    /**
+     * The id of a card whose effect an It's Not That Deep's aura cancelled, or `null` (FR-30).
+     *
+     * A turn-level field beside `refusalReason` rather than something derived, because it cannot be
+     * derived: the card is spent and its effect never ran, so afterwards the board looks exactly as it
+     * would have if the player had done nothing at all. Without this the player has no way to tell a
+     * nullified card from a bug, and `core/cards/context.js` already names a quiet no-op as "the
+     * quietest possible bug in a system like this".
+     */
+    nullifiedCard: null,
+
+    /**
+     * The object that just went off, or `null` (FR-30). Shaped
+     * `{ kind, square, owner, player, pawn, squares }`.
+     *
+     * A turn-level field beside `refusalReason`, and it exists for the same reason: the player did
+     * something and the game has to tell them what came of it. It cannot be derived from the board,
+     * because a fired trap has been **removed** from the trap list, and under the new rules a Banana
+     * Peel does not move the pawn at all. So after the fact the board looks exactly as it would if
+     * nothing had happened, while the pawn has quietly lost its next turn.
+     *
+     * Written by `core/enter.js` as a report, which is why it is in `PATCH_FIELDS` next to `negate`.
+     */
+    trapFired: null,
   };
 }

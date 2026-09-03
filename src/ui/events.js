@@ -130,12 +130,40 @@ export function bindPromptEvents($prompt, handlers) {
  * can carry either, both, or neither, and the two are written by different modules.
  */
 export function bindPickEvents($board, handlers) {
+  const pickPawn = (element) =>
+    handlers.onPawnPicked(Number($(element).attr("data-player")), pawnOf(element));
+
+  const pickSquare = (element) => handlers.onSquarePicked(Number($(element).attr("data-square")));
+
   $board.on("click", '.pawn[data-pickable="true"]', function onClick() {
-    handlers.onPawnPicked(Number($(this).attr("data-player")), pawnOf(this));
+    pickPawn(this);
   });
 
   $board.on("click", '.square--track[data-pickable="true"]', function onClick() {
-    handlers.onSquarePicked(Number($(this).attr("data-square")));
+    pickSquare(this);
+  });
+
+  // Both keyboard pairs are new in issue #45, and the square one closes a real gap rather than adding
+  // a nicety: **no field on the board was reachable from the keyboard at all.** Pawns and cards each
+  // got a `keydown` when they became clickable and fields were simply missed, which was survivable
+  // while one card in 29 pointed at a field. Issue #45 makes it five cards, four of them the trap
+  // cards, so a keyboard player could not play a trap at all. NFR-08.
+  //
+  // A field is not a `<button>` and cannot be one: it is a grid cell that pawns are painted over. So it
+  // needs the same `keydown` plus `tabindex` treatment the pawns and cards have, and `target-picker.js`
+  // adds the `tabindex` only while the field is actually pickable.
+  $board.on("keydown", '.pawn[data-pickable="true"]', function onKeydown(event) {
+    if (!isActivationKey(event)) return;
+
+    event.preventDefault();
+    pickPawn(this);
+  });
+
+  $board.on("keydown", '.square--track[data-pickable="true"]', function onKeydown(event) {
+    if (!isActivationKey(event)) return;
+
+    event.preventDefault();
+    pickSquare(this);
   });
 }
 

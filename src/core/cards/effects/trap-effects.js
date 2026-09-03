@@ -1,50 +1,45 @@
 /**
  * The four cards that put something on a square, and what happens when a pawn touches it.
- * Issue #38, requirements FR-26 and FR-29.
+ * Issue #38, requirements FR-26, FR-28 and FR-30.
  *
- * Pure `core/`. The four placement functions take a snapshot and return a patch, like every other
- * effect. `fireTrap` is different and the difference is worth naming: it is not a card effect at all.
+ * Pure `core/`. Four placement functions, each taking a snapshot and returning a patch like every
+ * other effect. **This file only puts things down.** What happens when a pawn walks into one of them
+ * is `core/trap-fire.js`, and how far the pawn then travels is `core/slide.js`.
  *
  * | Card | What it puts down | What it does when touched |
  * | --- | --- | --- |
- * | Banana Peel | A trap | The pawn goes back to its start area |
+ * | Banana Peel | A trap | The pawn is stunned and loses its next turn |
  * | Oil Spill | A trap | The pawn slides 3 to 5 further and skips the skill square it lands on |
- * | It's Not That Deep | A trap | The pawn is pushed back a D6 |
- * | Big Ah Rock | A blocker | Nothing passes it while it stands |
+ * | It's Not That Deep | A trap | The pawn is pushed back one square |
+ * | Big Ah Rock | A blocker | Nothing passes it while it stands. It also knocks the pawn behind it back 3, **on placement** rather than on being touched |
  *
- * ## Why `fireTrap` is here and not in `traps.js`
+ * ## Why `fireTrap` left this file in issue #45
  *
- * `core/traps.js` owns the **list**: what is on which square, which entries block, which one a walk hits
- * first. It deliberately knows nothing about what any of them does, so that a fifth trap is a line there
- * and a case here.
+ * It was here because a trap's behaviour belongs with the card that laid it, and that was a fair
+ * argument while the file was small and the two halves did not need each other. Both changed:
  *
- * `fireTrap` owns the **effects**, and it is called from `state/`'s move resolution rather than from a
- * card play. That makes it the only function in `core/cards/effects/` that is not a card effect, and it
- * is here because a trap's behaviour belongs with the card that laid it. Splitting the two halves of
- * Banana Peel across two files to satisfy a naming convention would be worse.
+ * - `bigAhRock` gained a knockback, so this file now has to reach `core/enter.js`, and `core/enter.js`
+ *   reaches the firing rules. Keeping both halves here would be an import cycle, not a convenience.
+ * - The firing rules stopped writing pawn positions at all and now hand back a distance, which is a
+ *   different kind of thing from a card effect's patch and reads badly next to four of them.
  *
- * ## A trap fires on crossing, not only on landing
- *
- * This is the one place in the project that looks at the whole walk, and the reason it is worth the
- * exception: a trap that only fired on an exact landing would almost never fire. A D20 crosses twenty
- * squares and lands on one.
- *
- * The skill squares work the other way round, on landing only, and that difference is deliberate. A
- * skill square is a reward, so making it collectable in bulk by taking the biggest die would undo the
- * point of the dice pool. A trap is a punishment, and a punishment you can jump over is not one.
+ * `core/traps.js` still owns the **list**: what is on which square, which entries block, which one a
+ * walk hits first. So the three modules split cleanly: the list, the placement, the consequence.
  */
 
-import { rollDie } from "../../dice-source.js";
-import { displace, sendHome } from "../../displacement.js";
-import { STATUS, addStatus, turnsForRounds } from "../../statuses.js";
-import { TRAP_KIND, placeTrap, removeTrap } from "../../traps.js";
+import { TRACK_LENGTH } from "../../board.js";
+import { pawnsOnSquares } from "../../displacement.js";
+import { shove } from "../../enter.js";
+import { squareRun } from "../../path.js";
+import { turnsForRounds } from "../../statuses.js";
+import { TRAP_KIND, placeTrap } from "../../traps.js";
+import { worldIn } from "../context.js";
 
-/** How long a Big Ah Rock stands, in rounds. */
-export const BIG_ROCK_ROUNDS = 2;
+/** How long a Big Ah Rock stands, in rounds. Three, as the rulebook has always said. */
+export const BIG_ROCK_ROUNDS = 3;
 
-/** The die It's Not That Deep pushes back by, and the slide Oil Spill gives. */
-export const NOT_THAT_DEEP_DIE = 6;
-export const OIL_SLIDE = Object.freeze({ min: 3, max: 5 });
+/** How far Big Ah Rock knocks the enemy pawn behind it. */
+export const KNOCKBACK = 3;
 
 /** One object placed on the target square, as a patch. */
 function place(context, kind, until = null) {
@@ -74,72 +69,53 @@ export function notThatDeep(context) {
 }
 
 /**
- * Drop a Big Ah Rock on a track square (Big Ah Rock).
+ * The nearest enemy pawn behind `square`, or `null`.
  *
- * A blocker with a deadline, unlike Rock, which is a status on a pawn and walks with it. The two are
- * stored differently because of what they are attached to, and `core/move-rules.js` reads both.
+ * "Behind" needs no per-player logic, and that is worth one comment because it looks as though it
+ * should. `absoluteSquare(player, r)` increases with `r` for **all four** seats, so every pawn walks
+ * the ring in the same direction and "against the placing player's direction of travel" is simply
+ * `-1`.
  *
- * **It does not move whoever is standing there.** A blocker stops pawns arriving and passing; a pawn
- * already on the square keeps standing there and can walk off it, which is the only reading that does
- * not need a rule about which direction it is allowed to leave in.
+ * The run is `TRACK_LENGTH - 1` squares and not the whole ring, so it stops one short of the rock's own
+ * square. `pawnsOnSquares` answers in the order the squares were given, so the first foreign pawn in
+ * the list is the nearest one behind and "first hit wins" costs nothing.
  */
-export function bigAhRock(context) {
-  const until = context.turnNumber + turnsForRounds(BIG_ROCK_ROUNDS, context.playerCount);
+function pawnBehind(context, square) {
+  const behind = squareRun(square, -1, TRACK_LENGTH - 1);
+  const found = pawnsOnSquares(context.pawns, behind).find((pawn) => pawn.player !== context.actor);
 
-  return place(context, TRAP_KIND.BIG_AH_ROCK, until);
+  return found === undefined ? null : { player: found.player, pawn: found.pawn };
 }
 
 /**
- * One trap goes off under one pawn.
+ * Drop a Big Ah Rock on a track square, and knock the pawn behind it back.
  *
- * Takes and returns the three lists it can touch, so `state/` spreads the answer into the next state.
- * Not a card effect: it is called from move resolution, and the pawn it fires at is whoever walked into
- * it rather than a target somebody chose.
+ * A blocker with a deadline, unlike Rock, which is a status on a pawn and walks with it. The two are
+ * stored differently because of what they are attached to, and `blockedSquares` reads both.
  *
- * **The trap is removed whether or not it changed anything.** A trap is single use, and a trap that
- * survived because the pawn it caught happened to be unmovable would sit there being a surprise twice.
+ * **It does not move whoever is standing on the square.** A blocker stops pawns arriving and passing; a
+ * pawn already there keeps standing there and can walk off, which is the only reading that does not
+ * need a rule about which direction it is allowed to leave in.
+ *
+ * **The knockback is separate from that and is new in issue #45.** The rulebook has always said "a
+ * square becomes a boulder for 3 turns, **and the enemy pawn directly behind you is knocked back 3**",
+ * and only the first half was built. The pawn it hits is the one the boulder has just trapped, which is
+ * what makes the two halves one card rather than two effects sharing a name.
+ *
+ * The rock is placed **before** the knockback resolves, so the push happens on the board the card has
+ * already changed. It makes no difference today, since the victim is pushed away from the rock rather
+ * than towards it, but a push resolved against a board that does not yet contain the thing the same card
+ * just put down is the kind of ordering that is wrong the moment anything else moves.
  */
-export function fireTrap({ pawns, statuses, traps, trap, mover, turnNumber, rng }) {
-  const cleared = removeTrap(traps, trap.square);
+export function bigAhRock(context) {
+  const until = context.turnNumber + turnsForRounds(BIG_ROCK_ROUNDS, context.playerCount);
+  const placed = place(context, TRAP_KIND.BIG_AH_ROCK, until);
 
-  switch (trap.kind) {
-    case TRAP_KIND.BANANA_PEEL:
-      return { pawns: sendHome(pawns, mover), statuses, traps: cleared };
+  const victim = pawnBehind(context, context.target.square);
+  if (victim === null) return placed;
 
-    case TRAP_KIND.NOT_THAT_DEEP:
-      return {
-        pawns: displace(pawns, mover, -rollDie(NOT_THAT_DEEP_DIE, rng)),
-        statuses,
-        traps: cleared,
-      };
-
-    case TRAP_KIND.OIL_SPILL: {
-      // 3 to 5 squares: a D3 rolled and offset, so the slide is still one draw from the injected RNG.
-      const slide = OIL_SLIDE.min + rollDie(OIL_SLIDE.max - OIL_SLIDE.min + 1, rng) - 1;
-
-      return {
-        pawns: displace(pawns, mover, slide),
-        /**
-         * The pawn slid rather than walked, so the square it stops on hands out no card (FR-22).
-         *
-         * A status lasting exactly this turn, rather than a flag returned to the caller. Both would
-         * work for the skill-square check that happens two lines later, and the status is also the
-         * honest record: the pawn *did* slide this turn, and the view can say so.
-         */
-        statuses: addStatus(statuses, {
-          kind: STATUS.SLIPPERY,
-          player: mover.player,
-          pawn: mover.pawn,
-          until: turnNumber + 1,
-          source: "action-oil-spill",
-        }),
-        traps: cleared,
-      };
-    }
-
-    default:
-      // A blocker. Nothing should ever walk onto one, because `blockedSquares` refuses the move first,
-      // and a rule that relies on another rule having run is a rule that breaks when the order changes.
-      return { pawns, statuses, traps };
-  }
+  // Through `shove` rather than a bare clamp, so the knockback respects blockers, resolves a capture, and
+  // can set off a trap of its own. A boulder that shunted a pawn on top of another one would be laying
+  // a corruption the rest of the rules cannot read.
+  return { ...placed, ...shove({ ...worldIn(context), traps: placed.traps }, victim, -KNOCKBACK) };
 }

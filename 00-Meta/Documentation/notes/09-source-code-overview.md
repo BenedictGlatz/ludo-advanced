@@ -124,11 +124,64 @@ of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
 
+### Measured 2026-09-03, after issue #45
+
+Every command in the section above was re-run on the feature branch after the last #45 commit, before
+the merge. **This is the current measurement**; the ones below it are kept so the growth is readable
+rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **10756 lines in 71 files** | 2026-09-03, after #45 |
+| Stylesheet lines in `src/` | 7 | 2667 lines in 16 files, unchanged | 2026-09-03, after #45 |
+| Test lines in `tests/` | 2 | **11584 lines in 68 files** | 2026-09-03, after #45 |
+| Lines in `src/core/` | 3 | **4411 lines in 31 files** | 2026-09-03, after #45 |
+| Lines in `src/state/` | 3 | **2016 lines in 11 files** | 2026-09-03, after #45 |
+| Lines in `src/ui/` | 3 | **4035 lines in 27 files**, plus 2667 lines of CSS | 2026-09-03, after #45 |
+| Unit tests | 4 | **49 test files, 677 tests, all passing** | 2026-09-03, after #45 |
+| End-to-end tests | 8 | **86 tests in 16 files per browser, 258 across the three** | 2026-09-03, after #45 |
+| Expected failures in the e2e suite | 8 | none | 2026-09-03, after #45 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.17 % (839/846) | 2026-09-03, after #45 |
+| Coverage of `src/core/`, lines | 5c | 99.47 % (565/568) over 31 files | 2026-09-03, after #45 |
+| Coverage of `src/state/`, lines | 5c | 98.56 % (274/278) over 11 files | 2026-09-03, after #45 |
+| Coverage, branches | 5a | 96.07 % (612/637) | 2026-09-03, after #45 |
+| Coverage, functions | 5a | 100 % (302/302) | 2026-09-03, after #45 |
+| Longest file of any kind | 6 | 300 lines, `src/state/turn-manager.js`, unchanged | 2026-09-03, after #45 |
+| Longest stylesheet | 7 | 244 lines, `src/ui/styles/prompt.css`, unchanged | 2026-09-03, after #45 |
+
+**Five readings.**
+
+1. **The rules layers grew for the first time since 2026-08-31, and by a lot.** `src/core/` went from
+   3669 to 4411 lines and 27 to 31 files; `src/state/` from 1809 to 2016 and 10 to 11 files. The four
+   new `core/` modules are `slide.js`, `trap-fire.js`, `enter.js` and `trap-rules.js`; the new `state/`
+   module is `card-legality.js`. One function was also deleted, `displace` from `displacement.js`, and one
+   moved out of `move-rules.js` into `traps.js`. Chapters 05 and 06 carry the seams.
+2. **Every one of the 29 measured files is above 90 per cent, and the floor is 80.** Coverage of lines
+   moved from 99.20 to 99.17 per cent over 89 more measured lines, which is what "the new code arrived
+   with its tests" looks like as a number. Functions stayed at 100 per cent, which they would not have
+   if `displace` had been left in: chapter 08 records that its dead body was the only thing the report
+   flagged, at 60 per cent on a file nobody had edited.
+3. **The e2e suite grew by 13 cases per browser, and none of them looks at a pixel.** 73 to 86.
+   `traps.spec.js` and `trap-fires.spec.js` assert attributes, because design handoff 07 is unanswered
+   and nothing about a trap is styled. One of the thirteen carries a deliberate negative assertion,
+   that the trap span has no rendered box, and its comment says it is meant to start failing when the
+   spec lands.
+4. **The longest file did not move and it was the hardest constraint of the issue.** `turn-manager.js`
+   was at exactly 300 before #45 and is at exactly 300 after it, through a change to the one function
+   in it that #45 had to touch. Four files were split to keep everything else under: `move-rules.js`
+   gave up `blockedSquares`, `skill-play.js` its legality half, `game-loop.js` its after-turn hold and
+   `match-flow.js` its two action routers. `enter.test.js` and `traps.spec.js` also hit the limit
+   while being written and each split at a real seam.
+5. **Two files are one line from the limit and neither is new.** `intents-cards.test.js` at 299 and
+   `helpers.js` at 295 were already there; #45 added a test file next to the first rather than into
+   it, and put its own helpers in `trap-helpers.js` rather than into the second. The next issue that
+   needs either will have to split it first.
+
 ### Measured 2026-09-02, after design handoffs 05 and 06 landed
 
 Every command in the section above was re-run after the two delivered stylesheets were copied in, the
-`data-copies` attribute was added and `greyscale.spec.js` was rewritten. **This is the current
-measurement**; the ones below it are kept so the growth is readable rather than asserted.
+`data-copies` attribute was added and `greyscale.spec.js` was rewritten. Superseded by the 2026-09-03
+measurement above; kept so the growth is readable rather than asserted.
 
 | Metric | Command | Value | Taken on |
 | --- | --- | --- | --- |

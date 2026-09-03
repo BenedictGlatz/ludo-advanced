@@ -731,6 +731,11 @@ Each is recorded as a deviation rather than a transcription, with the reason:
 | The Purge | Also reaches pawns already home, and lets you enter an opponent's house | Only the "every landing captures" half | A house is private to one player and no number names another player's house square |
 | Lock In | Labelled `DEFENSIVE`, effect not stated | The pawn cannot be moved **and** cannot be captured | A card that only stopped you moving your own pawn would be a card that only hurts its owner |
 
+> **This table was incomplete and issue #45 found out how.** Three *more* cards had been changed from
+> what the artwork and the rulebook say, and none of them was written down here: Banana Peel, It's Not
+> That Deep and Big Ah Rock. See "The rules the code had quietly rewritten" below. The three rows above
+> are deviations that were decided; those three were deviations that simply happened.
+
 #### Negative finding: 12 of 29 cards still have no rule
 
 `hasEffect` is the question both `state/` and `ui/` ask, and a card with no entry can be drawn, held and
@@ -778,6 +783,11 @@ Said plainly: **a reward you can farm is broken, and a punishment you can jump o
 
 Only the **first** trap on a walk fires, so one move has one outcome, and a trap never fires under a pawn
 belonging to the player who laid it. A card that punishes its own player is a card nobody plays.
+
+> **Half of that is superseded.** "Only the first trap on a walk fires" is still exactly true, and it is
+> now the load-bearing half. **"One move has one outcome" is not:** since issue #45 a trap that moves the
+> pawn starts a new walk, which can fire a trap of its own, up to a bounded chain. The section below
+> restates both properly.
 
 #### The order inside `resolveMove` is a rule, and it is invisible in almost every test
 
@@ -880,6 +890,424 @@ Both are closed by `tests/unit/core/dice-distribution.test.js`, and how the tole
 [08-quality.md](08-quality.md). The finding worth carrying into the report is not the missing test, it
 is that **the test's name was accurate and its assertion was not.** It was called `rollDie (FR-20)` and
 it sat next to the requirement id for two days, which is exactly the state in which nobody re-reads it.
+
+### `blockedSquares` moved to the module whose subject it is: 2026-09-02, issue #45
+
+A refactor with no behaviour change, done first and on its own so that the seam is a reviewable commit
+rather than noise inside a feature. `blockedSquares` left `move-rules.js` for `traps.js`.
+
+**Why it belonged there and not where it was.** It answers "which absolute squares may nothing cross
+right now", and its own comment was already entirely about how the two sources of that answer are
+stored: a Big Ah Rock is an entry in the trap list with a square of its own, a Rock is a status on a pawn
+whose square is wherever that pawn is standing this instant. Both halves of that explanation are
+`traps.js`'s subject. It sat in `move-rules.js` because that is where the first caller happened to be.
+
+**Two things it buys, and the second is the one that forced it.**
+
+1. `move-rules.js` came down far enough to take the new `STUNNED` refusal without approaching NFR-02's
+   300-line limit.
+2. `core/slide.js`, which issue #45 adds, has to ask about blockers. With `blockedSquares` in
+   `move-rules.js`, a **displacement** module would have had to import the **move rules**, which is the
+   wrong way round: displacement is what cards do to a pawn without a move, and it has no business
+   knowing how a legal move is evaluated. With the function in `traps.js` both callers ask the same
+   module the same question.
+
+**It is re-exported from `move-rules.js`**, the way that file already re-exports `TRAP_KIND` and the way
+`movement.js` re-exports `MOVE_KIND` and `REFUSAL`. Not politeness: `move-rules.test.js` imports it from
+there, and **the test file was not touched.** That is the proof the move was pure, and it is the reason
+the commit is worth being separate. A refactor whose test file has to change is not a refactor.
+
+One incidental tidy: the literal `40` in the Rock filter became `TRACK_LENGTH`, which is the constant it
+had always meant.
+
+**Rejected alternative:** compressing `move-rules.js` to make room instead. `CLAUDE.md` forbids meeting
+the line limit by deleting comments or whitespace, and in this codebase the header comments are the part
+worth keeping. The limit is there to force a seam to be found, and there was a real one here.
+
+### A second way to move a pawn, and why `displace` could not become it: 2026-09-02, issue #45
+
+`core/slide.js`. Two functions, `slideStop` and `slidePawn`. Nothing calls them yet; they land on their
+own so that the rule they carry can be tested before anything depends on it.
+
+**The problem it closes.** `displace` clamps a pawn's position and does nothing else. That is deliberate
+and its header says so: "it checks nothing about legality, because the card is the authority." Eleven of
+the 29 cards call it, and that sentence is why they safely can. What it means in practice is that before
+this, **an Oil Spill slide or a Yeet could put a pawn onto a square that already held one and leave both
+there.**
+
+The two halves of that bug behave very differently, and the asymmetry is the interesting part:
+
+| Two pawns on one square | Caught by | When |
+| --- | --- | --- |
+| Different players | `captureTarget` **throws**, because FR-11 makes it impossible | The next time anything lands there |
+| The **same** player | Nothing. That function filters to opponents | Never |
+
+So the loud case was already loud, and the quiet case could corrupt the board indefinitely. Inside a
+house column it would break the FR-05 win condition, because two pawns stacked on one house square means
+the four house squares can never all be filled, and the symptom would appear many turns later with
+nothing pointing at the cause.
+
+**Why a new module rather than making `displace` careful.** Adding blockers and captures to `displace`
+would falsify the one sentence that makes it safe to call from eleven places. So `displace` stays blunt
+for the cards that want blunt, and the shove that a *trap* performs is a different function. The
+distinction is real: a card being deliberately reckless is the card's authority; a trap firing is the
+board resolving a consequence, and a consequence has to leave the board in a state the other rules can
+still read.
+
+**The rule, in one line: a pushed pawn stops on the square before the first thing it cannot share.**
+Three things count, and two of them are rules that already existed somewhere else:
+
+| What | The rule it reuses |
+| --- | --- |
+| A Rock or a Big Ah Rock | `blockedSquares`, which is why that function moved into `traps.js` first |
+| A pawn of the pushed pawn's own player | FR-12, via `isSameSquare`, which is also what forces all four house squares to be filled |
+| A pawn carrying `STATUS.ARMOURED` | `moveOnto`'s existing reasoning: a pawn that cannot be captured cannot be landed on either |
+
+Both decisions behind it are in the journal, including the rejected step-back loop and the cost: **Yeet
+and Aight Imma Head Out now stop short in board states where they used to overlap two pawns silently.**
+That is a stronger invariant, and it is written down so it cannot later be argued as a regression.
+
+**One design detail worth carrying into the report**, because it is the same shape of answer twice. The
+clamp runs **before** the walk, so a slide is never stopped by something on a square it was not going to
+reach. And `slideStop` answers the pawn's *current* position when nothing can happen, instead of
+returning a "did it move" flag: the caller compares `from` and `to`, which it needs anyway to ask what
+the pawn crossed. Both are cases of letting the data answer the question rather than adding a signal.
+
+### One place a pawn enters a square, and the rules that stopped being spread out: 2026-09-02, issue #45
+
+Two new modules and one that shrank. `core/enter.js` is the choke point, `core/trap-fire.js` holds the
+firing rules, and `core/cards/effects/trap-effects.js` is down to what it says on the tin: four cards
+that put something on a square.
+
+#### The rule was only as complete as the list of call sites, and the list was one
+
+FR-30 says a trap fires when a pawn **enters** a tile. Until this commit the check lived in
+`state/skill-turn.js` and was called from exactly one place, `resolveMove`. So a trap fired for a dice
+move and for nothing else. Yeet, Aight Imma Head Out and Let Him Cook could push a pawn straight over a
+Banana Peel and nothing happened, and **Yeet's own printed card text says "or forward onto a trap, if
+you're feeling mean"**, which the game could not do.
+
+That is the general shape of the finding, and it is worth the report: a rule implemented at its call
+sites is a rule whose completeness nobody can check. Moving it behind one function makes "every
+movement fires traps" a property of the code instead of a claim about a list.
+
+#### No trap kind writes a pawn position any more
+
+The seam the whole issue hangs off. `fireTrap` used to move the pawn itself, with `displace`, which
+checks neither blockers nor captures. Now it returns the two lists it can change plus a **number**:
+
+```js
+{ statuses, traps, slide }   // slide is 0 when the trap moves nothing
+```
+
+One place performs the displacement, and it is the place that knows about blockers and captures. Three
+rules each doing their own arithmetic is three chances to get it wrong; one number handed to one walker
+is none. It also made the Banana Peel rule change almost free, because a stun is simply `slide: 0`.
+
+#### The chain, and what actually bounds it
+
+A trap that moves the pawn starts a **new** walk from where the pawn was pushed to, and that walk can
+fire a trap of its own. The two halves call each other, which is why they share a file rather than
+being split into two:
+
+```
+enterSquares -> fireTrap -> slide != 0 -> shove -> slidePawn -> enterSquares -> ...
+```
+
+Two properties, and the second is the one that is easy to state wrongly:
+
+- **Only the first trap on any one walk fires.** A move crossing two Banana Peels sets off the near one
+  and stops. That is unchanged and is what keeps a single walk from having two outcomes.
+- **The chain is bounded at `TRAP_CHAIN_LIMIT = 6`, and the cap is not what makes it terminate.** Every
+  firing calls `removeTrap`, so each link consumes an entry and the recursion is already bounded by the
+  length of the trap list. The cap guards against a future trap kind that survives its own firing,
+  which this issue itself makes plausible. The journal block spells that out, because a cap whose reason
+  is misremembered as "otherwise it loops" is a cap somebody later deletes after proving it cannot loop.
+
+Two arrivals set off nothing at all, and both are implemented by *structure* rather than by a condition:
+a pawn going home, because `sendHome` is a different function that never reaches the choke point; and a
+slide that moved nothing, because there is no walk to ask about and asking about a zero-length one would
+re-fire the trap that had just gone off.
+
+#### The rules the code had quietly rewritten
+
+The Product Owner decided that the Game Design Document wins wherever it and the code disagree. Three of
+the four square cards were affected, and **none of the three was in the deviation table above**:
+
+| Card | The rulebook and the artwork | What the code did | Now |
+| --- | --- | --- | --- |
+| Banana Peel | Stunned, loses its next turn | Sent the pawn back to its start area | A `STATUS.STUNNED` for one round |
+| It's Not That Deep | 1 back, plus offensive cards nullified within 3 squares | Pushed back a D6, no aura | Pushed back exactly 1, and the aura is built |
+| Big Ah Rock | 3 rounds, plus the enemy pawn behind knocked back 3 | 2 rounds, no knockback | 3 rounds, and the knockback is built |
+
+#### The two card texts that had started describing the code
+
+`en/cards.json` said Banana Peel sends a pawn "back to the start area" and It's Not That Deep pushes it
+"back a D6", in both languages. Both were accurate descriptions of the implementation and neither matched
+the card the player is holding. **They were corrected in the same commits as the rules**, rather than in
+one tidy-up at the end, because a wrong sentence in a player's hand is a worse bug than a wrong constant:
+a constant is invisible until it fires, and the sentence is on screen every time the card is drawn.
+
+Two texts are still incomplete rather than wrong: Oil Spill does not mention that its slide now resolves
+captures and is stopped by a boulder, and Big Ah Rock still says two rounds. Both land with their rules.
+
+#### Losing the D6 changed how often a chain happens, in the direction nobody expected
+
+It's Not That Deep pushed back an average of 3.5 squares and now pushes back exactly 1. The obvious
+reading is that the card got weaker, which it did. The less obvious consequence is about the **chain**
+added in the same issue: two traps now have to be on **neighbouring** squares for a pushback to walk into
+the second one, where a D6 would have reached anything within six.
+
+So the two changes pull against each other, and the net effect is that chains are rare. That is worth
+recording as a balance fact rather than discovered later as a surprise: the chain is a correctness
+mechanism, not a feature the player will see often. It exists so that a push resolves its capture and
+respects a boulder, and the second trap going off is the uncommon case.
+
+It also removes one draw from the injected RNG per firing, which is why three scripted-roll tests had to
+be re-counted. Chapter 08 has the general version of that problem.
+
+#### Big Ah Rock's knockback, and a direction that needed no per-player logic
+
+The second half of the card, which had never been built: "a square becomes a boulder for 3 turns, **and
+the enemy pawn directly behind you is knocked back 3**". The Product Owner's reading is that "behind"
+means behind the **rock**, against the placing player's direction of travel, first foreign pawn found
+wins. The rejected reading, behind the placing player's own *pawn*, would put the effect wherever that
+pawn happened to be standing rather than where the boulder is, which is hard to explain and harder to
+see.
+
+**Two implementation details worth the report, and both are cases of the topology already having the
+answer.**
+
+`absoluteSquare(player, r)` increases with `r` for **all four** seats, because every seat's entry square
+is just an offset into the same ring. So "against the placing player's direction of travel" is a single
+direction, `-1`, and needs no per-player branch at all. That is the board topology paying off for the
+fourth or fifth time in this chapter: a rule that sounds relative to a player turns out to be absolute.
+
+`pawnsOnSquares` answers "in the order the squares were given", which is already documented in
+`displacement.js`. So walking `squareRun(square, -1, TRACK_LENGTH - 1)` and taking the first foreign
+pawn out of the answer *is* "nearest one behind", with no distance arithmetic and no sort. The
+`- 1` on the length is what stops the run one short of the rock's own square, which keeps the
+long-standing promise that a pawn already standing there is not moved.
+
+The knockback goes through `shove`, so it inherits the whole of `slide.js`: it stops before a boulder,
+it resolves a capture, it floors at the entry square, and it can set off a trap of its own. A card that
+shunted a pawn on top of another one would be laying a corruption the rest of the rules cannot read.
+
+**One ordering decision, recorded because it makes no difference today.** The rock is placed *before* the
+knockback resolves, so the push happens on the board the card has already changed. The victim is pushed
+away from the rock rather than towards it, so no current rule can tell. It is still the right order: a
+push resolved against a board that does not yet contain the thing the same card just put down is wrong
+the moment anything else moves.
+
+#### Which cards route through the choke point, and which have nothing to route
+
+Three of the five displacement cards now go through `shove`: Yeet, Aight Imma Head Out and Let Him Cook.
+So does Big Ah Rock's knockback, and so does the trap chain. That is the whole of "every movement fires
+traps".
+
+**Four cards were deliberately left alone, and the silence needed writing down**, because a card that
+fires no trap looks exactly like a card somebody forgot to wire up:
+
+| Card | Why it has nothing to route |
+| --- | --- |
+| Hyperbeam | Its only effect on a pawn is `sendHome` |
+| Janky RPG | Same |
+| Ghost Mode | Cancels a move; moves nothing |
+| Uno Reverse | Cancels a move and calls `sendHome` |
+| Let Him Cook's **overshoot** branch | `sendHome`, unlike its run branch |
+
+A start area is not a tile. That is the rule, and Hyperbeam is the case that shows why it has to be:
+it can send four pawns home at once, and if going home counted as a walk it would fire every trap
+between those four pawns and their yards. So the exception is not a convenience, it is load bearing.
+
+**It is asserted, not assumed.** `movement-traps.test.js` has a case for Hyperbeam and one for Janky RPG
+proving they set off nothing, and one for Let Him Cook's overshoot. A negative that is only true because
+nobody wired it up is a negative that stops being true the first time somebody tidies the imports.
+
+#### `worldIn` is a projection, and that is why the card vocabulary did not have to grow
+
+The knockback needs six fields that `core/enter.js` calls a `world`. **Every one of the six was already
+in `CONTEXT_FIELDS`, and the three lists it writes were already in `PATCH_FIELDS`.** So a card that moves
+a pawn through the trap trigger needed no new context field, no new patch field, and no new `TRIGGER`
+value: its effect is still a pure function of a snapshot returning a patch, like the other 28.
+
+That is worth noticing rather than passing over. The context and patch vocabularies were designed for 29
+specific cards, and the first mechanic added after them fitted without widening either. `worldIn` sits
+beside `pawnIn` and `handOf` for the same reason those exist: they are the questions a card asks about
+the shape of its own snapshot, and a card should not have to know that the answer is spelled differently
+one layer down.
+
+**How the drift happened is the interesting part, and it was not carelessness.** Epic #38 implemented
+nineteen cards in one pass, five of which needed mechanics that did not exist. These three are exactly
+the three whose printed rule needed a mechanic that *still* did not exist after that work: a status that
+costs a turn, a rule measured in a radius, and a knockback that searches the board. Each was replaced by
+the nearest thing the engine could already express, and the substitution was never recorded.
+
+**The mechanism to record it existed and was not used.** Section 7.3 of the Game Design Document is a
+table of six cards whose printed text the board cannot express, each with the reading built instead and
+the reason. That is precisely the right home for all three. A deviation on the record is a decision; the
+same deviation off the record is a bug with good manners, and the locale files had already started
+describing the code rather than the game.
+
+#### The stun, and one deadline that looks like an off-by-one
+
+`STATUS.STUNNED` is read by `evaluatePawn` exactly the way `STATUS.HELD` is, so **only the caught pawn
+sits out** and its owner's other three are unaffected. No new step in the turn sequence, because Hold
+Pawn had already established the shape. It gets its own refusal reason rather than reusing `held`,
+because the two are different things to the player: Hold Pawn is something an opponent played at them, a
+stun is something they walked into.
+
+The deadline is `turnNumber + turnsForRounds(1, playerCount) + 1`. The `+ 1` is not a fencepost error.
+`hasStatus` applies while `turnNumber < until`, and a trap sprung during a dice move fires under the
+**active** seat's own pawn, so the turn to be missed is a full round away and `until` must exceed it. The
+same expression also costs exactly one turn when a card sprang the trap under another seat's pawn, whose
+next turn is sooner than a round away. One expression, no branch, and a test at two, three and four
+seats so that a hard-coded four could not have hidden a two-player bug.
+
+#### A missing rule now stops the game at boot
+
+`fireTrap`'s closed `switch` is gone. In its place is a frozen table of one rule per kind, plus a loop
+that runs **at import** and throws if any non-blocker kind has no entry.
+
+What the `switch` did wrong is worth naming precisely, because it looked correct: its `default:` returned
+everything untouched, which is right for a blocker, since blockers share the list and never fire. So the
+same branch also swallowed a missing rule for a *new* kind, in silence, while the module's header
+promised "a fifth trap is a line there and a case here". The failure would have appeared as a trap that
+did nothing, several matches later. `assertCatalogue` already set the pattern: check the table against
+the vocabulary once, when the module loads, so the failure lands on the day the kind was added.
+
+A blocker reaching `fireTrap` now throws too. Two guards already stand between a blocker and that
+function, so arriving anyway means one of them broke, and an exception says which.
+
+### A comment that described a guarantee nothing provided: 2026-09-02, issue #45
+
+`core/trap-rules.js` is new and holds three rules about where an object may be put down. The rules
+themselves are ordinary; **how the gap was found is the part worth the report.**
+
+`placeTrap` in `core/traps.js` replaces whatever is on the square rather than refusing, and its comment
+explained why: "the refusal belongs one layer up: `state/` will not let a player target a square that is
+already taken, and by the time a rule gets here the question is settled."
+
+**`state/` did no such thing.** `checkTarget`'s entire test for a track square was that the number was
+between 0 and 39. So a player could lay a trap directly on top of an opponent's and this function would
+silently delete it, which is a card doing something no card in the set is supposed to be able to do.
+
+That is a class of bug rather than a slip, and it is worth naming in the report: **a comment that
+describes a guarantee some other layer is supposed to provide is a comment that nothing checks.** It
+reads as documentation of a decision, it was written in good faith, and it survived review precisely
+because it sounded like the layering working correctly. Neither module was wrong on its own. The claim
+that joined them was.
+
+Two things follow for how the rest of the notes should be read. Comments of the form "X is handled
+elsewhere" are the ones to distrust when auditing, and a test that had crossed the seam would have
+caught this one immediately: `trap-placement.test.js` now exists and its last case walks all forty
+squares asserting that what the picker offers and what `checkTarget` accepts are the same set.
+
+#### The three rules, and where each reason comes from
+
+| Refused | Reason |
+| --- | --- |
+| A square already holding a trap or blocker | One object per square is what makes "what is on square 17" answerable, and refusing stops a card being used to delete an opponent's trap |
+| A square a pawn is standing on | A trap fires when something **enters** its square, so one laid under a pawn already there does nothing until that pawn leaves and comes all the way back round the ring. It looks like a play and is a wasted card |
+| The four entry squares | `EXCLUDED_SQUARES`, reused from the skill squares, whose own comment already carries the reason: the entry square is the busiest a player has, so a trap there would fire far more often than one anywhere else and would punish one quarter of the board for existing |
+
+The module is separate from `traps.js` because the question has a different shape: it needs the **pawns**
+and the board's topology as well as the list, and `traps.js`'s value is that every function in it takes
+the list and nothing else.
+
+### A planned split turned out to have no second side: `displace` was deleted: 2026-09-02, issue #45
+
+The plan for the chain reaction was that `core/slide.js` would be the careful push, used by traps, and
+`displace` in `core/displacement.js` would stay the blunt one, used by the five cards that move a pawn
+without a move. Two functions, two audiences, and the plan said so explicitly.
+
+**That was wrong, and finding out cost nothing because the coverage report said so.** After the last
+card was routed through `shove`, `displacement.js` dropped to 60 per cent line coverage with
+`displace`'s body as the only gap. A grep confirmed it: no file imported it, and there had never been a
+`displacement.test.js` either.
+
+**Why every caller wanted the careful version.** `displace` applied two clamps and checked nothing
+else, so a card using it could slide a pawn straight through a Big Ah Rock, or stop it on a square
+another pawn was already standing on. Once `slide.js` existed, each of those was recognisable as a bug
+in Yeet, in Aight Imma Head Out and in Let Him Cook rather than as a simpler variant of a push. There
+was no card for which "ignore the boulder" was the intended reading.
+
+So it was deleted rather than kept as an alternative nobody should pick. `PUSHBACK_FLOOR` stays in
+`displacement.js`, because the backwards floor is a game decision with its own journal entry and
+`slide.js` applies the identical clamp. `sendHome` also stays and is deliberately **not** a slide:
+walking a captured pawn back to its yard would count every square in between and fire the traps on
+them.
+
+**The finding worth carrying into the report** is not that a function was deleted. It is that the plan
+predicted a two-sided split and the code only ever grew one side, and the thing that noticed was a
+coverage percentage dropping on a file nobody had edited. A line count would not have shown it and a
+passing test suite did not.
+
+### The first rule in the project measured as a radius: 2026-09-02, issue #45
+
+It's Not That Deep's second half, which the artwork always printed and the code never had: "offensive
+cards played within 3 squares of it are nullified". Three either way plus the trap's own square is seven
+squares of protection, a sixth of the board, and that is what the card is worth now that its pushback
+is a single square.
+
+**Why it is worth a section rather than a line.** Every other rule in `core/` is about one square, one
+pawn or one walk. This is the first that is about a **region**, and the first that applies without
+anything happening: a Banana Peel does nothing until a pawn steps on it, and this one is in force the
+whole time it lies there.
+
+#### Three things had to be decided before it could be written
+
+| Question | Answer, and why |
+| --- | --- |
+| Measured against **what**? | The square the card acts on: the square it named, or the square the pawn it named is standing on. So Janky RPG measures its aimed square, Yeet measures its victim's, and Hyperbeam measures the shooter's |
+| Measured **how** on a ring? | The shorter way round, via a new `ringDistance` in `path.js`. Subtracting the numbers would call square 39 and square 2 thirty-seven apart, so the aura would be the wrong shape at exactly one place on the board |
+| Does nullifying **use up** the trap? | No, by Product Owner decision. It stays until a pawn steps on it, which is what makes the card area denial rather than a one-shot shield. It is also why the chain in `core/enter.js` needs a cap at all: this is the first trap that survives doing something |
+
+Two smaller answers fall out of rules that already existed. **67 can never be nullified**, because it is
+an offensive card that names nothing on the board at all: it is a gamble on your own roll, so
+`squareActedOn` answers `null` and there is no "where" to compare. And **a trap does not nullify its own
+owner's cards**, mirroring `firstTrapOnPath`'s existing exemption, whose comment already carries the
+reason: a card that punishes the player who played it is a card nobody plays.
+
+#### Where the check had to go, and the two seams that were wrong
+
+The aura is checked in `resolveCard` in `state/skill-play.js`. Both alternatives were considered and
+both are recorded, because the reasoning is the useful part:
+
+- **Inside the effect.** Not possible in the shape the effects have. An effect is a pure function of a
+  context snapshot returning a patch, and there is no way for the board to tell it "do nothing". All 29
+  would have to ask, which is the opposite of why `checkTarget` is one place and not 29.
+- **The `negate` instruction, through `reaction-window.js`.** This is the one that looks right and is
+  not. `negate` already means "the card that opened this window does not resolve", which is exactly the
+  effect wanted. But it **only reaches anything while a window is open**, and an offensive card played
+  when nobody is eligible to react resolves immediately in `playActionCard` with no window in existence.
+  Half the plays would have slipped past. `negate` is also produced by an effect somebody played, and
+  nothing plays an aura, so carrying it that way would mean minting a phantom card play and putting a
+  fictional entry in the discard pile.
+
+`resolveCard` is the single place any card's rule actually runs, on both paths, which is what makes one
+check enough. It also reads the board **at resolve time** rather than at play time, which is the honest
+reading of an aura: the board can change between a card being played into a window and that window
+shutting.
+
+#### The card is spent, and that is why a new state field exists
+
+A nullified card leaves the hand and goes to the discard pile. That follows the decision `discardChanges`
+already carries, that a cancelled card stays discarded because it was played, and it is the point of the
+trap: the player could not see it, and losing the card is the punishment.
+
+**Because it is spent silently, the board afterwards looks exactly as it would if the player had done
+nothing at all.** So `nullifiedCard` joined the turn-level fields in `game-state.js`. It cannot be
+derived, because the evidence is precisely what is missing, and `core/cards/context.js` already names a
+quiet no-op as "the quietest possible bug in a system like this".
+
+That field is also the one place this issue was caught by an existing test rather than by a new one.
+`game-state.test.js` asserts the cleared-fields list item by item, so forgetting to clear the new field
+failed a test immediately instead of leaking a stale card id into the next player's turn.
+
+**One simplification, recorded rather than hidden:** a reaction window that resolves two nullified
+offensive cards records only the last one. It is possible and vanishingly rare, and one message a player
+can read beats a list nothing was built to display.
 
 ## Decisions
 

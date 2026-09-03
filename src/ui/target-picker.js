@@ -26,18 +26,28 @@
  * a mouse, it disappears if the player changes their mind, and putting it in the state object would make
  * the rules layer hold it. `game-loop.js` passes what it needs to the two views on every render.
  *
- * ## Three kinds are answered on the board and four with buttons
+ * ## Four kinds are answered on the board and four with buttons
  *
  * A pawn and a square are pointed at. A direction, one of two options, a number and "which opponent" are
  * not things on the board, so `prompt-view.js` renders buttons for them. The split is per target kind and
  * it is the only reason this file knows about the board at all.
+ *
+ * `free-square` joined the board kinds in issue #45. It is "a track square that can take an object", and
+ * unlike the other three it means that **not every candidate is offered**: four of the five
+ * square-targeting cards leave something standing on the square they name, so an occupied square, a
+ * square with a pawn on it and the four entry squares are all refused. Which squares those are is asked
+ * of `state/`, never worked out here.
  */
 
 import { PAWNS_PER_PLAYER, REGION, TRACK_LENGTH, region } from "../core/board.js";
+import { pickableSquares } from "../state/skill-play.js";
 import { targetsFor } from "./prompt-view.js";
 
 /** The target kinds the player answers by clicking the board. Everything else is a button. */
-const ON_BOARD = ["own-pawn", "enemy-pawn", "track-square"];
+const ON_BOARD = ["own-pawn", "enemy-pawn", "track-square", "free-square"];
+
+/** The two kinds answered by clicking a square rather than a pawn. */
+const SQUARE_KINDS = ["track-square", "free-square"];
 
 /** The two options "Aight Imma Head Out" offers. The one card in the set with a `choice` target. */
 const CHOICES = { "action-head-out": ["advance", "retreat"] };
@@ -55,14 +65,23 @@ const CHOICES = { "action-head-out": ["advance", "retreat"] };
  * standing on, and neither exists off the track. Refusing it here means the player is never offered a
  * click that `checkTarget` would accept and the effect would silently ignore.
  */
-function markBoard($board, kind, seat, state) {
+function markBoard($board, kind, seat, state, cardId) {
   clearBoard($board);
   if (!ON_BOARD.includes(kind)) return;
 
   $board.attr("data-picking", kind);
 
-  if (kind === "track-square") {
-    $board.find(".square--track").attr("data-pickable", "true");
+  if (SQUARE_KINDS.includes(kind)) {
+    // The list comes from `state/`, which asks `core/`. This used to mark all forty squares, which was
+    // right while one card in 29 wanted a square. Four of the five now need the square to be free, and
+    // a view that worked out which ones would be a second copy of the rule, free to disagree with
+    // `checkTarget` the moment either changed.
+    for (const square of pickableSquares(state, cardId)) {
+      $board
+        .find(`.square--track[data-square="${square}"]`)
+        .attr("data-pickable", "true")
+        .attr("tabindex", 0);
+    }
     return;
   }
 
@@ -77,10 +96,19 @@ function markBoard($board, kind, seat, state) {
   }
 }
 
-/** Take every picking mark back off the board. */
+/**
+ * Take every picking mark back off the board.
+ *
+ * The `tabindex` goes with it, so a field is in the tab order only while it is actually an answer to a
+ * question. Forty permanent tab stops on the board would sit between a keyboard player and every
+ * control on the page, which is the defect spec 05 found on the pool overview and this avoids by
+ * construction. A pawn keeps whatever `tabindex` `move-hints.js` gave it, because that one is about
+ * being movable and is not this file's to clear.
+ */
 function clearBoard($board) {
   $board.removeAttr("data-picking");
   $board.find("[data-pickable]").removeAttr("data-pickable");
+  $board.find(".square--track[tabindex]").removeAttr("tabindex");
 }
 
 /**
@@ -103,7 +131,7 @@ export function createTargetPicker({ $board, onReady, onChange }) {
   function ask(state) {
     const kind = pick.kinds[pick.index];
 
-    markBoard($board, kind, pick.seat, state);
+    markBoard($board, kind, pick.seat, state, pick.cardId);
     onChange();
   }
 
@@ -165,9 +193,16 @@ export function createTargetPicker({ $board, onReady, onChange }) {
       record(state, { pawn: { player, pawn } });
     },
 
-    /** A track square was clicked while a square was being asked for. */
+    /**
+     * A track square was clicked while a square was being asked for.
+     *
+     * Whether *that* square was one of the offered ones is not re-checked here. It does not need to be:
+     * only the offered squares carry `data-pickable`, `events.js` binds the click to that selector, and
+     * `checkTarget` refuses an illegal square anyway. Two guards are enough and a third in the middle
+     * would be the one that goes stale.
+     */
     pickSquare(state, square) {
-      if (pick === null || pick.kinds[pick.index] !== "track-square") return;
+      if (pick === null || !SQUARE_KINDS.includes(pick.kinds[pick.index])) return;
 
       record(state, { square });
     },

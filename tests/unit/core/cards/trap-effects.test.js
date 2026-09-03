@@ -1,19 +1,19 @@
 /**
- * The four cards that put something on a square, and what happens when a pawn walks into it.
- * Issue #38, requirements FR-26 and FR-29.
+ * The four cards that put something on a square. Issue #38, requirements FR-26, FR-28 and FR-30.
  *
- * Split from `board-effects.test.js` when that file passed 300 lines. The seam is the one the source
- * uses: `trap-effects.js` is the only effects file with **two** halves to test, the placement and the
- * firing, and the firing is not a card effect at all. It is called from move resolution.
+ * Split from `board-effects.test.js` when that file passed 300 lines. **This file now covers the
+ * placement only**, which is all `trap-effects.js` still does: issue #45 moved the firing rules out to
+ * `core/trap-fire.js`, and their tests went with them.
  */
 
 import { describe, expect, it } from "vitest";
 
 import { START_R } from "../../../../src/core/board.js";
 import { createContext } from "../../../../src/core/cards/context.js";
+import { BIG_ROCK_ROUNDS } from "../../../../src/core/cards/effects/trap-effects.js";
 import { effectFor } from "../../../../src/core/cards/effects/index.js";
-import { fireTrap } from "../../../../src/core/cards/effects/trap-effects.js";
-import { STATUS } from "../../../../src/core/statuses.js";
+import { PUSHBACK_FLOOR } from "../../../../src/core/displacement.js";
+import { turnsForRounds } from "../../../../src/core/statuses.js";
 import { TRAP_KIND } from "../../../../src/core/traps.js";
 import { pawnsAt, rngForDice } from "../../../helpers/fixtures.js";
 
@@ -23,9 +23,8 @@ function play(cardId, fields = {}, dice = []) {
 }
 
 /** Where one pawn ended up in a patch's pawn list. */
-function at(patch, player, pawn) {
-  return patch.pawns.find((entry) => entry.player === player && entry.pawn === pawn).r;
-}
+const rOf = (patch, player, pawn) =>
+  patch.pawns.find((entry) => entry.player === player && entry.pawn === pawn).r;
 
 describe("the four cards that put something on a square", () => {
   const target = { square: 17 };
@@ -49,75 +48,120 @@ describe("the four cards that put something on a square", () => {
   /**
    * The three traps wait as long as it takes; the blocker is the only one with a deadline. A trap with a
    * deadline would be a trap that quietly stopped being there, which nobody could tell from a bug.
+   *
+   * Three rounds at four seats is twelve turns, so a rock dropped on turn 5 stands until 17. It was
+   * two rounds and 13 until issue #45; the rulebook always said three.
    */
   it("gives the blocker a deadline and the traps none", () => {
     expect(play("action-banana-peel", { target }).traps[0].until).toBeNull();
     expect(
       play("action-big-ah-rock", { turnNumber: 5, playerCount: 4, target }).traps[0].until
-    ).toBe(13);
+    ).toBe(5 + turnsForRounds(BIG_ROCK_ROUNDS, 4));
   });
 });
 
-describe("a trap going off", () => {
-  const mover = { player: 0, pawn: 0 };
-  const trapOn = (kind, square = 12) => ({ kind, square, owner: 2, until: null });
+describe("Big Ah Rock also knocks the pawn behind it back (issue #45)", () => {
+  const target = { square: 17 };
 
-  function fire(kind, r, dice = []) {
-    return fireTrap({
-      pawns: pawnsAt(4, { "0.0": r }),
-      statuses: [],
-      traps: [trapOn(kind)],
-      trap: trapOn(kind),
-      mover,
-      turnNumber: 7,
-      rng: rngForDice(dice),
+  /**
+   * The half of the card that was never built. Seat 2's `r = 37` is absolute 16, one square behind the
+   * rock on 17, so it is the nearest pawn behind and gets pushed three back to `r = 34`.
+   */
+  it("pushes the nearest enemy pawn behind the rock back three", () => {
+    const patch = play("action-big-ah-rock", {
+      actor: 0,
+      target,
+      pawns: pawnsAt(4, { "2.0": 37 }),
     });
-  }
 
-  it("Banana Peel sends the pawn back to its start area", () => {
-    const result = fire(TRAP_KIND.BANANA_PEEL, 13);
-
-    expect(at(result, 0, 0)).toBe(START_R);
-  });
-
-  it("It's Not That Deep pushes the pawn back a D6", () => {
-    const result = fire(TRAP_KIND.NOT_THAT_DEEP, 13, [[4, 6]]);
-
-    expect(at(result, 0, 0)).toBe(9);
+    expect(rOf(patch, 2, 0)).toBe(34);
   });
 
   /**
-   * Oil Spill slides the pawn **and** marks it, so the square it stops on hands out no skill card. A card
-   * whose whole point is speed should not also be the best way to farm cards.
+   * "Behind" is measured from the rock and runs backwards round the whole ring, first hit wins. Seat 2
+   * on absolute 16 is nearer than seat 1 on absolute 10, so seat 1 is untouched.
    */
-  it("Oil Spill slides the pawn forward and marks it as having slid", () => {
-    // The slide is 3 plus a D3 minus 1, so a 1 on the D3 is the shortest slide.
-    const result = fire(TRAP_KIND.OIL_SPILL, 13, [[1, 3]]);
-
-    expect(at(result, 0, 0)).toBe(16);
-    expect(result.statuses[0]).toMatchObject({
-      kind: STATUS.SLIPPERY,
-      player: 0,
-      pawn: 0,
-      until: 8,
+  it("finds the nearest one and leaves the others alone", () => {
+    const patch = play("action-big-ah-rock", {
+      actor: 0,
+      target,
+      pawns: pawnsAt(4, { "2.0": 37, "1.0": 1 }),
     });
+
+    expect(rOf(patch, 2, 0)).toBe(34);
+    expect(rOf(patch, 1, 0)).toBe(1);
   });
 
-  it("clears the trap off the board, whatever it did", () => {
-    for (const kind of [TRAP_KIND.BANANA_PEEL, TRAP_KIND.OIL_SPILL]) {
-      expect(fire(kind, 13, [[1, 6]]).traps).toEqual([]);
-    }
+  /** A card that knocked back its own pawn would be a card nobody plays. */
+  it("skips the placing player's own pawns", () => {
+    const patch = play("action-big-ah-rock", {
+      actor: 0,
+      target,
+      pawns: pawnsAt(4, { "0.0": 17, "2.0": 30 }),
+    });
+
+    expect(rOf(patch, 0, 0)).toBe(17);
+    expect(rOf(patch, 2, 0)).toBe(27);
   });
 
   /**
-   * A blocker is in the same list and must not behave like a trap. Nothing should ever walk onto one,
-   * because `blockedSquares` refuses the move first, and a rule that relies on another rule having run is
-   * a rule that breaks when the order changes.
+   * The rock's own square is not "behind" it, and the module has always promised that a pawn already
+   * standing there is not moved. Seat 2's `r = 38` is absolute 17, the rock's square itself, so the
+   * search finds nobody and the card writes **no pawn list at all**. Asserting the absence is stronger
+   * than asserting the position: a patch with no `pawns` key cannot have moved anything.
    */
-  it("does nothing at all for a blocker, and leaves it standing", () => {
-    const result = fire(TRAP_KIND.BIG_AH_ROCK, 13);
+  it("does not move a pawn standing on the square the rock lands on", () => {
+    const patch = play("action-big-ah-rock", {
+      actor: 0,
+      target,
+      pawns: pawnsAt(4, { "2.0": 38 }),
+    });
 
-    expect(at(result, 0, 0)).toBe(13);
-    expect(result.traps).toHaveLength(1);
+    expect(patch.pawns).toBeUndefined();
+    expect(patch.traps).toHaveLength(1);
+  });
+
+  /** No enemy pawn anywhere on the track, so the placement is all that happens. */
+  it("is a plain placement when there is nobody behind it", () => {
+    const patch = play("action-big-ah-rock", { actor: 0, target, pawns: pawnsAt(4) });
+
+    expect(patch.traps).toHaveLength(1);
+    expect(patch.pawns).toBeUndefined();
+  });
+
+  /**
+   * The knockback goes through `shove`, so it gets the same rules a trap-driven push does. Seat 1's
+   * `r = 25` is absolute 34, and seat 2 pushed back from absolute 16 to absolute 13 would pass it, so
+   * this needs the two on the same square instead: seat 1 at `r = 4` is absolute 13.
+   */
+  it("captures a pawn the knockback lands on", () => {
+    const patch = play("action-big-ah-rock", {
+      actor: 0,
+      target,
+      pawns: pawnsAt(4, { "2.0": 37, "1.0": 4 }),
+    });
+
+    expect(rOf(patch, 2, 0)).toBe(34);
+    expect(rOf(patch, 1, 0)).toBe(START_R);
+  });
+
+  /**
+   * The floor is the entry square, so a knockback never substitutes for a capture. Seat 2's `r = 2` is
+   * absolute 21, one behind a rock on 22, and three back from `r = 2` would be `r = -1`.
+   */
+  it("stops the knockback at the entry square", () => {
+    const patch = play("action-big-ah-rock", {
+      actor: 0,
+      target: { square: 22 },
+      pawns: pawnsAt(4, { "2.0": 2 }),
+    });
+
+    expect(rOf(patch, 2, 0)).toBe(PUSHBACK_FLOOR);
   });
 });
+
+/**
+ * The firing half of these four cards is now `tests/unit/core/trap-fire.test.js`, and the walk a fired
+ * trap sends the pawn on is `tests/unit/core/enter.test.js`. Both moved with the code in issue #45:
+ * `fireTrap` left this module for `core/trap-fire.js` and stopped writing pawn positions at all.
+ */

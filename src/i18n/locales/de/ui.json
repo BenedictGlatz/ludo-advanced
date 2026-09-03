@@ -75,12 +75,30 @@
       "overshoot": "Der Wurf ist zu hoch: ins Ziel geht es nur mit der genauen Zahl.",
       "already-home": "Diese Figur ist schon im Ziel und wird nicht mehr gezogen.",
       "held": "Diese Figur wird festgehalten und setzt diesen Zug aus.",
+      "stunned": "Diese Figur ist in eine Falle getreten und setzt diesen Zug aus.",
       "locked": "Diese Figur ist eingesperrt und darf nicht gezogen werden.",
       "blocked": "Auf dem Weg liegt ein Stein. Da kommt niemand vorbei.",
       "protected": "Die Figur auf dem Zielfeld ist geschützt und kann nicht geschlagen werden.",
       "no-steps": "Der Wurf ist auf 0 gefallen. Diese Runde bewegt sich niemand.",
       "none-available": "Mit diesem Wurf ist kein Zug möglich."
     }
+  },
+  "trap": {
+    "owned": "{{object}}, gelegt von {{player}}",
+    "label": {
+      "banana-peel": "Banana Peel",
+      "oil-spill": "Oil Spill",
+      "not-that-deep": "It's Not That Deep",
+      "big-ah-rock": "Big Ah Rock"
+    },
+    "fired": {
+      "banana-peel": "{{player}} ist auf die Banana Peel von {{owner}} getreten und setzt den nächsten Zug aus.",
+      "oil-spill": "{{player}} ist in den Oil Spill von {{owner}} geraten und {{squares}} Felder weitergerutscht.",
+      "not-that-deep": "{{player}} ist in It's Not That Deep von {{owner}} getreten und ein Feld zurückgegangen.",
+      "big-ah-rock": "{{owner}} hat einen Big Ah Rock abgelegt, und {{player}} wurde drei Felder zurückgestoßen."
+    },
+    "nullified": "In der Nähe lag ein It's Not That Deep und hat diese Karte aufgehoben.",
+    "aura": "Von einem It's Not That Deep geschützt"
   },
   "intent": {
     "rejected": {
@@ -120,6 +138,7 @@
       "own-pawn": "Wähle eine eigene Figur",
       "enemy-pawn": "Wähle eine gegnerische Figur",
       "track-square": "Wähle ein Feld auf der Strecke",
+      "free-square": "Wähle ein freies Feld auf der Strecke",
       "direction": "Vorwärts oder rückwärts?",
       "number": "Nenne eine Zahl",
       "player": "Wähle einen Gegner",

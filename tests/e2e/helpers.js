@@ -59,9 +59,21 @@ export const SEEDS = {
   winsQuickest: { seed: 238, players: 2 },
 };
 
-/** Open a match. `fast` is on unless a test explicitly wants the real pauses. */
-export async function openMatch(page, { seed, players }, { fast = true } = {}) {
-  const query = `?seed=${seed}&players=${players}${fast ? "&fast=1" : ""}`;
+/**
+ * Open a match. `fast` is on unless a test explicitly wants the real pauses.
+ *
+ * `stack` is a list of skill card ids that becomes the top of the skill pool, so a spec can be sure the
+ * hand it is about to play from holds the card it is testing. It arrives as `?stack=` and `src/main.js`
+ * carries the reason a seed could not do the same job: `scripts/find-seeds.js` never plays a card, so it
+ * cannot search for a seed whose shuffle deals a named one.
+ */
+export async function openMatch(page, { seed, players }, { fast = true, stack = null } = {}) {
+  const query = [
+    `?seed=${seed}`,
+    `&players=${players}`,
+    fast ? "&fast=1" : "",
+    stack === null ? "" : `&stack=${stack.join(",")}`,
+  ].join("");
   await page.goto(`/${query}`);
 
   const board = page.locator(".board");
@@ -195,8 +207,13 @@ export async function chooseAndCarryOn(board) {
  * nobody can move in passes itself in the same tick, so between two polls the board can leave `act`,
  * hand over, pass, hand back and be in `act` again. The phase and the seat would both read unchanged.
  * The turn number only counts upward, so it cannot hide a turn that has already happened.
+ *
+ * Exported since issue #45, because a spec that has to look at the board **during** a turn cannot use
+ * `playTurn` or `playUntil`: both of them wait past the turn before they hand control back, and a
+ * message that lives until the turn passes is gone by then. Such a spec drives the phases itself and
+ * needs this to end each turn properly.
  */
-async function waitPastTurn(board, turnNumber) {
+export async function waitPastTurn(board, turnNumber) {
   await expect
     .poll(
       async () => {
