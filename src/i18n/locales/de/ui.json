@@ -15,7 +15,6 @@
   "turn": {
     "prompt": "{{player}} ist am Zug",
     "chooseDie": "Wähle eine Würfelkarte",
-    "rolled": "Gewürfelt: {{roll}}",
     "selectPawn": "Wähle eine Figur",
     "end": "Zug beenden"
   },
@@ -159,6 +158,7 @@
       "add-die": "Plus W{{faces}}: {{value}}",
       "sub-die": "Minus W{{faces}}: {{value}}",
       "multiplier": "Mal {{factor}}: {{value}}",
+      "missed": "Mindestens {{needed}} gebraucht, {{rolled}} gewürfelt: 0",
       "floor": "Nicht unter 0"
     }
   }

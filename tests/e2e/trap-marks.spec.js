@@ -155,7 +155,7 @@ test.describe("the announcement's second voice (D55)", () => {
     const announced = await playUntilTrapFires(board);
     test.skip(announced === null, "the match ended before a pawn reached the trap");
 
-    const strip = page.locator(".move-refusal");
+    const strip = page.locator(".message-strip");
     await expect(strip).toHaveAttribute("data-message-kind", "trap");
 
     const ground = await strip.evaluate(

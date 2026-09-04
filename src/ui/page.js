@@ -31,7 +31,7 @@ export function matchParts(state, handSize) {
     $diceHand: renderDiceHand(handSize),
     $skillHand: renderSkillHand(),
     $prompt: renderPrompt(),
-    $message: $("<div>", { class: "move-refusal" }),
+    $message: $("<div>", { class: "message-strip" }),
   };
 }
 
@@ -48,7 +48,7 @@ export function emptyParts() {
     $diceHand: $("<div>", { class: "hand hand--dice" }),
     $skillHand: $("<div>", { class: "hand hand--skill" }),
     $prompt: renderPrompt(),
-    $message: $("<div>", { class: "move-refusal" }),
+    $message: $("<div>", { class: "message-strip" }),
   };
 }
 
@@ -59,12 +59,12 @@ export function emptyParts() {
  * The overlay is last so it paints over all of them without needing a z-index that competes with the
  * card layers in `tokens.css`.
  *
- * **The refusal strip is inside `.app__board` and not a row of the grid**, which is D35 of design spec 04
+ * **The message strip is inside `.app__board` and not a row of the grid**, which is D35 of design spec 04
  * and is the reason that spec could give the board its 44vw back. It used to hold a full-width row at the
  * foot of the page permanently, faded to nothing, so that an arriving refusal would not make the page
- * jump. It now hangs off the bottom edge of the board: `refusal.css` positions it absolutely and `app.css`
- * makes `.app__board` the containing block, so it costs no height, still cannot make the page jump, and a
- * message about a refused move sits over the pieces it is about.
+ * jump. It now hangs off the bottom edge of the board: `message-strip.css` positions it absolutely and
+ * `app.css` makes `.app__board` the containing block, so it costs no height, still cannot make the page
+ * jump, and a message about a refused move sits over the pieces it is about.
  *
  * **The two session elements are detached before the wipe, and that is not a tidiness measure.**
  * jQuery's `.empty()` deliberately unbinds every handler on the children it removes, so from the second

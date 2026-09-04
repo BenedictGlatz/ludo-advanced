@@ -135,6 +135,54 @@ export function holdMidTurn(state, delays, readToken) {
 }
 
 /**
+ * How long the roll stays on screen before the turn carries on. D70 of design spec 11. The fallback, not
+ * the number.
+ *
+ * `--motion-roll-hold` is where the 900 ms live, and this is what to use when no stylesheet has loaded.
+ * Same arrangement as `REFUSAL_MIN_MS` and `TRAP_HOLD_MS`.
+ */
+export const ROLL_HOLD_MS = 900;
+
+/**
+ * How long to hold the roll before the turn carries on.
+ *
+ * The third of this module's three waits, and the only one with no condition in it: **a roll that
+ * happened always gets its moment.** The other two ask the state a question first, because a turn can end
+ * with nothing to report and a card can announce nothing. A roll cannot happen and be nothing.
+ *
+ * ## Why the roll needed a wait at all, which is D70 and not obvious
+ *
+ * The request was that the roll is boring. What was underneath it is that the roll had no **moment**:
+ * `advance()` rolls and carries straight on in the same synchronous pass, so the number was painted in the
+ * same frame as the kept card's lift and the two unkept cards flying back to the pool. A stylesheet cannot
+ * make a moment out of a frame that has already been painted, which is why this is a wait the loop takes
+ * and not a keyframe somebody could have added without touching any JavaScript.
+ *
+ * ## Why it is `state`-free where its two siblings are not
+ *
+ * `holdAfterTurn` and `holdMidTurn` both take the state, because both have to decide **whether** to hold.
+ * The decision here belongs to the caller: `game-loop.js` only asks once the roll has actually produced a
+ * number, because the same phase opens the on-roll reaction window first and rolls nothing. Asking the
+ * state again here would put that condition in two places.
+ *
+ * ## Why the hold is longer than the throw
+ *
+ * `--motion-roll` is 520 ms of movement and this is 900. The extra 380 ms are the number stamping into the
+ * badge and then sitting still: D70.2's argument is that a number which appears and is immediately
+ * overtaken by the next thing has not been shown, it has been mentioned. It costs about 0.9 seconds per
+ * turn, roughly three and a half minutes over a four-player match, which is the price of the feature
+ * stated rather than discovered.
+ *
+ * **The hold is time and not movement**, so `--motion-roll-hold` sits outside `tokens.css`'s
+ * `prefers-reduced-motion` block while `--motion-roll` collapses to 1 ms inside it. That is D20's and
+ * D60's argument and this is the third token to use it: a player who asked for less movement did not ask
+ * for less time to read.
+ */
+export function holdRoll(delays, readToken) {
+  return delays.roll ?? readToken("--motion-roll-hold", ROLL_HOLD_MS);
+}
+
+/**
  * A set of named timers.
  *
  * `window` is read from the caller's scope rather than injected, which is the same choice `game-loop.js`

@@ -362,6 +362,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to read, and it works from the keyboard too: every card in the hand is reachable with Tab now, and the
   card you land on opens the same way. The row itself no longer shuffles sideways when the pointer
   crosses it
+- **The roll is something you watch happen** (design handoff 11, D70 and D71). Until now the number
+  simply appeared, in the same instant as the card you kept lifting and the two you did not flying back
+  to the pool. The card you chose now performs the throw itself: it tips back, shakes three times, comes
+  to rest, and the number stamps into the badge on it. The whole thing takes 900 milliseconds and the
+  game waits for it, so the roll has a moment of its own instead of sharing a frame with everything else
+  that happens when you pick a card. If you have asked your system for less motion, the card does not
+  move and the number is simply there, but the pause stays: less movement is not the same as less time to
+  look
+- **A roll that cards changed now tells you where the number came from** (design handoff 11, D73). Play a
+  Critical Success, an Angel Die and a Speedrun Any% in one turn and a D20 can produce a 44, which no die
+  in the game can roll. The strip under the board now lists every step in order: what the die rolled,
+  what each card added, and what the total became. It appears **only** when cards actually changed the
+  roll, so on an ordinary turn it stays quiet and the fact that it is speaking tells you something
+  happened
 
 ### Changed
 
@@ -628,6 +642,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **One of the nine kinds of roll step had no wording in either language.** A roll that a card had set a
+  threshold on and that then failed it would have printed `roll.step.missed` on screen instead of a
+  sentence. Eight of the nine had been translated and the ninth was missed, and nothing failed because
+  nothing was reading any of them yet. Both languages have it now, and there is a test that compares the
+  wordings against the list of steps rather than against each other, which is why the existing check
+  could not see it: both languages agreed about a step that had no wording anywhere
 - **The game no longer scrolls on a window that is not 900 px tall.** Everything except the board was
   measured in text units, so the page needed a fixed 820 px of height, up to 882 px while it was asking
   something, however large the window was. On a 1438 by 770 laptop that was 50 px of scrolling before the

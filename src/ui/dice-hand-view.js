@@ -27,6 +27,26 @@
  * `data-card-id` deals a card silently. `data-dealing` is the trigger design spec 03 asked for as
  * D34, and restarting it needs the attribute removed, a reflow forced, and the attribute put back.
  * The forced read of `offsetWidth` is the whole trick and it is the reason that line looks pointless.
+ *
+ * ## The throw, and the one line of it that looks like a mistake
+ *
+ * `data-rolling` is the second attribute of that shape, from design spec 11's D71. It goes on when a roll
+ * first appears and `turn-waits.js` takes it off when the hold expires.
+ *
+ * **The number is written into the badge at the start of the throw and not at the end**, which reads
+ * backwards and is the whole of D72. The badge is hidden by `card-state.css`'s `:empty { display: none }`,
+ * and an element with `display: none` has no start state to animate from, so every route that waited for
+ * the end of the roll to fill it needed that rule changed. Filling it at the start needs nothing changed:
+ * the badge is in the layout for the whole throw holding the result, and `roll.css`'s keyframe uses a
+ * `backwards` fill to keep it at zero opacity until the card comes to rest.
+ *
+ * That is why nothing below writes the number specially. `updateCard` already gets `state.roll` the
+ * moment the rules produce it, and this file only had to set the attribute in the same pass. Both follow
+ * from one fact, so they cannot get out of step.
+ *
+ * It costs one thing, named rather than hidden: the result is readable in the DOM about 520 ms before it
+ * is readable on screen. D72.1 argues that is right rather than merely acceptable, because a player who
+ * cannot see the card shake should not be made to wait out a shake they cannot see.
  */
 
 import $ from "jquery";
@@ -64,6 +84,31 @@ function replayDeal($hand) {
 }
 
 /**
+ * Restart the throw. `data-rolling` is `data-dealing`'s twin, so the same trick works unchanged.
+ *
+ * Design spec 11 asked for the attribute on the **row** and not on the one card, and D71.6 gives the
+ * reason: the restart above already exists for a row attribute, and the stylesheet can scope down to
+ * `.card[data-selected="true"]` by itself. An attribute on the card would have needed a second copy of
+ * this function against an element that is rewritten rather than kept.
+ */
+function replayRoll($hand) {
+  $hand.removeAttr("data-rolling");
+  void $hand[0].offsetWidth;
+  $hand.attr("data-rolling", "true");
+}
+
+/**
+ * The throw is over and the turn may carry on. Called by `turn-waits.js` when the hold expires.
+ *
+ * It has to happen **before the next turn deals**, or `data-rolling` would still be set when
+ * `data-dealing` goes on and the throw would restart on a card that is arriving. `hand.css` and
+ * `roll.css` would both be animating the same element for different reasons.
+ */
+export function endRoll($hand) {
+  $hand.removeAttr("data-rolling");
+}
+
+/**
  * Which slot holds the card the player kept, or `-1`.
  *
  * By denomination, and the first match wins. A hand holding two D6 cards has two slots that are
@@ -92,6 +137,13 @@ export function updateDiceHand($hand, state) {
   if ($hand.data("dealtTurn") !== state.turnNumber && hand.length > 0) {
     $hand.data("dealtTurn", state.turnNumber);
     replayDeal($hand);
+  }
+
+  // The throw, gated on the turn exactly like the deal above it, so the pass that first sees a roll
+  // starts it and the twenty passes after that leave it alone. See the note at the top of the file.
+  if ($hand.data("rolledTurn") !== state.turnNumber && state.roll !== null) {
+    $hand.data("rolledTurn", state.turnNumber);
+    replayRoll($hand);
   }
 
   $hand.attr("data-count", hand.length);

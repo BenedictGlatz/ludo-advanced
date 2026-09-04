@@ -41,7 +41,7 @@
  * **every rule in this project's CSS now comes from a numbered decision in a spec.** Handoff 07 added
  * `board-trap.css` on 2026-09-03 and kept that true.
  *
- * The import order below is the one 04-spec § 1 asks for, and four entries in it are load-bearing rather
+ * The import order below is the one 04-spec § 1 asks for, and five entries in it are load-bearing rather
  * than tidy. `prompt.css` has to come after `app.css`, because both place `.prompt` on the grid and at
  * equal specificity the later file wins. `handover.css` has to come after `overlay.css`, because it
  * overrides the sheet's transition to none, which is the whole of D39's concealment. `board-trap.css` has
@@ -50,6 +50,13 @@
  * declarations in each of them and nothing in them overrides it: it is the one state that changes a
  * card's size and re-flows its insides, which is why 10-spec § 2 split it out rather than making any one
  * of the three reach into the other two.
+ *
+ * `roll.css` is the fifth and it is last of the card files, after `card-reveal.css`, which is what
+ * 11-spec § 1 asks for. **It is there because it composes rather than because it overrides**, and that is
+ * worth the sentence: the throw is written on `rotate` and `translate` and never on `transform`, so it
+ * adds to the lift that `card-state.css` and `hand.css` write into `transform` instead of replacing it
+ * (D71.1). Last is where a file that only adds belongs, so nothing has to be reconciled when one of the
+ * four ahead of it changes.
  *
  * **One ordering is a known conflict rather than a decision**, and it is written down here because the
  * cascade is the only place it is visible. `prompt.css` styles a pickable field in the skill teal and
@@ -79,11 +86,12 @@ import "./ui/styles/board-track.css";
 import "./ui/styles/board-regions.css";
 import "./ui/styles/board-trap.css";
 import "./ui/styles/pawn.css";
-import "./ui/styles/refusal.css";
+import "./ui/styles/message-strip.css";
 import "./ui/styles/card.css";
 import "./ui/styles/card-state.css";
 import "./ui/styles/hand.css";
 import "./ui/styles/card-reveal.css";
+import "./ui/styles/roll.css";
 import "./ui/styles/app.css";
 import "./ui/styles/hud.css";
 import "./ui/styles/chrome.css";
@@ -104,8 +112,15 @@ import "./ui/styles/pool.css";
  * reads `--motion-refusal-hold`, this one is the mid-turn wait and reads `--motion-trap-hold`. Two
  * different numbers for two events that differ in who caused them, and a unit test pins that each can be
  * collapsed without the other.
+ *
+ * `roll` is D70's 900 ms hold, and it is a **fifth** key. Design spec 11 was asked whether skipping it
+ * entirely in a test run is acceptable and answered yes, for a reason worth keeping: nothing in the game
+ * state depends on the hold. It is reading time, it changes no value, and no rule branches on it. A
+ * figure that had to be honoured everywhere would cost 900 ms on every one of the roughly 250 rolls in
+ * an end-to-end run, which is minutes of wall clock for a frame nobody is watching. The place the timing
+ * is asserted is `roll-animation.spec.js`, at real speed, so one spec pays for it instead of all of them.
  */
-const FAST_DELAYS = { afterMove: 0, afterRefusal: 0, afterTrapCard: 0, reaction: 0 };
+const FAST_DELAYS = { afterMove: 0, afterRefusal: 0, afterTrapCard: 0, reaction: 0, roll: 0 };
 
 /**
  * The four settings the address bar may carry.

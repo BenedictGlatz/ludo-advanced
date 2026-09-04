@@ -1626,6 +1626,74 @@ the production build, and `reuseExistingServer` had left a server from an earlie
 `data-seat` but no `data-face`, which is the code from before the edit. `npm run build` fixed it. Reading
 the failing DOM rather than the assertion is what identified it in one step.
 
+### A green suite that tested a bundle five hours old: 2026-09-03, handoff 11
+
+The most important finding of the evening, and it is about the harness rather than about the code.
+
+`playwright.config.js` sets `reuseExistingServer: !process.env.CI` with the command
+`npm run build && npm run preview`. **If something is already answering on port 4173, the build never
+runs.** `npm run preview` serves the files in `dist/` from disk, so the suite tests whatever was last
+built, whenever that was.
+
+The class rename from `.move-refusal` to `.message-strip` was verified against a `dist/` from 18:14 with
+a working tree from 21:40. The run reported "24 passed". It was proved rather than guessed:
+`grep -c move-refusal dist/assets/*.js` returned 1 and `message-strip` returned 0, so the five specs
+that locate the strip by its new name had been run against a bundle that does not contain it.
+
+**Two facts follow, and the first one is a rule.**
+
+**Every end-to-end run in this project has to be preceded by `npm run build`.** The fix is that one
+command and nothing else, because `preview` re-reads from disk per request and does not need
+restarting. There is no need to find and kill the server.
+
+**A suite that can silently test the wrong code is worse than no suite for the one decision it is asked
+to support.** Nothing in the output distinguishes a reused stale server from a fresh build: no warning,
+no timestamp, no version. `reuseExistingServer` exists so a developer does not pay 30 seconds per run,
+and this is its price. Two ways out, and neither has been taken yet:
+
+1. Drop `reuseExistingServer`, and pay the rebuild on every run.
+2. Keep it and add a check, for example a build stamp in the page that a first test asserts against the
+   working tree.
+
+Recorded as outstanding rather than fixed, because it is a change to the test harness and this commit is
+a feature.
+
+**What it cost:** roughly 25 minutes, almost all of it spent doubting the application code. The visible
+symptom was a locator finding nothing, which reads exactly like a bug in the rename.
+
+### The bug the expensive specs caught and the cheap ones could not: 2026-09-03, handoff 11
+
+Three specs went red on the roll's hold: two in `win.spec.js` and one in `match-flow.spec.js`. All three
+play a full 77-turn match, all three took four minutes to fail, and all three failed on a click that
+never landed, with `<div class="app__dice"> intercepts pointer events`.
+
+The cause is in Ch. 04 and in the journal. What belongs here is **why nothing cheaper found it.**
+
+`roll.css` puts `pointer-events: none` on `.hand--dice[data-rolling="true"]`, and the hold that removes
+the attribute was hanging off the loop's `roll` branch. A roll does not always come through that branch:
+when an opponent holds Critical Failure, Devil Die or Hold Pawn, the roll happens inside `close-window`
+instead. So the dice hand became **permanently unclickable** from the first turn an opponent drew one of
+those three cards out of 29.
+
+**A two-player match needs several turns before that is even possible.** Every case in the new
+`roll-animation.spec.js` plays one or two turns and every one of them passed. The three specs that
+found it are the only ones in the suite that play a match as a **sequence** rather than setting up a
+**situation**.
+
+**That is the argument for keeping expensive full-match specs**, and it is worth making in the report
+because the obvious verdict on a test that takes minutes is that it should be replaced by something
+faster. They are the longest cases in the suite by a wide margin, they run in parallel with everything
+else so they set the floor on how long a full run takes, and they are the only tests here that can catch
+a state which leaks from one turn into the next. Runtimes are in Ch. 09.
+
+**The new case that closes it does not replace them.** `roll-animation.spec.js` now stacks four Devil
+Dice so an opponent is certain to hold one, plays six turns, and asserts the attribute is gone after
+each. It runs in seconds, and it only exists because the slow specs pointed at the problem first.
+
+**One rule for next time.** An attribute that gates input, rather than one that changes a colour,
+deserves a test that clicks through several turns and asserts it is **gone**. A test that only asserts
+it appears would have passed throughout.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -1640,6 +1708,18 @@ the failing DOM rather than the assertion is what identified it in one step.
   only ever fetched Chromium. Nothing was wrong with the code. It is the kind of failure that reads
   as a cross-browser defect for the first minute and is a missing download, and the lesson is that a
   suite is not proven on an engine until it has actually run on it.
+- **The end-to-end suite can silently test a stale bundle, and nothing has been changed about it.**
+  `playwright.config.js`'s `reuseExistingServer: !process.env.CI` skips `npm run build` whenever a preview
+  server is already answering on port 4173, and `npm run preview` serves `dist/` from disk. It happened
+  on 2026-09-03 and produced a run reporting "24 passed" against a bundle five hours old. **The working
+  rule is to run `npm run build` before `npx playwright test`**, which is a discipline and not a
+  guarantee. The two real fixes, neither taken: drop the reuse and pay the rebuild every run, or add a
+  build stamp to the page that a first test asserts against the tree. CI is unaffected, because
+  `process.env.CI` is set there and the server is never reused.
+- **NFR-08's explanation half is closed as of 2026-09-03**, with D73 of design handoff 11: a roll that
+  cards changed lists its steps in the message strip, and `roll-animation.spec.js` asserts both that it
+  speaks when the chain has two or more steps and that it stays silent when it has one. The refusal half
+  below is the part that is still a playtest.
 - **NFR-08 is only half testable.** Its criterion is that a playtester can say why a move was refused
   *without being told*. A test can check that the text is on screen, in the right region, in the right
   language and for long enough to read. Whether a person reads it is a playtest, and the playtest has

@@ -21,12 +21,15 @@
  * by i18next here.
  */
 
+import $ from "jquery";
+
 import { REGION, absoluteSquare, homeColumnStep, region } from "../core/board.js";
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { movablePawns } from "../state/turn-manager.js";
 import { t } from "../i18n/index.js";
 import { pawnElement } from "./board-view.js";
 import { seatLabel } from "./player-labels.js";
+import { rollBreakdown } from "./roll-steps.js";
 
 /**
  * The square a move lands on.
@@ -104,7 +107,8 @@ export function applyMoveHints($board, state) {
  * `kind` stays, even though the strip had exactly one kind left, because it is the seam the region is
  * told apart by and removing it would be a change to two end-to-end specs for no gain. **Issue #45
  * gave it a second kind and vindicated keeping it**, so `data-message-kind` is now load-bearing rather
- * than vestigial.
+ * than vestigial. Design spec 11's D73 gave it a third, which is the reason the element was renamed
+ * from `.move-refusal` to `.message-strip`: two of the three things it says are not refusals.
  *
  * ## The two new kinds, and the colour they ship in
  *
@@ -143,10 +147,54 @@ function message(state) {
     return { kind: "trap", key: "trap.nullified", options: {} };
   }
 
-  return null;
+  return rollMessage(state);
 }
 
-/** Fill the strip that hangs off the bottom of the board, or empty it. */
+/**
+ * The third kind of message: a roll that cards changed, explaining itself. D73, NFR-08.
+ *
+ * Last of the four branches, because a refusal is about what the player may do next and a trap is
+ * something that happened to them, and both outrank a footnote about a number that is already on the
+ * card. In practice they are mutually exclusive: this is asked in `act`, and a refusal means no move was
+ * possible, so the turn never reached `act` at all.
+ *
+ * ## Two conditions, and only one of them comes from the spec
+ *
+ * **`act`** is D73.4: the breakdown stays as long as the player is deciding which pawn to move, because
+ * that is the decision it informs, and it is cleared when the phase leaves that. It holds nothing and
+ * costs no milliseconds, which is also why D70's hold could stay as short as 900 ms.
+ *
+ * **`running`** is not in the spec and comes from a test. `win.spec.js` asserts that the strip carries no
+ * `data-message-kind` at all once a match is over, which is D40: the overlay says "you won" and the strip
+ * says nothing. A won match can be sitting in `act` with a chain still in the state, so without this the
+ * win screen would open over a strip explaining the winning roll.
+ *
+ * `data-reason-key` is a **latch and not a locale key**, which is the one surprising thing here.
+ * `message-strip.css` makes the strip visible with
+ * `[data-reason-key]:not([data-reason-key=""])`, so something has to be in it, and this message has a
+ * list instead of a sentence. Nothing calls `t()` on it and there is no `turn.roll-steps` in `ui.json`.
+ */
+function rollMessage(state) {
+  if (state.status !== MATCH_STATUS.RUNNING || state.phase !== TURN_PHASE.ACT) return null;
+
+  const steps = rollBreakdown(state);
+  if (steps === null) return null;
+
+  return { kind: "roll", key: "turn.roll-steps", steps };
+}
+
+/**
+ * Fill the strip that hangs off the bottom of the board, or empty it.
+ *
+ * `.text()` first in the list case as well as in the empty one, because it is what removes the children
+ * of whatever the strip said last. Three kinds of message share one element, so every write has to be
+ * able to undo any of the other two.
+ *
+ * **The list is the one element in this file that is built rather than rewritten**, which is the standing
+ * delivery rule it bends. The reason it is allowed to: the number of steps changes from roll to roll, so
+ * there is no fixed set of slots to keep, and nothing on it transitions. The strip itself, which does
+ * transition, is built once by `page.js` and only ever gets attributes here.
+ */
 export function showMessage($message, state) {
   const next = message(state);
 
@@ -155,8 +203,20 @@ export function showMessage($message, state) {
     return;
   }
 
-  $message
-    .attr("data-reason-key", next.key)
-    .attr("data-message-kind", next.kind)
-    .text(t(next.key, next.options));
+  $message.attr("data-reason-key", next.key).attr("data-message-kind", next.kind).text("");
+
+  if (next.steps === undefined) {
+    $message.text(t(next.key, next.options));
+    return;
+  }
+
+  const $steps = $("<ol>", { class: "message-strip__steps" });
+
+  for (const step of next.steps) {
+    $steps.append(
+      $("<li>", { class: "message-strip__step", "data-roll-step": step.kind }).text(step.text)
+    );
+  }
+
+  $message.append($steps);
 }

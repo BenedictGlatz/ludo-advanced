@@ -186,6 +186,15 @@
   /* The refusal message holds for four seconds (D20, now a token). */
   --motion-refusal-hold: 4s;
 
+  /* The roll (D70). --motion-roll is the kept dice card's throw. Its first
+     46 per cent is the wind up, which runs while the two cards nobody kept
+     travel home on --motion-move, and the number lands as it ends.
+     --motion-roll-hold is what game-loop.js waits before the turn carries on:
+     the roll's turn on screen, not a movement, so it stays out of the
+     reduced-motion block on the D20 and D60 argument. */
+  --motion-roll: 520ms;
+  --motion-roll-hold: 900ms;
+
   /* A trap announcement holds for two seconds before the turn may carry on
      (D60). Shorter than the refusal, because a refusal follows the player's
      own click and they are already looking at the board, while a trap fired
@@ -277,5 +286,9 @@
        against a latch and not a movement, the same argument that keeps
        --motion-refusal-hold and --motion-trap-hold out of this block. */
     --motion-reveal: 1ms;
+
+    /* The throw goes; the landing stays, because the number arriving is the
+       feedback D12 keeps. --motion-roll-hold is deliberately absent (D70). */
+    --motion-roll: 1ms;
   }
 }

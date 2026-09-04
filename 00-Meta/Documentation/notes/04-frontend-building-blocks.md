@@ -2089,6 +2089,308 @@ that opts out.
 `[data-playable="true"]`, so pressing `Enter` on a focused unplayable card does nothing. That is correct
 and deliberate: the stop is there to read the card, not to play it.
 
+### The roll has no animation, no moment and no explanation: 2026-09-03
+
+The request was that the dice roll animation is boring and a number just appears. It is accurate, and
+looking for the place to build a better one found three things where one was reported. All three go out
+as `11-brief-roll-animation.md`, D70 to D74.
+
+#### 1. There is no animation, and the badge cannot have one without a change
+
+`.card__result` is a span that `card-view.js` creates empty and always keeps, and `card-state.css` hides
+it with `:empty { display: none }`. The view writes the number in and the number is on screen. **No
+keyframe, no transition and no token targets it in any of the eighteen stylesheets.**
+
+- **The `:empty` rule is what makes this more than a missing stylesheet.** An element with
+  `display: none` has no start state, so nothing can transition or animate *into* view on that element.
+  Whatever the answer is, it needs either an ancestor, a pseudo-element, a placeholder character, or the
+  `:empty` rule replaced by an attribute the view writes. Three of those four are changes to our code,
+  which is why it is asked as D72 on its own rather than folded into the look.
+- The badge is small, and that is a measured constraint rather than an impression. At the fitted stage's
+  14.4 px root and the dice hand's `--card-u: 0.76`, the badge is **30.1 px square** and the number in it
+  is **17.8 px**. The card it sits on is 177.8 by 259.9 px. So an animation confined to the badge happens
+  in about 1.3 per cent of the card's area.
+- **D32 is not reopened.** The number belongs on the card that produced it, and `board-view.js` says in
+  its own comment that the board deliberately does not show the roll: "The number itself belongs to the
+  dice hand." Both are confirmed in the brief's § 2 rather than asked again.
+
+#### 2. The roll has no moment of its own, and the loop's own comment says it should
+
+`game-loop.js` line 26 describes the `roll` phase as existing "so that the on-roll reaction window has a
+moment to open in, **and so a roll animation has something to hang off**". Nothing hangs off it. That
+sentence went in with `182e5fa` on 2026-09-01.
+
+- `advance()` is synchronous and re-entrant, so one click on a dice card runs the action-phase skip and
+  the roll before the browser paints once. What a player sees is **a single frame** in which the kept card
+  lifts, the two unkept cards begin travelling back to the pool (`hand.css`, `data-resolved`), and the
+  number is already sitting on the kept card. The three parts of "you rolled" arrive together and the one
+  the player is waiting for is the one with no motion on it.
+- **A pause in front of the roll already exists, and it is not an animation.** `handleRollDie` opens the
+  on-roll reaction window **before** rolling, because Critical Failure, Devil Die and Hold Pawn are played
+  "as any player rolls" and have to be played before the number is known. When one opens, the roll happens
+  on window close through `resumeAfterWindow`. So the machine already knows how to stop in front of a
+  roll; it just never does it for the roll's own sake.
+- **What the answer costs us depends on the answer**, which is D70. A movement is a stylesheet and nothing
+  else. A hold is a stylesheet plus a wait in `game-loop.js`, and that file is at **293 lines**, 7 from
+  NFR-02's limit, so a wait would land in `timers.js` beside `holdAfterTurn` and `holdMidTurn` rather than
+  in the loop.
+
+#### 3. A roll that cards changed is an unexplained number, and this is NFR-08
+
+`core/roll.js` resolves a roll as a chain of up to nine kinds of step and returns the trace.
+`turn-manager.js` writes it to `state.rollSteps`, and its comment says why: "`rollSteps` keeps the trace
+so the screen can explain a number that three cards had a hand in (NFR-08)."
+
+- **No file under `src/ui/` reads `rollSteps`.** The only readers in the repository are unit tests.
+- **The sentences are already written, in both languages.** `roll.step.base`, `.fixed`, `.advantage`,
+  `.disadvantage`, `.add-die`, `.sub-die`, `.multiplier` and `.floor` are in `de/ui.json` and `en/ui.json`
+  and are read by nothing. "Plus a D8: 5", "Rolled twice, higher: 17", "Times 2: 22".
+- So a turn in which a player plays Critical Success, Angel Die and Speedrun Any% ends with a number on a
+  D20 card that can be larger than 20, and nothing on screen accounts for it.
+- **Negative finding, and it is the third of its kind in three handoffs.** A rule ran in `core/` or
+  `state/` and nothing in `ui/` rendered it: `state.traps` in handoff 07, the face-down own hand in
+  handoff 10, and `state.rollSteps` here. All three were `must have` requirements that were partly unmet
+  for reasons no test could see, because a rule with no renderer passes every unit test it has.
+- **Negative finding, two locale gaps of ours.** `ROLL_STEP.MISSED` exists in `core/roll.js` and has **no
+  key in either locale file**, so eight of the nine steps are translated. And `turn.rolled`,
+  "Rolled: {{roll}}" and "Gewürfelt: {{roll}}", sits in both files unread. Both are ours to fix when D73
+  is answered, and neither is a design question.
+- **Negative finding, no test.** There is **no test on the roll's timing anywhere**, and there is no unit
+  test for `dice-hand-view.js` or `card-view.js` at all: `.card__result` is pinned only by two Playwright
+  cases that read its text. That is why point 2 was never noticed.
+
+### The main menu is three elements, and nothing in the project styles a control you cannot use: 2026-09-03
+
+The request was that the main menu is barebones and should show three items, Hotseat, Online Multiplayer
+and Settings, with only Hotseat working, and that Claude Design should draw several mockups to choose
+from. It goes out as `12-brief-main-menu.md`, D75 to D80.
+
+#### What "barebones" is, in numbers
+
+`menuScreen()` in `overlay-screens.js` returns a title, one sentence and one button. Its own comment says
+"one button, because there is one thing to do here (FR-38)", which was true when it was written.
+
+- The stage is `100rem` by `56.25rem`, which at the fitted 14.4 px root is **1440 by 810 px**. The menu
+  panel is `min(30rem, 100%)`, which is **432 px, 30 per cent of the stage width**. The title is
+  `--text-xl` at 25.2 px, the paragraph `--text-md` at 15.3 px capped at 34ch, and the one button is
+  39.6 px tall.
+- So the entry point of the game is **three elements in a card using under a third of the width** of the
+  emptiest screen in the project. Nothing about the three is wrong. That is what makes it a direction to
+  be chosen rather than a defect to be fixed, and it is the reason the brief asks for drawings.
+
+#### The finding is an absence
+
+**Neither `disabled` nor `aria-disabled` appears in any of the eighteen stylesheets or in any file under
+`src/ui/`.** Two of the three requested items are exactly that, so D77 has no precedent anywhere in the
+project to reuse.
+
+- It is also two questions rather than one, because the two attributes produce different screens.
+  `disabled` removes the tab stop and stops the click for free. `aria-disabled` keeps the item reachable,
+  announces it as unavailable, and needs the click filtered in `session-actions.js`.
+- **D67 is the precedent and it points both ways.** Spec 05 § 5 took seven dead tab stops out of the pool
+  overview because a stop where `Enter` does nothing tells a keyboard user nothing, and D67 put stops back
+  on unplayable cards precisely because focusing one now *does* something. So whether an unavailable menu
+  item takes a tab stop depends on whether focusing it says anything, which is D78. The two decisions have
+  to agree, and the brief says so.
+
+#### The three items are each a real requirement, and two of them are unavailable for different reasons
+
+| Item | Requirement | State |
+| --- | --- | --- |
+| Hotseat | FR-01, `must have`, screen S2, issue #41 | Built. It is how the game is reached today |
+| Online Multiplayer | FR-42, `should have`, issue #42 | Nothing exists. No chosen technology, one acceptance criterion, and the Requirements Specification names it as the largest available cut |
+| Settings | S11. FR-34 for language, FR-41 for the mute, issue #40 for the audio half | **Deliberately deleted on 2026-09-01.** The language switch shipped into the always-present chrome instead, and only the mute is outstanding |
+
+- **"Not built yet" and "already available in the bar at the top" are not the same sentence**, which is
+  what makes D78 more than a label question.
+- **The chrome already floats over the menu, on purpose.** `--layer-chrome: 7` sits above
+  `--layer-overlay: 6`, and `chrome.css` gives the reason in its header: FR-34 says the language switch
+  works at runtime and the main menu is a runtime the player spends time in. On the menu the pause and
+  pool buttons are hidden and the language button is not, so the top of the menu already has one control
+  in it that is not part of the menu.
+- **`.overlay__actions` is a centred, wrapping flex row.** Three items stacked is not a small change to
+  that rule, it is a different rule, and whether it is scoped to `[data-screen="menu"]` is part of D76.
+- **The two screens stay two screens.** Hotseat leads to S2 as it does today, and D80 asks for
+  confirmation rather than a decision, because the Product Owner chose it: S2 has its own requirement and
+  acceptance criterion, its three count buttons are already designed as a choice between equals, and three
+  end-to-end specs click them. The other sixteen bypass the menu with `?players=` in the address bar,
+  which is what keeps a menu rewrite from touching them.
+
+#### One thing changed about how the loop is used, and it is worth a note of its own
+
+**Brief 12 asks for three mockups and a pick. No brief in this loop has asked for more than one answer
+per decision before.** The reason is that the request is a preference rather than a defect: there is no
+cause to diagnose, so the choice can only be made by looking. The spec then answers D75 to D80 for the
+mockup that was chosen, and **the two that were not chosen become the named rejected alternatives** that
+the spec template requires anyway. So the project's most-skipped rule gets easier to satisfy rather than
+harder, which is the opposite of what asking for three drawings sounds like.
+
+### Handoff 11 landed, and the roll stopped being a number that appears: 2026-09-03
+
+D70 to D74, all five answered, all five on screen. What landed is one new stylesheet, two amendments, one
+new module, one class rename and the closing of NFR-08's explanation half.
+
+#### The five answers, and which of them cost code
+
+| Decision | Answer | What it cost this side |
+| --- | --- | --- |
+| **D70** | A **hold**, not a movement. `--motion-roll: 520ms` is the throw, `--motion-roll-hold: 900ms` is what the loop waits | The only one that needed code, and it needed the most of it |
+| **D71** | The kept dice card **is** the die and performs the throw. Route 3, a die as its own object, was rejected because a D8 card already depicts an octahedron | One attribute, `data-rolling` on the row |
+| **D72** | Nothing replaces `:empty { display: none }`. The number is written at the **start** of the throw and held invisible by a `backwards` fill | **Nothing.** See below |
+| **D73** | A list in the message strip, all steps at once, only from two steps up | One new module and one branch |
+| **D74** | `FAST_DELAYS` gets `roll: 0`. Confirmed | One key |
+
+**Two new tokens, and everything else is derived in the stylesheets.** The spec spends 13 lines of
+`tokens.css` rather than 30 by deriving the badge stamp from `calc(var(--motion-feedback) * 2)` and the
+strip's delay from `calc(var(--motion-roll) + var(--motion-feedback))`. That is why the strip's fade
+collapses correctly under `prefers-reduced-motion` with no media query of its own: it is derived from a
+token that collapses.
+
+**`--motion-roll-hold` is the third token to sit outside the `prefers-reduced-motion` block**, after
+`--motion-refusal-hold` (D20) and `--motion-trap-hold` (D60). Three occurrences turn an exception into a
+rule worth stating: **a hold is time, not movement.** A player who asked for less motion did not ask for
+less time to read, and the roll adds a second reason: with the wind up gone there is no warning that a
+number is coming, so they have less warning and not more.
+
+#### D72 is the answer worth writing down, because the brief was wrong and the round trip is what caught it
+
+The brief found a real blocker: `.card__result` is hidden by `:empty { display: none }`, and an element
+with `display: none` has no start state to animate from. It offered three routes and **every one of them
+required a code change of ours**: a placeholder string, a dropped `:empty` with visibility on an
+attribute, or an animated ancestor.
+
+The spec took a fourth route the brief had not thought of. Write the number into the badge at the
+**start** of the throw rather than at the end, and let the keyframe's `backwards` fill hold it at zero
+opacity until the card comes to rest. An element that is already in the layout has a start state.
+
+**It cost zero lines.** `updateDiceHand` already wrote the badge from `state.roll` the moment the rules
+produced it, and the same render sets `data-rolling`, so both follow from one fact and cannot get out of
+step. `card-state.css`, `card.css` and `hand.css` were not delivered and needed no change.
+
+What it costs instead, named rather than hidden: the result is in the DOM about 520 ms before it is
+legible on screen. The spec argues that is correct rather than merely tolerable, because a player who
+cannot see the card shake should not be made to wait out a shake they cannot see. It is a hot-seat game
+on one device, and the same player can already read `state.roll` in the console.
+
+**The transferable lesson is about the brief and not about the badge.** The brief asked rather than told,
+and got an answer cheaper than any of the three options it had costed. A brief that had picked one of its
+own routes would have bought a code change it did not need.
+
+#### A roll arrives through two doors, and the first implementation only knew about one
+
+This is the one real bug in landing the handoff, and it was found by three unrelated end-to-end specs
+timing out four minutes into a 77-turn match.
+
+`handleRollDie` in `intents.js` does not always roll. When an opponent holds Critical Failure, Devil Die
+or Hold Pawn it opens the on-roll reaction window instead and rolls **nothing**, because those three
+cards are played "as any player rolls" and so have to be played before the number is known. It is
+`resumeAfterWindow` that rolls once the window shuts, dispatched as `close-window` out of
+`card-controls.js`. **The loop's `roll` branch is never re-entered on that path.**
+
+The first version hung the hold off that branch. The consequence was not a missing animation:
+
+1. `roll.css` puts `pointer-events: none` on `.hand--dice[data-rolling="true"]`, so a click on a dice
+   card lands on the plate behind the row instead.
+2. `dice-hand-view.js` sets the attribute from the state on any render, and only the hold takes it off.
+3. So from the first turn an opponent held one of those three cards, **the dice hand was permanently
+   unclickable** and the match could not be played past that turn.
+
+The fix is that the question is asked of the **state** rather than of the phase: does a roll exist that
+this turn has not been held for. That catches both doors, and it moved the check from inside the `roll`
+branch to the top of `advance()`, where every path passes. The second door now gets the hold too, which
+is the case D70 most wants: a roll a Devil Die changed is the roll most worth showing.
+
+**Why no test caught it earlier and one does now.** Every existing spec that plays a long match plays
+`?fast=1`, where the hold is zero, so nothing waited. The failure was not about timing but about an
+attribute that was never removed, and only a match long enough for an opponent to draw one of three
+specific cards reached it. `roll-animation.spec.js` now stacks four Devil Dice and plays six turns, so
+the second door is exercised on purpose rather than by luck.
+
+#### `game-loop.js` hit the 300-line limit for the third time, and two seams came out of it
+
+The file was at 293 lines, 7 under NFR-02's limit, which the brief had already named as the reason the
+hold could not be guessed at. Two things moved, and neither is a line-count trick:
+
+- **`src/ui/turn-waits.js`, new**, takes **the two waits the loop takes by itself**: the roll's moment
+  and the pause before the handover. `card-controls.js` already owned the third, the two-second hold on
+  a trap a card fired (D60), so the shape is now symmetric. The loop decides *that* it waits,
+  `timers.js` decides *how long*, and this decides *when*.
+- **`handleWindow` moved into `card-controls.js`**, which already owned the reaction window's clock, its
+  prompt and its closing. The loop had been left holding the one branch that reads it.
+
+`game-loop.js` came out **shorter than it went in**, and this is the third time the file has been split
+at the limit: `render.js` came out of it in issue #39, and `turn-controls.js` and `card-controls.js` in
+the same issue. Four real seams out of one line limit and no artificial ones, which is worth a sentence
+in the report about whether NFR-02 earns its keep. The figures are in Ch. 09.
+
+#### The strip was renamed, because it had been called the wrong thing for two decisions
+
+`.move-refusal` in `refusal.css` was right while a refused move was the only thing the strip said. D55
+gave it a trap's voice on 2026-09-03 and D73 gave it the roll's, so **two of the three kinds it carries
+are not refusals**. The spec reported it itself under "Noticed and not done".
+
+It is now `.message-strip` in `message-strip.css`, matching `data-message-kind`, which is the attribute
+the three kinds are actually told apart by. It landed as a commit of its own ahead of the feature, so
+nothing about the rename is mixed into the roll, and every existing end-to-end case that locates the
+strip is what verifies it.
+
+Two names deliberately keep the old word. `--motion-refusal-hold` really is the hold a refusal gets.
+`--layer-refusal` is a leftover all three kinds share, but it lives in `tokens.css`, which belongs to
+Claude Design, so it was asked there rather than changed from here.
+
+#### The stale-file problem happened a second time, and the ask has changed shape
+
+The delivered `tokens.css` had no `--stage-w`, no `--stage-h` and a `--board-size` of `44vw`, so it
+predated `e486bb4`. Copying it in would have **reverted D62's fitted 16:9 stage**. Only the two additive
+hunks were taken, and `git diff` was checked for removals rather than trusted.
+
+This is the same failure handoff 10 nearly caused with four files. The close of handoff 10 asked for one
+word, "name the commit, not the date", and that was done correctly and did not help: **naming a commit
+and re-reading the file at delivery time are two different acts.** So the ask is now different rather
+than repeated: deliver an amended file as a **diff**, which cannot silently carry a reversion.
+`refusal.css` in the same package was purely additive and merged without a thought, which is the shape
+to aim for.
+
+#### Two locale findings, and one of them explains why an existing test could not see it
+
+**`ROLL_STEP.MISSED` had no key in either language**, so eight of nine steps were translated. Both files
+have one now.
+
+`locales.test.js` already had a case asserting the two locale files have identical key sets, and it
+passed the whole time, because **both files agreed about a step that had no sentence anywhere**. Comparing
+the locales against each other cannot find a gap they share. The new case compares them against
+`ROLL_STEP`, which is the same shape as the existing cases for `REFUSAL` and the 29 card titles, and it
+is what turns the next missing key into a red test instead of a key printed on screen.
+
+**`turn.rolled` was deleted.** It sat in both files, read by nothing. The spec's argument for deleting
+rather than wiring it up: the badge says the number and the breakdown explains it, so a third sentence
+reading "Gewürfelt: 5" would be the strip repeating the card.
+
+#### A finding for the record, and it needed no change
+
+The spec's example HTML shows running totals, "Plus a D8: 22". The existing locale sentences interpolate
+each step's **own** value, so it renders "Plus a D8: 5", because `roll.js` stores what a step contributed
+rather than the total after it. `multiplier` and `missed` are the exceptions, where the step is the whole
+result. The sentences are consistent with the data, so nothing was changed. It is written down because a
+reader could take the illustration for the contract.
+
+#### What is still outstanding after this
+
+- **No unit test for `dice-hand-view.js` or `card-view.js`**, so `data-rolling` and the badge are pinned
+  only through Playwright. Unchanged by this delivery and stated rather than skipped.
+- **`tokens.css` is close enough to NFR-02's limit that the next addition to it needs the split**, and
+  11-spec § 7 names the seam rather than leaving it to be found: the motion tokens plus the four hold
+  tokens plus the whole `prefers-reduced-motion` block move to `motion.css`. It was not done here because
+  it touches no decision in the brief, and it is worth folding into the answer to brief 09, which changes
+  the same file. Current size in Ch. 09.
+- **Handoff 12 arrived in the same package. The design is chosen and it is deliberately not built yet.**
+  Claude Design recommended 12c, three doors in the game's own card language, and wrote the spec for that
+  one with 12a and 12b as drawn rejected alternatives. **The Product Owner confirmed 12c on 2026-09-04**,
+  in conversation with Claude Design rather than off this package alone, and asked in the same breath
+  that implementation not start yet. So the choice the brief asked for has been made and the build is
+  queued behind something else. `menu.css` and three SVGs are ready to land and nothing from handoff 12
+  is in `src/`.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -2201,6 +2503,26 @@ and deliberate: the stop is there to read the card, not to play it.
     close of handoff 10.
   - **D62, D63 and D64 are still unconfirmed** and handoff 10 has now been built on top of two of them.
     A confirmation that reverses D64 would change one rule in `card-reveal.css` as well.
+- **Open after briefs 11 and 12, sent 2026-09-03:**
+  - ~~**D70 to D74, the roll.**~~ **All five answered and landed the same day.** A hold of 900 ms, the
+    kept dice card performs the throw, nothing replaces `:empty` because the number is written at the
+    start of the roll instead of the end, a list in the message strip from two steps up, and `roll: 0` as
+    a fifth `FAST_DELAYS` key. **NFR-08's explanation half is closed.** See the section above.
+  - **D75 to D80, the main menu.** Whether the menu stays the overlay panel, what the three items are as
+    objects, **what an unavailable control looks like at all**, whether it explains itself, what else is
+    on the screen, and confirmation that Hotseat still leads to S2. None of the six blocks a requirement.
+    **The spec and the three mockups have arrived, 12c is the chosen design, and it is not built yet.**
+    Claude Design recommended 12c and answered all six decisions for it; the Product Owner confirmed that
+    choice on 2026-09-04 and asked that the implementation wait. Nothing from handoff 12 is in `src/`.
+  - ~~**`ROLL_STEP.MISSED` has no locale key in either language**~~, **fixed with D73**, and
+    `locales.test.js` now compares the locales against `ROLL_STEP` rather than only against each other,
+    which is why the existing key-set case could not see the gap. ~~`turn.rolled`~~ **deleted**, on the
+    spec's argument that the badge says the number and the breakdown explains it. **`setup.start` is
+    still in both languages and read by nothing**, and it is the one of the three that is left.
+  - **Nothing was implemented ahead of either spec**, unlike handoff 09. The reason is D70 and D77: both
+    decide the shape of the code rather than only its appearance, so building first would be building
+    twice. That is the handoff 10 precedent, not a new policy. **It paid off on D72**, where the answer
+    turned out to need no code change at all, and all three routes the brief had costed would have.
 - A card's visual presentation belongs here and its rule belongs in Chapter 05; the two are matched
   by card id. Worth stating explicitly in the report, because it is the clearest example of the
   layering rule doing real work.

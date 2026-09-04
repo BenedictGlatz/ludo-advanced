@@ -2,9 +2,13 @@
  * Everything the player does with a card, and the thirty-second clock. Issues #33 and #34.
  *
  * `ui/` only. Split out of `game-loop.js` when that file would have passed 300 lines, and the seam is a
- * real one: the loop drives the **phases** of a turn, and this drives the **cards**. The loop asks two
- * questions of it (is a card play half finished, how many seconds are left) and hands it four DOM
- * handlers to bind.
+ * real one: the loop drives the **phases** of a turn, and this drives the **cards**. The loop asks three
+ * questions of it (is a card play half finished, how many seconds are left, and is a person being asked
+ * something right now) and hands it four DOM handlers to bind.
+ *
+ * The third question is `handleWindow` and it arrived the same way this file did: `game-loop.js` passed
+ * 300 lines again on 2026-09-03, when the roll got a hold of its own. It was the branch of the loop that
+ * read a window this module already owned end to end, so it came here rather than to a new file.
  *
  * ## The thirty seconds (FR-25)
  *
@@ -115,6 +119,32 @@ export function createCardControls({
       windowMs()
     );
     timers.set("reaction-tick", tick, TICK_MS);
+  }
+
+  /**
+   * An open window, handled before the phase, because one can be open in three different phases and the
+   * phase does not change while it is. The loop calls this and stops when it returns `true`.
+   *
+   * Two ways out, and this takes only the first: **`eligible` is empty**, so there is nobody left to wait
+   * for and the window shuts at once (FR-25). The other way is the clock above. Returning `true` means
+   * "stop, a person is being asked something".
+   *
+   * **It moved here from `game-loop.js` on 2026-09-03** when D70's roll hold pushed that file past its
+   * 300 lines, and the seam was already drawn: this module owns the window's clock, its prompt and its
+   * closing, and the loop was left holding the one branch that reads it. The loop still decides *where in
+   * a turn* the question is asked, which is why the call site is still a branch in `advance()`.
+   */
+  function handleWindow() {
+    if (getState().reactionWindow.eligible.length > 0) {
+      syncClock();
+      refresh();
+      return true;
+    }
+
+    if (!apply({ type: INTENT.CLOSE_WINDOW })) return true;
+    syncClock();
+
+    return false;
   }
 
   /**
@@ -237,6 +267,7 @@ export function createCardControls({
 
     secondsLeft,
     syncClock,
+    handleWindow,
 
     /** Stop everything. Called when the loop stops, so a torn-down match leaves no clock running. */
     stop() {

@@ -100,7 +100,7 @@ export async function pawnStatuses(board) {
 
 /** The message strip beside the board, and what kind of message it is carrying. */
 export function messageStrip(board) {
-  return board.page().locator(".move-refusal");
+  return board.page().locator(".message-strip");
 }
 
 /** The skill hand, which design spec 03 put in a rail beside the board and not inside it. */

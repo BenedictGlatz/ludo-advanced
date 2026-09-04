@@ -85,7 +85,7 @@ test.describe("winning a match", () => {
     await expect(overlay).toHaveAttribute("data-player", String(winner));
     await expect(overlay.locator(".overlay__title")).toHaveText(wonMessage(winner));
 
-    const message = page.locator(".move-refusal");
+    const message = page.locator(".message-strip");
     await expect(message).toHaveText("");
     await expect(message).not.toHaveAttribute("data-message-kind", /.*/);
 
