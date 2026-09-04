@@ -390,6 +390,16 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   suite pass, with the counts in Ch. 09 next to the commands that produce them. Two negative findings
   written down and not fixed: a bot's skill hand is face up, and the `reaction.*` sentences still say
   "Spieler". Sprint 3, issue #43.
+- **2026-09-04, last: the requirements caught up with the code, and one of them had been contradicting
+  another since it was written.** FR-01 gained a lower bound of one person, FR-43 was rewritten from
+  "LLM-powered" to "local, rule-based" and rose from `C` to `S`, and FG-18 with it. The rise was forced
+  rather than chosen: US-01 gives a match a lower bound of one person, and a `could have` that a
+  `must have` depends on is a broken dependency. Dropping the LLM resolved a contradiction nobody had
+  noticed, because an LLM bot needs a network call and FR-03's acceptance criterion is a match completed
+  *without any network connection*. The open question in § 5 of the user stories is marked resolved, and
+  that file is committed for the first time. `CLAUDE.md` and `System-Architecture.md` gained the fifth
+  layer. Design brief 13 went out with D81 to D86, and issue #76 was opened for the setup screen so that
+  `Closes #43` is honest: the bot works, but choosing one is still a URL parameter. Sprint 3, issue #43.
 
 ---
 
@@ -4037,6 +4047,26 @@ to get wrong later.
 - **Consequence, stated because it will come back:** `game-loop.js` is at **exactly** 300 lines. The next
   thing that goes in has to take something out first.
 - → Ch. 04
+
+### 2026-09-04: FR-43 dropped the LLM, and doing so resolved a contradiction with FR-03
+
+- **Chosen:** FR-43 becomes *local, rule-based bot opponents* and rises from `C` to `S`. FR-01's lower
+  bound becomes one person. FG-18 is reworded and raised with it. FR-03 is untouched.
+- **Why the rise was forced rather than chosen:** US-01 gives a match a lower bound of **one** person,
+  and that bound is only playable if the other seats play themselves. A `could have` that a `must have`
+  depends on is a broken dependency: cut FR-43 and FR-01 becomes unbuildable.
+- **Why the LLM went:** FR-03's acceptance criterion is a match completed *without any network
+  connection*, and an LLM-backed bot needs a network call. The two requirements had contradicted each
+  other since both were written, and it stayed invisible because FR-43 was a `could have` nobody was
+  building. Worth naming in the report: **the traceability column is what made it visible**, and it is
+  the second time in this project that writing a document found a defect in another document.
+- **Rejected:** *keeping the LLM and giving FR-03 an exception.* It buys a network dependency, an API
+  key, a failure mode and a per-request cost, and it makes "plays without a network" false for exactly
+  the configuration a single player uses.
+- **Consequence, stated rather than implied:** the bot is built, and **choosing one is still a URL
+  parameter**. Issue #76 covers the setup screen and is deliberately blocked on D86 of design brief 13,
+  so that a screen does not get invented in code.
+- → Ch. 01
 
 ---
 

@@ -176,7 +176,7 @@ tree is what gets cut first, and a tree where the cuttable work is scattered wou
 | Code | Work package | Issue | Status 2026-08-22 |
 | --- | --- | --- | --- |
 | 6.1 | Online multiplayer and lobby system | #42 | open |
-| 6.2 | LLM-powered bot API integration | #43 | open |
+| 6.2 | Local rule-based bot opponents | #43 | **done 2026-09-04.** Rewritten from "LLM-powered bot API integration": the LLM was dropped, because it needs a network call that FR-03 forbids. Choosing bots from a screen is #76 and is open |
 | 6.3 | Expanded skill card set | #44 | open |
 | 6.4 | Trap card system and tile trigger logic | #45 | open on 2026-08-22; **implemented 2026-09-03**, awaiting merge and design handoff 07 |
 | 6.5 | Classic vs. custom game modes | #46 | open |

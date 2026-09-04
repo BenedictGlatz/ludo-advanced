@@ -77,7 +77,7 @@ exactly the point in the schedule where there is no room for it.
 | ID | Goal | Priority | Note |
 | --- | --- | --- | --- |
 | FG-17 | Online multiplayer with a lobby system. | should have | Backlog #42. Named as a risk criterion for *both* options in the one-pager's initial risk assessment, i.e. known to be expensive before the stack was chosen. |
-| FG-18 | LLM-powered bot opponents. | could have | Backlog #43. |
+| FG-18 | **Local, rule-based** bot opponents. | should have | Backlog #43. Reworded and raised on 2026-09-04: the team dropped the LLM idea, because an LLM bot needs a network call and FR-03's acceptance criterion is a match completed with no network connection. US-01 then made a bot the only way a single player can play at all, which is what raised it from `could have` to `should have`. |
 | FG-19 | An expanded skill card set beyond the MVP cards. | could have | Backlog #44. |
 | FG-20 | Trap cards and tile trigger logic. | could have | Backlog #45. |
 | FG-21 | Classic-vs-custom game modes (rule toggles). | could have | Backlog #46. |

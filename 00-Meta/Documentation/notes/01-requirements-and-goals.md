@@ -443,6 +443,36 @@ of it. The GDD sign-off table gained rows 12 to 14 for the three decisions the a
 pawn. It was the only trap that cost a lap, so the game is measurably gentler than it was on 2026-09-01.
 That is a playtesting question and belongs to whoever runs the next session, not to this issue.
 
+### A `could have` a `must have` depended on: FR-43 rewritten and raised, 2026-09-04, issue #43
+
+Three rows changed on one afternoon, and the interesting part is that the change was **forced by a
+dependency between requirements** rather than chosen.
+
+| Row | Before | After |
+| --- | --- | --- |
+| FR-01 | "a player count chosen from 2, 3 or 4" | the same, "of which at least one is a person", with unfilled seats played by bots |
+| FR-43 | "LLM-powered bot opponents", `C` | "Local, rule-based bot opponents take the seats no person fills", `S` |
+| FG-18 | "LLM-powered bot opponents", `could have` | "Local, rule-based bot opponents", `should have` |
+
+**The dependency is what made this a scope decision and not a wording fix.** US-01, written earlier the
+same day, gives a match a lower bound of **one** person. A single-player seat is only playable if the
+other seats play themselves, so FR-01's new bound is unbuildable if FR-43 is cut. A `could have` that a
+`must have` depends on is a broken dependency, and the fix is to raise it.
+
+**The LLM was dropped, and dropping it resolved a contradiction nobody had noticed.** FR-03's acceptance
+criterion is a match completed *without any network connection*. An LLM-backed bot needs a network call.
+The two requirements had contradicted each other since both were written, and it stayed invisible
+because FR-43 was a `could have` nobody was building. **This is the second time in this project that
+writing a document found a defect in another document** rather than in the code, and it is worth a
+sentence in the report: the traceability column is what made it visible.
+
+The rejected alternative was to keep the LLM and give FR-03 an exception. It costs a network dependency,
+an API key, a failure mode and a per-request cost, all for a `could have`, and it would have made
+"plays without a network" false for the one configuration a single player uses.
+
+**What is still open, and named rather than implied:** choosing bots happens through `?bots=` in the
+address bar. A setup screen is a separate issue, and its design question is D86 of design brief 13.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

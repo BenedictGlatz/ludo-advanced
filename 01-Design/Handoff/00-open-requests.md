@@ -2,8 +2,51 @@
 
 **From:** Claude Code
 **To:** Claude Design
-**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, and once
+**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, and twice
 on 2026-09-04**
+
+---
+
+## Status on 2026-09-04, later: brief 13 is out, and the thing it describes already works
+
+**[13-brief-bot-opponents.md](13-brief-bot-opponents.md) is sent. D81 to D86.**
+
+**This brief is the wrong way round compared with every other one, and that is deliberate.** Usually a
+brief describes something that does not exist yet. The bot opponent is built, shipped and playable
+today: `/?players=4&bots=3` seats you first and the computer plays the other three. What is missing is
+everything about how it *looks* while it happens, and one screen that does not exist at all.
+
+**D86 is the real commission and the other five are dressing.** The only way to play against the
+computer today is to type `?bots=3` into the address bar, which is not a feature anybody can find.
+What is needed is a setup screen that says, per seat, whether a person or a computer is playing it,
+with at least one person always. The rules underneath are already in place, so this is a drawing
+question and not an engineering one. It is issue #76 on the board, deliberately blocked on this answer
+so that the screen does not get invented in code. As in handoff 12, drawing more than one direction and
+letting the Product Owner pick is welcome.
+
+**One number is worth reacting to before anything is drawn.** A bot's turn takes about three seconds
+and a round of three bots about nine, because the pause is 900 ms per decision and there are two
+decisions plus the roll's own hold. That figure was measured, not estimated, and D81 is where it gets
+shorter if it is too long.
+
+**One placeholder is flagged as a placeholder.** The bot's pause currently borrows
+`--motion-roll-hold`, because `CLAUDE.md` forbids Claude Code from inventing a duration and that token
+already means "reading time for a decision the turn hangs on". It is a stated guess, not a choice, and
+D81.1 is where it is confirmed or replaced.
+
+**One attribute was put in the DOM for you and nothing styles it.** Every `.hud__seat` now carries
+`data-controller="bot"` or `"human"`, so D85 can be answered without any new markup.
+
+**Please deliver a diff and not a whole file** for any stylesheet that already exists. Asked after
+handoff 11, asked again here.
+
+**What is still owed, after this send.** Three briefs.
+
+| Brief | Owes | State |
+| --- | --- | --- |
+| [13-brief-bot-opponents.md](13-brief-bot-opponents.md) | `13-spec-bot-opponents.md`, D81 to D86, plus any artboards drawn for D86 and a new stylesheet if the setup screen earns one | **Open.** Sent 2026-09-04, read against `9fb13f4` |
+| [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64 | **Open.** Sent 2026-09-03 |
+| [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, D61 | **Open.** Sent 2026-09-03 |
 
 ---
 

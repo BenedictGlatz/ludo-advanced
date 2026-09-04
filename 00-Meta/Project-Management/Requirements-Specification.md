@@ -27,7 +27,7 @@ labels currently prioritise titles.
 
 | ID | Requirement | Acceptance criterion | MoSCoW | Traces to |
 | --- | --- | --- | --- | --- |
-| FR-01 | A new match is started for a player count chosen from 2, 3 or 4. | Each of the three counts starts a match with that many players, four pawns each, all in their start areas. | M | FG-01, #41 |
+| FR-01 | A new match is started for a player count chosen from 2, 3 or 4, of which **at least one is a person**; any seat no person takes is played by a bot (FR-43). | Each of the three counts starts a match with that many players, four pawns each, all in their start areas, and a match with 1 person and N-1 bots completes without a second person's input. | M | FG-01, #41, #43 |
 | FR-02 | Each player has a distinct colour, one start area, one entry square and one home path. | No two players share a colour or any of the three board regions. | M | FG-01, #26 |
 | FR-03 † | The MVP is played **hot-seat**: all players share one device and one browser tab. | A match completes with 4 players without any network connection. | M | FG-01 |
 | FR-04 | Turn order is fixed when the match starts and rotates in that order. | Given players in order, after player *n* the active player is *n+1*, wrapping to the first. | M | FG-06, #27 |
@@ -99,9 +99,23 @@ labels currently prioritise titles.
 | ID | Requirement | Acceptance criterion | MoSCoW | Traces to |
 | --- | --- | --- | --- | --- |
 | FR-42 | Online multiplayer with a lobby. | Two browsers on different machines play one match. | S | FG-17, #42 |
-| FR-43 | LLM-powered bot opponents. | A bot takes a legal turn without human input. | C | FG-18, #43 |
+| FR-43 | **Local, rule-based** bot opponents take the seats no person fills. | A bot takes a legal turn without human input, plays no skill card and declines every reaction window; the match uses no network. | S | FG-18, #43 |
 | FR-44 | Classic-vs-custom game modes as rule toggles. | Toggling a rule changes behaviour without a rebuild. | C | FG-21, #46 |
 | FR-45 † | A match in progress survives a page reload. | Reloading mid-match restores the board, hands and active player. | C | none |
+
+**FR-43 was rewritten on 2026-09-04 and is the one row in this table that is built.** It read
+"LLM-powered bot opponents" at `C`. Two things changed it, and both are recorded in the project journal
+of that date:
+
+- **The LLM is gone.** An LLM bot needs a network call, and FR-03's acceptance criterion is a match
+  completed *without any network connection*. The two requirements contradicted each other and nobody
+  had noticed while FR-43 was a `could have` nobody was building.
+- **It rose to `S`.** US-01, written on 2026-09-04, gives the match a lower bound of **one** person, and
+  a bot is the only way that bound can be met. A requirement another requirement depends on cannot stay
+  a `could have`.
+
+What is **not** built is choosing bots from a screen: today they come from `?bots=` in the address bar.
+That is a separate issue, waiting on a design for the setup screen (D86 of design brief 13).
 
 ---
 

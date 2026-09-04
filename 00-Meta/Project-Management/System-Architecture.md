@@ -17,7 +17,7 @@ NFR-09 (the injectable RNG).
 
 ## 1 The layers
 
-Five units, four of them directories and one a file:
+Six units, five of them directories and one a file:
 
 ```mermaid
 graph TD
@@ -25,6 +25,7 @@ graph TD
     ui["ui/<br/>jQuery rendering and event binding"]
     i18n["i18n/<br/>i18next setup, de and en locales"]
     state["state/<br/>the game state object and its transitions"]
+    ai["ai/<br/>rule-based bot players (FR-43)"]
     core["core/<br/>pure game rules, no browser"]
 
     main --> ui
@@ -32,29 +33,36 @@ graph TD
     main --> i18n
     ui --> state
     ui --> i18n
+    ui --> ai
+    ai --> state
+    ai --> core
     state --> core
 ```
 
 *Figure 2: Layer structure of Ludo Advanced and the permitted import directions.*
 
-**The two hard rules are the edges that are not drawn**, and they are the whole point of the diagram:
+**The hard rules are the edges that are not drawn**, and they are the whole point of the diagram:
 
 - **`core/` imports nothing from `state/` or `ui/`.** There is no arrow leaving `core/`. The rules
   are a function of their arguments and of nothing else.
 - **`ui/` never mutates state.** There is no arrow from `ui/` into `core/` either, and the arrow into
   `state/` carries intents, not writes. `ui/` reads state and dispatches; `state/` decides.
+- **`ai/` has no arrow to `ui/` or to `i18n/`**, and its arrow into `state/` is a **read**. It produces
+  intents and hands them back to whoever asked; it dispatches nothing and it cannot draw anything. A
+  bot is a player without a screen (FR-43, added 2026-09-04).
 
-Both are stated as requirement NFR-01 with an acceptance criterion that is mechanically checkable:
-unit tests for `core/` run with no DOM environment configured. A violation of the first rule is
-therefore not a style complaint, it is a failing test.
+All three are stated as requirement NFR-01 with an acceptance criterion that is mechanically checkable:
+unit tests for `core/` run with no DOM environment configured. A violation is therefore not a style
+complaint, it is a failing test, and ESLint carries one import ban per headless layer.
 
 | Layer | Owns | Must not contain |
 | --- | --- | --- |
 | `core/` | Board topology, movement, capture, win conditions, the dice card pool, the skill card pool, effect resolution, the turn rules | DOM, jQuery, i18next, imports from `state/` or `ui/` |
 | `state/` | The single game state object, the transitions that change it, the turn manager driving the sequence, the intent handlers | Rules of its own, rendering |
+| `ai/` | How a bot values a move, which dice card it picks, and which intent it wants next | Rules of its own, rendering, randomness, any notion of time |
 | `ui/` | Rendering the board, pawns, hands and prompts; binding events; dispatching intents | Game rules, direct state mutation |
 | `i18n/` | i18next setup, `locales/de.json`, `locales/en.json` | Anything else |
-| `main.js` | Composition root: boots i18next, wires core, state and ui together | Rules, rendering, state |
+| `main.js` | Composition root: boots i18next, wires core, state, ai and ui together | Rules, rendering, state |
 
 ---
 
@@ -101,9 +109,21 @@ NFR-05 reachable: there is no browser to start and no state to set up beyond the
 | `screens.js` | Main menu, pause, win screen and the flow between them. | FR-38, FR-05 |
 | `events.js` | The single place jQuery event handlers live. Each handler translates a DOM event into one intent and dispatches it. Nothing else. | NFR-01 |
 
-`ui/` is covered by Playwright rather than by unit tests, which is why the coverage target names only
-`core/` and `state/`. A line-coverage number for `ui/` would measure how much jQuery ran, not whether
-anything works.
+`ui/` is covered by Playwright rather than by unit tests, which is why the coverage target names
+`core/`, `state/` and `ai/` and not this layer. A line-coverage number for `ui/` would measure how much
+jQuery ran, not whether anything works.
+
+### 2.4 `ai/`
+
+| Module | Responsibility | Requirements |
+| --- | --- | --- |
+| `move-scoring.js` | Ranks one move: finishing a pawn, capturing (worth what it costs the opponent), entering the home column, leaving the start area, walking. | FR-43 |
+| `dice-choice.js` | Prices each card in the drawn hand by the mean best move over all its faces, and picks one. | FR-19, FR-43 |
+| `bot-policy.js` | Turns a state into one intent, and returns `null` wherever a person is not being asked. | FR-43 |
+
+Added 2026-09-04. Every function here is pure and deterministic: no `rng`, no `Math.random`, no `Date`.
+The pause that makes a bot's turn readable on screen is `ui/bot-driver.js`, deliberately on the other
+side of the boundary, which is what lets a whole four-bot match be a one-second unit test.
 
 ---
 
@@ -215,6 +235,13 @@ validation on commit.
 larger application would have. With four modules in `state/` and no backend, no persistence beyond the
 session and no networking in the MVP, it would add a hop that forwards calls unchanged. The layering
 is cut to the size of this application, and the note is here so that the absence reads as a decision.
+
+**A layer was added on 2026-09-04, and it is worth saying why this one earned its place** when the one
+above was refused. `ai/` is not a hop that forwards calls: it is the first module in the project that
+**produces intents with no person behind them**, which is a job no existing layer had. Putting it in
+`state/` would mean the single writable source of truth also held opinions about good play; putting it
+in `ui/` would mean the only way to test a bot was to open a browser. It also does something the
+refused layer would not have: it turns "can this game be finished" into a one-second unit test.
 
 ---
 
