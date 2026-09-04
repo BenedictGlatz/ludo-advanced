@@ -376,6 +376,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   what each card added, and what the total became. It appears **only** when cards actually changed the
   roll, so on an ordinary turn it stays quiet and the fact that it is speaking tells you something
   happened
+- **The main menu now says what else the game has** (design handoff 12, D76 and D78). It had one button
+  on it, so there was no way to tell that online play and a settings screen were ever planned. There are
+  three items now, and each one carries a second line saying what it is: Hotseat tells you it is two to
+  four players at one screen passed around the table, Online Multiplayer tells you it is not built yet,
+  and Settings tells you where the language switch actually is, which is the bar at the top. **The two
+  that do not work are drawn as not working** rather than left to be clicked and refused: no face, no
+  shadow, a dashed outline, and the game will not let you press them at all. That is the same way an
+  empty slot in your skill hand is drawn, so it is a shape you have seen before, and it still reads as
+  unavailable with the colour taken away
 
 ### Changed
 
@@ -639,6 +648,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Product Owner sign-off table of the game design document gained three rows marked **Overridden** and
   two new unsigned rows for the rule changes the cards force: leaving the start field becomes
   `roll >= dieMax`, and card-driven backward movement stops at the first track field
+- **The main menu stopped being a small card in the middle of an empty screen** (design handoff 12, D75
+  and D79). It used less than a third of the screen in both directions and it was drawn exactly like the
+  panel that asks whether you want to abandon a match, which is a strange way to greet somebody who has
+  not started one. The three items are now laid out across the middle of the screen, at the size of a
+  card you would read from the other side of a table, and they are drawn in the same ink as the cards you
+  play with. The game's name stays the size it was: the items are the loud thing on this screen now, and
+  two loud things would compete. On a phone the three go full width and stack, each with its picture
+  beside its name
 
 ### Fixed
 
@@ -719,3 +736,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   two jobs: it said "a card here can be played right now" and the stylesheet read it as "these cards belong
   to somebody else". They are two attributes now. Nothing about hot-seat privacy changes, because the
   handover screen is what covers the cards when the device changes hands, and it always was
+- **The language button sat at the wrong end of the top bar on the menu and on the player count screen.**
+  It is the only control on either of those two screens, and it was pushed to the right by the turn
+  sentence rather than by any rule of its own. There is no turn to name before a match starts, so the
+  sentence is empty and takes no room, and the button slid all the way to the left. It is on the right on
+  every screen now

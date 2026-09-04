@@ -34,7 +34,18 @@
   "menu": {
     "title": "Ludo Advanced",
     "text": "Ein Ludo mit Würfelkarten und Skill-Karten.",
-    "start": "Partie starten"
+    "hotseat": {
+      "label": "Hotseat",
+      "hint": "Zwei bis vier Spieler an einem Bildschirm, der herumgegeben wird."
+    },
+    "online": {
+      "label": "Online-Mehrspieler",
+      "hint": "Noch nicht gebaut."
+    },
+    "settings": {
+      "label": "Einstellungen",
+      "hint": "Die Sprache wechselst du in der Leiste oben. Ton ist noch nicht gebaut."
+    }
   },
   "setup": {
     "title": "Wie viele spielen mit?",

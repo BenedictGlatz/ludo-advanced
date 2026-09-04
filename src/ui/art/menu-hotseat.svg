@@ -1,0 +1,42 @@
+<svg viewBox="0 0 232 128" aria-hidden="true" focusable="false">
+  <g stroke="#2B1A3D" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" fill="none">
+    <g transform="translate(40 84) scale(0.62)">
+  <ellipse cx="0" cy="4" rx="38" ry="9" fill="#FF5D5D"></ellipse>
+  <path d="M-34,4 C-34,-4 -25,-7 -18,-13 C-12,-18 -10,-25 -10,-31 L10,-31 C10,-25 12,-18 18,-13 C25,-7 34,-4 34,4 Z" fill="#FF5D5D"></path>
+  <circle cx="0" cy="-48" r="23" fill="#FF9A9A"></circle>
+  <path d="M-14,-54 Q-9,-60 -4,-54" stroke-width="4"></path>
+  <path d="M5,-54 Q10,-60 15,-54" stroke-width="4"></path>
+  <path d="M-8,-38 Q1,-31 11,-39" stroke-width="4"></path>
+</g>
+    <g transform="translate(192 84) scale(0.62)">
+  <ellipse cx="0" cy="4" rx="38" ry="9" fill="#4C86F9"></ellipse>
+  <path d="M-34,4 C-34,-4 -25,-7 -18,-13 C-12,-18 -10,-25 -10,-31 L10,-31 C10,-25 12,-18 18,-13 C25,-7 34,-4 34,4 Z" fill="#4C86F9"></path>
+  <circle cx="0" cy="-48" r="23" fill="#7FB0FF"></circle>
+  <path d="M-14,-54 Q-9,-60 -4,-54" stroke-width="4"></path>
+  <path d="M5,-54 Q10,-60 15,-54" stroke-width="4"></path>
+  <path d="M-8,-38 Q1,-31 11,-39" stroke-width="4"></path>
+</g>
+    <g transform="translate(90 74) scale(0.58)">
+  <ellipse cx="0" cy="4" rx="38" ry="9" fill="#FFC93C"></ellipse>
+  <path d="M-34,4 C-34,-4 -25,-7 -18,-13 C-12,-18 -10,-25 -10,-31 L10,-31 C10,-25 12,-18 18,-13 C25,-7 34,-4 34,4 Z" fill="#FFC93C"></path>
+  <circle cx="0" cy="-48" r="23" fill="#FFE28A"></circle>
+  <path d="M-14,-54 Q-9,-60 -4,-54" stroke-width="4"></path>
+  <path d="M5,-54 Q10,-60 15,-54" stroke-width="4"></path>
+  <path d="M-8,-38 Q1,-31 11,-39" stroke-width="4"></path>
+</g>
+    <g transform="translate(142 74) scale(0.58)">
+  <ellipse cx="0" cy="4" rx="38" ry="9" fill="#3FA35B"></ellipse>
+  <path d="M-34,4 C-34,-4 -25,-7 -18,-13 C-12,-18 -10,-25 -10,-31 L10,-31 C10,-25 12,-18 18,-13 C25,-7 34,-4 34,4 Z" fill="#3FA35B"></path>
+  <circle cx="0" cy="-48" r="23" fill="#78D18F"></circle>
+  <path d="M-14,-54 Q-9,-60 -4,-54" stroke-width="4"></path>
+  <path d="M5,-54 Q10,-60 15,-54" stroke-width="4"></path>
+  <path d="M-8,-38 Q1,-31 11,-39" stroke-width="4"></path>
+</g>
+    <ellipse cx="116" cy="104" rx="78" ry="15" fill="#EFD9BC"></ellipse>
+    <g transform="translate(116 102)">
+      <rect x="-30" y="-13" width="60" height="26" rx="5" fill="#FFF8EC"></rect>
+      <g stroke-width="2.5" stroke="#B9A78E"><path d="M-10,-13 L-10,13 M10,-13 L10,13 M-30,-4 L30,-4 M-30,4 L30,4"></path></g>
+      <g stroke="none"><circle cx="-20" cy="-8.5" r="3.5" fill="#FF5D5D"></circle><circle cx="20" cy="-8.5" r="3.5" fill="#FFC93C"></circle><circle cx="-20" cy="8.5" r="3.5" fill="#3FA35B"></circle><circle cx="20" cy="8.5" r="3.5" fill="#4C86F9"></circle></g>
+    </g>
+  </g>
+</svg>

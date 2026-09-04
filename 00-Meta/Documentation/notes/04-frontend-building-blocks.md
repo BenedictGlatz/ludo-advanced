@@ -2383,13 +2383,139 @@ reader could take the illustration for the contract.
   tokens plus the whole `prefers-reduced-motion` block move to `motion.css`. It was not done here because
   it touches no decision in the brief, and it is worth folding into the answer to brief 09, which changes
   the same file. Current size in Ch. 09.
-- **Handoff 12 arrived in the same package. The design is chosen and it is deliberately not built yet.**
-  Claude Design recommended 12c, three doors in the game's own card language, and wrote the spec for that
-  one with 12a and 12b as drawn rejected alternatives. **The Product Owner confirmed 12c on 2026-09-04**,
-  in conversation with Claude Design rather than off this package alone, and asked in the same breath
-  that implementation not start yet. So the choice the brief asked for has been made and the build is
-  queued behind something else. `menu.css` and three SVGs are ready to land and nothing from handoff 12
-  is in `src/`.
+- ~~**Handoff 12 arrived in the same package. The design is chosen and it is deliberately not built
+  yet.**~~ **Landed on 2026-09-04**, see the section below. Claude Design recommended 12c, three doors in
+  the game's own card language, and wrote the spec for that one with 12a and 12b as drawn rejected
+  alternatives. The Product Owner confirmed 12c on 2026-09-04, in conversation with Claude Design rather
+  than off this package alone, and asked in the same breath that implementation wait; it was released the
+  same day.
+
+### Handoff 12, the main menu: D75 to D80, landed 2026-09-04
+
+The menu was three elements on a 432 px panel in the middle of a 1440 by 810 px stage, so it used under
+a third of the stage in both directions and was **the emptiest screen in the game**. It was also drawn
+identically to the screen that asks whether you want to abandon a match, because it was that component
+with different words in it. And it offered one button, so nothing on it said that online play or a
+settings screen exist.
+
+It is now three **doors** in the game's own card chrome, dealt across the middle of the stage, Hotseat
+the tall one. Six files: `menu.css` (new), three `menu-*.svg` drawings (new), `menu-screen.js` (new) and
+one line in `main.js`.
+
+**The seam held for the second time, and that is the finding rather than the look.** D38 put
+`data-screen` on the overlay element so a stylesheet could make one screen look nothing like the others.
+`handover.css` was the first screen to use it; `menu.css` is the second, and it goes further: the panel
+keeps every element `overlay-view.js` builds and **gives up its background, border, shadow and padding**,
+so the component's own markup survives a screen that is not a panel at all. `overlay.css` was not
+amended and `tokens.css` gained no token. What was missing from D38 was not the seam but the statement
+that **a screen may own its arrangement without owning its markup**.
+
+- **`.overlay__actions` is the cheapest part of the answer.** It was already a centred wrapping flex row,
+  which is what three doors side by side are, so it needed `gap` and `align-items: end` and nothing else.
+  The wrap is also what reserves the place for a fourth door (the rules screen, S10) with no new rule.
+- **One mechanical trap, and it cost Design an hour.** The panel's width is
+  `min(var(--overlay-panel-w), 100%)`, and inside `.overlay`'s grid that percentage resolves against a
+  single auto-sized column track that the panel's own content sized, so `84rem` silently did not mean
+  84rem. The menu's sheet is a **flex line rather than a grid** for that one reason: a flex container has
+  a definite content box and the number lands.
+- **A door is not a `.card`, and the boundary is load-bearing.** It borrows the face, the 3 px ink edge,
+  the hard offset shadow and the radius, at a size no hand uses. It takes no `--card-u`, no banner, no
+  kind pill, no tag list and **no `data-card-family`**, so `card.css`, `card-state.css` and
+  `card-reveal.css` never reach it. Making the doors real cards would have looked free and would have
+  meant a menu exception for the hover reveal of D66, for the desaturation of an unplayable card and for
+  `.card--back`. Borrowing four declarations is cheaper than inheriting a component and subtracting from
+  it. `tests/e2e/menu.spec.js` asserts the absence of `data-card-family`, because that is the boundary a
+  later change is most likely to cross.
+
+#### What an unavailable control looks like, which the project had no answer for
+
+D77 is the decision with no precedent, and the treatment turned out to be a **reuse rather than an
+invention**: the empty skill-hand slot at `hand.css:169-181` is already the card's silhouette in dashed
+ink at low weight with no face, no shadow, no lift and no tab stop. The `color-mix(in srgb,
+var(--color-ink) 32%, transparent)` is copied from it rather than derived, so the game's two dashed edges
+are the same weight. In the picked direction the resemblance is exact rather than analogous, because the
+object losing its face is already a card.
+
+**Two of the three cues are not colour**, which is what NFR-12 measures: no face and no shadow, a dashed
+edge, and a muted label. Verified at 1440 by 900 under `filter: grayscale(1)`: Hotseat reads as filled
+and raised, the other two as flat outlines, with no hue involved.
+
+**`disabled` and not `aria-disabled`, and the two decisions agree.** `aria-disabled` buys one thing, an
+item that stays reachable and announces itself as unavailable, and it costs a click filter in
+`session-actions.js`. It buys that only if focusing the door tells a keyboard user something the screen
+does not already say, and because of D78 it does not: the reason is permanent text inside the door. So
+there is **no branch for `online` or `settings` anywhere in `src/`**, and the DOM attribute is what stops
+the click and removes the tab stop. This is spec 05 § 5's argument, which took seven stops out of the
+pool overview, and it is the opposite side of D67, which gave every hand card a stop *because* focusing
+one now does something.
+
+The cost is stated rather than hidden: a keyboard-only player reaches Hotseat and nothing else, so they
+learn the other two doors exist by reading the screen. If D78 is ever narrowed so the reason is not
+permanently on screen, this is the decision that has to flip with it.
+
+#### The keyboard check D76.4 asked for, answered
+
+The spec could not tell from the stylesheets which of two elements a first `Tab` lands on and said either
+answer was acceptable. Measured on the built page:
+
+| | Focused |
+| --- | --- |
+| on open | the Hotseat door |
+| `Tab` | nothing, focus leaves the document |
+| `Shift+Tab`, twice | Hotseat, then the language button |
+
+So the sheet has **exactly one tab stop**, `focusOverlay` needed no change because Hotseat is first in
+the DOM, and the language button is reached **backwards**, because the chrome is earlier in the DOM but
+outside the overlay. `Enter` on each does what it says, which was the spec's condition.
+
+#### What the delivery needed from this side, and one thing it got wrong
+
+- **`overlayButton` had to be split**, which the delivery note said would not be necessary. Its claim
+  that "nothing changes in `overlay-view.js`" is true only of the `focusOverlay` call it had checked. The
+  function set the label as the button's own text, and a door has three children, so it is now a shared
+  `buttonShell` plus an `overlayDoor` branch taken when a description carries a `hint`. Branching on a
+  field and not on `description.screen` is what keeps that file's promise that it renders a description
+  and knows nothing about screens.
+- **The menu description moved into `menu-screen.js`**, on the `pool-screen.js` precedent, because
+  `overlay-screens.js` says of itself that it stays a switch and the menu stopped being a one-line
+  function.
+- **The six locale keys the spec named are impossible in JSON**: `menu.hotseat` cannot be both a string
+  and an object alongside `menu.hotseat.hint`. They nest with `.label` instead. See the journal.
+- **The three drawings are the exception to `src/ui/art/`'s rule that its files are generated.** They are
+  hand delivered, because `scripts/extract-card-art.js` matches a drawing to a card by its title and a
+  door has no card behind it, so `npm run assets:card-art` neither produces nor removes them and a redraw
+  is a file edit. `card-art.test.js`'s count of 36 walks the catalogue and the pool rather than the
+  directory, so three more files in the glob left it untouched, and the three are checked in a section of
+  their own against the same three contracts.
+- **`data-action="start"` became `"hotseat"`**, because the menu now has three doors and an action had to
+  say which one. Six call sites in three E2E specs. The 16 specs that pass `?players=` bypass the menu
+  and were untouched, which is the same insulation that saved them when the menu first landed.
+
+#### One open finding of the spec's turned out to be real
+
+12-spec § 7 could not tell from the stylesheets whether the language button sits at the right end of the
+chrome row on the menu, and flagged it. It did not. `.chrome__turn` carries `flex: 1 1 auto` and is the
+row's **only** spacer, so the controls were pushed right by the turn sentence rather than by a rule, and
+`chrome.css` takes that sentence out of flow with `:empty { display: none }` on the menu and on the setup
+screen. With pause and pool hidden there too, the language button was the only child left and sat at the
+**left** end. Fixed with one declaration, `justify-content: flex-end`, which is inert during a match
+because a growing flex child already eats every bit of the slack it would distribute.
+
+**This is the third "a rule runs and nothing renders it" class of finding**, after handoff 07's traps and
+handoff 11's roll steps, and it is the first that a design brief found by reasoning about the stylesheets
+rather than by looking at the screen.
+
+#### What is still outstanding after this
+
+- **No unit test for `overlay-view.js`**, so the door's three elements are pinned only through
+  Playwright. That is the standing situation for anything importing jQuery and is unchanged here.
+- **`setup.start` is still in both languages and read by nothing.** `menu.start` was deleted with this
+  change, because `menu.hotseat.label` replaced it, so `setup.start` is now the only orphan left. Left
+  alone deliberately: it is not this change's scope.
+- **The dashed edge on an unavailable door is faint in the dark skin**, because 32 per cent of
+  `--color-ink` on a dark ground is close to the ground. It is the value `hand.css` already uses for the
+  empty skill slot, so the two agree and neither was invented here. Not raised as a defect, recorded so
+  that a future contrast pass has it.
 
 ## Decisions
 

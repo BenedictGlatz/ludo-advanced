@@ -12,20 +12,10 @@
 import { PLAYER_COUNTS } from "../core/board.js";
 import { MATCH_STATUS } from "../state/game-state.js";
 import { t } from "../i18n/index.js";
+import { menuScreen } from "./menu-screen.js";
 import { OVERLAY_ACTION, OVERLAY_SCREEN } from "./overlay-vocabulary.js";
 import { seatLabel } from "./player-labels.js";
 import { poolScreen } from "./pool-screen.js";
-
-/** S1. The entry point: one button, because there is one thing to do here (FR-38). */
-function menuScreen() {
-  return {
-    screen: OVERLAY_SCREEN.MENU,
-    title: t("menu.title"),
-    text: t("menu.text"),
-    player: null,
-    buttons: [{ action: OVERLAY_ACTION.START, label: t("menu.start"), variant: "primary" }],
-  };
-}
 
 /**
  * S2. Choose 2, 3 or 4 players (FR-01).
@@ -129,9 +119,11 @@ function noScreen() {
  * `state` is `null` on the menu and the setup screen, because there is no match yet. `seat` is only
  * used by the handover, and `pool` only by the pool overview.
  *
- * **The pool overview lives in its own file** rather than as a seventh function here. It is the only
- * screen with cards on it, it is the only one whose content comes from `core/` rather than from the game
- * state, and it carries a paragraph of reasoning of its own. This file stays a switch.
+ * **The pool overview and the main menu live in their own files** rather than as two more functions
+ * here. The pool overview is the only screen with cards on it and the only one whose content comes from
+ * `core/` rather than from the game state; the menu became three doors with artwork and a paragraph of
+ * its own in design handoff 12. Both carry more reasoning than a screen description usually does, and
+ * this file stays a switch.
  *
  * `pool` is handed in rather than read, because the face-down count lives in the dice source inside
  * `deps` and this file is pure. A screen that reached into the running match for a number would be the

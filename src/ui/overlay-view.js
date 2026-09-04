@@ -93,18 +93,61 @@ function setCards($overlay, cards) {
   }
 }
 
-/** One button, from `{ action, label, variant, count }`. */
-function overlayButton(button) {
-  const $button = $("<button>", {
-    type: "button",
-    class: "overlay__button",
-    text: button.label,
-  }).attr("data-action", button.action);
+/** The shared shell: everything a plain button and a door have in common. */
+function buttonShell(button) {
+  const $button = $("<button>", { type: "button", class: "overlay__button" }).attr(
+    "data-action",
+    button.action
+  );
 
   if (button.variant !== undefined) $button.attr("data-variant", button.variant);
   if (button.count !== undefined) $button.attr("data-count", String(button.count));
 
   return $button;
+}
+
+/**
+ * A main menu door: a drawing, a name and a second line, from design handoff 12.
+ *
+ * Three children rather than the button's own text, because a button with two lines of text needs both
+ * of them to be elements. `.overlay__art` is `aria-hidden`, so the drawing is decoration and the door's
+ * name is carried by `.overlay__label` (NFR-08), which is the same split `card.css` makes for
+ * `.card__art`. `.overlay__hint` is **text in the DOM and never a `content:` property** (NFR-03): it is
+ * the reason a disabled door needs no `aria-disabled`, and a pseudo-element could not be read out.
+ *
+ * `.html()` for the art for the same reason `card-view.js` uses it: the drawing arrives as an inline SVG
+ * string. There is no re-parse guard here and there does not need to be one. `updateOverlay` rebuilds
+ * the buttons on every screen change anyway, it is three drawings on one screen, and `menu.css` animates
+ * no button's arrival, so a language switch on the menu restarts nothing.
+ *
+ * `.prop` and not `.attr` for `disabled`, because it is the element's own boolean property and that is
+ * what stops the click and takes the tab stop away (D77.2).
+ */
+function overlayDoor(button) {
+  const $button = buttonShell(button);
+
+  if (button.disabled === true) $button.prop("disabled", true);
+
+  return $button.append(
+    $("<span>", { class: "overlay__art" })
+      .attr("aria-hidden", "true")
+      .html(button.art ?? ""),
+    $("<span>", { class: "overlay__label", text: button.label }),
+    $("<span>", { class: "overlay__hint", text: button.hint })
+  );
+}
+
+/**
+ * One button, from `{ action, label, variant, count }`, or a door when it also carries a `hint`.
+ *
+ * The hint is what tells the two apart, because only the menu's items have one. Branching on a field
+ * rather than on `description.screen` keeps this file's promise that it renders a description and knows
+ * nothing about screens.
+ */
+function overlayButton(button) {
+  if (button.hint !== undefined) return overlayDoor(button);
+
+  return buttonShell(button).text(button.label);
 }
 
 /**
@@ -118,8 +161,12 @@ function overlayButton(button) {
  *   player,          // the seat the panel is about, or null
  *   outcome,         // "won" or "abandoned" on the win screen, null everywhere else
  *   cards: [],       // dice or skill card descriptions, only the pool overview has any
- *   buttons: [{ action, label, variant, count }] }
+ *   buttons: [{ action, label, variant, count, art, hint, disabled }] }
  * ```
+ *
+ * The last three fields on a button are the main menu's, from design handoff 12. **A button carrying a
+ * `hint` is built as a door**, with the drawing, the name and the second line as three elements instead
+ * of one string of text; every other screen's buttons keep their plain text and are unaffected.
  *
  * `hidden` is set as well as `data-open`, so the overlay is out of the accessibility tree and out of the
  * tab order while it is closed. `data-open` alone would leave a keyboard user tabbing through the

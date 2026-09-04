@@ -41,10 +41,14 @@
  * **every rule in this project's CSS now comes from a numbered decision in a spec.** Handoff 07 added
  * `board-trap.css` on 2026-09-03 and kept that true.
  *
- * The import order below is the one 04-spec § 1 asks for, and five entries in it are load-bearing rather
+ * The import order below is the one 04-spec § 1 asks for, and six entries in it are load-bearing rather
  * than tidy. `prompt.css` has to come after `app.css`, because both place `.prompt` on the grid and at
  * equal specificity the later file wins. `handover.css` has to come after `overlay.css`, because it
- * overrides the sheet's transition to none, which is the whole of D39's concealment. `board-trap.css` has
+ * overrides the sheet's transition to none, which is the whole of D39's concealment. `menu.css` is the
+ * second file to split a screen off the same component and comes after `overlay.css` for the same
+ * reason: it takes the panel's background, border and shadow away on the menu and nothing else
+ * (D75). It is independent of `handover.css`, because the two never match the same element.
+ * `board-trap.css` has
  * to come after `board.css`, because it reads the one seat mapping that file owns. `card-reveal.css` has
  * to come after all three of `card.css`, `card-state.css` and `hand.css`, because it overrides
  * declarations in each of them and nothing in them overrides it: it is the one state that changes a
@@ -97,6 +101,7 @@ import "./ui/styles/hud.css";
 import "./ui/styles/chrome.css";
 import "./ui/styles/prompt.css";
 import "./ui/styles/overlay.css";
+import "./ui/styles/menu.css";
 import "./ui/styles/handover.css";
 import "./ui/styles/pool.css";
 

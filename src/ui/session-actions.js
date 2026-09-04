@@ -42,7 +42,9 @@ export function createSessionActions(session) {
   }
 
   function onOverlayAction(action, value) {
-    if (action === OVERLAY_ACTION.START) session.openScreen(OVERLAY_SCREEN.SETUP);
+    // The Hotseat door, and it is the only one of the menu's three that is handled. The other two are
+    // `disabled` in the DOM (D77.2), so no click ever arrives and a filter here would be dead code.
+    if (action === OVERLAY_ACTION.HOTSEAT) session.openScreen(OVERLAY_SCREEN.SETUP);
     if (action === OVERLAY_ACTION.PLAYERS) session.freshMatch(Number(value));
     if (action === OVERLAY_ACTION.RESTART) session.playAgain();
     if (action === OVERLAY_ACTION.QUIT) session.quitToMenu();

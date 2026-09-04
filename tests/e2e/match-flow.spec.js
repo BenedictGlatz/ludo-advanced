@@ -41,7 +41,7 @@ async function openMenu(page, seed = 1) {
 
 /** Menu to a running match of `players` players. */
 async function startMatch(page, players) {
-  await action(page, "start").click();
+  await action(page, "hotseat").click();
   await expect(overlay(page)).toHaveAttribute("data-screen", "setup");
 
   await page.locator(`.overlay__button[data-count="${players}"]`).click();
@@ -71,7 +71,7 @@ test.describe("the match flow", () => {
   test("offers 2, 3 and 4 players and starts the one that was picked (FR-01)", async ({ page }) => {
     await openMenu(page);
 
-    await action(page, "start").click();
+    await action(page, "hotseat").click();
     await expect(page.locator(".overlay__button[data-action='players']")).toHaveCount(3);
 
     await page.locator('.overlay__button[data-count="3"]').click();
@@ -122,7 +122,16 @@ test.describe("the match flow", () => {
     await page.locator('.chrome__button[data-action="language"]').click();
 
     await expect(overlay(page).locator(".overlay__text")).toHaveText(en.menu.text);
-    await expect(action(page, "start")).toHaveText(en.menu.start);
+
+    // Since design handoff 12 a menu item holds three elements rather than its own text, so the label
+    // is asserted on `.overlay__label` and not on the button. The hint is asserted with it, because
+    // FR-34's criterion is that **no** string is left in the previous language, and the second line on
+    // a door is the one string on this screen that a `textContent` check would have hidden behind the
+    // label it is concatenated with.
+    const hotseat = action(page, "hotseat");
+
+    await expect(hotseat.locator(".overlay__label")).toHaveText(en.menu.hotseat.label);
+    await expect(hotseat.locator(".overlay__hint")).toHaveText(en.menu.hotseat.hint);
   });
 
   test("hides the pause button while a screen is already up", async ({ page }) => {
@@ -211,7 +220,7 @@ test.describe("winning and starting again", () => {
       window.__noReload = "survived";
     });
 
-    await action(page, "start").click();
+    await action(page, "hotseat").click();
     await page.locator(`.overlay__button[data-count="${SEEDS.winsQuickest.players}"]`).click();
 
     const board = page.locator(".board");

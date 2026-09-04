@@ -3786,7 +3786,94 @@ to get wrong later.
   is written.
 - **Why nothing was built on the strength of it:** the Product Owner asked for that explicitly. The
   package is landable as it stands, `menu.css` and three SVGs, so this is a queued decision and not a
-  blocked one.
+  blocked one. **Released and built the same day**, see the four decisions below.
+- → Ch. 04
+
+### 2026-09-04: The menu's locale keys deviate from the six names the spec asked for
+
+- **Chosen:** nest each door's two strings under the door, `menu.hotseat.label` and
+  `menu.hotseat.hint`, and the same for `online` and `settings`. `menu.start` was deleted, because
+  `menu.hotseat.label` replaced it.
+- **Why the spec could not be followed literally:** 12-spec § D78.3 names the six keys as
+  `menu.hotseat`, `menu.hotseat.hint`, and so on. **That is impossible in JSON**, where a key cannot
+  hold a string and an object at the same time, so `menu.hotseat` cannot be both the label and the
+  parent of the hint. The deviation is arithmetic rather than a judgement call, which is why it was
+  taken rather than asked back.
+- **Rejected:** *six flat sibling keys, `menu.hotseat` plus `menu.hotseatHint`.* It keeps the spec's
+  literal short name for the label and stays at the depth-2 shape the `menu` block already had. It
+  loses because the pairing then lives in a naming convention rather than in the structure: the label
+  and the hint of one door are two unrelated keys that happen to share a prefix, and a fourth door
+  would add two more siblings to a flat list of eight. Nesting also lets `menu-screen.js` derive both
+  keys from the action, so a new door costs no change in that file. Depth 3 is not new here:
+  `trap.fired.banana-peel` and `card.skill.<id>.title` are already at it.
+- **Consequence:** `flatKeys` in `locales.test.js` produces the dotted keys either way, so the key-set
+  and placeholder cases needed no change. `tests/e2e/match-flow.spec.js` reads `en.menu.hotseat.label`
+  straight out of the locale file, so the shape is asserted by use.
+- → Ch. 04
+
+### 2026-09-04: The three menu drawings were stripped of their provenance metadata
+
+- **Chosen:** delete the `<metadata><c2pa:manifest>` block and the two `xmlns` attributes from the
+  three delivered SVGs before landing them, so each file begins
+  `<svg viewBox="0 0 232 128" aria-hidden="true" focusable="false">`, exactly like the 36 card
+  drawings. Paths, colours and geometry are byte-for-byte as delivered.
+- **Why:** the 36 generated drawings carry no such blob, because `scripts/extract-card-art.js` strips
+  it. Keeping it would have made the three files look nothing like their neighbours in the same
+  directory, and roughly **23 KB of base64 provenance data** would have shipped inside the production
+  bundle and been inlined into the DOM on every menu render, for three pictures totalling under 6 KB
+  of actual drawing.
+- **Rejected:** *landing the files exactly as Design delivered them.* It is the more faithful
+  treatment of a deliverable and `card-art.test.js`'s three contracts pass either way. It loses on the
+  bundle and on the inconsistency, and the metadata is not part of the design: no colour, size or path
+  changed, so nothing Design decided was touched.
+- **Consequence:** these three are the exception to `src/ui/art/`'s rule that its files are generated,
+  and the exception is recorded in that file's header. A redraw is a file edit, and
+  `npm run assets:card-art` neither produces nor removes them.
+- → Ch. 04
+
+### 2026-09-04: The chrome's controls are pushed right by a rule instead of by the turn sentence
+
+- **Chosen:** one declaration, `justify-content: flex-end` on `.app__chrome`.
+- **Why it was needed, and it is a finding rather than a preference:** 12-spec § 7 flagged that it
+  could not tell from the stylesheets whether the language button sits at the right end of the chrome
+  row on the menu, and said so rather than guessing. It did not. `.chrome__turn` carries
+  `flex: 1 1 auto` and is the row's **only** spacer, so the controls were pushed right by the turn
+  sentence rather than by any rule, and `chrome.css` takes that sentence out of flow with
+  `:empty { display: none }` because it is empty on the menu and on the setup screen. With pause and
+  pool also hidden there, the language button was the only child left and it sat at the **left** end.
+- **Why it is safe:** the declaration is inert during a match. A flex child with `flex-grow: 1`
+  already consumes every bit of the free space `justify-content` would otherwise distribute, so the
+  rule only takes effect on the two screens where the sentence is gone. `shell.spec.js`, which
+  measures the page's boxes, is unchanged.
+- **Rejected:** *scoping the fix inside `menu.css`.* It would change one screen and leave the setup
+  screen with the button on the left, which is the same bug one click later. Also rejected: *reporting
+  it back to Design as a new open request and shipping the menu with the button on the left.* Design
+  had already drawn it on the right in all four artboards, so the intent was visible and asking again
+  would have cost a round trip to confirm something the mockup shows.
+- **The pattern worth carrying into the report:** this is the third finding of the shape "a rule runs
+  and nothing renders it", after handoff 07's traps and handoff 11's roll steps, and it is the first
+  one a design brief found by **reasoning about the stylesheets** rather than by looking at a screen.
+- → Ch. 04
+
+### 2026-09-04: The menu's screen description got its own file, and `overlayButton` had to split
+
+- **Chosen:** `src/ui/menu-screen.js` for the description, on the `pool-screen.js` precedent, and a
+  shared `buttonShell` plus an `overlayDoor` branch inside `overlay-view.js`.
+- **Why the file:** `overlay-screens.js` says of itself that it stays a switch, and the menu stopped
+  being the one-line function it had been: three doors, three label keys, three hint keys, three
+  drawings and a paragraph explaining why two of them are `disabled`. `pool-screen.js` set the
+  precedent that a screen with more content than a switch entry earns a file. Both files are pure and
+  import no jQuery, which is what keeps them unit-testable under `environment: "node"`.
+- **Why `overlay-view.js` changed, against the delivery note.** The note claims "nothing changes in
+  `overlay-view.js`", and that is true only of the `focusOverlay` call it had actually checked, which
+  is correct as written because Hotseat is first in the DOM. `overlayButton` passed the label as the
+  button's **own text**, and a door has three children, so it could not build one. Worth recording as
+  a process point: the delivery checked the one function the brief had offered to change and did not
+  check the one it had not.
+- **Rejected:** *branching on `description.screen` inside `overlay-view.js`.* It reads more directly
+  and it breaks that file's one promise, which its header states: it renders a description and knows
+  nothing about screens. Branching on a **field**, the presence of `hint`, keeps the promise and means
+  any future screen that wants a two-line button gets it without touching the component.
 - → Ch. 04
 
 ---

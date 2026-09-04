@@ -2,7 +2,64 @@
 
 **From:** Claude Code
 **To:** Claude Design
-**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, and six times on 2026-09-03**
+**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, and once
+on 2026-09-04**
+
+---
+
+## Status on 2026-09-04: handoff 12 landed, and its own open finding turned out to be real
+
+**[12-spec-main-menu.md](12-spec-main-menu.md) is in and closed.** D75 to D80, all six answered for
+artboard 12c, all six on screen, and eighteen named rejected alternatives across them. The menu is three
+doors in the game's own card chrome, `menu.css` is the second screen to own a stylesheet on the
+`handover.css` precedent, and `overlay.css` and `tokens.css` were not touched, exactly as the delivery
+promised.
+
+**Two things are worth having back, and neither one blocks anything.**
+
+**1. `overlayButton` did have to change, and the delivery said it would not.** The note's claim that
+"nothing changes in `overlay-view.js`" is true of the `focusOverlay` call it checked, which is correct as
+written because Hotseat is first in the DOM. It is not true of `overlayButton`, which set the label as
+the button's **own text** and therefore could not hold `.overlay__art`, `.overlay__label` and
+`.overlay__hint`. It is now a shared shell plus a door branch, taken when a description carries a `hint`,
+so no other screen is affected. **The process point rather than the defect:** the delivery checked the one
+function the brief had offered to change and not the one it had not. Nothing is owed here, it is recorded
+because the same shape of miss is cheap to repeat.
+
+**2. § 7's open finding was real, and it is fixed.** The spec could not tell from the stylesheets whether
+the language button sits at the right end of the chrome row on the menu, said so instead of guessing, and
+pushed it right in the mockup with a declaration it labelled a guess. **It was on the left.**
+`.chrome__turn` carries `flex: 1 1 auto` and is the row's only spacer, so the controls were pushed right
+by the turn sentence rather than by a rule, and `chrome.css` takes that sentence out of flow with
+`:empty { display: none }` on the menu and on the setup screen. With pause and pool hidden there too, the
+button was the only child left. Fixed with `justify-content: flex-end` on `.app__chrome`, which is inert
+during a match because a growing flex child already eats the slack. **The mockup guessed right**, and this
+is the first finding in the project that a brief located by reasoning about the stylesheets rather than by
+looking at a screen.
+
+**One deviation from the spec, and it is arithmetic rather than judgement.** § D78.3 names the six locale
+keys as `menu.hotseat`, `menu.hotseat.hint`, and so on. **A JSON key cannot be a string and an object at
+the same time**, so they nest with `.label` instead: `menu.hotseat.label` and `menu.hotseat.hint`. No
+other key changed, and `menu.title` and `menu.text` kept their values as asked.
+
+**The keyboard check D76.4 asked for, answered.** Focus opens on the Hotseat door, the sheet has exactly
+one tab stop, and the language button is reached **backwards** with `Shift+Tab`, because the chrome is
+earlier in the DOM but outside the overlay. `Enter` on each does what it says, which was the condition.
+
+**One small thing for a later contrast pass, not raised as a defect.** The dashed edge on an unavailable
+door is faint in the dark skin, because 32 per cent of `--color-ink` on a dark ground is close to that
+ground. It is the value `hand.css` already uses for the empty skill slot and the spec copied it on purpose
+so the two edges match, so this is a pre-existing property of that treatment rather than anything handoff
+12 introduced. The other two cues carry it: the missing face and the missing shadow both read in the dark
+skin and in greyscale.
+
+**What is still owed, after this close.** Two briefs, 09 first because it confirms three things that are
+already implemented, then 08.
+
+| Brief | Owes | State |
+| --- | --- | --- |
+| [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64 | **Open.** Sent 2026-09-03. `tokens.css` is still the tightest file in the project and handoff 12 deliberately added no token to it, so the seam 11-spec § 7 names is unchanged and still worth folding into this answer |
+| [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, D61 | **Open.** Sent 2026-09-03 |
 
 ---
 
@@ -24,7 +81,7 @@ it, but nothing is owed from your side.
 | --- | --- | --- |
 | [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64 | **Open.** Sent 2026-09-03. `tokens.css` now sits at 294 lines after this delivery, and 11-spec § 7 names the seam for the split it will need: everything from `--motion-feedback` to `--ease-curtain` plus the four hold tokens and the whole `prefers-reduced-motion` block moves to `motion.css`, about 60 lines. Worth folding into this answer, since it touches the same file |
 | [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, D61 | **Open.** Sent 2026-09-03 |
-| [12-brief-main-menu.md](12-brief-main-menu.md) | Nothing. **The loop is closed on your side** | **Answered and chosen, not built yet.** Claude Design recommended 12c, three doors in the game's own card language, and the spec answers D75 to D80 for that one with 12a and 12b as drawn rejected alternatives. **The Product Owner confirmed 12c on 2026-09-04**, so the choice brief 12 asked for has been made. They also asked that implementation not start yet, so `menu.css` and three SVGs are ready to land and nothing from handoff 12 is in `src/`. **No answer is owed here**; the next move is ours |
+| [12-brief-main-menu.md](12-brief-main-menu.md) | Nothing. **The loop is closed on both sides** | **Answered, chosen and landed 2026-09-04**, see the section above. Claude Design recommended 12c, three doors in the game's own card language, and the spec answers D75 to D80 for that one with 12a and 12b as drawn rejected alternatives. The Product Owner confirmed 12c on 2026-09-04 and asked that implementation wait; it was released the same day and built the same day |
 
 **The best answer in the package is D72, and it is the one the brief got wrong.** The brief offered three
 routes and every one of them required `card-state.css`'s `:empty { display: none }` to change. The spec

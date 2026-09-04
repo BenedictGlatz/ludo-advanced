@@ -39,8 +39,23 @@ export const OVERLAY_SCREEN = Object.freeze({
 
 /** What an overlay button can ask for, as the `data-action` the event handler reads. */
 export const OVERLAY_ACTION = Object.freeze({
-  /** Leave the main menu for the match setup. */
-  START: "start",
+  /**
+   * Leave the main menu for the match setup. Called `start` until design handoff 12, which made the
+   * menu three doors rather than one button, so the action had to say **which** door (D80).
+   */
+  HOTSEAT: "hotseat",
+  /**
+   * The two menu doors that do not work: online play (FR-42, no technology chosen) and the settings
+   * screen (S11, deliberately deleted).
+   *
+   * **Nothing handles either of them, and that is the decision rather than an omission.** D77.2 draws
+   * them with the DOM's own `disabled` attribute, and a browser fires no click on a disabled button, so
+   * there is no branch to write in `session-actions.js` and no stop for a keyboard to land on where
+   * `Enter` would do nothing. They exist here because the door still needs a `data-action` to be told
+   * apart in the stylesheet and in a test.
+   */
+  ONLINE: "online",
+  SETTINGS: "settings",
   /** A player count, 2, 3 or 4. Carries `data-count` as well. */
   PLAYERS: "players",
   /**

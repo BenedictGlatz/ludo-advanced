@@ -1694,6 +1694,57 @@ each. It runs in seconds, and it only exists because the slow specs pointed at t
 deserves a test that clicks through several turns and asserts it is **gone**. A test that only asserts
 it appears would have passed throughout.
 
+### Testing a control that is meant not to work: 2026-09-04, handoff 12
+
+The main menu's three doors added two test files and repaired one case. What is worth recording is that
+**the interesting half of the coverage is on the two doors that do nothing.**
+
+`tests/unit/ui/menu-screen.test.js`, 8 cases, is the cheap half. `menu-screen.js` imports no jQuery, so
+it is unit-testable for the same reason `pool-screen.js` is, and it can be asked exactly the part of the
+menu that is not a look: how many doors, in what order, which of them are `disabled`, and whether each
+one carries its second line.
+
+`tests/e2e/menu.spec.js`, 6 cases, is the half that needed a browser. **A new file rather than more cases
+in `match-flow.spec.js`**, which was at 238 of the 300-line limit, and the seam is the same one that split
+the handover off it: that file asserts a flow from menu to match to win and back, and these cases assert
+the shape of one screen, including two doors that appear in none of its transitions.
+
+**What is actually at risk, and why no unit test could see it.** `online` and `settings` are `disabled`
+in the DOM, which is D77.2's decision, and the consequence is that **nothing in `src/` handles either
+action at all**. If the attribute ever came off, a click would fall through the whole action table in
+silence and a player would find two dead buttons rather than two doors that explain themselves. That is
+a fact about the rendered element, so it takes Playwright. The case clicks both with `{ force: true }`,
+because Playwright refuses to click a disabled control on its own and the point of the case is what
+happens when a player tries anyway.
+
+**Three assertions worth naming, because each pins a decision rather than an appearance:**
+
+- **Exactly one tab stop**, `.overlay__button:not([disabled])` has count 1. This is the trade D77.3
+  makes, and a change that swapped `disabled` for `aria-disabled` without also adding the click filter
+  would go red here rather than in production.
+- **`.overlay__hint` is non-empty on all three doors.** It is the reason `disabled` is acceptable at all:
+  why a door cannot be opened is permanent text rather than something a focus reveals. An empty hint
+  would break D77's reasoning and **no other test would notice**, because `locales.test.js` can check
+  that a key is not empty and cannot check that a screen asks for it.
+- **No menu item carries `data-card-family`.** A door borrows the card's chrome and is not a `.card`, and
+  that is the boundary a later change is most likely to cross: crossing it would pull in the hover reveal
+  of D66 and the desaturation of an unplayable card, both of which would look like styling accidents.
+
+**A test the rename broke in two ways at once, and only one was predicted.**
+`match-flow.spec.js`'s language case asserted the menu button's label. The spec's landing checks
+anticipated that `toHaveText` reads `textContent`, which now concatenates the label and the hint. What it
+did not anticipate was that `data-action="start"` became `"hotseat"`, so the locator missed as well. The
+repaired case asserts on `.overlay__label` **and** on `.overlay__hint`, because FR-34's criterion is that
+no string is left in the previous language and the hint is the one string on that screen a `textContent`
+check would have hidden behind the label it is glued to.
+
+**Five checks were verified by looking and by no test at all**, and that is stated rather than skipped:
+the three doors on one bottom line at 1440 by 900, the dark skin, `filter: grayscale(1)` for NFR-12, the
+sub-84rem layout at 430 by 820, and the focus order. Four are appearance and belong to Design's review.
+The fifth, the focus order, was measured rather than eyeballed, because D76.4 asked for it explicitly:
+focus opens on Hotseat, a forward `Tab` leaves the document, and the language button is reached
+**backwards**. That result is in Ch. 04.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

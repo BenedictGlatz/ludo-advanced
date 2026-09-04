@@ -34,7 +34,18 @@
   "menu": {
     "title": "Ludo Advanced",
     "text": "Ludo with a dice card pool and skill cards.",
-    "start": "Start a match"
+    "hotseat": {
+      "label": "Hotseat",
+      "hint": "Two to four players, one screen, passed around the table."
+    },
+    "online": {
+      "label": "Online Multiplayer",
+      "hint": "Not built yet."
+    },
+    "settings": {
+      "label": "Settings",
+      "hint": "The language switch is in the bar above. Sound is not built yet."
+    }
   },
   "setup": {
     "title": "How many players?",
