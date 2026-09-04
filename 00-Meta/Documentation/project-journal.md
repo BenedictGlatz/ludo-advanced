@@ -439,6 +439,17 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   5c had two branches for three layers and had been quietly counting bot files as `state/`. Sprint 3,
   issue #82.
 
+- **2026-09-04**: A screenshot from a test round showed a skill card being covered by the chosen dice
+  card while the player was reading it. The cause is one property: `card.css` makes every card a
+  stacking context and neither hand plate is one, so both hands paint into a single z-index space and
+  the chosen card's layer, 3, beat the read card's, 2. Fixed with one new token,
+  `--layer-card-reading`, used in `card-reveal.css` and nowhere else, which also fixes the same
+  collision inside the fan between a selected card and a revealed neighbour. Design handoff 10 § 3 had
+  ruled this overlap correct on an argument about DOM order that holds for the plates and not for the
+  cards; the design side is told in `00-open-requests.md`. One end-to-end case added, asserted with
+  `elementFromPoint` rather than with a computed `z-index`, and checked against the unfixed stylesheet
+  first. Sprint 3, no issue.
+
 ---
 
 ## Decisions
@@ -4311,6 +4322,32 @@ to get wrong later.
   screen for two seconds. That is a duration nothing on screen reports, which is precisely the argument
   `mid-turn-hold.test.js` was written for, and the unit case pins both halves of it.
 - → Ch. 04, Ch. 08
+
+### 2026-09-04: The card being read gets its own layer, above every other card layer
+
+- **Chosen:** a fifth card layer, `--layer-card-reading: 4`, read only by the three reveal selectors in
+  `card-reveal.css`. Reading a card is the one state that has to sit on top of every other card,
+  including a selected one, so it is a layer of its own rather than a re-use of `--layer-card-raised`.
+- **The defect it fixes, and why it is worth writing down:** design handoff 10 § 3 argued that the
+  revealed card is above the dice plate because `.app__skill` follows `.app__dice` in the DOM, "with no
+  `z-index` needed". That is true of the plates. It is false of the cards inside them, because
+  `card.css` gives every card `position: relative` plus a `z-index`, which makes each card a stacking
+  context, while neither plate sets either property and so neither is one. Both hands therefore compete
+  in one z-index space, where the number is compared before the document order: the chosen dice card at
+  `--layer-card-selected` (3) covered the card being read at `--layer-card-raised` (2). A correct rule,
+  applied one level too high.
+- **Rejected:** *`isolation: isolate` on `.app__dice` and `.app__skill`,* which makes the plates the
+  stacking contexts the spec assumed and lets DOM order decide. It fixes only half: two cards in the
+  **same** plate, a selected skill card and a revealed neighbour, still collide, and that half was
+  broken too. It also moves the fix into `app.css`, a stylesheet the design side owns and handoff 10
+  did not deliver.
+- **Rejected:** *raising `--layer-card-raised` from 2 to 4.* Every hovered card in both hands would rise
+  above every selected one, and the selected dice card is the one thing on screen that says which die is
+  about to be rolled.
+- **How it is tested:** `document.elementFromPoint` in the middle of the two cards' overlap, not a
+  computed `z-index`. The numbers 2 and 3 only mean something together with the stacking contexts around
+  them, and misreading those contexts was the bug. The case fails against the unfixed stylesheet.
+- → Ch. 04
 
 ---
 

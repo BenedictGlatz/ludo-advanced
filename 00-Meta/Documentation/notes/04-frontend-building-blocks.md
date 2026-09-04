@@ -2747,6 +2747,51 @@ four-player one does, because `share` is 1 there and the bot's own cards are wor
 the first attempt at this check timed out waiting for a resting phase while the board was correctly
 asking the person whether they wanted to answer.
 
+### The card being read was covered by the card that had just been chosen: 2026-09-04, no issue
+
+Reported from a screenshot of a real match. Pointing at a skill card magnifies it upward out of its own
+plate, over the foot of the dice plate, and the dice card the player had chosen a moment earlier painted
+over its top third. The player was reading a card with a corner of another card lying on it.
+
+#### The cause is a stacking context that exists and two that do not
+
+`card.css` gives every card `position: relative` and `z-index: var(--layer-card)`, and a positioned
+element with a `z-index` that is not `auto` **is a stacking context**. Neither `.app__dice` nor
+`.app__skill` sets either property, so neither of them is one. The consequence is the whole defect: the
+cards of both hands are painted into the **same** z-index space, and there they are compared by number
+first and by document order only as a tie-break. A chosen dice card carries `--layer-card-selected`, 3.
+The card being read carried `--layer-card-raised`, 2. Document order never got a say.
+
+Design handoff 10 § 3 had ruled on exactly this overlap and called it correct behaviour, on the argument
+that `.app__skill` comes after `.app__dice` in the DOM and so paints over it "with no `z-index` needed".
+That sentence is true of the two plates and false of the cards inside them, and it is the reason the
+delivery shipped with `--layer-card-raised` in it. Worth keeping in the report as a small, exact example
+of a correct rule applied one level too high.
+
+#### The fix is one token and one line
+
+`--layer-card-reading: 4` in `tokens.css`, used by the three reveal selectors in `card-reveal.css` and by
+nothing else. No colour, no element, no view code, and the reveal stays what it was: a CSS state.
+
+The same line fixes a second case nobody had reported: **inside the fan**, a selected skill card also sat
+at 3 and covered a revealed neighbour at 2. One bug report, two occurrences of one mistake.
+
+*Rejected: `isolation: isolate` on the two plates*, which would make the plates the stacking contexts the
+spec assumed they were and let document order settle it. It fixes the halves unevenly: the cross-plate
+case goes away and the case inside the fan stays, because there both cards are in the same plate. It also
+puts the correction in `app.css`, which is a stylesheet the design side owns and which handoff 10
+explicitly did not deliver, rather than in the file that draws the state.
+
+#### The test asserts what the player sees, not the number
+
+`tests/e2e/card-reveal.spec.js` grew a fifth case. It chooses a dice card, reveals the skill card that
+stands in the same column, intersects the two boxes and asks the browser
+`document.elementFromPoint` for the topmost element in the middle of that intersection. **A computed
+`z-index` would have been the wrong assertion**: 2 against 3 only means something once you know which
+stacking contexts the two numbers live in, and it was the contexts that were misread here. The case was
+run against the unfixed stylesheet first and it fails there, which is the only way to know a regression
+test tests the regression.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -30,7 +30,7 @@
 
 import { expect, test } from "@playwright/test";
 
-import { SEEDS, boardState, chooseDiceCard, openMatch } from "./helpers.js";
+import { SEEDS, boardState, chooseDiceCard, diceHand, openMatch } from "./helpers.js";
 
 /** The skill hand, in the rail beside the board. */
 function skillHand(board) {
@@ -75,6 +75,65 @@ async function tabTo(page, card) {
   await page.keyboard.press("Shift+Tab");
   await page.keyboard.press("Tab");
   await expect(card).toBeFocused();
+}
+
+/**
+ * Which card in the fan stands closest to the chosen dice card, as an index into the fan.
+ *
+ * A revealed card grows straight up out of its own plate, so it can only meet the dice card that is
+ * in the same column. Asking the page rather than pinning a slot keeps the case correct if the fan's
+ * overlap or the plate's width ever changes.
+ */
+function nearestSkillIndex(page) {
+  return page.evaluate(() => {
+    const middle = (element) => {
+      const box = element.getBoundingClientRect();
+      return box.left + box.width / 2;
+    };
+
+    const dice = middle(document.querySelector('.hand--dice .card[data-selected="true"]'));
+    const cards = [...document.querySelectorAll(".hand--skill .card[data-card-id]")];
+
+    return cards.reduce(
+      (best, card, index) =>
+        Math.abs(middle(card) - dice) < Math.abs(middle(cards[best]) - dice) ? index : best,
+      0
+    );
+  });
+}
+
+/**
+ * What the player actually sees where the two cards overlap, as a word.
+ *
+ * `elementFromPoint` is the assertion and a computed `z-index` is not, because the number only means
+ * something together with the stacking contexts around it, and it was the contexts that were wrong
+ * here: a card is one, a plate is not, so both hands paint into the same space and the dice card won.
+ * Returns "no overlap" when the boxes do not meet at all, which would make the case vacuous.
+ */
+function topmostWhereTheyOverlap(page, index) {
+  return page.evaluate((fanIndex) => {
+    const read = document.querySelectorAll(".hand--skill .card[data-card-id]")[fanIndex];
+    const dice = document.querySelector('.hand--dice .card[data-selected="true"]');
+    const a = read.getBoundingClientRect();
+    const b = dice.getBoundingClientRect();
+
+    const left = Math.max(a.left, b.left);
+    const right = Math.min(a.right, b.right);
+    const top = Math.max(a.top, b.top);
+    const bottom = Math.min(a.bottom, b.bottom);
+
+    if (right <= left || bottom <= top) {
+      return "no overlap";
+    }
+
+    const hit = document.elementFromPoint((left + right) / 2, (top + bottom) / 2);
+
+    if (read.contains(hit)) {
+      return "the card being read";
+    }
+
+    return dice.contains(hit) ? "the chosen dice card" : "something else";
+  }, index);
 }
 
 test.describe("reading a card in your own hand", () => {
@@ -183,5 +242,32 @@ test.describe("reading a card in your own hand", () => {
     await expect
       .poll(() => card.evaluate((element) => window.getComputedStyle(element).scale))
       .not.toBe("none");
+  });
+
+  /**
+   * Reported on 2026-09-04, from a screenshot of a real match: the card under the pointer was covered
+   * by the dice card the player had just chosen.
+   *
+   * 10-spec § 3 had ruled the overlap correct and said DOM order settles it, since `.app__skill` comes
+   * after `.app__dice`. That is true of the two plates and false of the cards in them. `.card` sets
+   * `position: relative` and a `z-index`, so every card is a stacking context of its own, while neither
+   * plate sets either, so both hands compete in one z-index space. `--layer-card-selected` is 3 and the
+   * revealed card was at `--layer-card-raised`, 2.
+   */
+  test("paints the card being read above the dice card the player chose", async ({ page }) => {
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    await chooseDiceCard(board);
+
+    await expect(diceHand(board).locator('.card[data-selected="true"]')).toHaveCount(1);
+
+    const index = await nearestSkillIndex(page);
+    const card = skillHand(board).locator(".card[data-card-id]").nth(index);
+
+    await card.hover();
+
+    // The card has to be at full size before the boxes can meet, so the reveal is awaited first.
+    await expect.poll(() => paintedParagraphSize(card)).toBeGreaterThan(12);
+
+    await expect.poll(() => topmostWhereTheyOverlap(page, index)).toBe("the card being read");
   });
 });

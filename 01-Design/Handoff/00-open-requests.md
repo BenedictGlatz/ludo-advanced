@@ -2,8 +2,41 @@
 
 **From:** Claude Code
 **To:** Claude Design
-**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, and three
+**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, and four
 times on 2026-09-04**
+
+---
+
+## Status on 2026-09-04, last: one line of handoff 10 was changed in code, and here is why
+
+**A defect from a test round, and the fix touches `card-reveal.css`.** Reported with a screenshot: while
+the player reads a card in the skill hand, the dice card they had just chosen paints over the top third
+of it.
+
+**10-spec § 3 rules on this overlap and the ruling was right about the wrong two elements.** It says the
+revealed card is above the dice plate because `.app__skill` follows `.app__dice` in the DOM, "with no
+`z-index` needed". That holds for the two plates. It does not hold for the cards in them: `card.css`
+gives every card `position: relative` and a `z-index`, so **every card is a stacking context of its
+own**, while neither plate sets either property, so **neither plate is one**. The cards of both hands
+therefore compete in a single z-index space, where the number decides before document order does. The
+chosen dice card is at `--layer-card-selected`, 3. The card being read was at `--layer-card-raised`, 2.
+
+**What was changed, and it is one line plus one token.** `tokens.css` gained `--layer-card-reading: 4`,
+and the three reveal selectors in `card-reveal.css` use it in place of `--layer-card-raised`. Nothing
+else in either file is touched, no colour is added, and the reveal is still pure CSS. The token table in
+10-spec § 4 is one row short as a result.
+
+**It fixed a second case that had not been reported.** Inside the fan, a selected skill card also sits at
+3, so it covered a revealed neighbour at 2. One mistake, two places.
+
+*Rejected: `isolation: isolate` on the two plates,* which would make them the stacking contexts § 3
+assumed and let DOM order decide, because it leaves the in-fan case broken and puts the change in
+`app.css`, which handoff 10 did not deliver.
+
+**What this side would like back.** A confirmation that "the card being read is the top card layer" is
+the rule you want, or a different answer. It interacts with D64, still open: if the fan's stacking order
+is ever turned around, this layer stays correct, but the reason it exists should be in the spec rather
+than only in a comment.
 
 ---
 

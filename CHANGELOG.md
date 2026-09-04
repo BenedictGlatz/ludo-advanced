@@ -692,6 +692,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The skill card you are reading is no longer covered by the dice card you chose.** Pointing at a card in
+  your hand magnifies it upward, out of its own row and over the foot of the dice row, and the dice card you
+  had just picked painted over its top third. The card being read is now the top card layer, so it covers
+  every other card, including a selected card in its own row
 - **One of the nine kinds of roll step had no wording in either language.** A roll that a card had set a
   threshold on and that then failed it would have printed `roll.step.missed` on screen instead of a
   sentence. Eight of the nine had been translated and the ninth was missed, and nothing failed because
