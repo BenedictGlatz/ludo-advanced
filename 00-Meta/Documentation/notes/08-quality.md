@@ -1827,6 +1827,71 @@ above: the guard that stops a person clicking during a bot's pause protects a 90
 a 900 ms window in a browser is a flaky test by construction. The module imports no jQuery, so three
 assertions under `environment: "node"` do the job that a racy spec would have done badly.
 
+### The regression test that had to be turned upside down: 2026-09-04, issue #82
+
+`bot-match.test.js`'s four-bot case asserted that the discard pile stayed **empty** over a whole match
+on the full skill pool. That assertion was the 2026-09-04 scope decision made visible, and the block
+above says why it was worth having: "the bot plays no skill cards" was a property of the match rather
+than a promise in a comment.
+
+Issue #82 made it false on purpose, so the case now asserts that cards **are** spent. What is worth
+recording is that **the test's real assertion never changed**: it is the line inside `playOut` that
+checks every intent is accepted, over hundreds of turns with the full pool. The visible expectation
+flipped and the thing the test is for did not move at all, which is a fair definition of a test written
+against behaviour rather than against an implementation.
+
+**It caught nothing on the way in, again.** Every value function was written, the suite went green, and
+no assertion failed. Recorded as such rather than as a success: the same note is in the block above.
+
+### A guard that turns a bot's bug into a pass, and the test that stops it being an excuse
+
+`card-choice.js` asks `checkTarget` about the target its own value produced, and drops the card if the
+rules would refuse it. The asymmetry with a person is the reason: a refused click is a message on
+screen, while a refused **bot** intent stops the driver, leaves the phase unchanged, and parks the match
+for ever, so the symptom of a small arithmetic slip in one of 29 values is a browser sitting still.
+
+A guard like that hides the bug it protects against, so two tests exist to make sure it is never the
+thing that catches one:
+
+- `card-values.test.js` sweeps all 29 cards on a busy board **and** on an empty one and asserts every
+  target is legal before the guard ever runs. It also asserts every value is a finite number, because a
+  `NaN` compares false against everything and would look like a card the bot simply never plays.
+- `bot-match.test.js` asserts the property over whole matches.
+
+### The fairness test is an experiment, because a comment cannot enforce it: 2026-09-04, issue #82
+
+A bot may read how **many** cards each opponent holds, which is public since D33 and printed in the HUD,
+and it may not read which cards they are. `state.skillHands[1]` is one line of plausible-looking code
+away inside any value function, and a bot that peeked would pass every other test in this suite while
+playing a game the person in front of it cannot.
+
+So `card-choice.test.js` decides the same board twice with completely different cards in the opponents'
+hands and asserts the two decisions are identical. **A second case is what makes the first one mean
+something**: Tax Fraud robs whoever holds the most cards, so changing the **count** has to change the
+answer. Without it, the fairness case would be satisfied by a bot that ignores the other seats
+altogether, which is a different bot from the one that was designed.
+
+### A spec that had to be rewritten because it was testing a two-second window: 2026-09-04, issue #82
+
+The end-to-end case for a bot's card announcement first polled the message strip for
+`data-message-kind="card"` at real speed. It spent sixty seconds not seeing one and failed, and neither
+reason was a bug:
+
+1. The announcement is on screen for two seconds, so a poll has to land inside that window, and `?fast=1`
+   collapses it to nothing, so the fast run cannot see it at all.
+2. **The early turns of a match are quiet on purpose.** With every pawn still in the yard almost nothing
+   is worth playing, so the first card play is several turns in. That is the value model working, and the
+   first draft read it as a missing feature.
+
+The rewrite installs a `MutationObserver` on the strip and records every value the attribute ever takes,
+which turns a race into a list. The case now runs under `?fast=1`, asserts the kind **and** that the
+sentence names "Bot 2" rather than "Spieler 2", and is one case instead of two. What it gives up is the
+duration, and that is exactly what `mid-turn-hold.test.js` is for: a wait nothing on screen reports is a
+unit test's job, and that file's header has said so since issue #45.
+
+**The lesson is the one this chapter keeps recording in different words:** an end-to-end test should ask
+whether something happened, not try to be looking at the right moment.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -87,9 +87,11 @@ failing, so a malformed URL starts a normal game.
 | `?fast=1`    | Shortens the pauses in the turn loop and passes the handover screen without waiting for it  |
 
 **`?bots=` is how you play alone today.** `/?players=4&bots=3` seats you first and lets the computer
-play the other three: they pick their dice card, roll it, move a pawn, and never play a skill card. The
-hand-over screen stays away, because there is nobody to hand the keyboard to. Choosing bots from the
-menu instead of the address bar is a separate issue, waiting on a design for the setup screen.
+play the other three: they pick their dice card, roll it, move a pawn, and play a skill card whenever
+one is worth more to them than keeping it. When a bot plays a card, the strip under the board says so
+for two seconds, naming the seat and the card. The hand-over screen stays away, because there is nobody
+to hand the keyboard to. Choosing bots from the menu instead of the address bar is a separate issue,
+waiting on a design for the setup screen.
 
 `?players=` and `?fast=1` exist for the end-to-end suite. They are what let every spec written before
 the main menu and the handover screen existed keep running unchanged, and they change the waiting rather

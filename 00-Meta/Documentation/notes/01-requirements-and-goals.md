@@ -473,12 +473,61 @@ an API key, a failure mode and a per-request cost, all for a `could have`, and i
 **What is still open, and named rather than implied:** choosing bots happens through `?bots=` in the
 address bar. A setup screen is a separate issue, and its design question is D86 of design brief 13.
 
+### FR-43's acceptance criterion changed again the same day, and it got stricter: 2026-09-04, issue #82
+
+The row was rewritten in the morning and its criterion read "a bot takes a legal turn without human
+input, **plays no skill card and declines every reaction window**; the match uses no network". That half
+was the scope decision taken with the Product Owner, and it lasted a few hours.
+
+| Row | Before | After |
+| --- | --- | --- |
+| FR-43, criterion | "plays no skill card and declines every reaction window" | "plays a skill card only when a rule-based value model says it is worth more than holding it, and answers every reaction window" |
+| FR-43, traces to | FG-18, #43 | FG-18, #43, **#82** |
+
+**Why it changed so fast.** The consequence the earlier decision predicted turned out to be the whole
+problem: a bot's hand filled to its limit of five and was never spent, so one person against three bots
+played a game whose card mechanic, which is what makes Ludo Advanced a variant of Ludo rather than Ludo,
+was present for exactly one seat.
+
+**The wording is the point, and it is not "plays skill cards".** That sentence is satisfied by a bot
+that plays a random playable card, and the earlier decision had already rejected that version on the
+grounds that it looks like tactics without being any. Naming *a value model* in the criterion makes the
+acceptance test "can somebody explain, in one sentence, why the bot played that card", which is what the
+implementation is actually built to do.
+
+**Two cards are never played, and that is in the criterion's spirit rather than an exception to it.** Oil
+Spill and The Purge, each with its reason recorded in Ch. 06. A criterion that demanded all 29 be
+playable would be demanding a guess dressed as a model for two of them.
+
+### A rule finding for the Product Owner: Double Dip is net zero, 2026-09-04, issue #82
+
+Not a requirement change and not a bug fix. It came out of pricing the card for the bot and it needs a
+ruling before it can be either.
+
+**The finding.** `spendCard` in `state/skill-turn.js` counts Double Dip itself against the budget of
+one, and the card's own effect then sets the budget to two. One is left, which is exactly the one play
+the seat had before it played the card. So the card costs a card and buys nothing but the hand slot it
+frees. `core/cards/effects/card-effects.js` states in its own header that the card "has to be net
+positive to be worth anything, and it is", which is the claim this contradicts.
+
+**Why it is a question and not a correction.** Which reading is the rule is the Product Owner's call.
+Setting the budget to three, not counting the played card against it, or leaving the card as a
+hand-management card are all defensible, and they give the card three different powers.
+
+**What the code does meanwhile:** the bot prices it as "make room in a full hand", worth 1, so it is
+only ever played when the hand is full and nothing better is in it. Nothing was changed in the rule.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
 
 ## Open / to verify
 
+- **Double Dip's budget arithmetic needs a ruling** (2026-09-04, issue #82). `spendCard` counts the card
+  against the budget of one and the card then sets the budget to two, so it buys exactly the play the
+  seat already had. `card-effects.js` claims in its own header that the card is net positive. Three
+  readings are defensible and they give the card three different powers, so it is the Product Owner's
+  call and nothing was changed in the rule. The bot prices it as a hand slot in the meantime.
 - ~~MoSCoW prioritisation exists as labels but no requirement has been written against them; the
   backlog is not in this repository.~~ **Superseded 2026-08-06**: the backlog is now readable and
   transcribed above. What remains open: no issue has an acceptance criterion or a written

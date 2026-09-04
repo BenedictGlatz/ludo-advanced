@@ -425,6 +425,19 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   instead of a number. The e2e bot helpers moved into `bot-helpers.js`, and the announcement spec was
   written twice: the first version polled a two-second message at real speed and spent a minute not
   seeing one. Sprint 3, issue #82.
+- **2026-09-04, last: the documents caught up with the bots twice in one day, issue #82.** FR-43's
+  acceptance criterion was rewritten for the second time in a few hours, from "plays no skill card and
+  declines every reaction window" to "plays a skill card only when a rule-based value model says it is
+  worth more than holding it". The wording names the value model on purpose: "plays cards" is satisfied
+  by a bot that plays them at random, which is the version the morning's decision had already rejected.
+  Design brief 13 was corrected in place in four places with dated notes, because it was written this
+  morning against a bot that plays no cards, and **brief 14** went out with D87 to D89: what a card
+  announcement looks like (it ships in the refusal orange, which is wrong and is the same deviation D55
+  fixed for traps), the pause before a bot answers a window, and whether a bot should mark its target.
+  One rule finding for the Product Owner recorded in Ch. 01 rather than fixed: Double Dip is net zero.
+  Ch. 09 has a fresh measurement, and two of its own commands had to be widened first, because command
+  5c had two branches for three layers and had been quietly counting bot files as `state/`. Sprint 3,
+  issue #82.
 
 ---
 

@@ -21,10 +21,20 @@ A bot picks one of the three drawn dice cards, rolls it, moves a pawn, never pla
 always passes when a reaction window reaches it. Nothing about it is currently drawn: it takes its turn
 using the same board, the same hands and the same prompt strip a person does.
 
+> **Correction, 2026-09-04, later the same day (issue #82): the paragraph above and the first bullet
+> below are out of date, and brief 14 supersedes them.** A bot now plays skill cards in its own turn and
+> Reaction cards in other people's, on a rule-based value model, and it answers a reaction window with a
+> card when the card is worth more than keeping it. Its hand no longer fills up unspent, which is what
+> D82 and D83 were asked about. The rest of this brief still stands: D81, D84, D85 and D86 are unchanged
+> and unanswered.
+
 **Two things about it are already decided and are not open questions here.**
 
-- **A bot plays no skill cards.** Agreed with the Product Owner. Card tactics are a separate piece of
-  work, so a bot's hand fills up over the match and is never spent.
+- **A bot plays no skill cards.** ~~Agreed with the Product Owner. Card tactics are a separate piece of
+  work, so a bot's hand fills up over the match and is never spent.~~ **No longer true as of the same
+  day: see the correction above and brief 14.** A bot's hand is now spent as the match goes on, so a
+  drawing that assumes a hand of five sitting there for the whole match would be drawing the wrong
+  thing.
 - **The hand-over screen does not appear before a bot's turn**, and with one person and three bots it
   does not appear at all. There is nobody to hand the keyboard to, so D33's secrecy argument has nothing
   to protect.
@@ -128,6 +138,12 @@ Two readings, and they point in opposite directions:
 
 A third option is that the rail shows nothing at all during a bot's turn.
 
+> **Update, 2026-09-04, issue #82: the question got sharper rather than going away.** A bot now does
+> play those cards, so the first bullet's "except" no longer applies: a face-up bot hand is a genuine
+> preview of what it might do next, which is either the most informative thing on screen or an unfair
+> look into an opponent's hand, depending on which reading wins. The bot itself never reads anybody
+> else's hand, only how many cards they hold, which is public (D33).
+
 ### D83. The dice hand during a bot's turn, and how the choice is shown
 
 The three drawn cards appear, one of them lifts, the other two fly back to the pool: the same animation
@@ -136,6 +152,11 @@ a person's choice produces. Nobody clicked, so there is no moment of intent befo
 Should the chosen card be marked differently when the computer chose it? Should the two rejected cards
 be visible at all? This is the half of a bot's turn that most looks like something happening, so it is
 also the half most likely to be confusing if it is not marked.
+
+> **Update, 2026-09-04, issue #82:** it is no longer the only half. A bot's turn can now contain a card
+> play as well, which is announced in the message strip and holds the turn for two seconds. D87 of brief
+> 14 is about that announcement, and whichever way D83 is answered should sit beside it: the two are the
+> same turn seen twice.
 
 ### D84. Does a bot's chosen pawn light up before it moves?
 
@@ -198,9 +219,13 @@ silently undoes work, and only a diff makes the difference visible.
 
 ## 6 Out of scope
 
-- **Card tactics for the bot.** It plays no skill cards, on purpose, and that is a separate issue.
+- **Card tactics for the bot.** ~~It plays no skill cards, on purpose, and that is a separate issue.~~
+  **Corrected 2026-09-04, later the same day:** that separate issue is #82 and it is built. What a bot's
+  card play looks like is **brief 14**, which asks three questions this brief could not have.
 - **Difficulty levels.** There is one bot and it plays one way.
 - **Online multiplayer** (FR-42). A bot is local and the two have nothing to do with each other.
 - **The pause and win screens.** Unchanged by this feature.
-- **The `reaction.*` sentences.** They still say "Spieler" where they should name the seat, which is a
-  known gap in the code and is being fixed there rather than designed around.
+- **The `reaction.*` sentences.** ~~They still say "Spieler" where they should name the seat, which is a
+  known gap in the code and is being fixed there rather than designed around.~~ **Fixed in the code on
+  2026-09-04 with issue #82**, because a bot can now play a card into a window and the line has to be
+  able to name one. It says "Bot 3 will eine Figur schlagen".
