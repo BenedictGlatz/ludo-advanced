@@ -3757,6 +3757,40 @@ to get wrong later.
 
 ---
 
+### 2026-09-04: The main menu is design 12c, chosen by the Product Owner, and it is not built yet
+
+- **Chosen:** direction **12c** of the three mockups handoff 12 delivered, three doors laid out in the
+  game's own card language. The Product Owner took the decision on 2026-09-04, in conversation with
+  Claude Design rather than off the delivered package alone, and asked in the same message that the
+  implementation not start yet.
+- **Why brief 12 asked for three drawings at all:** the request was that the menu is "barebones", which
+  is a preference and not a defect. There is no cause to diagnose, so the choice could only be made by
+  looking at something. That is the reason this is the only brief in the loop that asked for more than
+  one answer per decision.
+- **Why the answer came back as a recommendation rather than as an open choice:** Claude Design drew all
+  three and then picked 12c itself, writing the spec for that one and leaving 12a and 12b as the named
+  rejected alternatives the spec template requires anyway. So the mockups did double duty. The
+  Product Owner's confirmation is what turned the recommendation into the decision.
+- **Rejected: 12b, the front door.** A two column panel with the game's name large on the left and three
+  wide rows on the right. It needs **no artwork at all**, so it is the direction that would have cost
+  least to land had the three drawings not already been made.
+- **Rejected: 12a, the panel keeps its place.** The cheapest of the three by a wide margin: about 25
+  lines inside `overlay.css` and no new file. It improves the measurement brief 12 complained about by
+  four percentage points and leaves the brief's own sentence true, which is to say it is a real answer
+  and not a straw man.
+- **What is recorded here and what is not.** The argument on file for 12c is the spec's own, in D75 to
+  D80. **The Product Owner's own reasons are not written down**, because the conversation that produced
+  them happened with Claude Design and this side did not see it. That is a gap rather than a detail:
+  the report is graded on why, and the why behind the one visual direction the game's entry screen will
+  use is currently only in a spec's voice. Worth one sentence from the Product Owner before the report
+  is written.
+- **Why nothing was built on the strength of it:** the Product Owner asked for that explicitly. The
+  package is landable as it stands, `menu.css` and three SVGs, so this is a queued decision and not a
+  blocked one.
+- → Ch. 04
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

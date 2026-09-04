@@ -15,14 +15,16 @@ throw, and a roll that cards changed lists its steps in the message strip. **NFR
 is closed**, which is the second of the three "a rule runs and nothing renders it" findings to be cleared
 after handoff 07's traps.
 
-**What is still owed, after this close.** Three briefs, and the order has not changed: 09 first because
-it confirms three things that are already implemented, then 08, then 12.
+**What is still owed, after this close.** Two briefs, 09 first because it confirms three things that are
+already implemented, then 08. **Handoff 12 has dropped off this list**, because it was answered in the
+same package and the Product Owner confirmed 12c on 2026-09-04: the row is kept below for the state of
+it, but nothing is owed from your side.
 
 | Brief | Owes | State |
 | --- | --- | --- |
 | [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64 | **Open.** Sent 2026-09-03. `tokens.css` now sits at 294 lines after this delivery, and 11-spec § 7 names the seam for the split it will need: everything from `--motion-feedback` to `--ease-curtain` plus the four hold tokens and the whole `prefers-reduced-motion` block moves to `motion.css`, about 60 lines. Worth folding into this answer, since it touches the same file |
 | [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, D61 | **Open.** Sent 2026-09-03 |
-| [12-brief-main-menu.md](12-brief-main-menu.md) | `12-spec-main-menu.md` plus **three mockups** | **Delivered, reviewed, not landed.** The package arrived with handoff 11's. **Claude Design made the pick itself: 12c**, three doors in the game's own card language, and the spec answers D75 to D80 for that one, with 12a and 12b as drawn rejected alternatives. `menu.css` and three SVGs are ready to land. What is outstanding is the Product Owner confirming 12c, because the brief asked for a choice rather than a recommendation. Nothing from it is in `src/` |
+| [12-brief-main-menu.md](12-brief-main-menu.md) | Nothing. **The loop is closed on your side** | **Answered and chosen, not built yet.** Claude Design recommended 12c, three doors in the game's own card language, and the spec answers D75 to D80 for that one with 12a and 12b as drawn rejected alternatives. **The Product Owner confirmed 12c on 2026-09-04**, so the choice brief 12 asked for has been made. They also asked that implementation not start yet, so `menu.css` and three SVGs are ready to land and nothing from handoff 12 is in `src/`. **No answer is owed here**; the next move is ours |
 
 **The best answer in the package is D72, and it is the one the brief got wrong.** The brief offered three
 routes and every one of them required `card-state.css`'s `:empty { display: none }` to change. The spec
