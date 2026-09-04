@@ -662,6 +662,29 @@ would need a model of the dice hand they will draw. Nühü prices a card aimed a
 rather than by that card's own value, because pricing all 29 cards from the receiving end is a second
 value table.
 
+**A turn-level field that carries no rule: `lastCardPlayed`.** `{ seat, cardId }`, written by both card
+intents when the card leaves the hand, cleared by `clearedTurnFields` at the handover. Nothing in
+`core/` or `state/` reads it and a match plays out identically without it, which makes it the first
+field in the state object that exists purely so the screen can say something.
+
+**Why it is in the state at all.** A bot's card play has to be announced or, as far as the player is
+concerned, it did not happen: several cards leave the board looking exactly as it did before, and the
+card itself goes into the discard pile with every other card of the match, so the play cannot be
+reconstructed afterwards. Rejected: *a variable in `ui/`*. The message strip is drawn out of the state
+and nothing else, so a fourth piece of presentation state threaded through `render` would be one
+refresh out of step with the board it describes. `nullifiedCard` and `trapFired` are the same kind of
+field for the same reason, and both predate this one.
+
+**It is written when the card is played, not when its rule runs.** An Action card that somebody can
+answer waits in `pendingCard` while a window is open, and the moment worth announcing is the moment the
+player did something. Both branches of `playActionCard` therefore inherit it from the state that spends
+the card, which is one line rather than two.
+
+**Two lines of `state/` shipped in a `ui/` commit**, which is worth naming because it looks like a
+layering slip. The field is only ever read by `ui/`, its whole justification is a screen requirement,
+and splitting it into its own commit would produce a commit that adds a field nothing reads. The value
+model in the commit before it does not touch either file.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -266,6 +266,21 @@ export function clearedTurnFields() {
     nullifiedCard: null,
 
     /**
+     * `{ seat, cardId }` of the last skill card played this turn, or `null`. Issue #82.
+     *
+     * **The one field here that carries no rule at all**: nothing in `core/` or `state/` reads it and
+     * a match plays out identically without it. It exists because a **bot** plays cards now, and a
+     * card played by somebody who is not at the keyboard has to be announced or, as far as the player
+     * is concerned, it did not happen. It cannot be derived afterwards: the card sits in the discard
+     * pile with every other card of the match, and several cards leave the board looking untouched.
+     *
+     * Rejected: *a variable in `ui/`.* The strip is drawn out of the state and nothing else, and a
+     * fourth piece of presentation state threaded through `render` would be one refresh out of step
+     * with the board it describes. `nullifiedCard` and `trapFired` are the same kind of field.
+     */
+    lastCardPlayed: null,
+
+    /**
      * The object that just went off, or `null` (FR-30). Shaped
      * `{ kind, square, owner, player, pawn, squares }`.
      *

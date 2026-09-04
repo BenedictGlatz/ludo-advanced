@@ -2628,6 +2628,100 @@ six things every waiting sibling needs from the loop, which had been written out
 **The file has no room left.** The next thing that goes into it has to take something out first, and
 the header's table of controls is the honest place to start looking.
 
+### A bot's card play had to become visible, and one negative finding closed itself: 2026-09-04, issue #82
+
+The bots play skill cards now (Ch. 06 carries the value model), and that turned a screen question into a
+requirement: **a card played by somebody who is not at the keyboard is invisible.** Several cards leave
+the board looking exactly as it did before. Built Different writes a status, No Take-Backsies shuts a
+window nobody was going to use, and a nullified card does nothing at all. Without an announcement, one
+person against three bots watches its own pawns get shoved around by nothing.
+
+#### The announcement is the message strip, with no new component and no new token
+
+`move-hints.js`'s `message(state)` gained a **fourth** kind, `card`, and `ui.json` gained one key per
+language. The strip already says three kinds of thing (a refusal, a report about a trap, and the roll's
+breakdown), and the third of those arrived the same way this one does: `data-message-kind` is the seam
+they are told apart by. `CLAUDE.md` forbids this side from inventing a design rule, so nothing here
+invents a look.
+
+**The card branch is last of the four, and that ordering is the design.** In the action phase there is
+no roll yet, so the breakdown answers `null` and the strip says what the bot played; once the die is
+rolled the breakdown is the more useful thing and takes the strip back. The announcement is therefore on
+screen for the part of the turn it belongs to and never fights with a message about the roll.
+
+**The reading time is borrowed, exactly as the bot's pause is.** `holdMidTurn` already holds a turn for
+`--motion-trap-hold` after a card announces something, and a bot's card play is the same kind of event:
+it arrives unasked in a turn that is under way. So it is a third source for that same hold rather than a
+fourth duration. D87 of brief 14 asks whether it deserves its own.
+
+**It ships in `--color-warn` and that is wrong.** No stylesheet reads `data-message-kind="card"`, so the
+strip keeps the colour the game reserves for "you cannot do that", and a bot playing a card is not a
+refusal. This is the same deviation issue #45 shipped for the trap announcement, for the same reason and
+with the same expected fix: D55 was answered by two selectors in `message-strip.css`, and D87 is the
+same shape. Recorded as a deviation, not as an oversight.
+
+#### `timers.js` grew a second question, and the asymmetry is deliberate
+
+`announcement(state)` is unchanged and still answers "a trap fired, or a card was nullified".
+`midTurnAnnouncement(state)` adds a bot's card play on top of it, and only `holdMidTurn` asks the new
+one. So the **end** of a turn does not hold for a card a bot played mid-turn: the card already had its
+two seconds where it happened, and holding it again at the handover would add four seconds to every bot
+turn that played anything. Two functions rather than one flag, and a unit case pins each half.
+
+`botCardPlayed` is the third piece: a **person's** own card play is not an announcement. They clicked
+the card, answered the target picker and pressed the last button, so telling them what they just did
+would cost two seconds per card in every match, the all-human ones included.
+
+#### `bot-driver.js`: `declineAll` became `answerWindow`
+
+A bot in an open window used to have one answer, so the loop called `bots.declineAll()` and carried on.
+Now it can play a card into one, and a card play is not a decline in two ways: it changes the board, and
+it needs the pause and the announcement. So:
+
+- **A decline still takes no pause at all.** Somebody else is waiting on the window, and a three-bot
+  table would put nearly three seconds in front of every capture a person made.
+- **A card play waits `holdBot` and then goes through `carryOn`.** `answerWindow` returns `true` only
+  when it scheduled one, which is the loop's signal to stop and wait; a decline returns `false` and the
+  loop carries straight on to `card-controls.js` as it always did.
+
+**`carryOn` is passed in rather than copied**, as `afterCard`. It is `card-controls.js`'s function and
+the delay is not the hard part of it: the marker that stops one announcement being held twice, and the
+rule that a zero hold resumes synchronously so the end-to-end suite's ordering is unchanged, both live
+in there and were both bugs in earlier drafts. `game-loop.js` wires it in one line and came out at
+exactly 300 lines again, with two lines changed and none added.
+
+#### The `reaction.*` finding from this morning is closed, because the fix became load-bearing
+
+The negative finding recorded above says all seven reaction sentences interpolate a bare number into a
+string with the word "Spieler" written into it, so a window opened during a bot's roll read "Spieler 3
+würfelt". It was left as follow-up work because it was only visible while a person held a Reaction card
+during a bot's turn.
+
+That stopped being true the moment a bot could play a card **into** a window: the line then has to name
+a bot as the one who answered. Four keys per language take `{{name}}` instead of `{{number}}`
+(`reaction.trigger.*`, `reaction.played`, `reaction.declined`, `reaction.waiting`), `windowLine` takes
+the match rather than the seat list, and `seatName` decides the word. The unused two are changed with
+the others rather than left half-converted.
+
+**The new key is `turn.cardPlayed` and not `card.playedBy`**, which is a small correction to the plan
+with a real reason: `cards.json` owns the whole `card` top-level key, and `mergeNamespaces` **throws**
+at boot on a top-level key defined in two files. That check is from 2026-08-31 and it did its job here.
+
+#### The e2e helpers moved out, and a first draft of the announcement spec was thrown away
+
+`bots.spec.js` was at 271 lines with three cases in it, so the five helpers it had grown moved to
+`tests/e2e/bot-helpers.js`, on `trap-helpers.js`'s precedent. They cannot go in `helpers.js`: that file
+is at exactly 300 lines and every spec imports it, and none of this is any use to a spec without a bot.
+
+The first version of the announcement case polled the strip for `data-message-kind="card"` at real speed
+and **spent sixty seconds not seeing one**, which is worth writing down because the reason is not a bug.
+The announcement lasts two seconds, `?fast=1` collapses it to nothing, and at real speed the early turns
+are quiet on purpose: with every pawn still in the yard, almost nothing is worth playing. So the spec
+now installs a `MutationObserver` on the strip and records every value the attribute ever takes. That
+turns a race into a list, runs under `?fast=1`, and asserts more than the first draft could: the kind
+**and** that the sentence names "Bot 2" rather than "Spieler 2". How long the announcement stays is a
+unit question, and `mid-turn-hold.test.js` is where it is asked.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

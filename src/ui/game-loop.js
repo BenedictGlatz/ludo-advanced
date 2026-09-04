@@ -125,7 +125,7 @@ export function createGameLoop({
 
   const cards = createCardControls({ $board, ...wiring });
   const waits = createTurnWaits({ parts, ...wiring });
-  const bots = createBotDriver({ $board, ...wiring });
+  const bots = createBotDriver({ $board, ...wiring, afterCard: cards.carryOn });
 
   const board = createTurnControls({
     getState: () => state,
@@ -193,11 +193,11 @@ export function createGameLoop({
     }
 
     if (state.reactionWindow !== null) {
-      // **Bots drop out first**, so the clock and the prompt only ever address people. Two things
+      // **Bots answer first**, so the clock and the prompt only ever address people. Two things
       // follow from the order: a window with nobody but bots in it shuts at once instead of running a
       // thirty-second countdown, and in a mixed round `seatOnShow`, which is `eligible[0]`, is a
-      // person. `declineAll` takes no pause, because somebody else is waiting on this window.
-      bots.declineAll();
+      // person. A decline takes no pause; a card play is scheduled and returns true, so the loop waits.
+      if (bots.answerWindow()) return;
       if (cards.handleWindow()) return;
       advance();
       return;

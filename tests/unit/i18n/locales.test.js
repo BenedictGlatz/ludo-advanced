@@ -218,6 +218,21 @@ describe("i18next once it is booted", () => {
     expect(t("player.name", { number: 2 })).toBe("Spieler 2");
   });
 
+  /**
+   * The four sentences that name a player by **name** rather than by number, since issue #82. They
+   * used to write the word "Spieler" in front of an interpolated number, so a window opened by a bot
+   * read "Spieler 3 würfelt" in a match whose HUD said "Bot 3". The fix is that the caller decides
+   * what a seat is called, and these keys take whatever it says.
+   */
+  it("lets the caller name the player in every reaction sentence", () => {
+    expect(t("reaction.trigger.on-roll", { name: "Bot 3" })).toBe("Bot 3 würfelt");
+    expect(t("reaction.played", { name: "Bot 3", card: "Nühü" })).toBe("Bot 3: Nühü");
+    expect(t("reaction.declined", { name: "Spieler 2" })).toBe("Spieler 2 hat abgelehnt");
+    expect(t("turn.cardPlayed", { name: "Bot 3", card: "Angel Die" })).toBe(
+      "Bot 3 spielt Angel Die"
+    );
+  });
+
   it("switches language at runtime and leaves no string behind (FR-34)", async () => {
     await changeLanguage("en");
 

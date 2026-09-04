@@ -412,6 +412,19 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   the real assertion unchanged, that no intent a bot produces is ever refused over hundreds of turns.
   Two cards are deliberately never played and one rule finding came out of the work: Double Dip is net
   zero, and `card-effects.js` claims it is net positive. Sprint 3, issue #82.
+- **2026-09-04, then the screen caught up with the bots, issue #82.** A card played by somebody who is
+  not at the keyboard is invisible, so it is announced in the message strip: a fourth kind of message on
+  a seam that already had three, one locale key per language, and the reading time borrowed from
+  `--motion-trap-hold` exactly as the bot's thinking pause borrows `--motion-roll-hold`. One new
+  turn-level state field, `lastCardPlayed`, which is the first field in the state object that carries no
+  rule at all. `declineAll` in the driver became `answerWindow`, because a bot in a window now has two
+  possible answers and only one of them is instant. `game-loop.js` came out at exactly 300 lines again,
+  two lines changed and none added. **One negative finding from this morning closed itself**: the seven
+  `reaction.*` sentences said "Spieler 3 würfelt" for a bot, which was left as follow-up work when the
+  bots landed and became load-bearing the moment a bot could answer a window, so the keys take a name
+  instead of a number. The e2e bot helpers moved into `bot-helpers.js`, and the announcement spec was
+  written twice: the first version polled a two-second message at real speed and spent a minute not
+  seeing one. Sprint 3, issue #82.
 
 ---
 
@@ -4214,6 +4227,77 @@ to get wrong later.
 - **Rejected:** *saying nothing and letting the bot price it as a second card.* The bot would then play
   Double Dip expecting a play it does not get, which is a wrong value hiding a wrong rule.
 - → Ch. 01, Ch. 06
+
+### 2026-09-04: A bot's card play is announced in the message strip, and it ships in the wrong colour
+
+- **Chosen:** a fourth kind of message, `card`, on the strip that already says three kinds of thing.
+  One locale key per language, no new component, no new token, and the reading time is the existing
+  `--motion-trap-hold`.
+- **Why an announcement is needed at all:** a card played by somebody who is not at the keyboard is
+  invisible. Built Different writes a status, No Take-Backsies shuts a window nobody was going to use,
+  and a nullified card does nothing whatsoever, so without a sentence the player watches their pawns get
+  shoved around by nothing.
+- **Why the strip and not something new:** `CLAUDE.md` is explicit that Claude Code does not invent
+  design rules, and a component is a design rule. `data-message-kind` is a seam that already exists and
+  that a third kind was added to on 2026-09-03, so this is the fourth use of a pattern rather than a new
+  idea.
+- **The deviation, stated rather than discovered:** no stylesheet reads `data-message-kind="card"`, so
+  the sentence appears in `--color-warn`, the colour the game reserves for "you cannot do that". A bot
+  playing a card is not a refusal. This is exactly the deviation issue #45 shipped for the trap
+  announcement; D55 answered that with two selectors, and D87 of brief 14 is the same shape.
+- **Rejected:** *inventing the two selectors here.* It is one line of CSS and it is still a design
+  decision about what the game's second voice looks like, and the last time this side guessed at a
+  design rule the guess was the thing the handoff had to undo.
+- **Rejected:** *announcing nothing and letting the board speak.* For a third of the cards the board
+  says nothing at all.
+- → Ch. 04
+
+### 2026-09-04: The card a bot played is a field on the state, not a variable in `ui/`
+
+- **Chosen:** `lastCardPlayed`, `{ seat, cardId }`, written by both card intents and cleared at the
+  handover with the rest of the turn-level fields.
+- **Why in the state:** the message strip is drawn out of the state object and nothing else. A fourth
+  piece of presentation state threaded through `render` would be one refresh out of step with the board
+  it describes, and `nullifiedCard` and `trapFired` are already exactly this kind of field for exactly
+  this reason.
+- **What is unusual about it, named so it is not read as a mistake:** it is the first field in the state
+  object that carries **no rule**. Nothing in `core/` or `state/` reads it and a match plays out
+  identically without it.
+- **Why it is written when the card leaves the hand and not when its rule runs:** an Action card that
+  somebody can answer waits in `pendingCard` while a window is open, and the moment worth announcing is
+  the moment somebody did something.
+- **Consequence:** two lines of `state/` shipped inside a `ui/` commit. Splitting them out would have
+  produced a commit that adds a field nothing reads, and the commit before it touches neither file.
+- → Ch. 04, Ch. 06
+
+### 2026-09-04: `holdMidTurn` gained a third source and `holdAfterTurn` deliberately did not
+
+- **Chosen:** `announcement(state)` is unchanged; a new `midTurnAnnouncement(state)` adds a bot's card
+  play on top of it, and only the mid-turn hold asks the new one.
+- **Why the asymmetry:** the card already had its two seconds where it happened. Holding for it again at
+  the handover would add four seconds to the end of every bot turn that played a card, which is most of
+  them, and the four seconds is a **refusal**'s reading time (D20) rather than a report's.
+- **Why a person's own card play is not announced at all:** they clicked the card, answered the target
+  picker and pressed the last button. Telling them what they just did would cost two seconds per card in
+  every match, including the all-human ones, for information they have already got.
+- **Rejected:** *one function with a flag.* The two callers want different answers, and a flag makes the
+  caller responsible for a decision that belongs to this module.
+- → Ch. 04
+
+### 2026-09-04: The announcement spec records the attribute instead of polling for it
+
+- **Chosen:** the end-to-end case installs a `MutationObserver` on the message strip, records every
+  value `data-message-kind` ever takes, and asserts against that list. It runs under `?fast=1`.
+- **Why the first version was thrown away:** it polled for `data-message-kind="card"` at real speed and
+  spent sixty seconds not seeing one. Two reasons, and neither is a bug: the announcement is on screen
+  for two seconds, so a poll has to land inside that window, and the early turns of a match are quiet on
+  purpose, because with every pawn still in the yard almost nothing is worth playing.
+- **What the observer buys:** a race becomes a list, the case runs at full speed, and it asserts more
+  than the poll could, both the kind and that the sentence names "Bot 2" rather than "Spieler 2".
+- **What it gives up, and where that is covered instead:** it no longer proves the announcement is on
+  screen for two seconds. That is a duration nothing on screen reports, which is precisely the argument
+  `mid-turn-hold.test.js` was written for, and the unit case pins both halves of it.
+- → Ch. 04, Ch. 08
 
 ---
 

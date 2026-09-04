@@ -17,6 +17,7 @@
   "turn": {
     "prompt": "{{player}} ist am Zug",
     "chooseDie": "Wähle eine Würfelkarte",
+    "cardPlayed": "{{name}} spielt {{card}}",
     "selectPawn": "Wähle eine Figur",
     "end": "Zug beenden"
   },
@@ -133,14 +134,14 @@
   "reaction": {
     "prompt": "Reaktion? {{seconds}} s",
     "trigger": {
-      "on-card": "Spieler {{number}} spielt eine Karte",
-      "on-roll": "Spieler {{number}} würfelt",
-      "on-capture": "Spieler {{number}} will eine Figur schlagen"
+      "on-card": "{{name}} spielt eine Karte",
+      "on-roll": "{{name}} würfelt",
+      "on-capture": "{{name}} will eine Figur schlagen"
     },
     "decline": "Ablehnen",
-    "waiting": "Warte auf Spieler {{number}}",
-    "declined": "Spieler {{number}} hat abgelehnt",
-    "played": "Spieler {{number}}: {{card}}",
+    "waiting": "Warte auf {{name}}",
+    "declined": "{{name}} hat abgelehnt",
+    "played": "{{name}}: {{card}}",
     "negated": "wurde abgesagt"
   },
   "action": {

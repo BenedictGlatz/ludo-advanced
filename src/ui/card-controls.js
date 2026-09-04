@@ -277,6 +277,15 @@ export function createCardControls({
     syncClock,
     handleWindow,
 
+    /**
+     * The hold after a card play, handed to `bot-driver.js` as `afterCard` (issue #82).
+     *
+     * Exported rather than duplicated, because the two hard parts of it are not the delay: the marker
+     * that stops one announcement being held twice, and the rule that a zero hold resumes
+     * synchronously so the end-to-end suite's ordering is unchanged. A bot's card play needs both.
+     */
+    carryOn,
+
     /** Stop everything. Called when the loop stops, so a torn-down match leaves no clock running. */
     stop() {
       stopClock();

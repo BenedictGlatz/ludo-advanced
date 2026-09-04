@@ -1,34 +1,23 @@
 /**
- * Playing against the computer. Issue #43, requirement FR-43.
+ * Playing against the computer. Issues #43 and #82, requirement FR-43.
  *
- * ## Two of the three cases run at real speed, and that is the point
+ * ## Two of the four cases run at real speed, and that is the point
  *
  * `?fast=1` collapses the bot's thinking pause to zero along with every other wait, so under it a bot
- * turn happens inside one tick. That is exactly what most specs want and exactly what these two must
- * not have: what they are testing is **the hand-over rule**, which is about who is asked to press a
- * button between turns, and the only honest way to check that nothing asks is to let real time pass
- * and watch the overlay stay away.
+ * turn happens inside one tick. That is exactly what most specs want and exactly what the two
+ * hand-over cases must not have: the rule they are about is **who is asked to press a button between
+ * turns**, and the only honest way to check that nothing asks is to let real time pass and watch the
+ * overlay stay away. `handover.spec.js` runs at real speed for the same reason.
  *
- * `handover.spec.js` runs at real speed for the same reason, and this file borrows its shape: the URL
- * is built here rather than through `openMatch`, because `helpers.js` is at its 300-line limit (NFR-02)
- * and a fourth option is not worth splitting it for.
- *
- * ## The third case cannot use `playUntil`, and the reason is worth knowing
- *
- * `boardState` reads six attributes with six separate round trips, which was harmless while every turn
- * waited for a click somewhere. With three bots under `?fast=1` the bots' three turns happen between
- * two of those reads, so a caller can get `phase` from a bot's fleeting `act` and `turnNumber` from two
- * turns later and try to click a pawn that no longer exists. It is not a bug in the helper: it is a
- * property that only shows up once turns can pass with nobody clicking.
- *
- * So that case reads the state **atomically**, through `window.ludo`, which `main.js` exposes for
- * exactly this: "a Playwright test that needs to look at the state rather than at the screen". It only
- * ever touches the page while the board is resting on the person's turn.
+ * The helpers live in [bot-helpers.js](bot-helpers.js), which carries the reason a bot spec cannot use
+ * `boardState` and `playUntil`: with three bots under `?fast=1`, several turns can pass between two
+ * attribute reads.
  */
 
 import { expect, test } from "@playwright/test";
 
-import { boardState, chooseAndCarryOn, moveFirstMovablePawn, playTurn } from "./helpers.js";
+import { boardState, playTurn } from "./helpers.js";
+import { openBotMatch, playHumanTurn, playPersonTurn, progress, snapshot } from "./bot-helpers.js";
 
 const overlay = (page) => page.locator(".overlay");
 const seatRow = (page, seat) => page.locator(`.hud__seat[data-player="${seat}"]`);
@@ -40,135 +29,11 @@ const seatRow = (page, seat) => page.locator(`.hud__seat[data-player="${seat}"]`
  */
 const FULL_MATCH_TIMEOUT_MS = 240_000;
 
-/** `?bots=` is not one of `openMatch`'s options, so the query is written out. */
-function openBotMatch(page, { seed, players, bots, fast = false }) {
-  const query = `?seed=${seed}&players=${players}&bots=${bots}${fast ? "&fast=1" : ""}`;
-
-  return page.goto(`/${query}`);
-}
-
-/**
- * One turn of a person's, without waiting for it to be over.
- *
- * `playTurn` cannot be used before a hand-over: it waits for the turn number to move, and the whole
- * point of the screen is that the turn does **not** pass until somebody presses Ready.
- * `handover.spec.js` drives its turns the same way for the same reason.
- */
-async function playHumanTurn(board) {
-  await chooseAndCarryOn(board);
-  if ((await boardState(board)).phase === "act") await moveFirstMovablePawn(board);
-}
-
-/**
- * The board's turn and seat, plus whichever screen is up, read in one pass.
- *
- * Read together on purpose. A poll that only watched the turn number would happily wait out a
- * hand-over screen that should never have opened and then report a timeout, which says nothing about
- * what went wrong. Reading the screen in the same pass turns that into an assertion that names it.
- */
-async function progress(page, board) {
-  const { turnNumber, activePlayer, status } = await boardState(board);
-
-  return {
-    turnNumber,
-    activePlayer,
-    status,
-    screen: await overlay(page).getAttribute("data-screen"),
-  };
-}
-
-/** The whole answer in one round trip. See the header for why the attributes will not do here. */
-function snapshot(page) {
-  return page.evaluate(() => {
-    const state = window.ludo.getLoop()?.getState() ?? null;
-    if (state === null) return null;
-
-    return {
-      status: state.status,
-      phase: state.phase,
-      seat: state.activePlayer,
-      isBot: state.bots.includes(state.activePlayer),
-      turnNumber: state.turnNumber,
-    };
-  });
-}
-
-/**
- * Wait until the board has come to rest on a person's turn, or the match is over.
- *
- * "At rest" is the three phases that wait for input. Every other phase either belongs to the loop or
- * belongs to a bot, and both pass on their own.
- */
-async function waitForPerson(page) {
-  let latest = null;
-
-  await expect
-    .poll(
-      async () => {
-        latest = await snapshot(page);
-        if (latest === null) return false;
-        if (latest.status !== "running") return true;
-
-        return !latest.isBot && ["choose", "action", "act"].includes(latest.phase);
-      },
-      { timeout: 20_000 }
-    )
-    .toBe(true);
-
-  return latest;
-}
-
-/** Wait until the board is no longer in exactly the state `from` describes. */
-async function waitPast(page, from) {
-  await expect
-    .poll(
-      async () => {
-        const now = await snapshot(page);
-
-        return (
-          now.status !== "running" || now.turnNumber !== from.turnNumber || now.phase !== from.phase
-        );
-      },
-      { timeout: 20_000 }
-    )
-    .toBe(true);
-}
-
-/**
- * Take the person's whole turn, one resting phase at a time, letting the board settle between each.
- *
- * The settle between every click is what `playUntil` cannot do: it decides what to press from a read
- * that may already be two turns old. Here every decision comes from a state that is, by construction,
- * one a person is being asked about.
- */
-async function playPersonTurn(page, board) {
-  const choosing = await waitForPerson(page);
-  if (choosing.status !== "running") return choosing;
-
-  if (choosing.phase === "choose") {
-    await page.locator('.hand--dice .card[data-slot="0"]').click();
-    await waitPast(page, choosing);
-  }
-
-  const acting = await waitForPerson(page);
-  if (acting.status === "running" && acting.phase === "action") {
-    await page.locator('.prompt [data-prompt-action="skip"]').click();
-    await waitPast(page, acting);
-  }
-
-  const moving = await waitForPerson(page);
-  if (moving.status === "running" && moving.phase === "act") {
-    await moveFirstMovablePawn(board);
-    await waitPast(page, moving);
-  }
-
-  return moving;
-}
-
 test.describe("bot opponents", () => {
-  // The two real-speed cases spend about fifteen seconds each doing nothing on purpose: three bot
-  // turns at 900 ms a decision, plus the roll's own hold. That is close enough to Playwright's default
-  // thirty seconds that a contended run would report waiting as failing.
+  // The real-speed cases spend seconds at a time doing nothing on purpose: three bot turns at 900 ms
+  // a decision, plus the roll's own hold, plus two seconds for every card a bot plays. That is close
+  // enough to Playwright's default thirty seconds that a contended run would report waiting as
+  // failing.
   test.setTimeout(90_000);
 
   test("one person and three bots: the bots take their turns and nothing asks to hand over", async ({
@@ -240,6 +105,87 @@ test.describe("bot opponents", () => {
     // number is the evidence that two whole turns went by unattended: seat 1 played turn 2, and this
     // is the end of turn 4.
     expect((await boardState(board)).turnNumber).toBe(4);
+  });
+
+  /**
+   * Issue #82's own case: the bots spend cards, the play is announced, and the match carries on.
+   *
+   * ## Three assertions in one match, because a match is what is expensive
+   *
+   * The discard pile is the evidence that a card was played, and it has to be, because several cards
+   * leave the board looking exactly as it did before: Built Different writes a status, No Take-Backsies
+   * shuts a window nobody was going to use, and a nullified card does nothing at all. The person in
+   * this match never plays a card, so every entry in the pile came from a bot.
+   *
+   * **What it is really testing is that nothing hangs.** A bot whose card play the rules refuse leaves
+   * `bot-driver.js` stopped and the phase unchanged, which is a browser sitting still rather than a
+   * failing assertion, so the turn number moving on afterwards is the whole point.
+   *
+   * ## Why a MutationObserver instead of polling the strip
+   *
+   * The announcement is on screen for `--motion-trap-hold`, two seconds, and `?fast=1` collapses that
+   * to nothing. Polling for it would therefore mean running the whole match at real speed and hoping a
+   * round trip lands inside a two-second window, and the first draft of this spec did exactly that and
+   * spent sixty seconds not seeing one. Recording every value the attribute ever takes turns a race
+   * into a list, so the case runs fast and asserts more: the kind **and** the name in the sentence.
+   *
+   * The strip is built once by `page.js` and only ever gets attributes, so one observer covers the
+   * whole match. How long the announcement stays is `mid-turn-hold.test.js`'s question, and a unit test
+   * is the right place for a duration nothing on screen reports.
+   */
+  test("the bots spend their skill cards, and every play is announced", async ({ page }) => {
+    test.setTimeout(FULL_MATCH_TIMEOUT_MS);
+
+    await openBotMatch(page, { seed: 1, players: 4, bots: 3, fast: true });
+
+    await page.evaluate(() => {
+      const el = document.querySelector(".message-strip");
+      window.announced = [];
+
+      new MutationObserver(() => {
+        const kind = el.getAttribute("data-message-kind");
+        if (kind !== null) window.announced.push({ kind, text: el.textContent });
+      }).observe(el, { attributes: true, attributeFilter: ["data-message-kind"] });
+    });
+
+    const announced = () => page.evaluate(() => window.announced);
+    let played = null;
+
+    // The person plays roughly one turn in four and never plays a card. Early turns are quiet on
+    // purpose: with every pawn still in the yard almost nothing is worth playing, so the cards start
+    // moving once the pawns are out and the hands are full.
+    for (let turn = 0; turn < 40 && played === null; turn += 1) {
+      const now = await playPersonTurn(page, page.locator(".board"));
+      if (now.status !== "running") break;
+
+      const state = await snapshot(page);
+      if (state.discards > 0 && (await announced()).some((entry) => entry.kind === "card")) {
+        played = state;
+      }
+    }
+
+    expect(
+      played,
+      "no bot played an announced skill card in 40 of the person's turns"
+    ).not.toBeNull();
+
+    // The sentence names the seat, which is what the `{{name}}` interpolation is for: it used to say
+    // "Spieler 2" for a seat the rest of the screen calls "Bot 2".
+    const cards = (await announced()).filter((entry) => entry.kind === "card");
+    expect(cards[0].text).toMatch(/Bot \d/);
+
+    // And the match carries on: two more of the person's turns, with the three bots taking theirs in
+    // between, which is six or more turns on top of the one the card was played in.
+    //
+    // Played rather than waited for, and the first draft got this wrong. Nothing moves while the board
+    // rests on the person's turn, so a poll for a rising turn number sits there until it times out.
+    for (let turn = 0; turn < 2; turn += 1) {
+      await playPersonTurn(page, page.locator(".board"));
+    }
+
+    const later = await snapshot(page);
+    expect(later.status).toBe("running");
+    expect(later.turnNumber).toBeGreaterThan(played.turnNumber + 3);
   });
 
   test("a match with three bots in it plays to a win", async ({ page }) => {

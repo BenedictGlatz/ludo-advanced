@@ -17,6 +17,7 @@
   "turn": {
     "prompt": "{{player}} to move",
     "chooseDie": "Choose a dice card",
+    "cardPlayed": "{{name}} plays {{card}}",
     "selectPawn": "Choose a pawn",
     "end": "End turn"
   },
@@ -133,14 +134,14 @@
   "reaction": {
     "prompt": "React? {{seconds}} s",
     "trigger": {
-      "on-card": "Player {{number}} plays a card",
-      "on-roll": "Player {{number}} rolls",
-      "on-capture": "Player {{number}} is about to capture a pawn"
+      "on-card": "{{name}} plays a card",
+      "on-roll": "{{name}} rolls",
+      "on-capture": "{{name}} is about to capture a pawn"
     },
     "decline": "Decline",
-    "waiting": "Waiting for player {{number}}",
-    "declined": "Player {{number}} declined",
-    "played": "Player {{number}}: {{card}}",
+    "waiting": "Waiting for {{name}}",
+    "declined": "{{name}} declined",
+    "played": "{{name}}: {{card}}",
     "negated": "was cancelled"
   },
   "action": {

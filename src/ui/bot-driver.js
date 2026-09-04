@@ -23,9 +23,23 @@
  * `apply` returns false and this module gives up on that pass, redraws, and lets the loop carry on.
  * Retrying is how a bot turns one impossible intent into an infinite loop, and the game-loop's own
  * comment already makes this rule for every other control in `ui/`.
+ *
+ * ## Since issue #82 a bot's intent can be a card, and that needed one thing from this file
+ *
+ * A card play changes the board in a way nobody watched happen, so it is announced in the message
+ * strip and the turn is held for the announcement's reading time. That hold already exists and already
+ * belongs to somebody: `carryOn` in [card-controls.js](card-controls.js) owns it for every card a
+ * person plays. So the loop passes it in as `afterCard`, and this module routes an accepted `play-card`
+ * through it instead of straight back into `advance()`.
+ *
+ * **Not a second hold written here**, which is the whole point of taking it as a parameter: the dedupe
+ * that stops one announcement being held twice, and the zero-means-synchronous rule that keeps the
+ * end-to-end suite's ordering, both live in that one function and are hard-won. `afterCard` defaults
+ * to `null`, so a driver built without it (every unit test written before issue #82) behaves as before.
  */
 
 import { decide } from "../ai/bot-policy.js";
+import { INTENT_CARD } from "../state/intents-cards.js";
 import { motionMs } from "./board-view.js";
 import { holdBot } from "./timers.js";
 
@@ -36,30 +50,82 @@ import { holdBot } from "./timers.js";
  * - `getState`, `apply`, `refresh` and `resume` come from `game-loop.js`, so there is one state
  *   reference in `ui/` and one place that dispatches.
  */
-export function createBotDriver({ $board, timers, delays = {}, getState, apply, refresh, resume }) {
+export function createBotDriver({
+  $board,
+  timers,
+  delays = {},
+  getState,
+  apply,
+  refresh,
+  resume,
+  afterCard = null,
+}) {
   const readToken = (token, fallback) => motionMs($board, token, fallback);
 
-  /**
-   * Every bot in the open window passes, at once and without a pause.
-   *
-   * **No pause, deliberately.** A window is not a bot's turn: somebody else is waiting on it, and a
-   * three-bot table would put nearly three seconds in front of every capture a person made. What the
-   * window is *for* is giving a person the chance to answer, and the bots dropping out immediately is
-   * what leaves that window to the people who can use it. It also means a window with only bots in it
-   * shuts at once instead of running a thirty-second clock nobody is watching.
-   *
-   * Returns whether anything was dispatched, so the caller can tell a changed state from an unchanged
-   * one. It stops on a refusal, like every other control here.
-   */
-  function declineAll() {
-    let acted = false;
+  /** Carry on after a card play, giving its announcement its moment. See `carryOn` in `card-controls.js`. */
+  const carryOn = () => (afterCard === null ? resume() : afterCard());
 
+  /**
+   * Every bot in the open window answers: the declines at once, a card play after a pause.
+   *
+   * **A decline takes no pause, deliberately.** A window is not a bot's turn: somebody else is waiting
+   * on it, and a three-bot table would put nearly three seconds in front of every capture a person
+   * made. What the window is *for* is giving a person the chance to answer, and the bots dropping out
+   * immediately is what leaves that window to the people who can use it. It also means a window with
+   * only bots in it shuts at once instead of running a thirty-second clock nobody is watching.
+   *
+   * **A card played into the window is different and does wait** (issue #82). It changes the board and
+   * it has to be announced, so it gets `holdBot` before the dispatch, exactly as a bot's own turn does,
+   * and `carryOn` after it so the announcement gets its reading time.
+   *
+   * Returns `true` when a card play was **scheduled**, which tells the loop to stop and wait for the
+   * timer. Declines return `false` even though they dispatched, because the loop's next step is to ask
+   * `card-controls.js` about the window it has just shortened. It stops on a refusal, like every other
+   * control here.
+   */
+  function answerWindow() {
     for (;;) {
-      const intent = decide(getState());
-      if (intent === null || getState().reactionWindow === null) return acted;
-      if (!apply(intent)) return acted;
-      acted = true;
+      const state = getState();
+      if (state.reactionWindow === null) return false;
+
+      const intent = decide(state);
+      if (intent === null) return false;
+
+      if (intent.type === INTENT_CARD.PLAY_CARD) {
+        const ms = holdBot(delays, readToken);
+
+        // Zero plays synchronously rather than through the registry, for the reason `takeTurn` gives.
+        if (ms <= 0) playCard();
+        else timers.set("bot", playCard, ms);
+
+        return true;
+      }
+
+      if (!apply(intent)) return false;
     }
+  }
+
+  /**
+   * Ask again, now, and play the card if it is still the card to play.
+   *
+   * Asked twice for the same reason `play` asks twice: the pause is real time, and a person may have
+   * answered the window in it. A decision made about a board that no longer exists is worse than a
+   * decision made a moment late.
+   */
+  function playCard() {
+    const intent = decide(getState());
+
+    if (intent === null || intent.type !== INTENT_CARD.PLAY_CARD) {
+      resume();
+      return;
+    }
+
+    if (!apply(intent)) {
+      refresh();
+      return;
+    }
+
+    carryOn();
   }
 
   /**
@@ -97,16 +163,21 @@ export function createBotDriver({ $board, timers, delays = {}, getState, apply, 
       return;
     }
 
+    const played = intent.type === INTENT_CARD.PLAY_CARD;
+
     if (!apply(intent)) {
       refresh();
       return;
     }
 
-    resume();
+    // A card play carries on through `card-controls.js`, so its announcement is held before the turn
+    // moves on. Everything else re-enters the loop directly, exactly as it did before issue #82.
+    if (played) carryOn();
+    else resume();
   }
 
   return {
-    declineAll,
+    answerWindow,
     takeTurn,
 
     /** Stop waiting. Called when the loop stops or pauses, so a torn-down match leaves nothing running. */

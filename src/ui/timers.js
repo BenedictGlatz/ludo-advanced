@@ -24,6 +24,8 @@
  * is a presentation question and this file has no opinion on it.
  */
 
+import { isBot } from "../state/bots.js";
+
 /**
  * How long a refusal stays on screen before the turn passes.
  *
@@ -105,6 +107,34 @@ export function announcement(state) {
 }
 
 /**
+ * The same question mid-turn, where a **bot's** card play also counts. Issue #82.
+ *
+ * A person who plays a card watched themselves do it. A bot's card is played by nobody the player can
+ * see, so it is announced in the message strip and, like a trap, it needs a guaranteed moment on
+ * screen before the turn carries on. Same argument as D60, same borrowed token.
+ *
+ * **Two functions and not one**, which is the decision in this file worth reading twice.
+ * `holdAfterTurn` deliberately keeps asking `announcement`, so a bot turn that played a card does
+ * **not** get the four-second refusal hold at the handover: the card was already held for its two
+ * seconds in the middle of the turn, and holding it again would add four seconds to every bot turn
+ * that played anything.
+ *
+ * Returns the same identity on two calls with the same state, so `card-controls.js` can compare them
+ * and hold one announcement once. `lastCardPlayed` is a frozen object on the state, exactly like
+ * `trapFired`.
+ */
+export function midTurnAnnouncement(state) {
+  return announcement(state) ?? botCardPlayed(state);
+}
+
+/** The card a bot just played, or `null`. A person's own card play is not an announcement. */
+export function botCardPlayed(state) {
+  const played = state.lastCardPlayed ?? null;
+
+  return played !== null && isBot(state, played.seat) ? played : null;
+}
+
+/**
  * How long to hold the turn after a card announced something, before carrying on. `0` means carry on now.
  *
  * The other half of `holdAfterTurn`: that one is asked when the turn has ended, this one mid-turn.
@@ -129,7 +159,7 @@ export function announcement(state) {
  * less time to read.
  */
 export function holdMidTurn(state, delays, readToken) {
-  if (announcement(state) === null) return 0;
+  if (midTurnAnnouncement(state) === null) return 0;
 
   return delays.afterTrapCard ?? readToken("--motion-trap-hold", TRAP_HOLD_MS);
 }

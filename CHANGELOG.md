@@ -411,6 +411,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A card a bot plays is announced in the message strip under the board** (issue #82), for two seconds,
+  naming the seat and the card: "Bot 3 spielt Angel Die". Without it the whole card mechanic of a match
+  against bots would happen in silence, because a third of the cards leave the board looking exactly as
+  it did before. **The sentence is orange, the colour the game otherwise uses for "you cannot do that",
+  and that is wrong**: no colour rule exists for this message yet, so it borrows the strip's default one
+  until Design answers D87
+- **The reaction prompt calls a bot a bot** (issue #82). "Bot 3 will eine Figur schlagen" instead of
+  "Spieler 3 will eine Figur schlagen", in the line that says what is being reacted to, in the list of
+  cards already played into the window, and in the decline message. The rest of the screen has called
+  that seat "Bot 3" since bots arrived; this was the last place that disagreed
 - **Banana Peel no longer sends a pawn home. It stuns it** (issue #45, FR-30). The pawn that walks into
   one finishes its move and then loses its next turn, which is what the card in your hand has always
   said and what the rulebook has always said. Only that pawn sits out: you still move your other three.

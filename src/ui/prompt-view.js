@@ -31,7 +31,7 @@ import $ from "jquery";
 
 import { cardById } from "../core/cards/catalogue.js";
 import { t } from "../i18n/index.js";
-import { displayNumber, seatName } from "./player-labels.js";
+import { seatName } from "./player-labels.js";
 
 /** What the strip is currently for. `prompt.css` keys its layout off this. */
 export const PROMPT_MODE = {
@@ -73,21 +73,29 @@ function button(label, action, value) {
 /**
  * The one-line description of an open reaction window: who is doing what to whom.
  *
- * `seats` is passed in so the players are numbered by position in the match rather than by seat index.
- * A two-player match otherwise reads "Spieler 3 würfelt" and has no Spieler 2. See `player-labels.js`.
+ * `match` is `{ seats, bots }`, and a state object is one. The seat list is needed because the players
+ * are numbered by position in the match rather than by seat index: a two-player match otherwise reads
+ * "Spieler 3 würfelt" and has no Spieler 2. See `player-labels.js`.
+ *
+ * **The bot list is needed because it used to say "Spieler" for a bot** (issue #82). Every one of these
+ * three sentences named a number and the locale wrote the word "Spieler" in front of it, so a window
+ * opened by a bot in a match where the HUD says "Bot 3" read "Spieler 3 will eine Figur schlagen".
+ * That was recorded as a negative finding when the bots landed and left unfixed, because nothing else
+ * in the window was the bots' business yet. Now a bot can play a card **into** a window, so the line
+ * has to be able to name one, and the three keys interpolate `{{name}}` instead of `{{number}}`.
  */
-function windowLine(seats, window) {
+function windowLine(match, window) {
   const played = window.played
     .map((entry) =>
       t("reaction.played", {
-        number: displayNumber(seats, entry.seat),
+        name: seatName(match, entry.seat),
         card: t(`card.skill.${entry.cardId}.title`),
       })
     )
     .join(" · ");
 
   const trigger = t(`reaction.trigger.${window.trigger}`, {
-    number: displayNumber(seats, window.actor),
+    name: seatName(match, window.actor),
   });
 
   return played === "" ? trigger : `${trigger} · ${played}`;
@@ -145,7 +153,7 @@ export function updatePrompt($prompt, state, { secondsLeft = null, pick = null }
 
   if (state.reactionWindow !== null) {
     $prompt.attr("data-mode", PROMPT_MODE.REACTION);
-    $line.text(windowLine(state.seats, state.reactionWindow));
+    $line.text(windowLine(state, state.reactionWindow));
     $clock.text(secondsLeft === null ? "" : t("reaction.prompt", { seconds: secondsLeft }));
     $buttons.append(button(t("reaction.decline"), PROMPT_ACTION.DECLINE));
     return $prompt;

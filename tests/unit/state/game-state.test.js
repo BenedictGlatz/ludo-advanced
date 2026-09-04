@@ -149,7 +149,17 @@ describe("clearedTurnFields", () => {
       pendingCard: null,
       nullifiedCard: null,
       trapFired: null,
+      lastCardPlayed: null,
     });
+  });
+
+  /**
+   * The field issue #82 added, and the reason it is in this list at all: it is written by both card
+   * intents purely so the screen can announce a **bot's** card play, and it has to be gone by the next
+   * turn or the strip would keep announcing a card that was played a turn ago.
+   */
+  it("clears the card a bot played, so no announcement outlives its turn", () => {
+    expect(clearedTurnFields().lastCardPlayed).toBeNull();
   });
 
   /**
