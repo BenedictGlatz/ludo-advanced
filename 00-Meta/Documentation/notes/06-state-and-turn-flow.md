@@ -578,6 +578,90 @@ asks whether a move parks a pawn in front of an opponent. That term needs absolu
 across seats plus a model of what the opponent's dice hand can roll, and a wrong model plays worse
 than no model. It is the obvious next tuning step and it is not in this issue.
 
+### The bot values a card in the currency of a move: 2026-09-04, issue #82
+
+**The 2026-09-04 decision that a bot plays no skill cards is superseded.** That block stays in the
+journal, because it records what was believed at the time and why; what changed is that the hand of a
+bot filled to its limit of five and was never spent, so a person playing against three bots played a
+game with no card mechanic in it at all. `src/ai/` gained eight files and the policy now answers the
+action phase and every reaction window with a card or with a pass.
+
+**One currency, and it is the move scorer's.** Every card value is in the units of `SCORE` in
+`ai/move-scoring.js`: one point is one step, leaving the yard is 25, a capture is 60 plus the victim's
+progress, finishing is 100. The reason is comparability: "Angel Die on a D6" and "Yeet the leading
+pawn" have to be rankable against each other and against passing, and a second scale would need a
+conversion factor nobody could justify. It also means the bot-against-bot match stays the scoreboard
+for tuning either half. Rejected: *a scale of its own per card family*, which reads more natural per
+card and makes the comparison between families a guess.
+
+**A card is played only when it beats a threshold.** `PLAY_AT` is 4 points, and at a full hand
+(`SKILL_HAND_LIMIT`, five) it drops to 1. The reason for the threshold is that a card in hand is worth
+something: the budget is one card per turn (FR-23), so a cheap play spends the only slot the turn has.
+The reason it drops at a full hand is that `drawSkillCard` refuses a draw into a full hand and the card
+stays in the pool, so holding on has stopped buying anything. Rejected: *play the best playable card
+every turn*, which empties the hand and plays Lock In on a pawn nobody is chasing.
+
+**Damage to one opponent counts as `1 / (seats - 1)` of my own gain.** In a duel an opponent's loss is
+my gain outright; at a four-player table the other two benefit from it as much as I do. One line,
+applied in every value, and the effect is that reaction cards are sharp in a two-player match and rare
+in a four-player one without a single card carrying a special case. Own gain and a pawn of my own saved
+from a capture count in full.
+
+**The bot asks the card its own rule.** For the seven cards whose whole effect is a roll modifier, the
+value calls the real effect out of `core/cards/effects/` and reads the modifiers back, then computes
+the roll's whole probability distribution in `ai/roll-odds.js`. So 67's threshold sitting before
+Speedrun's multiplier, and FR FR's named number being clamped to the die, are correct in the bot
+because they are correct in the card. Rejected: *a copy of each card's arithmetic in `ai/`*, which is a
+second rulebook that can disagree with the first.
+
+**`ai/roll-odds.js` is a deliberate second implementation of `core/roll.js`.** It walks the same six
+steps over probabilities instead of dice. The duplication is real and it is the cheaper of two evils:
+the alternative is to roll the real chain a few hundred times with a throwaway RNG, which puts
+randomness into the one layer whose whole property is that it has none (NFR-09, `?seed=42` replays a
+match). The drift risk is covered by a test that knows the closed-form answers independently.
+
+**Two cards are never played, as a negative finding rather than a gap.** *Oil Spill* slides whoever
+steps on it three to five squares **forwards**, so on almost every board it is a gift to the victim;
+the one board where it is good needs the victim's exact distance from their house. *The Purge*
+suspends the rule that an own pawn blocks, board-wide and for everybody, including the player who
+played it, so whether it is good depends on four seats' positions at once. Both return `null` from
+their value function, which is a different thing from a missing entry: `ai/card-values.js` throws at
+**boot** for a card with no value at all, on the pattern of `assertCatalogue` and `core/trap-fire.js`.
+
+**A bot reads only what a person can see, and a test enforces it by experiment.** Allowed: the board,
+the statuses, the traps, its own hand, the chosen dice card, the modifiers, `pendingCard`,
+`pendingMove`, the open window, and **how many** cards every other seat holds, which is public since
+decision D33 and printed in the HUD. Forbidden: `state.skillHands[anotherSeat]`. Nothing in JavaScript
+stops the peek, so `card-choice.test.js` decides the same board twice with completely different cards
+in the opponents' hands and asserts the answer is identical, plus a second case proving the public
+count still changes the answer, so the first case cannot be passed by a bot that ignores the other
+seats entirely.
+
+**A bad target is turned into a pass, not into a refused intent.** Each value picks its own target and
+`card-choice.js` then asks `checkTarget`, the same function the dispatcher will ask. The asymmetry with
+a person is the reason: a refused click is a message on screen, while a refused bot intent stops
+`ui/bot-driver.js`, leaves the phase unchanged, and parks the match for ever. `bot-match.test.js`
+carries the property over whole matches: no intent a bot produces is ever refused.
+
+**The It's Not That Deep aura is checked once, in `card-choice.js`, for all six offensive cards.** It
+depends on the target rather than on the card, so asking it in six values would be the same question
+written six times. **A known simplification:** a card whose best target sits inside the aura is
+dropped rather than re-aimed at the best square outside it.
+
+**A rule finding for the Product Owner, not fixed here: Double Dip is net zero.** `spendCard` counts
+Double Dip itself against the budget of one, and the card then sets the budget to two, which leaves
+exactly one further play: the one the seat had anyway. `card-effects.js`'s own header claims the card
+is "net positive". The bot therefore prices it as "make room in a full hand" and worth 1. Recorded in
+[01-requirements-and-goals.md](01-requirements-and-goals.md) as an open rule question.
+
+**Where the crude edges are, named rather than hidden.** `ai/threat.js` prices "a pawn `d` squares
+behind could roll exactly `d`" as one in six, twelve or twenty by the smallest die that reaches, and
+sums those instead of computing a proper "at least one of them" probability. The trap cards all aim one
+square in front of an opponent rather than at the square that opponent is most likely to enter, which
+would need a model of the dice hand they will draw. Nühü prices a card aimed at me as a flat number
+rather than by that card's own value, because pricing all 29 cards from the receiving end is a second
+value table.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

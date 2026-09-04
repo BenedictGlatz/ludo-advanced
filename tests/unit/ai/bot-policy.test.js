@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { MOVE_KIND } from "../../../src/core/move-rules.js";
+import { createModifiers } from "../../../src/core/roll.js";
 import { MATCH_STATUS, TURN_PHASE } from "../../../src/state/game-state.js";
 import { INTENT } from "../../../src/state/intents.js";
 import { INTENT_CARD } from "../../../src/state/intents-cards.js";
@@ -27,6 +28,19 @@ function match(fields) {
     statuses: [],
     traps: [],
     reactionWindow: null,
+
+    /**
+     * Empty hands unless a case says otherwise, which is what makes most of the file read as it did
+     * before issue #82: a seat holding nothing has nothing to play, so `decide` passes and declines
+     * exactly as it used to. The card-play cases below fill one hand and nothing else.
+     */
+    skillHands: { 0: [], 1: [], 2: [], 3: [] },
+    chosenDie: 6,
+    modifiers: createModifiers(),
+    cardsPlayed: {},
+    cardBudget: {},
+    turnNumber: 1,
+    playerCount: 4,
     ...fields,
   };
 }
@@ -72,10 +86,46 @@ describe("decide: the three phases a person would be asked in", () => {
     expect(state.hand).toContain(intent.faces);
   });
 
-  it("always passes on the action phase", () => {
-    // The scope decision of 2026-09-04: no card tactics yet, and "plays no card" is defined
-    // behaviour rather than a gap, so it is asserted.
+  it("passes when nothing is worth playing", () => {
+    // Was "always passes on the action phase" until issue #82, which was the scope decision of
+    // 2026-09-04. With an empty hand there is nothing to price, so passing is still the answer.
     expect(decide(match({ phase: TURN_PHASE.ACTION }))).toEqual({ type: INTENT.SKIP_ACTION });
+  });
+
+  /**
+   * The case that replaces the old "always passes". Four pawns out on the track and one of them
+   * exactly eight steps from home is the clearest board for Angel Die: a D6 alone can never finish
+   * that pawn, and a D6 plus a D8 finishes it on six of its 48 outcomes. The value comes out at
+   * about fifteen steps, which is far over the threshold, so the card is played.
+   */
+  it("plays Angel Die when it turns an unreachable finish into a likely one", () => {
+    const state = match({
+      phase: TURN_PHASE.ACTION,
+      chosenDie: 6,
+      pawns: pawnsAt(4, { "2.0": 36, "2.1": 5, "2.2": 10, "2.3": 15 }),
+      skillHands: { 0: [], 1: [], 2: ["action-angel-die"], 3: [] },
+    });
+
+    expect(decide(state)).toEqual({
+      type: INTENT_CARD.PLAY_CARD,
+      seat: 2,
+      cardId: "action-angel-die",
+      target: {},
+    });
+  });
+
+  /**
+   * A card in hand that is worth nothing on this board is kept, which is the whole point of the
+   * threshold. Nobody is behind this pawn, so protecting it buys exactly zero.
+   */
+  it("keeps a card that would do nothing", () => {
+    const state = match({
+      phase: TURN_PHASE.ACTION,
+      pawns: pawnsAt(4, { "2.0": 5 }),
+      skillHands: { 0: [], 1: [], 2: ["action-built-different"], 3: [] },
+    });
+
+    expect(decide(state)).toEqual({ type: INTENT.SKIP_ACTION });
   });
 
   it("commits the best move it was offered", () => {
@@ -123,6 +173,29 @@ describe("decide: reaction windows (FR-25)", () => {
     const state = match({ activePlayer: 0, phase: TURN_PHASE.ACT, reactionWindow: window([2]) });
 
     expect(decide(state)).toEqual({ type: INTENT_CARD.DECLINE_REACTION, seat: 2 });
+  });
+
+  /**
+   * The other half of issue #82: a bot answers a window when it holds something worth playing. A
+   * capture already declared against one of its own pawns fifteen steps in is worth 40 points to
+   * dodge, which is ten times the threshold.
+   */
+  it("plays a Reaction card instead of declining when it is worth it", () => {
+    const state = match({
+      activePlayer: 0,
+      phase: TURN_PHASE.REACTION,
+      pawns: pawnsAt(4, { "0.0": 5, "2.0": 15 }),
+      pendingMove: { player: 0, pawn: 0, from: 5, to: 15, captures: { player: 2, pawn: 0 } },
+      skillHands: { 0: [], 1: [], 2: ["reaction-ghost-mode"], 3: [] },
+      reactionWindow: window([2]),
+    });
+
+    expect(decide(state)).toEqual({
+      type: INTENT_CARD.PLAY_CARD,
+      seat: 2,
+      cardId: "reaction-ghost-mode",
+      target: {},
+    });
   });
 
   it("leaves a window of people alone", () => {

@@ -26,19 +26,23 @@
  * `afterTurn` holds the result long enough to read. A second issuer of `roll-die` would race the roll
  * animation, and the bug would look like a flickering die rather than like a bot problem.
  *
- * ## No skill cards, for now
+ * ## It plays cards, since issue #82
  *
- * The bot always passes on the action phase and always declines a reaction window. That is a scope
- * decision made with the Product Owner on 2026-09-04 and not a gap: card tactics need a value model
- * for 36 different cards, which is a piece of work in its own right and its own issue. What matters
- * for FR-43 is that the bot's behaviour is *defined* rather than accidental, so "plays no card" is
- * written into the acceptance criterion and tested.
+ * Until then it passed on every action phase and declined every window, which was the scope decision
+ * of 2026-09-04. That decision is now closed: `card-choice.js` prices every card in the hand in the
+ * units of a move (1 point is one step, a capture is 60 plus the victim's progress) and plays the best
+ * one when it beats a threshold, so keeping a card is a real alternative rather than a rule. Two cards
+ * are still never played, Oil Spill and The Purge, and each says why at its own value function.
+ *
+ * The three files under it are worth knowing apart: `card-values.js` is the table of what each card is
+ * worth, `card-choice.js` turns the best of them into an intent and refuses to trust its own target,
+ * and this file only decides **who is being asked what**.
  */
 
 import { INTENT } from "../state/intents.js";
-import { INTENT_CARD } from "../state/intents-cards.js";
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { isBot } from "../state/bots.js";
+import { chooseAction, chooseReaction } from "./card-choice.js";
 import { chooseDie } from "./dice-choice.js";
 import { bestMove } from "./move-scoring.js";
 
@@ -57,7 +61,7 @@ export function decide(state) {
   // anything at all.
   if (state.reactionWindow !== null) {
     const seat = state.reactionWindow.eligible.find((eligible) => isBot(state, eligible));
-    return seat === undefined ? null : { type: INTENT_CARD.DECLINE_REACTION, seat };
+    return seat === undefined ? null : chooseReaction(state, seat);
   }
 
   if (!isBot(state, state.activePlayer)) return null;
@@ -67,7 +71,7 @@ export function decide(state) {
       return { type: INTENT.CHOOSE_DIE, faces: chooseDie(state) };
 
     case TURN_PHASE.ACTION:
-      return { type: INTENT.SKIP_ACTION };
+      return chooseAction(state);
 
     case TURN_PHASE.ACT:
       return commitBestMove(state);

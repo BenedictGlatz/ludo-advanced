@@ -389,12 +389,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `?players=4&bots=3` and the last three seats play themselves. A bot picks its dice card by working out
   which of the three would do the most good on average, rolls it, and moves the pawn with the best move
   available: bringing a pawn home beats capturing, capturing beats reaching the safety of your own home
-  column, and that beats getting a pawn out of the yard. It never plays a skill card and always passes
-  when a reaction window is offered to it. Bots are called "Bot 2 (Grün)" in the scoreboard, in the line
+  column, and that beats getting a pawn out of the yard. Bots are called "Bot 2 (Grün)" in the scoreboard, in the line
   that says whose turn it is, and on the win screen, so you can always tell who is who. **The hand-over
   screen only appears when a second person is actually going to take the keyboard**, so playing alone
   against three bots means no screen between turns at all. Choosing bots from the main menu is not built
   yet; the address bar is how you do it today
+- **Computer opponents play skill cards and answer reaction windows** (issue #82). A bot works out what
+  every card in its hand would be worth **on this board, right now**, in the same units it judges a move
+  in: one point is one step, getting a pawn out of the yard is 25 and a capture is 60 or more. Then it
+  plays the best one, but only if it is worth more than keeping the card for a better moment. So Angel Die
+  is played on the pawn that can actually reach home with the extra die and kept when the extra die would
+  only overshoot, Built Different goes on the pawn an opponent is closing in on, a Banana Peel is laid one
+  square in front of whoever is furthest ahead, and Hyperbeam is not fired down a lane with one of the
+  bot's own pawns in it. In somebody else's turn a bot dodges a capture aimed at its own pawn, spoils a
+  roll that is about to do real damage, and holds the one pawn a turn depends on. **Damage to one opponent
+  counts for less the more players there are**, because at a four-player table two other people benefit
+  from it as much as the bot does, so bots answer far more often in a two-player match than in a
+  four-player one. A bot reads only what a person can see: the board and how **many** cards everybody else
+  holds, never which ones. Two cards are deliberately never played, Oil Spill and The Purge, because both
+  are as likely to help the table as the bot
 
 ### Changed
 

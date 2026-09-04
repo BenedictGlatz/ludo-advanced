@@ -32,9 +32,8 @@
  * to cache and nothing to be clever about.
  */
 
-import { evaluateTurn } from "../core/movement.js";
-import { boardOf } from "../state/game-state.js";
-import { bestMove } from "./move-scoring.js";
+import { createModifiers } from "../core/roll.js";
+import { expectedMoveScore } from "./roll-odds.js";
 
 /**
  * What a die of `faces` faces is worth on this board: the mean best move over every face it has.
@@ -42,17 +41,18 @@ import { bestMove } from "./move-scoring.js";
  * The statuses and the traps go in through `boardOf`, so a held pawn or a Rock in the way is already
  * priced in. That matters more than it sounds: a bot that ignored a Hold Pawn would keep choosing the
  * die that suits a pawn it is not allowed to move.
+ *
+ * **The loop over the faces moved into [roll-odds.js](roll-odds.js) in issue #82** and the numbers did
+ * not change: an unmodified die is a flat distribution over 1..faces, so a mean over the faces and a
+ * mean weighted by their probabilities are the same sum. What the move buys is that the card values
+ * priced against a **modified** roll are computed by the same function as this one, in the same units.
+ *
+ * `createModifiers()` and not `state.modifiers` on purpose. The dice card is chosen in `choose`, one
+ * phase before any Action card can be played, so there is nothing in force yet; asking for the empty
+ * set says that plainly instead of relying on it.
  */
 export function expectedScore(state, faces) {
-  const board = boardOf(state);
-  let total = 0;
-
-  for (let roll = 1; roll <= faces; roll += 1) {
-    const { moves } = evaluateTurn(state.pawns, state.activePlayer, roll, faces, board);
-    total += bestMove(moves, state.pawns)?.score ?? 0;
-  }
-
-  return total / faces;
+  return expectedMoveScore(state, state.activePlayer, faces, createModifiers());
 }
 
 /**

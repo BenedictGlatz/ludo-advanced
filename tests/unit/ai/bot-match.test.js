@@ -87,7 +87,14 @@ describe("a match with nobody at the keyboard (FR-43)", () => {
     expect(state.turnNumber).toBeLessThan(2000);
   });
 
-  it("plays four bots on a full skill pool, and none of them ever plays a card", () => {
+  /**
+   * The case issue #82 turned upside down. It used to assert that the discard pile stayed **empty**,
+   * which was the 2026-09-04 scope decision made visible. Now the same match has to show cards being
+   * spent, and the real assertion is still the one inside `playOut`: over hundreds of turns with the
+   * full pool, every intent a bot produces is accepted by the rules. A value function that builds an
+   * illegal target fails here rather than parking a browser in one phase for ever.
+   */
+  it("plays four bots on a full skill pool, and they spend cards on each other", () => {
     const deps = matchDeps(createSeededRng(5));
     const start = startMatch(4, deps, undefined, undefined, botSeatsFor(4, 4));
 
@@ -95,11 +102,9 @@ describe("a match with nobody at the keyboard (FR-43)", () => {
 
     expect(state.status).toBe(MATCH_STATUS.WON);
 
-    // Windows opened and were declined, hands filled up from the skill squares, and the discard pile
-    // stayed empty because a declined window discards nothing. That is the scope decision made
-    // visible: "the bot plays no skill cards" is a property of the match, not a promise in a comment.
-    expect(state.skillDiscard).toEqual([]);
-    expect(state.traps).toEqual([]);
+    // Cards were played, which is the whole of the new behaviour, and the closed accounting rule
+    // (FR-27) still holds: every card is in exactly one of pool, a hand or the discard pile.
+    expect(state.skillDiscard.length).toBeGreaterThan(0);
     expect(state.seats.some((seat) => state.skillHands[seat].length > 0)).toBe(true);
   });
 
