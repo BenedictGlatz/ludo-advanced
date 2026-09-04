@@ -1745,6 +1745,40 @@ The fifth, the focus order, was measured rather than eyeballed, because D76.4 as
 focus opens on Hotseat, a forward `Tab` leaves the document, and the language button is reached
 **backwards**. That result is in Ch. 04.
 
+### The strongest regression test in the suite is a game nobody plays: 2026-09-04, issue #43
+
+`tests/unit/ai/bot-match.test.js` starts a match in which **every seat is a bot** and plays it to a
+winner under Vitest, with no browser. Two boards: two bots on an empty pool, and four bots on the full
+58-card skill pool with the real skill squares. It asserts three things, and the first is the one that
+earns the file:
+
+1. **Every intent the bot produces is accepted.** Not "the bot did something sensible", but "the rules
+   never refused it". A wrong branch in `bot-policy.js` shows up here as a rejection naming the phase.
+2. **The match ends**, inside a hard cap on the number of intents. A phase nothing knows how to leave
+   throws with the phase name in the message.
+3. **The same seed plays the same match twice**, down to the pawn positions and the number of intents.
+
+**Why this is worth naming in the report.** Every other unit test in this project asks one question of
+one module: a rule, a transition, a refusal. This one plays the game as a *sequence* rather than as a
+situation, which is the property Ch. 08 already credits the three expensive end-to-end specs with, and
+it does it in about a second instead of four minutes. It is only possible because the bot is a pure
+layer that returns intents: had the bot been written inside `ui/`, the only way to play a whole match
+would have been Playwright.
+
+**It found nothing on its first run, and that is worth recording honestly.** The suite went from 757 to
+761 passing tests with no failures at any point during the bot's implementation. That is a weaker claim
+than "the test caught a bug", and writing down which tests found nothing is what keeps the ones that did
+find something meaningful.
+
+**Coverage now includes `src/ai/`**, under the same 80 % line floor as `core/` and `state/`. The
+argument is the one `vitest.config.js` already made for those two: the layer is pure and browser-free,
+so a coverage figure for it measures whether the code was exercised rather than how much jQuery ran.
+
+**Outstanding coverage, stated rather than skipped:** the *quality* of the bot's play is not tested
+anywhere. The tests pin the ranking, the tie-breaks and the arithmetic of the dice choice, all of which
+are claims about the code. Whether the resulting player is a satisfying opponent is a play-testing
+question, and the only instrument this project has for it is the Product Owner.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

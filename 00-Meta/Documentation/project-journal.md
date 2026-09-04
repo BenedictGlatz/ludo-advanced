@@ -368,6 +368,15 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   end-to-end spec, one new case in `locales.test.js`; the whole unit suite and the whole
   end-to-end suite pass on three browsers, with the counts in Ch. 09 next to the commands that produce
   them. Sprint 3, no issue on the board.
+- **2026-09-04: the rules half of the bot opponents, issue #43.** A fourth layer, `src/ai/`, with three
+  pure files: `move-scoring.js` ranks a move (finish, capture, enter the house, leave the yard, walk),
+  `dice-choice.js` prices each card in the hand by the **mean** best move over its faces, and
+  `bot-policy.js` turns a state into one intent and returns `null` everywhere a person is not being
+  asked. Beside it, `state/bots.js` and a seventh match-level field, `state.bots`. Nothing is visible on
+  screen yet, so no changelog entry. Five new test files, 44 cases, and the strongest regression test in
+  the suite: a whole match played by four bots on the full skill pool, in about a second, under
+  `environment: "node"`. Nothing failed at any point, which is a weaker result than a caught bug and is
+  recorded as such in Ch. 08. Sprint 3, issue #43.
 
 ---
 
@@ -3875,6 +3884,81 @@ to get wrong later.
   nothing about screens. Branching on a **field**, the presence of `hint`, keeps the promise and means
   any future screen that wants a two-line button gets it without touching the component.
 - → Ch. 04
+
+### 2026-09-04: A bot is a fourth layer, `src/ai/`, and not a module inside `state/` or `ui/`
+
+- **Chosen:** a new top-level layer, `src/ai/`, sitting between `ui/` and `state/`. It may read
+  `state/` and ask `core/` about the rules; it may never import `ui/` or `i18n/`, touch jQuery or
+  reach a DOM global. `ui/` may import `ai/`. The dependency arrow is `ui -> ai -> state -> core`.
+- **Why not `state/`:** a strategy is neither a rule nor a transition. A different strategy still
+  produces a legal game, and `decide()` writes nothing at all: it returns an intent, exactly as a
+  jQuery click handler does. Putting it in `state/` would mean the one writable source of truth also
+  held opinions about good play.
+- **Why not `ui/bot.js`:** `ui/` is deliberately not unit tested, and the single most valuable test of
+  a bot is a whole match played out with no browser. Under `environment: "node"` that is a one-second
+  test; inside `ui/` it would have been a four-minute Playwright run, which is the difference between
+  a test that runs on every commit and one that does not.
+- **Rejected:** *no layer at all, with the policy inlined into `game-loop.js`.* It is fewer files and
+  it is what a first draft would do. It loses the unit test, it pushes a 287-line file over the limit,
+  and it puts "which pawn is worth moving" in the same file as "when does the timer fire".
+- **Consequence:** three ESLint blocks instead of two, `src/ai/**` added to the coverage floor, and one
+  rule stated in `CLAUDE.md`: a bot is a player without a screen. Time is `ui/`'s, never `ai/`'s.
+- → Ch. 04, Ch. 06, Ch. 07
+
+### 2026-09-04: Bot seats are a list on the state, written once by `startMatch`
+
+- **Chosen:** `state.bots`, a sorted list of seat numbers, `[]` by default, set at `createGameState`
+  and carried over by `restartMatch`. `state/bots.js` owns the rule that turns a *count* into that
+  list: the last M seats, so the person at the keyboard keeps seat 0.
+- **Why a list and not the count:** it follows `seats`, which exists for the same reason. State asks
+  `core/` once and every later reader reads the answer instead of re-deriving it. "The last two of the
+  seats in play" copied into the HUD, the labels, the loop and two guards is a rule that drifts.
+- **Rejected:** *a `controllers` map, `{ 0: "human", 2: "bot" }`.* It is a second truth about who is
+  playing beside `seats`, and object keys are strings, so `Object.entries` returns `"0"` and every seat
+  comparison downstream quietly stops matching. `skillHands` had already cost an afternoon that way.
+- **Rejected:** *storing only the number of bots.* Cheaper to write and it moves the derivation into
+  five readers.
+- **Consequence:** `startMatch` has a fifth positional parameter. That is one too many, and the file
+  now names the trigger for converting it to an options object: the day FR-46's rule toggles ask for a
+  sixth. An all-bot match is legal in `state/` on purpose, because the regression test needs one; "at
+  least one human" is checked where a human types the number.
+- → Ch. 06
+
+### 2026-09-04: The bot plays no skill cards and declines every reaction window
+
+- **Chosen:** in the action phase the bot always dispatches `skip-action`; in any open window it always
+  dispatches `decline-reaction`. Agreed with the Product Owner when the work was planned.
+- **Why:** card tactics need a value model for 36 different cards, several of which are only worth
+  playing in response to something a *person* is about to do. That is a piece of work in its own right
+  and it is not what FR-43 asks for. What FR-43 asks for is a seat that takes a legal turn without human
+  input.
+- **Why it is written into the acceptance criterion and tested rather than left as a comment:** the
+  difference between "the bot chooses not to play cards" and "the bot cannot play cards" is invisible
+  from the outside, and only the first one is a decision. `bot-match.test.js` plays four bots on the
+  full pool and asserts the discard pile stays empty.
+- **Rejected:** *a first pass at card play, picking any playable card at random.* It would look like
+  tactics without being any, and a bot that plays Hold Pawn on itself is worse than one that plays
+  nothing.
+- **Consequence:** a bot's hand fills up over the match and is never spent. Whether that hand should be
+  face down like a person's is a Design question, filed as D82 and D83.
+- → Ch. 01, Ch. 06
+
+### 2026-09-04: The bot's dice choice averages every face instead of taking the best case
+
+- **Chosen:** `expectedScore` is the **mean** best-move score over faces 1..n, and a face that produces
+  no legal move counts as a zero in that mean.
+- **Why:** a pawn leaves the start area only on the die's maximum (FR-09), so at the beginning of a
+  match a D2 and a D20 have the *same* best case: one pawn out of the yard. Scoring by best case makes
+  the two indistinguishable and the bot picks whichever card it happened to see first, every time.
+  Averaging asks the useful question instead, how *often* the die does something good, and the bot
+  picks the D2, which is what a person does.
+- **Rejected:** *the maximum over the faces.* Simpler, and wrong in the single most common position of
+  the game. Also rejected: *weighting by how likely a good outcome is, on top of the average*, which is
+  the same information counted twice.
+- **Consequence:** ties go to the smaller die, because a smaller die overshoots the exact count into the
+  house (FR-13) less often, and when a big die is genuinely better the advance term has already said so.
+  Cost is 240 pure evaluations per turn, hidden behind an animation.
+- → Ch. 06
 
 ---
 

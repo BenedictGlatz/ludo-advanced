@@ -534,6 +534,50 @@ seam is that neither of them touched a closure variable: they read `getScreen()`
 so moving them was a move rather than a rewrite. `match-flow.js` owns the session; that file decides
 what a click asks of it.
 
+### A seventh match-level field, and a fourth layer that reads it: 2026-09-04, issue #43
+
+`bots` joined the match row of the lifetimes table, beside `seats`. It is a **sorted list of seat
+numbers**, `[]` by default, and it lives for the whole match: nothing clears it and `restartMatch`
+carries it over.
+
+**Why a list and not a count.** It follows `seats` exactly, and for the same reason that field gives:
+state asks `core/` once and everybody else reads the answer. Storing the number 2 would make every
+reader re-derive "the last two of the seats in play", and the same rule copied into five readers is a
+rule that drifts. Rejected: a `controllers` map like `{ 0: "human", 2: "bot" }`, because it is a second
+truth about who is playing beside `seats`, and object keys are strings, so `Object.entries` hands back
+`"0"` and the seat comparisons stop matching. `skillHands` had already cost an afternoon that way.
+
+**`state/bots.js` owns the last-M rule.** `botSeatsFor(playerCount, count)` returns the last `count`
+seats, which for two players is seat **2** and not seat 1, because `seatsFor` seats two players
+opposite each other. The humans fill up from the front so that the person at the keyboard keeps seat 0.
+One line in that file has a comment on it and deserves one: `slice(-0)` is `slice(0)`, so a zero-bot
+match written the obvious way would come back with every seat a bot.
+
+**`handoverNeeded(state, seat)` is in `state/` and not in `ui/`**, on the `seatOnShow` precedent: it is
+a question about the screen, but it is answered out of pure state, and putting it here makes it a unit
+test instead of a Playwright run. Its consequence is a rule change and not only a convenience: **with
+one human and three bots the hand-over screen never appears at all.** D33's secrecy argument has
+nothing to protect when there is no second person at the screen.
+
+**`bots` is a fifth positional parameter on `startMatch`, and that decision has a deadline written
+into the file.** Five positionals is one too many; an options object would read better. It is not worth
+doing today because `startMatch(2, deps, [], [])` is written out in `match.test.js`, in
+`scripts/find-seeds.js` and in `ui/match-flow.js`, and rewriting three call sites to change no
+behaviour is work spent on the shape of a call. `match.js`'s header names the trigger: the day FR-46's
+rule toggles ask for a sixth parameter is the day to convert it.
+
+**The `ai/` layer's import contract**, enforced by ESLint (see [07-tooling.md](07-tooling.md)):
+`ai/` may read `state/` and ask `core/`, and may never touch `ui/`, `i18n/`, jQuery or the DOM. `ui/`
+may import `ai/`. So the dependency arrow is `ui -> ai -> state -> core`, with `ui -> state` still
+direct. A bot is a player without a screen: `decide(state)` returns one intent, dispatches nothing,
+and knows nothing about time.
+
+**A negative finding, recorded rather than half-built: the bot cannot see danger.** `move-scoring.js`
+ranks finishing, capturing, entering the home column, leaving the yard and walking, and nothing in it
+asks whether a move parks a pawn in front of an opponent. That term needs absolute-square arithmetic
+across seats plus a model of what the opponent's dice hand can roll, and a wrong model plays worse
+than no model. It is the obvious next tuning step and it is not in this issue.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

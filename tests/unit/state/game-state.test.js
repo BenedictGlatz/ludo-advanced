@@ -23,6 +23,17 @@ describe("createGameState (FR-01)", () => {
     }
   });
 
+  it("starts with no bots unless it is told about some (FR-43)", () => {
+    expect(createGameState(2).bots).toEqual([]);
+    expect(createGameState(4, undefined, [2, 3]).bots).toEqual([2, 3]);
+  });
+
+  it("sorts the bot seats and refuses a seat nobody is sitting on", () => {
+    // Sorted, so that "the first bot in seat order" is the same question wherever it is asked.
+    expect(createGameState(4, undefined, [3, 1]).bots).toEqual([1, 3]);
+    expect(() => createGameState(2, undefined, [1])).toThrow(RangeError);
+  });
+
   it("starts with player 0 to move, on turn 1, waiting to draw", () => {
     const state = createGameState(4);
 
