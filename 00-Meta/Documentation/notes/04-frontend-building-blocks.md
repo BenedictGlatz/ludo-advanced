@@ -2722,6 +2722,31 @@ turns a race into a list, runs under `?fast=1`, and asserts more than the first 
 **and** that the sentence names "Bot 2" rather than "Spieler 2". How long the announcement stays is a
 unit question, and `mid-turn-hold.test.js` is where it is asked.
 
+#### What it actually says, read off a real match rather than asserted
+
+`/?players=2&bots=1&seed=5` at full speed, driven for a dozen turns with the announcements recorded.
+Three card plays came out of turns 13, 14 and 15, one per turn as FR-23's budget requires:
+
+```
+turn 13: Bot 2 (Grün) spielt Devil Die
+turn 14: Bot 2 (Grün) spielt Let Him Cook
+turn 15: Bot 2 (Grün) spielt Critical Failure
+```
+
+Two of the three are **Reaction** cards played into a person's roll, which is the half of the feature no
+unit test can show reaching a screen. The prompt strip in the same run said "Bot 2 würfelt" and
+"Bot 2 spielt eine Karte" where it used to say "Spieler 3", and "Spieler 1 würfelt" for the person, so
+both vocabularies are in use in one match.
+
+**Two findings from doing it this way rather than by eye.** A `MutationObserver` on
+`data-message-kind` fires on every write, and `showMessage` rewrites the attribute on every render, so
+the first reading looked like the bot playing Let Him Cook thirty times in a row. It is one play seen
+thirty times, and de-duplicating consecutive identical records is what made the output readable. And a
+two-player match with one bot sits in a **reaction window during the bot's turn** far more often than a
+four-player one does, because `share` is 1 there and the bot's own cards are worth three times as much:
+the first attempt at this check timed out waiting for a resting phase while the board was correctly
+asking the person whether they wanted to answer.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
