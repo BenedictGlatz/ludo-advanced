@@ -30,6 +30,7 @@ import { t } from "../i18n/index.js";
 import { pawnElement } from "./board-view.js";
 import { seatLabel } from "./player-labels.js";
 import { rollBreakdown } from "./roll-steps.js";
+import { botCardPlayed } from "./timers.js";
 
 /**
  * The square a move lands on.
@@ -136,8 +137,8 @@ function message(state) {
       kind: "trap",
       key: `trap.fired.${state.trapFired.kind}`,
       options: {
-        player: seatLabel(state.seats, state.trapFired.player),
-        owner: seatLabel(state.seats, state.trapFired.owner),
+        player: seatLabel(state, state.trapFired.player),
+        owner: seatLabel(state, state.trapFired.owner),
         squares: state.trapFired.squares,
       },
     };
@@ -147,7 +148,40 @@ function message(state) {
     return { kind: "trap", key: "trap.nullified", options: {} };
   }
 
-  return rollMessage(state);
+  return rollMessage(state) ?? cardMessage(state);
+}
+
+/**
+ * The fourth kind: a **bot** played a card. Issue #82.
+ *
+ * A person who plays a card watched themselves do it, so only a bot's play is announced. Without this
+ * the whole card mechanic of a match against three bots happens in silence: several cards leave the
+ * board looking exactly as it did before, and the strip is the only place the play can be seen at all.
+ *
+ * **Last of the four branches, which is deliberate.** In the action phase there is no roll yet, so
+ * `rollMessage` answers `null` and the card play is what the strip says; once the die is rolled the
+ * breakdown of that roll is the more useful thing and takes the strip back. The card play is therefore
+ * on screen for the part of the turn it belongs to, and `card-controls.js` holds the turn for
+ * `--motion-trap-hold` so it cannot be missed.
+ *
+ * **It ships in `--color-warn`, the colour the game reserves for "you cannot do that", and that is
+ * wrong.** No stylesheet reads `data-message-kind="card"`, so the strip keeps its default voice. It is
+ * the same deviation issue #45 shipped for the trap announcement and for the same reason: the
+ * alternative is to invent a treatment, which `CLAUDE.md` forbids this side from doing. D87 of design
+ * brief 14 is open against it, and the fix is expected to be two selectors rather than a component.
+ */
+function cardMessage(state) {
+  const played = botCardPlayed(state);
+  if (played === null) return null;
+
+  return {
+    kind: "card",
+    key: "turn.cardPlayed",
+    options: {
+      name: seatLabel(state, played.seat),
+      card: t(`card.skill.${played.cardId}.title`),
+    },
+  };
 }
 
 /**

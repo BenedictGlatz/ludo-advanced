@@ -2517,6 +2517,236 @@ rather than by looking at the screen.
   empty skill slot, so the two agree and neither was invented here. Not raised as a defect, recorded so
   that a future contrast pass has it.
 
+### The loop's fourth sibling, and the one thing a bot may not know: 2026-09-04, issue #43
+
+`src/ui/bot-driver.js` is the fourth module built on the pattern `card-controls.js` established:
+`game-loop.js` drives the **phases** of a turn, and one sibling owns each thing that happens inside
+them. The table of siblings is now `turn-controls.js` (what a pawn or dice-card click means),
+`card-controls.js` (what a card click means, plus the reaction clock), `turn-waits.js` (the two pauses
+the game takes on its own) and this one.
+
+**What it adds to `src/ai/` is time, and nothing else.** `decide(state)` returns an intent and knows
+nothing about clocks, exactly as `core/` decides the rules and knows nothing about the DOM. The driver
+waits, then dispatches. That split is the whole feature in one sentence, and it is what makes a whole
+bot match a one-second Vitest run instead of a four-minute Playwright one.
+
+**The decision is asked twice: once to find out whether there is anything to do, and again when the
+timer fires.** Not redundant. 900 ms of real time pass in between, and the match can be paused, given
+up, restarted, or carried on by a person in that window. Dispatching an intent captured at scheduling
+time would replay a decision made about a board that no longer exists.
+
+**Two lines in `advance()`, and the order of both is load-bearing:**
+
+- `bots.declineAll()` runs **before** `cards.handleWindow()`. So a window with nobody but bots in it
+  shuts at once instead of running a thirty-second countdown nobody is watching, and in a mixed round
+  `seatOnShow`, which is `eligible[0]`, is a person. Declining takes no pause at all, because somebody
+  else is waiting on that window.
+- `bots.takeTurn()` runs **after** the loop's three self-taken steps. So a bot with no playable card is
+  skipped through the action phase instantly, rather than appearing to think about a decision it does
+  not have.
+
+#### The hand-over rule changed, and it is a rule and not a convenience
+
+`onHandover` in `match-flow.js` now asks `handoverNeeded(state, seat)` first and simply passes the turn
+when the answer is no. Two cases make the screen pointless: the next seat is a bot, so nobody is being
+handed anything, and there is only one person in the match, so they never put the mouse down.
+
+**With one person and three bots the hand-over screen disappears from the game entirely.** D33's
+secrecy argument, that an opponent's cards stay their own, has nothing to protect when there is no
+second person at the screen. It lives in the flow rather than the loop because the loop's own comment
+already says that who decides the screen has changed hands is a question about the person in front of
+it and not about the turn.
+
+The hold before it is unchanged: a move still has to finish arriving and a refusal still has to be
+readable, whoever plays next. Only what happens **after** the hold is different.
+
+#### The pause, and the token it borrows
+
+`holdBot` in `timers.js`, the module's fourth wait. It reuses **`--motion-roll-hold`** rather than
+inventing a token, because `CLAUDE.md` says Claude Code does not invent design rules and a duration in
+`tokens.css` is one. That token means "reading time for a decision the turn hangs on", which is exactly
+what this is. **D81 asks Design whether the bot deserves its own token, whether 900 ms is right, and
+whether the pause belongs per intent or per turn.** Until it is answered, a borrowed token with a
+stated reason beats a number invented here.
+
+Rejected: a constant inside `bot-driver.js`. It cannot be overridden, so every end-to-end run with a bot
+in it would pay 900 ms per intent, and a duration living outside `tokens.css` is precisely what D20 and
+D70 were raised to remove. `FAST_DELAYS` gained a sixth key, `bot: 0`.
+
+#### Input is locked while a bot plays, and the lock is a guard rather than a stylesheet
+
+During the thinking pause the phase is already `act` and the bot's pawns already carry
+`data-movable="true"`, so a click would have committed the bot's move for it, a second early and
+possibly with a different pawn. `turn-controls.js` gained a third clause in one shared `playableBy`
+check, and `card-controls.js` the same on the skill hand and on Carry On.
+
+**Written as a guard and not as `pointer-events: none`.** The guard is what a test can read, and this
+project has already paid once for a stuck `pointer-events: none`: it made the dice hand permanently
+unclickable with no error and a screen that looked completely normal.
+
+Declining an open window stays allowed for everybody and needs no guard, because `declineAll` has
+already taken every bot out of `eligible` before the prompt is drawn.
+
+#### Names, and one attribute for Design
+
+Two locale keys per language: `player.bot` and `player.botNamed`. `seatName` and `seatLabel` stopped
+taking `state.seats` and now take `{ seats, bots }`, which a state object already is, so most call sites
+changed from `state.seats` to `state`. `bots` is read as `?? []`, which keeps every hand-built fixture
+written before issue #43 working.
+
+**A bot keeps its seat's number rather than being counted separately.** Seat 2 of four is "Bot 2" and
+never "Bot 1", on this file's existing rule that the number says the turn order and the colour says
+which pieces. Counting bots on their own would put a "Bot 1" and a "Spieler 1" at one table looking like
+the same seat. Rejected: one key with the word interpolated, `t("player.name", { kind })`, which reads
+as one fewer key and is untranslatable.
+
+`updateHud` writes **`data-controller="bot"` or `"human"`** on every `.hud__seat`. Two readers, and both
+matter: `bots.spec.js` asserts on it rather than on the word "Bot", which is what every other spec in
+this suite does with an attribute, and it is the hook Design needs if D85 decides a bot seat should look
+different. Nothing styles it yet, on purpose.
+
+#### Two negative findings, recorded rather than fixed
+
+- **A bot's skill hand is face up during its turn.** `data-face` follows the seat on show and knows
+  nothing about who is playing it. Whether a bot's cards should be hidden like a person's, given that a
+  bot has no secrets to keep, is D82 and D83.
+- **The `reaction.*` sentences still say "Spieler".** All seven of them interpolate a bare `number` into
+  a string with the word written into it, so a window opened during a bot's roll reads "Spieler 3
+  würfelt" and not "Bot 3 würfelt". Fixing it means passing a name instead of a number through
+  `windowLine`, which is seven keys in two languages plus a signature. **Left as follow-up work**: it is
+  only visible when a person is holding a Reaction card while a bot acts, and it is a different change
+  from this one.
+
+#### `game-loop.js` is at exactly 300 lines
+
+Two real seams paid for the driver rather than compressed comments. `bindMatchEvents` in `events.js`
+groups the five bindings `start()` had written out, and the seam is genuine: those are exactly the five
+regions rebuilt with every match, while the chrome and the overlay live for the whole session and are
+still bound by the flow. A local `halt()` replaces three identical stop blocks, and `wiring` names the
+six things every waiting sibling needs from the loop, which had been written out three times.
+
+**The file has no room left.** The next thing that goes into it has to take something out first, and
+the header's table of controls is the honest place to start looking.
+
+### A bot's card play had to become visible, and one negative finding closed itself: 2026-09-04, issue #82
+
+The bots play skill cards now (Ch. 06 carries the value model), and that turned a screen question into a
+requirement: **a card played by somebody who is not at the keyboard is invisible.** Several cards leave
+the board looking exactly as it did before. Built Different writes a status, No Take-Backsies shuts a
+window nobody was going to use, and a nullified card does nothing at all. Without an announcement, one
+person against three bots watches its own pawns get shoved around by nothing.
+
+#### The announcement is the message strip, with no new component and no new token
+
+`move-hints.js`'s `message(state)` gained a **fourth** kind, `card`, and `ui.json` gained one key per
+language. The strip already says three kinds of thing (a refusal, a report about a trap, and the roll's
+breakdown), and the third of those arrived the same way this one does: `data-message-kind` is the seam
+they are told apart by. `CLAUDE.md` forbids this side from inventing a design rule, so nothing here
+invents a look.
+
+**The card branch is last of the four, and that ordering is the design.** In the action phase there is
+no roll yet, so the breakdown answers `null` and the strip says what the bot played; once the die is
+rolled the breakdown is the more useful thing and takes the strip back. The announcement is therefore on
+screen for the part of the turn it belongs to and never fights with a message about the roll.
+
+**The reading time is borrowed, exactly as the bot's pause is.** `holdMidTurn` already holds a turn for
+`--motion-trap-hold` after a card announces something, and a bot's card play is the same kind of event:
+it arrives unasked in a turn that is under way. So it is a third source for that same hold rather than a
+fourth duration. D87 of brief 14 asks whether it deserves its own.
+
+**It ships in `--color-warn` and that is wrong.** No stylesheet reads `data-message-kind="card"`, so the
+strip keeps the colour the game reserves for "you cannot do that", and a bot playing a card is not a
+refusal. This is the same deviation issue #45 shipped for the trap announcement, for the same reason and
+with the same expected fix: D55 was answered by two selectors in `message-strip.css`, and D87 is the
+same shape. Recorded as a deviation, not as an oversight.
+
+#### `timers.js` grew a second question, and the asymmetry is deliberate
+
+`announcement(state)` is unchanged and still answers "a trap fired, or a card was nullified".
+`midTurnAnnouncement(state)` adds a bot's card play on top of it, and only `holdMidTurn` asks the new
+one. So the **end** of a turn does not hold for a card a bot played mid-turn: the card already had its
+two seconds where it happened, and holding it again at the handover would add four seconds to every bot
+turn that played anything. Two functions rather than one flag, and a unit case pins each half.
+
+`botCardPlayed` is the third piece: a **person's** own card play is not an announcement. They clicked
+the card, answered the target picker and pressed the last button, so telling them what they just did
+would cost two seconds per card in every match, the all-human ones included.
+
+#### `bot-driver.js`: `declineAll` became `answerWindow`
+
+A bot in an open window used to have one answer, so the loop called `bots.declineAll()` and carried on.
+Now it can play a card into one, and a card play is not a decline in two ways: it changes the board, and
+it needs the pause and the announcement. So:
+
+- **A decline still takes no pause at all.** Somebody else is waiting on the window, and a three-bot
+  table would put nearly three seconds in front of every capture a person made.
+- **A card play waits `holdBot` and then goes through `carryOn`.** `answerWindow` returns `true` only
+  when it scheduled one, which is the loop's signal to stop and wait; a decline returns `false` and the
+  loop carries straight on to `card-controls.js` as it always did.
+
+**`carryOn` is passed in rather than copied**, as `afterCard`. It is `card-controls.js`'s function and
+the delay is not the hard part of it: the marker that stops one announcement being held twice, and the
+rule that a zero hold resumes synchronously so the end-to-end suite's ordering is unchanged, both live
+in there and were both bugs in earlier drafts. `game-loop.js` wires it in one line and came out at
+exactly 300 lines again, with two lines changed and none added.
+
+#### The `reaction.*` finding from this morning is closed, because the fix became load-bearing
+
+The negative finding recorded above says all seven reaction sentences interpolate a bare number into a
+string with the word "Spieler" written into it, so a window opened during a bot's roll read "Spieler 3
+würfelt". It was left as follow-up work because it was only visible while a person held a Reaction card
+during a bot's turn.
+
+That stopped being true the moment a bot could play a card **into** a window: the line then has to name
+a bot as the one who answered. Four keys per language take `{{name}}` instead of `{{number}}`
+(`reaction.trigger.*`, `reaction.played`, `reaction.declined`, `reaction.waiting`), `windowLine` takes
+the match rather than the seat list, and `seatName` decides the word. The unused two are changed with
+the others rather than left half-converted.
+
+**The new key is `turn.cardPlayed` and not `card.playedBy`**, which is a small correction to the plan
+with a real reason: `cards.json` owns the whole `card` top-level key, and `mergeNamespaces` **throws**
+at boot on a top-level key defined in two files. That check is from 2026-08-31 and it did its job here.
+
+#### The e2e helpers moved out, and a first draft of the announcement spec was thrown away
+
+`bots.spec.js` was at 271 lines with three cases in it, so the five helpers it had grown moved to
+`tests/e2e/bot-helpers.js`, on `trap-helpers.js`'s precedent. They cannot go in `helpers.js`: that file
+is at exactly 300 lines and every spec imports it, and none of this is any use to a spec without a bot.
+
+The first version of the announcement case polled the strip for `data-message-kind="card"` at real speed
+and **spent sixty seconds not seeing one**, which is worth writing down because the reason is not a bug.
+The announcement lasts two seconds, `?fast=1` collapses it to nothing, and at real speed the early turns
+are quiet on purpose: with every pawn still in the yard, almost nothing is worth playing. So the spec
+now installs a `MutationObserver` on the strip and records every value the attribute ever takes. That
+turns a race into a list, runs under `?fast=1`, and asserts more than the first draft could: the kind
+**and** that the sentence names "Bot 2" rather than "Spieler 2". How long the announcement stays is a
+unit question, and `mid-turn-hold.test.js` is where it is asked.
+
+#### What it actually says, read off a real match rather than asserted
+
+`/?players=2&bots=1&seed=5` at full speed, driven for a dozen turns with the announcements recorded.
+Three card plays came out of turns 13, 14 and 15, one per turn as FR-23's budget requires:
+
+```
+turn 13: Bot 2 (Grün) spielt Devil Die
+turn 14: Bot 2 (Grün) spielt Let Him Cook
+turn 15: Bot 2 (Grün) spielt Critical Failure
+```
+
+Two of the three are **Reaction** cards played into a person's roll, which is the half of the feature no
+unit test can show reaching a screen. The prompt strip in the same run said "Bot 2 würfelt" and
+"Bot 2 spielt eine Karte" where it used to say "Spieler 3", and "Spieler 1 würfelt" for the person, so
+both vocabularies are in use in one match.
+
+**Two findings from doing it this way rather than by eye.** A `MutationObserver` on
+`data-message-kind` fires on every write, and `showMessage` rewrites the attribute on every render, so
+the first reading looked like the bot playing Let Him Cook thirty times in a row. It is one play seen
+thirty times, and de-duplicating consecutive identical records is what made the output readable. And a
+two-player match with one bot sits in a **reaction window during the bot's turn** far more often than a
+four-player one does, because `share` is 1 there and the bot's own cards are worth three times as much:
+the first attempt at this check timed out waiting for a resting phase while the board was correctly
+asking the person whether they wanted to answer.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

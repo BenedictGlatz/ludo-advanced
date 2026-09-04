@@ -17,6 +17,28 @@
 
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { INTENT } from "../state/intents.js";
+import { isBot } from "../state/bots.js";
+
+/**
+ * Is somebody allowed to click right now? Issue #43.
+ *
+ * The match is running, the turn is in the phase this control answers, **and a person is playing it**.
+ *
+ * The third clause is the new one and it closes a real hole rather than a theoretical one. During the
+ * bot's thinking pause the phase is already `act` and its pawns already carry `data-movable="true"`,
+ * so a click on the bot's pawn would have committed the bot's move for it, a second early and possibly
+ * with a different pawn than the one the bot had chosen.
+ *
+ * A guard here and not a `pointer-events: none` in the stylesheet: the guard is what the tests can
+ * read, and this project has already learned once what a stuck `pointer-events: none` costs.
+ */
+function playableBy(state, phase) {
+  return (
+    state.status === MATCH_STATUS.RUNNING &&
+    state.phase === phase &&
+    !isBot(state, state.activePlayer)
+  );
+}
 
 /**
  * The two direct board controls.
@@ -37,7 +59,7 @@ export function createTurnControls({ getState, apply, render, advance, isPicking
    */
   function onDiceCardActivated(faces) {
     const state = getState();
-    if (state.status !== MATCH_STATUS.RUNNING || state.phase !== TURN_PHASE.CHOOSE) return;
+    if (!playableBy(state, TURN_PHASE.CHOOSE)) return;
 
     if (!apply({ type: INTENT.CHOOSE_DIE, faces })) return;
     advance();
@@ -57,7 +79,7 @@ export function createTurnControls({ getState, apply, render, advance, isPicking
    */
   function onPawnActivated(pawn) {
     const state = getState();
-    if (state.status !== MATCH_STATUS.RUNNING || state.phase !== TURN_PHASE.ACT) return;
+    if (!playableBy(state, TURN_PHASE.ACT)) return;
     if (isPicking()) return;
 
     if (state.selectedPawn !== pawn) {

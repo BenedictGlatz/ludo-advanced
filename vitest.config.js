@@ -18,9 +18,13 @@ export default defineConfig({
       // `coverage/coverage-summary.json` are correct and are what Chapter 09 quotes.
       reporter: ["text", "json-summary", "html"],
       reportsDirectory: "coverage",
-      // NFR-05 applies to these two layers only, for the reason given in Chapter 08: a coverage
-      // figure for `ui/` would measure how much jQuery ran, not whether anything works.
-      include: ["src/core/**/*.js", "src/state/**/*.js"],
+      // NFR-05 applies to these layers only, for the reason given in Chapter 08: a coverage figure
+      // for `ui/` would measure how much jQuery ran, not whether anything works.
+      //
+      // `src/ai/` joined the list in issue #43, and the argument for it is the one already written
+      // above, word for word: it is pure, it needs no browser, and it is unit tested directly. A bot
+      // that is not covered is a bot nobody can tell has stopped playing well.
+      include: ["src/core/**/*.js", "src/state/**/*.js", "src/ai/**/*.js"],
       // `all: true` counts files that no test imports at all. Without it a module nobody tested is
       // simply absent from the report, and the percentage stays high by leaving work out of the
       // denominator. That is the one way a coverage floor can be met while getting worse.

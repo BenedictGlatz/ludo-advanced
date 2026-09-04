@@ -21,7 +21,13 @@
 
 import { describe, expect, it } from "vitest";
 
-import { TRAP_HOLD_MS, announcement, holdMidTurn } from "../../../src/ui/timers.js";
+import {
+  TRAP_HOLD_MS,
+  announcement,
+  botCardPlayed,
+  holdMidTurn,
+  midTurnAnnouncement,
+} from "../../../src/ui/timers.js";
 
 /** Returns the token name instead of a duration, so a test can see which one was asked for. */
 const nameToken = (token) => token;
@@ -29,7 +35,14 @@ const nameToken = (token) => token;
 /** Returns the fallback, so a test can see what happens with no stylesheet loaded. */
 const noStylesheet = (_token, fallback) => fallback;
 
-const quiet = { refusalReason: null, trapFired: null, nullifiedCard: null };
+const quiet = {
+  refusalReason: null,
+  trapFired: null,
+  nullifiedCard: null,
+  lastCardPlayed: null,
+  seats: [0, 1, 2, 3],
+  bots: [2, 3],
+};
 
 const trapFired = { kind: "banana-peel", square: 11, owner: 2, player: 0, pawn: 0, squares: 0 };
 
@@ -133,5 +146,70 @@ describe("what the strip is announcing", () => {
     const state = { ...quiet, trapFired, nullifiedCard: "action-yeet" };
 
     expect(announcement(state)).toBe(trapFired);
+  });
+});
+
+/**
+ * The third source of a mid-turn announcement, added by issue #82. A **bot's** card play is held on
+ * screen for the same reason a trap is: it changed the board and nobody watched it happen.
+ */
+describe("a bot's card play, which is the third thing worth holding for", () => {
+  const played = { seat: 2, cardId: "action-angel-die" };
+
+  it("holds for the trap token when a bot played a card", () => {
+    const state = { ...quiet, lastCardPlayed: played };
+
+    expect(holdMidTurn(state, {}, nameToken)).toBe("--motion-trap-hold");
+  });
+
+  /**
+   * **A person's own card play is not an announcement**, which is the one case in this file that is
+   * about who did something rather than about what happened. The player clicked the card, watched the
+   * target picker, and pressed the last button: holding the turn to tell them what they just did would
+   * add two seconds to every card a person plays, in every match, including the all-human ones.
+   */
+  it("does not hold when a person played the card", () => {
+    const state = { ...quiet, lastCardPlayed: { seat: 0, cardId: "action-angel-die" } };
+
+    expect(holdMidTurn(state, {}, nameToken)).toBe(0);
+    expect(botCardPlayed(state)).toBeNull();
+  });
+
+  /** A fixture with no `bots` at all is every unit test written before issue #43. Nobody is a bot. */
+  it("treats a match with no bot list as all human", () => {
+    const state = { refusalReason: null, lastCardPlayed: played };
+
+    expect(botCardPlayed(state)).toBeNull();
+    expect(holdMidTurn(state, {}, nameToken)).toBe(0);
+  });
+
+  /**
+   * The identity that `card-controls.js` compares to hold one announcement once. It is the frozen
+   * object on the state, exactly as `trapFired` is, so two calls answer the same reference.
+   */
+  it("returns the play itself, so two calls can be compared by identity", () => {
+    const state = { ...quiet, lastCardPlayed: played };
+
+    expect(midTurnAnnouncement(state)).toBe(played);
+    expect(midTurnAnnouncement(state)).toBe(midTurnAnnouncement(state));
+  });
+
+  /** A trap outranks a card play: the trap is what the player did not expect. */
+  it("prefers a fired trap to a card play", () => {
+    const state = { ...quiet, trapFired, lastCardPlayed: played };
+
+    expect(midTurnAnnouncement(state)).toBe(trapFired);
+  });
+
+  /**
+   * **The asymmetry that keeps every bot turn as short as it was.** `holdAfterTurn` deliberately does
+   * not know about a bot's card play, so the handover is not delayed by four seconds at the end of
+   * every bot turn that played a card. The card was already held for its two seconds in the middle of
+   * the turn, which is where it belongs.
+   */
+  it("is not part of what the end of the turn holds for", () => {
+    const state = { ...quiet, lastCardPlayed: played };
+
+    expect(announcement(state)).toBeNull();
   });
 });

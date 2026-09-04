@@ -2,8 +2,98 @@
 
 **From:** Claude Code
 **To:** Claude Design
-**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, and once
-on 2026-09-04**
+**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, and three
+times on 2026-09-04**
+
+---
+
+## Status on 2026-09-04, later still: brief 14 is out, and it corrects brief 13 from this morning
+
+**[14-brief-bot-cards.md](14-brief-bot-cards.md) is sent. D87 to D89.**
+
+**Brief 13 said twice that a bot plays no skill cards, and that stopped being true the same day.** A bot
+now prices every card in its hand against the board and plays the best one when it beats a threshold, in
+its own turn and in other people's. Both places in brief 13 carry a dated correction pointing at brief
+14; D81, D84, D85 and D86 are unaffected and still open, and **D82 and D83 got sharper rather than going
+away**, which is noted on each of them.
+
+**D87 is the real commission, and unlike most of these it is already answered badly rather than
+missing.** A bot's card play is announced in the message strip, and the strip's default voice is
+`--color-warn`, the colour the game reserves for "you cannot do that". A bot playing a card is not a
+refusal. This is the same deviation issue #45 shipped for the trap announcement, and D55 answered that
+one with **two selectors** in `message-strip.css` giving it the strip's second voice. The same two
+selectors are a perfectly good answer here, and the brief says so.
+
+**Two more borrowed durations, both flagged as guesses rather than choices.** The announcement is held
+for `--motion-trap-hold` (2 s), because that token already means "reading time for something that
+happened without being asked", and a bot answering a window waits `--motion-roll-hold` (900 ms) like
+every other bot decision. Neither is a decision this side is allowed to take. D87.3 and D88 are where
+they are confirmed or replaced, and they add up with D81: a bot turn with a card in it currently spends
+about four seconds of reading time before anything moves, and a card is played on roughly every other
+turn.
+
+**One thing was fixed rather than designed around.** Brief 13's section 6 said the `reaction.*`
+sentences still say "Spieler" for a bot seat. They do not any more: the moment a bot could play a card
+**into** a window, the line had to be able to name one, so four keys per language now take a name and
+the strip says "Bot 3 will eine Figur schlagen". That was a code gap and it is closed in code.
+
+**Nothing new is in the DOM for you this time.** `data-message-kind="card"` on the existing
+`.message-strip` is the whole contract, and the element is built once and only ever gets attributes.
+
+**Please deliver a diff and not a whole file** for any stylesheet that already exists. Asked after
+handoff 11, asked again in 13, asked again here.
+
+**What is still owed, after this send.** Four briefs.
+
+| Brief | Owes | State |
+| --- | --- | --- |
+| [14-brief-bot-cards.md](14-brief-bot-cards.md) | `14-spec-bot-cards.md`, D87 to D89, plus the CSS the answers imply | **Open.** Sent 2026-09-04, read against `35993fe` |
+| [13-brief-bot-opponents.md](13-brief-bot-opponents.md) | `13-spec-bot-opponents.md`, D81 to D86, plus any artboards drawn for D86 and a new stylesheet if the setup screen earns one | **Open.** Sent 2026-09-04, read against `9fb13f4`, corrected in place the same day |
+| [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64 | **Open.** Sent 2026-09-03 |
+| [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, D61 | **Open.** Sent 2026-09-03 |
+
+---
+
+## Status on 2026-09-04, later: brief 13 is out, and the thing it describes already works
+
+**[13-brief-bot-opponents.md](13-brief-bot-opponents.md) is sent. D81 to D86.**
+
+**This brief is the wrong way round compared with every other one, and that is deliberate.** Usually a
+brief describes something that does not exist yet. The bot opponent is built, shipped and playable
+today: `/?players=4&bots=3` seats you first and the computer plays the other three. What is missing is
+everything about how it *looks* while it happens, and one screen that does not exist at all.
+
+**D86 is the real commission and the other five are dressing.** The only way to play against the
+computer today is to type `?bots=3` into the address bar, which is not a feature anybody can find.
+What is needed is a setup screen that says, per seat, whether a person or a computer is playing it,
+with at least one person always. The rules underneath are already in place, so this is a drawing
+question and not an engineering one. It is issue #76 on the board, deliberately blocked on this answer
+so that the screen does not get invented in code. As in handoff 12, drawing more than one direction and
+letting the Product Owner pick is welcome.
+
+**One number is worth reacting to before anything is drawn.** A bot's turn takes about three seconds
+and a round of three bots about nine, because the pause is 900 ms per decision and there are two
+decisions plus the roll's own hold. That figure was measured, not estimated, and D81 is where it gets
+shorter if it is too long.
+
+**One placeholder is flagged as a placeholder.** The bot's pause currently borrows
+`--motion-roll-hold`, because `CLAUDE.md` forbids Claude Code from inventing a duration and that token
+already means "reading time for a decision the turn hangs on". It is a stated guess, not a choice, and
+D81.1 is where it is confirmed or replaced.
+
+**One attribute was put in the DOM for you and nothing styles it.** Every `.hud__seat` now carries
+`data-controller="bot"` or `"human"`, so D85 can be answered without any new markup.
+
+**Please deliver a diff and not a whole file** for any stylesheet that already exists. Asked after
+handoff 11, asked again here.
+
+**What is still owed, after this send.** Three briefs.
+
+| Brief | Owes | State |
+| --- | --- | --- |
+| [13-brief-bot-opponents.md](13-brief-bot-opponents.md) | `13-spec-bot-opponents.md`, D81 to D86, plus any artboards drawn for D86 and a new stylesheet if the setup screen earns one | **Open.** Sent 2026-09-04, read against `9fb13f4` |
+| [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64 | **Open.** Sent 2026-09-03 |
+| [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, D61 | **Open.** Sent 2026-09-03 |
 
 ---
 

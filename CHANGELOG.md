@@ -385,9 +385,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   shadow, a dashed outline, and the game will not let you press them at all. That is the same way an
   empty slot in your skill hand is drawn, so it is a shape you have seen before, and it still reads as
   unavailable with the colour taken away
+- **Computer opponents, so you can play on your own** (issue #43). Start a match with
+  `?players=4&bots=3` and the last three seats play themselves. A bot picks its dice card by working out
+  which of the three would do the most good on average, rolls it, and moves the pawn with the best move
+  available: bringing a pawn home beats capturing, capturing beats reaching the safety of your own home
+  column, and that beats getting a pawn out of the yard. Bots are called "Bot 2 (Grün)" in the scoreboard, in the line
+  that says whose turn it is, and on the win screen, so you can always tell who is who. **The hand-over
+  screen only appears when a second person is actually going to take the keyboard**, so playing alone
+  against three bots means no screen between turns at all. Choosing bots from the main menu is not built
+  yet; the address bar is how you do it today
+- **Computer opponents play skill cards and answer reaction windows** (issue #82). A bot works out what
+  every card in its hand would be worth **on this board, right now**, in the same units it judges a move
+  in: one point is one step, getting a pawn out of the yard is 25 and a capture is 60 or more. Then it
+  plays the best one, but only if it is worth more than keeping the card for a better moment. So Angel Die
+  is played on the pawn that can actually reach home with the extra die and kept when the extra die would
+  only overshoot, Built Different goes on the pawn an opponent is closing in on, a Banana Peel is laid one
+  square in front of whoever is furthest ahead, and Hyperbeam is not fired down a lane with one of the
+  bot's own pawns in it. In somebody else's turn a bot dodges a capture aimed at its own pawn, spoils a
+  roll that is about to do real damage, and holds the one pawn a turn depends on. **Damage to one opponent
+  counts for less the more players there are**, because at a four-player table two other people benefit
+  from it as much as the bot does, so bots answer far more often in a two-player match than in a
+  four-player one. A bot reads only what a person can see: the board and how **many** cards everybody else
+  holds, never which ones. Two cards are deliberately never played, Oil Spill and The Purge, because both
+  are as likely to help the table as the bot
 
 ### Changed
 
+- **A card a bot plays is announced in the message strip under the board** (issue #82), for two seconds,
+  naming the seat and the card: "Bot 3 spielt Angel Die". Without it the whole card mechanic of a match
+  against bots would happen in silence, because a third of the cards leave the board looking exactly as
+  it did before. **The sentence is orange, the colour the game otherwise uses for "you cannot do that",
+  and that is wrong**: no colour rule exists for this message yet, so it borrows the strip's default one
+  until Design answers D87
+- **The reaction prompt calls a bot a bot** (issue #82). "Bot 3 will eine Figur schlagen" instead of
+  "Spieler 3 will eine Figur schlagen", in the line that says what is being reacted to, in the list of
+  cards already played into the window, and in the decline message. The rest of the screen has called
+  that seat "Bot 3" since bots arrived; this was the last place that disagreed
 - **Banana Peel no longer sends a pawn home. It stuns it** (issue #45, FR-30). The pawn that walks into
   one finishes its move and then loses its next turn, which is what the card in your hand has always
   said and what the rulebook has always said. Only that pawn sits out: you still move your other three.

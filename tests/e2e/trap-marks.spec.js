@@ -158,9 +158,18 @@ test.describe("the announcement's second voice (D55)", () => {
     const strip = page.locator(".message-strip");
     await expect(strip).toHaveAttribute("data-message-kind", "trap");
 
-    const ground = await strip.evaluate(
-      (element) => window.getComputedStyle(element).backgroundColor
-    );
+    // **The kind and the colour are read in one pass**, and this is the second draft. Reading them in
+    // two round trips failed once in a full three-browser run: the announcement is on screen for
+    // `--motion-trap-hold`, and under twelve workers the turn can move on between the assertion above
+    // and the read below, which finds the strip already saying the next thing in the default colour.
+    // Same lesson as `bot-helpers.js`'s `snapshot`: what is asserted together has to be read together.
+    const shown = await strip.evaluate((element) => ({
+      kind: element.getAttribute("data-message-kind"),
+      ground: window.getComputedStyle(element).backgroundColor,
+    }));
+
+    expect(shown.kind).toBe("trap");
+    const ground = shown.ground;
     const warn = await token(page, "--color-warn-soft");
     const panel = await token(page, "--color-panel");
 

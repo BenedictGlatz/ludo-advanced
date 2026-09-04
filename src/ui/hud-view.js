@@ -39,6 +39,7 @@ import $ from "jquery";
 import { PAWNS_PER_PLAYER } from "../core/board.js";
 import { t } from "../i18n/index.js";
 import { seatProgress } from "../state/game-state.js";
+import { isBot } from "../state/bots.js";
 import { seatLabel, seatName } from "./player-labels.js";
 
 /**
@@ -118,6 +119,13 @@ export function updateHud($hud, state) {
     $seat.attr("data-on-turn", String(onTurn));
     $seat.attr("data-finished", String(progress.home === PAWNS_PER_PLAYER));
 
+    // Who is playing this seat, as a language-independent attribute (FR-43). Two readers, and both
+    // matter: `bots.spec.js` asserts on it rather than on the word "Bot", which is what every other
+    // spec in this suite does with an attribute; and it is the hook Design needs if D85 decides a bot
+    // seat should look different. Nothing styles it yet, on purpose: Claude Code does not invent a
+    // design rule, and putting the attribute in the DOM is what lets Design answer without new markup.
+    $seat.attr("data-controller", isBot(state, seat) ? "bot" : "human");
+
     // The **short** name, "Spieler 2", and not the full "Spieler 2 (Grün)". The colour is not
     // lost, because `hud.css` paints the plate in the seat's own colour and puts the seat's D16
     // shape next to the name, and the turn sentence above spells the full label out. A number, a
@@ -127,7 +135,7 @@ export function updateHud($hud, state) {
     // since fixed the plate at its own width instead. Remeasured on 2026-09-03: the four numbers
     // need 278 px, which is why the plate is 308 and not D37's 248, and the full label needs 107.
     // The short name is still the one that fits without a second line.
-    $seat.children(".hud__name").text(seatName(state.seats, seat));
+    $seat.children(".hud__name").text(seatName(state, seat));
 
     $seat.find(".hud__count").each(function updateCount() {
       const $count = $(this);
@@ -158,5 +166,5 @@ export function updateHud($hud, state) {
  * The seat row still carries `data-on-turn`, so the stylesheet marks the row without spending width.
  */
 export function turnLine(state) {
-  return t("turn.prompt", { player: seatLabel(state.seats, state.activePlayer) });
+  return t("turn.prompt", { player: seatLabel(state, state.activePlayer) });
 }

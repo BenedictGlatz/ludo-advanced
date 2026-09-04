@@ -88,7 +88,7 @@ function markSkillSquares($board, skillSquares) {
  * two-player match seats its players on 0 and 2, so a seat plus one would announce "Player 3" for the
  * second of two players. `player-labels.js` exists because four places got that wrong at once.
  */
-function markTraps($board, traps, seats) {
+function markTraps($board, traps, match) {
   const bySquare = new Map(traps.map((trap) => [trap.square, trap]));
 
   $board.find(".square--track").each(function markSquare() {
@@ -109,7 +109,7 @@ function markTraps($board, traps, seats) {
       "aria-label",
       t("trap.owned", {
         object: t(`trap.label.${trap.kind}`),
-        player: seatLabel(seats, trap.owner),
+        player: seatLabel(match, trap.owner),
       })
     );
   });
@@ -202,7 +202,7 @@ function markStatuses($board, statuses) {
  */
 export function applyBoardMarks($board, state) {
   markSkillSquares($board, state.skillSquares);
-  markTraps($board, state.traps, state.seats);
+  markTraps($board, state.traps, state);
   markAura($board, state.traps);
   markStatuses($board, state.statuses);
 }

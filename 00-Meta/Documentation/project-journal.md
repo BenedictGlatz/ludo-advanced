@@ -368,6 +368,76 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   end-to-end spec, one new case in `locales.test.js`; the whole unit suite and the whole
   end-to-end suite pass on three browsers, with the counts in Ch. 09 next to the commands that produce
   them. Sprint 3, no issue on the board.
+- **2026-09-04: the rules half of the bot opponents, issue #43.** A fourth layer, `src/ai/`, with three
+  pure files: `move-scoring.js` ranks a move (finish, capture, enter the house, leave the yard, walk),
+  `dice-choice.js` prices each card in the hand by the **mean** best move over its faces, and
+  `bot-policy.js` turns a state into one intent and returns `null` everywhere a person is not being
+  asked. Beside it, `state/bots.js` and a seventh match-level field, `state.bots`. Nothing is visible on
+  screen yet, so no changelog entry. Five new test files, 44 cases, and the strongest regression test in
+  the suite: a whole match played by four bots on the full skill pool, in about a second, under
+  `environment: "node"`. Nothing failed at any point, which is a weaker result than a caught bug and is
+  recorded as such in Ch. 08. Sprint 3, issue #43.
+- **2026-09-04, later: the bots reached the screen.** `bot-driver.js` is the loop's fourth sibling and
+  adds the one thing `ai/` may not know, time. Two lines in `advance()`, a borrowed duration token, input
+  guards so a person cannot play a bot's turn for it during the pause, two locale keys per language, and
+  `data-controller` on every HUD seat for the spec and for Design. The hand-over screen now only opens
+  when a second **person** is going to take the keyboard, which is a rule change and not a convenience.
+  `?bots=M` reads it off the address bar, and `readOptions` moved into `src/options.js` on the way,
+  because it had never been unit testable. `game-loop.js` paid for the driver with two real seams and
+  came out at exactly 300 lines, which is recorded as a problem for next time rather than as a success.
+  Three end-to-end cases, two of them at real speed on purpose, one new unit file for `turn-controls.js`,
+  and 15 cases for the address bar that had never existed. The full unit suite and the whole end-to-end
+  suite pass, with the counts in Ch. 09 next to the commands that produce them. Two negative findings
+  written down and not fixed: a bot's skill hand is face up, and the `reaction.*` sentences still say
+  "Spieler". Sprint 3, issue #43.
+- **2026-09-04, last: the requirements caught up with the code, and one of them had been contradicting
+  another since it was written.** FR-01 gained a lower bound of one person, FR-43 was rewritten from
+  "LLM-powered" to "local, rule-based" and rose from `C` to `S`, and FG-18 with it. The rise was forced
+  rather than chosen: US-01 gives a match a lower bound of one person, and a `could have` that a
+  `must have` depends on is a broken dependency. Dropping the LLM resolved a contradiction nobody had
+  noticed, because an LLM bot needs a network call and FR-03's acceptance criterion is a match completed
+  *without any network connection*. The open question in § 5 of the user stories is marked resolved, and
+  that file is committed for the first time. `CLAUDE.md` and `System-Architecture.md` gained the fifth
+  layer. Design brief 13 went out with D81 to D86, and issue #76 was opened for the setup screen so that
+  `Closes #43` is honest: the bot works, but choosing one is still a URL parameter. Sprint 3, issue #43.
+- **2026-09-04, after that: the bots learned to play cards, issue #82.** The scope decision of the
+  morning is superseded: `src/ai/` grew from three files to eleven, and a bot now prices every card in
+  its hand in the units of a move and plays the best one when it beats a threshold. `roll-odds.js` is
+  the roll as a probability distribution, `threat.js` is the danger term that `move-scoring.js` had
+  recorded as missing, four `values-*.js` files hold the 29 card values grouped by mechanic exactly as
+  `core/cards/effects/` is, `card-values.js` is the table and checks itself at boot, and
+  `card-choice.js` turns the best value into an intent and refuses to trust its own target. Seven new
+  unit files. The strongest result is the old one turned upside down: the four-bot match on the full
+  pool used to assert that the discard pile stayed **empty** and now asserts that cards are spent, with
+  the real assertion unchanged, that no intent a bot produces is ever refused over hundreds of turns.
+  Two cards are deliberately never played and one rule finding came out of the work: Double Dip is net
+  zero, and `card-effects.js` claims it is net positive. Sprint 3, issue #82.
+- **2026-09-04, then the screen caught up with the bots, issue #82.** A card played by somebody who is
+  not at the keyboard is invisible, so it is announced in the message strip: a fourth kind of message on
+  a seam that already had three, one locale key per language, and the reading time borrowed from
+  `--motion-trap-hold` exactly as the bot's thinking pause borrows `--motion-roll-hold`. One new
+  turn-level state field, `lastCardPlayed`, which is the first field in the state object that carries no
+  rule at all. `declineAll` in the driver became `answerWindow`, because a bot in a window now has two
+  possible answers and only one of them is instant. `game-loop.js` came out at exactly 300 lines again,
+  two lines changed and none added. **One negative finding from this morning closed itself**: the seven
+  `reaction.*` sentences said "Spieler 3 würfelt" for a bot, which was left as follow-up work when the
+  bots landed and became load-bearing the moment a bot could answer a window, so the keys take a name
+  instead of a number. The e2e bot helpers moved into `bot-helpers.js`, and the announcement spec was
+  written twice: the first version polled a two-second message at real speed and spent a minute not
+  seeing one. Sprint 3, issue #82.
+- **2026-09-04, last: the documents caught up with the bots twice in one day, issue #82.** FR-43's
+  acceptance criterion was rewritten for the second time in a few hours, from "plays no skill card and
+  declines every reaction window" to "plays a skill card only when a rule-based value model says it is
+  worth more than holding it". The wording names the value model on purpose: "plays cards" is satisfied
+  by a bot that plays them at random, which is the version the morning's decision had already rejected.
+  Design brief 13 was corrected in place in four places with dated notes, because it was written this
+  morning against a bot that plays no cards, and **brief 14** went out with D87 to D89: what a card
+  announcement looks like (it ships in the refusal orange, which is wrong and is the same deviation D55
+  fixed for traps), the pause before a bot answers a window, and whether a bot should mark its target.
+  One rule finding for the Product Owner recorded in Ch. 01 rather than fixed: Double Dip is net zero.
+  Ch. 09 has a fresh measurement, and two of its own commands had to be widened first, because command
+  5c had two branches for three layers and had been quietly counting bot files as `state/`. Sprint 3,
+  issue #82.
 
 ---
 
@@ -3875,6 +3945,372 @@ to get wrong later.
   nothing about screens. Branching on a **field**, the presence of `hint`, keeps the promise and means
   any future screen that wants a two-line button gets it without touching the component.
 - → Ch. 04
+
+### 2026-09-04: A bot is a fourth layer, `src/ai/`, and not a module inside `state/` or `ui/`
+
+- **Chosen:** a new top-level layer, `src/ai/`, sitting between `ui/` and `state/`. It may read
+  `state/` and ask `core/` about the rules; it may never import `ui/` or `i18n/`, touch jQuery or
+  reach a DOM global. `ui/` may import `ai/`. The dependency arrow is `ui -> ai -> state -> core`.
+- **Why not `state/`:** a strategy is neither a rule nor a transition. A different strategy still
+  produces a legal game, and `decide()` writes nothing at all: it returns an intent, exactly as a
+  jQuery click handler does. Putting it in `state/` would mean the one writable source of truth also
+  held opinions about good play.
+- **Why not `ui/bot.js`:** `ui/` is deliberately not unit tested, and the single most valuable test of
+  a bot is a whole match played out with no browser. Under `environment: "node"` that is a one-second
+  test; inside `ui/` it would have been a four-minute Playwright run, which is the difference between
+  a test that runs on every commit and one that does not.
+- **Rejected:** *no layer at all, with the policy inlined into `game-loop.js`.* It is fewer files and
+  it is what a first draft would do. It loses the unit test, it pushes a 287-line file over the limit,
+  and it puts "which pawn is worth moving" in the same file as "when does the timer fire".
+- **Consequence:** three ESLint blocks instead of two, `src/ai/**` added to the coverage floor, and one
+  rule stated in `CLAUDE.md`: a bot is a player without a screen. Time is `ui/`'s, never `ai/`'s.
+- → Ch. 04, Ch. 06, Ch. 07
+
+### 2026-09-04: Bot seats are a list on the state, written once by `startMatch`
+
+- **Chosen:** `state.bots`, a sorted list of seat numbers, `[]` by default, set at `createGameState`
+  and carried over by `restartMatch`. `state/bots.js` owns the rule that turns a *count* into that
+  list: the last M seats, so the person at the keyboard keeps seat 0.
+- **Why a list and not the count:** it follows `seats`, which exists for the same reason. State asks
+  `core/` once and every later reader reads the answer instead of re-deriving it. "The last two of the
+  seats in play" copied into the HUD, the labels, the loop and two guards is a rule that drifts.
+- **Rejected:** *a `controllers` map, `{ 0: "human", 2: "bot" }`.* It is a second truth about who is
+  playing beside `seats`, and object keys are strings, so `Object.entries` returns `"0"` and every seat
+  comparison downstream quietly stops matching. `skillHands` had already cost an afternoon that way.
+- **Rejected:** *storing only the number of bots.* Cheaper to write and it moves the derivation into
+  five readers.
+- **Consequence:** `startMatch` has a fifth positional parameter. That is one too many, and the file
+  now names the trigger for converting it to an options object: the day FR-46's rule toggles ask for a
+  sixth. An all-bot match is legal in `state/` on purpose, because the regression test needs one; "at
+  least one human" is checked where a human types the number.
+- → Ch. 06
+
+### 2026-09-04: The bot plays no skill cards and declines every reaction window
+
+- **Chosen:** in the action phase the bot always dispatches `skip-action`; in any open window it always
+  dispatches `decline-reaction`. Agreed with the Product Owner when the work was planned.
+- **Why:** card tactics need a value model for 36 different cards, several of which are only worth
+  playing in response to something a *person* is about to do. That is a piece of work in its own right
+  and it is not what FR-43 asks for. What FR-43 asks for is a seat that takes a legal turn without human
+  input.
+- **Why it is written into the acceptance criterion and tested rather than left as a comment:** the
+  difference between "the bot chooses not to play cards" and "the bot cannot play cards" is invisible
+  from the outside, and only the first one is a decision. `bot-match.test.js` plays four bots on the
+  full pool and asserts the discard pile stays empty.
+- **Rejected:** *a first pass at card play, picking any playable card at random.* It would look like
+  tactics without being any, and a bot that plays Hold Pawn on itself is worse than one that plays
+  nothing.
+- **Consequence:** a bot's hand fills up over the match and is never spent. Whether that hand should be
+  face down like a person's is a Design question, filed as D82 and D83.
+- → Ch. 01, Ch. 06
+
+### 2026-09-04: The bot's dice choice averages every face instead of taking the best case
+
+- **Chosen:** `expectedScore` is the **mean** best-move score over faces 1..n, and a face that produces
+  no legal move counts as a zero in that mean.
+- **Why:** a pawn leaves the start area only on the die's maximum (FR-09), so at the beginning of a
+  match a D2 and a D20 have the *same* best case: one pawn out of the yard. Scoring by best case makes
+  the two indistinguishable and the bot picks whichever card it happened to see first, every time.
+  Averaging asks the useful question instead, how *often* the die does something good, and the bot
+  picks the D2, which is what a person does.
+- **Rejected:** *the maximum over the faces.* Simpler, and wrong in the single most common position of
+  the game. Also rejected: *weighting by how likely a good outcome is, on top of the average*, which is
+  the same information counted twice.
+- **Consequence:** ties go to the smaller die, because a smaller die overshoots the exact count into the
+  house (FR-13) less often, and when a big die is genuinely better the advance term has already said so.
+  Cost is 240 pure evaluations per turn, hidden behind an animation.
+- → Ch. 06
+
+### 2026-09-04: The hand-over screen is skipped when no second person is going to take the keyboard
+
+- **Chosen:** `onHandover` in `match-flow.js` asks `handoverNeeded(state, seat)` and passes the turn
+  itself when the answer is no. Two cases: the next seat is a bot, or there is only one person in the
+  match at all.
+- **Why:** the screen exists to keep an opponent's five skill cards secret while a device changes hands
+  (D33). A bot is not handed anything, and a soloist never puts the mouse down, so in both cases the
+  screen is a click charged for nothing.
+- **Consequence, and it is a rule change rather than a convenience:** with one human and three bots the
+  hand-over screen never appears in the whole match. Worth stating plainly, because D33's argument is
+  simply absent in that configuration rather than overridden.
+- **Why the flow and not the loop:** the loop's own comment already says that who decides the screen has
+  changed hands is a question about the person in front of it and not about the turn. The flow owns the
+  screens and is already handed `nextSeat(state)`.
+- **Rejected:** *keeping the screen and letting it pass itself after a moment.* It preserves one shape
+  for every turn and it puts an overlay in front of a solo player three times per round for no reason.
+- **Unchanged on purpose:** the hold **before** the screen. A move still has to finish arriving and a
+  refusal still has to be readable, whoever plays next; only what happens after the hold is different.
+- → Ch. 04
+
+### 2026-09-04: The bot's pause borrows `--motion-roll-hold` until Design answers D81
+
+- **Chosen:** `holdBot` reads the existing `--motion-roll-hold` token, with 900 ms as the no-stylesheet
+  fallback, and `FAST_DELAYS` gains `bot: 0`.
+- **Why a pause at all:** the bot decides instantly, and instantly is unreadable. Without one, a bot's
+  whole turn is painted inside a single synchronous pass and a player watching three opponents sees the
+  board jump from their own move to their next one. That is D70's argument about the roll, applied to a
+  whole turn.
+- **Why that token:** `CLAUDE.md` is explicit that Claude Code does not invent design rules, and a
+  duration in `tokens.css` is one. `--motion-roll-hold` already means "reading time for a decision the
+  turn hangs on", which is exactly this, so borrowing it states the intent without deciding anything.
+- **Rejected:** *a constant inside `bot-driver.js`.* Not overridable, so every end-to-end run with a bot
+  would pay 900 ms per intent, and a duration outside `tokens.css` is what D20 and D70 were raised to
+  remove. Also rejected: *inventing `--motion-bot-hold`*, which is Design's call and is asked as D81.
+- → Ch. 04
+
+### 2026-09-04: `readOptions` moved out of `main.js` so that it could be tested
+
+- **Chosen:** `src/options.js` holds `readOptions` and `FAST_DELAYS`. `main.js` is still the only caller,
+  and its header's claim becomes "read once, by the composition root".
+- **Why:** not the line count, which was 204. Importing `main.js` from a unit test pulls in jQuery,
+  twenty stylesheets and a `boot()` call at module level, so the address bar had never been unit tested
+  at all. Issue #43 added a fifth option with real arithmetic in it, which made the gap worth closing.
+- **Consequence:** `src/options.js` is listed **by name** in ESLint's browser-globals block for one
+  identifier, `URLSearchParams`. By name and not as `src/*.js`, so a future non-browser module at the top
+  of `src/` does not inherit a DOM by sitting next to it.
+- **Rejected:** *testing `readOptions` through Playwright by loading URLs.* One browser run per malformed
+  value, to test string parsing.
+- → Ch. 07, Ch. 08
+
+### 2026-09-04: `bindMatchEvents` was the seam that paid for the bot driver, not the header comment
+
+- **Chosen:** `game-loop.js` made room by grouping its five `bind*` calls into `bindMatchEvents` in
+  `events.js`, by replacing three identical stop blocks with a local `halt()`, and by naming the six
+  things every waiting sibling needs as one `wiring` object.
+- **Why it is a seam and not compression:** those five bindings are exactly the regions rebuilt with
+  every match, while the chrome and the overlay live for the whole session and are still bound by the
+  flow. The three stop blocks were literal copies, and each was a place a fourth sibling had to be
+  remembered. `wiring` had been written out three times before it was about to be written a fourth.
+- **Rejected:** *deleting comments to get under 300 lines.* `CLAUDE.md` forbids exactly that, and the
+  file's header is the only place the loop's contract with its four siblings is written down.
+- **Consequence, stated because it will come back:** `game-loop.js` is at **exactly** 300 lines. The next
+  thing that goes in has to take something out first.
+- → Ch. 04
+
+### 2026-09-04: FR-43 dropped the LLM, and doing so resolved a contradiction with FR-03
+
+- **Chosen:** FR-43 becomes *local, rule-based bot opponents* and rises from `C` to `S`. FR-01's lower
+  bound becomes one person. FG-18 is reworded and raised with it. FR-03 is untouched.
+- **Why the rise was forced rather than chosen:** US-01 gives a match a lower bound of **one** person,
+  and that bound is only playable if the other seats play themselves. A `could have` that a `must have`
+  depends on is a broken dependency: cut FR-43 and FR-01 becomes unbuildable.
+- **Why the LLM went:** FR-03's acceptance criterion is a match completed *without any network
+  connection*, and an LLM-backed bot needs a network call. The two requirements had contradicted each
+  other since both were written, and it stayed invisible because FR-43 was a `could have` nobody was
+  building. Worth naming in the report: **the traceability column is what made it visible**, and it is
+  the second time in this project that writing a document found a defect in another document.
+- **Rejected:** *keeping the LLM and giving FR-03 an exception.* It buys a network dependency, an API
+  key, a failure mode and a per-request cost, and it makes "plays without a network" false for exactly
+  the configuration a single player uses.
+- **Consequence, stated rather than implied:** the bot is built, and **choosing one is still a URL
+  parameter**. Issue #76 covers the setup screen and is deliberately blocked on D86 of design brief 13,
+  so that a screen does not get invented in code.
+- → Ch. 01
+
+### 2026-09-04: The "bot plays no skill cards" decision is superseded, the same day
+
+- **Chosen:** the decision taken this morning with the Product Owner is replaced. A bot now plays
+  Action cards in its own turn and Reaction cards in other people's, on a rule-based value model.
+- **Why so soon:** the consequence that block itself predicted turned out to be the whole problem. A
+  bot's hand filled to its limit of five and was never spent, and one person against three bots played
+  a game whose entire card mechanic, which is what makes Ludo Advanced a variant rather than Ludo, was
+  present for exactly one seat.
+- **What the earlier block got right, and it is worth keeping in view:** its rejected alternative was
+  *"a first pass at card play, picking any playable card at random"*, on the grounds that it would look
+  like tactics without being any. That is still true, and it is what shaped this work: the value model
+  exists so that the bot's card plays are explainable in one sentence each.
+- **Rejected:** *waiting for a separate issue in a later sprint.* Issue #82 already existed on the
+  board (Enhanced Mechanics Bot Creation, a sub-issue of #80), and the missing mechanic was in the
+  build a person would actually play.
+- → Ch. 01, Ch. 06
+
+### 2026-09-04: A card's value is in the same units as a move, and the threshold is what makes it a choice
+
+- **Chosen:** every card value is expressed in the units of `SCORE` in `ai/move-scoring.js`, and a card
+  is played only when its value clears `PLAY_AT` (4 points), dropping to 1 when the hand is full.
+- **Why one currency:** "Angel Die on a D6" and "Yeet the leading pawn" have to be rankable against
+  each other **and** against doing nothing. Two scales would need a conversion factor that nobody could
+  justify, and the move scorer's scale already exists and is already tuned by the bot-against-bot test.
+- **Why a threshold at all:** the card budget is one card per turn (FR-23), so a cheap play spends the
+  only slot the turn has. Without a threshold the bot empties its hand and plays Lock In on a pawn that
+  nobody is chasing.
+- **Why the threshold drops at a full hand:** `drawSkillCard` refuses a draw into a hand of five and
+  the card stays in the pool, so holding on has stopped buying anything at all.
+- **Rejected:** *a scale of its own per card family.* More natural per card, and it makes every
+  comparison between families a guess.
+- **Rejected:** *play the best playable card every turn.* Simple, and it is the "looks like tactics"
+  bot the earlier decision had already argued against.
+- → Ch. 06
+
+### 2026-09-04: Damage to one opponent counts as a share, one over seats minus one
+
+- **Chosen:** in every card value, harm done to one opponent is multiplied by `1 / (seats - 1)`. Own
+  gain, and a pawn of my own saved from a capture, count in full.
+- **Why:** in a two-player match an opponent's loss is my gain outright. At a four-player table the
+  other two players benefit from it exactly as much as I do, so paying a card for it is a third as good.
+- **What it buys:** reaction cards are sharp in a duel and rare in a crowd, and Ragebait, Yeet, the four
+  traps and all seven Reactions get that behaviour from one shared line rather than from seven special
+  cases.
+- **Rejected:** *counting an opponent's loss in full.* It makes a four-bot match a card fight in which
+  nobody advances, and it is wrong in a way a player can feel.
+- → Ch. 06
+
+### 2026-09-04: The bot asks a card its own rule rather than copying it
+
+- **Chosen:** the seven cards whose whole effect is a roll modifier are priced by calling the real
+  effect from `core/cards/effects/` and reading the modifiers back, then computing the roll's
+  distribution in `ai/roll-odds.js`.
+- **Why:** the roll chain has an order that is easy to get subtly wrong. 67's threshold is applied
+  **before** Speedrun's multiplier so that a 3 doubled to 6 cannot pass a test it failed, FR FR's named
+  number is clamped to the die, and two Angel Dice add two D8s while two Speedruns do not square the
+  roll. A copy of that in `ai/` is a second rulebook that is free to disagree with the first.
+- **What made it possible:** those effects are pure functions of a snapshot and draw nothing from the
+  RNG, so running one to find out what it would do costs nothing and changes nothing.
+- **The one place duplication remained, and why:** `ai/roll-odds.js` walks the same six steps as
+  `core/roll.js` over probabilities instead of dice. The alternative was to roll the real chain a few
+  hundred times with a throwaway RNG, which puts randomness into the one layer whose whole property is
+  that it has none (NFR-09: `?seed=42` has to replay a match). The drift risk is covered by a test that
+  knows the closed forms independently.
+- → Ch. 06
+
+### 2026-09-04: The bot does not cheat, and a test enforces it by experiment
+
+- **Chosen:** a bot reads the board, the statuses, the traps, its own hand, the chosen dice card, the
+  modifiers, `pendingCard`, `pendingMove`, the open window, and **how many** cards each other seat
+  holds. It never reads which cards they are.
+- **Why the count is allowed:** decision D33 of 2026-09-01 made the count public and the HUD prints it
+  for every seat, so a bot reading it reads the screen. Tax Fraud aiming at whoever holds the most cards
+  is a play a person can make.
+- **Why it is a test and not a comment:** `state.skillHands[1]` is one line of plausible-looking code
+  away in any value function, and a bot that peeked would pass every other test in the suite while
+  playing a game the person in front of it cannot. So `card-choice.test.js` decides the same board twice
+  with completely different cards in the opponents' hands and asserts the answers are identical, plus a
+  second case proving the public count still changes the answer, so the first cannot be satisfied by a
+  bot that ignores the other seats entirely.
+- **Rejected:** *reading the hands, on the grounds that a bot is not a person.* It makes the bot
+  unbeatable in exactly the situations where the card mechanic is interesting, and it is undetectable
+  from the outside, which is the worst combination for a feature the report has to justify.
+- → Ch. 06, Ch. 08
+
+### 2026-09-04: Two of the 29 cards are never played, as a recorded finding
+
+- **Chosen:** Oil Spill in `values-squares.js` and The Purge in `values-window.js` return `null`,
+  meaning "never play this".
+- **Why Oil Spill:** it slides whoever steps on it three to five squares **forwards**. On almost every
+  board that is a gift to the victim. The one board where it is good needs the victim's exact distance
+  from their own house plus the slide distribution, for a card that is a mistake everywhere else.
+- **Why The Purge:** it suspends the rule that an own pawn blocks, board-wide, for a round, for
+  everybody including the player who played it. There is no one-step reading of that: its value depends
+  on four seats' positions at once, and any number put on it would be a guess dressed as a model.
+- **Why `null` and not a large negative number:** `null` says "do not play"; a number says "worth this
+  much", and a full hand lowers the threshold to 1, where a badly guessed number would get played.
+- **How a missing value is told apart from a deliberate one:** `ai/card-values.js` throws at **boot**
+  for a card id with no entry in the table, on the pattern of `assertCatalogue` and
+  `core/trap-fire.js`. So the 30th card added to the catalogue stops the game on the day it is added,
+  and the two deliberate refusals are entries like any other.
+- → Ch. 06
+
+### 2026-09-04: A bad bot target becomes a pass, never a refused intent
+
+- **Chosen:** each card value picks its own target, and `card-choice.js` then asks `checkTarget`, the
+  same function the dispatcher asks. A target the rules would refuse makes the card unplayable and the
+  bot considers the next one.
+- **Why the asymmetry with a person:** a refused click is a message on screen and the player tries
+  something else. A refused **bot** intent stops `ui/bot-driver.js`, leaves the phase unchanged, and
+  parks the match for ever, so the symptom of a small arithmetic slip in one value is a game that
+  freezes with no error.
+- **Why it is not a licence to be sloppy:** `card-values.test.js` sweeps all 29 cards on a busy board
+  and on an empty one and asserts the target is legal before the guard ever runs, and
+  `bot-match.test.js` asserts over whole matches that no bot intent is refused.
+- **The one simplification recorded with it:** the It's Not That Deep aura is checked once in
+  `card-choice.js` for all six offensive cards, and a card whose best target sits inside an aura is
+  dropped rather than re-aimed at the best square outside it.
+- → Ch. 06, Ch. 08
+
+### 2026-09-04: Double Dip is net zero, and the finding goes to the Product Owner rather than into a fix
+
+- **Chosen:** the bot prices Double Dip as "make room in a full hand", worth 1, and the rule is left
+  exactly as it is.
+- **The finding:** `spendCard` counts Double Dip itself against the budget of one, and the card's effect
+  then sets the budget to two. That leaves exactly one further play, which is the play the seat had
+  before the card was played. `core/cards/effects/card-effects.js` states in its own header that the
+  card "has to be net positive to be worth anything, and it is". It is not.
+- **Why it is not fixed here:** which of the two readings is the rule is the Product Owner's call, not
+  a bug with an obvious correction. Setting the budget to three, or not counting the card itself, are
+  both defensible and both change the card's power.
+- **Rejected:** *saying nothing and letting the bot price it as a second card.* The bot would then play
+  Double Dip expecting a play it does not get, which is a wrong value hiding a wrong rule.
+- → Ch. 01, Ch. 06
+
+### 2026-09-04: A bot's card play is announced in the message strip, and it ships in the wrong colour
+
+- **Chosen:** a fourth kind of message, `card`, on the strip that already says three kinds of thing.
+  One locale key per language, no new component, no new token, and the reading time is the existing
+  `--motion-trap-hold`.
+- **Why an announcement is needed at all:** a card played by somebody who is not at the keyboard is
+  invisible. Built Different writes a status, No Take-Backsies shuts a window nobody was going to use,
+  and a nullified card does nothing whatsoever, so without a sentence the player watches their pawns get
+  shoved around by nothing.
+- **Why the strip and not something new:** `CLAUDE.md` is explicit that Claude Code does not invent
+  design rules, and a component is a design rule. `data-message-kind` is a seam that already exists and
+  that a third kind was added to on 2026-09-03, so this is the fourth use of a pattern rather than a new
+  idea.
+- **The deviation, stated rather than discovered:** no stylesheet reads `data-message-kind="card"`, so
+  the sentence appears in `--color-warn`, the colour the game reserves for "you cannot do that". A bot
+  playing a card is not a refusal. This is exactly the deviation issue #45 shipped for the trap
+  announcement; D55 answered that with two selectors, and D87 of brief 14 is the same shape.
+- **Rejected:** *inventing the two selectors here.* It is one line of CSS and it is still a design
+  decision about what the game's second voice looks like, and the last time this side guessed at a
+  design rule the guess was the thing the handoff had to undo.
+- **Rejected:** *announcing nothing and letting the board speak.* For a third of the cards the board
+  says nothing at all.
+- → Ch. 04
+
+### 2026-09-04: The card a bot played is a field on the state, not a variable in `ui/`
+
+- **Chosen:** `lastCardPlayed`, `{ seat, cardId }`, written by both card intents and cleared at the
+  handover with the rest of the turn-level fields.
+- **Why in the state:** the message strip is drawn out of the state object and nothing else. A fourth
+  piece of presentation state threaded through `render` would be one refresh out of step with the board
+  it describes, and `nullifiedCard` and `trapFired` are already exactly this kind of field for exactly
+  this reason.
+- **What is unusual about it, named so it is not read as a mistake:** it is the first field in the state
+  object that carries **no rule**. Nothing in `core/` or `state/` reads it and a match plays out
+  identically without it.
+- **Why it is written when the card leaves the hand and not when its rule runs:** an Action card that
+  somebody can answer waits in `pendingCard` while a window is open, and the moment worth announcing is
+  the moment somebody did something.
+- **Consequence:** two lines of `state/` shipped inside a `ui/` commit. Splitting them out would have
+  produced a commit that adds a field nothing reads, and the commit before it touches neither file.
+- → Ch. 04, Ch. 06
+
+### 2026-09-04: `holdMidTurn` gained a third source and `holdAfterTurn` deliberately did not
+
+- **Chosen:** `announcement(state)` is unchanged; a new `midTurnAnnouncement(state)` adds a bot's card
+  play on top of it, and only the mid-turn hold asks the new one.
+- **Why the asymmetry:** the card already had its two seconds where it happened. Holding for it again at
+  the handover would add four seconds to the end of every bot turn that played a card, which is most of
+  them, and the four seconds is a **refusal**'s reading time (D20) rather than a report's.
+- **Why a person's own card play is not announced at all:** they clicked the card, answered the target
+  picker and pressed the last button. Telling them what they just did would cost two seconds per card in
+  every match, including the all-human ones, for information they have already got.
+- **Rejected:** *one function with a flag.* The two callers want different answers, and a flag makes the
+  caller responsible for a decision that belongs to this module.
+- → Ch. 04
+
+### 2026-09-04: The announcement spec records the attribute instead of polling for it
+
+- **Chosen:** the end-to-end case installs a `MutationObserver` on the message strip, records every
+  value `data-message-kind` ever takes, and asserts against that list. It runs under `?fast=1`.
+- **Why the first version was thrown away:** it polled for `data-message-kind="card"` at real speed and
+  spent sixty seconds not seeing one. Two reasons, and neither is a bug: the announcement is on screen
+  for two seconds, so a poll has to land inside that window, and the early turns of a match are quiet on
+  purpose, because with every pawn still in the yard almost nothing is worth playing.
+- **What the observer buys:** a race becomes a list, the case runs at full speed, and it asserts more
+  than the poll could, both the kind and that the sentence names "Bot 2" rather than "Spieler 2".
+- **What it gives up, and where that is covered instead:** it no longer proves the announcement is on
+  screen for two seconds. That is a duration nothing on screen reports, which is precisely the argument
+  `mid-turn-hold.test.js` was written for, and the unit case pins both halves of it.
+- → Ch. 04, Ch. 08
 
 ---
 

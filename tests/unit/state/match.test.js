@@ -66,6 +66,13 @@ describe("startMatch (FR-01)", () => {
     }
   });
 
+  it("remembers which seats play themselves (FR-43)", () => {
+    const state = startMatch(4, scripted([6]), [], [], [2, 3]);
+
+    expect(state.bots).toEqual([2, 3]);
+    expect(startPlainMatch(4, scripted([6])).bots).toEqual([]);
+  });
+
   it("checks the injected dependencies before the first turn, not three phases into it", () => {
     const rng = rngForRolls([6], 6);
 
@@ -93,6 +100,17 @@ describe("restartMatch (FR-06)", () => {
     expect(restarted.turnNumber).toBe(1);
     expect(restarted.status).toBe(MATCH_STATUS.RUNNING);
     expect(restarted.winner).toBeNull();
+  });
+
+  it("keeps the bot seats, because nobody left the room (FR-43)", () => {
+    // The one field a restart carries over. The skill squares are a position the last match wandered
+    // into; the bot seats are who is playing, and Play Again does not change that.
+    const deps = scripted([6]);
+    const started = startMatch(4, deps, [], [], [2, 3]);
+
+    const restarted = restartMatch(started, matchDeps(createSeededRng(7), fixedDieSource(6)));
+
+    expect(restarted.bots).toEqual([2, 3]);
   });
 });
 

@@ -19,7 +19,7 @@ Please keep this in mind when answering questions or writing documentation.
 
 ## Project
 
-**Ludo Advanced** is a 2D web-based board game for 2–4 players: a Ludo variant that replaces the single die with two
+**Ludo Advanced** is a 2D web-based board game for 2–4 players, of which at least one is a person and the rest may be bots: a Ludo variant that replaces the single die with two
 card pools:
 
 - **Dice Card Pool**: cards from D2 to D20. Each turn a player draws 3 cards, picks one, rolls that die, and the
@@ -105,19 +105,26 @@ src/
            resolution, win conditions. Runs and tests without a browser.
   state/   The single game-state object plus its transitions. The only
            writable source of truth. Imports core/, never ui/.
+  ai/      Rule-based bot players (FR-43). Reads state, returns intents.
+           Imports core/ and state/, never ui/ or i18n/. Pure and
+           deterministic: no rng, no Math.random, no Date, no clock.
   ui/      jQuery rendering and event binding. Reads state, dispatches
            intents into state/. Contains no game rules.
   i18n/    i18next setup, locales/de.json, locales/en.json
-  main.js  Composition root: boots i18next, wires core + state + ui.
+  options.js  The address bar, parsed. Read once, by main.js.
+  main.js  Composition root: boots i18next, wires core + state + ai + ui.
 tests/
   unit/    Vitest, mirrors the src/ layout
   e2e/     Playwright
 ```
 
-Two rules follow from this:
+Three rules follow from this:
 
 - **`core/` never imports from `state/` or `ui/`.** Rules stay headless and directly unit-testable.
 - **`ui/` never mutates state directly.** It dispatches into `state/`, which applies `core/` rules.
+- **`ai/` never imports from `ui/` or `i18n/`, and never knows the time.** A bot is a player without a
+  screen: it reads state and returns one intent, exactly as a click handler does. The pause that makes
+  a bot turn readable belongs to `ui/bot-driver.js`. That is what lets a whole bot match be a unit test.
 
 Card effects (skill and dice) live in `core/` as pure functions over game state: a card's visual presentation belongs
 in `ui/`, its rule belongs in `core/`, and the two are matched by card id.
@@ -128,7 +135,7 @@ High test coverage is a project requirement, not a nice-to-have.
 
 - Every rule change in `core/` ships with its unit test in the same commit.
 - Every player-facing flow (take a turn, pick a dice card, play a skill card, capture a pawn, win) has an E2E test.
-- Coverage target: **≥ 80 % lines in `src/core/` and `src/state/`**. `ui/` is covered through E2E instead.
+- Coverage target: **≥ 80 % lines in `src/core/`, `src/state/` and `src/ai/`**. `ui/` is covered through E2E instead.
 
 ## Documentation notes
 
@@ -146,6 +153,7 @@ chapter table, the status of each chapter, and the standing list of open questio
 | --- | --- |
 | `src/core/`: rules, board, movement, capture, card pools | `notes/05-game-core-building-blocks.md` |
 | `src/state/`: transitions, turn manager, intents | `notes/06-state-and-turn-flow.md` |
+| `src/ai/`: bot policy, move scoring, dice choice | `notes/06-state-and-turn-flow.md` |
 | `src/ui/`, `src/i18n/`: rendering, events, locales | `notes/04-frontend-building-blocks.md` |
 | `package.json`, ESLint, Prettier, Vite config | `notes/07-tooling.md` |
 | tests, coverage, CI workflow | `notes/08-quality.md` |

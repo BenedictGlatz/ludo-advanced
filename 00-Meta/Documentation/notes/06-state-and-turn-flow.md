@@ -534,6 +534,157 @@ seam is that neither of them touched a closure variable: they read `getScreen()`
 so moving them was a move rather than a rewrite. `match-flow.js` owns the session; that file decides
 what a click asks of it.
 
+### A seventh match-level field, and a fourth layer that reads it: 2026-09-04, issue #43
+
+`bots` joined the match row of the lifetimes table, beside `seats`. It is a **sorted list of seat
+numbers**, `[]` by default, and it lives for the whole match: nothing clears it and `restartMatch`
+carries it over.
+
+**Why a list and not a count.** It follows `seats` exactly, and for the same reason that field gives:
+state asks `core/` once and everybody else reads the answer. Storing the number 2 would make every
+reader re-derive "the last two of the seats in play", and the same rule copied into five readers is a
+rule that drifts. Rejected: a `controllers` map like `{ 0: "human", 2: "bot" }`, because it is a second
+truth about who is playing beside `seats`, and object keys are strings, so `Object.entries` hands back
+`"0"` and the seat comparisons stop matching. `skillHands` had already cost an afternoon that way.
+
+**`state/bots.js` owns the last-M rule.** `botSeatsFor(playerCount, count)` returns the last `count`
+seats, which for two players is seat **2** and not seat 1, because `seatsFor` seats two players
+opposite each other. The humans fill up from the front so that the person at the keyboard keeps seat 0.
+One line in that file has a comment on it and deserves one: `slice(-0)` is `slice(0)`, so a zero-bot
+match written the obvious way would come back with every seat a bot.
+
+**`handoverNeeded(state, seat)` is in `state/` and not in `ui/`**, on the `seatOnShow` precedent: it is
+a question about the screen, but it is answered out of pure state, and putting it here makes it a unit
+test instead of a Playwright run. Its consequence is a rule change and not only a convenience: **with
+one human and three bots the hand-over screen never appears at all.** D33's secrecy argument has
+nothing to protect when there is no second person at the screen.
+
+**`bots` is a fifth positional parameter on `startMatch`, and that decision has a deadline written
+into the file.** Five positionals is one too many; an options object would read better. It is not worth
+doing today because `startMatch(2, deps, [], [])` is written out in `match.test.js`, in
+`scripts/find-seeds.js` and in `ui/match-flow.js`, and rewriting three call sites to change no
+behaviour is work spent on the shape of a call. `match.js`'s header names the trigger: the day FR-46's
+rule toggles ask for a sixth parameter is the day to convert it.
+
+**The `ai/` layer's import contract**, enforced by ESLint (see [07-tooling.md](07-tooling.md)):
+`ai/` may read `state/` and ask `core/`, and may never touch `ui/`, `i18n/`, jQuery or the DOM. `ui/`
+may import `ai/`. So the dependency arrow is `ui -> ai -> state -> core`, with `ui -> state` still
+direct. A bot is a player without a screen: `decide(state)` returns one intent, dispatches nothing,
+and knows nothing about time.
+
+**A negative finding, recorded rather than half-built: the bot cannot see danger.** `move-scoring.js`
+ranks finishing, capturing, entering the home column, leaving the yard and walking, and nothing in it
+asks whether a move parks a pawn in front of an opponent. That term needs absolute-square arithmetic
+across seats plus a model of what the opponent's dice hand can roll, and a wrong model plays worse
+than no model. It is the obvious next tuning step and it is not in this issue.
+
+### The bot values a card in the currency of a move: 2026-09-04, issue #82
+
+**The 2026-09-04 decision that a bot plays no skill cards is superseded.** That block stays in the
+journal, because it records what was believed at the time and why; what changed is that the hand of a
+bot filled to its limit of five and was never spent, so a person playing against three bots played a
+game with no card mechanic in it at all. `src/ai/` gained eight files and the policy now answers the
+action phase and every reaction window with a card or with a pass.
+
+**One currency, and it is the move scorer's.** Every card value is in the units of `SCORE` in
+`ai/move-scoring.js`: one point is one step, leaving the yard is 25, a capture is 60 plus the victim's
+progress, finishing is 100. The reason is comparability: "Angel Die on a D6" and "Yeet the leading
+pawn" have to be rankable against each other and against passing, and a second scale would need a
+conversion factor nobody could justify. It also means the bot-against-bot match stays the scoreboard
+for tuning either half. Rejected: *a scale of its own per card family*, which reads more natural per
+card and makes the comparison between families a guess.
+
+**A card is played only when it beats a threshold.** `PLAY_AT` is 4 points, and at a full hand
+(`SKILL_HAND_LIMIT`, five) it drops to 1. The reason for the threshold is that a card in hand is worth
+something: the budget is one card per turn (FR-23), so a cheap play spends the only slot the turn has.
+The reason it drops at a full hand is that `drawSkillCard` refuses a draw into a full hand and the card
+stays in the pool, so holding on has stopped buying anything. Rejected: *play the best playable card
+every turn*, which empties the hand and plays Lock In on a pawn nobody is chasing.
+
+**Damage to one opponent counts as `1 / (seats - 1)` of my own gain.** In a duel an opponent's loss is
+my gain outright; at a four-player table the other two benefit from it as much as I do. One line,
+applied in every value, and the effect is that reaction cards are sharp in a two-player match and rare
+in a four-player one without a single card carrying a special case. Own gain and a pawn of my own saved
+from a capture count in full.
+
+**The bot asks the card its own rule.** For the seven cards whose whole effect is a roll modifier, the
+value calls the real effect out of `core/cards/effects/` and reads the modifiers back, then computes
+the roll's whole probability distribution in `ai/roll-odds.js`. So 67's threshold sitting before
+Speedrun's multiplier, and FR FR's named number being clamped to the die, are correct in the bot
+because they are correct in the card. Rejected: *a copy of each card's arithmetic in `ai/`*, which is a
+second rulebook that can disagree with the first.
+
+**`ai/roll-odds.js` is a deliberate second implementation of `core/roll.js`.** It walks the same six
+steps over probabilities instead of dice. The duplication is real and it is the cheaper of two evils:
+the alternative is to roll the real chain a few hundred times with a throwaway RNG, which puts
+randomness into the one layer whose whole property is that it has none (NFR-09, `?seed=42` replays a
+match). The drift risk is covered by a test that knows the closed-form answers independently.
+
+**Two cards are never played, as a negative finding rather than a gap.** *Oil Spill* slides whoever
+steps on it three to five squares **forwards**, so on almost every board it is a gift to the victim;
+the one board where it is good needs the victim's exact distance from their house. *The Purge*
+suspends the rule that an own pawn blocks, board-wide and for everybody, including the player who
+played it, so whether it is good depends on four seats' positions at once. Both return `null` from
+their value function, which is a different thing from a missing entry: `ai/card-values.js` throws at
+**boot** for a card with no value at all, on the pattern of `assertCatalogue` and `core/trap-fire.js`.
+
+**A bot reads only what a person can see, and a test enforces it by experiment.** Allowed: the board,
+the statuses, the traps, its own hand, the chosen dice card, the modifiers, `pendingCard`,
+`pendingMove`, the open window, and **how many** cards every other seat holds, which is public since
+decision D33 and printed in the HUD. Forbidden: `state.skillHands[anotherSeat]`. Nothing in JavaScript
+stops the peek, so `card-choice.test.js` decides the same board twice with completely different cards
+in the opponents' hands and asserts the answer is identical, plus a second case proving the public
+count still changes the answer, so the first case cannot be passed by a bot that ignores the other
+seats entirely.
+
+**A bad target is turned into a pass, not into a refused intent.** Each value picks its own target and
+`card-choice.js` then asks `checkTarget`, the same function the dispatcher will ask. The asymmetry with
+a person is the reason: a refused click is a message on screen, while a refused bot intent stops
+`ui/bot-driver.js`, leaves the phase unchanged, and parks the match for ever. `bot-match.test.js`
+carries the property over whole matches: no intent a bot produces is ever refused.
+
+**The It's Not That Deep aura is checked once, in `card-choice.js`, for all six offensive cards.** It
+depends on the target rather than on the card, so asking it in six values would be the same question
+written six times. **A known simplification:** a card whose best target sits inside the aura is
+dropped rather than re-aimed at the best square outside it.
+
+**A rule finding for the Product Owner, not fixed here: Double Dip is net zero.** `spendCard` counts
+Double Dip itself against the budget of one, and the card then sets the budget to two, which leaves
+exactly one further play: the one the seat had anyway. `card-effects.js`'s own header claims the card
+is "net positive". The bot therefore prices it as "make room in a full hand" and worth 1. Recorded in
+[01-requirements-and-goals.md](01-requirements-and-goals.md) as an open rule question.
+
+**Where the crude edges are, named rather than hidden.** `ai/threat.js` prices "a pawn `d` squares
+behind could roll exactly `d`" as one in six, twelve or twenty by the smallest die that reaches, and
+sums those instead of computing a proper "at least one of them" probability. The trap cards all aim one
+square in front of an opponent rather than at the square that opponent is most likely to enter, which
+would need a model of the dice hand they will draw. Nühü prices a card aimed at me as a flat number
+rather than by that card's own value, because pricing all 29 cards from the receiving end is a second
+value table.
+
+**A turn-level field that carries no rule: `lastCardPlayed`.** `{ seat, cardId }`, written by both card
+intents when the card leaves the hand, cleared by `clearedTurnFields` at the handover. Nothing in
+`core/` or `state/` reads it and a match plays out identically without it, which makes it the first
+field in the state object that exists purely so the screen can say something.
+
+**Why it is in the state at all.** A bot's card play has to be announced or, as far as the player is
+concerned, it did not happen: several cards leave the board looking exactly as it did before, and the
+card itself goes into the discard pile with every other card of the match, so the play cannot be
+reconstructed afterwards. Rejected: *a variable in `ui/`*. The message strip is drawn out of the state
+and nothing else, so a fourth piece of presentation state threaded through `render` would be one
+refresh out of step with the board it describes. `nullifiedCard` and `trapFired` are the same kind of
+field for the same reason, and both predate this one.
+
+**It is written when the card is played, not when its rule runs.** An Action card that somebody can
+answer waits in `pendingCard` while a window is open, and the moment worth announcing is the moment the
+player did something. Both branches of `playActionCard` therefore inherit it from the state that spends
+the card, which is one line rather than two.
+
+**Two lines of `state/` shipped in a `ui/` commit**, which is worth naming because it looks like a
+layering slip. The field is only ever read by `ui/`, its whole justification is a screen requirement,
+and splitting it into its own commit would produce a commit that adds a field nothing reads. The value
+model in the commit before it does not touch either file.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
