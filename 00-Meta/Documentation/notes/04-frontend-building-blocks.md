@@ -2383,8 +2383,11 @@ reader could take the illustration for the contract.
   tokens plus the whole `prefers-reduced-motion` block move to `motion.css`. It was not done here because
   it touches no decision in the brief, and it is worth folding into the answer to brief 09, which changes
   the same file. Current size in Ch. 09.
-- **Handoff 12 arrived in the same package and is not landed.** The Product Owner has to pick one of the
-  three menu mockups first, so nothing from it is in `src/`.
+- **Handoff 12 arrived in the same package and is not landed.** **Claude Design made the pick itself**,
+  12c, three doors in the game's own card language, and wrote the spec for that one with 12a and 12b as
+  drawn rejected alternatives. So `menu.css` and three SVGs are ready to land and what is outstanding is
+  the Product Owner **confirming** the pick rather than making it, because the brief asked for a choice.
+  Nothing from it is in `src/`.
 
 ## Decisions
 
@@ -2506,8 +2509,9 @@ reader could take the illustration for the contract.
   - **D75 to D80, the main menu.** Whether the menu stays the overlay panel, what the three items are as
     objects, **what an unavailable control looks like at all**, whether it explains itself, what else is
     on the screen, and confirmation that Hotseat still leads to S2. None of the six blocks a requirement.
-    **The spec and the three mockups have arrived and are not landed:** the Product Owner has to pick one
-    of the three first, so nothing from handoff 12 is in `src/`.
+    **The spec and the three mockups have arrived and are not landed:** Claude Design picked 12c itself
+    and answered all six decisions for it, so what is outstanding is the Product Owner confirming that
+    pick. Nothing from handoff 12 is in `src/`.
   - ~~**`ROLL_STEP.MISSED` has no locale key in either language**~~, **fixed with D73**, and
     `locales.test.js` now compares the locales against `ROLL_STEP` rather than only against each other,
     which is why the existing key-set case could not see the gap. ~~`turn.rolled`~~ **deleted**, on the
