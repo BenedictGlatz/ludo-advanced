@@ -1892,6 +1892,51 @@ unit test's job, and that file's header has said so since issue #45.
 **The lesson is the one this chapter keeps recording in different words:** an end-to-end test should ask
 whether something happened, not try to be looking at the right moment.
 
+### The measured cost of the feature is in the test suite, not in the game: 2026-09-04, issue #82
+
+The full three-browser run failed once on the case that plays a whole bot match to a win, on Firefox,
+with **`Test timeout of 240000ms exceeded`** while waiting for a dice card to become stable. The same
+case passes on its own in about two minutes on the same engine.
+
+**What it is:** a bot match is four turns of work for every turn a person takes, and since the bots play
+cards each of those turns can also open a reaction window, resolve a card and redraw. Twelve workers
+across three engines contend for one machine, and Firefox is the slowest of the three. The 240 seconds
+that `win.spec.js` and `match-flow.spec.js` have used since they were written stopped being enough for
+**this** spec only.
+
+**What was done:** `bots.spec.js`'s own constant went to 420 seconds, with the measurement written next
+to it. **No assertion changed**, which is the distinction worth keeping: raising a timeout because the
+machine is busy is patience, and changing an expectation because the code disagrees with it is
+tolerance. The suite has done the second thing exactly once, and it was recorded as a defect.
+
+**The reading to act on:** the end-to-end suite now spends most of its wall clock in four full-match
+specs, and this feature added the most expensive one. That is the fourth time this chapter has recorded
+the same trade, and it is still the right one: those are the only tests in the suite that play the game
+as a sequence rather than setting up a situation, and one of them found the only real bug in landing
+handoff 11.
+
+#### A negative finding about the suite rather than about the code: three full runs, three different flakes
+
+The three-browser suite was run three times to land this issue. Each run reported **one** failure and it
+was a different one every time, and every one of them passed on its own immediately afterwards:
+
+| Run | Failed | Reported as |
+| --- | --- | --- |
+| 1 | `bots.spec.js`, the full bot match, Firefox | `Test timeout of 240000ms exceeded` |
+| 2 | `trap-marks.spec.js`, the trap's colour, Firefox | The strip's colour read one message too late |
+| 3 | Four cases across Firefox and Edge | Two timeouts, one missed transient attribute, and one `NS_ERROR_CONNECTION_REFUSED` from the preview server |
+
+**Two of the three were worth a code change and one was not.** The first is the feature genuinely costing
+more time, and the constant went up with the measurement written beside it. The second was a real race in
+an existing spec, reading an attribute and a colour in two round trips with a two-second message between
+them, and it is fixed by reading both in one pass. The third is the machine: twelve browser workers on one
+laptop, with a connection refused by the preview server in the middle of it.
+
+**The useful reading is that this suite has no retries configured off CI** (`retries: process.env.CI ? 1 : 0`),
+so a local full run reports contention as failure and somebody has to judge each one. That judgement is
+recorded here rather than solved, because the alternative, turning retries on locally, hides exactly the
+kind of race the second row was.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

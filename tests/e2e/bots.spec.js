@@ -23,11 +23,17 @@ const overlay = (page) => page.locator(".overlay");
 const seatRow = (page, seat) => page.locator(`.hud__seat[data-player="${seat}"]`);
 
 /**
- * A whole match played click by click, the same figure `win.spec.js` and `match-flow.spec.js` use and
- * for the same measured reason: at Playwright's default worker count the browsers contend, and the
- * default 30 seconds reports contention as a failure.
+ * A whole match played click by click. `win.spec.js` and `match-flow.spec.js` use 240 seconds for the
+ * same measured reason, that at Playwright's default worker count the browsers contend and the default
+ * 30 seconds reports contention as a failure.
+ *
+ * **This file needs more than they do, and issue #82 is why.** A bot match is four turns of work per
+ * turn a person takes, and since the bots play cards each of those turns can also open a window,
+ * resolve a card and redraw. The two cases below passed in about two minutes each on their own and one
+ * of them went past 240 seconds in a full three-browser run, on the slowest engine, with twelve workers
+ * competing. Nothing about the assertions changed: it is patience, not tolerance.
  */
-const FULL_MATCH_TIMEOUT_MS = 240_000;
+const FULL_MATCH_TIMEOUT_MS = 420_000;
 
 test.describe("bot opponents", () => {
   // The real-speed cases spend seconds at a time doing nothing on purpose: three bot turns at 900 ms
