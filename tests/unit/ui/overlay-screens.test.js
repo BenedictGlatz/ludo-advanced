@@ -30,8 +30,8 @@ import { screenDescription } from "../../../src/ui/overlay-screens.js";
  * few hundred intents to reach and this screen reads three fields. `seats` is `seatsFor(2)`'s real answer,
  * so the numbering the label depends on is the numbering the game uses.
  */
-function finishedMatch(status, winner) {
-  return { status, winner, seats: [0, 2] };
+function finishedMatch(status, winner, bots = []) {
+  return { status, winner, seats: [0, 2], bots };
 }
 
 describe("the win screen", () => {
@@ -47,6 +47,18 @@ describe("the win screen", () => {
     expect(description.outcome).toBe("won");
     expect(description.player).toBe(2);
     expect(description.title).toContain("Spieler 2");
+  });
+
+  it("names a bot that won as a bot (FR-43)", () => {
+    // The seat number is unchanged, and that is the rule from `player-labels.js`: the number says the
+    // turn order, so seat 2 of two is "Bot 2" and never "Bot 1".
+    const description = screenDescription(OVERLAY_SCREEN.WIN, {
+      state: finishedMatch(MATCH_STATUS.WON, 2, [2]),
+    });
+
+    expect(description.title).toContain("Bot 2");
+    expect(description.title).not.toContain("Spieler");
+    expect(description.player).toBe(2);
   });
 
   /**

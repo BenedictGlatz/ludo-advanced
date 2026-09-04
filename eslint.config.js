@@ -177,7 +177,10 @@ export default [
   },
 
   {
-    files: ["src/ui/**/*.js", "src/main.js"],
+    // `src/options.js` is here for one name, `URLSearchParams`. It is not a `ui/` file and holds no
+    // jQuery: it parses the address bar, which is a browser fact, and it is listed by name so that a
+    // future non-browser module at the top of `src/` does not inherit a DOM by sitting next to it.
+    files: ["src/ui/**/*.js", "src/main.js", "src/options.js"],
     languageOptions: { globals: browserGlobals },
   },
 

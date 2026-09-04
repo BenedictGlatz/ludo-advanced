@@ -168,6 +168,25 @@ export function bindPickEvents($board, handlers) {
 }
 
 /**
+ * Bind everything inside a match, in one call. Issue #43.
+ *
+ * The five bindings below it are unchanged and still exported: `match-flow.js` binds the chrome and the
+ * overlay separately, because those two live for the whole session rather than for one match. What this
+ * groups is exactly the set `game-loop.js`'s `start()` had written out, and the grouping is a real seam
+ * rather than a line count: **these are the five regions that are rebuilt with every match.**
+ *
+ * `regions` is `{ $board, $diceHand, $skillHand, $prompt }` and `handlers` is `{ board, cards }`, the
+ * two controller objects the loop already holds.
+ */
+export function bindMatchEvents({ $board, $diceHand, $skillHand, $prompt }, { board, cards }) {
+  bindBoardEvents($board, { onPawnActivated: board.onPawnActivated });
+  bindPickEvents($board, cards.handlers);
+  bindDiceHandEvents($diceHand, { onDiceCardActivated: board.onDiceCardActivated });
+  bindSkillHandEvents($skillHand, cards.handlers);
+  bindPromptEvents($prompt, cards.handlers);
+}
+
+/**
  * Bind the always-present controls: the language switch and the pause button. Issue #39.
  *
  * The same shape as the prompt strip's binding and for the same reason: one handler for every button in

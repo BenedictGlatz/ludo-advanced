@@ -1779,6 +1779,54 @@ anywhere. The tests pin the ranking, the tie-breaks and the arithmetic of the di
 are claims about the code. Whether the resulting player is a satisfying opponent is a play-testing
 question, and the only instrument this project has for it is the Product Owner.
 
+### A module was moved so that it could be tested at all: 2026-09-04, issue #43
+
+`readOptions` had never had a unit test, and not for lack of trying: it lived in `src/main.js`, and
+importing that file pulls in jQuery, twenty stylesheets and a call to `boot()` at module level. So the
+address bar was covered only through whichever end-to-end spec happened to use a parameter, and a
+malformed value had no test anywhere.
+
+Issue #43 added a fifth option with real arithmetic in it (`bots` is clamped against `players`), which
+made that gap worth closing rather than noting. `src/options.js` imports one thing, `PLAYER_COUNTS`, and
+`tests/unit/options.test.js` has 15 cases in it, including the four options that were already there.
+
+**The lesson is about where a thing lives, not about the test.** The parsing had always been testable
+code; it was untestable only because of what sat next to it in the same file. That is worth one sentence
+in the report, because it is the cheapest kind of coverage gap to fix and the easiest to never notice.
+
+### Two of three bot specs run at real speed, and the third could not use the helpers: 2026-09-04, issue #43
+
+`tests/e2e/bots.spec.js` has three cases, and how each one is driven is the interesting part.
+
+**Two run without `?fast=1`, like `handover.spec.js` and for the same reason.** What they test is the
+hand-over rule, which is a claim about who is asked to press a button between turns. `?fast=1` collapses
+the bot's pause to zero, so under it the thing being tested does not happen in real time at all. The
+only honest check is to let fifteen seconds pass and watch the overlay stay away.
+
+**The third one found a property of the existing helpers.** `boardState` reads six attributes in six
+separate round trips, which was harmless while every turn waited for a click somewhere. With three bots
+under `?fast=1` the bots' three turns pass **between two of those reads**, so `playUntil` can take
+`phase` from a bot's fleeting `act` and `turnNumber` from two turns later, and then try to click a pawn
+that no longer exists. The symptom was an unhelpful one: a click that timed out on "element is not
+stable".
+
+That is not a bug in the helper. It is a property that could not show up before, because until issue #43
+no turn ever passed without somebody clicking. The fix in that spec is to read the state **atomically**
+through `window.ludo`, which `main.js` has exposed since issue #62 for exactly this purpose, and to
+touch the page only while the board is resting on the person's turn. `helpers.js` is unchanged, because
+every other spec in the suite still has a person in every seat.
+
+**Two other things cost time in this spec and neither was a product bug.** `playTurn` cannot be used
+before a hand-over, because it waits for the turn number to move and the whole point of that screen is
+that the turn does not pass until Ready is pressed. And the hand-over screen opens **before** `end-turn`
+is dispatched, so the board still reads the turn that just finished: the assertion wanted 5 and the
+correct answer was 4.
+
+`turn-controls.js` got a unit test in the same change, and the reason is the same shape as the one
+above: the guard that stops a person clicking during a bot's pause protects a 900 ms window, and racing
+a 900 ms window in a browser is a flaky test by construction. The module imports no jQuery, so three
+assertions under `environment: "node"` do the job that a racy spec would have done badly.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

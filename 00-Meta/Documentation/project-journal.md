@@ -377,6 +377,19 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   the suite: a whole match played by four bots on the full skill pool, in about a second, under
   `environment: "node"`. Nothing failed at any point, which is a weaker result than a caught bug and is
   recorded as such in Ch. 08. Sprint 3, issue #43.
+- **2026-09-04, later: the bots reached the screen.** `bot-driver.js` is the loop's fourth sibling and
+  adds the one thing `ai/` may not know, time. Two lines in `advance()`, a borrowed duration token, input
+  guards so a person cannot play a bot's turn for it during the pause, two locale keys per language, and
+  `data-controller` on every HUD seat for the spec and for Design. The hand-over screen now only opens
+  when a second **person** is going to take the keyboard, which is a rule change and not a convenience.
+  `?bots=M` reads it off the address bar, and `readOptions` moved into `src/options.js` on the way,
+  because it had never been unit testable. `game-loop.js` paid for the driver with two real seams and
+  came out at exactly 300 lines, which is recorded as a problem for next time rather than as a success.
+  Three end-to-end cases, two of them at real speed on purpose, one new unit file for `turn-controls.js`,
+  and 15 cases for the address bar that had never existed. The full unit suite and the whole end-to-end
+  suite pass, with the counts in Ch. 09 next to the commands that produce them. Two negative findings
+  written down and not fixed: a bot's skill hand is face up, and the `reaction.*` sentences still say
+  "Spieler". Sprint 3, issue #43.
 
 ---
 
@@ -3959,6 +3972,71 @@ to get wrong later.
   house (FR-13) less often, and when a big die is genuinely better the advance term has already said so.
   Cost is 240 pure evaluations per turn, hidden behind an animation.
 - → Ch. 06
+
+### 2026-09-04: The hand-over screen is skipped when no second person is going to take the keyboard
+
+- **Chosen:** `onHandover` in `match-flow.js` asks `handoverNeeded(state, seat)` and passes the turn
+  itself when the answer is no. Two cases: the next seat is a bot, or there is only one person in the
+  match at all.
+- **Why:** the screen exists to keep an opponent's five skill cards secret while a device changes hands
+  (D33). A bot is not handed anything, and a soloist never puts the mouse down, so in both cases the
+  screen is a click charged for nothing.
+- **Consequence, and it is a rule change rather than a convenience:** with one human and three bots the
+  hand-over screen never appears in the whole match. Worth stating plainly, because D33's argument is
+  simply absent in that configuration rather than overridden.
+- **Why the flow and not the loop:** the loop's own comment already says that who decides the screen has
+  changed hands is a question about the person in front of it and not about the turn. The flow owns the
+  screens and is already handed `nextSeat(state)`.
+- **Rejected:** *keeping the screen and letting it pass itself after a moment.* It preserves one shape
+  for every turn and it puts an overlay in front of a solo player three times per round for no reason.
+- **Unchanged on purpose:** the hold **before** the screen. A move still has to finish arriving and a
+  refusal still has to be readable, whoever plays next; only what happens after the hold is different.
+- → Ch. 04
+
+### 2026-09-04: The bot's pause borrows `--motion-roll-hold` until Design answers D81
+
+- **Chosen:** `holdBot` reads the existing `--motion-roll-hold` token, with 900 ms as the no-stylesheet
+  fallback, and `FAST_DELAYS` gains `bot: 0`.
+- **Why a pause at all:** the bot decides instantly, and instantly is unreadable. Without one, a bot's
+  whole turn is painted inside a single synchronous pass and a player watching three opponents sees the
+  board jump from their own move to their next one. That is D70's argument about the roll, applied to a
+  whole turn.
+- **Why that token:** `CLAUDE.md` is explicit that Claude Code does not invent design rules, and a
+  duration in `tokens.css` is one. `--motion-roll-hold` already means "reading time for a decision the
+  turn hangs on", which is exactly this, so borrowing it states the intent without deciding anything.
+- **Rejected:** *a constant inside `bot-driver.js`.* Not overridable, so every end-to-end run with a bot
+  would pay 900 ms per intent, and a duration outside `tokens.css` is what D20 and D70 were raised to
+  remove. Also rejected: *inventing `--motion-bot-hold`*, which is Design's call and is asked as D81.
+- → Ch. 04
+
+### 2026-09-04: `readOptions` moved out of `main.js` so that it could be tested
+
+- **Chosen:** `src/options.js` holds `readOptions` and `FAST_DELAYS`. `main.js` is still the only caller,
+  and its header's claim becomes "read once, by the composition root".
+- **Why:** not the line count, which was 204. Importing `main.js` from a unit test pulls in jQuery,
+  twenty stylesheets and a `boot()` call at module level, so the address bar had never been unit tested
+  at all. Issue #43 added a fifth option with real arithmetic in it, which made the gap worth closing.
+- **Consequence:** `src/options.js` is listed **by name** in ESLint's browser-globals block for one
+  identifier, `URLSearchParams`. By name and not as `src/*.js`, so a future non-browser module at the top
+  of `src/` does not inherit a DOM by sitting next to it.
+- **Rejected:** *testing `readOptions` through Playwright by loading URLs.* One browser run per malformed
+  value, to test string parsing.
+- → Ch. 07, Ch. 08
+
+### 2026-09-04: `bindMatchEvents` was the seam that paid for the bot driver, not the header comment
+
+- **Chosen:** `game-loop.js` made room by grouping its five `bind*` calls into `bindMatchEvents` in
+  `events.js`, by replacing three identical stop blocks with a local `halt()`, and by naming the six
+  things every waiting sibling needs as one `wiring` object.
+- **Why it is a seam and not compression:** those five bindings are exactly the regions rebuilt with
+  every match, while the chrome and the overlay live for the whole session and are still bound by the
+  flow. The three stop blocks were literal copies, and each was a place a fourth sibling had to be
+  remembered. `wiring` had been written out three times before it was about to be written a fourth.
+- **Rejected:** *deleting comments to get under 300 lines.* `CLAUDE.md` forbids exactly that, and the
+  file's header is the only place the loop's contract with its four siblings is written down.
+- **Consequence, stated because it will come back:** `game-loop.js` is at **exactly** 300 lines. The next
+  thing that goes in has to take something out first.
+- → Ch. 04
 
 ---
 

@@ -67,9 +67,7 @@ function winScreen(state) {
 
   return {
     screen: OVERLAY_SCREEN.WIN,
-    title: won
-      ? t("match.won", { player: seatLabel(state.seats, state.winner) })
-      : t("match.abandoned"),
+    title: won ? t("match.won", { player: seatLabel(state, state.winner) }) : t("match.abandoned"),
     player: won ? state.winner : null,
     outcome: won ? "won" : "abandoned",
     buttons: [
@@ -93,7 +91,7 @@ function winScreen(state) {
 function handoverScreen(state, seat) {
   return {
     screen: OVERLAY_SCREEN.HANDOVER,
-    title: t("handover.title", { player: seatLabel(state.seats, seat) }),
+    title: t("handover.title", { player: seatLabel(state, seat) }),
     text: t("handover.text"),
     player: seat,
     buttons: [{ action: OVERLAY_ACTION.READY, label: t("handover.ready"), variant: "primary" }],

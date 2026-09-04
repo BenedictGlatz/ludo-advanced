@@ -349,6 +349,18 @@ Also in this change: `vitest.config.js`'s `coverage.include` gained `src/ai/**/*
 already written above it for `core/` and `state/`. The 80 % floor now covers three layers instead of
 two.
 
+### A sixth file in the browser-globals list, and it is not a `ui/` file: 2026-09-04, issue #43
+
+`src/options.js` is listed **by name** beside `src/ui/**` and `src/main.js`, and it is there for exactly
+one identifier: `URLSearchParams`. Reading the address bar is a browser fact.
+
+Listing it by name rather than widening the pattern to `src/*.js` is the whole decision. A pattern would
+hand a DOM to any future module that happens to sit at the top of `src/`, and a layer that quietly
+gained browser globals by being in the right directory is the failure this configuration exists to
+prevent. The cost is one line the day a second such file appears.
+
+Why the file exists at all is a testing question and belongs to [08-quality.md](08-quality.md).
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

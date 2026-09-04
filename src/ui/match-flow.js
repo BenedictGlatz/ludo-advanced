@@ -33,6 +33,7 @@
  */
 
 import { POOL_SIZE, createDicePool } from "../core/dice-pool.js";
+import { botSeatsFor, handoverNeeded } from "../state/bots.js";
 import { matchDeps, restartMatch, startMatch } from "../state/match.js";
 import { renderChrome, updateChrome } from "./chrome-view.js";
 import { bindChromeEvents, bindOverlayEvents } from "./events.js";
@@ -57,6 +58,8 @@ import { createSessionActions } from "./session-actions.js";
  *   rule: `startMatch` has accepted a stacked pool since issue #38 and nothing in production passed one,
  *   so a test can put a named card in a hand instead of hoping a seed does. `main.js` carries the reason
  *   a seed could not.
+ * - `bots` is how many of the seats play themselves, from `?bots=`, and it is a **count** rather than a
+ *   list of seats because which seats they are is `botSeatsFor`'s rule in `state/` (FR-43).
  */
 export function createMatchFlow({
   $root,
@@ -65,6 +68,7 @@ export function createMatchFlow({
   delays = {},
   skipHandover = false,
   stack = null,
+  bots = 0,
 }) {
   const session = { $chrome: renderChrome(), $overlay: renderOverlay() };
 
@@ -144,9 +148,26 @@ export function createMatchFlow({
    *
    * `seat` is `nextSeat` from the turn manager, so the overlay names the same player `endTurn` is about
    * to hand the turn to rather than working it out a second time.
+   *
+   * **The screen only goes up when a second person is actually going to take it** (FR-43). A bot is not
+   * handed anything, and a soloist playing three bots never puts the mouse down, so `handoverNeeded`
+   * answers both cases and the turn simply passes.
+   *
+   * The hold in `waits.afterTurn` still runs first, unchanged: a move has to finish arriving and a
+   * refusal has to be readable whoever plays next. Only what happens **after** the hold is different.
+   *
+   * Why the flow and not the loop: the loop's own comment says that who decides the screen has changed
+   * hands is a question about the person in front of it and not about the turn, and this is that
+   * question. The flow owns the screens and is already handed `nextSeat(state)`.
    */
   function onHandover(seat) {
     state = loop.getState();
+
+    if (!handoverNeeded(state, seat)) {
+      loop.passTurn();
+      return;
+    }
+
     openScreen(OVERLAY_SCREEN.HANDOVER, seat);
   }
 
@@ -177,10 +198,18 @@ export function createMatchFlow({
    * `undefined` rather than `null` for the skill squares, because that is what makes `startMatch` use
    * its default. `stack` is `null` in every production boot, and `seedSkillCards` shuffles a real pool
    * when it is not given one.
+   *
+   * **`Math.min(bots, playerCount - 1)` is not belt and braces.** `bots` is read once, off the address
+   * bar, and `playerCount` changes every time somebody picks a different count on the setup screen. So
+   * `?players=4&bots=3`, quit to the menu, start a two-player match would otherwise seat three bots at
+   * a two-seat table, and `botSeatsFor` clamps that to an all-bot match rather than throwing. One
+   * person is always left at the keyboard.
    */
   function freshMatch(playerCount) {
     deps = matchDeps(rng, createDicePool());
-    beginMatch(startMatch(playerCount, deps, undefined, stack ?? undefined));
+    const botSeats = botSeatsFor(playerCount, Math.min(bots, playerCount - 1));
+
+    beginMatch(startMatch(playerCount, deps, undefined, stack ?? undefined, botSeats));
   }
 
   /**

@@ -104,7 +104,7 @@ function windowLine(seats, window) {
  * text field, because a text field needs validation, a submit and a keyboard, and the die has at most
  * twenty faces. FR FR is the only card that uses it.
  */
-function targetButtons(kind, { seats, actor, chosenDie, choices }) {
+function targetButtons(kind, { seats, bots, actor, chosenDie, choices }) {
   switch (kind) {
     case "direction":
       return [
@@ -120,7 +120,7 @@ function targetButtons(kind, { seats, actor, chosenDie, choices }) {
     case "player":
       return seats
         .filter((seat) => seat !== actor)
-        .map((seat) => button(seatName(seats, seat), PROMPT_ACTION.PICK, String(seat)));
+        .map((seat) => button(seatName({ seats, bots }, seat), PROMPT_ACTION.PICK, String(seat)));
     default:
       return [];
   }

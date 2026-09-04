@@ -5,6 +5,8 @@
   "player": {
     "name": "Player {{number}}",
     "named": "Player {{number}} ({{colour}})",
+    "bot": "Bot {{number}}",
+    "botNamed": "Bot {{number}} ({{colour}})",
     "colour": {
       "0": "red",
       "1": "yellow",

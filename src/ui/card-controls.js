@@ -37,6 +37,7 @@
 
 import { INTENT } from "../state/intents.js";
 import { INTENT_CARD, seatOnShow } from "../state/intents-cards.js";
+import { isBot } from "../state/bots.js";
 import { motionMs } from "./board-view.js";
 import { PROMPT_ACTION } from "./prompt-view.js";
 import { createTargetPicker } from "./target-picker.js";
@@ -210,11 +211,16 @@ export function createCardControls({
    *
    * The seat is `seatOnShow` and not simply the active player: during a reaction window the hand on screen
    * belongs to whoever is being asked, and they are the one playing the card.
+   *
+   * **A bot's hand is not clickable during its own turn** (issue #43). Declining an open window stays
+   * allowed and needs no guard: `bot-driver.js` takes every bot out of `eligible` before the prompt is
+   * drawn, so the seat on show during a window is always a person.
    */
   function onSkillCardActivated(cardId, slot) {
     if (picker.isPicking()) return;
 
     const state = getState();
+    if (state.reactionWindow === null && isBot(state, state.activePlayer)) return;
 
     picker.start(state, cardId, slot, seatOnShow(state));
   }
@@ -224,6 +230,8 @@ export function createCardControls({
 
     switch (action) {
       case PROMPT_ACTION.SKIP:
+        // Carry on is the bot's own step during its turn, so a person cannot press it for it.
+        if (isBot(state, state.activePlayer)) return;
         if (apply({ type: INTENT.SKIP_ACTION })) carryOn();
         return;
       case PROMPT_ACTION.DECLINE:

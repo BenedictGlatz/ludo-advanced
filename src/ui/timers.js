@@ -183,6 +183,42 @@ export function holdRoll(delays, readToken) {
 }
 
 /**
+ * How long a bot appears to think before it plays. Issue #43. The fallback, not the number.
+ *
+ * Same arrangement as the three constants above it, and the same reason: this is what to use when no
+ * stylesheet has loaded, which happens in a test harness rather than in a browser.
+ */
+export const BOT_HOLD_MS = 900;
+
+/**
+ * How long to wait before dispatching a bot's intent. The fourth wait in this module.
+ *
+ * ## Why a bot waits at all
+ *
+ * The bot decides instantly, and instantly is unreadable. Without a pause a bot's whole turn (pick a
+ * card, roll it, move a pawn) is painted inside one synchronous pass, so a player watching three
+ * opponents would see the board jump from their own move to their next one. That is D70's argument
+ * about the roll, applied to a whole turn: something which happens and is immediately overtaken has
+ * not been shown, it has been mentioned.
+ *
+ * ## Why it reuses `--motion-roll-hold` instead of getting its own token
+ *
+ * `CLAUDE.md` is explicit that Claude Code does not invent design rules, and a duration in `tokens.css`
+ * is a design rule. `--motion-roll-hold` is the one existing token that means "reading time for a
+ * decision the turn hangs on", which is exactly what this is, so borrowing it states the intent without
+ * deciding anything Design has not. **Whether the bot deserves a token of its own, whether 900 ms is
+ * right, and whether the pause belongs per intent or per turn are D81**, and until that is answered the
+ * borrowed token is the honest placeholder.
+ *
+ * Rejected: *a constant inside `bot-driver.js`.* It cannot be overridden, so every end-to-end run with
+ * a bot in it would pay 900 ms per intent, and a duration living outside `tokens.css` is precisely what
+ * D20 and D70 were raised to remove.
+ */
+export function holdBot(delays, readToken) {
+  return delays.bot ?? readToken("--motion-roll-hold", BOT_HOLD_MS);
+}
+
+/**
  * A set of named timers.
  *
  * `window` is read from the caller's scope rather than injected, which is the same choice `game-loop.js`

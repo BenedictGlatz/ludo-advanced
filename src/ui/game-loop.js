@@ -21,12 +21,14 @@
  * | Pick a pawn, then commit it | `act` | Issue #62 |
  * | Play a Reaction, or decline | any, while a window is open | Issue #33 |
  *
+ * **Since issue #43 a seat can answer all four without a person**, and that changed nothing here except
+ * two lines in `advance()`. `bot-driver.js` is the fifth sibling and asks `src/ai/` the same questions
+ * the four controls above answer from a click. A bot is a player without a screen.
+ *
  * Two things still happen without the player, and both for a stated reason:
  *
  * - **`roll` rolls itself.** There is nothing to decide there. The phase exists so that the on-roll
- *   reaction window has a moment to open in, and so a roll animation has something to hang off. **The
- *   second half of that sentence became true on 2026-09-03**, with design spec 11's D70. It had been
- *   describing something that did not exist since `182e5fa`.
+ *   reaction window has a moment to open in, and so a roll animation has something to hang off (D70).
  * - **The turn hands over on its own** only when nobody is watching for it. Since issue #39 the pause
  *   after a move ends in the handover overlay rather than in the next turn: `onHandover` is called and a
  *   person presses Ready. The timer is still there and still uses the design's durations, because a move
@@ -41,24 +43,18 @@
  * ## The waiting is not in this file any more
  *
  * It used to be, and the durations with it. Since design spec 11's D70 the roll has a hold of its own,
- * which was the third wait and the one that would have pushed this file past 300 lines, so both of the
- * waits the loop takes by itself moved to `turn-waits.js`. The reaction window's thirty seconds were
- * already `card-controls.js`'s, and the branch that reads an open window went there in the same change.
- * What is left here is the decision to wait, never how long, and never what the waiting looks like.
+ * so both of the waits the loop takes by itself live in `turn-waits.js`, the reaction window's thirty
+ * seconds are `card-controls.js`'s, and the bot's pause is `bot-driver.js`'s. What is left here is the
+ * decision to wait, never how long, and never what the waiting looks like.
  */
 
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { INTENT, dispatch } from "../state/intents.js";
 import { playableCards } from "../state/intents-cards.js";
 import { nextSeat } from "../state/turn-manager.js";
+import { createBotDriver } from "./bot-driver.js";
 import { createCardControls } from "./card-controls.js";
-import {
-  bindBoardEvents,
-  bindDiceHandEvents,
-  bindPickEvents,
-  bindPromptEvents,
-  bindSkillHandEvents,
-} from "./events.js";
+import { bindMatchEvents } from "./events.js";
 import { createRenderer } from "./render.js";
 import { createTimers } from "./timers.js";
 import { createTurnControls } from "./turn-controls.js";
@@ -110,15 +106,26 @@ export function createGameLoop({
     return result.accepted;
   }
 
-  const cards = createCardControls({
-    $board,
+  /**
+   * What every sibling that can wait needs from the loop: the timer registry, the durations, the one
+   * state reference, the one dispatcher, and the two ways back in.
+   *
+   * Written out three times identically until issue #43 was about to write it a fourth. It is not only
+   * repetition: the list **is** the contract of a sibling module, and having it in one place is what
+   * makes "no module holds its own copy of the state" checkable by reading five lines.
+   */
+  const wiring = {
     timers,
     delays,
     getState: () => state,
     apply,
     refresh: render,
     resume: () => advance(),
-  });
+  };
+
+  const cards = createCardControls({ $board, ...wiring });
+  const waits = createTurnWaits({ parts, ...wiring });
+  const bots = createBotDriver({ $board, ...wiring });
 
   const board = createTurnControls({
     getState: () => state,
@@ -128,14 +135,21 @@ export function createGameLoop({
     isPicking: () => cards.isPicking(),
   });
 
-  const waits = createTurnWaits({
-    parts,
-    timers,
-    delays,
-    getState: () => state,
-    refresh: render,
-    resume: () => advance(),
-  });
+  /**
+   * Stop everything that is waiting. Three callers wrote these lines out identically until the fourth
+   * sibling was about to be added to each of them, and the symptom of missing one is a timer firing
+   * into a match that is already gone.
+   *
+   * `bots.stop()` is redundant after `timers.clearAll()`, which clears every name. It is here on the
+   * convention `waits` already follows: **a module that starts a timer is asked to stop it**, so
+   * nothing depends on the registry's sweep also being right.
+   */
+  function halt() {
+    timers.clearAll();
+    cards.stop();
+    waits.stop();
+    bots.stop();
+  }
 
   /**
    * Hand the turn on and carry straight into the next one.
@@ -158,9 +172,7 @@ export function createGameLoop({
     render();
 
     if (state.status !== MATCH_STATUS.RUNNING) {
-      timers.clearAll();
-      cards.stop();
-      waits.stop();
+      halt();
 
       // Guarded, because `advance()` is re-entered after every accepted intent and the match-over
       // screen must open once rather than on every pass.
@@ -181,6 +193,11 @@ export function createGameLoop({
     }
 
     if (state.reactionWindow !== null) {
+      // **Bots drop out first**, so the clock and the prompt only ever address people. Two things
+      // follow from the order: a window with nobody but bots in it shuts at once instead of running a
+      // thirty-second countdown, and in a mixed round `seatOnShow`, which is `eligible[0]`, is a
+      // person. `declineAll` takes no pause, because somebody else is waiting on this window.
+      bots.declineAll();
       if (cards.handleWindow()) return;
       advance();
       return;
@@ -210,7 +227,13 @@ export function createGameLoop({
 
     if (state.phase === TURN_PHASE.TURN_END) {
       waits.afterTurn(onHandover === null ? passTurn : () => onHandover(nextSeat(state)));
+      return;
     }
+
+    // A bot in `choose`, in `action` holding a playable card, or in `act`. It comes **after** the three
+    // self-taken steps above, so a bot with nothing playable is skipped through the action phase with no
+    // pause at all, rather than appearing to think about a decision it does not have.
+    if (bots.takeTurn()) return;
 
     // `choose`, `action` with a card in hand, and `act` are the phases that wait for a person.
   }
@@ -218,11 +241,7 @@ export function createGameLoop({
   return {
     /** Put the board on screen and start the first turn. */
     start() {
-      bindBoardEvents($board, { onPawnActivated: board.onPawnActivated });
-      bindPickEvents($board, cards.handlers);
-      bindDiceHandEvents($diceHand, { onDiceCardActivated: board.onDiceCardActivated });
-      bindSkillHandEvents($skillHand, cards.handlers);
-      bindPromptEvents($prompt, cards.handlers);
+      bindMatchEvents({ $board, $diceHand, $skillHand, $prompt }, { board, cards });
       advance();
     },
 
@@ -241,11 +260,7 @@ export function createGameLoop({
      * card frozen part way through its throw, and the next match's first render would find `data-rolling`
      * already set. `waits.stop()` is what handles that half.
      */
-    stop() {
-      timers.clearAll();
-      cards.stop();
-      waits.stop();
-    },
+    stop: halt,
 
     /**
      * Pass the turn on, which is what the handover overlay's Ready button does.
@@ -260,12 +275,11 @@ export function createGameLoop({
      *
      * The state object is untouched, because a pause is not a game event: nothing in the rulebook knows
      * about it, and putting it in the frozen state would make the rules layer hold a fact about a button.
+     *
+     * **This is also why a bot can never move under an overlay.** Both the pause screen and the pool
+     * overview go through here, and `halt()` clears the bot's pending timer with everything else.
      */
-    pause() {
-      timers.clearAll();
-      cards.stop();
-      waits.stop();
-    },
+    pause: halt,
 
     /**
      * Carry on from where the pause left off.

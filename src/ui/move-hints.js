@@ -136,8 +136,8 @@ function message(state) {
       kind: "trap",
       key: `trap.fired.${state.trapFired.kind}`,
       options: {
-        player: seatLabel(state.seats, state.trapFired.player),
-        owner: seatLabel(state.seats, state.trapFired.owner),
+        player: seatLabel(state, state.trapFired.player),
+        owner: seatLabel(state, state.trapFired.owner),
         squares: state.trapFired.squares,
       },
     };
