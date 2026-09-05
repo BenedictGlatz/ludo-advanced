@@ -39,8 +39,8 @@ import { toggleController } from "../state/bots.js";
  *
  * ```js
  * const lineup = createLineup();
- * lineup.begin(4);              // seats [0, 1, 2, 3], nobody a bot
- * lineup.toggle(3);             // seat 3 is the computer
+ * lineup.begin(4);                    // seats [0, 1, 2, 3], nobody a bot
+ * lineup.setController(3, "bot");     // seat 3 is the computer
  * lineup.snapshot();            // { playerCount: 4, seats: [0, 1, 2, 3], bots: [3] }
  * ```
  *
@@ -69,12 +69,21 @@ export function createLineup() {
     },
 
     /**
-     * Switch one seat between a person and the computer.
+     * Say what plays one seat: `"human"` or `"bot"`.
+     *
+     * **A click on the position that is already chosen does nothing**, which is why this sets a value
+     * rather than flipping the row. The control is a pair of positions and both of them are live at
+     * all times (D91.2), so "Spieler" on a row that is already a person has to be a no-op and not a
+     * switch to the computer.
      *
      * The refusal is `toggleController`'s and not this file's: it hands back the list unchanged when
      * the seat is the last person, so a refused click leaves the line-up exactly as it was.
      */
-    toggle(seat) {
+    setController(seat, controller) {
+      const isBotNow = bots.includes(seat);
+
+      if ((controller === "bot") === isBotNow) return;
+
       bots = toggleController(seats, bots, seat);
     },
 

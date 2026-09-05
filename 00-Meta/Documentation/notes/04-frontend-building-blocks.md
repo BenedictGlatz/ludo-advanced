@@ -2841,6 +2841,40 @@ single-player match is now two clicks away instead of one, on a screen that exis
 was unreachable. The trade is that the screen never overwrites the answer the player gave one click
 earlier: somebody who clicks 4 was almost certainly counting people.
 
+### The line-up screen's description, and a mistake in the spec its test found: 2026-09-05, issue #76
+
+`src/ui/lineup-screen.js` is the third screen to get a file of its own beside `overlay-screens.js`,
+after the pool overview and the menu, and for the reason that file states about itself: it stays a
+switch. This screen carries rows, which no other screen does.
+
+**A row is a seat, a name and two named positions.** The two positions are "Spieler" and "Bot", which
+is the HUD's word (constraint 8 of the brief): `hud-view.js` says Bot, the row's own label says Bot, so
+the button says Bot. `data-controller="human"` keeps the code's word without it ever being a word a
+player reads.
+
+**The row is not one button that flips.** Both positions are visible and live at all times, so a player
+can see what the other one would be without clicking it. The consequence in the code is that a click
+sets a value rather than toggling: "Spieler" on a row that is already a person has to do nothing.
+
+#### A negative finding: handoff 15 names the two-player rows wrongly, and the code is right
+
+§ D96.2 of the spec and mockup 15c both draw a two-player line-up as **"Spieler 1 (Rot)" and
+"Spieler 3 (Grün)"**, on the reading that the label follows the seat number and seat 2 is therefore
+player 3.
+
+**That is the exact defect `player-labels.js` was written to fix.** `displayNumber` counts the seat's
+position in `state.seats`, not the seat number, so the real rows are **"Spieler 1 (Rot)" and
+"Spieler 2 (Grün)"**. That file's header records the old behaviour as a bug: "a two-player match was
+played by Spieler 1 and Spieler 3, and there was no Spieler 2".
+
+**Nothing in the delivery had to change.** The spec's *instruction* is to reuse `player.named` and
+`player.botNamed`, which is what is built; only its worked example is wrong. The unusual pairing that
+made the case worth drawing survives either way, and it is the more interesting half: **Spieler 2 is
+green**, because the colour is keyed on the seat and the number on the position in the seat list.
+
+It was caught by a unit test written from the spec, which failed against correct code. Worth keeping in
+the report as the cheapest possible way to find a wrong assumption in a document.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

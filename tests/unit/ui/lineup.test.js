@@ -41,14 +41,28 @@ describe("the line-up", () => {
     expect(lineup.snapshot().seats).toEqual([0, 1, 2, 3]);
   });
 
+  it("does nothing when the position that is already chosen is clicked", () => {
+    // Both positions are live at all times, so "Spieler" on a row that is already a person has to be
+    // a no-op rather than a switch to the computer. That is the whole reason this sets a value.
+    const lineup = createLineup();
+    lineup.begin(4);
+    lineup.setController(2, "bot");
+
+    lineup.setController(2, "bot");
+    expect(lineup.snapshot().bots).toEqual([2]);
+
+    lineup.setController(1, "human");
+    expect(lineup.snapshot().bots).toEqual([2]);
+  });
+
   it("switches a seat to the computer and back", () => {
     const lineup = createLineup();
     lineup.begin(4);
 
-    lineup.toggle(3);
+    lineup.setController(3, "bot");
     expect(lineup.snapshot().bots).toEqual([3]);
 
-    lineup.toggle(3);
+    lineup.setController(3, "human");
     expect(lineup.snapshot().bots).toEqual([]);
   });
 
@@ -57,7 +71,7 @@ describe("the line-up", () => {
     // have red and move first, and the player takes green.
     const lineup = createLineup();
     lineup.begin(2);
-    lineup.toggle(0);
+    lineup.setController(0, "bot");
 
     expect(lineup.snapshot().bots).toEqual([0]);
   });
@@ -65,12 +79,12 @@ describe("the line-up", () => {
   it("refuses to turn the last person into a bot, and changes nothing when it does (FR-01)", () => {
     const lineup = createLineup();
     lineup.begin(3);
-    lineup.toggle(1);
-    lineup.toggle(2);
+    lineup.setController(1, "bot");
+    lineup.setController(2, "bot");
 
     expect(lineup.snapshot().bots).toEqual([1, 2]);
 
-    lineup.toggle(0);
+    lineup.setController(0, "bot");
     expect(lineup.snapshot().bots).toEqual([1, 2]);
   });
 
@@ -79,9 +93,9 @@ describe("the line-up", () => {
     // them into a two-seat match, where two of those seats do not exist.
     const lineup = createLineup();
     lineup.begin(4);
-    lineup.toggle(1);
-    lineup.toggle(2);
-    lineup.toggle(3);
+    lineup.setController(1, "bot");
+    lineup.setController(2, "bot");
+    lineup.setController(3, "bot");
 
     lineup.begin(2);
 

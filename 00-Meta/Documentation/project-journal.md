@@ -4415,6 +4415,26 @@ to get wrong later.
   into seats that do not exist.
 - → Ch. 04
 
+### 2026-09-05: A unit test written from the spec found the spec wrong, not the code
+
+- **The claim:** design handoff 15, § D96.2 and mockup 15c, says a two-player line-up reads
+  "Spieler 1 (Rot)" and "Spieler 3 (Grün)", with no Spieler 2, and draws it that way on purpose as
+  "the case a four-row drawing hides".
+- **What it actually reads:** "Spieler 1 (Rot)" and "Spieler 2 (Grün)". `displayNumber` in
+  `player-labels.js` counts the seat's **position in `state.seats`**, not the seat number, and that
+  file's header records "Spieler 1 and Spieler 3 with no Spieler 2" as the two-year-old off-by-one it
+  was created to remove.
+- **Nothing had to change.** The spec's instruction is to reuse `player.named` and `player.botNamed`,
+  which is what is built. Only the worked example is wrong, and the pairing that made the case worth
+  drawing survives anyway: Spieler 2 is **green**, because the colour is keyed on the seat and the
+  number on the position.
+- **How it was found:** a unit test written straight from the spec's sentence failed against correct
+  code. That is the cheapest place this could have been caught, and it argues for writing the spec's
+  own examples down as assertions rather than reading past them.
+- **Reported to the Product Owner** rather than corrected in the delivered spec, since
+  `01-Design/Handoff/` is the design side's document.
+- → Ch. 04
+
 ---
 
 ## Challenges

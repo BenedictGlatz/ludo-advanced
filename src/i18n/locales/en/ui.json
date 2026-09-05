@@ -56,6 +56,14 @@
     "players": "{{players}} players",
     "start": "Go"
   },
+  "lineup": {
+    "title": "Player or bot?",
+    "text": "At least one seat is a player's. A bot plays a whole turn: dice card, roll, move and skill cards.",
+    "human": "Player",
+    "bot": "Bot",
+    "begin": "Start the match",
+    "back": "Back"
+  },
   "pause": {
     "open": "Pause",
     "title": "Paused",
