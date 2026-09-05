@@ -45,7 +45,7 @@
  *
  * | Lives for | Fields | Cleared by |
  * | --- | --- | --- |
- * | The match | `pawns`, `seats`, `skillSquares`, `skillPool`, `skillDiscard`, `skillHands` | nothing |
+ * | The match | `pawns`, `seats`, `bots`, `skillSquares`, `skillPool`, `skillDiscard`, `skillHands` | nothing |
  * | Several turns | `statuses`, `traps` | their own deadline, or being used up |
  * | One turn | `hand`, `chosenDie`, `roll`, `modifiers`, `cardsPlayed`, `reactionWindow`, ... | `clearedTurnFields` |
  *
@@ -59,6 +59,7 @@ import { seatsFor } from "../core/board.js";
 import { createPawns, pawnProgress } from "../core/pawns.js";
 import { createModifiers } from "../core/roll.js";
 import { INITIAL_SKILL_SQUARES } from "../core/skill-squares.js";
+import { assertBotSeats } from "./bots.js";
 import { deepFreeze } from "./freeze.js";
 
 /**
@@ -120,13 +121,23 @@ export const MATCH_STATUS = {
  *
  * The default is the real layout, so no production caller passes anything and there is no way to start
  * a match with an accidentally empty board.
+ *
+ * **`bots` is the seats that play themselves** (FR-43), and it sits beside `seats` because it has the
+ * same lifetime and the same nature: a fact about who is in this match, decided once at the start and
+ * read from then on. [bots.js](bots.js) owns the list and the rule that builds it. The default is
+ * `[]`, so every match built by a test written before issue #43 is still an all-human match.
+ *
+ * A match made only of bots is allowed here. Stopping it is not a rule, it is a thing to tell whoever
+ * typed the number, so it is checked where the number is typed, in `src/options.js`.
  */
-export function createGameState(playerCount, skillSquares = INITIAL_SKILL_SQUARES) {
+export function createGameState(playerCount, skillSquares = INITIAL_SKILL_SQUARES, bots = []) {
   const seats = seatsFor(playerCount);
+  assertBotSeats(seats, bots);
 
   return deepFreeze({
     playerCount,
     seats,
+    bots: [...bots].sort((a, b) => a - b),
     status: MATCH_STATUS.RUNNING,
     activePlayer: seats[0],
     turnNumber: 1,
@@ -253,6 +264,21 @@ export function clearedTurnFields() {
      * quietest possible bug in a system like this".
      */
     nullifiedCard: null,
+
+    /**
+     * `{ seat, cardId }` of the last skill card played this turn, or `null`. Issue #82.
+     *
+     * **The one field here that carries no rule at all**: nothing in `core/` or `state/` reads it and
+     * a match plays out identically without it. It exists because a **bot** plays cards now, and a
+     * card played by somebody who is not at the keyboard has to be announced or, as far as the player
+     * is concerned, it did not happen. It cannot be derived afterwards: the card sits in the discard
+     * pile with every other card of the match, and several cards leave the board looking untouched.
+     *
+     * Rejected: *a variable in `ui/`.* The strip is drawn out of the state and nothing else, and a
+     * fourth piece of presentation state threaded through `render` would be one refresh out of step
+     * with the board it describes. `nullifiedCard` and `trapFired` are the same kind of field.
+     */
+    lastCardPlayed: null,
 
     /**
      * The object that just went off, or `null` (FR-30). Shaped

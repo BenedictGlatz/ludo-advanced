@@ -324,6 +324,43 @@ one browser per matrix job instead of all three. Browser binaries are deliberate
 cache key that goes stale against a Playwright version produces the "Executable doesn't exist" failure
 this project already lost time to on 2026-08-30, and a fresh download is about a minute.
 
+### ESLint learned a fourth layer, and the six global names stopped being copied: 2026-09-04, issue #43
+
+`src/ai/` is the first layer added since the toolchain was bootstrapped, so it is the first test of
+whether the layer rules in `eslint.config.js` were written to be extended or only to be satisfied.
+
+**`aiLayerBans` is `coreLayerBans` with `state/` taken out of the forbidden group.** `ai/` may import
+`core/` and `state/`; it may not import `ui/` or `i18n/`, and it may not import `jquery` or `i18next`
+by name. The block sits between the `state/` block and the `ui/` block, which is also where the layer
+sits in the dependency arrow.
+
+**`src/ai/**` is deliberately not in the `browserGlobals` file list.** So a bare `window` in a bot file
+fails twice: once on `no-restricted-globals` with the layer message, and once on `no-undef` because the
+name is genuinely not declared. Two failures for one mistake is the right number when the mistake is a
+layer violation, and it is the arrangement `core/` and `state/` already had.
+
+**The six global names became one shared constant, `noBrowserGlobals`.** Before this change they were
+written out once, for `core/` and `state/`. Adding `ai/` would have made a second copy, and the reason
+not to is specific rather than tidiness: the two lists would drift, and the drift is **silent**. A name
+missing from one list is not an error anywhere, it is simply a ban that stopped applying, and nothing
+in a green lint run would say so. The messages were reworded to name all three layers.
+
+Also in this change: `vitest.config.js`'s `coverage.include` gained `src/ai/**/*.js`, on the argument
+already written above it for `core/` and `state/`. The 80 % floor now covers three layers instead of
+two.
+
+### A sixth file in the browser-globals list, and it is not a `ui/` file: 2026-09-04, issue #43
+
+`src/options.js` is listed **by name** beside `src/ui/**` and `src/main.js`, and it is there for exactly
+one identifier: `URLSearchParams`. Reading the address bar is a browser fact.
+
+Listing it by name rather than widening the pattern to `src/*.js` is the whole decision. A pattern would
+hand a DOM to any future module that happens to sit at the top of `src/`, and a layer that quietly
+gained browser globals by being in the right directory is the failure this configuration exists to
+prevent. The cost is one line the day a second such file appears.
+
+Why the file exists at all is a testing question and belongs to [08-quality.md](08-quality.md).
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

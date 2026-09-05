@@ -55,11 +55,22 @@ function assertDeps(deps) {
  *
  * Both defaults are the real thing, so no production caller passes either and there is no way to start
  * a real match with an accidentally empty pool.
+ *
+ * ## `bots` is the fifth positional parameter, and that is a decision with a deadline
+ *
+ * `bots` is a list of seat numbers (FR-43), forwarded to `createGameState`, which carries the reason
+ * the field exists. Five positional parameters is one too many to read comfortably, and an options
+ * object would be nicer. It is not worth doing today: `startMatch(2, deps, [], [])` is written out in
+ * `match.test.js`, in `scripts/find-seeds.js` and in `ui/match-flow.js`, and rewriting all three to
+ * change nothing about the behaviour is work spent on the shape of a call.
+ *
+ * **The day FR-46 brings rule toggles and asks for a sixth parameter is the day to make it an options
+ * object.** Writing that down here is cheaper than arguing about it twice.
  */
-export function startMatch(playerCount, deps, skillSquares, skillPool) {
+export function startMatch(playerCount, deps, skillSquares, skillPool, bots = []) {
   assertDeps(deps);
 
-  const fresh = createGameState(playerCount, skillSquares);
+  const fresh = createGameState(playerCount, skillSquares, bots);
   const seeded = nextState(fresh, seedSkillCards(fresh, deps, skillPool));
 
   return drawHand(seeded, deps);
@@ -74,9 +85,13 @@ export function startMatch(playerCount, deps, skillSquares, skillPool) {
  * **The skill squares go back to their starting layout, they are not carried over.** A restart is a
  * fresh match, and a board that kept the arrangement the last match had wandered into would make the
  * second match start from a position nobody chose.
+ *
+ * **The bot seats are the one thing that is carried over**, and that is not an inconsistency with the
+ * paragraph above. The skill squares are a *position* the last match wandered into; the bot seats are
+ * *who is playing*, and nobody left the room between the win screen and Play Again.
  */
 export function restartMatch(state, deps) {
-  return startMatch(state.playerCount, deps);
+  return startMatch(state.playerCount, deps, undefined, undefined, state.bots);
 }
 
 /**

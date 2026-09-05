@@ -24,8 +24,11 @@ test.describe("the handover", () => {
     // Deliberately **without** `fast=1`, because the whole point of this screen is that it waits. Every
     // other spec runs with the gate skipped, which is the affordance that kept them unchanged.
     await page.goto("/?seed=1");
-    await action(page, "start").click();
+    await action(page, "hotseat").click();
     await page.locator('.overlay__button[data-count="2"]').click();
+    // The line-up screen since issue #76. It opens with both seats a person, which is what the
+    // handover needs: a bot is never handed anything.
+    await action(page, "begin").click();
 
     const board = page.locator(".board");
 
@@ -69,8 +72,11 @@ test.describe("the handover", () => {
    */
   test("rewrites the rail for the arriving seat before the curtain lifts", async ({ page }) => {
     await page.goto("/?seed=1");
-    await action(page, "start").click();
+    await action(page, "hotseat").click();
     await page.locator('.overlay__button[data-count="2"]').click();
+    // The line-up screen since issue #76. It opens with both seats a person, which is what the
+    // handover needs: a bot is never handed anything.
+    await action(page, "begin").click();
 
     const board = page.locator(".board");
 

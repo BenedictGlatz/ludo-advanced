@@ -15,7 +15,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { POOL_COMPOSITION, POOL_SIZE } from "../../../src/core/dice-pool.js";
 import { changeLanguage, initI18n } from "../../../src/i18n/index.js";
 import { OVERLAY_ACTION, OVERLAY_SCREEN } from "../../../src/ui/overlay-vocabulary.js";
-import { poolScreen } from "../../../src/ui/pool-screen.js";
+import { poolCountsFor, poolScreen } from "../../../src/ui/pool-screen.js";
 import { screenDescription } from "../../../src/ui/overlay-screens.js";
 
 /** The count the overview shows for almost the whole of a turn: three cards are out on the hand. */
@@ -127,5 +127,32 @@ describe("the overview as the overlay's sixth screen", () => {
     ]) {
       expect(screenDescription(screen, {}).cards ?? []).toEqual([]);
     }
+  });
+});
+
+/**
+ * `poolCountsFor` came out of `match-flow.js` with the line-up screen (issue #76). It was only ever
+ * covered through Playwright before that, because it lived inside a closure that needs jQuery to
+ * build. Moving it next to the screen it feeds is what made these three cases writable at all.
+ */
+describe("the two numbers the overview is built from", () => {
+  it("reads the face-down count off the dice source, and the total off the pool", () => {
+    const deps = { diceSource: { remaining: () => 17 } };
+
+    expect(poolCountsFor(deps)).toEqual({ remaining: 17, total: POOL_SIZE });
+  });
+
+  it("asks the source again every time, so the count cannot go stale between two draws", () => {
+    let left = 20;
+    const deps = { diceSource: { remaining: () => left } };
+
+    expect(poolCountsFor(deps).remaining).toBe(20);
+    left = 17;
+    expect(poolCountsFor(deps).remaining).toBe(17);
+  });
+
+  it("answers null when there is no match, which is what keeps the screen from outliving its pool", () => {
+    expect(poolCountsFor(null)).toBeNull();
+    expect(poolCountsFor(undefined)).toBeNull();
   });
 });

@@ -7,6 +7,25 @@
  */
 
 import { createPawns } from "../../src/core/pawns.js";
+import { createGameState, nextState } from "../../src/state/game-state.js";
+
+/**
+ * A real four-player state with `fields` written over it. Issue #82.
+ *
+ * Built out of `createGameState` and `nextState` rather than out of a literal, which is the whole
+ * point: the bot's card values read a dozen fields, and a hand-written fixture that forgets one of
+ * them fails as a `TypeError` inside a value function, which reads like a bug in the bot. This cannot
+ * fall behind the real shape, because it **is** the real shape.
+ *
+ * The skill squares are emptied, because every caller of this builder places its own pawns and a
+ * skill square nobody asked about only shows up as an extra draw from the RNG.
+ *
+ * The result is frozen, like every state in the game, so a value function that sorted a list in place
+ * fails loudly here instead of quietly corrupting a match.
+ */
+export function stateFor(fields = {}) {
+  return nextState(createGameState(4, []), fields);
+}
 
 /**
  * A pawn list for `playerCount` players with some pawns moved off their start squares.

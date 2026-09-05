@@ -24,6 +24,8 @@
  * is a presentation question and this file has no opinion on it.
  */
 
+import { isBot } from "../state/bots.js";
+
 /**
  * How long a refusal stays on screen before the turn passes.
  *
@@ -105,6 +107,34 @@ export function announcement(state) {
 }
 
 /**
+ * The same question mid-turn, where a **bot's** card play also counts. Issue #82.
+ *
+ * A person who plays a card watched themselves do it. A bot's card is played by nobody the player can
+ * see, so it is announced in the message strip and, like a trap, it needs a guaranteed moment on
+ * screen before the turn carries on. Same argument as D60, same borrowed token.
+ *
+ * **Two functions and not one**, which is the decision in this file worth reading twice.
+ * `holdAfterTurn` deliberately keeps asking `announcement`, so a bot turn that played a card does
+ * **not** get the four-second refusal hold at the handover: the card was already held for its two
+ * seconds in the middle of the turn, and holding it again would add four seconds to every bot turn
+ * that played anything.
+ *
+ * Returns the same identity on two calls with the same state, so `card-controls.js` can compare them
+ * and hold one announcement once. `lastCardPlayed` is a frozen object on the state, exactly like
+ * `trapFired`.
+ */
+export function midTurnAnnouncement(state) {
+  return announcement(state) ?? botCardPlayed(state);
+}
+
+/** The card a bot just played, or `null`. A person's own card play is not an announcement. */
+export function botCardPlayed(state) {
+  const played = state.lastCardPlayed ?? null;
+
+  return played !== null && isBot(state, played.seat) ? played : null;
+}
+
+/**
  * How long to hold the turn after a card announced something, before carrying on. `0` means carry on now.
  *
  * The other half of `holdAfterTurn`: that one is asked when the turn has ended, this one mid-turn.
@@ -129,7 +159,7 @@ export function announcement(state) {
  * less time to read.
  */
 export function holdMidTurn(state, delays, readToken) {
-  if (announcement(state) === null) return 0;
+  if (midTurnAnnouncement(state) === null) return 0;
 
   return delays.afterTrapCard ?? readToken("--motion-trap-hold", TRAP_HOLD_MS);
 }
@@ -180,6 +210,42 @@ export const ROLL_HOLD_MS = 900;
  */
 export function holdRoll(delays, readToken) {
   return delays.roll ?? readToken("--motion-roll-hold", ROLL_HOLD_MS);
+}
+
+/**
+ * How long a bot appears to think before it plays. Issue #43. The fallback, not the number.
+ *
+ * Same arrangement as the three constants above it, and the same reason: this is what to use when no
+ * stylesheet has loaded, which happens in a test harness rather than in a browser.
+ */
+export const BOT_HOLD_MS = 900;
+
+/**
+ * How long to wait before dispatching a bot's intent. The fourth wait in this module.
+ *
+ * ## Why a bot waits at all
+ *
+ * The bot decides instantly, and instantly is unreadable. Without a pause a bot's whole turn (pick a
+ * card, roll it, move a pawn) is painted inside one synchronous pass, so a player watching three
+ * opponents would see the board jump from their own move to their next one. That is D70's argument
+ * about the roll, applied to a whole turn: something which happens and is immediately overtaken has
+ * not been shown, it has been mentioned.
+ *
+ * ## Why it reuses `--motion-roll-hold` instead of getting its own token
+ *
+ * `CLAUDE.md` is explicit that Claude Code does not invent design rules, and a duration in `tokens.css`
+ * is a design rule. `--motion-roll-hold` is the one existing token that means "reading time for a
+ * decision the turn hangs on", which is exactly what this is, so borrowing it states the intent without
+ * deciding anything Design has not. **Whether the bot deserves a token of its own, whether 900 ms is
+ * right, and whether the pause belongs per intent or per turn are D81**, and until that is answered the
+ * borrowed token is the honest placeholder.
+ *
+ * Rejected: *a constant inside `bot-driver.js`.* It cannot be overridden, so every end-to-end run with
+ * a bot in it would pay 900 ms per intent, and a duration living outside `tokens.css` is precisely what
+ * D20 and D70 were raised to remove.
+ */
+export function holdBot(delays, readToken) {
+  return delays.bot ?? readToken("--motion-roll-hold", BOT_HOLD_MS);
 }
 
 /**

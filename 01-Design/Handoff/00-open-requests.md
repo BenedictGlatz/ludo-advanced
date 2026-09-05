@@ -2,7 +2,305 @@
 
 **From:** Claude Code
 **To:** Claude Design
-**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, and six times on 2026-09-03**
+**Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, four
+times on 2026-09-04, and twice on 2026-09-05**
+
+---
+
+## Status on 2026-09-05: handoff 16 landed, and it was applied rule by rule rather than copied
+
+**[16-spec-seat-dots-and-message-strip.md](16-spec-seat-dots-and-message-strip.md) answered D97 to D99
+and both halves are built.** Every seat mark in the game is a dot, `.pawn__mark` is gone from `pawn.css`
+and from the DOM, and the message strip hangs above `.app__skill` with 44 px reserved at the foot of
+`.app__dice`. All four items of § 7 are done: the two DOM edits, the deleted assertions, and the grep.
+926 unit tests and 130 end-to-end cases pass on Chromium.
+
+### The one thing this side did differently from the README, and why
+
+**The ten stylesheets could not be copied over ours. Six of them would have reverted work in this tree.**
+§ 1 of your spec says the copies on your side predate it, and it is more than the two files it names:
+
+| File | What copying it would have reverted |
+| --- | --- |
+| `tokens.css` | The 16:9 stage (`--stage-w`, `--stage-h`, the stage-relative `--board-size`) and `--layer-card-reading` |
+| `app.css` | The whole stage: the `html` font-size rule, the `#app` frame, and the media query's three overrides |
+| `chrome.css` | `justify-content: flex-end`, the fix for the language button sitting at the left end on the menu |
+| `hud.css` | `min-width: 15.5rem`, the fix for the seat plates clipping "KARTEN" |
+| `overlay.css` | `position: absolute`, which is what keeps the letterbox bars visible when the menu opens |
+| `lineup.css` | `.overlay__seats:empty`, added three days ago and reported in the section below |
+
+**And `refusal.css` is the strip under a name it lost on 2026-09-03.** It is `message-strip.css` and
+`.message-strip` here, renamed when D73 gave it a third voice and two of the three stopped being
+refusals. Copying the delivered file would have added a dead stylesheet and left the live one unchanged.
+
+So the changes were applied **rule by rule** against our files, which is what § 1 asks for in its own
+words: "the selector named beside each rule is what to trust, not the line number". Every rule the spec
+names is in, including every rewritten comment, at the selector it names. Nothing was left out and
+nothing was added.
+
+**The ask, and it is small.** A whole-file delivery is a diff whose base is unstated, and the base is
+whatever this side last shipped when you read it. That has now cost a manual reconciliation twice. Either
+send the amended rules as a diff, or say in the README which date the copies were taken from, so this
+side can tell a deliberate reversal from a stale line at a glance.
+
+### Two things about D97 that are worth having in writing
+
+**The four assertions were deleted, not rewritten, exactly as § 7.3 asked.** Two in `greyscale.spec.js`
+(the sixteen pieces and the four HUD plates), one in `board-renders.spec.js` (the DOM contract for
+`.pawn__mark`) and one in `trap-fires.spec.js` (the chip's `clip-path`, plus the pawn mark that was its
+control). Nothing asserts the dots. `greyscale.spec.js` now has three cases left and its header says why.
+
+**D99 is on the Product Owner's desk, not ours.** This side agrees it is the right fix and cannot take
+it: the four hues are quoted verbatim from the layout template under D1 and D2. If it is approved, the
+eight values plus a text-contrast re-check on every plate is a piece of work worth its own brief.
+
+### D98 measured after landing, at both widths
+
+At 1440 by 900 the strip runs the width of the rail, its foot sits 4 px above the skill plate, and the
+lowest of three unresolved dice cards clears its top by **24 px**. So the 44 px reservation of § 5.3 is
+enough with room to spare. Below the 84rem breakpoint the layout is one column and the strip still clears
+every card. **No permanent test was added for the geometry**, because every number in it is a `--space-*`
+token and a case asserting them would report your next spacing change as a defect.
+
+---
+
+## Status on 2026-09-05: handoff 15 landed, D86 is retired, and one rule was added to the stylesheet
+
+**[15-spec-bot-setup-menu.md](15-spec-bot-setup-menu.md) answered D90 to D96, and the line-up screen is
+built and shipped.** `lineup.css` is in `src/ui/styles/`, loaded after `overlay.css`, unchanged except
+for the one addition below. **D86 of brief 13 is retired with them**, as brief 15 asked.
+
+The computer is reachable from the menu for the first time: main menu, player count, line-up, match. The
+`?players=` and `?bots=` parameters are untouched, so the sixteen specs that boot straight into a match
+are unaffected.
+
+### What was built, against § 6 of the spec
+
+All eight items, unchanged: `OVERLAY_SCREEN.LINEUP`, the one line in `session-actions.js`, the rows with
+their two positions, `disabled` on the last person's `bot` position, Back then Start, the scoped focus
+exception, the six locale keys in both languages, and `lineup.css` in the load order. Eleven end-to-end
+cases cover the screen and the whole suite is green in all three browsers.
+
+### One rule was added to `lineup.css`, and it is reported rather than absorbed
+
+**`.overlay__seats:empty { display: none }`, three lines, with a comment naming the precedent.**
+
+`.overlay__seats` is built once in `renderOverlay` and lives in the panel on all seven screens, the same
+way `.overlay__cards` does. `.overlay__panel` is a flex column with a `--space-4` gap, so an empty group
+leaves a hole on the other six screens. `pool.css` met exactly this and answered it the same way for the
+card region, so the rule is the project's own and not an invention.
+
+**Nothing else in the delivered file was changed.** It is flagged here because a stylesheet quietly
+edited on this side is how two trees drift, which is the thing § 3 of your own README is about.
+
+### A finding in the spec, and the code is the one that is right
+
+**§ D96.2 and mockup 15c name a two-player line-up wrongly.** They draw the rows as **"Spieler 1 (Rot)"
+and "Spieler 3 (Grün)"**, on the reading that the label follows the seat number, so seat 2 is player 3.
+
+`displayNumber` in `player-labels.js` counts the seat's **position in the seat list**, not the seat
+number, so the real rows are **"Spieler 1 (Rot)" and "Spieler 2 (Grün)"**. That file's header records
+"Spieler 1 and Spieler 3 with no Spieler 2" as the two-year-old off-by-one it exists to fix.
+
+**Nothing had to change.** The spec's instruction is to reuse `player.named` and `player.botNamed`,
+which is what was built. Only the example is wrong, and the thing that made the case worth drawing
+survives either way and is arguably more surprising: **Spieler 2 is green**, because the colour is keyed
+on the seat and the number on the position. It was found by a unit test written from the spec's own
+sentence, which failed against correct code.
+
+### Two things asked back, neither of them blocking
+
+1. **`.chrome__turn:empty` and where the language button sits**, carried over from handoff 12 § 7 and
+   repeated in § 7 of this spec. The turn sentence is empty on the menu, on setup and now on the
+   line-up, and `.app__chrome` is a flex row with no spacer, so the button sits at the **left** end.
+   The mockup pushes it right with a one-declaration override and deliberately does not guess. It is on
+   screen on three of the seven screens now, so it is worth an answer.
+2. **A confirmation of the `:empty` rule above**, or a different answer if the group should be built
+   only on the screen that uses it.
+
+### Still open and untouched by this
+
+D81, D84 and D85 of brief 13, brief 14 in full, D61 from brief 08, D62 to D64 from brief 09, D70 to D74
+from brief 11, and the eight leftovers of handoff 02. Nothing in handoff 15 depended on any of them.
+
+---
+
+## Status on 2026-09-04, last: one line of handoff 10 was changed in code, and here is why
+
+**A defect from a test round, and the fix touches `card-reveal.css`.** Reported with a screenshot: while
+the player reads a card in the skill hand, the dice card they had just chosen paints over the top third
+of it.
+
+**10-spec § 3 rules on this overlap and the ruling was right about the wrong two elements.** It says the
+revealed card is above the dice plate because `.app__skill` follows `.app__dice` in the DOM, "with no
+`z-index` needed". That holds for the two plates. It does not hold for the cards in them: `card.css`
+gives every card `position: relative` and a `z-index`, so **every card is a stacking context of its
+own**, while neither plate sets either property, so **neither plate is one**. The cards of both hands
+therefore compete in a single z-index space, where the number decides before document order does. The
+chosen dice card is at `--layer-card-selected`, 3. The card being read was at `--layer-card-raised`, 2.
+
+**What was changed, and it is one line plus one token.** `tokens.css` gained `--layer-card-reading: 4`,
+and the three reveal selectors in `card-reveal.css` use it in place of `--layer-card-raised`. Nothing
+else in either file is touched, no colour is added, and the reveal is still pure CSS. The token table in
+10-spec § 4 is one row short as a result.
+
+**It fixed a second case that had not been reported.** Inside the fan, a selected skill card also sits at
+3, so it covered a revealed neighbour at 2. One mistake, two places.
+
+*Rejected: `isolation: isolate` on the two plates,* which would make them the stacking contexts § 3
+assumed and let DOM order decide, because it leaves the in-fan case broken and puts the change in
+`app.css`, which handoff 10 did not deliver.
+
+**What this side would like back.** A confirmation that "the card being read is the top card layer" is
+the rule you want, or a different answer. It interacts with D64, still open: if the fan's stacking order
+is ever turned around, this layer stays correct, but the reason it exists should be in the spec rather
+than only in a comment.
+
+---
+
+## Status on 2026-09-04, later still: brief 14 is out, and it corrects brief 13 from this morning
+
+**[14-brief-bot-cards.md](14-brief-bot-cards.md) is sent. D87 to D89.**
+
+**Brief 13 said twice that a bot plays no skill cards, and that stopped being true the same day.** A bot
+now prices every card in its hand against the board and plays the best one when it beats a threshold, in
+its own turn and in other people's. Both places in brief 13 carry a dated correction pointing at brief
+14; D81, D84, D85 and D86 are unaffected and still open, and **D82 and D83 got sharper rather than going
+away**, which is noted on each of them.
+
+**D87 is the real commission, and unlike most of these it is already answered badly rather than
+missing.** A bot's card play is announced in the message strip, and the strip's default voice is
+`--color-warn`, the colour the game reserves for "you cannot do that". A bot playing a card is not a
+refusal. This is the same deviation issue #45 shipped for the trap announcement, and D55 answered that
+one with **two selectors** in `message-strip.css` giving it the strip's second voice. The same two
+selectors are a perfectly good answer here, and the brief says so.
+
+**Two more borrowed durations, both flagged as guesses rather than choices.** The announcement is held
+for `--motion-trap-hold` (2 s), because that token already means "reading time for something that
+happened without being asked", and a bot answering a window waits `--motion-roll-hold` (900 ms) like
+every other bot decision. Neither is a decision this side is allowed to take. D87.3 and D88 are where
+they are confirmed or replaced, and they add up with D81: a bot turn with a card in it currently spends
+about four seconds of reading time before anything moves, and a card is played on roughly every other
+turn.
+
+**One thing was fixed rather than designed around.** Brief 13's section 6 said the `reaction.*`
+sentences still say "Spieler" for a bot seat. They do not any more: the moment a bot could play a card
+**into** a window, the line had to be able to name one, so four keys per language now take a name and
+the strip says "Bot 3 will eine Figur schlagen". That was a code gap and it is closed in code.
+
+**Nothing new is in the DOM for you this time.** `data-message-kind="card"` on the existing
+`.message-strip` is the whole contract, and the element is built once and only ever gets attributes.
+
+**Please deliver a diff and not a whole file** for any stylesheet that already exists. Asked after
+handoff 11, asked again in 13, asked again here.
+
+**What is still owed, after this send.** Four briefs.
+
+| Brief | Owes | State |
+| --- | --- | --- |
+| [14-brief-bot-cards.md](14-brief-bot-cards.md) | `14-spec-bot-cards.md`, D87 to D89, plus the CSS the answers imply | **Open.** Sent 2026-09-04, read against `35993fe` |
+| [13-brief-bot-opponents.md](13-brief-bot-opponents.md) | `13-spec-bot-opponents.md`, D81 to D86, plus any artboards drawn for D86 and a new stylesheet if the setup screen earns one | **Open.** Sent 2026-09-04, read against `9fb13f4`, corrected in place the same day |
+| [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64 | **Open.** Sent 2026-09-03 |
+| [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, D61 | **Open.** Sent 2026-09-03 |
+
+---
+
+## Status on 2026-09-04, later: brief 13 is out, and the thing it describes already works
+
+**[13-brief-bot-opponents.md](13-brief-bot-opponents.md) is sent. D81 to D86.**
+
+**This brief is the wrong way round compared with every other one, and that is deliberate.** Usually a
+brief describes something that does not exist yet. The bot opponent is built, shipped and playable
+today: `/?players=4&bots=3` seats you first and the computer plays the other three. What is missing is
+everything about how it *looks* while it happens, and one screen that does not exist at all.
+
+**D86 is the real commission and the other five are dressing.** The only way to play against the
+computer today is to type `?bots=3` into the address bar, which is not a feature anybody can find.
+What is needed is a setup screen that says, per seat, whether a person or a computer is playing it,
+with at least one person always. The rules underneath are already in place, so this is a drawing
+question and not an engineering one. It is issue #76 on the board, deliberately blocked on this answer
+so that the screen does not get invented in code. As in handoff 12, drawing more than one direction and
+letting the Product Owner pick is welcome.
+
+**One number is worth reacting to before anything is drawn.** A bot's turn takes about three seconds
+and a round of three bots about nine, because the pause is 900 ms per decision and there are two
+decisions plus the roll's own hold. That figure was measured, not estimated, and D81 is where it gets
+shorter if it is too long.
+
+**One placeholder is flagged as a placeholder.** The bot's pause currently borrows
+`--motion-roll-hold`, because `CLAUDE.md` forbids Claude Code from inventing a duration and that token
+already means "reading time for a decision the turn hangs on". It is a stated guess, not a choice, and
+D81.1 is where it is confirmed or replaced.
+
+**One attribute was put in the DOM for you and nothing styles it.** Every `.hud__seat` now carries
+`data-controller="bot"` or `"human"`, so D85 can be answered without any new markup.
+
+**Please deliver a diff and not a whole file** for any stylesheet that already exists. Asked after
+handoff 11, asked again here.
+
+**What is still owed, after this send.** Three briefs.
+
+| Brief | Owes | State |
+| --- | --- | --- |
+| [13-brief-bot-opponents.md](13-brief-bot-opponents.md) | `13-spec-bot-opponents.md`, D81 to D86, plus any artboards drawn for D86 and a new stylesheet if the setup screen earns one | **Open.** Sent 2026-09-04, read against `9fb13f4` |
+| [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64 | **Open.** Sent 2026-09-03 |
+| [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, D61 | **Open.** Sent 2026-09-03 |
+
+---
+
+## Status on 2026-09-04: handoff 12 landed, and its own open finding turned out to be real
+
+**[12-spec-main-menu.md](12-spec-main-menu.md) is in and closed.** D75 to D80, all six answered for
+artboard 12c, all six on screen, and eighteen named rejected alternatives across them. The menu is three
+doors in the game's own card chrome, `menu.css` is the second screen to own a stylesheet on the
+`handover.css` precedent, and `overlay.css` and `tokens.css` were not touched, exactly as the delivery
+promised.
+
+**Two things are worth having back, and neither one blocks anything.**
+
+**1. `overlayButton` did have to change, and the delivery said it would not.** The note's claim that
+"nothing changes in `overlay-view.js`" is true of the `focusOverlay` call it checked, which is correct as
+written because Hotseat is first in the DOM. It is not true of `overlayButton`, which set the label as
+the button's **own text** and therefore could not hold `.overlay__art`, `.overlay__label` and
+`.overlay__hint`. It is now a shared shell plus a door branch, taken when a description carries a `hint`,
+so no other screen is affected. **The process point rather than the defect:** the delivery checked the one
+function the brief had offered to change and not the one it had not. Nothing is owed here, it is recorded
+because the same shape of miss is cheap to repeat.
+
+**2. § 7's open finding was real, and it is fixed.** The spec could not tell from the stylesheets whether
+the language button sits at the right end of the chrome row on the menu, said so instead of guessing, and
+pushed it right in the mockup with a declaration it labelled a guess. **It was on the left.**
+`.chrome__turn` carries `flex: 1 1 auto` and is the row's only spacer, so the controls were pushed right
+by the turn sentence rather than by a rule, and `chrome.css` takes that sentence out of flow with
+`:empty { display: none }` on the menu and on the setup screen. With pause and pool hidden there too, the
+button was the only child left. Fixed with `justify-content: flex-end` on `.app__chrome`, which is inert
+during a match because a growing flex child already eats the slack. **The mockup guessed right**, and this
+is the first finding in the project that a brief located by reasoning about the stylesheets rather than by
+looking at a screen.
+
+**One deviation from the spec, and it is arithmetic rather than judgement.** § D78.3 names the six locale
+keys as `menu.hotseat`, `menu.hotseat.hint`, and so on. **A JSON key cannot be a string and an object at
+the same time**, so they nest with `.label` instead: `menu.hotseat.label` and `menu.hotseat.hint`. No
+other key changed, and `menu.title` and `menu.text` kept their values as asked.
+
+**The keyboard check D76.4 asked for, answered.** Focus opens on the Hotseat door, the sheet has exactly
+one tab stop, and the language button is reached **backwards** with `Shift+Tab`, because the chrome is
+earlier in the DOM but outside the overlay. `Enter` on each does what it says, which was the condition.
+
+**One small thing for a later contrast pass, not raised as a defect.** The dashed edge on an unavailable
+door is faint in the dark skin, because 32 per cent of `--color-ink` on a dark ground is close to that
+ground. It is the value `hand.css` already uses for the empty skill slot and the spec copied it on purpose
+so the two edges match, so this is a pre-existing property of that treatment rather than anything handoff
+12 introduced. The other two cues carry it: the missing face and the missing shadow both read in the dark
+skin and in greyscale.
+
+**What is still owed, after this close.** Two briefs, 09 first because it confirms three things that are
+already implemented, then 08.
+
+| Brief | Owes | State |
+| --- | --- | --- |
+| [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64 | **Open.** Sent 2026-09-03. `tokens.css` is still the tightest file in the project and handoff 12 deliberately added no token to it, so the seam 11-spec § 7 names is unchanged and still worth folding into this answer |
+| [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, D61 | **Open.** Sent 2026-09-03 |
 
 ---
 
@@ -24,7 +322,7 @@ it, but nothing is owed from your side.
 | --- | --- | --- |
 | [09-brief-layout-and-fan.md](09-brief-layout-and-fan.md) | `09-spec-layout-and-fan.md`, confirming or replacing D62 to D64 | **Open.** Sent 2026-09-03. `tokens.css` now sits at 294 lines after this delivery, and 11-spec § 7 names the seam for the split it will need: everything from `--motion-feedback` to `--ease-curtain` plus the four hold tokens and the whole `prefers-reduced-motion` block moves to `motion.css`, about 60 lines. Worth folding into this answer, since it touches the same file |
 | [08-brief-pickable-field.md](08-brief-pickable-field.md) | `08-spec-pickable-field.md`, D61 | **Open.** Sent 2026-09-03 |
-| [12-brief-main-menu.md](12-brief-main-menu.md) | Nothing. **The loop is closed on your side** | **Answered and chosen, not built yet.** Claude Design recommended 12c, three doors in the game's own card language, and the spec answers D75 to D80 for that one with 12a and 12b as drawn rejected alternatives. **The Product Owner confirmed 12c on 2026-09-04**, so the choice brief 12 asked for has been made. They also asked that implementation not start yet, so `menu.css` and three SVGs are ready to land and nothing from handoff 12 is in `src/`. **No answer is owed here**; the next move is ours |
+| [12-brief-main-menu.md](12-brief-main-menu.md) | Nothing. **The loop is closed on both sides** | **Answered, chosen and landed 2026-09-04**, see the section above. Claude Design recommended 12c, three doors in the game's own card language, and the spec answers D75 to D80 for that one with 12a and 12b as drawn rejected alternatives. The Product Owner confirmed 12c on 2026-09-04 and asked that implementation wait; it was released the same day and built the same day |
 
 **The best answer in the package is D72, and it is the one the brief got wrong.** The brief offered three
 routes and every one of them required `card-state.css`'s `:empty { display: none }` to change. The spec

@@ -284,7 +284,7 @@ Seven spec files, run against the production build in Chromium, Firefox and Edge
 | `capture.spec.js` | Landing on an opponent sends it home and takes its square | FR-11 |
 | `no-legal-move.spec.js` | The turn passes and the reason is on screen, in German | FR-14, NFR-08, NFR-03 |
 | `win.spec.js` | A whole match, clicked through, ends with a full house and names the winner | FR-05, SG1 |
-| `greyscale.spec.js` | The four seats told apart without colour. Asserts four different shapes on the pieces since 2026-09-02; measured the palette's greyscale contrast before that | NFR-12 |
+| `greyscale.spec.js` | The four seats told apart without colour. Measured the palette's greyscale contrast until 2026-09-02, asserted four different shapes on the pieces until 2026-09-05, and since D97 asserts only that the four greys differ at all. NFR-12 is unmet and this file is where that is visible | NFR-12 |
 
 #### Every spec fixes the RNG, and the seeds were measured rather than guessed
 
@@ -1693,6 +1693,325 @@ each. It runs in seconds, and it only exists because the slow specs pointed at t
 **One rule for next time.** An attribute that gates input, rather than one that changes a colour,
 deserves a test that clicks through several turns and asserts it is **gone**. A test that only asserts
 it appears would have passed throughout.
+
+### Testing a control that is meant not to work: 2026-09-04, handoff 12
+
+The main menu's three doors added two test files and repaired one case. What is worth recording is that
+**the interesting half of the coverage is on the two doors that do nothing.**
+
+`tests/unit/ui/menu-screen.test.js`, 8 cases, is the cheap half. `menu-screen.js` imports no jQuery, so
+it is unit-testable for the same reason `pool-screen.js` is, and it can be asked exactly the part of the
+menu that is not a look: how many doors, in what order, which of them are `disabled`, and whether each
+one carries its second line.
+
+`tests/e2e/menu.spec.js`, 6 cases, is the half that needed a browser. **A new file rather than more cases
+in `match-flow.spec.js`**, which was at 238 of the 300-line limit, and the seam is the same one that split
+the handover off it: that file asserts a flow from menu to match to win and back, and these cases assert
+the shape of one screen, including two doors that appear in none of its transitions.
+
+**What is actually at risk, and why no unit test could see it.** `online` and `settings` are `disabled`
+in the DOM, which is D77.2's decision, and the consequence is that **nothing in `src/` handles either
+action at all**. If the attribute ever came off, a click would fall through the whole action table in
+silence and a player would find two dead buttons rather than two doors that explain themselves. That is
+a fact about the rendered element, so it takes Playwright. The case clicks both with `{ force: true }`,
+because Playwright refuses to click a disabled control on its own and the point of the case is what
+happens when a player tries anyway.
+
+**Three assertions worth naming, because each pins a decision rather than an appearance:**
+
+- **Exactly one tab stop**, `.overlay__button:not([disabled])` has count 1. This is the trade D77.3
+  makes, and a change that swapped `disabled` for `aria-disabled` without also adding the click filter
+  would go red here rather than in production.
+- **`.overlay__hint` is non-empty on all three doors.** It is the reason `disabled` is acceptable at all:
+  why a door cannot be opened is permanent text rather than something a focus reveals. An empty hint
+  would break D77's reasoning and **no other test would notice**, because `locales.test.js` can check
+  that a key is not empty and cannot check that a screen asks for it.
+- **No menu item carries `data-card-family`.** A door borrows the card's chrome and is not a `.card`, and
+  that is the boundary a later change is most likely to cross: crossing it would pull in the hover reveal
+  of D66 and the desaturation of an unplayable card, both of which would look like styling accidents.
+
+**A test the rename broke in two ways at once, and only one was predicted.**
+`match-flow.spec.js`'s language case asserted the menu button's label. The spec's landing checks
+anticipated that `toHaveText` reads `textContent`, which now concatenates the label and the hint. What it
+did not anticipate was that `data-action="start"` became `"hotseat"`, so the locator missed as well. The
+repaired case asserts on `.overlay__label` **and** on `.overlay__hint`, because FR-34's criterion is that
+no string is left in the previous language and the hint is the one string on that screen a `textContent`
+check would have hidden behind the label it is glued to.
+
+**Five checks were verified by looking and by no test at all**, and that is stated rather than skipped:
+the three doors on one bottom line at 1440 by 900, the dark skin, `filter: grayscale(1)` for NFR-12, the
+sub-84rem layout at 430 by 820, and the focus order. Four are appearance and belong to Design's review.
+The fifth, the focus order, was measured rather than eyeballed, because D76.4 asked for it explicitly:
+focus opens on Hotseat, a forward `Tab` leaves the document, and the language button is reached
+**backwards**. That result is in Ch. 04.
+
+### The strongest regression test in the suite is a game nobody plays: 2026-09-04, issue #43
+
+`tests/unit/ai/bot-match.test.js` starts a match in which **every seat is a bot** and plays it to a
+winner under Vitest, with no browser. Two boards: two bots on an empty pool, and four bots on the full
+58-card skill pool with the real skill squares. It asserts three things, and the first is the one that
+earns the file:
+
+1. **Every intent the bot produces is accepted.** Not "the bot did something sensible", but "the rules
+   never refused it". A wrong branch in `bot-policy.js` shows up here as a rejection naming the phase.
+2. **The match ends**, inside a hard cap on the number of intents. A phase nothing knows how to leave
+   throws with the phase name in the message.
+3. **The same seed plays the same match twice**, down to the pawn positions and the number of intents.
+
+**Why this is worth naming in the report.** Every other unit test in this project asks one question of
+one module: a rule, a transition, a refusal. This one plays the game as a *sequence* rather than as a
+situation, which is the property Ch. 08 already credits the three expensive end-to-end specs with, and
+it does it in about a second instead of four minutes. It is only possible because the bot is a pure
+layer that returns intents: had the bot been written inside `ui/`, the only way to play a whole match
+would have been Playwright.
+
+**It found nothing on its first run, and that is worth recording honestly.** The suite went from 757 to
+761 passing tests with no failures at any point during the bot's implementation. That is a weaker claim
+than "the test caught a bug", and writing down which tests found nothing is what keeps the ones that did
+find something meaningful.
+
+**Coverage now includes `src/ai/`**, under the same 80 % line floor as `core/` and `state/`. The
+argument is the one `vitest.config.js` already made for those two: the layer is pure and browser-free,
+so a coverage figure for it measures whether the code was exercised rather than how much jQuery ran.
+
+**Outstanding coverage, stated rather than skipped:** the *quality* of the bot's play is not tested
+anywhere. The tests pin the ranking, the tie-breaks and the arithmetic of the dice choice, all of which
+are claims about the code. Whether the resulting player is a satisfying opponent is a play-testing
+question, and the only instrument this project has for it is the Product Owner.
+
+### A module was moved so that it could be tested at all: 2026-09-04, issue #43
+
+`readOptions` had never had a unit test, and not for lack of trying: it lived in `src/main.js`, and
+importing that file pulls in jQuery, twenty stylesheets and a call to `boot()` at module level. So the
+address bar was covered only through whichever end-to-end spec happened to use a parameter, and a
+malformed value had no test anywhere.
+
+Issue #43 added a fifth option with real arithmetic in it (`bots` is clamped against `players`), which
+made that gap worth closing rather than noting. `src/options.js` imports one thing, `PLAYER_COUNTS`, and
+`tests/unit/options.test.js` has 15 cases in it, including the four options that were already there.
+
+**The lesson is about where a thing lives, not about the test.** The parsing had always been testable
+code; it was untestable only because of what sat next to it in the same file. That is worth one sentence
+in the report, because it is the cheapest kind of coverage gap to fix and the easiest to never notice.
+
+### Two of three bot specs run at real speed, and the third could not use the helpers: 2026-09-04, issue #43
+
+`tests/e2e/bots.spec.js` has three cases, and how each one is driven is the interesting part.
+
+**Two run without `?fast=1`, like `handover.spec.js` and for the same reason.** What they test is the
+hand-over rule, which is a claim about who is asked to press a button between turns. `?fast=1` collapses
+the bot's pause to zero, so under it the thing being tested does not happen in real time at all. The
+only honest check is to let fifteen seconds pass and watch the overlay stay away.
+
+**The third one found a property of the existing helpers.** `boardState` reads six attributes in six
+separate round trips, which was harmless while every turn waited for a click somewhere. With three bots
+under `?fast=1` the bots' three turns pass **between two of those reads**, so `playUntil` can take
+`phase` from a bot's fleeting `act` and `turnNumber` from two turns later, and then try to click a pawn
+that no longer exists. The symptom was an unhelpful one: a click that timed out on "element is not
+stable".
+
+That is not a bug in the helper. It is a property that could not show up before, because until issue #43
+no turn ever passed without somebody clicking. The fix in that spec is to read the state **atomically**
+through `window.ludo`, which `main.js` has exposed since issue #62 for exactly this purpose, and to
+touch the page only while the board is resting on the person's turn. `helpers.js` is unchanged, because
+every other spec in the suite still has a person in every seat.
+
+**Two other things cost time in this spec and neither was a product bug.** `playTurn` cannot be used
+before a hand-over, because it waits for the turn number to move and the whole point of that screen is
+that the turn does not pass until Ready is pressed. And the hand-over screen opens **before** `end-turn`
+is dispatched, so the board still reads the turn that just finished: the assertion wanted 5 and the
+correct answer was 4.
+
+`turn-controls.js` got a unit test in the same change, and the reason is the same shape as the one
+above: the guard that stops a person clicking during a bot's pause protects a 900 ms window, and racing
+a 900 ms window in a browser is a flaky test by construction. The module imports no jQuery, so three
+assertions under `environment: "node"` do the job that a racy spec would have done badly.
+
+### The regression test that had to be turned upside down: 2026-09-04, issue #82
+
+`bot-match.test.js`'s four-bot case asserted that the discard pile stayed **empty** over a whole match
+on the full skill pool. That assertion was the 2026-09-04 scope decision made visible, and the block
+above says why it was worth having: "the bot plays no skill cards" was a property of the match rather
+than a promise in a comment.
+
+Issue #82 made it false on purpose, so the case now asserts that cards **are** spent. What is worth
+recording is that **the test's real assertion never changed**: it is the line inside `playOut` that
+checks every intent is accepted, over hundreds of turns with the full pool. The visible expectation
+flipped and the thing the test is for did not move at all, which is a fair definition of a test written
+against behaviour rather than against an implementation.
+
+**It caught nothing on the way in, again.** Every value function was written, the suite went green, and
+no assertion failed. Recorded as such rather than as a success: the same note is in the block above.
+
+### A guard that turns a bot's bug into a pass, and the test that stops it being an excuse
+
+`card-choice.js` asks `checkTarget` about the target its own value produced, and drops the card if the
+rules would refuse it. The asymmetry with a person is the reason: a refused click is a message on
+screen, while a refused **bot** intent stops the driver, leaves the phase unchanged, and parks the match
+for ever, so the symptom of a small arithmetic slip in one of 29 values is a browser sitting still.
+
+A guard like that hides the bug it protects against, so two tests exist to make sure it is never the
+thing that catches one:
+
+- `card-values.test.js` sweeps all 29 cards on a busy board **and** on an empty one and asserts every
+  target is legal before the guard ever runs. It also asserts every value is a finite number, because a
+  `NaN` compares false against everything and would look like a card the bot simply never plays.
+- `bot-match.test.js` asserts the property over whole matches.
+
+### The fairness test is an experiment, because a comment cannot enforce it: 2026-09-04, issue #82
+
+A bot may read how **many** cards each opponent holds, which is public since D33 and printed in the HUD,
+and it may not read which cards they are. `state.skillHands[1]` is one line of plausible-looking code
+away inside any value function, and a bot that peeked would pass every other test in this suite while
+playing a game the person in front of it cannot.
+
+So `card-choice.test.js` decides the same board twice with completely different cards in the opponents'
+hands and asserts the two decisions are identical. **A second case is what makes the first one mean
+something**: Tax Fraud robs whoever holds the most cards, so changing the **count** has to change the
+answer. Without it, the fairness case would be satisfied by a bot that ignores the other seats
+altogether, which is a different bot from the one that was designed.
+
+### A spec that had to be rewritten because it was testing a two-second window: 2026-09-04, issue #82
+
+The end-to-end case for a bot's card announcement first polled the message strip for
+`data-message-kind="card"` at real speed. It spent sixty seconds not seeing one and failed, and neither
+reason was a bug:
+
+1. The announcement is on screen for two seconds, so a poll has to land inside that window, and `?fast=1`
+   collapses it to nothing, so the fast run cannot see it at all.
+2. **The early turns of a match are quiet on purpose.** With every pawn still in the yard almost nothing
+   is worth playing, so the first card play is several turns in. That is the value model working, and the
+   first draft read it as a missing feature.
+
+The rewrite installs a `MutationObserver` on the strip and records every value the attribute ever takes,
+which turns a race into a list. The case now runs under `?fast=1`, asserts the kind **and** that the
+sentence names "Bot 2" rather than "Spieler 2", and is one case instead of two. What it gives up is the
+duration, and that is exactly what `mid-turn-hold.test.js` is for: a wait nothing on screen reports is a
+unit test's job, and that file's header has said so since issue #45.
+
+**The lesson is the one this chapter keeps recording in different words:** an end-to-end test should ask
+whether something happened, not try to be looking at the right moment.
+
+### The measured cost of the feature is in the test suite, not in the game: 2026-09-04, issue #82
+
+The full three-browser run failed once on the case that plays a whole bot match to a win, on Firefox,
+with **`Test timeout of 240000ms exceeded`** while waiting for a dice card to become stable. The same
+case passes on its own in about two minutes on the same engine.
+
+**What it is:** a bot match is four turns of work for every turn a person takes, and since the bots play
+cards each of those turns can also open a reaction window, resolve a card and redraw. Twelve workers
+across three engines contend for one machine, and Firefox is the slowest of the three. The 240 seconds
+that `win.spec.js` and `match-flow.spec.js` have used since they were written stopped being enough for
+**this** spec only.
+
+**What was done:** `bots.spec.js`'s own constant went to 420 seconds, with the measurement written next
+to it. **No assertion changed**, which is the distinction worth keeping: raising a timeout because the
+machine is busy is patience, and changing an expectation because the code disagrees with it is
+tolerance. The suite has done the second thing exactly once, and it was recorded as a defect.
+
+**The reading to act on:** the end-to-end suite now spends most of its wall clock in four full-match
+specs, and this feature added the most expensive one. That is the fourth time this chapter has recorded
+the same trade, and it is still the right one: those are the only tests in the suite that play the game
+as a sequence rather than setting up a situation, and one of them found the only real bug in landing
+handoff 11.
+
+#### A negative finding about the suite rather than about the code: three full runs, three different flakes
+
+The three-browser suite was run three times to land this issue. Each run reported **one** failure and it
+was a different one every time, and every one of them passed on its own immediately afterwards:
+
+| Run | Failed | Reported as |
+| --- | --- | --- |
+| 1 | `bots.spec.js`, the full bot match, Firefox | `Test timeout of 240000ms exceeded` |
+| 2 | `trap-marks.spec.js`, the trap's colour, Firefox | The strip's colour read one message too late |
+| 3 | Four cases across Firefox and Edge | Two timeouts, one missed transient attribute, and one `NS_ERROR_CONNECTION_REFUSED` from the preview server |
+
+**Two of the three were worth a code change and one was not.** The first is the feature genuinely costing
+more time, and the constant went up with the measurement written beside it. The second was a real race in
+an existing spec, reading an attribute and a colour in two round trips with a two-second message between
+them, and it is fixed by reading both in one pass. The third is the machine: twelve browser workers on one
+laptop, with a connection refused by the preview server in the middle of it.
+
+**The useful reading is that this suite has no retries configured off CI** (`retries: process.env.CI ? 1 : 0`),
+so a local full run reports contention as failure and somebody has to judge each one. That judgement is
+recorded here rather than solved, because the alternative, turning retries on locally, hides exactly the
+kind of race the second row was.
+
+### One flow change cost six clicks in three specs, and it was cheap: 2026-09-05, issue #76
+
+The line-up screen made a count click open a screen instead of starting a match, and **every spec that
+walked in through the menu noticed.**
+
+| File | What had to change |
+| --- | --- |
+| `tests/e2e/match-flow.spec.js` | The shared `startMatch` helper, plus two direct count clicks |
+| `tests/e2e/handover.spec.js` | Two two-player matches started from the menu |
+| `tests/e2e/dice-pool.spec.js` | One, in a spec about something else entirely |
+
+**The fix was one added click on Start in all six**, because the line-up opens with every seat a person
+and therefore produces exactly the match those specs used to get. That is D92 paying for itself in the
+suite as well as on the screen.
+
+**The sixteen specs that boot with a player count in the address bar were untouched**, which is what that
+parameter was kept alive for. A feature that changes the front door cost the suite six lines rather than
+a rewrite, and that is the strongest argument this project has for keeping two routes into a match.
+
+**One repaired case got stronger rather than only longer.** `dice-pool.spec.js` asserts that the pool
+button is hidden when there is no pool. It now also asserts it is still hidden **on the line-up screen**,
+which is a new state the old spec could not have covered: a screen after the menu with still no match
+behind it.
+
+#### The new spec, and the three things only it can see
+
+`tests/e2e/lineup.spec.js`, eleven cases, a file of its own because `match-flow.spec.js` was at 247 of
+300 lines and this is a screen rather than a flow. Three of the eleven cover things no unit test can:
+
+- **The switched-off position.** FR-01 is enforced by the DOM's own `disabled` property, so if it ever
+  came off, the click would fall through to `toggleController`, which refuses **silently**. The player
+  would meet a button that does nothing and says nothing.
+- **The rebuild on a language switch.** The overlay's controls are rebuilt on every screen change and on
+  every language change, so a row that was switched has to come back switched, in the other language,
+  with its pressed state and its disabled position restored from the flow rather than from the DOM.
+- **That the match gets the seats the screen showed**, read off the loop's own state rather than
+  inferred from the board.
+
+### Four assertions deleted on purpose, and the coverage they leave behind: 2026-09-05, design handoff 16
+
+D97 withdraws the four seat shapes and deletes `.pawn__mark`. Four assertions across three specs were
+asserting facts that are now gone by design, and the spec asked for them to be **deleted rather than
+fixed**. They were.
+
+| Spec | What went | Why not rewritten |
+| --- | --- | --- |
+| `greyscale.spec.js` | The case asserting a non-zero box and four different `clip-path` values across sixteen pieces | A dot is a dot on all four seats. Asserting that four identical shapes are identical is not a test |
+| `greyscale.spec.js` | The case asserting four different `clip-path` values on the four HUD plates | Same. It existed to catch a broken inheritance chain, and there is no longer a chain to break |
+| `board-renders.spec.js` | The DOM-contract case: one empty `.pawn__mark` per pawn, sixteen of them | The element is out of the contract |
+| `trap-fires.spec.js` | The chip's `clip-path`, and the pawn mark that was its control | Same reason as the first row. The chip's box and its 30 % ratio stay, which is what D51 is about |
+
+**What is left in `greyscale.spec.js` is worth naming, because the file's title now over-promises.** Three
+cases: the four seat greys are all different from each other, the four colours are identical in both
+skins, and a greyscale screenshot is attached for the review round. None of them asserts that a player can
+tell two pawns apart, because that is no longer true and a test that claimed it would be lying.
+
+**The insurance case recorded on 2026-09-03 was retired by the thing it insured against.** It watched for
+a broken `--seat-shape` inheritance chain, whose failure mode was silent: every consumer would fall back
+to `circle(50%)`, the game would keep rendering, and NFR-12 would be quietly untrue. That is now the
+intended state, so the case has nothing left to catch. It was a good test for two days and it is worth
+keeping in the report as an example of a test whose value ended with a design decision rather than with a
+bug.
+
+**The suite is otherwise unchanged and stayed green.** 926 unit tests and 130 end-to-end cases pass on
+Chromium after the change. Two end-to-end case titles were corrected as well, in `no-legal-move.spec.js`
+and `win.spec.js`, because both described the strip as sitting "under the board" and D98 moved it.
+
+**What is not covered, stated plainly.** Nothing asserts the strip's new position. The geometry was
+measured by hand at 1440 by 900 and below the 84rem breakpoint, and it holds: the strip runs the width of
+the rail, its foot sits 4 px above the skill plate, and the lowest dice card clears its top by 24 px. A
+permanent case was not added because the numbers are `--space-*` tokens and a test asserting them would
+fail the next time the design side moves one, which is a test that reports design changes as defects.
+`shell.spec.js` already asserts the strip exists and does not scroll the page, and that is the part that
+is a requirement.
+
 
 ## Decisions
 

@@ -174,6 +174,10 @@ export function createTargetPicker({ $board, onReady, onChange }) {
       return {
         kind: pick.kinds[pick.index],
         seats: state.seats,
+        // The opponent buttons name their seats, and a bot's name is different (FR-43). Two fields
+        // rather than the state itself, because a descriptor that carried a frozen state object would
+        // be a second, ageing copy of it beside the loop's.
+        bots: state.bots,
         actor: pick.seat,
         chosenDie: state.chosenDie ?? TRACK_LENGTH,
         choices: CHOICES[pick.cardId] ?? [],

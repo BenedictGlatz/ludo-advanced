@@ -5,6 +5,8 @@
   "player": {
     "name": "Spieler {{number}}",
     "named": "Spieler {{number}} ({{colour}})",
+    "bot": "Bot {{number}}",
+    "botNamed": "Bot {{number}} ({{colour}})",
     "colour": {
       "0": "Rot",
       "1": "Gelb",
@@ -15,6 +17,7 @@
   "turn": {
     "prompt": "{{player}} ist am Zug",
     "chooseDie": "Wähle eine Würfelkarte",
+    "cardPlayed": "{{name}} spielt {{card}}",
     "selectPawn": "Wähle eine Figur",
     "end": "Zug beenden"
   },
@@ -34,13 +37,32 @@
   "menu": {
     "title": "Ludo Advanced",
     "text": "Ein Ludo mit Würfelkarten und Skill-Karten.",
-    "start": "Partie starten"
+    "hotseat": {
+      "label": "Hotseat",
+      "hint": "Zwei bis vier Spieler an einem Bildschirm, der herumgegeben wird."
+    },
+    "online": {
+      "label": "Online-Mehrspieler",
+      "hint": "Noch nicht gebaut."
+    },
+    "settings": {
+      "label": "Einstellungen",
+      "hint": "Die Sprache wechselst du in der Leiste oben. Ton ist noch nicht gebaut."
+    }
   },
   "setup": {
     "title": "Wie viele spielen mit?",
     "text": "Alle spielen an einem Bildschirm.",
     "players": "{{players}} Spieler",
     "start": "Los"
+  },
+  "lineup": {
+    "title": "Spieler oder Bot?",
+    "text": "Mindestens ein Sitz gehört einem Spieler. Ein Bot spielt einen ganzen Zug: Würfelkarte, Wurf, Zug und Skillkarten.",
+    "human": "Spieler",
+    "bot": "Bot",
+    "begin": "Spiel starten",
+    "back": "Zurück"
   },
   "pause": {
     "open": "Pause",
@@ -120,14 +142,14 @@
   "reaction": {
     "prompt": "Reaktion? {{seconds}} s",
     "trigger": {
-      "on-card": "Spieler {{number}} spielt eine Karte",
-      "on-roll": "Spieler {{number}} würfelt",
-      "on-capture": "Spieler {{number}} will eine Figur schlagen"
+      "on-card": "{{name}} spielt eine Karte",
+      "on-roll": "{{name}} würfelt",
+      "on-capture": "{{name}} will eine Figur schlagen"
     },
     "decline": "Ablehnen",
-    "waiting": "Warte auf Spieler {{number}}",
-    "declined": "Spieler {{number}} hat abgelehnt",
-    "played": "Spieler {{number}}: {{card}}",
+    "waiting": "Warte auf {{name}}",
+    "declined": "{{name}} hat abgelehnt",
+    "played": "{{name}}: {{card}}",
     "negated": "wurde abgesagt"
   },
   "action": {

@@ -59,3 +59,16 @@ export function skillArt(cardId) {
 export function diceArt(faces) {
   return drawing(`d${faces}`);
 }
+
+/**
+ * The illustration on a main menu door, by the same `data-action` the button carries (issue #12c).
+ *
+ * **The three `menu-*.svg` files are hand delivered and not generated**, which makes them the exception
+ * to this file's header. `scripts/extract-card-art.js` matches a drawing to a card by its title, and a
+ * door is not a card, so `npm run assets:card-art` neither produces nor removes them: a redraw is a file
+ * edit. They come through the same glob because they sit in the same directory, which is the whole
+ * reason this function is three lines instead of an import list.
+ */
+export function menuArt(action) {
+  return drawing(`menu-${action}`);
+}

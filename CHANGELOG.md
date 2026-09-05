@@ -376,9 +376,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   what each card added, and what the total became. It appears **only** when cards actually changed the
   roll, so on an ordinary turn it stays quiet and the fact that it is speaking tells you something
   happened
+- **The main menu now says what else the game has** (design handoff 12, D76 and D78). It had one button
+  on it, so there was no way to tell that online play and a settings screen were ever planned. There are
+  three items now, and each one carries a second line saying what it is: Hotseat tells you it is two to
+  four players at one screen passed around the table, Online Multiplayer tells you it is not built yet,
+  and Settings tells you where the language switch actually is, which is the bar at the top. **The two
+  that do not work are drawn as not working** rather than left to be clicked and refused: no face, no
+  shadow, a dashed outline, and the game will not let you press them at all. That is the same way an
+  empty slot in your skill hand is drawn, so it is a shape you have seen before, and it still reads as
+  unavailable with the colour taken away
+- **Computer opponents, so you can play on your own** (issue #43). Start a match with
+  `?players=4&bots=3` and the last three seats play themselves. A bot picks its dice card by working out
+  which of the three would do the most good on average, rolls it, and moves the pawn with the best move
+  available: bringing a pawn home beats capturing, capturing beats reaching the safety of your own home
+  column, and that beats getting a pawn out of the yard. Bots are called "Bot 2 (Grün)" in the scoreboard, in the line
+  that says whose turn it is, and on the win screen, so you can always tell who is who. **The hand-over
+  screen only appears when a second person is actually going to take the keyboard**, so playing alone
+  against three bots means no screen between turns at all. Choosing bots from the main menu is not built
+  yet; the address bar is how you do it today
+- **Computer opponents play skill cards and answer reaction windows** (issue #82). A bot works out what
+  every card in its hand would be worth **on this board, right now**, in the same units it judges a move
+  in: one point is one step, getting a pawn out of the yard is 25 and a capture is 60 or more. Then it
+  plays the best one, but only if it is worth more than keeping the card for a better moment. So Angel Die
+  is played on the pawn that can actually reach home with the extra die and kept when the extra die would
+  only overshoot, Built Different goes on the pawn an opponent is closing in on, a Banana Peel is laid one
+  square in front of whoever is furthest ahead, and Hyperbeam is not fired down a lane with one of the
+  bot's own pawns in it. In somebody else's turn a bot dodges a capture aimed at its own pawn, spoils a
+  roll that is about to do real damage, and holds the one pawn a turn depends on. **Damage to one opponent
+  counts for less the more players there are**, because at a four-player table two other people benefit
+  from it as much as the bot does, so bots answer far more often in a two-player match than in a
+  four-player one. A bot reads only what a person can see: the board and how **many** cards everybody else
+  holds, never which ones. Two cards are deliberately never played, Oil Spill and The Purge, because both
+  are as likely to help the table as the bot
+- **A line-up screen, so the computer can be chosen from the menu instead of the address bar** (issue #76,
+  FR-43, design handoff 15). The route is now main menu, then the player count, then a screen with one row
+  per seat that says whether a player or a bot plays it, then the match. Each row carries the seat's
+  colour and shape, its name in the same words the HUD uses, and two named positions of which exactly one
+  is chosen, so the state of a row is readable without colour. **At least one seat is always a player's**
+  (FR-01): the rule is written above the rows and the one control that would break it is switched off, so
+  the refusal is explained before it happens rather than after. **Any seat may be the bot, including the
+  first one**, so a player who wants the green pieces can have them and let the computer move first. The
+  keyboard lands on Start when the screen opens, so 4 and Enter is the whole of a four-player match
 
 ### Changed
 
+- **Choosing a player count no longer starts the match on its own** (issue #76). It sizes the match and
+  opens the line-up screen, and Start on that screen is what begins the match. Two gestures where there
+  used to be one, which is the price of the computer being reachable without the address bar. The
+  `?players=` and `?bots=` parameters are untouched and still boot straight into a match
+- **The message strip has moved off the board and now sits above your skill cards.** It used to hang across
+  the foot of the board, where it covered two players' start areas and the last stretch of two players'
+  tracks every time it said anything. It now speaks beside the cards you are about to use, and it grows
+  upward, so a two-line message never covers a card. The dice row keeps a little space free at its foot so
+  that the strip and the cards never overlap
+- **The four players are told apart by colour alone again.** Every seat mark in the game is now a dot in
+  that seat's colour: on the score plates, on the turn line, on the win and handover screens, on a trap
+  lying on the board and on the line-up rows. The pieces lose their mark entirely and keep their two eyes,
+  because a mark under two eyes looked like a mouth and gave each colour an expression it was never meant
+  to have. **What this costs:** a greyscale screenshot no longer tells a red pawn from a blue one on the
+  shared track, so the requirement asking for a second, non-colour cue is open again. A player's name is
+  still written next to their colour everywhere a seat is named, and each player still owns a fixed corner,
+  home column and entry square on the board
+- **A card a bot plays is announced in the message strip** (issue #82), for two seconds,
+  naming the seat and the card: "Bot 3 spielt Angel Die". Without it the whole card mechanic of a match
+  against bots would happen in silence, because a third of the cards leave the board looking exactly as
+  it did before. **The sentence is orange, the colour the game otherwise uses for "you cannot do that",
+  and that is wrong**: no colour rule exists for this message yet, so it borrows the strip's default one
+  until Design answers D87
+- **The reaction prompt calls a bot a bot** (issue #82). "Bot 3 will eine Figur schlagen" instead of
+  "Spieler 3 will eine Figur schlagen", in the line that says what is being reacted to, in the list of
+  cards already played into the window, and in the decline message. The rest of the screen has called
+  that seat "Bot 3" since bots arrived; this was the last place that disagreed
 - **Banana Peel no longer sends a pawn home. It stuns it** (issue #45, FR-30). The pawn that walks into
   one finishes its move and then loses its next turn, which is what the card in your hand has always
   said and what the rulebook has always said. Only that pawn sits out: you still move your other three.
@@ -639,9 +707,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The Product Owner sign-off table of the game design document gained three rows marked **Overridden** and
   two new unsigned rows for the rule changes the cards force: leaving the start field becomes
   `roll >= dieMax`, and card-driven backward movement stops at the first track field
+- **The main menu stopped being a small card in the middle of an empty screen** (design handoff 12, D75
+  and D79). It used less than a third of the screen in both directions and it was drawn exactly like the
+  panel that asks whether you want to abandon a match, which is a strange way to greet somebody who has
+  not started one. The three items are now laid out across the middle of the screen, at the size of a
+  card you would read from the other side of a table, and they are drawn in the same ink as the cards you
+  play with. The game's name stays the size it was: the items are the loud thing on this screen now, and
+  two loud things would compete. On a phone the three go full width and stack, each with its picture
+  beside its name
 
 ### Fixed
 
+- **The skill card you are reading is no longer covered by the dice card you chose.** Pointing at a card in
+  your hand magnifies it upward, out of its own row and over the foot of the dice row, and the dice card you
+  had just picked painted over its top third. The card being read is now the top card layer, so it covers
+  every other card, including a selected card in its own row
 - **One of the nine kinds of roll step had no wording in either language.** A roll that a card had set a
   threshold on and that then failed it would have printed `roll.step.missed` on screen instead of a
   sentence. Eight of the nine had been translated and the ninth was missed, and nothing failed because
@@ -719,3 +799,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   two jobs: it said "a card here can be played right now" and the stylesheet read it as "these cards belong
   to somebody else". They are two attributes now. Nothing about hot-seat privacy changes, because the
   handover screen is what covers the cards when the device changes hands, and it always was
+- **The language button sat at the wrong end of the top bar on the menu and on the player count screen.**
+  It is the only control on either of those two screens, and it was pushed to the right by the turn
+  sentence rather than by any rule of its own. There is no turn to name before a match starts, so the
+  sentence is empty and takes no room, and the button slid all the way to the left. It is on the right on
+  every screen now

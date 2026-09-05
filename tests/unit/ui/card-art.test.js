@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest";
 
 import { SKILL_CARDS } from "../../../src/core/cards/catalogue.js";
 import { POOL_COMPOSITION } from "../../../src/core/dice-pool.js";
-import { diceArt, skillArt } from "../../../src/ui/art/index.js";
+import { diceArt, menuArt, skillArt } from "../../../src/ui/art/index.js";
 
 /** Every drawing in the game, as `[label, svg]`, so one loop can check all 36. */
 function allDrawings() {
@@ -69,5 +69,38 @@ describe("card artwork", () => {
     for (const [label, svg] of allDrawings()) {
       expect(svg, `${label} has no viewBox`).toMatch(/^<svg viewBox="0 0 232 \d+"/);
     }
+  });
+});
+
+/**
+ * The three main menu doors, from design handoff 12.
+ *
+ * They sit in the same directory and come through the same glob, but they are **not cards**: they are
+ * hand delivered rather than generated, because `scripts/extract-card-art.js` matches a drawing to a
+ * card by its title and a door has no card behind it. So the count of 36 above is unaffected, and these
+ * are checked separately.
+ *
+ * They are still held to the card drawings' three contracts, and the same test loops above cannot reach
+ * them, so the contracts are restated here. The `aria-hidden` one is the reason a door's name is carried
+ * by `.overlay__label` (NFR-08); the inline-style one is what keeps sizing inside `menu.css`.
+ */
+describe("main menu artwork", () => {
+  const doors = ["hotseat", "online", "settings"];
+
+  it("has a drawing for each of the three doors, in the card drawings' own shape", () => {
+    for (const door of doors) {
+      const svg = menuArt(door);
+
+      expect(svg, `no drawing for ${door}`).toMatch(/^<svg viewBox="0 0 232 \d+"/);
+      expect(svg, `${door} is not aria-hidden`).toContain('aria-hidden="true"');
+      expect(svg, `${door} is focusable`).toContain('focusable="false"');
+      expect(/^<svg[^>]*>/.exec(svg)[0], `${door} carries an inline style`).not.toContain("style=");
+    }
+  });
+
+  it("returns null for a door that does not exist, rather than throwing", () => {
+    // Same deal `skillArt` makes: a door with no drawing renders an empty first row instead of taking
+    // the whole menu down. The case above is what makes sure `null` never happens in a shipped build.
+    expect(menuArt("nope")).toBeNull();
   });
 });

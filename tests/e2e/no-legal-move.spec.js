@@ -33,7 +33,7 @@ async function openAndChoose(page, options) {
 }
 
 test.describe("a turn with no legal move", () => {
-  test("shows a reason in the region under the board and then passes the turn", async ({
+  test("shows a reason in the strip beside the hands and then passes the turn", async ({
     page,
   }) => {
     const board = await openAndChoose(page, { fast: false });

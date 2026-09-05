@@ -38,8 +38,9 @@ git ls-files -z 'src/*.js' | xargs -0 wc -l | tail -1    # lines
 git ls-files 'tests/*.js' | wc -l
 git ls-files -z 'tests/*.js' | xargs -0 wc -l | tail -1
 
-# 3. Lines per architecture layer
-for d in src/core src/state src/ui src/i18n; do
+# 3. Lines per architecture layer. `src/ai` joined the list on 2026-09-04 with issue #43, which is
+#    the whole reason it is a loop over a list rather than four commands.
+for d in src/core src/state src/ui src/i18n src/ai; do
   printf '%s %s files ' "$d" "$(git ls-files "$d/*.js" | wc -l)"
   git ls-files -z "$d/*.js" | xargs -0 wc -l | tail -1
 done
@@ -58,7 +59,8 @@ for (const [k,v] of Object.entries(j))
 # 5c. Coverage per directory, which is what NFR-05 actually asks for
 node -e "const j=require('./coverage/coverage-summary.json'); const a={};
 for (const [k,v] of Object.entries(j)) { if (k === 'total') continue;
-  const d = k.includes('core') ? 'src/core' : 'src/state';
+  const p = k.split(String.fromCharCode(92)).join('/');
+  const d = p.includes('/core/') ? 'src/core' : p.includes('/state/') ? 'src/state' : 'src/ai';
   a[d] = a[d] || {c:0,t:0,f:0}; a[d].c += v.lines.covered; a[d].t += v.lines.total; a[d].f += 1; }
 for (const [d,x] of Object.entries(a))
   console.log(d, x.f + ' files', x.c + '/' + x.t, (100*x.c/x.t).toFixed(2) + '%');"
@@ -75,6 +77,20 @@ git ls-files -z 'src/*.css' | xargs -0 wc -l | sort -rn
 # 8. End-to-end test count, per browser. The suite runs three, so the total run is three times this.
 npx playwright test --list --project=chromium 2>&1 | tail -1
 ```
+
+**Commands 3 and 5c were both widened on 2026-09-04**, when `src/ai/` became the fourth layer under
+`src/`. Command 3's loop gained `src/ai`, and command 5c's one-line classifier had two branches for
+three directories, so a bot file was silently counted as `src/state`. **It also matched on the substring
+`core` anywhere in the path**, which was correct only because no directory outside `src/core/` happened
+to contain those four letters. Both now split the path on the separator and match a directory rather
+than a substring, and the run on Windows needs the backslash, which is why the split is written with
+`String.fromCharCode(92)`: this file's own rule bans no character, but a literal backslash inside a
+double-quoted `node -e` inside a Markdown code fence is three levels of escaping and one of them always
+gets it wrong.
+
+The lesson is the same one command 6 already carries: **a measurement command that was written for the
+directories that existed at the time reports confidently on the wrong set once a directory is added.**
+Command 5c would have gone on producing two believable rows for three layers.
 
 **Command 6 changed on 2026-08-30** and the change matters. It used to list `*.js` only. NFR-02
 applies to "source, tests and config", and a stylesheet is source: the delivered `board.css` was the
@@ -124,11 +140,62 @@ of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
 
+### Measured 2026-09-04, after the bots learned to play cards
+
+Every command in the section above was re-run after issues #43 and #82 landed and before the closing
+commit. **This is the current measurement**; the ones below it are kept so the growth is readable rather
+than asserted. The previous block is from before `src/ai/` existed, so the layer rows are new here.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **14108 lines in 89 files** | 2026-09-04, after #82 |
+| Stylesheet lines in `src/` | 7 | 3717 lines in 20 files | 2026-09-04, after #82 |
+| Test lines in `tests/` | 2 | **16332 lines in 95 files** | 2026-09-04, after #82 |
+| Lines in `src/core/` | 3 | 4411 lines in 31 files, **unchanged by both issues** | 2026-09-04, after #82 |
+| Lines in `src/state/` | 3 | 2171 lines in 12 files | 2026-09-04, after #82 |
+| Lines in `src/ui/` | 3 | 5232 lines in 31 files, plus 3717 lines of CSS | 2026-09-04, after #82 |
+| Lines in `src/ai/` | 3 | **1901 lines in 12 files**, the layer that did not exist yesterday | 2026-09-04, after #82 |
+| Unit tests | 4 | **69 test files, 893 tests**, all passing | 2026-09-04, after #82 |
+| End-to-end tests | 8 | **121 tests in 22 files per browser, 363 across the three** | 2026-09-04, after #82 |
+| Coverage of the three headless layers, lines | 5c | **99.49 % (1171/1177)** | 2026-09-04, after #82 |
+| Coverage of `src/core/`, lines | 5c | 99.65 % (566/568) over 31 files | 2026-09-04, after #82 |
+| Coverage of `src/state/`, lines | 5c | 98.98 % (290/293) over 12 files | 2026-09-04, after #82 |
+| Coverage of `src/ai/`, lines | 5c | **99.68 % (315/316) over 12 files** | 2026-09-04, after #82 |
+| Coverage, branches | 5a | 95.40 % | 2026-09-04, after #82 |
+| Coverage, functions | 5a | 100 % | 2026-09-04, after #82 |
+| Longest file of any kind | 6 | **300 lines, and there are three of them**: `tests/e2e/helpers.js`, `src/ui/game-loop.js` and `src/state/turn-manager.js` | 2026-09-04, after #82 |
+| Longest stylesheet | 7 | 294 lines, `src/ui/styles/tokens.css`, unchanged | 2026-09-04, after #82 |
+
+**Five readings, and two of them are warnings.**
+
+1. **`src/core/` is byte-identical after two whole features**, which is the fifth measurement in a row
+   where the rules layer did not move. This is the strongest case for the layering the project has
+   produced so far: the bots decide what to play, the value model prices 29 cards, the announcement
+   reaches the screen, and **not one line of the rules changed**. NFR-05's coverage floor for `core/` is
+   met by tests that were written for other issues entirely.
+2. **`src/ai/` came in at 1901 lines over 12 files with 99.68 % line coverage**, which is the highest of
+   the three headless layers. It is a layer where every function is pure and takes a literal board, so
+   the coverage is cheap rather than impressive: the number to be pleased about is that a file of card
+   values is testable one card at a time.
+3. **Three files now sit at exactly 300 lines**, where two did at the last measurement, and
+   `src/ui/timers.js` is at 298 with two more at 299. `game-loop.js` joined the ceiling. **Every one of
+   the three is a file the next change has to shrink before it can grow**, and that is now a standing
+   cost rather than a one-off warning: it has been recorded at three consecutive measurements and has
+   got worse at each.
+4. **The test suites grew faster than the source again**, and by more than usual: about 3200 lines of
+   tests against about 2100 of source across the two issues. Seventeen new unit files.
+5. **Branch coverage fell from 96.07 % to 95.40 %** while line coverage rose. That is the honest cost of
+   `src/ai/`: several value functions have a guard for a board that no test reaches (a pawn that is not
+   there, a die that has not been chosen), and `card-values.js`'s boot check throws on a line no test can
+   reach without a broken catalogue. `core/trap-fire.js` has the same unreachable guard and the same
+   uncovered line, which is the precedent this follows rather than an excuse.
+
+---
+
 ### Measured 2026-09-03, after design handoff 11 landed
 
 Every command in the section above was re-run after the handoff landed and before the closing commit.
-**This is the current measurement**; the ones below it are kept so the growth is readable rather than
-asserted.
+The ones below it are kept so the growth is readable rather than asserted.
 
 | Metric | Command | Value | Taken on |
 | --- | --- | --- | --- |

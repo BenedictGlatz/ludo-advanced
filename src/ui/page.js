@@ -59,12 +59,17 @@ export function emptyParts() {
  * The overlay is last so it paints over all of them without needing a z-index that competes with the
  * card layers in `tokens.css`.
  *
- * **The message strip is inside `.app__board` and not a row of the grid**, which is D35 of design spec 04
+ * **The message strip is inside `.app__skill` and not a row of the grid**, which is D35 of design spec 04
  * and is the reason that spec could give the board its 44vw back. It used to hold a full-width row at the
  * foot of the page permanently, faded to nothing, so that an arriving refusal would not make the page
- * jump. It now hangs off the bottom edge of the board: `message-strip.css` positions it absolutely and
- * `app.css` makes `.app__board` the containing block, so it costs no height, still cannot make the page
- * jump, and a message about a refused move sits over the pieces it is about.
+ * jump. It hangs off a plate instead: `message-strip.css` positions it absolutely and `app.css` makes the
+ * plate the containing block, so it costs no height and still cannot make the page jump.
+ *
+ * **Which plate changed on 2026-09-05, D98 of design handoff 16.** It hung off the bottom of the board
+ * until then, and in play that put it over two start areas and the last four fields of two tracks. The
+ * board is the one region in the game that may not be covered, so the strip now hangs above the skill
+ * plate and grows upward from there. It is the first child of `.app__skill` so the source order matches
+ * the paint order; the CSS does not depend on that.
  *
  * **The two session elements are detached before the wipe, and that is not a tidiness measure.**
  * jQuery's `.empty()` deliberately unbinds every handler on the children it removes, so from the second
@@ -90,9 +95,9 @@ export function mount($root, parts, session) {
       session.$app.append(
         session.$chrome,
         parts.$hud,
-        $("<div>", { class: "app__board" }).append(parts.$board, parts.$message),
+        $("<div>", { class: "app__board" }).append(parts.$board),
         $("<div>", { class: "app__dice" }).append(parts.$diceHand),
-        $("<div>", { class: "app__skill" }).append(parts.$skillHand),
+        $("<div>", { class: "app__skill" }).append(parts.$message, parts.$skillHand),
         parts.$prompt,
         session.$overlay
       )

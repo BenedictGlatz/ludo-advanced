@@ -149,8 +149,12 @@ test.describe("the dice card pool overview", () => {
     // No match, no pool. A button that opens an empty screen is worse than one that is not there.
     await expect(poolButton(page)).toBeHidden();
 
-    await page.locator('.overlay__button[data-action="start"]').click();
+    await page.locator('.overlay__button[data-action="hotseat"]').click();
     await page.locator('.overlay__button[data-count="2"]').click();
+    // Still nothing to look at on the line-up screen: the match has not started, so there is no pool.
+    await expect(poolButton(page)).toBeHidden();
+
+    await page.locator('.overlay__button[data-action="begin"]').click();
     await expect(poolButton(page)).toBeVisible();
   });
 

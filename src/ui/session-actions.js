@@ -31,9 +31,13 @@ import { changeLanguage, nextLanguage } from "../i18n/index.js";
 /**
  * The two handlers, bound to one session.
  *
- * `session` is the small interface `match-flow.js` hands in: `openScreen`, `freshMatch`, `playAgain`,
- * `quitToMenu`, `drawShell`, `getLoop` and `getScreen`. Naming it as an argument rather than importing
- * the flow keeps the dependency pointing one way, which is what lets this file be read on its own.
+ * `session` is the small interface `match-flow.js` hands in: `openScreen`, `playAgain`, `quitToMenu`,
+ * `drawShell`, `getLoop`, `getScreen` and `lineup`. Naming it as an argument rather than importing the
+ * flow keeps the dependency pointing one way, which is what lets this file be read on its own.
+ *
+ * **`session.lineup` is the one entry that is an object rather than a function**, and it is
+ * `createLineupFlow`'s three operations from `lineup.js`. Three separate entries would have been three
+ * names for one screen, and this file would then be the only place that knew they belonged together.
  */
 export function createSessionActions(session) {
   /** Is a match running with nothing on top of it? The guard both chrome buttons need. */
@@ -41,11 +45,26 @@ export function createSessionActions(session) {
     return session.getLoop() !== null && session.getScreen() === OVERLAY_SCREEN.NONE;
   }
 
-  function onOverlayAction(action, value) {
-    if (action === OVERLAY_ACTION.START) session.openScreen(OVERLAY_SCREEN.SETUP);
-    if (action === OVERLAY_ACTION.PLAYERS) session.freshMatch(Number(value));
+  function onOverlayAction(action, value, choice) {
+    // The Hotseat door, and it is the only one of the menu's three that is handled. The other two are
+    // `disabled` in the DOM (D77.2), so no click ever arrives and a filter here would be dead code.
+    if (action === OVERLAY_ACTION.HOTSEAT) session.openScreen(OVERLAY_SCREEN.SETUP);
     if (action === OVERLAY_ACTION.RESTART) session.playAgain();
     if (action === OVERLAY_ACTION.QUIT) session.quitToMenu();
+
+    // **The count click stopped starting a match** (issue #76). It sizes the match and opens the
+    // line-up, which asks who plays each of those seats, and BEGIN is what starts it. That is one line
+    // here and the whole of the feature's change to the flow, which is why the line-up could be built
+    // without touching `core/` or `ai/` at all.
+    //
+    // BACK goes to the count screen and is the only back button in the game (D94.2). It throws the
+    // half-made line-up away rather than remembering it, because `open` rebuilds the line-up from the
+    // count: a player who comes back and picks a smaller number must not carry bots into seats that do
+    // not exist.
+    if (action === OVERLAY_ACTION.PLAYERS) session.lineup.open(Number(value));
+    if (action === OVERLAY_ACTION.CONTROLLER) session.lineup.setController(Number(value), choice);
+    if (action === OVERLAY_ACTION.BEGIN) session.lineup.begin();
+    if (action === OVERLAY_ACTION.BACK) session.openScreen(OVERLAY_SCREEN.SETUP);
 
     if (action === OVERLAY_ACTION.RESUME) {
       session.openScreen(OVERLAY_SCREEN.NONE);

@@ -157,6 +157,10 @@ function playActionCard(state, intent, deps) {
   const spent = nextState(state, {
     ...spendCard(state, seat),
     ...discardChanges(state, seat, intent.cardId),
+
+    // For the screen only, and both branches below inherit it. `game-state.js` carries the reason a
+    // card play has to be recorded at all: a bot's card is played by nobody the player can see.
+    lastCardPlayed: { seat, cardId: intent.cardId },
   });
 
   const window = openWindow(spent, TRIGGER.ON_CARD, seat);
@@ -199,6 +203,7 @@ function playReactionCard(state, intent) {
       ...spendCard(state, seat),
       ...discardChanges(state, seat, intent.cardId),
       ...recordPlay(state, entry),
+      lastCardPlayed: { seat, cardId: intent.cardId },
     })
   );
 }

@@ -22,6 +22,16 @@
    A hand with `data-face="down"` is excluded by construction rather than by a
    later override, so no gesture can reveal a card the viewer does not own.
 
+   Amended on 2026-09-04: the revealed card is painted at --layer-card-reading
+   and no longer at --layer-card-raised. The spec's § 3 argued that DOM order
+   alone puts the skill plate over the dice plate, which is true of the plates
+   and not of the cards inside them: a card is its own stacking context and a
+   plate is not, so every card in the rail competes in one z-index space. A
+   chosen dice card sits at --layer-card-selected, one above the raised card,
+   and covered the top third of the card the player was reading. The same tie
+   existed inside the fan, where a selected skill card covered a revealed
+   neighbour. Reading is now the top card layer, which is what the state means.
+
    Amended on landing, 2026-09-03: both box-shadow offsets below multiply by
    --shadow-dir, which the delivered file did not have because it was read
    against the tree before D64 landed. A revealed card is still sitting in the
@@ -46,7 +56,7 @@
 .hand--skill:not([data-face="down"]) .card[data-card-id]:hover,
 .hand--skill:not([data-face="down"]) .card[data-card-id]:focus-visible,
 .hand--skill:not([data-face="down"]) .card[data-card-id].card--reading {
-  z-index: var(--layer-card-raised);
+  z-index: var(--layer-card-reading);
   scale: calc(1 / var(--card-u));
   filter: none;
   transform: translateY(calc(var(--lift) * 2));

@@ -7,10 +7,14 @@
    holds the yards, the houses and the slots, board-trap.css holds the objects
    a card puts on a field. Load all three after this one.
 
-   Amended on 2026-09-03, 07-spec-trap-marker.md: --seat-shape joins the seat
+   Amended on 2026-09-03, 07-spec-trap-marker.md: --seat-shape joined the seat
    mapping below, the turn-off bar takes a z-index, the skill diamond steps
    back for a trap as well as for a ring, and the pickable field and its
-   keyboard focus are at the foot of this file (D59). */
+   keyboard focus are at the foot of this file (D59).
+
+   Amended on 2026-09-05, 16-spec: --seat-shape left the mapping again (D97).
+   The four per-seat clip paths are retired outright, so the mapping is colour
+   and nothing else. */
 
 .board,
 .board * {
@@ -45,34 +49,29 @@
     var(--shadow-region);
 }
 
-/* One mapping from seat number to colour and to shape. Every region, every
-   pawn, every HUD plate and now every trap takes its identity from here, so a
-   player is described once (D2, D16).
+/* One mapping from seat number to colour. Every region, every pawn, every HUD
+   plate and now every trap takes its identity from here, so a player is
+   described once (D2).
 
-   --seat-shape moved in on 2026-09-03, the follow-up 06-spec section 6 named:
-   it was repeated in hud.css, chrome.css, overlay.css and pawn.css, and D53
-   puts a seat mark on a fifth element. All four repeats are deleted; the
-   elements that read --seat-shape now inherit it from the ancestor carrying
-   data-player, which is the element they already take --player from. */
+   --seat-shape left again on 2026-09-05, D97. It arrived here on 2026-09-03
+   because five elements read it; the four per-seat clip paths are now retired
+   outright and every seat mark in the game is a dot. What is left below is
+   colour, which is the whole of what tells two seats apart. */
 [data-player="0"] {
   --player: var(--color-p0);
   --player-soft: var(--color-p0-soft);
-  --seat-shape: var(--seat-shape-0);
 }
 [data-player="1"] {
   --player: var(--color-p1);
   --player-soft: var(--color-p1-soft);
-  --seat-shape: var(--seat-shape-1);
 }
 [data-player="2"] {
   --player: var(--color-p2);
   --player-soft: var(--color-p2-soft);
-  --seat-shape: var(--seat-shape-2);
 }
 [data-player="3"] {
   --player: var(--color-p3);
   --player-soft: var(--color-p3-soft);
-  --seat-shape: var(--seat-shape-3);
 }
 
 /* --- Squares --- */

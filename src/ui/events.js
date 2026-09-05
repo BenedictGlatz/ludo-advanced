@@ -168,6 +168,25 @@ export function bindPickEvents($board, handlers) {
 }
 
 /**
+ * Bind everything inside a match, in one call. Issue #43.
+ *
+ * The five bindings below it are unchanged and still exported: `match-flow.js` binds the chrome and the
+ * overlay separately, because those two live for the whole session rather than for one match. What this
+ * groups is exactly the set `game-loop.js`'s `start()` had written out, and the grouping is a real seam
+ * rather than a line count: **these are the five regions that are rebuilt with every match.**
+ *
+ * `regions` is `{ $board, $diceHand, $skillHand, $prompt }` and `handlers` is `{ board, cards }`, the
+ * two controller objects the loop already holds.
+ */
+export function bindMatchEvents({ $board, $diceHand, $skillHand, $prompt }, { board, cards }) {
+  bindBoardEvents($board, { onPawnActivated: board.onPawnActivated });
+  bindPickEvents($board, cards.handlers);
+  bindDiceHandEvents($diceHand, { onDiceCardActivated: board.onDiceCardActivated });
+  bindSkillHandEvents($skillHand, cards.handlers);
+  bindPromptEvents($prompt, cards.handlers);
+}
+
+/**
  * Bind the always-present controls: the language switch and the pause button. Issue #39.
  *
  * The same shape as the prompt strip's binding and for the same reason: one handler for every button in
@@ -188,11 +207,27 @@ export function bindChromeEvents($chrome, handlers) {
  * The same shape as the prompt strip and the chrome: one handler for every button in the region, told
  * apart by `data-action`, and no `keydown` of its own because these are real `<button>` elements.
  *
- * `handlers.onOverlayAction(action, value)` gets the action and, for the match-setup buttons, the player
- * count they stand for.
+ * `handlers.onOverlayAction(action, value, choice)` gets the action and, where a button carries one, the
+ * number it stands for and the position it is.
+ *
+ * **Two attributes carry `value`, and they never appear on the same button.** `data-count` is a player
+ * count on the setup screen and `data-seat` is a seat on the line-up screen, and both answer "which
+ * one". `overlay.css` selects on `data-count` for the three square count buttons, so the line-up's rows
+ * could not simply reuse it without inheriting a look that is not theirs.
+ *
+ * `choice` is `data-value`, and only the line-up's two positions have one. It is a third argument
+ * rather than something read back out of the DOM, because the pair is two named positions and not one
+ * button that flips: a click has to say **which** position it is, so that clicking the one that is
+ * already chosen can do nothing. Handlers that do not need it simply do not declare it.
  */
 export function bindOverlayEvents($overlay, handlers) {
   $overlay.on("click", "[data-action]", function onClick() {
-    handlers.onOverlayAction($(this).attr("data-action"), $(this).attr("data-count"));
+    const $button = $(this);
+
+    handlers.onOverlayAction(
+      $button.attr("data-action"),
+      $button.attr("data-count") ?? $button.attr("data-seat"),
+      $button.attr("data-value")
+    );
   });
 }

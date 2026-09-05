@@ -9,12 +9,22 @@
    runtime and the main menu is a runtime the player spends time in.
    ========================================================================== */
 
+/* justify-content since 2026-09-04, and it is a fix rather than a preference.
+   .chrome__turn carries flex: 1 1 auto and is this row's only spacer, so the
+   controls are pushed right by the sentence rather than by a rule. On the menu
+   and on the setup screen the sentence is empty and line 74 below takes it out
+   of flow, and pause and pool are hidden there too, so the language button was
+   the only child left and it sat at the LEFT end of the row. One declaration,
+   and it is inert during a match, because a growing flex child already eats
+   every bit of the slack this would distribute. Found as the one open finding
+   of 12-spec § 7, which could not tell from the stylesheets which way it went. */
 .app__chrome {
   position: relative;
   z-index: var(--layer-chrome);
   display: flex;
   gap: var(--space-2);
   align-items: center;
+  justify-content: flex-end;
   min-height: 2.25rem;
 }
 
@@ -41,10 +51,9 @@
   white-space: nowrap;
 }
 
-/* --seat-shape was mapped here as well until 2026-09-03, and the four lines
-   were deleted when 07-spec moved the mapping into the one [data-player="N"]
-   block in board.css. That selector is unscoped, so the chrome row inherits
-   the shape although it sits outside .board. The --seat-color line stays. */
+/* --seat-shape is gone from the project as of 2026-09-05, D97: the mark below
+   is a dot, and a dot needs no per-seat value. --seat-color stays, because
+   this plate sits on a neutral ground and needs the seat as a fill. */
 .app__chrome[data-player="0"] {
   --seat-color: var(--color-p0);
 }
@@ -64,7 +73,7 @@
   width: var(--space-5);
   height: var(--space-5);
   background: var(--seat-color);
-  clip-path: var(--seat-shape, circle(50%));
+  border-radius: var(--radius-pill);
   outline: var(--border-hair) solid var(--color-ink);
   outline-offset: calc(var(--border-hair) * -1);
 }

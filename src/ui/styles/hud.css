@@ -51,11 +51,9 @@
     background-color var(--motion-feedback) var(--ease-ui);
 }
 
-/* --seat-shape was mapped here as well until 2026-09-03, and the four lines
-   were deleted when 07-spec moved the mapping into the one [data-player="N"]
-   block in board.css. That selector is unscoped, so .hud__seat inherits the
-   shape from itself; the --seat-color line stays, because this file uses its
-   own name for the fill rather than board.css's --player. */
+/* --seat-shape is gone from the project as of 2026-09-05, D97: the mark below
+   is a dot, and a dot needs no per-seat value. --seat-color stays, because
+   this plate sits on a neutral ground and needs the seat as a fill. */
 .hud__seat[data-player="0"] {
   --seat-color: var(--color-p0);
 }
@@ -69,12 +67,12 @@
   --seat-color: var(--color-p3);
 }
 
-/* --- The name line, and the seat mark that carries D16.
+/* --- The name line and the seat dot (D97).
 
-       The mark is a clipped block in the seat's colour, and the four clips
-       differ in shape, so the plate still says which seat it is with the
-       colour removed. It is the same mark the pawn, the win panel and the
-       handover curtain wear. --- */
+       A disc in the seat's colour with a hairline ink ring. It used to be the
+       same block clipped to one of four shapes; the shapes are withdrawn, so
+       the dot is the whole mark and the colour is the whole distinction. It
+       is the same dot the chrome and the win panel wear. --- */
 
 .hud__name {
   display: flex;
@@ -96,7 +94,7 @@
   width: var(--seat-mark);
   height: var(--seat-mark);
   background: var(--seat-color);
-  clip-path: var(--seat-shape, circle(50%));
+  border-radius: var(--radius-pill);
   outline: var(--border-hair) solid var(--color-ink);
   outline-offset: calc(var(--border-hair) * -1);
 }

@@ -12,20 +12,11 @@
 import { PLAYER_COUNTS } from "../core/board.js";
 import { MATCH_STATUS } from "../state/game-state.js";
 import { t } from "../i18n/index.js";
+import { lineupScreen } from "./lineup-screen.js";
+import { menuScreen } from "./menu-screen.js";
 import { OVERLAY_ACTION, OVERLAY_SCREEN } from "./overlay-vocabulary.js";
 import { seatLabel } from "./player-labels.js";
 import { poolScreen } from "./pool-screen.js";
-
-/** S1. The entry point: one button, because there is one thing to do here (FR-38). */
-function menuScreen() {
-  return {
-    screen: OVERLAY_SCREEN.MENU,
-    title: t("menu.title"),
-    text: t("menu.text"),
-    player: null,
-    buttons: [{ action: OVERLAY_ACTION.START, label: t("menu.start"), variant: "primary" }],
-  };
-}
 
 /**
  * S2. Choose 2, 3 or 4 players (FR-01).
@@ -77,9 +68,7 @@ function winScreen(state) {
 
   return {
     screen: OVERLAY_SCREEN.WIN,
-    title: won
-      ? t("match.won", { player: seatLabel(state.seats, state.winner) })
-      : t("match.abandoned"),
+    title: won ? t("match.won", { player: seatLabel(state, state.winner) }) : t("match.abandoned"),
     player: won ? state.winner : null,
     outcome: won ? "won" : "abandoned",
     buttons: [
@@ -103,7 +92,7 @@ function winScreen(state) {
 function handoverScreen(state, seat) {
   return {
     screen: OVERLAY_SCREEN.HANDOVER,
-    title: t("handover.title", { player: seatLabel(state.seats, seat) }),
+    title: t("handover.title", { player: seatLabel(state, seat) }),
     text: t("handover.text"),
     player: seat,
     buttons: [{ action: OVERLAY_ACTION.READY, label: t("handover.ready"), variant: "primary" }],
@@ -127,17 +116,25 @@ function noScreen() {
  * The description for whichever screen the flow is on.
  *
  * `state` is `null` on the menu and the setup screen, because there is no match yet. `seat` is only
- * used by the handover, and `pool` only by the pool overview.
+ * used by the handover, `pool` only by the pool overview, and `lineup` only by the line-up screen.
  *
- * **The pool overview lives in its own file** rather than as a seventh function here. It is the only
- * screen with cards on it, it is the only one whose content comes from `core/` rather than from the game
- * state, and it carries a paragraph of reasoning of its own. This file stays a switch.
+ * **The pool overview and the main menu live in their own files** rather than as two more functions
+ * here. The pool overview is the only screen with cards on it and the only one whose content comes from
+ * `core/` rather than from the game state; the menu became three doors with artwork and a paragraph of
+ * its own in design handoff 12. Both carry more reasoning than a screen description usually does, and
+ * this file stays a switch.
  *
  * `pool` is handed in rather than read, because the face-down count lives in the dice source inside
  * `deps` and this file is pure. A screen that reached into the running match for a number would be the
  * one place in `ui/` that could not be tested by asking it what it says.
+ *
+ * `lineup` is handed in for the same reason and it is a **snapshot**, `{ playerCount, seats, bots }`,
+ * from `lineup.js`. There is no match behind the line-up screen, so `state` is `null` there too.
  */
-export function screenDescription(screen, { state = null, seat = null, pool = null } = {}) {
+export function screenDescription(
+  screen,
+  { state = null, seat = null, pool = null, lineup = null } = {}
+) {
   switch (screen) {
     case OVERLAY_SCREEN.MENU:
       return menuScreen();
@@ -149,6 +146,12 @@ export function screenDescription(screen, { state = null, seat = null, pool = nu
       return winScreen(state);
     case OVERLAY_SCREEN.HANDOVER:
       return handoverScreen(state, seat);
+    case OVERLAY_SCREEN.LINEUP:
+      // `noScreen` when no count has been chosen, on the same argument as the pool overview below: a
+      // line-up with no seats on it would be a screen asking about a match nobody has sized. The flow
+      // hands in a snapshot rather than `null` once it has a line-up object at all, so the empty
+      // `playerCount` is what the check has to be written against and not the argument being absent.
+      return lineup === null || lineup.playerCount === null ? noScreen() : lineupScreen(lineup);
     case OVERLAY_SCREEN.POOL:
       // `noScreen` when there is no match, so a stale POOL screen cannot outlive the pool it describes.
       return pool === null ? noScreen() : poolScreen(pool);

@@ -2383,13 +2383,635 @@ reader could take the illustration for the contract.
   tokens plus the whole `prefers-reduced-motion` block move to `motion.css`. It was not done here because
   it touches no decision in the brief, and it is worth folding into the answer to brief 09, which changes
   the same file. Current size in Ch. 09.
-- **Handoff 12 arrived in the same package. The design is chosen and it is deliberately not built yet.**
-  Claude Design recommended 12c, three doors in the game's own card language, and wrote the spec for that
-  one with 12a and 12b as drawn rejected alternatives. **The Product Owner confirmed 12c on 2026-09-04**,
-  in conversation with Claude Design rather than off this package alone, and asked in the same breath
-  that implementation not start yet. So the choice the brief asked for has been made and the build is
-  queued behind something else. `menu.css` and three SVGs are ready to land and nothing from handoff 12
-  is in `src/`.
+- ~~**Handoff 12 arrived in the same package. The design is chosen and it is deliberately not built
+  yet.**~~ **Landed on 2026-09-04**, see the section below. Claude Design recommended 12c, three doors in
+  the game's own card language, and wrote the spec for that one with 12a and 12b as drawn rejected
+  alternatives. The Product Owner confirmed 12c on 2026-09-04, in conversation with Claude Design rather
+  than off this package alone, and asked in the same breath that implementation wait; it was released the
+  same day.
+
+### Handoff 12, the main menu: D75 to D80, landed 2026-09-04
+
+The menu was three elements on a 432 px panel in the middle of a 1440 by 810 px stage, so it used under
+a third of the stage in both directions and was **the emptiest screen in the game**. It was also drawn
+identically to the screen that asks whether you want to abandon a match, because it was that component
+with different words in it. And it offered one button, so nothing on it said that online play or a
+settings screen exist.
+
+It is now three **doors** in the game's own card chrome, dealt across the middle of the stage, Hotseat
+the tall one. Six files: `menu.css` (new), three `menu-*.svg` drawings (new), `menu-screen.js` (new) and
+one line in `main.js`.
+
+**The seam held for the second time, and that is the finding rather than the look.** D38 put
+`data-screen` on the overlay element so a stylesheet could make one screen look nothing like the others.
+`handover.css` was the first screen to use it; `menu.css` is the second, and it goes further: the panel
+keeps every element `overlay-view.js` builds and **gives up its background, border, shadow and padding**,
+so the component's own markup survives a screen that is not a panel at all. `overlay.css` was not
+amended and `tokens.css` gained no token. What was missing from D38 was not the seam but the statement
+that **a screen may own its arrangement without owning its markup**.
+
+- **`.overlay__actions` is the cheapest part of the answer.** It was already a centred wrapping flex row,
+  which is what three doors side by side are, so it needed `gap` and `align-items: end` and nothing else.
+  The wrap is also what reserves the place for a fourth door (the rules screen, S10) with no new rule.
+- **One mechanical trap, and it cost Design an hour.** The panel's width is
+  `min(var(--overlay-panel-w), 100%)`, and inside `.overlay`'s grid that percentage resolves against a
+  single auto-sized column track that the panel's own content sized, so `84rem` silently did not mean
+  84rem. The menu's sheet is a **flex line rather than a grid** for that one reason: a flex container has
+  a definite content box and the number lands.
+- **A door is not a `.card`, and the boundary is load-bearing.** It borrows the face, the 3 px ink edge,
+  the hard offset shadow and the radius, at a size no hand uses. It takes no `--card-u`, no banner, no
+  kind pill, no tag list and **no `data-card-family`**, so `card.css`, `card-state.css` and
+  `card-reveal.css` never reach it. Making the doors real cards would have looked free and would have
+  meant a menu exception for the hover reveal of D66, for the desaturation of an unplayable card and for
+  `.card--back`. Borrowing four declarations is cheaper than inheriting a component and subtracting from
+  it. `tests/e2e/menu.spec.js` asserts the absence of `data-card-family`, because that is the boundary a
+  later change is most likely to cross.
+
+#### What an unavailable control looks like, which the project had no answer for
+
+D77 is the decision with no precedent, and the treatment turned out to be a **reuse rather than an
+invention**: the empty skill-hand slot at `hand.css:169-181` is already the card's silhouette in dashed
+ink at low weight with no face, no shadow, no lift and no tab stop. The `color-mix(in srgb,
+var(--color-ink) 32%, transparent)` is copied from it rather than derived, so the game's two dashed edges
+are the same weight. In the picked direction the resemblance is exact rather than analogous, because the
+object losing its face is already a card.
+
+**Two of the three cues are not colour**, which is what NFR-12 measures: no face and no shadow, a dashed
+edge, and a muted label. Verified at 1440 by 900 under `filter: grayscale(1)`: Hotseat reads as filled
+and raised, the other two as flat outlines, with no hue involved.
+
+**`disabled` and not `aria-disabled`, and the two decisions agree.** `aria-disabled` buys one thing, an
+item that stays reachable and announces itself as unavailable, and it costs a click filter in
+`session-actions.js`. It buys that only if focusing the door tells a keyboard user something the screen
+does not already say, and because of D78 it does not: the reason is permanent text inside the door. So
+there is **no branch for `online` or `settings` anywhere in `src/`**, and the DOM attribute is what stops
+the click and removes the tab stop. This is spec 05 § 5's argument, which took seven stops out of the
+pool overview, and it is the opposite side of D67, which gave every hand card a stop *because* focusing
+one now does something.
+
+The cost is stated rather than hidden: a keyboard-only player reaches Hotseat and nothing else, so they
+learn the other two doors exist by reading the screen. If D78 is ever narrowed so the reason is not
+permanently on screen, this is the decision that has to flip with it.
+
+#### The keyboard check D76.4 asked for, answered
+
+The spec could not tell from the stylesheets which of two elements a first `Tab` lands on and said either
+answer was acceptable. Measured on the built page:
+
+| | Focused |
+| --- | --- |
+| on open | the Hotseat door |
+| `Tab` | nothing, focus leaves the document |
+| `Shift+Tab`, twice | Hotseat, then the language button |
+
+So the sheet has **exactly one tab stop**, `focusOverlay` needed no change because Hotseat is first in
+the DOM, and the language button is reached **backwards**, because the chrome is earlier in the DOM but
+outside the overlay. `Enter` on each does what it says, which was the spec's condition.
+
+#### What the delivery needed from this side, and one thing it got wrong
+
+- **`overlayButton` had to be split**, which the delivery note said would not be necessary. Its claim
+  that "nothing changes in `overlay-view.js`" is true only of the `focusOverlay` call it had checked. The
+  function set the label as the button's own text, and a door has three children, so it is now a shared
+  `buttonShell` plus an `overlayDoor` branch taken when a description carries a `hint`. Branching on a
+  field and not on `description.screen` is what keeps that file's promise that it renders a description
+  and knows nothing about screens.
+- **The menu description moved into `menu-screen.js`**, on the `pool-screen.js` precedent, because
+  `overlay-screens.js` says of itself that it stays a switch and the menu stopped being a one-line
+  function.
+- **The six locale keys the spec named are impossible in JSON**: `menu.hotseat` cannot be both a string
+  and an object alongside `menu.hotseat.hint`. They nest with `.label` instead. See the journal.
+- **The three drawings are the exception to `src/ui/art/`'s rule that its files are generated.** They are
+  hand delivered, because `scripts/extract-card-art.js` matches a drawing to a card by its title and a
+  door has no card behind it, so `npm run assets:card-art` neither produces nor removes them and a redraw
+  is a file edit. `card-art.test.js`'s count of 36 walks the catalogue and the pool rather than the
+  directory, so three more files in the glob left it untouched, and the three are checked in a section of
+  their own against the same three contracts.
+- **`data-action="start"` became `"hotseat"`**, because the menu now has three doors and an action had to
+  say which one. Six call sites in three E2E specs. The 16 specs that pass `?players=` bypass the menu
+  and were untouched, which is the same insulation that saved them when the menu first landed.
+
+#### One open finding of the spec's turned out to be real
+
+12-spec § 7 could not tell from the stylesheets whether the language button sits at the right end of the
+chrome row on the menu, and flagged it. It did not. `.chrome__turn` carries `flex: 1 1 auto` and is the
+row's **only** spacer, so the controls were pushed right by the turn sentence rather than by a rule, and
+`chrome.css` takes that sentence out of flow with `:empty { display: none }` on the menu and on the setup
+screen. With pause and pool hidden there too, the language button was the only child left and sat at the
+**left** end. Fixed with one declaration, `justify-content: flex-end`, which is inert during a match
+because a growing flex child already eats every bit of the slack it would distribute.
+
+**This is the third "a rule runs and nothing renders it" class of finding**, after handoff 07's traps and
+handoff 11's roll steps, and it is the first that a design brief found by reasoning about the stylesheets
+rather than by looking at the screen.
+
+#### What is still outstanding after this
+
+- **No unit test for `overlay-view.js`**, so the door's three elements are pinned only through
+  Playwright. That is the standing situation for anything importing jQuery and is unchanged here.
+- **`setup.start` is still in both languages and read by nothing.** `menu.start` was deleted with this
+  change, because `menu.hotseat.label` replaced it, so `setup.start` is now the only orphan left. Left
+  alone deliberately: it is not this change's scope.
+- **The dashed edge on an unavailable door is faint in the dark skin**, because 32 per cent of
+  `--color-ink` on a dark ground is close to the ground. It is the value `hand.css` already uses for the
+  empty skill slot, so the two agree and neither was invented here. Not raised as a defect, recorded so
+  that a future contrast pass has it.
+
+### The loop's fourth sibling, and the one thing a bot may not know: 2026-09-04, issue #43
+
+`src/ui/bot-driver.js` is the fourth module built on the pattern `card-controls.js` established:
+`game-loop.js` drives the **phases** of a turn, and one sibling owns each thing that happens inside
+them. The table of siblings is now `turn-controls.js` (what a pawn or dice-card click means),
+`card-controls.js` (what a card click means, plus the reaction clock), `turn-waits.js` (the two pauses
+the game takes on its own) and this one.
+
+**What it adds to `src/ai/` is time, and nothing else.** `decide(state)` returns an intent and knows
+nothing about clocks, exactly as `core/` decides the rules and knows nothing about the DOM. The driver
+waits, then dispatches. That split is the whole feature in one sentence, and it is what makes a whole
+bot match a one-second Vitest run instead of a four-minute Playwright one.
+
+**The decision is asked twice: once to find out whether there is anything to do, and again when the
+timer fires.** Not redundant. 900 ms of real time pass in between, and the match can be paused, given
+up, restarted, or carried on by a person in that window. Dispatching an intent captured at scheduling
+time would replay a decision made about a board that no longer exists.
+
+**Two lines in `advance()`, and the order of both is load-bearing:**
+
+- `bots.declineAll()` runs **before** `cards.handleWindow()`. So a window with nobody but bots in it
+  shuts at once instead of running a thirty-second countdown nobody is watching, and in a mixed round
+  `seatOnShow`, which is `eligible[0]`, is a person. Declining takes no pause at all, because somebody
+  else is waiting on that window.
+- `bots.takeTurn()` runs **after** the loop's three self-taken steps. So a bot with no playable card is
+  skipped through the action phase instantly, rather than appearing to think about a decision it does
+  not have.
+
+#### The hand-over rule changed, and it is a rule and not a convenience
+
+`onHandover` in `match-flow.js` now asks `handoverNeeded(state, seat)` first and simply passes the turn
+when the answer is no. Two cases make the screen pointless: the next seat is a bot, so nobody is being
+handed anything, and there is only one person in the match, so they never put the mouse down.
+
+**With one person and three bots the hand-over screen disappears from the game entirely.** D33's
+secrecy argument, that an opponent's cards stay their own, has nothing to protect when there is no
+second person at the screen. It lives in the flow rather than the loop because the loop's own comment
+already says that who decides the screen has changed hands is a question about the person in front of
+it and not about the turn.
+
+The hold before it is unchanged: a move still has to finish arriving and a refusal still has to be
+readable, whoever plays next. Only what happens **after** the hold is different.
+
+#### The pause, and the token it borrows
+
+`holdBot` in `timers.js`, the module's fourth wait. It reuses **`--motion-roll-hold`** rather than
+inventing a token, because `CLAUDE.md` says Claude Code does not invent design rules and a duration in
+`tokens.css` is one. That token means "reading time for a decision the turn hangs on", which is exactly
+what this is. **D81 asks Design whether the bot deserves its own token, whether 900 ms is right, and
+whether the pause belongs per intent or per turn.** Until it is answered, a borrowed token with a
+stated reason beats a number invented here.
+
+Rejected: a constant inside `bot-driver.js`. It cannot be overridden, so every end-to-end run with a bot
+in it would pay 900 ms per intent, and a duration living outside `tokens.css` is precisely what D20 and
+D70 were raised to remove. `FAST_DELAYS` gained a sixth key, `bot: 0`.
+
+#### Input is locked while a bot plays, and the lock is a guard rather than a stylesheet
+
+During the thinking pause the phase is already `act` and the bot's pawns already carry
+`data-movable="true"`, so a click would have committed the bot's move for it, a second early and
+possibly with a different pawn. `turn-controls.js` gained a third clause in one shared `playableBy`
+check, and `card-controls.js` the same on the skill hand and on Carry On.
+
+**Written as a guard and not as `pointer-events: none`.** The guard is what a test can read, and this
+project has already paid once for a stuck `pointer-events: none`: it made the dice hand permanently
+unclickable with no error and a screen that looked completely normal.
+
+Declining an open window stays allowed for everybody and needs no guard, because `declineAll` has
+already taken every bot out of `eligible` before the prompt is drawn.
+
+#### Names, and one attribute for Design
+
+Two locale keys per language: `player.bot` and `player.botNamed`. `seatName` and `seatLabel` stopped
+taking `state.seats` and now take `{ seats, bots }`, which a state object already is, so most call sites
+changed from `state.seats` to `state`. `bots` is read as `?? []`, which keeps every hand-built fixture
+written before issue #43 working.
+
+**A bot keeps its seat's number rather than being counted separately.** Seat 2 of four is "Bot 2" and
+never "Bot 1", on this file's existing rule that the number says the turn order and the colour says
+which pieces. Counting bots on their own would put a "Bot 1" and a "Spieler 1" at one table looking like
+the same seat. Rejected: one key with the word interpolated, `t("player.name", { kind })`, which reads
+as one fewer key and is untranslatable.
+
+`updateHud` writes **`data-controller="bot"` or `"human"`** on every `.hud__seat`. Two readers, and both
+matter: `bots.spec.js` asserts on it rather than on the word "Bot", which is what every other spec in
+this suite does with an attribute, and it is the hook Design needs if D85 decides a bot seat should look
+different. Nothing styles it yet, on purpose.
+
+#### Two negative findings, recorded rather than fixed
+
+- **A bot's skill hand is face up during its turn.** `data-face` follows the seat on show and knows
+  nothing about who is playing it. Whether a bot's cards should be hidden like a person's, given that a
+  bot has no secrets to keep, is D82 and D83.
+- **The `reaction.*` sentences still say "Spieler".** All seven of them interpolate a bare `number` into
+  a string with the word written into it, so a window opened during a bot's roll reads "Spieler 3
+  würfelt" and not "Bot 3 würfelt". Fixing it means passing a name instead of a number through
+  `windowLine`, which is seven keys in two languages plus a signature. **Left as follow-up work**: it is
+  only visible when a person is holding a Reaction card while a bot acts, and it is a different change
+  from this one.
+
+#### `game-loop.js` is at exactly 300 lines
+
+Two real seams paid for the driver rather than compressed comments. `bindMatchEvents` in `events.js`
+groups the five bindings `start()` had written out, and the seam is genuine: those are exactly the five
+regions rebuilt with every match, while the chrome and the overlay live for the whole session and are
+still bound by the flow. A local `halt()` replaces three identical stop blocks, and `wiring` names the
+six things every waiting sibling needs from the loop, which had been written out three times.
+
+**The file has no room left.** The next thing that goes into it has to take something out first, and
+the header's table of controls is the honest place to start looking.
+
+### A bot's card play had to become visible, and one negative finding closed itself: 2026-09-04, issue #82
+
+The bots play skill cards now (Ch. 06 carries the value model), and that turned a screen question into a
+requirement: **a card played by somebody who is not at the keyboard is invisible.** Several cards leave
+the board looking exactly as it did before. Built Different writes a status, No Take-Backsies shuts a
+window nobody was going to use, and a nullified card does nothing at all. Without an announcement, one
+person against three bots watches its own pawns get shoved around by nothing.
+
+#### The announcement is the message strip, with no new component and no new token
+
+`move-hints.js`'s `message(state)` gained a **fourth** kind, `card`, and `ui.json` gained one key per
+language. The strip already says three kinds of thing (a refusal, a report about a trap, and the roll's
+breakdown), and the third of those arrived the same way this one does: `data-message-kind` is the seam
+they are told apart by. `CLAUDE.md` forbids this side from inventing a design rule, so nothing here
+invents a look.
+
+**The card branch is last of the four, and that ordering is the design.** In the action phase there is
+no roll yet, so the breakdown answers `null` and the strip says what the bot played; once the die is
+rolled the breakdown is the more useful thing and takes the strip back. The announcement is therefore on
+screen for the part of the turn it belongs to and never fights with a message about the roll.
+
+**The reading time is borrowed, exactly as the bot's pause is.** `holdMidTurn` already holds a turn for
+`--motion-trap-hold` after a card announces something, and a bot's card play is the same kind of event:
+it arrives unasked in a turn that is under way. So it is a third source for that same hold rather than a
+fourth duration. D87 of brief 14 asks whether it deserves its own.
+
+**It ships in `--color-warn` and that is wrong.** No stylesheet reads `data-message-kind="card"`, so the
+strip keeps the colour the game reserves for "you cannot do that", and a bot playing a card is not a
+refusal. This is the same deviation issue #45 shipped for the trap announcement, for the same reason and
+with the same expected fix: D55 was answered by two selectors in `message-strip.css`, and D87 is the
+same shape. Recorded as a deviation, not as an oversight.
+
+#### `timers.js` grew a second question, and the asymmetry is deliberate
+
+`announcement(state)` is unchanged and still answers "a trap fired, or a card was nullified".
+`midTurnAnnouncement(state)` adds a bot's card play on top of it, and only `holdMidTurn` asks the new
+one. So the **end** of a turn does not hold for a card a bot played mid-turn: the card already had its
+two seconds where it happened, and holding it again at the handover would add four seconds to every bot
+turn that played anything. Two functions rather than one flag, and a unit case pins each half.
+
+`botCardPlayed` is the third piece: a **person's** own card play is not an announcement. They clicked
+the card, answered the target picker and pressed the last button, so telling them what they just did
+would cost two seconds per card in every match, the all-human ones included.
+
+#### `bot-driver.js`: `declineAll` became `answerWindow`
+
+A bot in an open window used to have one answer, so the loop called `bots.declineAll()` and carried on.
+Now it can play a card into one, and a card play is not a decline in two ways: it changes the board, and
+it needs the pause and the announcement. So:
+
+- **A decline still takes no pause at all.** Somebody else is waiting on the window, and a three-bot
+  table would put nearly three seconds in front of every capture a person made.
+- **A card play waits `holdBot` and then goes through `carryOn`.** `answerWindow` returns `true` only
+  when it scheduled one, which is the loop's signal to stop and wait; a decline returns `false` and the
+  loop carries straight on to `card-controls.js` as it always did.
+
+**`carryOn` is passed in rather than copied**, as `afterCard`. It is `card-controls.js`'s function and
+the delay is not the hard part of it: the marker that stops one announcement being held twice, and the
+rule that a zero hold resumes synchronously so the end-to-end suite's ordering is unchanged, both live
+in there and were both bugs in earlier drafts. `game-loop.js` wires it in one line and came out at
+exactly 300 lines again, with two lines changed and none added.
+
+#### The `reaction.*` finding from this morning is closed, because the fix became load-bearing
+
+The negative finding recorded above says all seven reaction sentences interpolate a bare number into a
+string with the word "Spieler" written into it, so a window opened during a bot's roll read "Spieler 3
+würfelt". It was left as follow-up work because it was only visible while a person held a Reaction card
+during a bot's turn.
+
+That stopped being true the moment a bot could play a card **into** a window: the line then has to name
+a bot as the one who answered. Four keys per language take `{{name}}` instead of `{{number}}`
+(`reaction.trigger.*`, `reaction.played`, `reaction.declined`, `reaction.waiting`), `windowLine` takes
+the match rather than the seat list, and `seatName` decides the word. The unused two are changed with
+the others rather than left half-converted.
+
+**The new key is `turn.cardPlayed` and not `card.playedBy`**, which is a small correction to the plan
+with a real reason: `cards.json` owns the whole `card` top-level key, and `mergeNamespaces` **throws**
+at boot on a top-level key defined in two files. That check is from 2026-08-31 and it did its job here.
+
+#### The e2e helpers moved out, and a first draft of the announcement spec was thrown away
+
+`bots.spec.js` was at 271 lines with three cases in it, so the five helpers it had grown moved to
+`tests/e2e/bot-helpers.js`, on `trap-helpers.js`'s precedent. They cannot go in `helpers.js`: that file
+is at exactly 300 lines and every spec imports it, and none of this is any use to a spec without a bot.
+
+The first version of the announcement case polled the strip for `data-message-kind="card"` at real speed
+and **spent sixty seconds not seeing one**, which is worth writing down because the reason is not a bug.
+The announcement lasts two seconds, `?fast=1` collapses it to nothing, and at real speed the early turns
+are quiet on purpose: with every pawn still in the yard, almost nothing is worth playing. So the spec
+now installs a `MutationObserver` on the strip and records every value the attribute ever takes. That
+turns a race into a list, runs under `?fast=1`, and asserts more than the first draft could: the kind
+**and** that the sentence names "Bot 2" rather than "Spieler 2". How long the announcement stays is a
+unit question, and `mid-turn-hold.test.js` is where it is asked.
+
+#### What it actually says, read off a real match rather than asserted
+
+`/?players=2&bots=1&seed=5` at full speed, driven for a dozen turns with the announcements recorded.
+Three card plays came out of turns 13, 14 and 15, one per turn as FR-23's budget requires:
+
+```
+turn 13: Bot 2 (Grün) spielt Devil Die
+turn 14: Bot 2 (Grün) spielt Let Him Cook
+turn 15: Bot 2 (Grün) spielt Critical Failure
+```
+
+Two of the three are **Reaction** cards played into a person's roll, which is the half of the feature no
+unit test can show reaching a screen. The prompt strip in the same run said "Bot 2 würfelt" and
+"Bot 2 spielt eine Karte" where it used to say "Spieler 3", and "Spieler 1 würfelt" for the person, so
+both vocabularies are in use in one match.
+
+**Two findings from doing it this way rather than by eye.** A `MutationObserver` on
+`data-message-kind` fires on every write, and `showMessage` rewrites the attribute on every render, so
+the first reading looked like the bot playing Let Him Cook thirty times in a row. It is one play seen
+thirty times, and de-duplicating consecutive identical records is what made the output readable. And a
+two-player match with one bot sits in a **reaction window during the bot's turn** far more often than a
+four-player one does, because `share` is 1 there and the bot's own cards are worth three times as much:
+the first attempt at this check timed out waiting for a resting phase while the board was correctly
+asking the person whether they wanted to answer.
+
+### The card being read was covered by the card that had just been chosen: 2026-09-04, no issue
+
+Reported from a screenshot of a real match. Pointing at a skill card magnifies it upward out of its own
+plate, over the foot of the dice plate, and the dice card the player had chosen a moment earlier painted
+over its top third. The player was reading a card with a corner of another card lying on it.
+
+#### The cause is a stacking context that exists and two that do not
+
+`card.css` gives every card `position: relative` and `z-index: var(--layer-card)`, and a positioned
+element with a `z-index` that is not `auto` **is a stacking context**. Neither `.app__dice` nor
+`.app__skill` sets either property, so neither of them is one. The consequence is the whole defect: the
+cards of both hands are painted into the **same** z-index space, and there they are compared by number
+first and by document order only as a tie-break. A chosen dice card carries `--layer-card-selected`, 3.
+The card being read carried `--layer-card-raised`, 2. Document order never got a say.
+
+Design handoff 10 § 3 had ruled on exactly this overlap and called it correct behaviour, on the argument
+that `.app__skill` comes after `.app__dice` in the DOM and so paints over it "with no `z-index` needed".
+That sentence is true of the two plates and false of the cards inside them, and it is the reason the
+delivery shipped with `--layer-card-raised` in it. Worth keeping in the report as a small, exact example
+of a correct rule applied one level too high.
+
+#### The fix is one token and one line
+
+`--layer-card-reading: 4` in `tokens.css`, used by the three reveal selectors in `card-reveal.css` and by
+nothing else. No colour, no element, no view code, and the reveal stays what it was: a CSS state.
+
+The same line fixes a second case nobody had reported: **inside the fan**, a selected skill card also sat
+at 3 and covered a revealed neighbour at 2. One bug report, two occurrences of one mistake.
+
+*Rejected: `isolation: isolate` on the two plates*, which would make the plates the stacking contexts the
+spec assumed they were and let document order settle it. It fixes the halves unevenly: the cross-plate
+case goes away and the case inside the fan stays, because there both cards are in the same plate. It also
+puts the correction in `app.css`, which is a stylesheet the design side owns and which handoff 10
+explicitly did not deliver, rather than in the file that draws the state.
+
+#### The test asserts what the player sees, not the number
+
+`tests/e2e/card-reveal.spec.js` grew a fifth case. It chooses a dice card, reveals the skill card that
+stands in the same column, intersects the two boxes and asks the browser
+`document.elementFromPoint` for the topmost element in the middle of that intersection. **A computed
+`z-index` would have been the wrong assertion**: 2 against 3 only means something once you know which
+stacking contexts the two numbers live in, and it was the contexts that were misread here. The case was
+run against the unfixed stylesheet first and it fails there, which is the only way to know a regression
+test tests the regression.
+
+### The pool counts moved next to the screen that shows them: 2026-09-05, issue #76
+
+The line-up screen (handoff 15) adds roughly fifteen lines to `match-flow.js`, and that file was at 287
+of the 300-line NFR-02 limit. So the first commit of the feature moves something out rather than adding
+anything.
+
+**What moved, and why it was the right thing to move.** `poolCounts()` was a **pure function of `deps`**
+that answers a question about the pool overview. It was the only thing in `match-flow.js` that was not
+about owning a session: everything else in that file reads or writes the screen, the loop, the state or
+the pool. It now lives in `pool-screen.js` as `poolCountsFor(deps)`, next to the screen it feeds, and
+`match-flow.js` calls it with its own `deps`.
+
+**The seam is the same one `session-actions.js` used**, and the giveaway is identical: the function
+touched no closure variable except `deps`, which it read and never wrote. A function that had been
+writing into the flow's closure could not have moved without threading state through a module boundary,
+which is worse than a long file.
+
+**It gained three unit tests it could not have had before.** It was covered only through Playwright,
+because it lived inside a closure that needs jQuery to build. The three cases are worth naming because
+one of them is not obvious: that `poolCountsFor` asks the dice source for its count **on every call**
+rather than caching it, which is the property the original comment claimed and nothing checked.
+
+### The line-up is view state, and it got its own file rather than two more variables: 2026-09-05, issue #76
+
+`src/ui/lineup.js` is the screen's working memory: which count was chosen, which seats that count uses,
+and which of them are bots so far. Pure, no jQuery, no `t()`, and therefore a unit test.
+
+**Why it never enters the game state.** A player halfway through setting up a line-up **has not started
+a match**. `createGameState` has no field for a match that does not exist, and adding one would make the
+rules layer hold a fact about a menu. It is the same argument `match-flow.js` already makes about the
+screen itself, and it is the fourth time this project has answered that question the same way.
+
+**Three rejected homes, and each lost for a different reason.**
+
+| Rejected | Why |
+| --- | --- |
+| Two more closure variables in `match-flow.js` | That file was at the 300-line limit, and worse, a rule inside a closure that also owns the loop, the pool and the state cannot be tested without a browser |
+| `session-actions.js` | Its header promises that neither of its two functions touches a variable, and that promise is what made it splittable off `match-flow.js`. Breaking it for a menu spends a good seam badly |
+| A `lineup` field on the frozen game state | It would put a fact about a button in `core/`, which D38 and this chapter's neighbours have now refused four times |
+
+**The one case in it that is not obvious**, and it has a test of its own: `begin(count)` forgets the
+previous line-up completely. A player who goes back to the count screen and picks a smaller number must
+not carry three bots into a two-seat match, where two of those seats do not exist.
+
+**The opening line-up is every seat a person (D92), and the cost is stated rather than hidden.** The
+single-player match is now two clicks away instead of one, on a screen that exists because that match
+was unreachable. The trade is that the screen never overwrites the answer the player gave one click
+earlier: somebody who clicks 4 was almost certainly counting people.
+
+### The line-up screen's description, and a mistake in the spec its test found: 2026-09-05, issue #76
+
+`src/ui/lineup-screen.js` is the third screen to get a file of its own beside `overlay-screens.js`,
+after the pool overview and the menu, and for the reason that file states about itself: it stays a
+switch. This screen carries rows, which no other screen does.
+
+**A row is a seat, a name and two named positions.** The two positions are "Spieler" and "Bot", which
+is the HUD's word (constraint 8 of the brief): `hud-view.js` says Bot, the row's own label says Bot, so
+the button says Bot. `data-controller="human"` keeps the code's word without it ever being a word a
+player reads.
+
+**The row is not one button that flips.** Both positions are visible and live at all times, so a player
+can see what the other one would be without clicking it. The consequence in the code is that a click
+sets a value rather than toggling: "Spieler" on a row that is already a person has to do nothing.
+
+#### A negative finding: handoff 15 names the two-player rows wrongly, and the code is right
+
+§ D96.2 of the spec and mockup 15c both draw a two-player line-up as **"Spieler 1 (Rot)" and
+"Spieler 3 (Grün)"**, on the reading that the label follows the seat number and seat 2 is therefore
+player 3.
+
+**That is the exact defect `player-labels.js` was written to fix.** `displayNumber` counts the seat's
+position in `state.seats`, not the seat number, so the real rows are **"Spieler 1 (Rot)" and
+"Spieler 2 (Grün)"**. That file's header records the old behaviour as a bug: "a two-player match was
+played by Spieler 1 and Spieler 3, and there was no Spieler 2".
+
+**Nothing in the delivery had to change.** The spec's *instruction* is to reuse `player.named` and
+`player.botNamed`, which is what is built; only its worked example is wrong. The unusual pairing that
+made the case worth drawing survives either way, and it is the more interesting half: **Spieler 2 is
+green**, because the colour is keyed on the seat and the number on the position in the seat list.
+
+It was caught by a unit test written from the spec, which failed against correct code. Worth keeping in
+the report as the cheapest possible way to find a wrong assumption in a document.
+
+### Handoff 15 landed, and the count click stopped starting a match: 2026-09-05, issue #76
+
+The line-up screen is built, and with it the computer is reachable without the address bar for the first
+time. Route: main menu, player count, line-up, match.
+
+**The one invasive change is a single line in `session-actions.js`.** `OVERLAY_ACTION.PLAYERS` used to
+call `freshMatch(count)` and now calls `lineup.open(count)`. Everything else in the feature is new files
+and new markup, and **no file in `core/` and no file in `ai/` was touched at all**. That was the point of
+the layering: the rules had taken a list of bot seats since issue #43, so this was a menu and not a
+feature.
+
+**What the delivery answered, in one line each.**
+
+| Decision | Answer |
+| --- | --- |
+| D90 | Two screens. S2 unchanged, the line-up is S3 with its own `lineup.css`, third file on that seam |
+| D91 | A row is a plate, a name and two named positions. The row itself is not clickable |
+| D92 | Every seat opens as a person, so the screen never overwrites the count the player just gave |
+| D93 | The rule is a permanent sentence above the rows, and the one control that would break it is switched off |
+| D94 | Start is the one primary and takes the keyboard, Back returns to the count |
+| D95 | Seat 0 may be a bot like any other seat |
+| D96 | Six new keys. "Spieler" and "Bot", the HUD's words. No mode is named anywhere |
+
+**Two attributes carry "which one", and they never meet.** `data-count` is a player count on S2 and
+`data-seat` is a seat on S3. They could not be one attribute, because `overlay.css` selects on
+`data-count` to draw the three square count buttons and the line-up's rows must not inherit that look.
+`data-value` is a third and says which of the two positions a click was: the pair is two named positions
+and not one button that flips, so a click on the position that is already chosen has to be a no-op.
+
+**The focus rule is the only change to an existing function, and D94.3 asked for it with its cost
+attached.** `focusOverlay` now prefers the Start button and falls back to the first button as before.
+Without it the keyboard would land on seat 0's Spieler position, which is already chosen, so Enter on
+arrival would do nothing. The cost: a keyboard user who wants the rows reaches them with Shift and Tab.
+The rule is scoped by the **button**, not by the screen, so `overlay-view.js` keeps its promise that it
+renders a description and knows nothing about screens.
+
+#### A negative finding: `lineup.css` was missing one rule and Claude Code added it
+
+`.overlay__seats` is built once and lives in the panel on all seven screens, and `.overlay__panel` is a
+flex column with a `--space-4` gap, so an empty group leaves a hole on the other six. `pool.css` had
+already met this and answered it with an `:empty` rule on `.overlay__cards`. The same three lines were
+added to `lineup.css`, with a comment naming the precedent and saying they are not a design decision.
+**Reported rather than absorbed silently**, because the delivered file is the design side's.
+
+#### Two files are now close to the 300-line limit, and the next screen has to split one
+
+`overlay-view.js` is at 296 and `match-flow.js` at 295. Both are under NFR-02 and both have almost no
+room left. `match-flow.js` needed a second split inside this one feature: the three line-up operations
+moved into `lineup.js` beside the memory they change. The seam held because setting up a line-up happens
+**before** there is a session to own, which is the one thing on that file's plate that is not about
+owning one. Whoever adds the eighth screen should expect to split `overlay-view.js` first, and the
+obvious seam there is the three builders, the door, the seat row and the card region, against the shell.
+
+### Handoff 16 landed, and NFR-12's second identifier is gone again: 2026-09-05, no issue
+
+Two review notes on the built game, answered as D97 to D99. Both are stylesheet changes with a small DOM
+change each, and one of them retires a requirement's only mechanism.
+
+**D97: the four seat shapes are withdrawn and every seat mark becomes a dot.** Handoff 06 had given each
+seat a clip path, a circle, a triangle, a square and a diamond, mapped in `board.css` and read by five
+elements. All four `--seat-shape-*` tokens are removed from `tokens.css`, the four mapping declarations
+leave `board.css`, and the five readers swap `clip-path` for `border-radius: var(--radius-pill)`: the HUD
+name line, the chrome turn line, the win and handover panel, the trap chip and the line-up row badge.
+
+**The pawn is the exception, and it is a deletion rather than a conversion.** `.pawn__mark` sat low and
+centred on the disc so that it cleared the two eyes, and that position is exactly what failed: a shape
+under two eyes reads as a mouth, so four seats meant four expressions on the board. The rule leaves
+`pawn.css` and the span leaves `board-view.js`. `.pawn__status` is the pawn's only child now.
+
+**The cost is real and the spec states it in numbers.** Converted to greyscale, red and blue are 1.15:1
+apart and green and red 1.26:1, so a red pawn and a blue pawn on the shared track are the same grey. What
+still works is words wherever a seat is named, and position on the board's own furniture, since each seat
+owns a fixed start area, home column, entry square and turn-off bar. What does not work is a pawn on the
+shared track, which is 39 of the 40 track fields. **NFR-12 is unmet again**, and `greyscale.spec.js` is
+where that is visible: the two tests that asserted the shapes were deleted and the file's header now
+records why. They were not rewritten to assert the dots, because a dot is a dot on all four seats and
+asserting that four identical shapes are identical is not a test.
+
+**D99 books the follow-up and it is a Product Owner call.** Re-tune the four seat colours so they differ
+in lightness as well as in hue, aiming for no pair closer than about 1.6:1. The seats would still be told
+apart by colour alone, which is what D2 asked for; the colours would simply stop depending on hue
+perception. Not done here because the four values are quoted from the layout template under D1 and D2, and
+because each has a `--color-pN-soft` partner in both skins, so it is eight values and a re-check of every
+plate's text contrast. **Rejected: reinstating the shapes behind `prefers-contrast`.** A cue that only
+exists under a setting is a cue the game is not designed around.
+
+**D97.2 is a small gain that came free.** `clip-path` was clipping away the ink ring the declaration
+always asked for; `border-radius` does not. The yellow seat on `--color-surface` in Picnic is where that
+shows.
+
+#### D98: the message strip left the board and hangs above the skill plate
+
+D35 had taken the strip out of the grid and hung it off the bottom of the board, so that a message about a
+refused move sat over the pieces it was about. In play that put it over two start areas and the last four
+fields of two tracks, and **the board is the one region in the game that may not be covered.** It now
+hangs above `.app__skill`: `position: relative` moves from `.app__board` to `.app__skill` in `app.css`,
+and the strip is anchored by `bottom: calc(100% + var(--space-2))` with `left: 0; right: 0` instead of
+being centred at the board's width.
+
+It keeps everything D35 bought. It costs no grid row, it still cannot make the page jump, and because
+`bottom` is the anchored edge **a two line message grows upward**, into the gap, never down onto the
+skill cards. It is also beside the thing the player decides next, since a refused move ends in choosing
+another pawn or playing a card.
+
+**One declaration pays for the overlap, and the first draft of the spec got this wrong before fixing it.**
+A one line strip is 46 px tall and the gap between the two plates is 16, so 30 px of strip lands inside
+the dice plate. The dice hand is centred and its cards run to the plate's edge, so that band is always
+card and never padding: a refusal cut the cards' tag row through the middle of the glyphs. Nudging the
+strip cannot fix it, because wherever it goes it is 46 px tall. So `.app__dice` reserves the band once
+with `padding-bottom: calc(var(--space-6) + var(--space-3))`, 44 px. The dice cards lose 44 px of height
+at the design resolution and take it as a scale rather than as a crop, because they are sized from
+`--card-u` against the plate's own box.
+
+Measured after landing, at 1440 by 900: the strip runs the width of the rail, its foot sits 4 px above the
+skill plate, and the lowest dice card clears its top by 24 px. Below the 84rem breakpoint the layout is
+one column and the strip still clears every card. **Rejected: capping the strip's top at the dice plate's
+edge** (a two line message would then grow down onto the skill cards), **its own grid row again** (46 px of
+permanent empty page, which is what D35 removed), **below the skill plate** (that is the page edge at
+1440 by 900 and off a scrolled page below the breakpoint), and **inside the skill plate as a flow item**
+(row 4 is `auto`, so the page would jump).
+
+#### A negative finding: the delivered stylesheets could not be copied over ours
+
+The package ships ten complete files rather than diffs, and the README says to copy them over the files of
+the same name. **Doing that would have reverted six of them**, because the design side's copies predate
+this tree. `tokens.css` and `app.css` there have no stage, so the 16:9 fit of 2026-09-03 would have gone,
+along with `--layer-card-reading`; `chrome.css` would have lost the `justify-content` fix of handoff 12,
+`hud.css` the `min-width` fix that stopped the seat plates clipping "KARTEN", `overlay.css` the
+`position: absolute` that keeps the letterbox bars visible, and `lineup.css` the `:empty` rule added three
+days ago. The tenth file, `refusal.css`, is the strip under the name it lost on 2026-09-03 when it became
+`message-strip.css`, so copying it would have added a dead file and left the live one unchanged.
+
+The changes were applied rule by rule instead, which is what § 1 of the spec asks for in its own words:
+"the selector named beside each rule is what to trust, not the line number". **The lesson for the next
+handoff is that a whole-file delivery is a diff whose base is unstated**, and the base is whatever the
+design side last read. Worth one line in the retrospective, because it will happen again.
+
 
 ## Decisions
 

@@ -47,13 +47,11 @@
   --color-p2-soft: light-dark(#dcf3e5, #2f4a50);
   --color-p3-soft: light-dark(#dfe9fe, #3a3a6e);
 
-  /* --- Seat marks (D16, NFR-12). A shape per seat, so four seats are told
-         apart with the colour taken away. Clip paths and not glyphs: no font
-         dependency, nothing readable, nothing translatable. --- */
-  --seat-shape-0: circle(50% at 50% 50%);
-  --seat-shape-1: polygon(50% 4%, 96% 94%, 4% 94%);
-  --seat-shape-2: inset(6%);
-  --seat-shape-3: polygon(50% 2%, 98% 50%, 50% 98%, 2% 50%);
+  /* --- Seat marks (D97, retiring D16). One geometry for all four seats: a
+         dot in the seat's colour. The four --seat-shape-* clip paths are
+         withdrawn, and with them the shape half of NFR-12; what carries
+         NFR-12 now is in 16-spec section 4. --seat-mark is the size of the
+         dot on the HUD and stays. --- */
   --seat-mark: 0.85rem;
 
   /* --- Signal colours (D7, D9). Violet and orange are outside the
@@ -268,6 +266,10 @@
   --layer-card: 1;
   --layer-card-raised: 2;
   --layer-card-selected: 3;
+  /* The card being read (D66), added 2026-09-04: both hands share one z-index
+     space, so a chosen dice card at --layer-card-selected covered the revealed
+     card growing up into it. See card-reveal.css. */
+  --layer-card-reading: 4;
 }
 
 /* D12: loops stop, feedback stays. The curtain keeps its opacity and loses

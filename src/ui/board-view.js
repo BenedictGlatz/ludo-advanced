@@ -66,8 +66,8 @@ export function motionMs($board, token, fallback) {
  *    to animate from. The span costs 40 empty elements and renders nothing without `[data-trap]`.
  * 2. **Both pseudo-elements of `.square` are already taken.** `::before` is D27's skill diamond and
  *    `::after` is the turn-off bar on squares 9, 19, 29 and 39, all four of which are legal trap
- *    targets. There was no third layer to give the mark, which is the same situation `.pawn__mark`
- *    solved for the piece in design handoff 06.
+ *    targets. There was no third layer to give the mark, which is the same situation `.pawn__status`
+ *    solves for the piece in design handoff 07.
  */
 function trackSquares() {
   const entries = new Map(SEATS.map((seat) => [entrySquare(seat), seat]));
@@ -110,19 +110,19 @@ function house(seat) {
  * D10 contract change. `tabindex` is what makes the `:focus-visible` ring of D11 reachable: the
  * design specified a keyboard state, so the markup has to be keyboard-reachable for it to exist.
  *
- * `.pawn__mark` is the empty element design spec 04 § 5 asked for: the seat's shape (D16, NFR-12) goes
- * on the piece, and the two pseudo-elements of `pawn.css` are already taken by the body and the state
- * ring. It carries no text and no attribute of its own; `data-player` on the pawn is what keys it.
- * Styled by design handoff 06.
+ * `.pawn__status` is the piece's one empty span, asked for by name in design spec 07 § 5 (D57), and it
+ * is here because **the piece has nothing left to draw on:** both pseudo-elements of `pawn.css` are
+ * taken by the body and the state ring, so a status that has to be visible needs a box of its own.
  *
- * `.pawn__status` is the second one, asked for by name in design spec 07 § 5 (D57), and it is here for
- * the same reason there is a first one: **the piece has nothing left to draw on.** Both pseudo-elements
- * are taken and `.pawn__mark` is the seat mark, which is the one thing on the board that may not come to
- * mean something else. So a status that has to be visible needs a box of its own.
+ * There used to be a second span before it, `.pawn__mark`, carrying the seat's shape (D16, NFR-12). It
+ * was deleted on 2026-09-05 with design handoff 16 (D97): the four seat shapes are withdrawn across the
+ * whole game, and on the piece the mark is not replaced by a dot, because a shape sitting under two eyes
+ * reads as a mouth. The seats are told apart by colour now. What that costs is written down in
+ * `16-spec-seat-dots-and-message-strip.md` § 4.
  *
- * Both spans are built once and never touched again, which is D10's contract and not tidiness: a mark
+ * The span is built once and never touched again, which is D10's contract and not tidiness: a mark
  * created at the moment a status appears has no previous state to transition from, so it would arrive
- * fully drawn however the stylesheet is written. They render nothing until the pawn carries a status,
+ * fully drawn however the stylesheet is written. It renders nothing until the pawn carries a status,
  * the same way the 40 `.square__trap` spans render nothing on an empty field.
  */
 function pawn(seat, index) {
@@ -130,7 +130,7 @@ function pawn(seat, index) {
     .attr("data-player", seat)
     .attr("data-pawn", index)
     .attr("data-r", 0)
-    .append($("<span>", { class: "pawn__mark" }), $("<span>", { class: "pawn__status" }));
+    .append($("<span>", { class: "pawn__status" }));
 }
 
 /**

@@ -443,12 +443,132 @@ of it. The GDD sign-off table gained rows 12 to 14 for the three decisions the a
 pawn. It was the only trap that cost a lap, so the game is measurably gentler than it was on 2026-09-01.
 That is a playtesting question and belongs to whoever runs the next session, not to this issue.
 
+### A `could have` a `must have` depended on: FR-43 rewritten and raised, 2026-09-04, issue #43
+
+Three rows changed on one afternoon, and the interesting part is that the change was **forced by a
+dependency between requirements** rather than chosen.
+
+| Row | Before | After |
+| --- | --- | --- |
+| FR-01 | "a player count chosen from 2, 3 or 4" | the same, "of which at least one is a person", with unfilled seats played by bots |
+| FR-43 | "LLM-powered bot opponents", `C` | "Local, rule-based bot opponents take the seats no person fills", `S` |
+| FG-18 | "LLM-powered bot opponents", `could have` | "Local, rule-based bot opponents", `should have` |
+
+**The dependency is what made this a scope decision and not a wording fix.** US-01, written earlier the
+same day, gives a match a lower bound of **one** person. A single-player seat is only playable if the
+other seats play themselves, so FR-01's new bound is unbuildable if FR-43 is cut. A `could have` that a
+`must have` depends on is a broken dependency, and the fix is to raise it.
+
+**The LLM was dropped, and dropping it resolved a contradiction nobody had noticed.** FR-03's acceptance
+criterion is a match completed *without any network connection*. An LLM-backed bot needs a network call.
+The two requirements had contradicted each other since both were written, and it stayed invisible
+because FR-43 was a `could have` nobody was building. **This is the second time in this project that
+writing a document found a defect in another document** rather than in the code, and it is worth a
+sentence in the report: the traceability column is what made it visible.
+
+The rejected alternative was to keep the LLM and give FR-03 an exception. It costs a network dependency,
+an API key, a failure mode and a per-request cost, all for a `could have`, and it would have made
+"plays without a network" false for the one configuration a single player uses.
+
+**What is still open, and named rather than implied:** choosing bots happens through `?bots=` in the
+address bar. A setup screen is a separate issue, and its design question is D86 of design brief 13.
+
+### FR-43's acceptance criterion changed again the same day, and it got stricter: 2026-09-04, issue #82
+
+The row was rewritten in the morning and its criterion read "a bot takes a legal turn without human
+input, **plays no skill card and declines every reaction window**; the match uses no network". That half
+was the scope decision taken with the Product Owner, and it lasted a few hours.
+
+| Row | Before | After |
+| --- | --- | --- |
+| FR-43, criterion | "plays no skill card and declines every reaction window" | "plays a skill card only when a rule-based value model says it is worth more than holding it, and answers every reaction window" |
+| FR-43, traces to | FG-18, #43 | FG-18, #43, **#82** |
+
+**Why it changed so fast.** The consequence the earlier decision predicted turned out to be the whole
+problem: a bot's hand filled to its limit of five and was never spent, so one person against three bots
+played a game whose card mechanic, which is what makes Ludo Advanced a variant of Ludo rather than Ludo,
+was present for exactly one seat.
+
+**The wording is the point, and it is not "plays skill cards".** That sentence is satisfied by a bot
+that plays a random playable card, and the earlier decision had already rejected that version on the
+grounds that it looks like tactics without being any. Naming *a value model* in the criterion makes the
+acceptance test "can somebody explain, in one sentence, why the bot played that card", which is what the
+implementation is actually built to do.
+
+**Two cards are never played, and that is in the criterion's spirit rather than an exception to it.** Oil
+Spill and The Purge, each with its reason recorded in Ch. 06. A criterion that demanded all 29 be
+playable would be demanding a guess dressed as a model for two of them.
+
+### A rule finding for the Product Owner: Double Dip is net zero, 2026-09-04, issue #82
+
+Not a requirement change and not a bug fix. It came out of pricing the card for the bot and it needs a
+ruling before it can be either.
+
+**The finding.** `spendCard` in `state/skill-turn.js` counts Double Dip itself against the budget of
+one, and the card's own effect then sets the budget to two. One is left, which is exactly the one play
+the seat had before it played the card. So the card costs a card and buys nothing but the hand slot it
+frees. `core/cards/effects/card-effects.js` states in its own header that the card "has to be net
+positive to be worth anything, and it is", which is the claim this contradicts.
+
+**Why it is a question and not a correction.** Which reading is the rule is the Product Owner's call.
+Setting the budget to three, not counting the played card against it, or leaving the card as a
+hand-management card are all defensible, and they give the card three different powers.
+
+**What the code does meanwhile:** the bot prices it as "make room in a full hand", worth 1, so it is
+only ever played when the hand is full and nothing better is in it. Nothing was changed in the rule.
+
+### NFR-12 is unmet again, three days after it was met: 2026-09-05, design handoff 16
+
+D97 withdraws the four seat shapes across the whole game and deletes `.pawn__mark` outright, so the
+non-colour identifier that closed NFR-12 on 2026-09-02 is gone. This is a review decision by the design
+side and not a regression: § 3 of `16-spec-seat-dots-and-message-strip.md` argues that a shape sitting
+under two eyes reads as a mouth, and that four seats therefore read as four expressions on the board.
+
+| | |
+| --- | --- |
+| Requirement | NFR-12, `should have` ([Requirements-Specification.md](../../Project-Management/Requirements-Specification.md) row NFR-12) |
+| Met | 2026-09-02 to 2026-09-05, **three days**, by design spec 06's D48 to D50 |
+| Unmet again from | 2026-09-05, design handoff 16, D97 |
+| What replaced it | Nothing. The seats are told apart by colour alone, which is where D2 left them on 2026-08-30 |
+| Test | `tests/e2e/greyscale.spec.js`, whose two shape cases were deleted rather than rewritten. Its header records the reason |
+
+**The numbers, restated because they are the requirement's whole content again.** Reduced to greyscale
+the worst pair is red against blue at **1.15:1** and the next is green against red at **1.26:1**, against
+the **1.30** threshold derived as the best an evenly spread four-value palette can reach over these hues.
+The palette has not moved since 2026-08-30, so the 1.146 figure recorded above and the 1.15 quoted in the
+handoff are the same measurement.
+
+**What still identifies a seat, and where it stops working.** Words, wherever a seat is named: the HUD
+plate, the chrome turn line, the win panel, the handover curtain and the line-up row all carry the seat's
+name in text. Position, on the board's own furniture: each seat owns a fixed start area, home column,
+entry square and turn-off bar, so a pawn in a yard or a house is placed rather than only coloured. What
+does not work is a pawn on the shared track, which is **39 of the 40 track fields**, and that is precisely
+the case the acceptance criterion is written about.
+
+**The one fix that does not bring a shape back is booked as D99 and is not this side's to take.**
+Re-tune the four seat colours so they differ in lightness as well as in hue, aiming for no pair closer
+than about 1.6:1, which the handoff says is reachable inside the existing four hues. It is a Product
+Owner decision twice over: the four values are quoted verbatim from the layout template under D1 and D2,
+and each has a `--color-pN-soft` partner used as a wash in both skins, so it is eight values and a
+re-check of every plate's text contrast. Until then the requirement is open.
+
+**The report sentence, updated.** NFR-12 has now been blocked by a design decision, unblocked by a design
+decision and blocked by a third, all inside seven days, without a single line of `core/` moving. That is
+the clearest example in the project of a requirement whose owner is the design side and whose cost lands
+on the implementation side, and it is worth a paragraph on its own.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
 
 ## Open / to verify
 
+- **Double Dip's budget arithmetic needs a ruling** (2026-09-04, issue #82). `spendCard` counts the card
+  against the budget of one and the card then sets the budget to two, so it buys exactly the play the
+  seat already had. `card-effects.js` claims in its own header that the card is net positive. Three
+  readings are defensible and they give the card three different powers, so it is the Product Owner's
+  call and nothing was changed in the rule. The bot prices it as a hand slot in the meantime.
 - ~~MoSCoW prioritisation exists as labels but no requirement has been written against them; the
   backlog is not in this repository.~~ **Superseded 2026-08-06**: the backlog is now readable and
   transcribed above. What remains open: no issue has an acceptance criterion or a written
