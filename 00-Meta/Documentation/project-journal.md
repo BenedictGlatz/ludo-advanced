@@ -466,6 +466,17 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   standing, per this file's own append-only rule; this line is the correction. The Delivered list in
   `sprint-log.md` was not affected, because it is organised by sprint section rather than by a label on
   each line. Sprint 2.
+- **2026-09-05**: `dev` brought up to date with the two branches that were still ahead of it. A
+  teammate pulled `dev` and found the main menu missing, which is how the gap was noticed: PR #75
+  (`feature/roll-animation` into `dev`) had been open since 2026-09-04 and held 17 commits, among them
+  the three-door main menu, the bot policy, the line-up screen and the seat colours. In the meantime
+  `feature/roll-animation` had itself taken PRs #83 and #84 from `feature/82-bot-card-tactics`, so it
+  had quietly become a second integration branch stacked on top of `dev`. Both merges were made
+  locally as merge commits, matching the shape of PR #74 already in `dev`, and `dev` was pushed;
+  GitHub closed PR #75 as merged. Lint, 926 unit tests in 71 files and the production build all pass
+  on the merged `dev`. One branch stays open: `docs/appendix-board-screenshot` (PR #51, one docs
+  commit from 2026-08-09) conflicts with `dev` and needs a manual resolution, so it was left alone
+  rather than resolved unasked. Sprint 2.
 
 
 ---

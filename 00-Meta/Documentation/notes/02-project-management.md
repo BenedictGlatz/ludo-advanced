@@ -578,6 +578,16 @@ the finding:
   repository would carry a stale copy of it forever. `PLAN-sprint1.md` was handled the same way. The
   cost, and it is real: the plan the sprint was executed from is **not** reconstructable from the
   repository afterwards, so the sprint log and this note are the only record that it existed.
+- **Negative finding, 2026-09-05: an open pull request turned a feature branch into a second
+  integration branch.** PR #75 (`feature/roll-animation` into `dev`) stayed open for a day while work
+  kept arriving, and instead of waiting for it, PRs #83 and #84 merged `feature/82-bot-card-tactics`
+  into `feature/roll-animation`. `dev` fell 17 commits behind, holding neither the main menu, nor the
+  bots, nor the line-up screen. **How it surfaced is the point: not from the board and not from a
+  review, but from a teammate pulling `dev` and asking why the main menu was missing.** Nothing in the
+  branching policy is violated by stacking a branch on an open pull request, and nothing in it warns
+  against it either. Two things would have caught it earlier: merging a pull request the day it is
+  opened, and branching new work off `dev` rather than off the branch whose merge is still pending.
+  Resolved by merging both branches into `dev` on 2026-09-05.
 
 ### Documentation process
 
