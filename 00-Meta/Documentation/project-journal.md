@@ -4395,6 +4395,26 @@ to get wrong later.
   menu. Two entry points, two guards, one requirement.
 - → Ch. 06
 
+### 2026-09-05: The half-made line-up is view state in its own file
+
+- **Chosen:** `src/ui/lineup.js`, a small closure with `begin(count)`, `toggle(seat)` and `snapshot()`.
+  It holds no jQuery and no `t()`, so it is a unit test, and the one rule it needs comes from
+  `toggleController` in `state/bots.js`.
+- **Why not the game state:** a player halfway through a line-up has not started a match, so there is
+  nothing for `state/` to hold. Fourth time this project has answered that question the same way, after
+  the screen itself, a half-finished card play, and the pool's own count.
+- **Rejected:** *two more closure variables in `match-flow.js`.* The obvious thing. It loses on the
+  300-line limit and, more importantly, on testability: a rule inside the closure that owns the loop,
+  the pool and the state cannot be checked without booting jQuery.
+- **Rejected:** *`session-actions.js`.* Its header promises neither function touches a variable, and
+  that promise is what made it splittable in the first place.
+- **Rejected:** *a `lineup` field on the frozen game state.* It would put a fact about a button in
+  `core/`.
+- **The case that earned its own test:** `begin` forgets the previous line-up completely. Going back to
+  the count screen and picking 2 after setting three bots on a four-seat line-up must not carry bots
+  into seats that do not exist.
+- → Ch. 04
+
 ---
 
 ## Challenges

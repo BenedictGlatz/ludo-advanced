@@ -2814,6 +2814,33 @@ because it lived inside a closure that needs jQuery to build. The three cases ar
 one of them is not obvious: that `poolCountsFor` asks the dice source for its count **on every call**
 rather than caching it, which is the property the original comment claimed and nothing checked.
 
+### The line-up is view state, and it got its own file rather than two more variables: 2026-09-05, issue #76
+
+`src/ui/lineup.js` is the screen's working memory: which count was chosen, which seats that count uses,
+and which of them are bots so far. Pure, no jQuery, no `t()`, and therefore a unit test.
+
+**Why it never enters the game state.** A player halfway through setting up a line-up **has not started
+a match**. `createGameState` has no field for a match that does not exist, and adding one would make the
+rules layer hold a fact about a menu. It is the same argument `match-flow.js` already makes about the
+screen itself, and it is the fourth time this project has answered that question the same way.
+
+**Three rejected homes, and each lost for a different reason.**
+
+| Rejected | Why |
+| --- | --- |
+| Two more closure variables in `match-flow.js` | That file was at the 300-line limit, and worse, a rule inside a closure that also owns the loop, the pool and the state cannot be tested without a browser |
+| `session-actions.js` | Its header promises that neither of its two functions touches a variable, and that promise is what made it splittable off `match-flow.js`. Breaking it for a menu spends a good seam badly |
+| A `lineup` field on the frozen game state | It would put a fact about a button in `core/`, which D38 and this chapter's neighbours have now refused four times |
+
+**The one case in it that is not obvious**, and it has a test of its own: `begin(count)` forgets the
+previous line-up completely. A player who goes back to the count screen and picks a smaller number must
+not carry three bots into a two-seat match, where two of those seats do not exist.
+
+**The opening line-up is every seat a person (D92), and the cost is stated rather than hidden.** The
+single-player match is now two clicks away instead of one, on a screen that exists because that match
+was unreachable. The trade is that the screen never overwrites the answer the player gave one click
+earlier: somebody who clicks 4 was almost certainly counting people.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
