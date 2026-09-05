@@ -357,7 +357,16 @@ available cut. **That is no longer what the board says**, see point 1 above.
   | 2026-09-01 | #39 (epic) | The 36 card illustrations extracted from the artboard, players named on screen, and the language switch put in the chrome |
   | 2026-09-01 | #35 (2) | The HUD: whose turn it is in words, and each seat's pawn and card counts |
   | 2026-09-01 | #41 (5) | The menu, match setup, handover, pause, win and restart flow, with no page reload |
+  | 2026-09-05 | #86 (1) | The card being read was covered by the card that had just been chosen: one new z-index token, one rule, one end-to-end case checked against the unfixed stylesheet first |
+  | 2026-09-05 | #85 (3) | Design handoff 16: the four seat shapes withdrawn and every seat mark made a dot, `.pawn__mark` deleted, and the message strip moved off the board to above the skill plate. **NFR-12 is unmet again** as a result, which is a design decision and is recorded as one |
   | 2026-09-03 | #45 (5) | The trap rules brought back to the rulebook after three had drifted, a chain reaction and one choke point for entering a square, traps and pawn statuses in the DOM, the announcement, placement limits, keyboard picking of a field, the first trap end-to-end coverage, and design brief 07 sent. **The first `could have` delivered**, and it cost well over its 5 points: eight Product Owner decisions turned a finish-the-mechanic issue into three new mechanics |
+
+  **#85 and #86 were opened on 2026-09-05, after the work was already built and committed.** Both were
+  found rather than planned: #86 is a defect a test round surfaced, and #85 is a design review that
+  arrived as a handoff rather than as a board item. Writing the issue after the fact is worse than
+  writing it first, and it is recorded here rather than smoothed over, because the alternative was four
+  points of delivered work that the sprint's own numbers never see. The two rows above are dated by the
+  commit, like every other row in this table, and not by the day the issue was opened.
 
   **The lesson is about when, not whether.** Every one of these has its facts recorded somewhere; what was
   missing was the sequence, and the sequence is the only thing a chapter note cannot reconstruct. The two
