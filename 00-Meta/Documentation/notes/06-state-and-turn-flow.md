@@ -714,6 +714,26 @@ been decided, at the moment a match is built.
 **The result is sorted**, so a line-up's bot list and `botSeatsFor`'s output are the same shape.
 `state.bots` is in seat order whichever of the two routes into a match was taken.
 
+### Two routes into a match, one argument at the bottom of both: 2026-09-05, issue #76
+
+`startMatch(playerCount, deps, skillSquares, skillPool, bots)` has taken a **list of seats** since issue
+#43. The line-up screen is the second thing to call it and the first to produce that list directly.
+
+| Route | How the seats are decided |
+| --- | --- |
+| `?bots=3` | A count. `botSeatsFor(playerCount, count)` turns it into the last seats, clamped to one below the player count |
+| The line-up screen | The player says it, seat by seat. `botSeatsFor` is not involved at all |
+
+**`freshMatch` gained one optional argument and no branch worth the name:** it falls back to
+`botSeatsFor` when no list is handed in. So the two entry points share one code path from `startMatch`
+downwards and there is nothing to drift.
+
+**The screen can say things the parameter cannot, and that is D95.** `botSeatsFor` always leaves seat 0
+to a person, because somebody had to decide and the person at the keyboard keeping the first seat is a
+sensible default. The screen lets the player put the computer on seat 0 and take green instead. That is a
+default being overridden and not a rule being broken: `options.js` still refuses more bots than players
+for the address bar, and `canBeBot` refuses the last person on the screen.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

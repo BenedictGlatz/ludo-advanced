@@ -148,8 +148,10 @@ export function screenDescription(
       return handoverScreen(state, seat);
     case OVERLAY_SCREEN.LINEUP:
       // `noScreen` when no count has been chosen, on the same argument as the pool overview below: a
-      // line-up screen with no seats on it would be a screen asking about a match nobody has sized.
-      return lineup === null ? noScreen() : lineupScreen(lineup);
+      // line-up with no seats on it would be a screen asking about a match nobody has sized. The flow
+      // hands in a snapshot rather than `null` once it has a line-up object at all, so the empty
+      // `playerCount` is what the check has to be written against and not the argument being absent.
+      return lineup === null || lineup.playerCount === null ? noScreen() : lineupScreen(lineup);
     case OVERLAY_SCREEN.POOL:
       // `noScreen` when there is no match, so a stale POOL screen cannot outlive the pool it describes.
       return pool === null ? noScreen() : poolScreen(pool);

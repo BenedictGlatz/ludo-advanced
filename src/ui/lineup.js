@@ -33,6 +33,7 @@
 
 import { seatsFor } from "../core/board.js";
 import { toggleController } from "../state/bots.js";
+import { OVERLAY_SCREEN } from "./overlay-vocabulary.js";
 
 /**
  * A line-up that a screen can ask questions of and a click can change.
@@ -90,6 +91,67 @@ export function createLineup() {
     /** Everything anybody outside needs, as copies. `playerCount` is `null` before `begin`. */
     snapshot() {
       return { playerCount, seats: [...seats], bots: [...bots] };
+    },
+  };
+}
+
+/**
+ * The three things the line-up screen can be asked to do, bound to one session.
+ *
+ * `session` is the small interface `match-flow.js` hands in: `openScreen`, `drawShell` and
+ * `freshMatch`. Naming it as an argument rather than importing the flow keeps the dependency pointing
+ * one way, which is the same deal `session-actions.js` makes and for the same reason: it is what lets
+ * this file be read, and tested, on its own.
+ *
+ * ## Why this is here and not in `match-flow.js`
+ *
+ * `match-flow.js` **owns a session**: the screen, the loop, the state and the pool, and it is the only
+ * thing that may change any of them. Setting up a line-up is the one thing on that screen that happens
+ * **before** there is a session to own, so it is the newest and the most separable of that file's
+ * concerns. Keeping it there would also have taken the file past the 300-line NFR-02 limit for the
+ * second time in one feature, which is the symptom rather than the reason.
+ *
+ * The memory above and these three operations are one file rather than two, because the operations are
+ * a sentence each and a file that held only them would be a wrapper.
+ */
+export function createLineupFlow(session) {
+  const lineup = createLineup();
+
+  return {
+    /** What the screen description is built from. `playerCount` is `null` before `open`. */
+    snapshot() {
+      return lineup.snapshot();
+    },
+
+    /**
+     * The player has picked a count, so ask who plays each of those seats.
+     *
+     * **This is what the count click used to do directly**, and breaking it in two is the whole of the
+     * feature: a count now sizes the match and the Start button on this screen begins it.
+     */
+    open(playerCount) {
+      lineup.begin(playerCount);
+      session.openScreen(OVERLAY_SCREEN.LINEUP);
+    },
+
+    /** Switch one seat between a person and the computer, and redraw the rows. */
+    setController(seat, controller) {
+      lineup.setController(seat, controller);
+      session.drawShell();
+    },
+
+    /**
+     * Start the match the line-up describes.
+     *
+     * The seats go in as a **list** rather than as a count of bots, which is the one place this screen
+     * reaches past itself: D95 lets the player put the computer on seat 0, and `botSeatsFor`'s rule
+     * about the last seats cannot express that. Both routes into a match end at the same argument of
+     * `startMatch`, so there is one code path below the two entry points and nothing to drift.
+     */
+    begin() {
+      const { playerCount, bots } = lineup.snapshot();
+
+      session.freshMatch(playerCount, bots);
     },
   };
 }

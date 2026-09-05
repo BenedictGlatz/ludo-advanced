@@ -1937,6 +1937,44 @@ so a local full run reports contention as failure and somebody has to judge each
 recorded here rather than solved, because the alternative, turning retries on locally, hides exactly the
 kind of race the second row was.
 
+### One flow change cost six clicks in three specs, and it was cheap: 2026-09-05, issue #76
+
+The line-up screen made a count click open a screen instead of starting a match, and **every spec that
+walked in through the menu noticed.**
+
+| File | What had to change |
+| --- | --- |
+| `tests/e2e/match-flow.spec.js` | The shared `startMatch` helper, plus two direct count clicks |
+| `tests/e2e/handover.spec.js` | Two two-player matches started from the menu |
+| `tests/e2e/dice-pool.spec.js` | One, in a spec about something else entirely |
+
+**The fix was one added click on Start in all six**, because the line-up opens with every seat a person
+and therefore produces exactly the match those specs used to get. That is D92 paying for itself in the
+suite as well as on the screen.
+
+**The sixteen specs that boot with a player count in the address bar were untouched**, which is what that
+parameter was kept alive for. A feature that changes the front door cost the suite six lines rather than
+a rewrite, and that is the strongest argument this project has for keeping two routes into a match.
+
+**One repaired case got stronger rather than only longer.** `dice-pool.spec.js` asserts that the pool
+button is hidden when there is no pool. It now also asserts it is still hidden **on the line-up screen**,
+which is a new state the old spec could not have covered: a screen after the menu with still no match
+behind it.
+
+#### The new spec, and the three things only it can see
+
+`tests/e2e/lineup.spec.js`, eleven cases, a file of its own because `match-flow.spec.js` was at 247 of
+300 lines and this is a screen rather than a flow. Three of the eleven cover things no unit test can:
+
+- **The switched-off position.** FR-01 is enforced by the DOM's own `disabled` property, so if it ever
+  came off, the click would fall through to `toggleController`, which refuses **silently**. The player
+  would meet a button that does nothing and says nothing.
+- **The rebuild on a language switch.** The overlay's controls are rebuilt on every screen change and on
+  every language change, so a row that was switched has to come back switched, in the other language,
+  with its pressed state and its disabled position restored from the flow rather than from the DOM.
+- **That the match gets the seats the screen showed**, read off the loop's own state rather than
+  inferred from the board.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

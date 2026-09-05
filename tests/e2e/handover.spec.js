@@ -26,6 +26,9 @@ test.describe("the handover", () => {
     await page.goto("/?seed=1");
     await action(page, "hotseat").click();
     await page.locator('.overlay__button[data-count="2"]').click();
+    // The line-up screen since issue #76. It opens with both seats a person, which is what the
+    // handover needs: a bot is never handed anything.
+    await action(page, "begin").click();
 
     const board = page.locator(".board");
 
@@ -71,6 +74,9 @@ test.describe("the handover", () => {
     await page.goto("/?seed=1");
     await action(page, "hotseat").click();
     await page.locator('.overlay__button[data-count="2"]').click();
+    // The line-up screen since issue #76. It opens with both seats a person, which is what the
+    // handover needs: a bot is never handed anything.
+    await action(page, "begin").click();
 
     const board = page.locator(".board");
 

@@ -2875,6 +2875,59 @@ green**, because the colour is keyed on the seat and the number on the position 
 It was caught by a unit test written from the spec, which failed against correct code. Worth keeping in
 the report as the cheapest possible way to find a wrong assumption in a document.
 
+### Handoff 15 landed, and the count click stopped starting a match: 2026-09-05, issue #76
+
+The line-up screen is built, and with it the computer is reachable without the address bar for the first
+time. Route: main menu, player count, line-up, match.
+
+**The one invasive change is a single line in `session-actions.js`.** `OVERLAY_ACTION.PLAYERS` used to
+call `freshMatch(count)` and now calls `lineup.open(count)`. Everything else in the feature is new files
+and new markup, and **no file in `core/` and no file in `ai/` was touched at all**. That was the point of
+the layering: the rules had taken a list of bot seats since issue #43, so this was a menu and not a
+feature.
+
+**What the delivery answered, in one line each.**
+
+| Decision | Answer |
+| --- | --- |
+| D90 | Two screens. S2 unchanged, the line-up is S3 with its own `lineup.css`, third file on that seam |
+| D91 | A row is a plate, a name and two named positions. The row itself is not clickable |
+| D92 | Every seat opens as a person, so the screen never overwrites the count the player just gave |
+| D93 | The rule is a permanent sentence above the rows, and the one control that would break it is switched off |
+| D94 | Start is the one primary and takes the keyboard, Back returns to the count |
+| D95 | Seat 0 may be a bot like any other seat |
+| D96 | Six new keys. "Spieler" and "Bot", the HUD's words. No mode is named anywhere |
+
+**Two attributes carry "which one", and they never meet.** `data-count` is a player count on S2 and
+`data-seat` is a seat on S3. They could not be one attribute, because `overlay.css` selects on
+`data-count` to draw the three square count buttons and the line-up's rows must not inherit that look.
+`data-value` is a third and says which of the two positions a click was: the pair is two named positions
+and not one button that flips, so a click on the position that is already chosen has to be a no-op.
+
+**The focus rule is the only change to an existing function, and D94.3 asked for it with its cost
+attached.** `focusOverlay` now prefers the Start button and falls back to the first button as before.
+Without it the keyboard would land on seat 0's Spieler position, which is already chosen, so Enter on
+arrival would do nothing. The cost: a keyboard user who wants the rows reaches them with Shift and Tab.
+The rule is scoped by the **button**, not by the screen, so `overlay-view.js` keeps its promise that it
+renders a description and knows nothing about screens.
+
+#### A negative finding: `lineup.css` was missing one rule and Claude Code added it
+
+`.overlay__seats` is built once and lives in the panel on all seven screens, and `.overlay__panel` is a
+flex column with a `--space-4` gap, so an empty group leaves a hole on the other six. `pool.css` had
+already met this and answered it with an `:empty` rule on `.overlay__cards`. The same three lines were
+added to `lineup.css`, with a comment naming the precedent and saying they are not a design decision.
+**Reported rather than absorbed silently**, because the delivered file is the design side's.
+
+#### Two files are now close to the 300-line limit, and the next screen has to split one
+
+`overlay-view.js` is at 296 and `match-flow.js` at 295. Both are under NFR-02 and both have almost no
+room left. `match-flow.js` needed a second split inside this one feature: the three line-up operations
+moved into `lineup.js` beside the memory they change. The seam held because setting up a line-up happens
+**before** there is a session to own, which is the one thing on that file's plate that is not about
+owning one. Whoever adds the eighth screen should expect to split `overlay-view.js` first, and the
+obvious seam there is the three builders, the door, the seat row and the card region, against the shell.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

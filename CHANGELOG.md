@@ -408,9 +408,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   four-player one. A bot reads only what a person can see: the board and how **many** cards everybody else
   holds, never which ones. Two cards are deliberately never played, Oil Spill and The Purge, because both
   are as likely to help the table as the bot
+- **A line-up screen, so the computer can be chosen from the menu instead of the address bar** (issue #76,
+  FR-43, design handoff 15). The route is now main menu, then the player count, then a screen with one row
+  per seat that says whether a player or a bot plays it, then the match. Each row carries the seat's
+  colour and shape, its name in the same words the HUD uses, and two named positions of which exactly one
+  is chosen, so the state of a row is readable without colour. **At least one seat is always a player's**
+  (FR-01): the rule is written above the rows and the one control that would break it is switched off, so
+  the refusal is explained before it happens rather than after. **Any seat may be the bot, including the
+  first one**, so a player who wants the green pieces can have them and let the computer move first. The
+  keyboard lands on Start when the screen opens, so 4 and Enter is the whole of a four-player match
 
 ### Changed
 
+- **Choosing a player count no longer starts the match on its own** (issue #76). It sizes the match and
+  opens the line-up screen, and Start on that screen is what begins the match. Two gestures where there
+  used to be one, which is the price of the computer being reachable without the address bar. The
+  `?players=` and `?bots=` parameters are untouched and still boot straight into a match
 - **A card a bot plays is announced in the message strip under the board** (issue #82), for two seconds,
   naming the seat and the card: "Bot 3 spielt Angel Die". Without it the whole card mechanic of a match
   against bots would happen in silence, because a third of the cards leave the board looking exactly as

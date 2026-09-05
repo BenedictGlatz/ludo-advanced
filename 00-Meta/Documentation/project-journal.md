@@ -4435,6 +4435,94 @@ to get wrong later.
   `01-Design/Handoff/` is the design side's document.
 - → Ch. 04
 
+### 2026-09-05: The count click stopped starting a match, which is the whole flow change
+
+- **Chosen:** `OVERLAY_ACTION.PLAYERS` opens the line-up screen with that count instead of calling
+  `freshMatch(count)`. One line in `session-actions.js`, and it is the only invasive change the whole
+  feature makes. **No file in `core/` and no file in `ai/` was touched.**
+- **Why it had to move:** the computer was reachable only through `?bots=` in the address bar. A screen
+  that says who plays each seat cannot come before the count, because the count is what fixes how many
+  seats there are to talk about, so the count click could no longer also start the match.
+- **Rejected:** *one screen that grows, D90.2*, with the counts at the top and rows appearing under
+  them. It saves a click and shows the consequence of the count immediately. It loses because it has to
+  answer what happens to four set rows when the player then clicks 3: whichever way that is answered,
+  the player has done work the screen throws away. Two screens make that a Back, which is a gesture the
+  player chose rather than a consequence they discovered.
+- **The cost, stated plainly:** the menu route is three clicks deep now, menu, count, line-up, Start.
+  Nothing in this game is entered from cold more than once per session, so the click is cheap, but it is
+  the sort of thing a retrospective notices without remembering why it was chosen.
+- **What it cost the suite:** six clicks in three end-to-end specs, one added Start click each. The
+  sixteen specs that boot with a player count in the address bar were untouched, which is what that
+  parameter was kept alive for.
+- → Ch. 04, Ch. 08
+
+---
+
+### 2026-09-05: `match-flow.js` had to be split twice in one feature, and the second seam was the line-up
+
+- **What happened:** step 1 of the plan moved `poolCounts` out to make room, freeing fourteen lines. The
+  line-up's three operations plus their reasoning then cost thirty-five, and the file went to 322 of the
+  300-line NFR-02 limit.
+- **Chosen:** move `open`, `setController` and `begin` into `lineup.js` as `createLineupFlow(session)`,
+  beside the memory they change. `match-flow.js` came back to 295 and `lineup.js` went to 157.
+- **Why that seam is real and not just convenient:** `match-flow.js` owns a **session**, and setting up
+  a line-up happens before there is a session to own. It is the one thing on that file's plate that is
+  not about owning one, which is the same test `session-actions.js` passed when it was split off.
+- **Rejected:** *a third file for the three operations.* `lineup.js` already holds the line-up, the
+  operations are a sentence each, and a file holding only them would be a wrapper.
+- **Rejected:** *trimming the comments on the three new functions to fit.* NFR-02 asks for a split along
+  a real seam and explicitly not for shrinking a file by deleting the part that explains it.
+- **The estimate that was wrong, and why it is worth recording:** the plan budgeted "roughly fifteen
+  lines" for the feature in `match-flow.js` and the real figure was thirty-five. The gap is entirely
+  documentation: the three functions are two lines each and their reasoning is twenty. That is the
+  project working as intended and it should be budgeted for next time.
+- → Ch. 04
+
+---
+
+### 2026-09-05: `session.lineup` is an object where every other entry is a function
+
+- **Chosen:** `createSessionActions` receives `lineup` as one object with three methods, next to six
+  plain functions. `session-actions.js` calls `session.lineup.open`, `.setController` and `.begin`.
+- **Why:** three separate entries would have been three names for one screen, and `session-actions.js`
+  would then be the only place that knew they belonged together. The grouping says where they come from.
+- **Rejected:** *flattening them into `openLineup`, `setController` and `beginFromLineup`.* It keeps the
+  interface uniform, which is worth something, and it hides that the three are one module's public face.
+- → Ch. 04
+
+---
+
+### 2026-09-05: A click on the line-up sets a value, it does not flip the row
+
+- **Chosen:** each row has two named positions and a click says **which** one it is, through
+  `data-value`. `bindOverlayEvents` passes it as a third argument, which handlers that do not need it
+  simply do not declare.
+- **Why it cannot be a toggle:** both positions are visible and live at all times (D91.2), so clicking
+  "Spieler" on a row that is already a person is a real click on a real button. A toggle would turn that
+  row into a bot, which is the opposite of what the player asked for.
+- **Consequence in `state/`:** `toggleController` is still the function that holds the FR-01 rule.
+  `lineup.js` calls it only when the requested value differs from the current one, so the rule is
+  written once and the no-op is a guard rather than a second rule.
+- **Rejected:** *reading `data-value` back out of the DOM inside the handler.* It would make
+  `session-actions.js` touch an element, and its whole promise is that it does not.
+- → Ch. 04
+
+---
+
+### 2026-09-05: `.overlay__seats:empty` was missing from the delivered stylesheet
+
+- **What happened:** `lineup.css` arrived without a rule hiding the empty seat group. The group is built
+  once and lives in the panel on all seven screens, and the panel is a flex column with a gap, so the
+  other six would each carry a hole where the rows are not.
+- **Chosen:** add the three lines, with a comment naming `pool.css` as the precedent and saying they are
+  not a design decision. `pool.css` had already answered exactly this for the card region.
+- **Why not ask instead:** the answer already exists in the project, in the same shape, for the same
+  reason. Waiting for a spec to restate a rule the codebase has would be process for its own sake.
+- **Reported to the Product Owner** rather than absorbed silently, because the file is the design side's
+  and a stylesheet quietly edited on this side is how two trees drift.
+- → Ch. 04
+
+
 ---
 
 ## Challenges

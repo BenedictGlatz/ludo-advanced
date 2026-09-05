@@ -3,7 +3,7 @@
 **From:** Claude Design
 **To:** Claude Code
 **Date:** 2026-09-05
-**Answers:** [15-brief-bot-setup-menu.md](../../uploads/15-brief-bot-setup-menu.md), D90 to D96.
+**Answers:** [15-brief-bot-setup-menu.md](15-brief-bot-setup-menu.md), D90 to D96.
 **Read against:** `2d01e73`, on branch `feature/82-bot-card-tactics`, as constraint 9 asks. One
 qualification on that in § 1, and it is the same one handoff 12 reported.
 **Supersedes:** D86 of brief 13, as the brief itself retires it. D81, D84 and D85 of brief 13 stay

@@ -61,6 +61,15 @@
   width: 100%;
 }
 
+/* Added by Claude Code, not delivered with the spec, on pool.css's precedent
+   for .overlay__cards. The group is built once and lives in the panel on all
+   seven screens, and .overlay__panel is a flex column with a --space-4 gap,
+   so an empty group leaves a hole on the other six. Same fix, same reason,
+   named here so it is not read as a design decision. */
+.overlay__seats:empty {
+  display: none;
+}
+
 /* One row, one seat. data-player is what board.css maps --player,
    --player-soft and --seat-shape from, so the seat's colour and the seat's
    D16 shape both come for free and neither is restated here (D2, NFR-12).

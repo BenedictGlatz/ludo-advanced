@@ -1,17 +1,23 @@
 /**
- * The screens around a match, and the flow between them. Screens S1, S2, S8, S9, the handover, and
+ * The screens around a match, and the flow between them. Screens S1, S2, S3, S8, S9, the handover, and
  * issue #41's acceptance criterion for FR-38: menu to match to pause to match to win to menu, with no
  * page reload.
+ *
+ * **A player count no longer starts a match** (issue #76). It opens the line-up screen, which asks who
+ * plays each of those seats, and the Start button on that screen is what begins the match. Two gestures
+ * where there used to be one, and the reason is that the computer was reachable only through `?bots=`
+ * before it. The `?players=` route below is untouched and still goes straight to a match.
  *
  * `ui/` only. It owns the **view's** screen, creates a match when one is asked for, and hands every
  * rule question to `state/`.
  *
  * ## The screen is view state and never enters the game state
  *
- * Which of the six screens is up is not a fact about the game: the rules know nothing about a pause, and
- * `createGameState` has no field for one. Putting it in the frozen state object would make the rules
- * layer hold a fact about a button, which is the same reasoning `skill-hand-view.js` records for a
- * half-finished card play.
+ * Which of the seven screens is up is not a fact about the game: the rules know nothing about a pause,
+ * and `createGameState` has no field for one. Putting it in the frozen state object would make the
+ * rules layer hold a fact about a button, which is the same reasoning `skill-hand-view.js` records for
+ * a half-finished card play. **The half-made line-up is the same answer twice over** and it lives
+ * beside the screen, in `lineup.js`, for the same reason.
  *
  * ## Why a new match rebuilds the page
  *
@@ -39,6 +45,7 @@ import { renderChrome, updateChrome } from "./chrome-view.js";
 import { bindChromeEvents, bindOverlayEvents } from "./events.js";
 import { createGameLoop } from "./game-loop.js";
 import { turnLine } from "./hud-view.js";
+import { createLineupFlow } from "./lineup.js";
 import { screenDescription } from "./overlay-screens.js";
 import { OVERLAY_SCREEN, focusOverlay, renderOverlay, updateOverlay } from "./overlay-view.js";
 import { emptyParts, matchParts, mount } from "./page.js";
@@ -60,7 +67,9 @@ import { createSessionActions } from "./session-actions.js";
  *   so a test can put a named card in a hand instead of hoping a seed does. `main.js` carries the reason
  *   a seed could not.
  * - `bots` is how many of the seats play themselves, from `?bots=`, and it is a **count** rather than a
- *   list of seats because which seats they are is `botSeatsFor`'s rule in `state/` (FR-43).
+ *   list of seats because which seats they are is `botSeatsFor`'s rule in `state/` (FR-43). The line-up
+ *   screen hands `freshMatch` the list directly instead, because D95 lets the player put the computer
+ *   on seat 0 and a count cannot say that.
  */
 export function createMatchFlow({
   $root,
@@ -91,7 +100,12 @@ export function createMatchFlow({
 
     updateOverlay(
       session.$overlay,
-      screenDescription(screen, { state, seat: handoverSeat, pool: poolCountsFor(deps) })
+      screenDescription(screen, {
+        state,
+        seat: handoverSeat,
+        pool: poolCountsFor(deps),
+        lineup: lineup.snapshot(),
+      })
     );
     updateChrome(session.$chrome, {
       canPause: loop !== null && screen === OVERLAY_SCREEN.NONE,
@@ -189,11 +203,11 @@ export function createMatchFlow({
    * a two-seat table, and `botSeatsFor` clamps that to an all-bot match rather than throwing. One
    * person is always left at the keyboard.
    */
-  function freshMatch(playerCount) {
+  function freshMatch(playerCount, botSeats = null) {
     deps = matchDeps(rng, createDicePool());
-    const botSeats = botSeatsFor(playerCount, Math.min(bots, playerCount - 1));
+    const seats = botSeats ?? botSeatsFor(playerCount, Math.min(bots, playerCount - 1));
 
-    beginMatch(startMatch(playerCount, deps, undefined, stack ?? undefined, botSeats));
+    beginMatch(startMatch(playerCount, deps, undefined, stack ?? undefined, seats));
   }
 
   /**
@@ -229,13 +243,23 @@ export function createMatchFlow({
   }
 
   /**
-   * What each button means is in `session-actions.js`, which reached for nothing but these seven
-   * operations, so moving it was a move rather than a rewrite. This module owns the session; that one
-   * decides what a click asks of it.
+   * The line-up screen, which happens before there is a session to own. `lineup.js` holds the
+   * half-made line-up and the three operations on it; this module hands it the three things it needs
+   * back. The dependency points one way, exactly as `session-actions.js` below does.
+   *
+   * `drawShell` and `freshMatch` are function declarations, so they are hoisted and this line can
+   * stand above them.
+   */
+  const lineup = createLineupFlow({ openScreen, drawShell, freshMatch });
+
+  /**
+   * What each button means is in `session-actions.js`, which reached for nothing but these operations,
+   * so moving it was a move rather than a rewrite. This module owns the session; that one decides what
+   * a click asks of it.
    */
   const actions = createSessionActions({
     openScreen,
-    freshMatch,
+    lineup,
     playAgain,
     quitToMenu,
     drawShell,
