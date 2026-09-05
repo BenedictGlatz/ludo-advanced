@@ -457,6 +457,16 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   the ten delivered files could not be copied over ours and were applied rule by rule. Sprint 3, no
   issue.
 
+- **2026-09-05**: Issues #85 (design handoff 16) and #86 (the card being read) opened for work that was
+  already delivered, put in Sprint 2 on the board with 3 and 1 story points, and set to In Progress so
+  they can be closed with the merge. Both were built without an issue, which is why they had to be
+  written after the fact. **A correction goes with them: twelve log entries from 2026-09-03 onward say
+  Sprint 3 and every one of them is Sprint 2.** The board's Sprint 2 runs 2026-08-24 to 2026-09-06 and
+  Sprint 3 starts 2026-09-07, so all work in that window belongs to Sprint 2. The entries are left
+  standing, per this file's own append-only rule; this line is the correction. The Delivered list in
+  `sprint-log.md` was not affected, because it is organised by sprint section rather than by a label on
+  each line. Sprint 2.
+
 
 ---
 
