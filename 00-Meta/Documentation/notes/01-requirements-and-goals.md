@@ -517,6 +517,47 @@ hand-management card are all defensible, and they give the card three different 
 **What the code does meanwhile:** the bot prices it as "make room in a full hand", worth 1, so it is
 only ever played when the hand is full and nothing better is in it. Nothing was changed in the rule.
 
+### NFR-12 is unmet again, three days after it was met: 2026-09-05, design handoff 16
+
+D97 withdraws the four seat shapes across the whole game and deletes `.pawn__mark` outright, so the
+non-colour identifier that closed NFR-12 on 2026-09-02 is gone. This is a review decision by the design
+side and not a regression: § 3 of `16-spec-seat-dots-and-message-strip.md` argues that a shape sitting
+under two eyes reads as a mouth, and that four seats therefore read as four expressions on the board.
+
+| | |
+| --- | --- |
+| Requirement | NFR-12, `should have` ([Requirements-Specification.md](../../Project-Management/Requirements-Specification.md) row NFR-12) |
+| Met | 2026-09-02 to 2026-09-05, **three days**, by design spec 06's D48 to D50 |
+| Unmet again from | 2026-09-05, design handoff 16, D97 |
+| What replaced it | Nothing. The seats are told apart by colour alone, which is where D2 left them on 2026-08-30 |
+| Test | `tests/e2e/greyscale.spec.js`, whose two shape cases were deleted rather than rewritten. Its header records the reason |
+
+**The numbers, restated because they are the requirement's whole content again.** Reduced to greyscale
+the worst pair is red against blue at **1.15:1** and the next is green against red at **1.26:1**, against
+the **1.30** threshold derived as the best an evenly spread four-value palette can reach over these hues.
+The palette has not moved since 2026-08-30, so the 1.146 figure recorded above and the 1.15 quoted in the
+handoff are the same measurement.
+
+**What still identifies a seat, and where it stops working.** Words, wherever a seat is named: the HUD
+plate, the chrome turn line, the win panel, the handover curtain and the line-up row all carry the seat's
+name in text. Position, on the board's own furniture: each seat owns a fixed start area, home column,
+entry square and turn-off bar, so a pawn in a yard or a house is placed rather than only coloured. What
+does not work is a pawn on the shared track, which is **39 of the 40 track fields**, and that is precisely
+the case the acceptance criterion is written about.
+
+**The one fix that does not bring a shape back is booked as D99 and is not this side's to take.**
+Re-tune the four seat colours so they differ in lightness as well as in hue, aiming for no pair closer
+than about 1.6:1, which the handoff says is reachable inside the existing four hues. It is a Product
+Owner decision twice over: the four values are quoted verbatim from the layout template under D1 and D2,
+and each has a `--color-pN-soft` partner used as a wash in both skins, so it is eight values and a
+re-check of every plate's text contrast. Until then the requirement is open.
+
+**The report sentence, updated.** NFR-12 has now been blocked by a design decision, unblocked by a design
+decision and blocked by a third, all inside seven days, without a single line of `core/` moving. That is
+the clearest example in the project of a requirement whose owner is the design side and whose cost lands
+on the implementation side, and it is worth a paragraph on its own.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

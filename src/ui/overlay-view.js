@@ -173,9 +173,10 @@ function overlayButton(button) {
 /**
  * One seat row on the line-up screen: the seat, its name, and the two positions of its control.
  *
- * `data-player` is what `board.css` maps `--player`, `--player-soft` and `--seat-shape` from, so the
- * seat's colour and its D16 shape arrive without this file or `lineup.css` restating either (D2,
- * NFR-12). `data-controller` is `hud-view.js`'s word for the same fact and is reused unchanged.
+ * `data-player` is what `board.css` maps `--player` and `--player-soft` from, so the seat's colour
+ * arrives without this file or `lineup.css` restating it (D2). The badge is a dot: the four seat shapes
+ * were withdrawn on 2026-09-05 with design handoff 16 (D97). `data-controller` is `hud-view.js`'s word
+ * for the same fact and is reused unchanged.
  *
  * The plate is a `::before` in the stylesheet rather than an element here, because it is a shape and
  * not a thing to read: the seat's identity is in the name beside it, in words.

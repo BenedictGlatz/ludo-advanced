@@ -71,16 +71,6 @@ test.describe("the board renders out of state", () => {
     }
   });
 
-  test("gives every pawn an empty mark element for the seat shape (NFR-12)", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
-
-    // The element is the DOM half of D16. Whether it is visible is design handoff 06 and is asserted
-    // in greyscale.spec.js once the stylesheet lands; this only checks the contract the brief promises:
-    // one mark per pawn, no text in it.
-    await expect(board.locator(".pawn > .pawn__mark")).toHaveCount(16);
-    await expect(board.locator(".pawn__mark").first()).toHaveText("");
-  });
-
   test("starts every pawn in its own yard", async ({ page }) => {
     const board = await openMatch(page, SEEDS.leavesStartAtOnce);
 

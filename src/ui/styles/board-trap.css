@@ -1,7 +1,7 @@
 /* The objects a card puts on a track field: the three traps, the blocker,
    the seat that owns each one, and the It's Not That Deep aura.
    Depends on tokens.css and on the seat mapping in board.css, which supplies
-   --player and --seat-shape to any element carrying data-player.
+   --player to any element carrying data-player.
 
    Split off board.css on 2026-09-03 for NFR-02 (constraint 13 of brief 07)
    and at a real seam: board.css draws the board and the states the board
@@ -17,10 +17,11 @@
 /* --- The object itself (D51, D53).
 
        One construction for all four objects, and it is the pawn's: a body in
-       the owner's seat colour with a 3px ink edge, carrying the seat's shape
-       in ink inside it. The measurement 06-spec section 4 made therefore
-       carries over unchanged, 3.67:1 at the worst seat in Picnic and 5.16:1
-       in Night In, which is what keeps NFR-12 true with the marks present.
+       the owner's seat colour with a 3px ink edge. Amended 2026-09-05, D97:
+       the ink shape inside the chip goes with the rest of the seat shapes, so
+       the chip is a dot in the owner's colour and nothing more. It was 10 px
+       across at the design resolution and 6 px at the floor of --board-size,
+       which is the smallest thing the change costs and the least missed.
 
        The chip stands in the foot-left corner rather than in the middle of
        the field, because the middle of a field belongs to the pawn standing
@@ -52,17 +53,6 @@
   transition:
     opacity var(--motion-capture) var(--ease-capture),
     scale var(--motion-capture) var(--ease-capture);
-}
-
-/* The owner's shape, ink on the seat colour. clip-path removes a border along
-   with everything outside the shape, which is the finding from 04-spec D16,
-   so the edge is on the body and the shape inside it needs none. */
-.square__trap::before {
-  content: "";
-  position: absolute;
-  inset: 22%;
-  background: var(--color-ink);
-  clip-path: var(--seat-shape, circle(50% at 50% 50%));
 }
 
 /* A field with no object renders nothing: the span above is already at zero
@@ -98,10 +88,6 @@
   height: 76%;
   border-width: var(--border-ink);
   border-radius: var(--radius-sm);
-}
-
-.square[data-trap="blocker"] .square__trap::before {
-  inset: 30%;
 }
 
 /* --- The aura (D58). Up to seven contiguous fields in which an offensive

@@ -51,10 +51,9 @@
   white-space: nowrap;
 }
 
-/* --seat-shape was mapped here as well until 2026-09-03, and the four lines
-   were deleted when 07-spec moved the mapping into the one [data-player="N"]
-   block in board.css. That selector is unscoped, so the chrome row inherits
-   the shape although it sits outside .board. The --seat-color line stays. */
+/* --seat-shape is gone from the project as of 2026-09-05, D97: the mark below
+   is a dot, and a dot needs no per-seat value. --seat-color stays, because
+   this plate sits on a neutral ground and needs the seat as a fill. */
 .app__chrome[data-player="0"] {
   --seat-color: var(--color-p0);
 }
@@ -74,7 +73,7 @@
   width: var(--space-5);
   height: var(--space-5);
   background: var(--seat-color);
-  clip-path: var(--seat-shape, circle(50%));
+  border-radius: var(--radius-pill);
   outline: var(--border-hair) solid var(--color-ink);
   outline-offset: calc(var(--border-hair) * -1);
 }

@@ -3,7 +3,64 @@
 **From:** Claude Code
 **To:** Claude Design
 **Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, four
-times on 2026-09-04, and once on 2026-09-05**
+times on 2026-09-04, and twice on 2026-09-05**
+
+---
+
+## Status on 2026-09-05: handoff 16 landed, and it was applied rule by rule rather than copied
+
+**[16-spec-seat-dots-and-message-strip.md](16-spec-seat-dots-and-message-strip.md) answered D97 to D99
+and both halves are built.** Every seat mark in the game is a dot, `.pawn__mark` is gone from `pawn.css`
+and from the DOM, and the message strip hangs above `.app__skill` with 44 px reserved at the foot of
+`.app__dice`. All four items of § 7 are done: the two DOM edits, the deleted assertions, and the grep.
+926 unit tests and 130 end-to-end cases pass on Chromium.
+
+### The one thing this side did differently from the README, and why
+
+**The ten stylesheets could not be copied over ours. Six of them would have reverted work in this tree.**
+§ 1 of your spec says the copies on your side predate it, and it is more than the two files it names:
+
+| File | What copying it would have reverted |
+| --- | --- |
+| `tokens.css` | The 16:9 stage (`--stage-w`, `--stage-h`, the stage-relative `--board-size`) and `--layer-card-reading` |
+| `app.css` | The whole stage: the `html` font-size rule, the `#app` frame, and the media query's three overrides |
+| `chrome.css` | `justify-content: flex-end`, the fix for the language button sitting at the left end on the menu |
+| `hud.css` | `min-width: 15.5rem`, the fix for the seat plates clipping "KARTEN" |
+| `overlay.css` | `position: absolute`, which is what keeps the letterbox bars visible when the menu opens |
+| `lineup.css` | `.overlay__seats:empty`, added three days ago and reported in the section below |
+
+**And `refusal.css` is the strip under a name it lost on 2026-09-03.** It is `message-strip.css` and
+`.message-strip` here, renamed when D73 gave it a third voice and two of the three stopped being
+refusals. Copying the delivered file would have added a dead stylesheet and left the live one unchanged.
+
+So the changes were applied **rule by rule** against our files, which is what § 1 asks for in its own
+words: "the selector named beside each rule is what to trust, not the line number". Every rule the spec
+names is in, including every rewritten comment, at the selector it names. Nothing was left out and
+nothing was added.
+
+**The ask, and it is small.** A whole-file delivery is a diff whose base is unstated, and the base is
+whatever this side last shipped when you read it. That has now cost a manual reconciliation twice. Either
+send the amended rules as a diff, or say in the README which date the copies were taken from, so this
+side can tell a deliberate reversal from a stale line at a glance.
+
+### Two things about D97 that are worth having in writing
+
+**The four assertions were deleted, not rewritten, exactly as § 7.3 asked.** Two in `greyscale.spec.js`
+(the sixteen pieces and the four HUD plates), one in `board-renders.spec.js` (the DOM contract for
+`.pawn__mark`) and one in `trap-fires.spec.js` (the chip's `clip-path`, plus the pawn mark that was its
+control). Nothing asserts the dots. `greyscale.spec.js` now has three cases left and its header says why.
+
+**D99 is on the Product Owner's desk, not ours.** This side agrees it is the right fix and cannot take
+it: the four hues are quoted verbatim from the layout template under D1 and D2. If it is approved, the
+eight values plus a text-contrast re-check on every plate is a piece of work worth its own brief.
+
+### D98 measured after landing, at both widths
+
+At 1440 by 900 the strip runs the width of the rail, its foot sits 4 px above the skill plate, and the
+lowest of three unresolved dice cards clears its top by **24 px**. So the 44 px reservation of § 5.3 is
+enough with room to spare. Below the 84rem breakpoint the layout is one column and the strip still clears
+every card. **No permanent test was added for the geometry**, because every number in it is a `--space-*`
+token and a case asserting them would report your next spacing change as a defect.
 
 ---
 

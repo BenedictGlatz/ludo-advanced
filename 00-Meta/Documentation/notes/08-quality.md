@@ -284,7 +284,7 @@ Seven spec files, run against the production build in Chromium, Firefox and Edge
 | `capture.spec.js` | Landing on an opponent sends it home and takes its square | FR-11 |
 | `no-legal-move.spec.js` | The turn passes and the reason is on screen, in German | FR-14, NFR-08, NFR-03 |
 | `win.spec.js` | A whole match, clicked through, ends with a full house and names the winner | FR-05, SG1 |
-| `greyscale.spec.js` | The four seats told apart without colour. Asserts four different shapes on the pieces since 2026-09-02; measured the palette's greyscale contrast before that | NFR-12 |
+| `greyscale.spec.js` | The four seats told apart without colour. Measured the palette's greyscale contrast until 2026-09-02, asserted four different shapes on the pieces until 2026-09-05, and since D97 asserts only that the four greys differ at all. NFR-12 is unmet and this file is where that is visible | NFR-12 |
 
 #### Every spec fixes the RNG, and the seeds were measured rather than guessed
 
@@ -1974,6 +1974,44 @@ behind it.
   with its pressed state and its disabled position restored from the flow rather than from the DOM.
 - **That the match gets the seats the screen showed**, read off the loop's own state rather than
   inferred from the board.
+
+### Four assertions deleted on purpose, and the coverage they leave behind: 2026-09-05, design handoff 16
+
+D97 withdraws the four seat shapes and deletes `.pawn__mark`. Four assertions across three specs were
+asserting facts that are now gone by design, and the spec asked for them to be **deleted rather than
+fixed**. They were.
+
+| Spec | What went | Why not rewritten |
+| --- | --- | --- |
+| `greyscale.spec.js` | The case asserting a non-zero box and four different `clip-path` values across sixteen pieces | A dot is a dot on all four seats. Asserting that four identical shapes are identical is not a test |
+| `greyscale.spec.js` | The case asserting four different `clip-path` values on the four HUD plates | Same. It existed to catch a broken inheritance chain, and there is no longer a chain to break |
+| `board-renders.spec.js` | The DOM-contract case: one empty `.pawn__mark` per pawn, sixteen of them | The element is out of the contract |
+| `trap-fires.spec.js` | The chip's `clip-path`, and the pawn mark that was its control | Same reason as the first row. The chip's box and its 30 % ratio stay, which is what D51 is about |
+
+**What is left in `greyscale.spec.js` is worth naming, because the file's title now over-promises.** Three
+cases: the four seat greys are all different from each other, the four colours are identical in both
+skins, and a greyscale screenshot is attached for the review round. None of them asserts that a player can
+tell two pawns apart, because that is no longer true and a test that claimed it would be lying.
+
+**The insurance case recorded on 2026-09-03 was retired by the thing it insured against.** It watched for
+a broken `--seat-shape` inheritance chain, whose failure mode was silent: every consumer would fall back
+to `circle(50%)`, the game would keep rendering, and NFR-12 would be quietly untrue. That is now the
+intended state, so the case has nothing left to catch. It was a good test for two days and it is worth
+keeping in the report as an example of a test whose value ended with a design decision rather than with a
+bug.
+
+**The suite is otherwise unchanged and stayed green.** 926 unit tests and 130 end-to-end cases pass on
+Chromium after the change. Two end-to-end case titles were corrected as well, in `no-legal-move.spec.js`
+and `win.spec.js`, because both described the strip as sitting "under the board" and D98 moved it.
+
+**What is not covered, stated plainly.** Nothing asserts the strip's new position. The geometry was
+measured by hand at 1440 by 900 and below the 84rem breakpoint, and it holds: the strip runs the width of
+the rail, its foot sits 4 px above the skill plate, and the lowest dice card clears its top by 24 px. A
+permanent case was not added because the numbers are `--space-*` tokens and a test asserting them would
+fail the next time the design side moves one, which is a test that reports design changes as defects.
+`shell.spec.js` already asserts the strip exists and does not scroll the page, and that is the part that
+is a requirement.
+
 
 ## Decisions
 

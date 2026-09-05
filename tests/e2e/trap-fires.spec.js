@@ -124,16 +124,19 @@ test.describe("the object standing on a field", () => {
    * contract rather than to delete the test. Handoff 07 landed on 2026-09-03, the case went red on the
    * first run after it, and this is that check.
    *
-   * Three assertions, and the second is the one that matters most. A box proves something painted. The
-   * **ratio** proves it is the 30 per cent chip D51 specified rather than merely something, and it is a
-   * ratio and not a pixel count so that it survives a change to `--board-size`. The `clip-path` proves
-   * the owner's seat shape is inside it, which is what D53 answers and what NFR-12 rests on: a chip that
-   * said whose it was by colour alone would pass the first two assertions and fail the requirement.
+   * A box proves something painted. The **ratio** proves it is the 30 per cent chip D51 specified rather
+   * than merely something, and it is a ratio and not a pixel count so that it survives a change to
+   * `--board-size`.
    *
-   * The pawn's own mark stays as the control. It has been styled since handoff 06, so a zero there would
-   * mean the harness is measuring wrong rather than that the chip is missing.
+   * **There were two more assertions here until 2026-09-05.** One read the `clip-path` off
+   * `.square__trap::before` and proved the owner's seat shape was inside the chip; the other measured
+   * `.pawn__mark` as a control. Design handoff 16 (D97) withdrew the seat shapes across the whole game,
+   * so the chip is a dot in the owner's colour and the pawn has no mark at all. Both facts are gone on
+   * purpose and the assertions were deleted rather than rewritten, for the reason `greyscale.spec.js`
+   * gives: a dot is a dot on all four seats. What NFR-12 rests on now, and what it costs, is § 4 of
+   * `16-spec-seat-dots-and-message-strip.md`.
    */
-  test("draws the trap as a chip carrying its owner's shape", async ({ page }) => {
+  test("draws the trap as a chip in its owner's colour", async ({ page }) => {
     const board = await openMatch(page, SEEDS.leavesStartAtOnce, withStack(["action-banana-peel"]));
 
     await chooseDiceCard(board);
@@ -148,14 +151,6 @@ test.describe("the object standing on a field", () => {
     // the first version of this case measured 0.12 of the field and looked like a broken stylesheet.
     await expect.poll(() => chipRatio(field)).toBeGreaterThan(0.2);
     expect(await chipRatio(field)).toBeLessThan(0.4);
-
-    const shape = await field
-      .locator(".square__trap")
-      .evaluate((span) => window.getComputedStyle(span, "::before").clipPath);
-    expect(shape).not.toBe("none");
-
-    const pawnMark = await board.locator(".pawn .pawn__mark").first().boundingBox();
-    expect(pawnMark?.width ?? 0).toBeGreaterThan(0);
   });
 
   /**

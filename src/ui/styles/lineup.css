@@ -5,8 +5,8 @@
    Split out of overlay.css on the handover.css and menu.css precedent, which
    is one screen's own stylesheet and not a second component (D90).
    Depends on tokens.css, on overlay.css, and on the seat mapping in board.css
-   which supplies --player, --player-soft and --seat-shape to any element
-   carrying data-player. Loads after overlay.css.
+   which supplies --player and --player-soft to any element carrying
+   data-player. Loads after overlay.css.
    Reasoning: 15-spec-bot-setup-menu.md, D90 to D96.
 
    The screen keeps the curtain and keeps the panel as a card, because it is a
@@ -70,9 +70,9 @@
   display: none;
 }
 
-/* One row, one seat. data-player is what board.css maps --player,
-   --player-soft and --seat-shape from, so the seat's colour and the seat's
-   D16 shape both come for free and neither is restated here (D2, NFR-12).
+/* One row, one seat. data-player is what board.css maps --player and
+   --player-soft from, so the seat's colour comes for free and is not restated
+   here (D2). The badge is a dot: the four seat shapes are withdrawn (D97).
 
    The wash is the seat's own soft tone. It is the cheapest thing on this
    screen that makes four seats read as four seats before a word is read, and
@@ -96,7 +96,7 @@
   width: var(--space-5);
   height: var(--space-5);
   background: var(--player);
-  clip-path: var(--seat-shape, circle(50%));
+  border-radius: var(--radius-pill);
   outline: var(--border-hair) solid var(--color-ink);
   outline-offset: calc(var(--border-hair) * -1);
 }

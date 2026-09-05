@@ -22,7 +22,7 @@
  * sentence changes one JSON file rather than breaking a test.
  *
  * **Where the message is read from changed on 2026-09-01**, when design spec 04 answered D40. It used to
- * be the refusal strip under the board and it is now the win overlay, because the strip is orange and
+ * be the refusal strip beside the hands and it is now the win overlay, because the strip is orange and
  * orange means the game refused something. The wording assertion is the same one; only the element it is
  * made against moved, and this spec now also checks that the strip is left empty.
  */

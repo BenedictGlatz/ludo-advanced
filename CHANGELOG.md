@@ -424,7 +424,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   opens the line-up screen, and Start on that screen is what begins the match. Two gestures where there
   used to be one, which is the price of the computer being reachable without the address bar. The
   `?players=` and `?bots=` parameters are untouched and still boot straight into a match
-- **A card a bot plays is announced in the message strip under the board** (issue #82), for two seconds,
+- **The message strip has moved off the board and now sits above your skill cards.** It used to hang across
+  the foot of the board, where it covered two players' start areas and the last stretch of two players'
+  tracks every time it said anything. It now speaks beside the cards you are about to use, and it grows
+  upward, so a two-line message never covers a card. The dice row keeps a little space free at its foot so
+  that the strip and the cards never overlap
+- **The four players are told apart by colour alone again.** Every seat mark in the game is now a dot in
+  that seat's colour: on the score plates, on the turn line, on the win and handover screens, on a trap
+  lying on the board and on the line-up rows. The pieces lose their mark entirely and keep their two eyes,
+  because a mark under two eyes looked like a mouth and gave each colour an expression it was never meant
+  to have. **What this costs:** a greyscale screenshot no longer tells a red pawn from a blue one on the
+  shared track, so the requirement asking for a second, non-colour cue is open again. A player's name is
+  still written next to their colour everywhere a seat is named, and each player still owns a fixed corner,
+  home column and entry square on the board
+- **A card a bot plays is announced in the message strip** (issue #82), for two seconds,
   naming the seat and the card: "Bot 3 spielt Angel Die". Without it the whole card mechanic of a match
   against bots would happen in silence, because a third of the cards leave the board looking exactly as
   it did before. **The sentence is orange, the colour the game otherwise uses for "you cannot do that",

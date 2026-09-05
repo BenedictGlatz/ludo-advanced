@@ -9,17 +9,29 @@
  * four seat colours against a 1.30 floor, measured 1.146 at the worst pair, and carried `test.fail()` so
  * the suite reported a known failure instead of going green over an unmet requirement.
  *
- * Design handoff 06 (D48 to D50) put a shape per seat on the piece: `.pawn__mark`, an ink shape clipped
- * to `--seat-shape-0` to `--seat-shape-3`, a circle, a triangle, a square and a diamond. The requirement
- * is now met another way, so the first test asserts the acceptance criterion as it is written: every pawn
- * carries a mark, the mark has a shape, the shape is the same within a seat and different across seats,
- * and none of that changes under a greyscale filter.
+ * Design handoff 06 (D48 to D50) then put a shape per seat on the piece: `.pawn__mark`, an ink shape
+ * clipped to one of four `--seat-shape-*` tokens. Two tests here asserted it, one on the sixteen pieces
+ * and one on the HUD plates.
  *
- * The 1.30 luminance case is retired, as D50 decided. The 1.146 figure and the derivation of the 1.30
+ * **Design handoff 16 (D97) withdrew the shapes again on 2026-09-05, and both tests were deleted with
+ * them.** Every seat mark in the game is now a dot in the seat's colour, and the piece's mark is gone
+ * outright rather than converted, because a shape sitting under two eyes reads as a mouth. The
+ * assertions were not rewritten to check the dots: a dot is a dot on all four seats, and asserting that
+ * four identical shapes are identical is not a test.
+ *
+ * **So NFR-12 is unmet again, and this file is where that is visible.** The cost is written out in
+ * `16-spec-seat-dots-and-message-strip.md` § 4: reduced to greyscale, red and blue are 1.15:1 apart and
+ * green and red 1.26:1, so a red pawn and a blue pawn on the shared track are the same grey. What still
+ * works is words wherever a seat is named, and position on the board's own furniture, since each seat
+ * owns a fixed start area, home column, entry square and turn-off bar. D99 books the follow-up that
+ * would fix it without bringing a shape back: re-tune the four seat colours so they differ in lightness
+ * as well as in hue. That is a Product Owner decision, not a stylesheet one.
+ *
+ * The 1.30 luminance case stays retired, as D50 decided. The 1.146 figure and the derivation of the 1.30
  * threshold live in `00-Meta/Documentation/notes/01-requirements-and-goals.md` next to NFR-12 and in
  * `notes/08-quality.md`, where the next person who proposes moving a seat colour will find them. What is
- * kept is the second case below, the floor of four different greys: two seats reducing to the same grey is
- * the regression worth catching, and it passes today.
+ * kept below is the floor of four different greys: two seats reducing to the same grey is the regression
+ * worth catching, and it passes today.
  */
 
 import { expect, test } from "@playwright/test";
@@ -27,7 +39,6 @@ import { expect, test } from "@playwright/test";
 import { SEEDS, openMatch } from "./helpers.js";
 
 const SEAT_TOKENS = ["--color-p0", "--color-p1", "--color-p2", "--color-p3"];
-const SEATS = [0, 1, 2, 3];
 
 /** Read the four seat colours off `:root` and reduce each to its relative luminance. */
 async function seatLuminance(page) {
@@ -72,100 +83,7 @@ function pairs(seats) {
   return result;
 }
 
-/**
- * For every pawn on the board: its seat, the rendered box of its mark and the computed `clip-path`.
- *
- * `getComputedStyle` resolves the `var()` chain, so what comes back is the literal shape and not the
- * token name. That is what lets the test compare shapes across seats without knowing the four values,
- * which stay the design's to change.
- */
-async function pawnMarks(board) {
-  return board.locator(".pawn").evaluateAll((pawns) =>
-    pawns.map((pawn) => {
-      const mark = pawn.querySelector(".pawn__mark");
-      const box = mark.getBoundingClientRect();
-
-      return {
-        seat: Number(pawn.getAttribute("data-player")),
-        width: box.width,
-        height: box.height,
-        clipPath: window.getComputedStyle(mark).clipPath,
-      };
-    })
-  );
-}
-
-/** The asserting half of NFR-12, run once in colour and once under the greyscale filter. */
-function expectSeatsIdentifiable(marks) {
-  expect(marks).toHaveLength(16);
-
-  for (const mark of marks) {
-    expect(mark.width, `seat ${mark.seat} mark width`).toBeGreaterThan(0);
-    expect(mark.height, `seat ${mark.seat} mark height`).toBeGreaterThan(0);
-    expect(mark.clipPath, `seat ${mark.seat} has a shape`).not.toBe("none");
-  }
-
-  const shapeOf = SEATS.map((seat) => {
-    const shapes = new Set(marks.filter((mark) => mark.seat === seat).map((mark) => mark.clipPath));
-    expect(shapes.size, `seat ${seat} uses one shape for all four pawns`).toBe(1);
-    return [...shapes][0];
-  });
-
-  expect(new Set(shapeOf).size, "the four seats have four different shapes").toBe(4);
-}
-
 test.describe("NFR-12: the board in greyscale", () => {
-  test("gives every seat its own shape on the piece, in colour and in greyscale", async ({
-    page,
-  }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
-
-    expectSeatsIdentifiable(await pawnMarks(board));
-
-    // The filter changes what a pixel looks like and not what a box measures, so the same assertions hold
-    // and the run under the filter is the acceptance criterion's own wording: a greyscale screenshot.
-    await page.addStyleTag({ content: "html { filter: grayscale(1); }" });
-    expectSeatsIdentifiable(await pawnMarks(board));
-  });
-
-  /**
-   * **Insurance against the one change in design handoff 07 that fails with no symptom.**
-   *
-   * Until 2026-09-03 five stylesheets each mapped `data-player` to `--seat-shape` with their own copy of
-   * the four rules. 07-spec moved the mapping into the single `[data-player="N"]` block in `board.css`
-   * and deleted the four copies in `pawn.css`, `hud.css`, `chrome.css` and `overlay.css`, which is the
-   * follow-up 06-spec § 6 asked for. Every consumer now inherits the shape from an ancestor.
-   *
-   * That works because the surviving selector is **unscoped**, so it reaches the HUD and the chrome
-   * although they sit outside `.board`. If it ever stops working, every consumer falls back to the
-   * `circle(50%)` written into its own `clip-path` declaration, and **the game keeps rendering**: four
-   * identical circles, one per seat, and NFR-12 quietly broken. No assertion in this suite noticed that
-   * before this case, because every clip-path check was on `.pawn__mark`.
-   *
-   * The HUD is the consumer chosen because it is on screen in every match. The chrome carries the same
-   * mark and the two overlay panels only appear on a win or a handover.
-   */
-  test("keeps the seat shape on the HUD, which now inherits it", async ({ page }) => {
-    await openMatch(page, SEEDS.leavesStartAtOnce);
-
-    const shapes = await page.locator(".hud__seat").evaluateAll((seats) =>
-      seats.map((seat) => ({
-        seat: Number(seat.getAttribute("data-player")),
-        clipPath: window.getComputedStyle(seat.querySelector(".hud__name"), "::before").clipPath,
-      }))
-    );
-
-    expect(shapes).toHaveLength(4);
-    for (const { seat, clipPath } of shapes) {
-      expect(clipPath, `HUD seat ${seat} has a shape`).not.toBe("none");
-    }
-
-    expect(
-      new Set(shapes.map((shape) => shape.clipPath)).size,
-      "the four HUD plates have four different shapes"
-    ).toBe(4);
-  });
-
   test("does at least give the four seats four different greys", async ({ page }) => {
     await openMatch(page, SEEDS.leavesStartAtOnce);
     const seats = await seatLuminance(page);

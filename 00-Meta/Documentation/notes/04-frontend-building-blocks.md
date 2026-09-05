@@ -2928,6 +2928,91 @@ moved into `lineup.js` beside the memory they change. The seam held because sett
 owning one. Whoever adds the eighth screen should expect to split `overlay-view.js` first, and the
 obvious seam there is the three builders, the door, the seat row and the card region, against the shell.
 
+### Handoff 16 landed, and NFR-12's second identifier is gone again: 2026-09-05, no issue
+
+Two review notes on the built game, answered as D97 to D99. Both are stylesheet changes with a small DOM
+change each, and one of them retires a requirement's only mechanism.
+
+**D97: the four seat shapes are withdrawn and every seat mark becomes a dot.** Handoff 06 had given each
+seat a clip path, a circle, a triangle, a square and a diamond, mapped in `board.css` and read by five
+elements. All four `--seat-shape-*` tokens are removed from `tokens.css`, the four mapping declarations
+leave `board.css`, and the five readers swap `clip-path` for `border-radius: var(--radius-pill)`: the HUD
+name line, the chrome turn line, the win and handover panel, the trap chip and the line-up row badge.
+
+**The pawn is the exception, and it is a deletion rather than a conversion.** `.pawn__mark` sat low and
+centred on the disc so that it cleared the two eyes, and that position is exactly what failed: a shape
+under two eyes reads as a mouth, so four seats meant four expressions on the board. The rule leaves
+`pawn.css` and the span leaves `board-view.js`. `.pawn__status` is the pawn's only child now.
+
+**The cost is real and the spec states it in numbers.** Converted to greyscale, red and blue are 1.15:1
+apart and green and red 1.26:1, so a red pawn and a blue pawn on the shared track are the same grey. What
+still works is words wherever a seat is named, and position on the board's own furniture, since each seat
+owns a fixed start area, home column, entry square and turn-off bar. What does not work is a pawn on the
+shared track, which is 39 of the 40 track fields. **NFR-12 is unmet again**, and `greyscale.spec.js` is
+where that is visible: the two tests that asserted the shapes were deleted and the file's header now
+records why. They were not rewritten to assert the dots, because a dot is a dot on all four seats and
+asserting that four identical shapes are identical is not a test.
+
+**D99 books the follow-up and it is a Product Owner call.** Re-tune the four seat colours so they differ
+in lightness as well as in hue, aiming for no pair closer than about 1.6:1. The seats would still be told
+apart by colour alone, which is what D2 asked for; the colours would simply stop depending on hue
+perception. Not done here because the four values are quoted from the layout template under D1 and D2, and
+because each has a `--color-pN-soft` partner in both skins, so it is eight values and a re-check of every
+plate's text contrast. **Rejected: reinstating the shapes behind `prefers-contrast`.** A cue that only
+exists under a setting is a cue the game is not designed around.
+
+**D97.2 is a small gain that came free.** `clip-path` was clipping away the ink ring the declaration
+always asked for; `border-radius` does not. The yellow seat on `--color-surface` in Picnic is where that
+shows.
+
+#### D98: the message strip left the board and hangs above the skill plate
+
+D35 had taken the strip out of the grid and hung it off the bottom of the board, so that a message about a
+refused move sat over the pieces it was about. In play that put it over two start areas and the last four
+fields of two tracks, and **the board is the one region in the game that may not be covered.** It now
+hangs above `.app__skill`: `position: relative` moves from `.app__board` to `.app__skill` in `app.css`,
+and the strip is anchored by `bottom: calc(100% + var(--space-2))` with `left: 0; right: 0` instead of
+being centred at the board's width.
+
+It keeps everything D35 bought. It costs no grid row, it still cannot make the page jump, and because
+`bottom` is the anchored edge **a two line message grows upward**, into the gap, never down onto the
+skill cards. It is also beside the thing the player decides next, since a refused move ends in choosing
+another pawn or playing a card.
+
+**One declaration pays for the overlap, and the first draft of the spec got this wrong before fixing it.**
+A one line strip is 46 px tall and the gap between the two plates is 16, so 30 px of strip lands inside
+the dice plate. The dice hand is centred and its cards run to the plate's edge, so that band is always
+card and never padding: a refusal cut the cards' tag row through the middle of the glyphs. Nudging the
+strip cannot fix it, because wherever it goes it is 46 px tall. So `.app__dice` reserves the band once
+with `padding-bottom: calc(var(--space-6) + var(--space-3))`, 44 px. The dice cards lose 44 px of height
+at the design resolution and take it as a scale rather than as a crop, because they are sized from
+`--card-u` against the plate's own box.
+
+Measured after landing, at 1440 by 900: the strip runs the width of the rail, its foot sits 4 px above the
+skill plate, and the lowest dice card clears its top by 24 px. Below the 84rem breakpoint the layout is
+one column and the strip still clears every card. **Rejected: capping the strip's top at the dice plate's
+edge** (a two line message would then grow down onto the skill cards), **its own grid row again** (46 px of
+permanent empty page, which is what D35 removed), **below the skill plate** (that is the page edge at
+1440 by 900 and off a scrolled page below the breakpoint), and **inside the skill plate as a flow item**
+(row 4 is `auto`, so the page would jump).
+
+#### A negative finding: the delivered stylesheets could not be copied over ours
+
+The package ships ten complete files rather than diffs, and the README says to copy them over the files of
+the same name. **Doing that would have reverted six of them**, because the design side's copies predate
+this tree. `tokens.css` and `app.css` there have no stage, so the 16:9 fit of 2026-09-03 would have gone,
+along with `--layer-card-reading`; `chrome.css` would have lost the `justify-content` fix of handoff 12,
+`hud.css` the `min-width` fix that stopped the seat plates clipping "KARTEN", `overlay.css` the
+`position: absolute` that keeps the letterbox bars visible, and `lineup.css` the `:empty` rule added three
+days ago. The tenth file, `refusal.css`, is the strip under the name it lost on 2026-09-03 when it became
+`message-strip.css`, so copying it would have added a dead file and left the live one unchanged.
+
+The changes were applied rule by rule instead, which is what § 1 of the spec asks for in its own words:
+"the selector named beside each rule is what to trust, not the line number". **The lesson for the next
+handoff is that a whole-file delivery is a diff whose base is unstated**, and the base is whatever the
+design side last read. Worth one line in the retrospective, because it will happen again.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

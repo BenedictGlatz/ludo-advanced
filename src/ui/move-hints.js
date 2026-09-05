@@ -218,7 +218,7 @@ function rollMessage(state) {
 }
 
 /**
- * Fill the strip that hangs off the bottom of the board, or empty it.
+ * Fill the strip that hangs above the skill plate, or empty it.
  *
  * `.text()` first in the list case as well as in the empty one, because it is what removes the children
  * of whatever the strip said last. Three kinds of message share one element, so every write has to be

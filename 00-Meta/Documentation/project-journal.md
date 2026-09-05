@@ -449,6 +449,14 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   cards; the design side is told in `00-open-requests.md`. One end-to-end case added, asserted with
   `elementFromPoint` rather than with a computed `z-index`, and checked against the unfixed stylesheet
   first. Sprint 3, no issue.
+- **2026-09-05**: Design handoff 16 landed. D97 withdraws the four seat shapes across the whole game
+  (four tokens, four mapping declarations, five `clip-path` reads) and deletes `.pawn__mark` from
+  `pawn.css` and from the DOM, so the seats are told apart by colour alone again and NFR-12 is unmet.
+  D98 moves the message strip off the board and above the skill plate, paid for by 44 px of
+  `padding-bottom` on `.app__dice`. Nine stylesheets, three view files, four end-to-end specs. Six of
+  the ten delivered files could not be copied over ours and were applied rule by rule. Sprint 3, no
+  issue.
+
 
 ---
 
@@ -4521,6 +4529,67 @@ to get wrong later.
 - **Reported to the Product Owner** rather than absorbed silently, because the file is the design side's
   and a stylesheet quietly edited on this side is how two trees drift.
 - → Ch. 04
+
+### 2026-09-05: The pawn's seat mark is deleted rather than turned into a dot
+
+- **Chosen:** with the four seat shapes withdrawn (D97), the four other seat marks become dots and the
+  pawn's mark is removed outright. `.pawn__mark` leaves `pawn.css` and leaves `board-view.js`.
+- **Why the pawn is different from the other four:** it is the only one of the five that sits on a face.
+  The mark was placed low and centred so that it cleared the two eyes, which is exactly what made it a
+  mouth: four seats read as four expressions, and no legend explained them. The HUD plate, the chrome
+  line, the win panel and the trap chip carry no face, so a dot there is a badge and reads as one.
+- **What it costs, stated rather than absorbed:** NFR-12 asks that no fact be carried by colour alone,
+  and this removes the only mechanism that answered it. In greyscale red and blue are 1.15:1 apart and
+  green and red 1.26:1. A seat is still identifiable by words wherever it is named, and by position on
+  the board's own furniture, but not on the shared track, which is 39 of the 40 track fields.
+- **Rejected:** *a dot on the pawn too.* It would be a third circle under two eyes and would say nothing
+  the disc's own colour does not already say.
+- **Rejected:** *keeping the shapes behind `prefers-contrast` or a greyscale setting.* A cue that exists
+  only under a setting is a cue the game is not designed around.
+- **Booked as D99, and it is the Product Owner's:** re-tune the four seat colours so they differ in
+  lightness as well as in hue, no pair closer than about 1.6:1. Eight values with the `-soft` partners,
+  in two skins, so it is its own piece of work.
+- → Ch. 04, Ch. 01
+
+---
+
+### 2026-09-05: The message strip moves to the rail, and the dice plate reserves the band it lands in
+
+- **Chosen:** the strip hangs above `.app__skill` instead of off the bottom of `.app__board`, and
+  `.app__dice` takes `padding-bottom: calc(var(--space-6) + var(--space-3))`, 44 px.
+- **Why it left the board:** D35 put it under the board so that a message about a refused move sat over
+  the pieces it was about. In play it covered two start areas and the last four fields of two tracks,
+  and the board is the one region in the game that may not be covered.
+- **Why the padding is not optional:** the strip is 46 px tall and the two plates are 16 px apart, so
+  30 px of it lands inside the dice plate however it is nudged. The dice hand is centred and its cards
+  run to the plate's edge, so that band is always card: a refusal cut the cards' tag row through the
+  middle of the glyphs. Reserving it once is 44 px of permanent cost inside an existing plate, against a
+  46 px grid row that would push the board, which is what D35 removed.
+- **Rejected:** *capping the strip so its top cannot pass the dice plate.* A two line message would then
+  grow downward onto the skill cards, which is the one direction the anchor makes impossible on purpose.
+- **Rejected:** *below the skill plate.* That is the page edge at 1440 by 900 and off a scrolled page
+  below the 84rem breakpoint.
+- **Rejected:** *inside the skill plate as a flow item.* Row 4 is `auto`, so the plate would grow and the
+  page would jump.
+- → Ch. 04
+
+---
+
+### 2026-09-05: A whole-file stylesheet delivery is a diff whose base is unstated
+
+- **What happened:** handoff 16 ships ten complete stylesheets and its README says to copy them over the
+  files of the same name. Six of them are older than this tree, so copying would have silently reverted
+  the 16:9 stage in `tokens.css` and `app.css`, `--layer-card-reading`, the `justify-content` fix in
+  `chrome.css`, the `min-width` fix in `hud.css`, `position: absolute` in `overlay.css` and the `:empty`
+  rule in `lineup.css`. A seventh, `refusal.css`, is the strip under the name it lost on 2026-09-03.
+- **Chosen:** apply the changes rule by rule against our files instead, which is what § 1 of the spec
+  itself asks for: "the selector named beside each rule is what to trust, not the line number".
+- **Why not ask first:** the spec names every rule it touches and says why, so the intended change was
+  unambiguous. What was ambiguous was only the delivery format, and that is answerable from the diff.
+- **Consequence for the process:** a whole-file delivery carries an implicit base, and the base is
+  whatever the design side last read. The two trees have now drifted twice. Worth naming in the
+  retrospective and worth a line in the next brief.
+- → Ch. 04, Ch. 11
 
 
 ---

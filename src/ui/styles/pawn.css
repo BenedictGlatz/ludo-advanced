@@ -54,49 +54,17 @@
   box-shadow: var(--shadow-piece);
 }
 
-/* --- The seat mark (D16, NFR-12). An empty <span>, the first child of
-       .pawn, carrying the seat's shape from tokens.css. The follow-up that
-       04-spec section 5 asked for: the HUD, the chrome and two overlay panels
-       got the mark on 2026-09-01 and the piece did not, and the piece is
-       where NFR-12 is actually measured.
+/* --- The seat mark is withdrawn (D97, retiring D16 and D49). It was an ink
+       shape across the lower half of the disc, low and centred so it cleared
+       the eyes, and that position is exactly why it failed: a shape under two
+       eyes is a mouth. Four seats meant four expressions, the triangle seat
+       looked like it was shouting and the square seat like it was gagged, and
+       none of it was a legend anyone would look up. The pieces differ by
+       colour now, and the face is two eyes.
 
-       Ink, and not white and not a lightened seat colour, because the mark
-       sits on the seat colour itself rather than on a neutral plate. That is
-       the whole reason it measures better here than anywhere else in the game:
-       greyscale contrast against its own ground is 3.67:1 at the worst seat
-       (blue) in Picnic and 5.16:1 in Night In, against 2.74:1 for the same
-       four shapes on the HUD. The numbers are in 06-spec section 4.
-
-       Low and centred, so it clears the eyes: the mark spans 48% to 86% of
-       the disc and the eyes sit between 19% and 41%. It is a badge on a
-       creature's front, which is why it can be this size without reading as
-       a third eye.
-
-       z-index is what puts it over the face. Both pseudo-elements are at
-       auto, so paint order decides, and ::after is painted last of the
-       three. One line settles it.
-
-       Nothing in the five states needed a rule of its own (D49): the mark
-       inherits the piece's transform, so it scales with data-selected and
-       dims with data-captured, and the breathe loop and the focus ring are
-       both on ::before, outside the disc, and never reach it. --- */
-
-/* The four rules that mapped data-player to --seat-shape here were deleted on
-   2026-09-03 and moved into the one [data-player="N"] block in board.css,
-   which is the follow-up 06-spec section 6 named. The pawn inherits
-   --seat-shape from itself now, the same way it already inherits --player. */
-
-.pawn__mark {
-  position: absolute;
-  bottom: 14%;
-  left: 50%;
-  z-index: 1;
-  width: 38%;
-  height: 38%;
-  background: var(--color-ink);
-  clip-path: var(--seat-shape, circle(50% at 50% 50%));
-  translate: -50% 0;
-}
+       .pawn__mark leaves pawn.css and the DOM contract. The greyscale figures
+       06-spec section 4 recorded were measured on this element; what NFR-12
+       rests on instead is in 16-spec section 4. --- */
 
 /* The state ring. Sits behind the piece, and is the only thing the four
    interactive states change. */
@@ -194,10 +162,11 @@
        changes what a field hands the pawn is a tag stuck on the piece.
 
        Nothing else on the pawn is available. Both pseudo-elements are taken,
-       the disc by ::after and the state ring by ::before, and .pawn__mark is
-       the seat mark, which is the one thing on the board that may not change
-       to mean something else. So the tag is a second empty span, named in
-       section 5 of the spec the way 04-spec named three and 06-spec one. --- */
+       the disc by ::after and the state ring by ::before. So the tag is a
+       second empty span, named in section 5 of the spec the way 04-spec named
+       three and 06-spec one. D97 has since freed the lower half of the disc,
+       and the tag keeps its shoulder anyway: the eyes are still there, and a
+       status is a thing stuck on the creature, not part of its face. --- */
 
 /* stunned: this pawn loses its next turn. It tips over, and its fill mixes
    toward --color-dormant, the value the game already uses for a thing that is
