@@ -12,24 +12,30 @@
 
    Amended on 2026-09-01, 04-spec D35: the strip used to hold a full-width
    grid row at the foot of the page, 46 px of it, permanently, faded to
-   nothing so that the page would not jump when a refusal arrived. It now
-   hangs off the bottom of the board region instead. It costs no grid, it
-   still cannot make the page jump, and a message about a refused move is
-   over the pieces it is about. app.css makes .app__board the containing
-   block. */
+   nothing so that the page would not jump when a refusal arrived. It hangs
+   off a plate instead. It costs no grid and it still cannot make the page
+   jump.
+
+   Amended again on 2026-09-05, D98. Which plate changed. The strip hung off
+   the bottom of the board so that a message about a refused move sat over the
+   pieces it was about, and in play it sat over the foot of the board, which
+   is two start areas and the last four fields of two tracks: the board is the
+   one region in the game that may not be covered. It now hangs above the
+   skill plate, at the top of the rail's lower half. Same object, same motion,
+   same no-jump property; app.css makes .app__skill the containing block. */
 
 .message-strip {
   position: absolute;
-  bottom: calc(var(--space-4) * -1);
-  left: 50%;
+  right: 0;
+  bottom: calc(100% + var(--space-2));
+  left: 0;
   z-index: var(--layer-refusal);
-  translate: -50% calc(var(--space-2) * -1);
+  translate: 0 calc(var(--space-2) * -1);
   box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: var(--space-3);
   min-height: calc(var(--space-6) + var(--space-2));
-  width: var(--board-size);
   padding: var(--space-3) var(--space-4);
   border: var(--border-card) solid var(--color-ink);
   border-radius: var(--radius-card);
@@ -54,7 +60,7 @@
 
 .message-strip[data-reason-key]:not([data-reason-key=""]) {
   opacity: 1;
-  translate: -50% 0;
+  translate: 0 0;
 }
 
 /* --- The trap announcement (D55, brief 07 section 4.4). data-message-kind is

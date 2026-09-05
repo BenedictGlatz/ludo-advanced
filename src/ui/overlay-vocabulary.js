@@ -35,6 +35,11 @@ export const OVERLAY_SCREEN = Object.freeze({
   HANDOVER: "handover",
   /** The dice card pool overview (issue #30). The only screen with cards on it. */
   POOL: "pool",
+  /**
+   * S3, the line-up: who plays each seat of the match, a person or the computer (issue #76, FR-43).
+   * The seventh screen, between the player count and the match, and the only one with rows on it.
+   */
+  LINEUP: "lineup",
 });
 
 /** What an overlay button can ask for, as the `data-action` the event handler reads. */
@@ -72,4 +77,17 @@ export const OVERLAY_ACTION = Object.freeze({
   QUIT: "quit",
   /** The handover is acknowledged and the next player's turn may begin. */
   READY: "ready",
+  /**
+   * One position of one seat row on the line-up screen (issue #76, design handoff 15, D91).
+   *
+   * It carries **two** values rather than one: `data-seat`, the seat the row is about, and
+   * `data-value`, which of the two positions was clicked. Both are needed because the control is a
+   * pair of named positions and not one button that flips, so a click on the position that is already
+   * chosen has to be a no-op rather than a switch to the other one.
+   */
+  CONTROLLER: "controller",
+  /** Start the match with the line-up as it stands. The line-up screen's one primary (D94.1). */
+  BEGIN: "begin",
+  /** Back from the line-up to the player count. The only back button in the game (D94.2). */
+  BACK: "back",
 });

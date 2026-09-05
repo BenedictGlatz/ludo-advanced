@@ -685,6 +685,55 @@ layering slip. The field is only ever read by `ui/`, its whole justification is 
 and splitting it into its own commit would produce a commit that adds a field nothing reads. The value
 model in the commit before it does not touch either file.
 
+### FR-01 got a second home, and it takes arrays because there is no state: 2026-09-05, issue #76
+
+`state/bots.js` gained `canBeBot(seats, bots, seat)` and `toggleController(seats, bots, seat)` for the
+line-up screen (design handoff 15, D93). Both are pure, both are unit tested, and both look wrong next
+to the two functions above them until the reason is written down.
+
+**Why the rule is in `state/` and not in `ui/`.** "The last person may not become a bot" is a rule about
+who is playing, which is the sentence this file's own header uses to explain why `botSeatsFor` lives
+here. A rule inside a click handler is a rule that cannot be unit tested without booting jQuery.
+
+**Why they take two arrays where `isBot` and `humanSeats` take a state.** There is no state. A player
+halfway through a line-up has not started a match, and `createGameState` has no field for one that has
+not started, so the only things to work with are the seats the count produced and the bot seats chosen
+so far. The asymmetry is deliberate and the file says so, because it is exactly the kind of thing that
+gets tidied up later by somebody who has not noticed there is no match yet.
+
+**FR-01 is now enforced in two places, and that is not duplication.** `options.js` still refuses
+`bots >= players` for `?bots=`, silently and before anything is drawn, which is the right answer for a
+number typed into an address bar. The screen refuses it one click at a time, in front of the player.
+Two entry points, two guards, one requirement.
+
+**`toggleController` returns the list unchanged rather than throwing when it refuses.** The caller is a
+click, and a refused click on a menu is a normal event rather than a programming error. `assertBotSeats`
+three functions above keeps the job of throwing, and it is asked once, about a list that has already
+been decided, at the moment a match is built.
+
+**The result is sorted**, so a line-up's bot list and `botSeatsFor`'s output are the same shape.
+`state.bots` is in seat order whichever of the two routes into a match was taken.
+
+### Two routes into a match, one argument at the bottom of both: 2026-09-05, issue #76
+
+`startMatch(playerCount, deps, skillSquares, skillPool, bots)` has taken a **list of seats** since issue
+#43. The line-up screen is the second thing to call it and the first to produce that list directly.
+
+| Route | How the seats are decided |
+| --- | --- |
+| `?bots=3` | A count. `botSeatsFor(playerCount, count)` turns it into the last seats, clamped to one below the player count |
+| The line-up screen | The player says it, seat by seat. `botSeatsFor` is not involved at all |
+
+**`freshMatch` gained one optional argument and no branch worth the name:** it falls back to
+`botSeatsFor` when no list is handed in. So the two entry points share one code path from `startMatch`
+downwards and there is nothing to drift.
+
+**The screen can say things the parameter cannot, and that is D95.** `botSeatsFor` always leaves seat 0
+to a person, because somebody had to decide and the person at the keyboard keeping the first seat is a
+sensible default. The screen lets the player put the computer on seat 0 and take green instead. That is a
+default being overridden and not a rule being broken: `options.js` still refuses more bots than players
+for the address bar, and `canBeBot` refuses the last person on the screen.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

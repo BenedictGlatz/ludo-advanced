@@ -439,6 +439,25 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   5c had two branches for three layers and had been quietly counting bot files as `state/`. Sprint 3,
   issue #82.
 
+- **2026-09-04**: A screenshot from a test round showed a skill card being covered by the chosen dice
+  card while the player was reading it. The cause is one property: `card.css` makes every card a
+  stacking context and neither hand plate is one, so both hands paint into a single z-index space and
+  the chosen card's layer, 3, beat the read card's, 2. Fixed with one new token,
+  `--layer-card-reading`, used in `card-reveal.css` and nowhere else, which also fixes the same
+  collision inside the fan between a selected card and a revealed neighbour. Design handoff 10 § 3 had
+  ruled this overlap correct on an argument about DOM order that holds for the plates and not for the
+  cards; the design side is told in `00-open-requests.md`. One end-to-end case added, asserted with
+  `elementFromPoint` rather than with a computed `z-index`, and checked against the unfixed stylesheet
+  first. Sprint 3, no issue.
+- **2026-09-05**: Design handoff 16 landed. D97 withdraws the four seat shapes across the whole game
+  (four tokens, four mapping declarations, five `clip-path` reads) and deletes `.pawn__mark` from
+  `pawn.css` and from the DOM, so the seats are told apart by colour alone again and NFR-12 is unmet.
+  D98 moves the message strip off the board and above the skill plate, paid for by 44 px of
+  `padding-bottom` on `.app__dice`. Nine stylesheets, three view files, four end-to-end specs. Six of
+  the ten delivered files could not be copied over ours and were applied rule by rule. Sprint 3, no
+  issue.
+
+
 ---
 
 ## Decisions
@@ -4311,6 +4330,267 @@ to get wrong later.
   screen for two seconds. That is a duration nothing on screen reports, which is precisely the argument
   `mid-turn-hold.test.js` was written for, and the unit case pins both halves of it.
 - → Ch. 04, Ch. 08
+
+### 2026-09-04: The card being read gets its own layer, above every other card layer
+
+- **Chosen:** a fifth card layer, `--layer-card-reading: 4`, read only by the three reveal selectors in
+  `card-reveal.css`. Reading a card is the one state that has to sit on top of every other card,
+  including a selected one, so it is a layer of its own rather than a re-use of `--layer-card-raised`.
+- **The defect it fixes, and why it is worth writing down:** design handoff 10 § 3 argued that the
+  revealed card is above the dice plate because `.app__skill` follows `.app__dice` in the DOM, "with no
+  `z-index` needed". That is true of the plates. It is false of the cards inside them, because
+  `card.css` gives every card `position: relative` plus a `z-index`, which makes each card a stacking
+  context, while neither plate sets either property and so neither is one. Both hands therefore compete
+  in one z-index space, where the number is compared before the document order: the chosen dice card at
+  `--layer-card-selected` (3) covered the card being read at `--layer-card-raised` (2). A correct rule,
+  applied one level too high.
+- **Rejected:** *`isolation: isolate` on `.app__dice` and `.app__skill`,* which makes the plates the
+  stacking contexts the spec assumed and lets DOM order decide. It fixes only half: two cards in the
+  **same** plate, a selected skill card and a revealed neighbour, still collide, and that half was
+  broken too. It also moves the fix into `app.css`, a stylesheet the design side owns and handoff 10
+  did not deliver.
+- **Rejected:** *raising `--layer-card-raised` from 2 to 4.* Every hovered card in both hands would rise
+  above every selected one, and the selected dice card is the one thing on screen that says which die is
+  about to be rolled.
+- **How it is tested:** `document.elementFromPoint` in the middle of the two cards' overlap, not a
+  computed `z-index`. The numbers 2 and 3 only mean something together with the stacking contexts around
+  them, and misreading those contexts was the bug. The case fails against the unfixed stylesheet.
+- → Ch. 04
+
+### 2026-09-05: `poolCounts` was the seam that made room for the line-up screen
+
+- **Chosen:** move `poolCounts()` out of `match-flow.js` into `pool-screen.js` as `poolCountsFor(deps)`,
+  before any of the line-up work. `match-flow.js` was at 287 of 300 lines (NFR-02) and the feature adds
+  about fifteen.
+- **Why that function and not another:** it is the only thing in `match-flow.js` that is a **pure
+  function of `deps`** rather than an operation on the session. Everything else in the file reads or
+  writes the screen, the loop, the state or the pool. It also touched no closure variable it wrote to,
+  which is the same test `session-actions.js` passed when it was split out, so this is a move rather
+  than a rewrite.
+- **Rejected:** *splitting `match-flow.js` along the screen boundary instead*, which is the larger and
+  more obvious seam. It would be the right split for a bigger file, and doing it under the pressure of
+  a feature is how a good seam gets spent badly. The 300-line limit is met with fourteen lines to spare
+  without it.
+- **Rejected:** *compressing the file's comments to make room.* NFR-02 says to split along a real seam
+  and not to shrink a file by deleting the part that explains it.
+- **What it bought beyond the lines:** three unit tests. The function was covered only through
+  Playwright, because it lived in a closure that needs jQuery to build. One of the three checks the
+  property its own comment claimed and nothing verified: the count is asked of the dice source on every
+  call, so it cannot go stale between two draws.
+- → Ch. 04
+
+### 2026-09-05: The line-up's FR-01 rule lives in `state/` and takes arrays, not a state
+
+- **Chosen:** `canBeBot(seats, bots, seat)` and `toggleController(seats, bots, seat)` in
+  `src/state/bots.js`. Pure, two arrays in, an answer or a new array out.
+- **Why `state/`:** "the last person may not become a bot" is a rule about who is playing, which is the
+  sentence that file's header already uses to explain why `botSeatsFor` is there. A rule inside a click
+  handler cannot be unit tested without booting jQuery.
+- **Why arrays and not a state object, unlike `isBot` and `humanSeats` directly above them:** there is
+  no state. A player halfway through a line-up has not started a match, and `createGameState` has no
+  field for a match that has not started. The asymmetry is commented in the file on purpose, because it
+  is the kind of thing that gets "tidied up" later by someone who has not noticed there is no match.
+- **Chosen:** `toggleController` returns the list unchanged when it refuses, rather than throwing. The
+  caller is a click, and a refused click on a menu is normal. `assertBotSeats` keeps the throwing job:
+  it is asked once, at the moment a match is built, about a list that has already been decided.
+- **Rejected:** *putting the rule in `src/ui/lineup.js` with the rest of the screen's memory.* It would
+  have been one file instead of two, and it would have put a requirement in the layer that is covered by
+  Playwright rather than by unit tests.
+- **Rejected:** *reusing `botSeatsFor` for the screen.* It computes bot seats from a **count**, and D95
+  lets the player put the bot on seat 0, so the screen produces the set directly. `botSeatsFor` stays
+  exactly as it is for `?bots=`, and both routes end at the same `startMatch` argument.
+- **Note:** FR-01 is now guarded twice, in `options.js` for the address bar and on the screen for the
+  menu. Two entry points, two guards, one requirement.
+- → Ch. 06
+
+### 2026-09-05: The half-made line-up is view state in its own file
+
+- **Chosen:** `src/ui/lineup.js`, a small closure with `begin(count)`, `toggle(seat)` and `snapshot()`.
+  It holds no jQuery and no `t()`, so it is a unit test, and the one rule it needs comes from
+  `toggleController` in `state/bots.js`.
+- **Why not the game state:** a player halfway through a line-up has not started a match, so there is
+  nothing for `state/` to hold. Fourth time this project has answered that question the same way, after
+  the screen itself, a half-finished card play, and the pool's own count.
+- **Rejected:** *two more closure variables in `match-flow.js`.* The obvious thing. It loses on the
+  300-line limit and, more importantly, on testability: a rule inside the closure that owns the loop,
+  the pool and the state cannot be checked without booting jQuery.
+- **Rejected:** *`session-actions.js`.* Its header promises neither function touches a variable, and
+  that promise is what made it splittable in the first place.
+- **Rejected:** *a `lineup` field on the frozen game state.* It would put a fact about a button in
+  `core/`.
+- **The case that earned its own test:** `begin` forgets the previous line-up completely. Going back to
+  the count screen and picking 2 after setting three bots on a four-seat line-up must not carry bots
+  into seats that do not exist.
+- → Ch. 04
+
+### 2026-09-05: A unit test written from the spec found the spec wrong, not the code
+
+- **The claim:** design handoff 15, § D96.2 and mockup 15c, says a two-player line-up reads
+  "Spieler 1 (Rot)" and "Spieler 3 (Grün)", with no Spieler 2, and draws it that way on purpose as
+  "the case a four-row drawing hides".
+- **What it actually reads:** "Spieler 1 (Rot)" and "Spieler 2 (Grün)". `displayNumber` in
+  `player-labels.js` counts the seat's **position in `state.seats`**, not the seat number, and that
+  file's header records "Spieler 1 and Spieler 3 with no Spieler 2" as the two-year-old off-by-one it
+  was created to remove.
+- **Nothing had to change.** The spec's instruction is to reuse `player.named` and `player.botNamed`,
+  which is what is built. Only the worked example is wrong, and the pairing that made the case worth
+  drawing survives anyway: Spieler 2 is **green**, because the colour is keyed on the seat and the
+  number on the position.
+- **How it was found:** a unit test written straight from the spec's sentence failed against correct
+  code. That is the cheapest place this could have been caught, and it argues for writing the spec's
+  own examples down as assertions rather than reading past them.
+- **Reported to the Product Owner** rather than corrected in the delivered spec, since
+  `01-Design/Handoff/` is the design side's document.
+- → Ch. 04
+
+### 2026-09-05: The count click stopped starting a match, which is the whole flow change
+
+- **Chosen:** `OVERLAY_ACTION.PLAYERS` opens the line-up screen with that count instead of calling
+  `freshMatch(count)`. One line in `session-actions.js`, and it is the only invasive change the whole
+  feature makes. **No file in `core/` and no file in `ai/` was touched.**
+- **Why it had to move:** the computer was reachable only through `?bots=` in the address bar. A screen
+  that says who plays each seat cannot come before the count, because the count is what fixes how many
+  seats there are to talk about, so the count click could no longer also start the match.
+- **Rejected:** *one screen that grows, D90.2*, with the counts at the top and rows appearing under
+  them. It saves a click and shows the consequence of the count immediately. It loses because it has to
+  answer what happens to four set rows when the player then clicks 3: whichever way that is answered,
+  the player has done work the screen throws away. Two screens make that a Back, which is a gesture the
+  player chose rather than a consequence they discovered.
+- **The cost, stated plainly:** the menu route is three clicks deep now, menu, count, line-up, Start.
+  Nothing in this game is entered from cold more than once per session, so the click is cheap, but it is
+  the sort of thing a retrospective notices without remembering why it was chosen.
+- **What it cost the suite:** six clicks in three end-to-end specs, one added Start click each. The
+  sixteen specs that boot with a player count in the address bar were untouched, which is what that
+  parameter was kept alive for.
+- → Ch. 04, Ch. 08
+
+---
+
+### 2026-09-05: `match-flow.js` had to be split twice in one feature, and the second seam was the line-up
+
+- **What happened:** step 1 of the plan moved `poolCounts` out to make room, freeing fourteen lines. The
+  line-up's three operations plus their reasoning then cost thirty-five, and the file went to 322 of the
+  300-line NFR-02 limit.
+- **Chosen:** move `open`, `setController` and `begin` into `lineup.js` as `createLineupFlow(session)`,
+  beside the memory they change. `match-flow.js` came back to 295 and `lineup.js` went to 157.
+- **Why that seam is real and not just convenient:** `match-flow.js` owns a **session**, and setting up
+  a line-up happens before there is a session to own. It is the one thing on that file's plate that is
+  not about owning one, which is the same test `session-actions.js` passed when it was split off.
+- **Rejected:** *a third file for the three operations.* `lineup.js` already holds the line-up, the
+  operations are a sentence each, and a file holding only them would be a wrapper.
+- **Rejected:** *trimming the comments on the three new functions to fit.* NFR-02 asks for a split along
+  a real seam and explicitly not for shrinking a file by deleting the part that explains it.
+- **The estimate that was wrong, and why it is worth recording:** the plan budgeted "roughly fifteen
+  lines" for the feature in `match-flow.js` and the real figure was thirty-five. The gap is entirely
+  documentation: the three functions are two lines each and their reasoning is twenty. That is the
+  project working as intended and it should be budgeted for next time.
+- → Ch. 04
+
+---
+
+### 2026-09-05: `session.lineup` is an object where every other entry is a function
+
+- **Chosen:** `createSessionActions` receives `lineup` as one object with three methods, next to six
+  plain functions. `session-actions.js` calls `session.lineup.open`, `.setController` and `.begin`.
+- **Why:** three separate entries would have been three names for one screen, and `session-actions.js`
+  would then be the only place that knew they belonged together. The grouping says where they come from.
+- **Rejected:** *flattening them into `openLineup`, `setController` and `beginFromLineup`.* It keeps the
+  interface uniform, which is worth something, and it hides that the three are one module's public face.
+- → Ch. 04
+
+---
+
+### 2026-09-05: A click on the line-up sets a value, it does not flip the row
+
+- **Chosen:** each row has two named positions and a click says **which** one it is, through
+  `data-value`. `bindOverlayEvents` passes it as a third argument, which handlers that do not need it
+  simply do not declare.
+- **Why it cannot be a toggle:** both positions are visible and live at all times (D91.2), so clicking
+  "Spieler" on a row that is already a person is a real click on a real button. A toggle would turn that
+  row into a bot, which is the opposite of what the player asked for.
+- **Consequence in `state/`:** `toggleController` is still the function that holds the FR-01 rule.
+  `lineup.js` calls it only when the requested value differs from the current one, so the rule is
+  written once and the no-op is a guard rather than a second rule.
+- **Rejected:** *reading `data-value` back out of the DOM inside the handler.* It would make
+  `session-actions.js` touch an element, and its whole promise is that it does not.
+- → Ch. 04
+
+---
+
+### 2026-09-05: `.overlay__seats:empty` was missing from the delivered stylesheet
+
+- **What happened:** `lineup.css` arrived without a rule hiding the empty seat group. The group is built
+  once and lives in the panel on all seven screens, and the panel is a flex column with a gap, so the
+  other six would each carry a hole where the rows are not.
+- **Chosen:** add the three lines, with a comment naming `pool.css` as the precedent and saying they are
+  not a design decision. `pool.css` had already answered exactly this for the card region.
+- **Why not ask instead:** the answer already exists in the project, in the same shape, for the same
+  reason. Waiting for a spec to restate a rule the codebase has would be process for its own sake.
+- **Reported to the Product Owner** rather than absorbed silently, because the file is the design side's
+  and a stylesheet quietly edited on this side is how two trees drift.
+- → Ch. 04
+
+### 2026-09-05: The pawn's seat mark is deleted rather than turned into a dot
+
+- **Chosen:** with the four seat shapes withdrawn (D97), the four other seat marks become dots and the
+  pawn's mark is removed outright. `.pawn__mark` leaves `pawn.css` and leaves `board-view.js`.
+- **Why the pawn is different from the other four:** it is the only one of the five that sits on a face.
+  The mark was placed low and centred so that it cleared the two eyes, which is exactly what made it a
+  mouth: four seats read as four expressions, and no legend explained them. The HUD plate, the chrome
+  line, the win panel and the trap chip carry no face, so a dot there is a badge and reads as one.
+- **What it costs, stated rather than absorbed:** NFR-12 asks that no fact be carried by colour alone,
+  and this removes the only mechanism that answered it. In greyscale red and blue are 1.15:1 apart and
+  green and red 1.26:1. A seat is still identifiable by words wherever it is named, and by position on
+  the board's own furniture, but not on the shared track, which is 39 of the 40 track fields.
+- **Rejected:** *a dot on the pawn too.* It would be a third circle under two eyes and would say nothing
+  the disc's own colour does not already say.
+- **Rejected:** *keeping the shapes behind `prefers-contrast` or a greyscale setting.* A cue that exists
+  only under a setting is a cue the game is not designed around.
+- **Booked as D99, and it is the Product Owner's:** re-tune the four seat colours so they differ in
+  lightness as well as in hue, no pair closer than about 1.6:1. Eight values with the `-soft` partners,
+  in two skins, so it is its own piece of work.
+- → Ch. 04, Ch. 01
+
+---
+
+### 2026-09-05: The message strip moves to the rail, and the dice plate reserves the band it lands in
+
+- **Chosen:** the strip hangs above `.app__skill` instead of off the bottom of `.app__board`, and
+  `.app__dice` takes `padding-bottom: calc(var(--space-6) + var(--space-3))`, 44 px.
+- **Why it left the board:** D35 put it under the board so that a message about a refused move sat over
+  the pieces it was about. In play it covered two start areas and the last four fields of two tracks,
+  and the board is the one region in the game that may not be covered.
+- **Why the padding is not optional:** the strip is 46 px tall and the two plates are 16 px apart, so
+  30 px of it lands inside the dice plate however it is nudged. The dice hand is centred and its cards
+  run to the plate's edge, so that band is always card: a refusal cut the cards' tag row through the
+  middle of the glyphs. Reserving it once is 44 px of permanent cost inside an existing plate, against a
+  46 px grid row that would push the board, which is what D35 removed.
+- **Rejected:** *capping the strip so its top cannot pass the dice plate.* A two line message would then
+  grow downward onto the skill cards, which is the one direction the anchor makes impossible on purpose.
+- **Rejected:** *below the skill plate.* That is the page edge at 1440 by 900 and off a scrolled page
+  below the 84rem breakpoint.
+- **Rejected:** *inside the skill plate as a flow item.* Row 4 is `auto`, so the plate would grow and the
+  page would jump.
+- → Ch. 04
+
+---
+
+### 2026-09-05: A whole-file stylesheet delivery is a diff whose base is unstated
+
+- **What happened:** handoff 16 ships ten complete stylesheets and its README says to copy them over the
+  files of the same name. Six of them are older than this tree, so copying would have silently reverted
+  the 16:9 stage in `tokens.css` and `app.css`, `--layer-card-reading`, the `justify-content` fix in
+  `chrome.css`, the `min-width` fix in `hud.css`, `position: absolute` in `overlay.css` and the `:empty`
+  rule in `lineup.css`. A seventh, `refusal.css`, is the strip under the name it lost on 2026-09-03.
+- **Chosen:** apply the changes rule by rule against our files instead, which is what § 1 of the spec
+  itself asks for: "the selector named beside each rule is what to trust, not the line number".
+- **Why not ask first:** the spec names every rule it touches and says why, so the intended change was
+  unambiguous. What was ambiguous was only the delivery format, and that is answerable from the diff.
+- **Consequence for the process:** a whole-file delivery carries an implicit base, and the base is
+  whatever the design side last read. The two trees have now drifted twice. Worth naming in the
+  retrospective and worth a line in the next brief.
+- → Ch. 04, Ch. 11
+
 
 ---
 

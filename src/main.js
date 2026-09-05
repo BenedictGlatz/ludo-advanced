@@ -53,6 +53,10 @@
  * second file to split a screen off the same component and comes after `overlay.css` for the same
  * reason: it takes the panel's background, border and shadow away on the menu and nothing else
  * (D75). It is independent of `handover.css`, because the two never match the same element.
+ * `lineup.css` is the third file to split a screen off the same component and comes after `overlay.css`
+ * for the third time with the same reason: it widens the panel, hides an empty seat group and takes the
+ * face off the position of a control that is not chosen (D90.2). It is independent of the other two,
+ * because no two of the three ever match the same element.
  * `board-trap.css` has
  * to come after `board.css`, because it reads the one seat mapping that file owns. `card-reveal.css` has
  * to come after all three of `card.css`, `card-state.css` and `hand.css`, because it overrides
@@ -107,6 +111,7 @@ import "./ui/styles/chrome.css";
 import "./ui/styles/prompt.css";
 import "./ui/styles/overlay.css";
 import "./ui/styles/menu.css";
+import "./ui/styles/lineup.css";
 import "./ui/styles/handover.css";
 import "./ui/styles/pool.css";
 

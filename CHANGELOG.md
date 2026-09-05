@@ -408,10 +408,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   four-player one. A bot reads only what a person can see: the board and how **many** cards everybody else
   holds, never which ones. Two cards are deliberately never played, Oil Spill and The Purge, because both
   are as likely to help the table as the bot
+- **A line-up screen, so the computer can be chosen from the menu instead of the address bar** (issue #76,
+  FR-43, design handoff 15). The route is now main menu, then the player count, then a screen with one row
+  per seat that says whether a player or a bot plays it, then the match. Each row carries the seat's
+  colour and shape, its name in the same words the HUD uses, and two named positions of which exactly one
+  is chosen, so the state of a row is readable without colour. **At least one seat is always a player's**
+  (FR-01): the rule is written above the rows and the one control that would break it is switched off, so
+  the refusal is explained before it happens rather than after. **Any seat may be the bot, including the
+  first one**, so a player who wants the green pieces can have them and let the computer move first. The
+  keyboard lands on Start when the screen opens, so 4 and Enter is the whole of a four-player match
 
 ### Changed
 
-- **A card a bot plays is announced in the message strip under the board** (issue #82), for two seconds,
+- **Choosing a player count no longer starts the match on its own** (issue #76). It sizes the match and
+  opens the line-up screen, and Start on that screen is what begins the match. Two gestures where there
+  used to be one, which is the price of the computer being reachable without the address bar. The
+  `?players=` and `?bots=` parameters are untouched and still boot straight into a match
+- **The message strip has moved off the board and now sits above your skill cards.** It used to hang across
+  the foot of the board, where it covered two players' start areas and the last stretch of two players'
+  tracks every time it said anything. It now speaks beside the cards you are about to use, and it grows
+  upward, so a two-line message never covers a card. The dice row keeps a little space free at its foot so
+  that the strip and the cards never overlap
+- **The four players are told apart by colour alone again.** Every seat mark in the game is now a dot in
+  that seat's colour: on the score plates, on the turn line, on the win and handover screens, on a trap
+  lying on the board and on the line-up rows. The pieces lose their mark entirely and keep their two eyes,
+  because a mark under two eyes looked like a mouth and gave each colour an expression it was never meant
+  to have. **What this costs:** a greyscale screenshot no longer tells a red pawn from a blue one on the
+  shared track, so the requirement asking for a second, non-colour cue is open again. A player's name is
+  still written next to their colour everywhere a seat is named, and each player still owns a fixed corner,
+  home column and entry square on the board
+- **A card a bot plays is announced in the message strip** (issue #82), for two seconds,
   naming the seat and the card: "Bot 3 spielt Angel Die". Without it the whole card mechanic of a match
   against bots would happen in silence, because a third of the cards leave the board looking exactly as
   it did before. **The sentence is orange, the colour the game otherwise uses for "you cannot do that",
@@ -692,6 +718,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The skill card you are reading is no longer covered by the dice card you chose.** Pointing at a card in
+  your hand magnifies it upward, out of its own row and over the foot of the dice row, and the dice card you
+  had just picked painted over its top third. The card being read is now the top card layer, so it covers
+  every other card, including a selected card in its own row
 - **One of the nine kinds of roll step had no wording in either language.** A roll that a card had set a
   threshold on and that then failed it would have printed `roll.step.missed` on screen instead of a
   sentence. Eight of the nine had been translated and the ninth was missed, and nothing failed because

@@ -1,16 +1,17 @@
 /**
- * One overlay, five screens. Screens S1, S2, S8, S9 and the handover. Issues #39 and #41.
+ * One overlay, seven screens: S1, S2, S3, S8, S9, the handover and the pool overview. Issues #39, #41,
+ * #30 and #76.
  *
  * `ui/` only: jQuery, no `t()` and no rule. Like `card-view.js`, this file **renders a description and
  * looks nothing up**. `overlay-screens.js` builds the description; the split is what keeps one component
- * behind five screens that have nothing in common except their shape.
+ * behind seven screens that have nothing in common except their shape.
  *
- * ## Why five screens and not five components
+ * ## Why seven screens and not seven components
  *
- * The main menu, the match setup, the pause screen, the win screen and the handover are all the same
- * thing from the player's side: **the game has stopped and is asking you something, and here are your
- * buttons.** They differ in the words and in how many buttons there are. Five components would be five
- * copies of one focus trap and one show-and-hide.
+ * The main menu, the match setup, the line-up, the pause screen, the win screen, the handover and the
+ * pool overview are all the same thing from the player's side: **the game has stopped and is asking you
+ * something, and here are your buttons.** They differ in the words and in how many controls there are.
+ * Seven components would be seven copies of one focus trap and one show-and-hide.
  *
  * Whether that is the right seam is D38 in design handoff 04, which is why `data-screen` is on the
  * element: a stylesheet that wants to make the menu look nothing like the pause screen can.
@@ -21,13 +22,14 @@
  * design spec 01. An overlay that were added and removed could not animate its own arrival, and the
  * handover overlay is the most-repeated screen in the game.
  *
- * **The buttons are the exception and are rebuilt**, because the number of them is a property of the
- * screen: the menu has one and the pause screen has two. Nothing in the stylesheet animates a button's
- * arrival, so there is no transition to restart.
+ * **The buttons, the cards and the seat rows are the exception and are rebuilt**, because how many
+ * there are is a property of the screen: the menu has one door and the line-up has up to four rows.
+ * Nothing in the stylesheet animates their arrival, so there is no transition to restart, and a
+ * language switch that rebuilds a whole screen restarts nothing either.
  *
  * ## The design landed on 2026-09-01, and D38 confirmed this seam
  *
- * One component behind five screens is the answer, and the sheet has two modes rather than one: a **veil**
+ * One component behind the screens is the answer, and the sheet has two modes rather than one: a **veil**
  * you can read the board through for pause and win, and an opaque **curtain** for the menu, the setup
  * screen and the handover. The handover's half moved to `handover.css`, which is a split of the same
  * component and not a second one.
@@ -58,6 +60,10 @@ export { OVERLAY_ACTION, OVERLAY_SCREEN };
  * `.overlay__text` is present while empty rather than added when it gets content, for the same reason
  * `.card__result` is: `overlay.css` hides an empty one with `:empty`, and an element that has to exist
  * before it has content cannot be created at the moment it gets some.
+ *
+ * `.overlay__cards` and `.overlay__seats` are the same deal, and both are hidden while empty by the
+ * stylesheet of the one screen that fills them. Without that, the panel's flex gap would leave a hole
+ * on every screen that has neither.
  */
 export function renderOverlay() {
   return $("<div>", { class: "overlay" })
@@ -69,6 +75,7 @@ export function renderOverlay() {
         $("<h2>", { class: "overlay__title" }),
         $("<p>", { class: "overlay__text" }),
         $("<div>", { class: "overlay__cards" }),
+        $("<div>", { class: "overlay__seats" }),
         $("<div>", { class: "overlay__actions" })
       )
     );
@@ -93,7 +100,20 @@ function setCards($overlay, cards) {
   }
 }
 
-/** The shared shell: everything a plain button and a door have in common. */
+/**
+ * The shared shell: everything a plain button, a door and a seat position have in common.
+ *
+ * Every field is optional and is written only when it is there, so a screen that does not use one is
+ * not left carrying an empty attribute. `count` is the setup screen's; `seat`, `value` and `pressed`
+ * belong to the line-up's two positions.
+ *
+ * **`aria-pressed` is the line-up's only record of which position is chosen**, so what the stylesheet
+ * draws and what a screen reader announces cannot drift apart: they read one attribute.
+ *
+ * `.prop` and not `.attr` for `disabled`, because it is the element's own boolean property and that is
+ * what stops the click and takes the tab stop away. D77.2 chose it for the two dead menu doors, and
+ * D93.1 chooses it again for the `bot` position of the last remaining person.
+ */
 function buttonShell(button) {
   const $button = $("<button>", { type: "button", class: "overlay__button" }).attr(
     "data-action",
@@ -102,6 +122,10 @@ function buttonShell(button) {
 
   if (button.variant !== undefined) $button.attr("data-variant", button.variant);
   if (button.count !== undefined) $button.attr("data-count", String(button.count));
+  if (button.seat !== undefined) $button.attr("data-seat", String(button.seat));
+  if (button.value !== undefined) $button.attr("data-value", button.value);
+  if (button.pressed !== undefined) $button.attr("aria-pressed", String(button.pressed));
+  if (button.disabled === true) $button.prop("disabled", true);
 
   return $button;
 }
@@ -120,15 +144,11 @@ function buttonShell(button) {
  * the buttons on every screen change anyway, it is three drawings on one screen, and `menu.css` animates
  * no button's arrival, so a language switch on the menu restarts nothing.
  *
- * `.prop` and not `.attr` for `disabled`, because it is the element's own boolean property and that is
- * what stops the click and takes the tab stop away (D77.2).
+ * `disabled` moved into `buttonShell` when the line-up screen needed the same treatment for the one
+ * position FR-01 refuses (D93.1). It is the same argument in both places, so it is written once.
  */
 function overlayDoor(button) {
-  const $button = buttonShell(button);
-
-  if (button.disabled === true) $button.prop("disabled", true);
-
-  return $button.append(
+  return buttonShell(button).append(
     $("<span>", { class: "overlay__art" })
       .attr("aria-hidden", "true")
       .html(button.art ?? ""),
@@ -151,6 +171,44 @@ function overlayButton(button) {
 }
 
 /**
+ * One seat row on the line-up screen: the seat, its name, and the two positions of its control.
+ *
+ * `data-player` is what `board.css` maps `--player` and `--player-soft` from, so the seat's colour
+ * arrives without this file or `lineup.css` restating it (D2). The badge is a dot: the four seat shapes
+ * were withdrawn on 2026-09-05 with design handoff 16 (D97). `data-controller` is `hud-view.js`'s word
+ * for the same fact and is reused unchanged.
+ *
+ * The plate is a `::before` in the stylesheet rather than an element here, because it is a shape and
+ * not a thing to read: the seat's identity is in the name beside it, in words.
+ */
+function overlaySeat(seat) {
+  return $("<div>", { class: "overlay__seat" })
+    .attr("data-player", String(seat.player))
+    .attr("data-controller", seat.controller)
+    .append(
+      $("<span>", { class: "overlay__seat-name", text: seat.label }),
+      $("<div>", { class: "overlay__seat-choice" }).append(
+        seat.choices.map((choice) => buttonShell(choice).text(choice.label)[0])
+      )
+    );
+}
+
+/**
+ * Fill or empty the seat region, the same way `setCards` does its own.
+ *
+ * **Rebuilt rather than rewritten**, and here that is load-bearing rather than merely consistent: the
+ * overlay's controls are rebuilt on every screen change **and on every language switch**, so a whole
+ * row has to come back from the description and never from what is already in the DOM. Switching
+ * language halfway through setting up a line-up is the case that finds a row rebuilt from itself.
+ */
+function setSeats($overlay, seats) {
+  $overlay
+    .find(".overlay__seats")
+    .empty()
+    .append(seats.map((seat) => overlaySeat(seat)[0]));
+}
+
+/**
  * Put a screen on the overlay, or take it off.
  *
  * The description is:
@@ -161,7 +219,8 @@ function overlayButton(button) {
  *   player,          // the seat the panel is about, or null
  *   outcome,         // "won" or "abandoned" on the win screen, null everywhere else
  *   cards: [],       // dice or skill card descriptions, only the pool overview has any
- *   buttons: [{ action, label, variant, count, art, hint, disabled }] }
+ *   seats: [],       // seat rows, only the line-up screen has any
+ *   buttons: [{ action, label, variant, count, seat, value, pressed, art, hint, disabled }] }
  * ```
  *
  * The last three fields on a button are the main menu's, from design handoff 12. **A button carrying a
@@ -197,6 +256,7 @@ export function updateOverlay($overlay, description) {
   $overlay.find(".overlay__text").text(description.text ?? "");
 
   setCards($overlay, description.cards ?? []);
+  setSeats($overlay, description.seats ?? []);
 
   $overlay
     .find(".overlay__actions")
@@ -207,12 +267,31 @@ export function updateOverlay($overlay, description) {
 }
 
 /**
- * Move the keyboard onto the overlay's first button.
+ * Move the keyboard onto the overlay's first button, or onto its Start button when it has one.
  *
  * Called by the flow after opening a screen. It is here rather than in `updateOverlay` because focus is
  * a thing that happens **once**, when a screen opens, and `updateOverlay` also runs on a language
  * change, where stealing focus back would be wrong.
+ *
+ * **The one exception is the line-up screen, and D94.3 asks for it by name.** The first button there is
+ * seat 0's `human` position, which is already the chosen one, so `Enter` on arrival would do nothing at
+ * all. Start is the one control on that screen where `Enter` does what the player came for, and the
+ * line-up arrives valid, so the express route through both screens is 4 then Enter.
+ *
+ * The cost, stated rather than hidden: a keyboard user who wants the rows reaches them with
+ * `Shift+Tab`, because the rows come before the actions in the DOM and should. That is one keystroke,
+ * against `Enter` doing nothing on every arrival.
+ *
+ * The rule is scoped by the button and not by the screen, so this file keeps its promise that it
+ * renders a description and knows nothing about screens.
  */
 export function focusOverlay($overlay) {
+  const $begin = $overlay.find(`.overlay__button[data-action="${OVERLAY_ACTION.BEGIN}"]`);
+
+  if ($begin.length > 0) {
+    $begin.first().trigger("focus");
+    return;
+  }
+
   $overlay.find(".overlay__button").first().trigger("focus");
 }

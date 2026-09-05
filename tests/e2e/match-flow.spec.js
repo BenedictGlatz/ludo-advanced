@@ -39,12 +39,21 @@ async function openMenu(page, seed = 1) {
   return overlay(page);
 }
 
-/** Menu to a running match of `players` players. */
+/**
+ * Menu to a running match of `players` players, every seat a person.
+ *
+ * **Three clicks since issue #76**, not two: the count opens the line-up screen and Start begins the
+ * match. The line-up opens with every seat a person, so clicking straight through produces exactly the
+ * match this helper used to produce, unchanged.
+ */
 async function startMatch(page, players) {
   await action(page, "hotseat").click();
   await expect(overlay(page)).toHaveAttribute("data-screen", "setup");
 
   await page.locator(`.overlay__button[data-count="${players}"]`).click();
+  await expect(overlay(page)).toHaveAttribute("data-screen", "lineup");
+
+  await action(page, "begin").click();
   await expect(overlay(page)).toHaveAttribute("data-screen", "none");
 
   return page.locator(".board");
@@ -74,7 +83,10 @@ test.describe("the match flow", () => {
     await action(page, "hotseat").click();
     await expect(page.locator(".overlay__button[data-action='players']")).toHaveCount(3);
 
+    // The count sizes the match and the line-up starts it, since issue #76. FR-01's criterion is still
+    // about the three counts on S2, which is why that screen was left exactly as it was.
     await page.locator('.overlay__button[data-count="3"]').click();
+    await action(page, "begin").click();
     await expect(overlay(page)).toHaveAttribute("data-screen", "none");
 
     await expect(page.locator(".board")).toHaveAttribute("data-players", "3");
@@ -222,6 +234,7 @@ test.describe("winning and starting again", () => {
 
     await action(page, "hotseat").click();
     await page.locator(`.overlay__button[data-count="${SEEDS.winsQuickest.players}"]`).click();
+    await action(page, "begin").click();
 
     const board = page.locator(".board");
     await playUntil(board, async () => (await boardState(board)).status !== "running");

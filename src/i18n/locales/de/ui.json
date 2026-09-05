@@ -56,6 +56,14 @@
     "players": "{{players}} Spieler",
     "start": "Los"
   },
+  "lineup": {
+    "title": "Spieler oder Bot?",
+    "text": "Mindestens ein Sitz gehört einem Spieler. Ein Bot spielt einen ganzen Zug: Würfelkarte, Wurf, Zug und Skillkarten.",
+    "human": "Spieler",
+    "bot": "Bot",
+    "begin": "Spiel starten",
+    "back": "Zurück"
+  },
   "pause": {
     "open": "Pause",
     "title": "Pause",

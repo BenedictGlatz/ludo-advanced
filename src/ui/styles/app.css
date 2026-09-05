@@ -87,23 +87,37 @@ body {
   grid-area: 2 / 1 / 3 / 3;
 }
 
-/* The board spans the three rail rows. `relative` is what lets the refusal
-   strip hang off the bottom of the board instead of holding a grid row: a
-   refused move is a fact about a pawn, so the message belongs over the
-   pieces and not at the foot of the page (D35, and D9 revisited). */
+/* The board spans the three rail rows. It was the containing block for the
+   message strip from 04-spec D35 until D98 moved the strip to the rail; the
+   board owns no absolutely positioned descendant of its own, so `relative`
+   went with it. */
 .app__board {
-  position: relative;
   display: grid;
   grid-area: 3 / 1 / 6 / 2;
   place-items: center;
 }
 
+/* The foot of this plate is reserved, and the reservation is the whole of what
+   D98 costs. The message strip hangs above .app__skill and stands 46 px tall;
+   the gap between the two plates gives 16 px of that back, so 30 px of strip
+   would otherwise land inside this plate. The hand is centred and its cards
+   run to the plate's edge, so that band is always card, never padding, and a
+   strip cutting a card's tag row in half reads as broken rather than as a
+   message. Padding it out lifts the cards clear once instead of letting the
+   strip clip them every time it speaks. It costs the dice cards 44 px of
+   height at the design resolution, which --card-u absorbs. */
 .app__dice {
   grid-area: 3 / 2;
   align-self: end;
+  padding-bottom: calc(var(--space-6) + var(--space-3));
 }
 
+/* `relative` is what lets the message strip hang above this plate instead of
+   holding a grid row (D98). The strip still costs no layout and still cannot
+   make the page jump, and it is now over the cards the player is reading
+   while it is up rather than over the foot of the board. */
 .app__skill {
+  position: relative;
   grid-area: 4 / 2;
 }
 

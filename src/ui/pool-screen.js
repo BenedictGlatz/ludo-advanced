@@ -33,7 +33,7 @@
  * something already visible, and it would invite the player to read a face-down pool as a known one.
  */
 
-import { POOL_COMPOSITION } from "../core/dice-pool.js";
+import { POOL_COMPOSITION, POOL_SIZE } from "../core/dice-pool.js";
 import { t } from "../i18n/index.js";
 import { diceCardDescription } from "./dice-card.js";
 import { OVERLAY_ACTION, OVERLAY_SCREEN } from "./overlay-vocabulary.js";
@@ -61,6 +61,28 @@ function poolCards() {
     }),
     copies: entry.copies,
   }));
+}
+
+/**
+ * The two numbers this screen needs, read off a match's `deps`, or `null` when there is no match.
+ *
+ * It lived in `match-flow.js` until the line-up screen needed room in that file (issue #76). The seam
+ * is not the line count: this is a pure function of `deps` that answers a question about the pool
+ * overview, and it is the only thing in that module that was not about owning a session. It belongs
+ * next to the screen it feeds.
+ *
+ * The face-down count is asked of the dice source at the moment the shell is drawn rather than kept in
+ * a variable, because the pool is the only thing in the game that is not in the frozen state object and
+ * a copy of its count would go stale on the next draw.
+ *
+ * `total` is `POOL_SIZE` because the flow builds a real `createDicePool()` for every match and never a
+ * stand-in source, so the twenty is the truth here rather than an assumption about whatever was
+ * injected.
+ */
+export function poolCountsFor(deps) {
+  if (deps === null || deps === undefined) return null;
+
+  return { remaining: deps.diceSource.remaining(), total: POOL_SIZE };
 }
 
 /**
