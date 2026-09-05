@@ -1,0 +1,266 @@
+/* Ludo Advanced design tokens.
+   Every value the UI layer is allowed to use lives here, on :root, so that
+   core/ and state/ never see a colour, a size or a font (NFR-01).
+   Reasoning is in 01-Design/Handoff/01-spec-foundations-and-board.md and
+   03-spec-cards-and-hands.md; the 2026-09-01 additions are 04-spec.
+
+   Tone (D14): friend-slop party game. Flat fills, a 3px ink outline on every
+   card, pill and pawn, hard offset shadows that are never blurred, big radii.
+   No gradients, no soft shading. Two skins (D13): Picnic (light) and
+   Night In (dark plum), switched by color-scheme / data-theme on <html>. */
+
+:root {
+  color-scheme: light dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root {
+  /* --- Surfaces and text (D1, D13) --- */
+  --color-app-bg: light-dark(#e9d3ae, #2a1e3f);
+  --color-board-bg: light-dark(#fffcf3, #3b2c53);
+  --color-board-edge: light-dark(#3a2b55, #1c1230);
+  --color-square: light-dark(#fffefa, #4d3c65);
+  --color-square-edge: light-dark(#3a2b55, #1c1230);
+  --color-panel: light-dark(#fffcf3, #3b2c53);
+  --color-surface: light-dark(#ffffff, #453659);
+  --color-text: light-dark(#3a2b55, #f6efff);
+  --color-text-muted: light-dark(#7a6b93, #b3a6cc);
+  --color-dormant: light-dark(#c9bfae, #5d5273);
+  --color-dormant-soft: light-dark(#f1e9da, #342a4a);
+
+  /* --- Ink and the hard shadow (D14) --- */
+  --color-ink: light-dark(#3a2b55, #1c1230);
+  --ink-dim: light-dark(rgb(58 43 85 / 0.22), rgb(0 0 0 / 0.38));
+
+  /* --- Player colours (D1, D2), from the layout template verbatim. --- */
+  --color-p0: #ff5d5d;
+  --color-p1: #ffc93c;
+  --color-p2: #2fbf71;
+  --color-p3: #4c86f9;
+  --color-p0-soft: light-dark(#ffe3e0, #593048);
+  --color-p1-soft: light-dark(#ffefcd, #5c4a3f);
+  --color-p2-soft: light-dark(#dcf3e5, #2f4a50);
+  --color-p3-soft: light-dark(#dfe9fe, #3a3a6e);
+
+  /* --- Seat marks (D16, NFR-12). A shape per seat, so four seats are told
+         apart with the colour taken away. Clip paths and not glyphs: no font
+         dependency, nothing readable, nothing translatable. --- */
+  --seat-shape-0: circle(50% at 50% 50%);
+  --seat-shape-1: polygon(50% 4%, 96% 94%, 4% 94%);
+  --seat-shape-2: inset(6%);
+  --seat-shape-3: polygon(50% 2%, 98% 50%, 50% 98%, 2% 50%);
+  --seat-mark: 0.85rem;
+
+  /* --- Signal colours (D7, D9). Violet and orange are outside the
+         player hue set, so a highlight can never be read as a player. --- */
+  --color-hint: light-dark(#a35de0, #c08bf2);
+  --color-hint-soft: light-dark(#f3e6fd, #4f3a6e);
+  --color-warn: light-dark(#e07038, #f2955c);
+  --color-warn-soft: light-dark(#fdeadb, #55391f);
+  --color-focus: light-dark(#a35de0, #c08bf2);
+
+  /* --- Spacing (D4). A 4 px base in rem, so it follows browser zoom. --- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* --- Typography (D5), from the layout template: Baloo 2 for headings and
+         buttons, Nunito for names, body and labels. The page loads them;
+         production self-hosts them (see the spec). --- */
+  --font-display: "Baloo 2", "Nunito", system-ui, sans-serif;
+  --font-ui: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-num: "Nunito", ui-monospace, Menlo, Consolas, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.5rem;
+  --leading-tight: 1.2;
+  --leading-body: 1.5;
+  --weight-regular: 600;
+  --weight-medium: 700;
+  --weight-strong: 800;
+  --tracking-wide: 0.08em;
+
+  /* --- Board geometry (D6). No fixed target resolution; one fluid unit. --- */
+
+  /* Reverted to 44vw by Claude Design on 2026-09-01, D35 of handoff 04.
+     Issue #39 had taken it to 39vw to buy a HUD row and a chrome row. The
+     answer to D35 pays for both rows out of the foot of the page instead: the
+     refusal strip and the prompt strip stop holding 116 px of grid, so the
+     board keeps its size. The arithmetic is in 04-spec § D35. */
+  --board-size: clamp(24rem, min(82vh, 44vw), 60rem);
+  --cell: calc(var(--board-size) / 11);
+  --pawn-size: calc(var(--cell) * 0.78);
+  --pawn-scale: 1;
+  --slot-size: calc(var(--cell) * 0.8);
+  --board-min-width: 80rem;
+  --board-min-height: 45rem;
+
+  /* --- Radii and edges. Template chrome radii are 16 / 18 / 28 px; inside
+         the board they scale with the cell instead. --- */
+  --radius-sm: calc(var(--cell) * 0.22);
+  --radius-md: calc(var(--cell) * 0.32);
+  --radius-lg: calc(var(--cell) * 0.5);
+  --radius-card: 1.125rem;
+  --radius-pill: 999px;
+  --border-hair: max(2px, calc(var(--cell) * 0.055));
+  --border-thick: max(2px, calc(var(--cell) * 0.06));
+  --border-ink: max(3px, calc(var(--cell) * 0.07));
+  --border-board: max(4px, calc(var(--cell) * 0.13));
+  --border-card: 3px;
+
+  /* --- Hard offset shadows (D14). Never blurred. --- */
+  --shadow-board: 0 calc(var(--cell) * 0.18) 0 var(--ink-dim);
+  --shadow-piece: 0 calc(var(--cell) * 0.09) 0 var(--ink-dim);
+  --shadow-region: 0 calc(var(--cell) * 0.12) 0 var(--ink-dim);
+  --shadow-lift: 0 calc(var(--cell) * 0.18) 0 var(--ink-dim);
+  --shadow-card: 0 0.4rem 0 var(--ink-dim);
+
+  /* --- Motion (D8). --motion-feedback is the NFR-11 budget. --- */
+  --motion-feedback: 90ms;
+  --motion-move: 240ms;
+  --motion-capture: 320ms;
+  --motion-pulse: 1200ms;
+  --motion-deal-stagger: 60ms;
+
+  /* The reveal of a card in your own hand (D68). 160 ms rather than
+     --motion-feedback, because 47 per cent of growth inside 90 ms is a jump
+     and not a movement, and rather than --motion-move, which is the budget
+     for a piece crossing the board. --motion-reveal-delay is how long the
+     growth waits, so sweeping the pointer across a fan of five does not fire
+     five reveals. The lift still answers inside --motion-feedback with no
+     delay, which is the response NFR-11 measures. */
+  --motion-reveal: 160ms;
+  --motion-reveal-delay: 120ms;
+  --ease-ui: cubic-bezier(0.2, 0, 0, 1);
+  --ease-move: cubic-bezier(0.34, 1.1, 0.64, 1);
+  --ease-capture: cubic-bezier(0.55, 0, 0.85, 0.3);
+
+  /* Overlays (D38, D39). --motion-curtain moves the handover panel, never the
+     sheet: the sheet is opaque in frame one or it conceals nothing. */
+  --overlay-veil: color-mix(in srgb, var(--color-app-bg) 74%, transparent);
+  --motion-overlay: 180ms;
+  --motion-curtain: 320ms;
+  --ease-curtain: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* The refusal message holds for four seconds (D20, now a token). */
+  --motion-refusal-hold: 4s;
+
+  /* The roll (D70). --motion-roll is the kept dice card's throw. Its first
+     46 per cent is the wind up, which runs while the two cards nobody kept
+     travel home on --motion-move, and the number lands as it ends.
+     --motion-roll-hold is what game-loop.js waits before the turn carries on:
+     the roll's turn on screen, not a movement, so it stays out of the
+     reduced-motion block on the D20 and D60 argument. */
+  --motion-roll: 520ms;
+  --motion-roll-hold: 900ms;
+
+  /* A trap announcement holds for two seconds before the turn may carry on
+     (D60). Shorter than the refusal, because a refusal follows the player's
+     own click and they are already looking at the board, while a trap fired
+     by a card interrupts a turn that is under way. Long enough that the strip
+     cannot be missed. The view reads it; no stylesheet does. */
+  --motion-trap-hold: 2s;
+
+  /* The reaction window, and the point at which it starts shouting. */
+  --clock-window: 30s;
+  --clock-urgent: 8s;
+
+  /* --- Cards (D25). The card artwork's palette, folded into the two skins.
+         Two hues are the same hex in both: the family hue, because green
+         means Action and must not shift with the lights, and the wash behind
+         the art, because all 29 illustrations are drawn with dark ink lines
+         and would vanish on a dark ground. The face, the body text and the
+         page around them are paired. --- */
+  --card-face: light-dark(#fff8ec, #473758);
+  --card-text: light-dark(#4a3b2e, #ece2f7);
+  --card-band-text: #fff8ec;
+  --card-result-bg: #fff8ec;
+  --card-back: light-dark(#6b3fa0, #3d245c);
+  --card-back-mark: light-dark(#b98ce0, #7c58a8);
+  --card-back-frame: light-dark(rgb(255 243 226 / 0.5), rgb(255 243 226 / 0.32));
+  --card-dormant-wash: #efe7d8;
+
+  /* The artwork's own two values (D41). Fixed in both skins: the drawings are
+     dark ink on cream and a card is a printed object. The extraction map
+     points the raw hex at these, so the ink is a token from now on. */
+  --card-art-ground: #fff8ec;
+  --card-art-ink: #2b1a3d;
+
+  /* Type, which decides when a card may be played, carried by the band. */
+  --card-action: #3fa35b;
+  --card-action-wash: #e3f4e8;
+  --card-reaction: #ff9a3c;
+  --card-reaction-wash: #ffeedc;
+  --card-dice: #8b5fb8;
+  --card-dice-wash: #f3e6fb;
+
+  /* Category, which is grouping and flavour, carried by the kind pill and
+     the wash. Four hues from artboard 4a. */
+  --card-movement: #4c86f9;
+  --card-movement-wash: #e4eeff;
+  --card-blocking: #b98ce0;
+  --card-blocking-wash: #f0e4f9;
+  --card-troll: #ffc93c;
+  --card-troll-wash: #fff0c9;
+  --card-offensive: #ff5d5d;
+  --card-offensive-wash: #ffe6e1;
+
+  /* Card geometry (D26). --card-u is a factor on the artboard, 260 by 380.
+     A hand sets it; the card reads it. Declared here and not on .card so a
+     hand can override it by inheritance. */
+  --card-u: 1;
+
+  /* --- The skill square (D27). Teal is the only hue left: it is not a seat
+         colour, not the violet hint and not the orange refusal, so a field
+         can be a skill square and a legal target at the same time. --- */
+  --color-skill: light-dark(#0f9c93, #33d2c4);
+  --color-skill-soft: light-dark(#d3f1ee, #1c4b4b);
+
+  /* --- Layering --- */
+  --layer-square: 1;
+  --layer-region: 2;
+  --layer-pawn: 3;
+  --layer-pawn-active: 4;
+  --layer-refusal: 5;
+  --layer-overlay: 6;
+  --layer-chrome: 7;
+  --layer-card: 1;
+  --layer-card-raised: 2;
+  --layer-card-selected: 3;
+}
+
+/* D12: loops stop, feedback stays. The curtain keeps its opacity and loses
+   only its travel, because concealment is not a decoration (D39). */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-move: 1ms;
+    --motion-capture: 1ms;
+    --motion-pulse: 0ms;
+    --motion-deal-stagger: 0ms;
+    --motion-overlay: 1ms;
+    --motion-curtain: 1ms;
+
+    /* The reveal stays and arrives at once (D12, D68): reading a card is
+       feedback. --motion-reveal-delay keeps its value, because it is a guard
+       against a latch and not a movement, the same argument that keeps
+       --motion-refusal-hold and --motion-trap-hold out of this block. */
+    --motion-reveal: 1ms;
+
+    /* The throw goes; the landing stays, because the number arriving is the
+       feedback D12 keeps. --motion-roll-hold is deliberately absent (D70). */
+    --motion-roll: 1ms;
+  }
+}

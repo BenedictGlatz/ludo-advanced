@@ -4371,6 +4371,30 @@ to get wrong later.
   call, so it cannot go stale between two draws.
 - → Ch. 04
 
+### 2026-09-05: The line-up's FR-01 rule lives in `state/` and takes arrays, not a state
+
+- **Chosen:** `canBeBot(seats, bots, seat)` and `toggleController(seats, bots, seat)` in
+  `src/state/bots.js`. Pure, two arrays in, an answer or a new array out.
+- **Why `state/`:** "the last person may not become a bot" is a rule about who is playing, which is the
+  sentence that file's header already uses to explain why `botSeatsFor` is there. A rule inside a click
+  handler cannot be unit tested without booting jQuery.
+- **Why arrays and not a state object, unlike `isBot` and `humanSeats` directly above them:** there is
+  no state. A player halfway through a line-up has not started a match, and `createGameState` has no
+  field for a match that has not started. The asymmetry is commented in the file on purpose, because it
+  is the kind of thing that gets "tidied up" later by someone who has not noticed there is no match.
+- **Chosen:** `toggleController` returns the list unchanged when it refuses, rather than throwing. The
+  caller is a click, and a refused click on a menu is normal. `assertBotSeats` keeps the throwing job:
+  it is asked once, at the moment a match is built, about a list that has already been decided.
+- **Rejected:** *putting the rule in `src/ui/lineup.js` with the rest of the screen's memory.* It would
+  have been one file instead of two, and it would have put a requirement in the layer that is covered by
+  Playwright rather than by unit tests.
+- **Rejected:** *reusing `botSeatsFor` for the screen.* It computes bot seats from a **count**, and D95
+  lets the player put the bot on seat 0, so the screen produces the set directly. `botSeatsFor` stays
+  exactly as it is for `?bots=`, and both routes end at the same `startMatch` argument.
+- **Note:** FR-01 is now guarded twice, in `options.js` for the address bar and on the screen for the
+  menu. Two entry points, two guards, one requirement.
+- → Ch. 06
+
 ---
 
 ## Challenges

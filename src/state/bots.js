@@ -24,6 +24,12 @@
  * Somebody has to decide, and the person at the keyboard should keep seat 0: they play first, and
  * their colour is the one the board is drawn around. So the humans fill up from the front and the
  * bots take what is left over. `botSeatsFor` is the only place that rule is written down.
+ *
+ * **That default is not a rule, and the line-up screen does not use it.** `botSeatsFor` answers
+ * "which seats" for a match started from `?bots=`, where a number is all there is to go on. The
+ * line-up screen (issue #76, design handoff 15, D95) lets the player say which seats directly, seat 0
+ * included, and hands `startMatch` the set. Both routes end at the same argument, so there is one code
+ * path below the two entry points and nothing to drift.
  */
 
 import { seatsFor } from "../core/board.js";
@@ -49,6 +55,49 @@ export function botSeatsFor(playerCount, count) {
   // Not `seats.slice(-wanted)`. `slice(-0)` is `slice(0)`, which is the whole list, so a zero-bot
   // match would come back with every seat a bot. This is the one line in the file worth a comment.
   return seats.slice(seats.length - wanted);
+}
+
+/**
+ * May this seat be turned into a bot? `false` only for the last seat that still has a person on it.
+ *
+ * FR-01: at least one person plays. `options.js` already refuses `bots >= players` before a match is
+ * built, silently and behind the player's back, which is the right answer for something typed into an
+ * address bar. The line-up screen (issue #76) asks the same question **in front of** the player, one
+ * click at a time, so the rule needs a shape a button can be disabled from.
+ *
+ * ## Why these two take arrays and `isBot` above them takes a state
+ *
+ * There is no state yet. A player halfway through setting up a line-up has not started a match, and
+ * `createGameState` has no field for one that has not started, so the only two things there are to
+ * work with are the seats the count produced and the bot seats chosen so far. The asymmetry with
+ * `isBot` and `humanSeats` one function above is deliberate and should not be tidied away: those two
+ * are asked during a match and these two are asked before there is one.
+ */
+export function canBeBot(seats, bots, seat) {
+  if (!seats.includes(seat)) return false;
+  if (bots.includes(seat)) return false;
+
+  // The seat is a person today, so turning it into a bot removes one person. That is allowed exactly
+  // as long as somebody else is still a person.
+  return seats.filter((other) => !bots.includes(other)).length > 1;
+}
+
+/**
+ * Switch one seat between a person and a bot, and give back the new bot list.
+ *
+ * **A refused toggle returns the list unchanged rather than throwing.** The caller is a click, and a
+ * refused click on a menu is a normal thing rather than a programming error. `assertBotSeats` above is
+ * the function that throws, and it keeps that job: it is asked once, when a match is built, about a
+ * list that has already been decided.
+ *
+ * The result is sorted, so a line-up's bot list and `botSeatsFor`'s are the same shape and `state.bots`
+ * is in seat order whichever of the two routes into a match was taken.
+ */
+export function toggleController(seats, bots, seat) {
+  if (bots.includes(seat)) return bots.filter((other) => other !== seat);
+  if (!canBeBot(seats, bots, seat)) return bots;
+
+  return [...bots, seat].sort((a, b) => a - b);
 }
 
 /**

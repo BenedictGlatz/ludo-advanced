@@ -1,0 +1,268 @@
+/* Board: the 11 by 11 grid and the fields on it. Depends on tokens.css.
+   Geometry is derived in 01-Design/Handoff/01-spec-foundations-and-board.md (D3).
+   The skill square is D27 of 03-spec-cards-and-hands.md.
+
+   Three files were split off this one, all for NFR-02 and all at a real seam:
+   board-track.css holds the 40 index-to-cell placements, board-regions.css
+   holds the yards, the houses and the slots, board-trap.css holds the objects
+   a card puts on a field. Load all three after this one.
+
+   Amended on 2026-09-03, 07-spec-trap-marker.md: --seat-shape joins the seat
+   mapping below, the turn-off bar takes a z-index, the skill diamond steps
+   back for a trap as well as for a ring, and the pickable field and its
+   keyboard focus are at the foot of this file (D59). */
+
+.board,
+.board * {
+  box-sizing: border-box;
+}
+
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(11, var(--cell));
+  grid-template-rows: repeat(11, var(--cell));
+  width: var(--board-size);
+  height: var(--board-size);
+  padding: 0;
+  font-family: var(--font-ui);
+  color: var(--color-text);
+  background: var(--color-board-bg);
+  border-radius: var(--radius-lg);
+  outline: var(--border-board) solid var(--color-ink);
+  box-shadow: var(--shadow-board);
+  transition: box-shadow var(--motion-feedback) var(--ease-ui);
+}
+
+/* Whose turn it is, signalled by an ink halo around that seat's own yard, so
+   it cannot bleed into the board frame the way a coloured inset ring did. */
+.board[data-active-player="0"] .start-area[data-player="0"],
+.board[data-active-player="1"] .start-area[data-player="1"],
+.board[data-active-player="2"] .start-area[data-player="2"],
+.board[data-active-player="3"] .start-area[data-player="3"] {
+  box-shadow:
+    inset 0 0 0 calc(var(--border-ink) * 2.4) var(--color-ink),
+    var(--shadow-region);
+}
+
+/* One mapping from seat number to colour and to shape. Every region, every
+   pawn, every HUD plate and now every trap takes its identity from here, so a
+   player is described once (D2, D16).
+
+   --seat-shape moved in on 2026-09-03, the follow-up 06-spec section 6 named:
+   it was repeated in hud.css, chrome.css, overlay.css and pawn.css, and D53
+   puts a seat mark on a fifth element. All four repeats are deleted; the
+   elements that read --seat-shape now inherit it from the ancestor carrying
+   data-player, which is the element they already take --player from. */
+[data-player="0"] {
+  --player: var(--color-p0);
+  --player-soft: var(--color-p0-soft);
+  --seat-shape: var(--seat-shape-0);
+}
+[data-player="1"] {
+  --player: var(--color-p1);
+  --player-soft: var(--color-p1-soft);
+  --seat-shape: var(--seat-shape-1);
+}
+[data-player="2"] {
+  --player: var(--color-p2);
+  --player-soft: var(--color-p2-soft);
+  --seat-shape: var(--seat-shape-2);
+}
+[data-player="3"] {
+  --player: var(--color-p3);
+  --player-soft: var(--color-p3-soft);
+  --seat-shape: var(--seat-shape-3);
+}
+
+/* --- Squares --- */
+
+.square {
+  position: relative;
+  z-index: var(--layer-square);
+  margin: calc(var(--cell) * 0.028);
+  border-radius: var(--radius-sm);
+  background: var(--color-square);
+  box-shadow: inset 0 0 0 var(--border-hair) var(--color-square-edge);
+  transition:
+    background-color var(--motion-feedback) var(--ease-ui),
+    box-shadow var(--motion-feedback) var(--ease-ui);
+}
+
+.square--home-column {
+  background: color-mix(in oklab, var(--player) 55%, var(--color-square));
+  box-shadow: inset 0 0 0 var(--border-hair) var(--color-square-edge);
+}
+
+/* Entry and turn-off squares are marked, because a player has to find their
+   own way onto and off the shared track (D7). */
+.square[data-entry-of="0"],
+.square[data-turnoff-of="0"] {
+  --marked: var(--color-p0);
+}
+.square[data-entry-of="1"],
+.square[data-turnoff-of="1"] {
+  --marked: var(--color-p1);
+}
+.square[data-entry-of="2"],
+.square[data-turnoff-of="2"] {
+  --marked: var(--color-p2);
+}
+.square[data-entry-of="3"],
+.square[data-turnoff-of="3"] {
+  --marked: var(--color-p3);
+}
+
+.square[data-entry-of="0"],
+.square[data-entry-of="1"],
+.square[data-entry-of="2"],
+.square[data-entry-of="3"] {
+  background-color: var(--marked);
+  box-shadow: inset 0 0 0 var(--border-hair) var(--color-square-edge);
+}
+
+/* The turn-off bar points at the board edge the square sits on, not down. */
+.square[data-turnoff-of="0"]::after,
+.square[data-turnoff-of="1"]::after,
+.square[data-turnoff-of="2"]::after,
+.square[data-turnoff-of="3"]::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  border-radius: var(--radius-pill);
+  background: var(--marked);
+}
+
+.square[data-turnoff-of="0"]::after {
+  inset: 18% auto 18% 8%;
+  width: calc(var(--cell) * 0.13);
+}
+.square[data-turnoff-of="1"]::after {
+  inset: 8% 18% auto 18%;
+  height: calc(var(--cell) * 0.13);
+}
+.square[data-turnoff-of="2"]::after {
+  inset: 18% 8% 18% auto;
+  width: calc(var(--cell) * 0.13);
+}
+.square[data-turnoff-of="3"]::after {
+  inset: auto 18% 8% 18%;
+  height: calc(var(--cell) * 0.13);
+}
+
+/* The legal-move highlight. It has to stay unmistakable when six squares
+   carry it at once, so it is a filled ring in a hue no player owns, plus a
+   slow pulse that makes the whole set read as one group (D7, FR-32). */
+.square[data-legal-target="true"] {
+  background-color: var(--color-hint-soft);
+  box-shadow:
+    inset 0 0 0 var(--border-thick) var(--color-hint),
+    0 0 0 calc(var(--cell) * 0.04) color-mix(in oklab, var(--color-hint) 28%, transparent);
+  animation: legal-pulse var(--motion-pulse) var(--ease-ui) infinite;
+}
+
+/* An entry square keeps its owner's colour when it is a legal target: the
+   highlight is the ring, never the fill (D7). */
+.square[data-legal-target="true"][data-entry-of="0"],
+.square[data-legal-target="true"][data-entry-of="1"],
+.square[data-legal-target="true"][data-entry-of="2"],
+.square[data-legal-target="true"][data-entry-of="3"] {
+  background-color: var(--marked);
+}
+
+@keyframes legal-pulse {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 var(--border-thick) var(--color-hint),
+      0 0 0 calc(var(--cell) * 0.02) var(--color-hint-soft);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 var(--border-thick) var(--color-hint),
+      0 0 0 calc(var(--cell) * 0.09) var(--color-hint-soft);
+  }
+}
+
+/* The 40 track field placements live in board-track.css. Split out on
+   2026-08-30 for NFR-02: see that file's header for why and for the
+   index-to-cell table. --- */
+
+/* --- The skill square (D27). A mark, not a fill: the field keeps its own
+       background, so a skill square that is also a legal target shows the
+       violet ring and the teal diamond at the same time and neither has to
+       give way. The diamond is decorative geometry, no glyph and no text.
+
+       Teal and not the purple the earlier material described, because violet
+       is --color-hint, which every legal-move highlight and focus ring in the
+       game already uses. --- */
+
+.square[data-skill-square="true"]::before {
+  content: "";
+  position: absolute;
+  inset: 24%;
+  background: var(--color-skill);
+  border-radius: 14%;
+  box-shadow: inset 0 0 0 max(2px, calc(var(--cell) * 0.045)) var(--color-ink);
+  transform: rotate(45deg);
+  transition: inset var(--motion-feedback) var(--ease-ui);
+}
+
+/* Inside the pulsing ring the diamond steps back a little, so the ring is
+   still the widest thing on the field. A trap chip standing in the foot-left
+   corner gets the same step back, and for the same reason: at 30 per cent the
+   diamond's lower left edge passes the chip's corner within a hair rather
+   than taking a bite out of it (D54). One value, three conditions. */
+.square[data-skill-square="true"][data-legal-target="true"]::before,
+.square[data-skill-square="true"][data-pickable="true"]::before,
+.square[data-skill-square="true"][data-trap]::before {
+  inset: 30%;
+}
+
+/* --- A field the player may click to answer a card (D59). Violet, which is
+       the same "you may click this" the legal move target uses, because the
+       two are never on screen together: a move target answers a die that has
+       been rolled, a pickable field answers a card that is mid-play. Teaching
+       one vocabulary twice is cheaper for the player than teaching two.
+
+       The difference is the pulse, and the pulse is D7's, not this state's.
+       Six move targets pulse so that they read as one group inside a move
+       already under way. A trap card offers up to 36 fields at once, and 36
+       pulsing fields is a board that flashes rather than a board that asks a
+       question.
+
+       The four fields a trap card refuses are not painted as refused. They
+       are simply not offered, which is the same signal the other 29 cards
+       already use, and the refusal strip answers a click on one of them. --- */
+
+.square--track[data-pickable="true"] {
+  cursor: pointer;
+  background-color: var(--color-hint-soft);
+  box-shadow: inset 0 0 0 var(--border-thick) var(--color-hint);
+}
+
+/* An entry square keeps its owner's colour when it is offered, exactly as it
+   does when it is a legal move target: the offer is the ring, never the
+   fill (D7). */
+.square--track[data-pickable="true"][data-entry-of="0"],
+.square--track[data-pickable="true"][data-entry-of="1"],
+.square--track[data-pickable="true"][data-entry-of="2"],
+.square--track[data-pickable="true"][data-entry-of="3"] {
+  background-color: var(--marked);
+}
+
+/* Keyboard focus on a field (D11, NFR-08). A field is reachable from the
+   keyboard for the first time in this issue, and both the offer above and
+   D11's focus ring are --color-hint, so focus cannot be told from offered by
+   hue. It is told apart by construction: the offer is an inset ring, focus is
+   two rings outside the field with a surface-coloured gap between them, which
+   is the pawn's focus treatment at field scale. The field lifts a layer so
+   the outer ring is not clipped by its neighbours. */
+.square--track:focus-visible {
+  z-index: var(--layer-region);
+  outline: none;
+  box-shadow:
+    inset 0 0 0 var(--border-thick) var(--color-hint),
+    0 0 0 max(2px, calc(var(--cell) * 0.05)) var(--color-focus),
+    0 0 0 max(4px, calc(var(--cell) * 0.09)) var(--color-surface);
+}
