@@ -2792,6 +2792,28 @@ stacking contexts the two numbers live in, and it was the contexts that were mis
 run against the unfixed stylesheet first and it fails there, which is the only way to know a regression
 test tests the regression.
 
+### The pool counts moved next to the screen that shows them: 2026-09-05, issue #76
+
+The line-up screen (handoff 15) adds roughly fifteen lines to `match-flow.js`, and that file was at 287
+of the 300-line NFR-02 limit. So the first commit of the feature moves something out rather than adding
+anything.
+
+**What moved, and why it was the right thing to move.** `poolCounts()` was a **pure function of `deps`**
+that answers a question about the pool overview. It was the only thing in `match-flow.js` that was not
+about owning a session: everything else in that file reads or writes the screen, the loop, the state or
+the pool. It now lives in `pool-screen.js` as `poolCountsFor(deps)`, next to the screen it feeds, and
+`match-flow.js` calls it with its own `deps`.
+
+**The seam is the same one `session-actions.js` used**, and the giveaway is identical: the function
+touched no closure variable except `deps`, which it read and never wrote. A function that had been
+writing into the flow's closure could not have moved without threading state through a module boundary,
+which is worse than a long file.
+
+**It gained three unit tests it could not have had before.** It was covered only through Playwright,
+because it lived inside a closure that needs jQuery to build. The three cases are worth naming because
+one of them is not obvious: that `poolCountsFor` asks the dice source for its count **on every call**
+rather than caching it, which is the property the original comment claimed and nothing checked.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

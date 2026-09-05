@@ -4349,6 +4349,28 @@ to get wrong later.
   them, and misreading those contexts was the bug. The case fails against the unfixed stylesheet.
 - → Ch. 04
 
+### 2026-09-05: `poolCounts` was the seam that made room for the line-up screen
+
+- **Chosen:** move `poolCounts()` out of `match-flow.js` into `pool-screen.js` as `poolCountsFor(deps)`,
+  before any of the line-up work. `match-flow.js` was at 287 of 300 lines (NFR-02) and the feature adds
+  about fifteen.
+- **Why that function and not another:** it is the only thing in `match-flow.js` that is a **pure
+  function of `deps`** rather than an operation on the session. Everything else in the file reads or
+  writes the screen, the loop, the state or the pool. It also touched no closure variable it wrote to,
+  which is the same test `session-actions.js` passed when it was split out, so this is a move rather
+  than a rewrite.
+- **Rejected:** *splitting `match-flow.js` along the screen boundary instead*, which is the larger and
+  more obvious seam. It would be the right split for a bigger file, and doing it under the pressure of
+  a feature is how a good seam gets spent badly. The 300-line limit is met with fourteen lines to spare
+  without it.
+- **Rejected:** *compressing the file's comments to make room.* NFR-02 says to split along a real seam
+  and not to shrink a file by deleting the part that explains it.
+- **What it bought beyond the lines:** three unit tests. The function was covered only through
+  Playwright, because it lived in a closure that needs jQuery to build. One of the three checks the
+  property its own comment claimed and nothing verified: the count is asked of the dice source on every
+  call, so it cannot go stale between two draws.
+- → Ch. 04
+
 ---
 
 ## Challenges

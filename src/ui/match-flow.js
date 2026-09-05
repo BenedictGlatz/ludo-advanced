@@ -32,7 +32,7 @@
  * **not** reset, so a restart plays a different match rather than replaying the same one.
  */
 
-import { POOL_SIZE, createDicePool } from "../core/dice-pool.js";
+import { createDicePool } from "../core/dice-pool.js";
 import { botSeatsFor, handoverNeeded } from "../state/bots.js";
 import { matchDeps, restartMatch, startMatch } from "../state/match.js";
 import { renderChrome, updateChrome } from "./chrome-view.js";
@@ -42,6 +42,7 @@ import { turnLine } from "./hud-view.js";
 import { screenDescription } from "./overlay-screens.js";
 import { OVERLAY_SCREEN, focusOverlay, renderOverlay, updateOverlay } from "./overlay-view.js";
 import { emptyParts, matchParts, mount } from "./page.js";
+import { poolCountsFor } from "./pool-screen.js";
 import { createSessionActions } from "./session-actions.js";
 
 /**
@@ -79,23 +80,6 @@ export function createMatchFlow({
   let deps = null;
 
   /**
-   * The two numbers the pool overview needs, or `null` when there is no match.
-   *
-   * The face-down count is asked of the dice source at the moment the shell is drawn rather than kept in
-   * a variable, because the pool is the only thing in the game that is not in the frozen state object and
-   * a copy of its count would go stale on the next draw.
-   *
-   * `total` is `POOL_SIZE` because this flow builds a real `createDicePool()` for every match and never a
-   * stand-in source, so the twenty is the truth here rather than an assumption about whatever was
-   * injected.
-   */
-  function poolCounts() {
-    if (deps === null) return null;
-
-    return { remaining: deps.diceSource.remaining(), total: POOL_SIZE };
-  }
-
-  /**
    * Redraw the overlay and the chrome. Called whenever the screen or the language changes.
    *
    * The turn sentence is read off the **loop's** state and not the flow's copy, because the flow only
@@ -107,7 +91,7 @@ export function createMatchFlow({
 
     updateOverlay(
       session.$overlay,
-      screenDescription(screen, { state, seat: handoverSeat, pool: poolCounts() })
+      screenDescription(screen, { state, seat: handoverSeat, pool: poolCountsFor(deps) })
     );
     updateChrome(session.$chrome, {
       canPause: loop !== null && screen === OVERLAY_SCREEN.NONE,
