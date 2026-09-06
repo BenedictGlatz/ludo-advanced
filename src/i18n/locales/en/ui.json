@@ -121,6 +121,18 @@
     "nullified": "An It's Not That Deep was lying nearby and cancelled that card.",
     "aura": "Protected by an It's Not That Deep"
   },
+  "status": {
+    "separator": " · ",
+    "held": "Held (Hold Pawn): sits this turn out.",
+    "rock": "Petrified (Rock): a wall nothing gets past.",
+    "ghost": "Ghost (Ghost Mode): cannot be captured.",
+    "locked": "Locked in (Lock In): may not be moved and cannot be captured.",
+    "armoured": "Armoured (Built Different): cannot be captured.",
+    "ragebait": "Taunted (Ragebait): must be moved if it can move.",
+    "purge": "The Purge: every landing captures, own pawns included.",
+    "slippery": "Slippery (Oil Spill): skips the next skill square.",
+    "stunned": "Stunned (Banana Peel): sits the next turn out."
+  },
   "intent": {
     "rejected": {
       "match-over": "The match is over.",

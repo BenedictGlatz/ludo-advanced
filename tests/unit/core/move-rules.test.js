@@ -66,6 +66,31 @@ describe("Hold Pawn and Lock In take one pawn out of the choice", () => {
 
     expect(result.refusals).toContainEqual({ player: 0, pawn: 0, reason: REFUSAL.LOCKED });
   });
+
+  /**
+   * The playtest finding behind issue #88, written down as a test so it stays answered. A tester
+   * reported that Lock In "prevents all movement this turn". It does not: the lock is on one pawn, and
+   * the other three are evaluated exactly as before. What the tester saw was the other case below,
+   * where the locked pawn was the only one on the track and the roll was not the maximum, so nothing
+   * else could leave the yard either. That is FR-09 doing its job, not the lock spreading.
+   */
+  it("locks exactly one pawn: three others on the track still move (issue #88)", () => {
+    const pawns = pawnsAt(4, { "0.0": 12, "0.1": 14, "0.2": 20, "0.3": 30 });
+    const board = boardWith([status(STATUS.LOCKED, 0, 0)]);
+    const moves = legalMoves(pawns, 0, 3, 6, board);
+
+    expect(moves.map((move) => move.pawn)).toEqual([1, 2, 3]);
+  });
+
+  it("leaves a turn with no move when the only track pawn is locked and the roll is not the maximum", () => {
+    const pawns = pawnsAt(4, { "0.0": 12 });
+    const board = boardWith([status(STATUS.LOCKED, 0, 0)]);
+    const result = evaluateTurn(pawns, 0, 3, 6, board);
+
+    expect(result.moves).toEqual([]);
+    expect(result.refusals).toContainEqual({ player: 0, pawn: 0, reason: REFUSAL.LOCKED });
+    expect(result.refusals.filter((r) => r.reason === REFUSAL.NEEDS_MAXIMUM)).toHaveLength(3);
+  });
 });
 
 describe("a Banana Peel's stun takes one pawn out of the choice too (issue #45)", () => {

@@ -45,6 +45,7 @@ import { TRACK_LENGTH } from "../core/board.js";
 import { NULLIFY_RADIUS, nullifyingTrap } from "../core/trap-rules.js";
 import { t } from "../i18n/index.js";
 import { seatLabel } from "./player-labels.js";
+import { statusTitle } from "./status-labels.js";
 
 /**
  * Put `data-skill-square="true"` on the eight fields that hand out a card, and take it off the rest
@@ -190,8 +191,8 @@ function markStatuses($board, statuses) {
     const key = `${$pawn.attr("data-player")}.${$pawn.attr("data-pawn")}`;
     const held = kinds.get(key);
 
-    if (held === undefined) $pawn.removeAttr("data-statuses");
-    else $pawn.attr("data-statuses", held.join(" "));
+    if (held === undefined) $pawn.removeAttr("data-statuses").removeAttr("title");
+    else $pawn.attr("data-statuses", held.join(" ")).attr("title", statusTitle(held));
   });
 }
 

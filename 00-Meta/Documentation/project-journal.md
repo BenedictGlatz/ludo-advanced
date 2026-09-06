@@ -4769,6 +4769,27 @@ to get wrong later.
 
 ---
 
+### 2026-09-06: The first three of seven playtest items land as text, a test and a tooltip
+
+- **What prompted it:** issues #88 and #94, the two "not a bug" items from the playtest that still cost
+  the tester a wrong conclusion each.
+- **Chosen for Lock In (#88):** the rule stays. The card text says explicitly that the caster cannot move
+  the pawn and that the other pawns are unaffected, and two unit tests pin the behaviour the tester
+  misread, including the exact situation that produced "nothing moves".
+- **Chosen for the invisible protection (#94):** a native `title` on every pawn carrying a status, one
+  clause per kind, in a jQuery-free `status-labels.js` so the wording is unit tested. The drawn marks
+  and a designed tooltip go to brief 17.
+- **Rejected: changing Lock In to lock an opponent's pawn, which is what the tester expected.** It would
+  turn a `DEFENSIVE` card into an attack, invalidate the bot's pricing of it (`values-pawns.js` prices it
+  as insurance minus a turn of walking), and contradict the GDD, all to match a first impression that
+  the card text can correct on its own.
+- **Rejected: making the tooltip a designed component now.** Seven statuses have no mark, and inventing
+  seven is the case the 2026-09-06 rule sends back to a brief. The `title` is text, ships today, and
+  stays useful under a drawn mark later as its accessible name.
+- → Ch. 04, Ch. 05
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

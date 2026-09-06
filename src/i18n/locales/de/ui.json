@@ -121,6 +121,18 @@
     "nullified": "In der Nähe lag ein It's Not That Deep und hat diese Karte aufgehoben.",
     "aura": "Von einem It's Not That Deep geschützt"
   },
+  "status": {
+    "separator": " · ",
+    "held": "Festgehalten (Hold Pawn): setzt diesen Zug aus.",
+    "rock": "Versteinert (Rock): eine Mauer, an der niemand vorbeikommt.",
+    "ghost": "Geist (Ghost Mode): kann nicht geschlagen werden.",
+    "locked": "Eingesperrt (Lock In): darf nicht gezogen und nicht geschlagen werden.",
+    "armoured": "Gepanzert (Built Different): kann nicht geschlagen werden.",
+    "ragebait": "Provoziert (Ragebait): muss gezogen werden, wenn sie ziehen kann.",
+    "purge": "The Purge: jede Landung schlägt, auch eigene Figuren.",
+    "slippery": "Rutschig (Oil Spill): überspringt das nächste Skill-Feld.",
+    "stunned": "Benommen (Banana Peel): setzt den nächsten Zug aus."
+  },
   "intent": {
     "rejected": {
       "match-over": "Die Partie ist beendet.",

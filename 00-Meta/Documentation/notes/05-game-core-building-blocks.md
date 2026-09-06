@@ -1353,6 +1353,32 @@ does, and the Rock expectations in `values-pawns.test.js` moved from 6 and 0 to 
 `trap`, because `board-trap.css` and three specs key off it and a future standing object is one more
 value rather than a rename. And the trap list keeps `until`, for the same reason `expireTraps` stays.
 
+### Lock In was reported as a bug, and the rule was right: 2026-09-06, issue #88
+
+**The report:** "Lock In prevents all movement this turn; only the targeted player should be unable to
+move." Two misreadings in one sentence, both worth recording because a rulebook is graded on whether it
+can answer exactly this.
+
+- **Lock In has no opponent target.** GDD card table, `action-lock-in`: *your pawn* is immune to capture
+  until your next turn. `catalogue-extra.js` gives it `TARGET.OWN_PAWN`, `card-legality.js` refuses any
+  other seat's pawn, and `status-effects.js` writes `LOCKED` and `ARMOURED` on the caster's own pawn.
+- **The lock is on one pawn, not on the turn.** `evaluatePawn` in `move-rules.js` refuses the locked
+  pawn with `REFUSAL.LOCKED` and evaluates the other three normally. `move-rules.test.js` now has the
+  case in so many words: one pawn locked, three on the track, three moves offered.
+
+**What the tester actually saw.** Lock In on the only pawn on the track, then a roll below the die's
+maximum: the locked pawn is refused, and the three in the yard are refused by FR-09. Nothing moves, and
+every refusal is correct. The second new test in `move-rules.test.js` pins that situation.
+
+**What changed anyway.** The card text in both locales now says *you* cannot move it and *your other
+pawns move as usual*, because the old wording ("stays put") read as a passive fact rather than a cost the
+caster pays. The tooltip from issue #94 names the lock on the pawn itself.
+
+**One real deviation surfaced by the check, left open on purpose.** The GDD says the pawn is also immune
+to *forced* movement. `enter.js`'s `shove` checks no status, so Yeet, It's Not That Deep and Big Ah
+Rock's knockback all move a locked pawn today. That is a rule question for the Product Owner, recorded
+on #87, not something to fix while sharpening a card text.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
