@@ -881,6 +881,30 @@ bot for every short move that ended near an enemy, including the ones that gave 
 Rewritten as a difference and measured again. The shipped `DEFAULT_PROFILE` is what the arena chose and
 nothing else.
 
+### `lastCardPlayed` carries the target, `lastCard` does not (2026-09-06, design spec 18)
+
+`lastCardPlayed` was `{ seat, cardId }`. It is now `{ seat, cardId, target }`, where `target` is the
+same object the intent carried: `{ square: 7 }`, `{ pawn: { player, pawn } }`, `{ direction: 1 }`, or
+`{}` for the 12 cards that point at nothing.
+
+**Why the field had to grow.** The cast (design spec 18) draws a played card's effect landing on the
+board. 17 of the 29 cards act on a place, and which place it was is the one fact about a card play
+that cannot be recovered afterwards: the card is in the discard pile with every other card of the
+match, and several cards (a Banana Peel, a nullified anything) leave the board looking exactly as it
+did before.
+
+**Why its match-level sibling did not grow with it.** `lastCard`, the record behind the HUD plate,
+still holds `{ seat, cardId, turnNumber, outcome }`. The plate outlives the turn and shows what was
+played and how it went; a target from three turns ago is a fact nobody reads. Growing both records
+because they look alike is how a field ends up with two meanings.
+
+**What was checked rather than assumed.** `card-controls.js`'s `carryOn` compares the announcement it
+is holding for by **identity**, so that one announcement is not held twice, and `botCardPlayed`
+returns this frozen object. Adding a field to an object that is built once per dispatch and then
+frozen does not touch that comparison, and the test pinning the behaviour stayed green.
+`clearedTurnFields()` already listed the field, so the growth costs nothing at the handover.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

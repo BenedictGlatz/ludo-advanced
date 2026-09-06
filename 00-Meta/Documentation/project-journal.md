@@ -5090,6 +5090,24 @@ to get wrong later.
 
 ---
 
+### 2026-09-06: A card play records its target, and four cards report how far they reached
+
+- **Chosen:** `lastCardPlayed` grows a `target` field, and `PATCH_FIELDS` grows a `cardReach` report
+  written by the four cards that roll a die inside their own effect. Both are for the cast, both are
+  read by `ui/` only, and neither is read by a rule.
+- **Rejected:** *growing `lastCard`, the match-level record, in the same way.* It looks like the same
+  object and it answers a different question. The plate outlives the turn; a target from three turns
+  ago is a fact nobody reads.
+- **Rejected:** *reconstructing the reach in `ui/` by diffing the board between two states.* It needs
+  no rules change and it is rules in the view layer. It is also wrong wherever an effect moves a pawn
+  zero squares, which a Yeet at a pawn on the entry square does every time.
+- **Why the reach could not simply be recomputed:** the four effects roll through `context.rng`, which
+  is consumed. Re-rolling would give a different number, and there is no seed to replay.
+- **Consequence:** the four effects each gained one line and a paragraph of reasoning; the other 25 are
+  asserted to report nothing, which is the case that would otherwise fail silently.
+- → Ch. 05, Ch. 06
+
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

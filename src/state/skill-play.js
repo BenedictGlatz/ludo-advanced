@@ -96,6 +96,14 @@ const FIELD_FOR = Object.freeze({
    * thing the report exists to prevent.
    */
   trapFired: "trapFired",
+
+  /**
+   * How far a card's own roll reached, for the cast's board stage (design spec 18, D109).
+   *
+   * The same kind of field as `trapFired` directly above it: a report and not board state. Four
+   * cards roll inside their effect and the number is gone by the time the patch is written.
+   */
+  cardReach: "cardReach",
 });
 
 /**

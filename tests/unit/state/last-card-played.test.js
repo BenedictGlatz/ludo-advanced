@@ -51,6 +51,7 @@ describe("lastCardPlayed", () => {
     expect(play(state, 0, "action-angel-die").state.lastCardPlayed).toEqual({
       seat: 0,
       cardId: "action-angel-die",
+      target: {},
     });
   });
 
@@ -64,7 +65,11 @@ describe("lastCardPlayed", () => {
     const result = play(state, 0, "action-angel-die");
 
     expect(result.state.reactionWindow).not.toBeNull();
-    expect(result.state.lastCardPlayed).toEqual({ seat: 0, cardId: "action-angel-die" });
+    expect(result.state.lastCardPlayed).toEqual({
+      seat: 0,
+      cardId: "action-angel-die",
+      target: {},
+    });
   });
 
   /** The second path a card play takes: into an open window, by a seat that is not the active one. */
@@ -75,7 +80,59 @@ describe("lastCardPlayed", () => {
     expect(play(open, 2, "reaction-nuehue").state.lastCardPlayed).toEqual({
       seat: 2,
       cardId: "reaction-nuehue",
+      target: {},
     });
+  });
+
+  /**
+   * The target, which the field grew on 2026-09-06 for the cast (design spec 18, D109).
+   *
+   * The board half of a cast draws the effect landing on a square or a pawn, and which one it was is
+   * the one fact about a card play nothing else keeps: the card is in the discard pile with the rest
+   * and a Banana Peel leaves the board looking untouched. So the object the intent carried travels
+   * with the record, unread by any rule, exactly as `seat` and `cardId` already do.
+   */
+  it("records the square an Action card was aimed at", () => {
+    const state = inActionPhase({ 0: ["action-banana-peel"] });
+    const played = play(state, 0, "action-banana-peel", { square: 7 }).state;
+
+    expect(played.lastCardPlayed).toEqual({
+      seat: 0,
+      cardId: "action-banana-peel",
+      target: { square: 7 },
+    });
+  });
+
+  /**
+   * The same on the second path, so a Reaction's cast can find its target too.
+   *
+   * Hold Pawn is the one Reaction in the set that points at a pawn, and it answers the **roll**
+   * window rather than the card window, so the turn is walked to the roll phase first.
+   */
+  it("records the pawn a Reaction card was aimed at", () => {
+    const state = nextState(inActionPhase({ 2: ["reaction-hold-pawn"] }), {
+      phase: TURN_PHASE.ROLL,
+    });
+    const open = dispatch(state, { type: INTENT.ROLL_DIE }, deps).state;
+    expect(open.reactionWindow).not.toBeNull();
+
+    const answered = play(open, 2, "reaction-hold-pawn", { pawn: { player: 0, pawn: 1 } }).state;
+
+    expect(answered.lastCardPlayed).toEqual({
+      seat: 2,
+      cardId: "reaction-hold-pawn",
+      target: { pawn: { player: 0, pawn: 1 } },
+    });
+  });
+
+  /**
+   * A card that points at nothing records `{}` and not `null`, which is what lets the view read
+   * `target.square` without a guard on every access.
+   */
+  it("records an empty target for a card that points at nothing", () => {
+    const state = inActionPhase({ 0: ["action-angel-die"] });
+
+    expect(play(state, 0, "action-angel-die").state.lastCardPlayed.target).toEqual({});
   });
 
   /**

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A played card remembers what it was aimed at.** The square, the pawn or the direction a skill card
+  acted on is kept with the record of the play, and the four cards that roll a die inside their own rule
+  (Hyperbeam, Janky RPG, Yeet, Let Him Cook) now report how far they reached. Nothing on screen shows it
+  yet; it is what the animation of a played card is built on
 - **The bots see danger.** A bot no longer parks a pawn one field in front of an opponent, walks out of
   its yard onto an entry field somebody is queuing up behind, or picks the dice card whose likely
   landing fields are the dangerous ones. How likely a capture really is now comes out of the dice pool's

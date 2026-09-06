@@ -74,6 +74,9 @@ function sweep(context, squares) {
  *
  * A pawn in a start area or a house cannot fire, because it is not on a shared square and there is no
  * square in front of it to name.
+ *
+ * **`cardReach` is the D4** (design spec 18, D109): how many squares the beam covered, so the cast can
+ * light exactly those and not a guessed number of them.
  */
 export function hyperbeam(context) {
   const shooter = pawnIn(context, context.target.pawn);
@@ -83,7 +86,10 @@ export function hyperbeam(context) {
 
   const length = rollDie(HYPERBEAM_DIE, context.rng);
 
-  return sweep(context, squareRun(from, context.target.direction, length));
+  return {
+    ...sweep(context, squareRun(from, context.target.direction, length)),
+    cardReach: length,
+  };
 }
 
 /**
@@ -96,12 +102,19 @@ export function hyperbeam(context) {
  * "Both neighbours" is unambiguous on a ring of forty and meaningless in a house column, which is why
  * the card takes a track square rather than a pawn. `neighbourSquares` wraps, so square 0's neighbours
  * are 39 and 1.
+ *
+ * **`cardReach` is the D6 itself and not the squares it hit** (design spec 18, D109). The view needs
+ * to know whether the shot landed or went wide, and it can ask the same `JANKY_HIT` question this
+ * function asks. Reporting the squares instead would be reporting a decision twice.
  */
 export function jankyRpg(context) {
   const square = context.target.square;
   const aim = rollDie(JANKY_DIE, context.rng);
 
-  return sweep(context, aim >= JANKY_HIT ? [square] : neighbourSquares(square));
+  return {
+    ...sweep(context, aim >= JANKY_HIT ? [square] : neighbourSquares(square)),
+    cardReach: aim,
+  };
 }
 
 /**
