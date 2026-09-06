@@ -534,6 +534,15 @@ review away.
   Owner chose Sprint 2. Details in [notes/02-project-management.md](notes/02-project-management.md),
   reasoning in [project-journal.md](project-journal.md).
 
+- **2026-09-06, evening:** the seven playtest items of #87 worked through in one afternoon, each on its own
+  feature branch off `dev`, none merged yet: #92 (reaction bar contrast, 1), #94 with #88 (pawn tooltip,
+  Lock In text, 2 + 1), #90 (both rock cards petrify an own pawn, 5), #89 (bonus roll from D6 up, 3), #91
+  (target click and drag, 3), #93 (last-card state plus design brief 17, 2). #93 and the aura half of #94
+  stay open until spec 17 lands. Unit and Chromium end-to-end suites pass on every branch; the seeds in
+  `tests/e2e/helpers.js` were re-derived for #89. Six branches touching the same notes and changelog
+  anchors will conflict on merge in the documentation files, not in the code; the order to merge them is
+  the order above.
+
 > The resource/energy system appears only in this sprint plan, not in the one-pager or the README.
 > Whether it is in scope is undecided: see [notes/01-requirements-and-goals.md](notes/01-requirements-and-goals.md).
 > Multiplayer has no chosen technology and may end up local hot-seat only.
