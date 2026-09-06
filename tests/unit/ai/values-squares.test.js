@@ -14,10 +14,8 @@
 
 import { describe, expect, it } from "vitest";
 
-import { KNOCKBACK } from "../../../src/core/cards/effects/trap-effects.js";
 import {
   bananaPeel,
-  bigAhRock,
   hyperbeam,
   jankyRpg,
   notThatDeep,
@@ -30,7 +28,7 @@ function acting(placements, fields = {}) {
   return stateFor({ phase: "action", chosenDie: 6, pawns: pawnsAt(4, placements), ...fields });
 }
 
-describe("the four cards that leave something on a square", () => {
+describe("the three cards that leave something on a square", () => {
   /**
    * Aimed one square in front of the leading opponent pawn, which is the square that pawn is most
    * likely to enter next. Seat 1's leader is on square 29, so the obvious answer is square 30, which
@@ -67,21 +65,6 @@ describe("the four cards that leave something on a square", () => {
 
     expect(notThatDeep(near, 0).value).toBeGreaterThan(notThatDeep(far, 0).value);
     expect(notThatDeep(far, 0).value).toBe(2);
-  });
-
-  /** A boulder is worth the knockback plus the blocking, less what my own pawns lose behind it. */
-  it("prices a Big Ah Rock at the knockback plus the block", () => {
-    const state = acting({ "1.1": 5 });
-
-    expect(bigAhRock(state, 0).target).toEqual({ square: 15 });
-    expect(bigAhRock(state, 0).value).toBeCloseTo((KNOCKBACK + 4) / 3, 10);
-  });
-
-  it("counts my own pawns stuck behind a Big Ah Rock against it", () => {
-    // Seat 0's r = 12 is square 11, four squares behind square 15.
-    const state = acting({ "1.1": 5, "0.0": 12 });
-
-    expect(bigAhRock(state, 0).value).toBeCloseTo((KNOCKBACK + 4) / 3 - 2, 10);
   });
 });
 

@@ -40,7 +40,7 @@
 
 import { rollDie } from "./dice-source.js";
 import { STATUS, addStatus, turnsForRounds } from "./statuses.js";
-import { TRAP_KIND, isBlocker, removeTrap } from "./traps.js";
+import { TRAP_KIND, removeTrap } from "./traps.js";
 
 /** How long a Banana Peel's stun lasts, in rounds. One: the pawn loses its next turn and no more. */
 export const STUN_ROUNDS = 1;
@@ -130,12 +130,13 @@ const TRAP_RULES = Object.freeze({
  * itself, rather than on the turn somebody happens to walk into one.
  *
  * This replaces a closed `switch` whose `default:` returned everything untouched. That branch existed
- * for blockers, which are in the same list and never fire, and it therefore also swallowed a missing
- * rule in complete silence. The pattern is `assertCatalogue`'s: check the table against the vocabulary
- * once, at the moment the module loads, so the failure lands on the day the kind was added.
+ * for the blocker Big Ah Rock used to be, which sat in the same list and never fired, and it therefore
+ * also swallowed a missing rule in complete silence. The pattern is `assertCatalogue`'s: check the table
+ * against the vocabulary once, at the moment the module loads, so the failure lands on the day the kind
+ * was added. Since issue #90 every kind in the list fires, so the check has no exemption left.
  */
 for (const kind of Object.values(TRAP_KIND)) {
-  if (!isBlocker(kind) && !Object.hasOwn(TRAP_RULES, kind)) {
+  if (!Object.hasOwn(TRAP_RULES, kind)) {
     throw new Error(`trap kind "${kind}" has no rule in core/trap-fire.js`);
   }
 }
@@ -149,10 +150,9 @@ for (const kind of Object.values(TRAP_KIND)) {
  * **The trap is removed whether or not it changed anything.** A trap is single use, and a trap that
  * survived because the pawn it caught happened to be unmovable would sit there being a surprise twice.
  *
- * **A blocker reaching here throws.** Nothing should ever walk onto one, because `blockedSquares`
- * refuses the move first, and `firstTrapOnPath` skips blockers besides. Two guards already stand
- * between a blocker and this function, so arriving anyway means one of them broke, and that is worth an
- * exception rather than a silent no-op that hides which.
+ * **An unknown kind reaching here throws.** The import-time check above makes that impossible for
+ * anything in `TRAP_KIND`, so arriving here with something else means an entry was written into the
+ * trap list by hand, and that is worth an exception rather than a silent no-op that hides where.
  */
 export function fireTrap({ statuses, traps, trap, mover, turnNumber, playerCount, rng }) {
   const rule = TRAP_RULES[trap.kind];

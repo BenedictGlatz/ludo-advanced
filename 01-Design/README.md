@@ -2,10 +2,27 @@
 
 How Claude Code and Claude Design hand work to each other, and where the results land.
 
-Design and UI for this project are developed with **Claude Design**, which has access to this
+New designs for this project are developed with **Claude Design**, which has access to this
 directory. [CLAUDE.md](../CLAUDE.md) draws a hard line: Claude Code does not invent design rules, and
 Claude Design owns colour, spacing, typography and component looks. This folder is the mechanism that
 makes that line workable instead of merely stated.
+
+## What does not go through the loop, since 2026-09-06
+
+**Small design fixes.** Claude Code checks them in the running app and fixes them directly. The three
+conditions are in [CLAUDE.md](../CLAUDE.md) under *Design and UI*: the fix repairs something already
+specified, it uses only existing tokens and patterns, and it does not change how the screen looks when
+it is working.
+
+The reason is cost, and it is one-sided. A brief-and-spec round is worth days for a screen that does
+not exist yet. For a clipped label or a state the CSS forgot to apply, the round costs the same days
+and produces a change nobody would have designed differently.
+
+**What this does not move:** new screens and components, and the design system itself. Those still
+start with a brief, which is also what keeps prototyping possible. And when a fix turns out to
+contradict the spec rather than the CSS, it goes into
+[Handoff/00-open-requests.md](Handoff/00-open-requests.md), so this side is never working from a spec
+the code has quietly left behind.
 
 ---
 

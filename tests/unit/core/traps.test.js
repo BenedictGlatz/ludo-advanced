@@ -1,18 +1,17 @@
 /**
  * Objects that sit on a square. Issue #38, requirements FR-28 and FR-30.
  *
- * The interesting cases are the two exclusions: a trap does not fire under its owner's own pawn, and a
- * blocker is not a trap even though it is in the same list.
+ * The interesting case is the one exclusion: a trap does not fire under its owner's own pawn. The
+ * second exclusion, a blocker in the same list, left with issue #90 when Big Ah Rock became a status on
+ * a pawn.
  */
 
 import { describe, expect, it } from "vitest";
 
 import {
-  BLOCKERS,
   TRAP_KIND,
   expireTraps,
   firstTrapOnPath,
-  isBlocker,
   placeTrap,
   removeTrap,
   trapAt,
@@ -25,19 +24,16 @@ const peel = (square, owner = 0) => ({
   until: null,
 });
 
-const rock = (square, owner = 0, until = 20) => ({
-  kind: TRAP_KIND.BIG_AH_ROCK,
+const spill = (square, owner = 0, until = null) => ({
+  kind: TRAP_KIND.OIL_SPILL,
   square,
   owner,
   until,
 });
 
-describe("the two behaviours in one list", () => {
-  it("marks the blockers and nothing else", () => {
-    expect(isBlocker(TRAP_KIND.BIG_AH_ROCK)).toBe(true);
-    expect(isBlocker(TRAP_KIND.BANANA_PEEL)).toBe(false);
-    expect(isBlocker(TRAP_KIND.OIL_SPILL)).toBe(false);
-    expect(BLOCKERS).toEqual([TRAP_KIND.BIG_AH_ROCK]);
+describe("the list holds one kind of thing (issue #90)", () => {
+  it("names three trap kinds and no blocker", () => {
+    expect(Object.values(TRAP_KIND).sort()).toEqual(["banana-peel", "not-that-deep", "oil-spill"]);
   });
 });
 
@@ -56,10 +52,10 @@ describe("placeTrap, trapAt and removeTrap", () => {
    * will not let a player target an occupied square in the first place.
    */
   it("replaces whatever was on that square rather than stacking", () => {
-    const traps = placeTrap(placeTrap([], peel(17)), rock(17));
+    const traps = placeTrap(placeTrap([], peel(17)), spill(17));
 
     expect(traps).toHaveLength(1);
-    expect(trapAt(traps, 17).kind).toBe(TRAP_KIND.BIG_AH_ROCK);
+    expect(trapAt(traps, 17).kind).toBe(TRAP_KIND.OIL_SPILL);
   });
 
   it("removes the object on one square and leaves the others", () => {
@@ -93,21 +89,13 @@ describe("firstTrapOnPath", () => {
     expect(firstTrapOnPath(traps, [16, 17, 18], mover)).toBeNull();
     expect(firstTrapOnPath(traps, [16, 17, 18], { player: 2, pawn: 0 })).not.toBeNull();
   });
-
-  /**
-   * A blocker is in the same list and must not be treated as a trap. Nothing should ever walk over one
-   * anyway, because `blockedSquares` refuses the move first, but a rule that relies on another rule
-   * having run is a rule that breaks when the order changes.
-   */
-  it("skips a blocker, which stops a pawn rather than firing at it", () => {
-    expect(firstTrapOnPath([rock(17, 2)], [16, 17, 18], mover)).toBeNull();
-  });
 });
 
 describe("expireTraps", () => {
-  it("drops a blocker whose deadline has passed", () => {
-    expect(expireTraps([rock(17, 0, 10)], 10)).toHaveLength(0);
-    expect(expireTraps([rock(17, 0, 10)], 9)).toHaveLength(1);
+  /** No card writes a deadline since issue #90; the filter stays for the next timed object. */
+  it("drops an object whose deadline has passed", () => {
+    expect(expireTraps([spill(17, 0, 10)], 10)).toHaveLength(0);
+    expect(expireTraps([spill(17, 0, 10)], 9)).toHaveLength(1);
   });
 
   it("keeps a trap with no deadline for as long as it takes", () => {

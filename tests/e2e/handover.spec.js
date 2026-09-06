@@ -14,7 +14,7 @@
 
 import { expect, test } from "@playwright/test";
 
-import { boardState, chooseAndCarryOn, moveFirstMovablePawn } from "./helpers.js";
+import { boardState, chooseAndCarryOn, playOutMoves } from "./helpers.js";
 
 const overlay = (page) => page.locator(".overlay");
 const action = (page, name) => page.locator(`.overlay__button[data-action="${name}"]`);
@@ -36,7 +36,7 @@ test.describe("the handover", () => {
     // a dice card, then for the action phase to be passed, then for a pawn. A turn with no legal move
     // skips the last step and reaches the handover through the four-second refusal instead.
     await chooseAndCarryOn(board);
-    if ((await boardState(board)).phase === "act") await moveFirstMovablePawn(board);
+    await playOutMoves(board);
 
     await expect(overlay(page)).toHaveAttribute("data-screen", "handover", { timeout: 15000 });
 
@@ -81,7 +81,7 @@ test.describe("the handover", () => {
     const board = page.locator(".board");
 
     await chooseAndCarryOn(board);
-    if ((await boardState(board)).phase === "act") await moveFirstMovablePawn(board);
+    await playOutMoves(board);
 
     await expect(overlay(page)).toHaveAttribute("data-screen", "handover", { timeout: 15000 });
     await expect(page.locator(".hand--skill")).toHaveAttribute("data-seat", "0");

@@ -477,7 +477,32 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   on the merged `dev`. One branch stays open: `docs/appendix-board-screenshot` (PR #51, one docs
   commit from 2026-08-09) conflicts with `dev` and needs a manual resolution, so it was left alone
   rather than resolved unasked. Sprint 2.
-
+- **2026-09-06**: The *Design and UI* convention in `CLAUDE.md` was changed at the Product Owner's
+  request. Small design fixes are now Claude Code's, with three conditions defining what counts as
+  small; Claude Design keeps new designs and the design system. `01-Design/README.md` gained a
+  section naming what no longer goes through the handoff loop. Documentation only, no code change.
+  Sprint 2.
+- **2026-09-06**: A teammate's playtest produced seven findings. Each was checked against the code and
+  the game design document before anything was booked: three of the seven are rules behaving as
+  designed (Lock In targets the caster's own pawn, the bonus roll was rejected in GDD § 3, every track
+  square is capturable), four are defects or missing features. Issue #87 opened as the parent with seven
+  sub-issues #88 to #94, linked with `addSubIssue`, all in Sprint 2 with 17 story points between them.
+  The Product Owner decided the three rule questions in the same conversation: Lock In stays, the bonus
+  roll comes in from D6 upward, and both rock cards move onto an own pawn. Sprint 2.
+- **2026-09-06, evening**: the six feature branches of the playtest parent #87 were merged into `dev`
+  locally, in issue order, as merge commits. Nothing was pushed. Four of the five merges conflicted, all
+  of them in documentation: `CHANGELOG.md`, `project-journal.md`, `00-open-requests.md` and three chapter
+  notes, every time because two branches had appended a block at the same anchor. Every conflict was
+  resolved by keeping both sides, which is what an append-only note means, and no code file conflicted at
+  all. The merged `dev` passes lint, 973 unit tests in 76 files and 137 Chromium end-to-end cases. Sprint 2.
+- **2026-09-06, night**: design handoff 17 landed on `dev`, which closes the last two open items of the
+  playtest parent #87: the last-card slot (#93) and the drawn status marks that were the aura half of #94.
+  Three new stylesheets, two amended by change list, one new view file, one new attribute, six locale keys
+  in both languages and one new end-to-end spec. D52 is retired, D100 to D103 are answered, and D102 came
+  back as a deliberate no. Sprint 2.- **2026-09-06, night**: the eight issues of the playtest parent #87 were rewritten from German into
+  English, titles, bodies and the status comment, at the Product Owner's request: English is the
+  repository's language on GitHub as well as in the code. `CLAUDE.md` gained the rule under *Project
+  management*, so the next issue is written in English rather than translated afterwards. Sprint 2.
 
 ---
 
@@ -4612,6 +4637,227 @@ to get wrong later.
   retrospective and worth a line in the next brief.
 - → Ch. 04, Ch. 11
 
+---
+
+### 2026-09-06: Small design fixes leave the handoff loop, new designs stay in it
+
+- **What prompted it:** the Product Owner's own observation after sixteen handoffs. Routing every
+  design change through Claude Design makes fixing small visual problems very time-consuming, and the
+  purpose he actually wants the loop for is prototyping new screens before they are built.
+- **Chosen:** split the rule by *kind of change* rather than by tool. Claude Code fixes what is already
+  specified and visibly broken; Claude Design owns anything new and the design system itself. Three
+  conditions in `CLAUDE.md` decide which side a change falls on: the fix repairs something already
+  specified, it uses only existing tokens and patterns, and it does not change how the screen looks when
+  it is working. Two obligations come with it: a fix whose spec line or visible bug cannot be named is
+  not small, and a fix that corrects the *spec* rather than the CSS goes into
+  `01-Design/Handoff/00-open-requests.md`.
+- **Why a cost argument, not a competence one:** the loop's price is the same for every change that
+  enters it, roughly a brief, a wait and a spec. For a screen that does not exist yet, that price buys
+  a design decision with alternatives on the record. For a clipped label it buys a change nobody would
+  have designed differently. The loop was never wrong, it was just charged uniformly.
+- **Why the three conditions instead of "use your judgement":** the old rule was enforceable because it
+  was absolute. Replacing it with a judgement call would hand this side exactly the decision
+  `CLAUDE.md` exists to withhold, which is inventing design rules. The conditions are written so that
+  failing any one of them sends the change back to a brief.
+- **Rejected: letting Claude Code fix anything visual and only asking for genuinely new screens.**
+  Cheaper still, and it loses the thing the rule protects. "Make the panel a bit warmer" passes no
+  test for brokenness and would quietly become a second palette next to the design system's.
+- **Rejected: a size threshold, for example fixes under about ten CSS lines.** Easy to check and
+  measures the wrong thing. A one-line colour change can redefine a token everywhere, and repairing a
+  broken responsive layout can take forty lines without deciding anything at all.
+- **Rejected: keeping the loop and batching small fixes into a periodic collected handoff.** It keeps
+  every decision with the design side, which is tidy, and it leaves visible bugs sitting in the build
+  until the batch goes out. Sprint 2 already had a clipped label and a stale `:empty` rule waiting on
+  unrelated handoffs.
+- **Known cost, recorded because it will show up:** the two trees drift. The design side works from
+  stylesheets it last read, and small fixes now land without it hearing about them. That drift already
+  bit twice before this change (see the 2026-09-05 decision above), and this makes it more frequent
+  rather than less. `00-open-requests.md` is the mitigation and it is a weak one, since it depends on
+  this side noticing that a fix contradicts the spec.
+- → Ch. 04, Ch. 10
+
+
+---
+
+### 2026-09-06: A playtest finding is checked against the rulebook before it becomes an issue
+
+- **What prompted it:** a teammate's playtest list of seven "bugs" and enhancements. Three of the
+  seven describe rules that work exactly as the game design document specifies: Lock In locks the
+  caster's **own** pawn (GDD card table, `action-lock-in`), the bonus roll on a maximum was rejected in
+  GDD § 3 because of the D2, and no track square is safe (GDD § 4.3, FR-15 not built). Booked as
+  reported, they would have been three tickets to "fix" working code.
+- **Chosen:** every finding was traced to the code path and the GDD line first, then put to the Product
+  Owner with the finding attached, and only then written up. The parent issue #87 carries the table
+  with the "not a bug" reasoning so the tester can read why. The three rule questions were still
+  decided, and two of them **changed the rulebook**: the bonus roll comes in with a D6 floor and a
+  three-roll cap, and both rock cards move onto an own pawn. Lock In keeps its rule and gets a sharper
+  card text instead.
+- **Why the "not a bug" items still got sub-issues:** the tester's impression is the finding. A rule that
+  reads as a defect at the table has a presentation problem even when the code is right, and the
+  cheapest fix for that is text and a tooltip, not an argument.
+- **Rejected: booking the seven items as reported and sorting them out during implementation.** Faster
+  to write, and it would have put "Lock In blocks all movement" on the board as a bug, which the code
+  would then have been changed to match. The GDD exists so that a rule question is answered by reading,
+  not by whoever touches the code next.
+- **Rejected: one ticket for the whole list.** Seven items touch `core/`, `state/`, `ai/`, `ui/`, the
+  locale files and a design brief, at very different risk. One ticket would carry one estimate for all
+  of it and close only when the slowest item does. Seven sub-issues under one parent keep the list
+  together and let each land on its own branch.
+- **Consequence:** the bonus-roll and rock decisions are rule changes and go into the GDD in the same
+  commits as the code. The Lock In "immune to forced movement" clause, which the code does not
+  implement either, is recorded on #87 as an open question rather than fixed by the way.
+- → Ch. 01, Ch. 02, Ch. 05
+
+---
+
+### 2026-09-06: The bonus roll comes in with the objection that once rejected it built in as a floor
+
+- **What prompted it:** playtest item 2 (issue #89): a player who rolls the die's maximum should roll
+  that die again. GDD § 3 had rejected exactly this, because a D2 rolls its maximum every other time.
+- **Chosen:** the Product Owner took the rule with a six-face floor and asked that the D2 and D4 cards
+  say they give no bonus. Added: a cap of three rolls a turn, the natural face rather than the modified
+  total, modifiers cleared between rolls, no second Action card, and a bonus even after a maximum that
+  could not be used.
+- **Rejected: no floor, the classic rule on every die.** It is what the tester asked for word for word,
+  and it is the case the GDD's own arithmetic rules out: a D2 turn would roll again half the time, three
+  times in a row an eighth of the time, and the card that makes the D2 a gamble would make it a machine.
+- **Rejected: no cap.** With real dice a run of maxima ends by itself; with a scripted RNG that always
+  answers the maximum it never does, and the bot loop and every seeded test would hang. The classic
+  three-sixes rule gives the cap a reading players already know.
+- **Rejected: the modified total counting as the maximum.** Angel Die, Speedrun and FR FR would all buy
+  a second roll, FR FR every single time. The face the die showed is the only reading under which the
+  bonus is a property of the roll and not of the hand.
+- **Rejected: leaving `refusalReason` standing on a no-move maximum.** The strip would say "no move is
+  possible" for the instant before the bonus die is thrown, then contradict itself. Cleared with the rest
+  of the roll's leftovers; the bonus line in the roll breakdown says what happened instead.
+- **What it cost:** `turn-manager.js` had to be split first (300 lines), 22 end-to-end cases and the
+  scripted full match had to learn that a turn can hold three moves, and three of five seeds moved.
+  Chapter 08 has the details. About two hours, most of it in the test drivers rather than in the rule.
+- → Ch. 01, Ch. 05, Ch. 06, Ch. 08
+
+---
+
+### 2026-09-06: Big Ah Rock stops being a square object, and both rock cards petrify a pawn
+
+- **What prompted it:** playtest item 3 (issue #90). The tester read Rock's movable pawn as a bug and
+  Big Ah Rock's field target as the wrong target. The GDD backed the first half ("immovable stone") and
+  contradicted the second (it said "track square").
+- **Chosen:** the Product Owner picked the larger change: both cards act on an own pawn, and a petrified
+  pawn can neither be moved by its owner nor pushed by a card. Big Ah Rock keeps its three rounds and its
+  knockback, now measured behind the stone.
+- **Rejected: fix Rock only and leave Big Ah Rock on a square, which is what the GDD said.** Cheaper by
+  eleven test files, and it keeps two cards with the same name and two different kinds of object on the
+  board, which is the confusion the tester reported in the first place. The Product Owner chose the
+  consistent pair.
+- **Rejected: a separate status kind `BOULDER` for Big Ah Rock.** Three readers would gain a second
+  line each and no rule would differ. `source` already records which card wrote the status.
+- **Consequence:** the trap list has one behaviour again and `traps.js` is simpler than before issue
+  #45. D52 of design spec 07 (the blocker's 76 per cent mark) has nothing to draw and is retired in
+  `00-open-requests.md`; the stone pawn's mark is a question for brief 17. The GDD card table row was
+  rewritten with the old reading struck through rather than deleted.
+- → Ch. 05, Ch. 06, Ch. 08
+
+---
+
+### 2026-09-06: Pointing at the destination picks, and only the second gesture moves
+
+- **What prompted it:** playtest item 4 (issue #91): move a pawn by dragging it or by clicking the
+  destination, not only by two clicks on the pawn.
+- **Chosen:** both gestures, and both keep the two-step move from issue #62. A click on a lit square
+  with nothing selected picks the pawn that reaches it; with that pawn selected it commits. A drag picks
+  the pawn up (selects it) once the pointer has moved six pixels, and letting go on the lit square
+  commits. Anywhere else puts the pawn back and keeps it selected.
+- **Rejected: one click on the destination moves.** It is the shortest gesture and it is the one the
+  2026-08-29 decision ruled out for pawns: a misclick captures an opponent with no way back, in a game
+  where a capture costs most of a lap. Nothing about a square makes that safer than a pawn.
+- **Rejected: selecting on `pointerdown` so a drag starts instantly.** Every press is followed by a
+  `click`, and a pawn the press had selected would be committed by it. The threshold is what keeps a
+  click a click.
+- **Rejected: jQuery UI or another drag library.** A new runtime dependency needs the Product Owner's
+  approval, and the gesture is three pointer events and a little state. Pointer events also cover touch
+  and pen in one binding, which a mouse-only library would not.
+- **Consequence:** `events.js` has its first exception to "every handler lives here"; `drag-move.js` says
+  why in its header. The look of a carried pawn is deliberately unstyled and goes to brief 17.
+- → Ch. 04
+
+---
+
+### 2026-09-06: The first three of seven playtest items land as text, a test and a tooltip
+
+- **What prompted it:** issues #88 and #94, the two "not a bug" items from the playtest that still cost
+  the tester a wrong conclusion each.
+- **Chosen for Lock In (#88):** the rule stays. The card text says explicitly that the caster cannot move
+  the pawn and that the other pawns are unaffected, and two unit tests pin the behaviour the tester
+  misread, including the exact situation that produced "nothing moves".
+- **Chosen for the invisible protection (#94):** a native `title` on every pawn carrying a status, one
+  clause per kind, in a jQuery-free `status-labels.js` so the wording is unit tested. The drawn marks
+  and a designed tooltip go to brief 17.
+- **Rejected: changing Lock In to lock an opponent's pawn, which is what the tester expected.** It would
+  turn a `DEFENSIVE` card into an attack, invalidate the bot's pricing of it (`values-pawns.js` prices it
+  as insurance minus a turn of walking), and contradict the GDD, all to match a first impression that
+  the card text can correct on its own.
+- **Rejected: making the tooltip a designed component now.** Seven statuses have no mark, and inventing
+  seven is the case the 2026-09-06 rule sends back to a brief. The `title` is text, ships today, and
+  stays useful under a drawn mark later as its accessible name.
+- → Ch. 04, Ch. 05
+
+---
+
+### 2026-09-06: The last card gets a match-level field before it gets a place on screen
+
+- **What prompted it:** playtest item 6 (issue #93): a place that shows the last card played and what it
+  did. A new component, so Claude Design's under the day's rule; the Product Owner chose to prepare the
+  data now and let the look wait for the spec.
+- **Chosen:** `state.lastCard = { seat, cardId, turnNumber, outcome }`, match-level, overwritten and never
+  cleared, settled by `reaction-window.js` when a window shuts. Brief 17 asks for the slot (D100) and
+  bundles the other two invisible things from the playtest, the status marks (D101, D102) and the carried
+  pawn (D103).
+- **Rejected: making `lastCardPlayed` survive the turn.** It drives the bot announcement and its being
+  cleared is what stops the strip repeating a play from a turn ago (issue #82). One field with two jobs
+  would need a flag saying which job applies on each read.
+- **Rejected: building a provisional slot with existing tokens.** The Product Owner was offered exactly
+  this and declined: it is the case the 2026-09-06 rule sends to a brief, and a provisional component
+  becomes the design by inertia.
+- **Rejected: a scrolling event log.** The strip is a single slot by D73, and a log is a new kind of
+  thing on a screen with no room for one. Recorded in the brief as rejected on this side, not as a
+  constraint on the design.
+- → Ch. 04, Ch. 06
+
+---
+
+### 2026-09-06: The last card is a plate in the HUD row, and a protected pawn finally looks protected
+
+- **What prompted it:** design handoff 17, answering the brief sent the same afternoon for the three
+  things the playtest of #87 found invisible. D100 to D103, with D52 retired.
+- **Chosen for D100:** a fifth plate at the end of the HUD row, showing the card's name in words, the seat
+  and the turn, with the card itself one hover away at the reference size. It is a child of `.hud`, because
+  that row spans both grid columns and centres its plates, so a plate outside it cannot sit at its end.
+- **Chosen for D101:** three channels rather than one slot. The piece changes for `rock` and `stunned`, one
+  ink shell serves `armoured` and `ghost` together, and the existing tag carries `locked`, `held`,
+  `ragebait` and `slippery` one at a time. A Lock In pawn wears two marks, which is the playtest finding.
+- **Chosen for D103:** the carried pawn grows, casts the longest shadow in the game and loses every
+  transition, and the lit target under the pointer answers with an ink ring. `drag-move.js` writes
+  `data-drop="true"` on that one field.
+- **Rejected: the plate in the rail above the dice hand.** It is where the eye already is, and it is paid
+  for out of `--card-u`, the one size in the game a player is asked to compare three objects at. Measured
+  on the fitted stage, the rail's three plates leave about 15 px of slack in 738.
+- **Rejected: rendering the plate only once a card has been played.** One sideways jump of the other four
+  plates, in the middle of a match, is worse than a dashed rectangle for two turns.
+- **Rejected: a designed status tooltip (D102).** The tester was clicking, not hovering, so a hover readout
+  would not have reached them, and it would be a fifth place to say a thing the piece, the strip and the
+  plate now say between them. The native `title` from issue #94 stays as the accessible name.
+- **Rejected: two shell weights, one each for `armoured` and `ghost`.** Two ring weights would be a
+  distinction nobody looks up, on the one mark that has to be read instantly by somebody being told no.
+- **Rejected: `width: auto` on the plate, to match what `.hud__seat` actually does.** The seat plate has
+  been `min-width: 15.5rem` since 2026-09-03, so it grows and the new plate does not, and at the design
+  resolution the plate measures about 223 px against a seat plate's 289. Matching it would push the HUD row
+  into wrapping, which is a worse defect than a narrower fifth plate. Reported back instead.
+- **What it cost:** the delivered `last-card.css` assumed the card in the plate would not already be
+  desaturated, and it is, because a record card is described as unplayable and `card-state.css` dims those.
+  One declaration, `filter: none`, taken from `card-reveal.css`'s own answer to the same question (D66), and
+  reported back in `00-open-requests.md`. Otherwise the change lists applied without a single judgement
+  call, which is the first handoff since 09 that needed no reconciliation at all.
+- → Ch. 04, Ch. 08
 
 ---
 

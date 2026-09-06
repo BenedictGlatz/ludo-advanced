@@ -27,6 +27,8 @@
       },
       "range": "Range 1 to {{faces}}",
       "leave": "Leaves start on {{faces}}",
+      "bonus": "Rolling {{faces}} rolls again",
+      "noBonus": "No bonus roll",
       "copies": "{{copies}} in the pool"
     },
     "skill": {
@@ -84,11 +86,11 @@
       },
       "action-rock": {
         "title": "Rock",
-        "text": "One of your own pawns becomes a wall nothing gets past, for two rounds."
+        "text": "One of your own pawns turns to stone for two rounds: nothing gets past it, and you cannot move it yourself."
       },
       "action-big-ah-rock": {
         "title": "Big Ah Rock",
-        "text": "Turn one square into a boulder for three rounds, and knock the nearest enemy pawn behind it back three squares."
+        "text": "One of your own pawns turns to stone for three rounds, and the nearest enemy pawn behind it is knocked back three squares."
       },
       "action-oil-spill": {
         "title": "Oil Spill",
@@ -120,7 +122,7 @@
       },
       "action-lock-in": {
         "title": "Lock In",
-        "text": "One of your own pawns stays put for a round and cannot be captured while it does."
+        "text": "Locks one of your own pawns in for a round: you cannot move it yourself, and nobody can capture it. Your other pawns move as usual."
       },
       "action-not-that-deep": {
         "title": "It's Not That Deep",

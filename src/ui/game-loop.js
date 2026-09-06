@@ -51,7 +51,7 @@
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { INTENT, dispatch } from "../state/intents.js";
 import { playableCards } from "../state/intents-cards.js";
-import { nextSeat } from "../state/turn-manager.js";
+import { nextSeat } from "../state/turn-resolution.js";
 import { createBotDriver } from "./bot-driver.js";
 import { createCardControls } from "./card-controls.js";
 import { bindMatchEvents } from "./events.js";

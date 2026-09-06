@@ -17,6 +17,9 @@
 
 import $ from "jquery";
 
+import { bindDragEvents } from "./drag-move.js";
+import { targetOfElement } from "./move-targets.js";
+
 /** The pawn identity a DOM event happened on. */
 function pawnOf(element) {
   return Number($(element).attr("data-pawn"));
@@ -46,6 +49,21 @@ export function bindBoardEvents($board, handlers) {
 
     event.preventDefault();
     handlers.onPawnActivated(pawnOf(this));
+  });
+
+  // Issue #91: the lit target square is clickable too. `[data-legal-target]` is written by
+  // `move-hints.js` after `core/` answered which squares a move ends on, so like `[data-movable]` it is
+  // a fact and not a rule check. `handlers.onTargetActivated(target)` gets the square's description
+  // and decides what pointing at it means.
+  $board.on("click", '.square[data-legal-target="true"]', function onClick() {
+    handlers.onTargetActivated(targetOfElement(this));
+  });
+
+  $board.on("keydown", '.square[data-legal-target="true"]', function onKeydown(event) {
+    if (!isActivationKey(event)) return;
+
+    event.preventDefault();
+    handlers.onTargetActivated(targetOfElement(this));
   });
 }
 
@@ -175,11 +193,17 @@ export function bindPickEvents($board, handlers) {
  * groups is exactly the set `game-loop.js`'s `start()` had written out, and the grouping is a real seam
  * rather than a line count: **these are the five regions that are rebuilt with every match.**
  *
+ * The drag binding (issue #91) lives in `drag-move.js` and is bound here beside the board's clicks. It is
+ * the one exception to "every jQuery event handler is in this file", and the header of that file says
+ * why: a drag is one gesture spread over three events and a little state, and that state has no place in
+ * a file whose whole point is that each handler does exactly one thing.
+ *
  * `regions` is `{ $board, $diceHand, $skillHand, $prompt }` and `handlers` is `{ board, cards }`, the
  * two controller objects the loop already holds.
  */
 export function bindMatchEvents({ $board, $diceHand, $skillHand, $prompt }, { board, cards }) {
-  bindBoardEvents($board, { onPawnActivated: board.onPawnActivated });
+  bindBoardEvents($board, board);
+  bindDragEvents($board, board);
   bindPickEvents($board, cards.handlers);
   bindDiceHandEvents($diceHand, { onDiceCardActivated: board.onDiceCardActivated });
   bindSkillHandEvents($skillHand, cards.handlers);

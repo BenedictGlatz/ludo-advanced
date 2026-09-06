@@ -2,6 +2,15 @@
    movement transition. Depends on tokens.css and on the seat mapping in
    board.css, which supplies --player.
 
+   Amended 2026-09-06, D101: the pawn statuses leave this file. D56's tilt,
+   D57's tag and the six kinds neither of them answered are in
+   pawn-status.css, which loads after this one, and the drag gesture of issue
+   #91 is in pawn-drag.css after that. The seam is what put the piece in the
+   state, not what the state looks like: this file draws the piece and the
+   five states the player puts it in, pawn-status.css draws what a card did to
+   it. --pawn-tilt stays declared here, in the transform below, because the
+   transform is this file's.
+
    The pawn is a direct child of .board and is positioned by --pawn-col and
    --pawn-row, fractional cell coordinates of its centre set inline by the
    view. It is never re-parented into a square. See D10 in the spec: a pawn
@@ -87,6 +96,9 @@
 
 .pawn[data-movable="true"] {
   cursor: pointer;
+  /* Issue #91: a movable pawn can be dragged, and on a touch screen the
+     browser would otherwise take the same gesture for a scroll. */
+  touch-action: none;
 }
 
 .pawn[data-movable="true"]::before {
@@ -155,79 +167,10 @@
    contrast on every pawn that is not the active seat's, which is exactly what
    NFR-12 and D16 cannot afford. The yard halo in board.css keeps the job. */
 
-/* --- Pawn statuses (D56, D57). data-statuses is a space-separated list, so
-       a pawn can carry two of these at once and both have to be readable
-       together. Two treatments, because the two facts are not the same size:
-       a status that stops the pawn changes the piece, a status that only
-       changes what a field hands the pawn is a tag stuck on the piece.
-
-       Nothing else on the pawn is available. Both pseudo-elements are taken,
-       the disc by ::after and the state ring by ::before. So the tag is a
-       second empty span, named in section 5 of the spec the way 04-spec named
-       three and 06-spec one. D97 has since freed the lower half of the disc,
-       and the tag keeps its shoulder anyway: the eyes are still there, and a
-       status is a thing stuck on the creature, not part of its face. --- */
-
-/* stunned: this pawn loses its next turn. It tips over, and its fill mixes
-   toward --color-dormant, the value the game already uses for a thing that is
-   present and not available. The seat colour stays under the mix and the ink
-   mark is untouched, so the piece is still identifiable while it is out.
-
-   The tilt is what makes it unmistakable rather than merely dull: it is the
-   only piece on the board that is not upright, it reads at a glance and it
-   reads in greyscale. It is a static transform and not a loop, so
-   prefers-reduced-motion has nothing to stop. A stunned pawn is also not
-   data-movable, which is true of eleven other pieces on a four-seat board and
-   is why the absent breathe ring could not carry this on its own. */
-.pawn[data-statuses~="stunned"] {
-  --pawn-tilt: -9deg;
-  cursor: default;
-}
-
-.pawn[data-statuses~="stunned"]::after {
-  background-color: color-mix(in oklab, var(--player) 58%, var(--color-dormant));
-}
-
-/* slippery: the pawn slid rather than walked, so the field it stopped on
-   hands out no card. One turn, and its only consequence has already happened
-   by the time the player reads the mark, which is why it is a tag and not a
-   change to the piece.
-
-   The tag is a dormant disc with an ink skid inside it, sitting on the disc's
-   upper right shoulder, clear of the eyes and of the seat mark at the foot.
-   It is the slot for the six statuses this issue does not answer: they take
-   the same box with their own inner geometry, one at a time, in an order the
-   spec that answers them sets. */
-.pawn__status {
-  position: absolute;
-  top: -8%;
-  right: -8%;
-  z-index: 2;
-  width: 38%;
-  height: 38%;
-  border: var(--border-hair) solid var(--color-ink);
-  border-radius: var(--radius-pill);
-  background: var(--color-dormant);
-  opacity: 0;
-  scale: 0.4;
-  transition:
-    opacity var(--motion-feedback) var(--ease-ui),
-    scale var(--motion-feedback) var(--ease-ui);
-}
-
-.pawn__status::before {
-  content: "";
-  position: absolute;
-  inset: 36% 14%;
-  border-radius: var(--radius-pill);
-  background: var(--color-ink);
-  rotate: -35deg;
-}
-
-.pawn[data-statuses~="slippery"] .pawn__status {
-  opacity: 1;
-  scale: 1;
-}
+/* --- The pawn statuses moved out on 2026-09-06 (D101). D56's stunned tilt,
+       D57's .pawn__status tag and the six kinds D57 left unstyled are in
+       pawn-status.css. Nothing about them changed in the move except the
+       file they are in; the tag keeps its shoulder and its geometry. --- */
 
 /* --- Keyboard focus. Desktop only does not mean mouse only (D11). --- */
 

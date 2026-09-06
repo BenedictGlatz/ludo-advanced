@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Rolling the maximum on a D6 or larger rolls that die again**, up to three rolls a turn. The D2 and the
+  D4 give no bonus roll, and every dice card now says on its face whether its maximum rolls again. A card
+  played into the first roll does not carry into the second, and the message strip says when a roll is a
+  bonus roll
+- **A pawn can be moved by pointing at where it should go.** Click the pawn, then click the lit square; or
+  drag the pawn onto the lit square and let go. Dropping it anywhere else puts it back. The lit squares can
+  also be reached with the keyboard and activated with Enter or Space. The two clicks on the pawn still
+  work, and a single click on a square only picks the pawn, so a misclick still cannot capture anything
+- **The last card anybody played is on screen**, as a plate at the end of the HUD row: the card's name, who
+  played it, on which turn, and whether it resolved, is still waiting for an answer or was cancelled.
+  Pointing at the plate, or tabbing to it, brings the card itself up at full size
+- **A pawn shows what a card did to it.** All nine statuses are drawn now: a petrified pawn squares off,
+  closes its eyes and gets heavier, a pawn that cannot be captured wears a second ink ring, and locked in,
+  held, taunted and slippery each get their own mark on the shoulder. A pawn that is locked in wears two of
+  them, because Lock In does two things at once
+- **Pointing at a pawn tells you what is stuck to it.** A pawn carrying a card effect (locked in, armoured,
+  petrified, stunned and the rest) now has a tooltip naming each effect and what it does, so a refused
+  capture or a pawn that will not move can be explained by looking at the pawn rather than guessing
 - `CLAUDE.md` defining the tech stack, architecture layering, testing, Git and AI prompt log conventions
 - `README.md` with project overview, setup instructions, scripts and contribution guidelines
 - This changelog
@@ -420,6 +438,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Rock and Big Ah Rock both turn one of your own pawns to stone, and stone does not move.** Rock's pawn
+  used to stay movable by its owner; Big Ah Rock used to turn a field into a boulder. Now both cards aim at
+  one of your pawns: nothing gets past it, you cannot move it, and no card can push it, for two rounds
+  (Rock) or three (Big Ah Rock). Big Ah Rock still knocks the nearest enemy pawn behind the stone back
+  three squares, and that push is now announced in the message strip
+- **A pawn being dragged looks like it is being carried**: it grows, it casts the longest shadow in the
+  game, it follows the pointer with no delay at all, and the field it would land on answers with a ring
+  drawn inside its own edge
+- **A petrified pawn's tooltip now says that its owner cannot move it either**, which is the half of the
+  rock cards' change the wording had left out
+- **Lock In's card text says what it costs you.** It now reads that you cannot move the locked pawn yourself
+  and that your other pawns move as usual. The rule is unchanged: a playtest read the card as locking the
+  whole turn, and the old wording did not say otherwise
 - **Choosing a player count no longer starts the match on its own** (issue #76). It sizes the match and
   opens the line-up screen, and Start on that screen is what begins the match. Two gestures where there
   used to be one, which is the price of the computer being reachable without the address bar. The
@@ -718,6 +749,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The reaction bar is readable in the dark skin.** Its plate was a fixed light peach and its text the
+  skin's text colour, which is near-white in the dark skin; the countdown had the same pairing. Both grounds
+  are now skin-paired tokens, so the light skin looks as before and the dark one has dark text on a dark
+  orange plate
 - **The skill card you are reading is no longer covered by the dice card you chose.** Pointing at a card in
   your hand magnifies it upward, out of its own row and over the foot of the dice row, and the dice card you
   had just picked painted over its top third. The card being read is now the top card layer, so it covers

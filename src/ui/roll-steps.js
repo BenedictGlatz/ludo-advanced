@@ -57,9 +57,16 @@ function sentence(step) {
  */
 export function rollBreakdown(state) {
   const steps = state.rollSteps;
-  if (steps.length < 2) return null;
+  const bonus = state.bonusRoll === true;
 
-  return steps.map((step) => ({ kind: step.step, text: sentence(step) }));
+  // D73.3's "two or more, never one" has one exception since issue #89: a bonus roll is worth a line
+  // even when nothing else changed the number, because the player has to be told **why** a second roll
+  // just happened. The bonus line goes first, as the reason the rest of the list exists.
+  if (steps.length === 0 || (!bonus && steps.length < 2)) return null;
+
+  const list = steps.map((step) => ({ kind: step.step, text: sentence(step) }));
+
+  return bonus ? [{ kind: "bonus", text: t("roll.bonus") }, ...list] : list;
 }
 
 /**

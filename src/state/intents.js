@@ -61,17 +61,15 @@ import { REJECTED, accept, reject } from "./rejections.js";
 import { INTENT_CARD, dispatchCardIntent } from "./intents-cards.js";
 import { closeWindow, openWindow } from "./reaction-window.js";
 import {
-  cancelPendingMove,
   chooseDie,
   commitMove,
   drawHand,
-  endTurn,
   moveForPawn,
   passAction,
-  resolveMove,
   rollChosenDie,
   selectPawn,
 } from "./turn-manager.js";
+import { cancelPendingMove, endTurn, resolveMove } from "./turn-resolution.js";
 
 /** The seven things `ui/` may ask for. There is deliberately no "move this pawn there". */
 export const INTENT = {

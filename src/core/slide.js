@@ -35,6 +35,7 @@
  * | What | Why | Where the rule already lives |
  * | --- | --- | --- |
  * | A Rock or a Big Ah Rock | Nothing crosses or lands on one while it stands | `blockedSquares` |
+ * | The pushed pawn itself being stone | A petrified pawn does not move, for its owner or for a card (issue #90) | `evaluatePawn`, same status |
  * | A pawn of the pushed pawn's own player | Two of one player's pawns may not share a square (FR-12), and in a house that is what forces the four pawns onto the four house squares | `isSameSquare`, and `ownPawnBlocking` for an ordinary move |
  * | A pawn carrying `STATUS.ARMOURED` | Built Different, and Lock In's "immune to capture and to forced movement" | `moveOnto`, which already reasons that "a pawn that cannot be captured cannot be landed on either, because the alternative is two pawns sharing a square" |
  *
@@ -108,6 +109,9 @@ export function slideStop(pawns, board, ref, delta) {
   const pawn = pawnFor(pawns, ref);
   if (pawn === undefined) return START_R;
   if (pawn.r === START_R || delta === 0) return pawn.r;
+  // Issue #90: stone does not slide. Checked before the clamp so a petrified pawn answers its own
+  // position and the caller's "did anything happen" comparison reads false.
+  if (hasStatus(board.statuses, STATUS.ROCK, ref)) return pawn.r;
 
   const target = Math.min(HOME_R, Math.max(PUSHBACK_FLOOR, pawn.r + delta));
   const step = target >= pawn.r ? 1 : -1;

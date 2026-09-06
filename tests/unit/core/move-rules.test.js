@@ -14,7 +14,6 @@ import { describe, expect, it } from "vitest";
 import { REFUSAL, evaluateTurn, legalMoves } from "../../../src/core/movement.js";
 import { blockedSquares } from "../../../src/core/move-rules.js";
 import { STATUS } from "../../../src/core/statuses.js";
-import { TRAP_KIND } from "../../../src/core/traps.js";
 import { pawnsAt } from "../../../tests/helpers/fixtures.js";
 
 const boardWith = (statuses = [], traps = []) => ({ statuses, traps });
@@ -66,6 +65,31 @@ describe("Hold Pawn and Lock In take one pawn out of the choice", () => {
     const result = evaluateTurn(pawns, 0, 3, 6, board);
 
     expect(result.refusals).toContainEqual({ player: 0, pawn: 0, reason: REFUSAL.LOCKED });
+  });
+
+  /**
+   * The playtest finding behind issue #88, written down as a test so it stays answered. A tester
+   * reported that Lock In "prevents all movement this turn". It does not: the lock is on one pawn, and
+   * the other three are evaluated exactly as before. What the tester saw was the other case below,
+   * where the locked pawn was the only one on the track and the roll was not the maximum, so nothing
+   * else could leave the yard either. That is FR-09 doing its job, not the lock spreading.
+   */
+  it("locks exactly one pawn: three others on the track still move (issue #88)", () => {
+    const pawns = pawnsAt(4, { "0.0": 12, "0.1": 14, "0.2": 20, "0.3": 30 });
+    const board = boardWith([status(STATUS.LOCKED, 0, 0)]);
+    const moves = legalMoves(pawns, 0, 3, 6, board);
+
+    expect(moves.map((move) => move.pawn)).toEqual([1, 2, 3]);
+  });
+
+  it("leaves a turn with no move when the only track pawn is locked and the roll is not the maximum", () => {
+    const pawns = pawnsAt(4, { "0.0": 12 });
+    const board = boardWith([status(STATUS.LOCKED, 0, 0)]);
+    const result = evaluateTurn(pawns, 0, 3, 6, board);
+
+    expect(result.moves).toEqual([]);
+    expect(result.refusals).toContainEqual({ player: 0, pawn: 0, reason: REFUSAL.LOCKED });
+    expect(result.refusals.filter((r) => r.reason === REFUSAL.NEEDS_MAXIMUM)).toHaveLength(3);
   });
 });
 
@@ -175,6 +199,21 @@ describe("The Purge makes an own pawn capturable instead of blocking", () => {
   });
 });
 
+describe("a petrified pawn cannot be moved by its owner (issue #90)", () => {
+  /**
+   * The rulebook says "immovable stone"; until a playtest asked, the code let the owner walk the wall
+   * around. Same shape as Lock In: the stone drops out, the owner's other pawns are untouched.
+   */
+  it("refuses the stone with its own reason and leaves the other pawns alone", () => {
+    const pawns = pawnsAt(4, { "0.0": 12, "0.1": 20 });
+    const board = boardWith([status(STATUS.ROCK, 0, 0)]);
+    const result = evaluateTurn(pawns, 0, 3, 6, board);
+
+    expect(result.moves.map((move) => move.pawn)).toEqual([1]);
+    expect(result.refusals).toContainEqual({ player: 0, pawn: 0, reason: REFUSAL.PETRIFIED });
+  });
+});
+
 describe("Rocks block the path, not just the target", () => {
   /**
    * This is the one rule that had to look at the whole walk. Every other rule in the project checks
@@ -196,14 +235,6 @@ describe("Rocks block the path, not just the target", () => {
     const board = boardWith([status(STATUS.ROCK, 2, 0)]);
 
     expect(legalMoves(pawns, 0, 2, 6, board).map((move) => move.pawn)).toContain(0);
-  });
-
-  it("blocks a Big Ah Rock's square with no pawn standing on it", () => {
-    const traps = [{ kind: TRAP_KIND.BIG_AH_ROCK, square: 14, owner: 2, until: 99 }];
-    const pawns = pawnsAt(4, { "0.0": 12 });
-    const result = evaluateTurn(pawns, 0, 3, 6, boardWith([], traps));
-
-    expect(result.refusals).toContainEqual({ player: 0, pawn: 0, reason: REFUSAL.BLOCKED });
   });
 });
 
@@ -227,10 +258,13 @@ describe("blockedSquares", () => {
     expect(blockedSquares(pawnsAt(4, { "2.0": 43 }), board)).toEqual([]);
   });
 
-  it("merges the two sources and lists each square once", () => {
-    const traps = [{ kind: TRAP_KIND.BIG_AH_ROCK, square: 24, owner: 1, until: 99 }];
-    const board = boardWith([status(STATUS.ROCK, 2, 0)], traps);
+  /**
+   * Issue #90: the trap list is no longer a source. A Big Ah Rock used to be an entry there; it is now
+   * the same status Rock writes, so two stones on two pawns are simply two entries in one list.
+   */
+  it("lists every stone once and reads nothing from the trap list", () => {
+    const board = boardWith([status(STATUS.ROCK, 2, 0), status(STATUS.ROCK, 1, 0)], []);
 
-    expect(blockedSquares(pawnsAt(4, { "2.0": 5 }), board)).toEqual([24]);
+    expect(blockedSquares(pawnsAt(4, { "2.0": 5, "1.0": 5 }), board).sort()).toEqual([14, 24]);
   });
 });

@@ -153,12 +153,11 @@ const ROLL_CARDS = Object.freeze([
   "action-fr-fr",
 ]);
 
-/** The four cards that leave something standing on a square. */
+/** The three cards that leave something standing on a square. */
 const TRAP_CARDS = Object.freeze([
   "action-banana-peel",
   "action-oil-spill",
   "action-not-that-deep",
-  "action-big-ah-rock",
 ]);
 
 /** What my own pawns standing on `square` would lose if everything there were sent home. */

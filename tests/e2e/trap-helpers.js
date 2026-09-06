@@ -20,6 +20,7 @@
 import { expect } from "@playwright/test";
 
 import {
+  afterMove,
   boardState,
   carryOn,
   chooseDiceCard,
@@ -161,7 +162,12 @@ export async function playUntilTrapFires(board, maxTurns = 60) {
     if (phase === "choose") await chooseDiceCard(board);
     await carryOn(board);
 
-    if ((await boardState(board)).phase === "act") {
+    // A loop since issue #89: a natural maximum on a D6 or larger rolls again, so one turn can hold
+    // several moves, and a trap can go off on any of them. `afterMove` says whether the same turn is
+    // back in `act` or has passed.
+    let acting = (await boardState(board)).phase === "act";
+    while (acting) {
+      const { rolls } = await boardState(board);
       await moveFirstMovablePawn(board);
 
       const key = await messageStrip(board).getAttribute("data-reason-key");
@@ -172,10 +178,38 @@ export async function playUntilTrapFires(board, maxTurns = 60) {
           text: await messageStrip(board).innerText(),
         };
       }
+
+      acting = (await afterMove(board, turnNumber, rolls)) === "again";
     }
 
     await waitPastTurn(board, turnNumber);
   }
 
   return null;
+}
+
+/**
+ * Drive the match until `seat` is choosing a die with at least one pawn on the track, choose the die,
+ * and return whether the turn stopped in the action phase. Issue #90.
+ *
+ * An own-pawn card (Rock, Big Ah Rock, Lock In, Built Different) has nothing to point at while every
+ * pawn is in the yard, so a spec that plays one has to wait for a track pawn first. `playTurn` is passed
+ * in rather than imported, for the same reason `awaitCardInHand` takes it: the helper file drives no
+ * turns of its own.
+ */
+export async function reachOwnPawnOnTrack(board, playTurn, seat = 0, maxTurns = 8) {
+  for (let step = 0; step < maxTurns; step += 1) {
+    const { activePlayer, phase } = await boardState(board);
+    const onTrack = await board
+      .locator(`.pawn[data-player="${seat}"]`)
+      .evaluateAll((pawns) => pawns.some((p) => Number(p.getAttribute("data-r")) > 0));
+
+    if (activePlayer === seat && phase === "choose" && onTrack) {
+      await chooseDiceCard(board);
+      return (await boardState(board)).phase === "action";
+    }
+    await playTurn(board);
+  }
+
+  return false;
 }

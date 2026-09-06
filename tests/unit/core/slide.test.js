@@ -26,19 +26,11 @@ import { HOME_R, START_R } from "../../../src/core/board.js";
 import { PUSHBACK_FLOOR } from "../../../src/core/displacement.js";
 import { slidePawn, slideStop } from "../../../src/core/slide.js";
 import { STATUS } from "../../../src/core/statuses.js";
-import { TRAP_KIND } from "../../../src/core/traps.js";
 import { pawnsAt } from "../../helpers/fixtures.js";
 
 const boardWith = (statuses = [], traps = []) => ({ statuses, traps });
 
 const status = (kind, player, pawn, until = 99) => ({ kind, player, pawn, until, source: "test" });
-
-const blocker = (square) => ({
-  kind: TRAP_KIND.BIG_AH_ROCK,
-  square,
-  owner: 3,
-  until: 99,
-});
 
 const rOf = (pawns, player, pawn) =>
   pawns.find((entry) => entry.player === player && entry.pawn === pawn).r;
@@ -67,18 +59,7 @@ describe("an unobstructed push goes the whole way", () => {
   });
 });
 
-describe("a blocker stops the slide on the square before it", () => {
-  /**
-   * A Big Ah Rock is an entry in the trap list with a square of its own, so this is the simple half.
-   * Absolute 12 is seat 0's `r = 13`, so a push of 5 from `r = 10` walks into it and stops at 12.
-   */
-  it("stops before a Big Ah Rock rather than sliding through it", () => {
-    const pawns = pawnsAt(4, { "0.0": 10 });
-    const board = boardWith([], [blocker(12)]);
-
-    expect(slideStop(pawns, board, mover, 5)).toBe(12);
-  });
-
+describe("a stone stops the slide on the square before it", () => {
   /**
    * The other half, and the reason `blockedSquares` reads pawns at all: a Rock is a status on a pawn,
    * so the blocked square is wherever that pawn is standing this instant. Seat 2 at `r = 33` is on
@@ -96,10 +77,25 @@ describe("a blocker stops the slide on the square before it", () => {
    * never going to reach. Absolute 16 is seat 0's `r = 17`, two squares past the target.
    */
   it("ignores a blocker beyond where the push would have ended anyway", () => {
-    const pawns = pawnsAt(4, { "0.0": 10 });
-    const board = boardWith([], [blocker(16)]);
+    // Seat 2 at `r = 37` stands on absolute 16.
+    const pawns = pawnsAt(4, { "0.0": 10, "2.0": 37 });
+    const board = boardWith([status(STATUS.ROCK, 2, 0)]);
 
     expect(slideStop(pawns, board, mover, 5)).toBe(15);
+  });
+
+  /**
+   * Issue #90: the stone itself does not slide. A Yeet, a knockback or a trap aimed at a petrified pawn
+   * leaves it exactly where it stands, which is what "immovable" has to mean for a card as well as for
+   * its owner.
+   */
+  it("does not move a pawn that is itself the stone", () => {
+    const pawns = pawnsAt(4, { "0.0": 10 });
+    const board = boardWith([status(STATUS.ROCK, 0, 0)]);
+
+    expect(slideStop(pawns, board, mover, 5)).toBe(10);
+    expect(slideStop(pawns, board, mover, -4)).toBe(10);
+    expect(slidePawn(pawns, board, mover, 5).to).toBe(10);
   });
 });
 
@@ -204,8 +200,9 @@ describe("the walk it reports", () => {
    * or the trap check that runs afterwards would look at squares the pawn never touched.
    */
   it("reports the walk the pawn really took, not the one that was asked for", () => {
-    const pawns = pawnsAt(4, { "0.0": 10 });
-    const board = boardWith([], [blocker(12)]);
+    // Seat 2 at `r = 33` is the stone on absolute 12.
+    const pawns = pawnsAt(4, { "0.0": 10, "2.0": 33 });
+    const board = boardWith([status(STATUS.ROCK, 2, 0)]);
     const result = slidePawn(pawns, board, mover, 5);
 
     expect(result.from).toBe(10);

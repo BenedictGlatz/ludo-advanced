@@ -34,6 +34,7 @@ import {
   taxFraud,
 } from "./values-roll.js";
 import {
+  bigAhRock,
   builtDifferent,
   headOut,
   letHimCook,
@@ -42,14 +43,7 @@ import {
   rock,
   yeet,
 } from "./values-pawns.js";
-import {
-  bananaPeel,
-  bigAhRock,
-  hyperbeam,
-  jankyRpg,
-  notThatDeep,
-  oilSpill,
-} from "./values-squares.js";
+import { bananaPeel, hyperbeam, jankyRpg, notThatDeep, oilSpill } from "./values-squares.js";
 import {
   criticalFailure,
   devilDie,

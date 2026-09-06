@@ -558,6 +558,20 @@ the clearest example in the project of a requirement whose owner is the design s
 on the implementation side, and it is worth a paragraph on its own.
 
 
+### A rule change from a playtest, and no requirement id carries it: 2026-09-06, issue #89
+
+The bonus roll (a natural maximum on a D6 or larger rolls again, three rolls a turn at most) is a rule
+of the game since 2026-09-06 and lives in GDD § 3. **No FR names it.** FR-09 to FR-14 describe movement,
+FR-18 to FR-21 the dice pool, and none of them says how many times a turn rolls. Recorded as a standing
+finding rather than patched: `Requirements-Specification.md` is the frozen planning document and a new
+FR-46 written after the fact would be a requirement invented to match the code. The GDD is the rulebook
+and carries the rule with its reasons; the specification's trace column would be the place to add it in a
+planning slot, with the Product Owner's sign-off, if the module's assessment asks for full traceability.
+
+Also of note for the scope chapter: this is the first rule the project **un-rejected**. GDD § 3 said no
+bonus roll and gave the D2 as the reason; the accepted version keeps the reason as a floor. The rejected
+paragraph is kept in the GDD as a quote rather than deleted.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

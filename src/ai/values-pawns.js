@@ -33,6 +33,7 @@ import {
   YEET_DIE,
   COOK_DIE,
 } from "../core/cards/effects/displacement-effects.js";
+import { KNOCKBACK } from "../core/cards/effects/status-effects.js";
 import { squareOf } from "../core/displacement.js";
 import { slidePawn } from "../core/slide.js";
 import { boardOf } from "../state/game-state.js";
@@ -64,22 +65,57 @@ const BLOCK_RANGE = 6;
 /** What one pawn being stopped by a blocker is worth. A guess, and the same one for both rock cards. */
 const BLOCK_WORTH = 3;
 
+/** What standing still for a round costs, in steps. Roughly one average roll of the smaller dice. */
+const LOCK_COST = 5;
+
+/**
+ * What a wall on one of my pawns is worth: the enemies it stops, less my own pawns it stops, less the
+ * pawn's own standstill.
+ *
+ * Shared by Rock and Big Ah Rock. The subtraction of friends is the card's whole character: a Rock
+ * blocks its owner exactly as hard as everybody else. **The standstill is new in issue #90**, when a
+ * petrified pawn stopped being movable by its owner: the same `LOCK_COST` Lock In pays, because it is
+ * the same fact, one pawn sitting out a round of walking.
+ */
+function wallValue(state, seat, pawn) {
+  const square = squareOf(pawn);
+  const enemies = enemiesBehind(state.pawns, square, BLOCK_RANGE, seat).length;
+  const friends = friendsBehind(state.pawns, square, BLOCK_RANGE, seat).length;
+
+  return BLOCK_WORTH * (enemies - friends) - LOCK_COST;
+}
+
 /**
  * Turn one of your own pawns into a wall (Rock).
  *
  * Worth `BLOCK_WORTH` for every opponent pawn close enough behind to run into it, less the same for
- * every one of my own pawns behind it, because a Rock blocks its owner exactly as hard as everybody
- * else. That subtraction is the entire card: a wall in front of my own train of pawns is a card played
- * against myself.
+ * every one of my own pawns behind it, less what the pawn gives up by standing still. A wall in front
+ * of my own train of pawns is a card played against myself.
  */
 export function rock(state, seat) {
   return best(
-    ownOnTrack(state, seat).map((pawn) => {
-      const square = squareOf(pawn);
-      const enemies = enemiesBehind(state.pawns, square, BLOCK_RANGE, seat).length;
-      const friends = friendsBehind(state.pawns, square, BLOCK_RANGE, seat).length;
+    ownOnTrack(state, seat).map((pawn) => ({
+      value: wallValue(state, seat, pawn),
+      target: { pawn: ref(pawn) },
+    }))
+  );
+}
 
-      return { value: BLOCK_WORTH * (enemies - friends), target: { pawn: ref(pawn) } };
+/**
+ * The same wall for a round longer, and the nearest enemy behind it knocked back three (Big Ah Rock).
+ *
+ * Priced as Rock plus the knockback, taken as a share, when there is an enemy within `BLOCK_RANGE`
+ * behind the pawn to knock. The rules push the nearest enemy anywhere round the ring, and a pawn
+ * thirty squares behind is still pushed three; it is simply not worth spending the card on, which is
+ * what the range says. Issue #90 moved this here from `values-squares.js`, where it priced a square.
+ */
+export function bigAhRock(state, seat) {
+  return best(
+    ownOnTrack(state, seat).map((pawn) => {
+      const behind = enemiesBehind(state.pawns, squareOf(pawn), BLOCK_RANGE, seat).length > 0;
+      const knock = behind ? share(state) * KNOCKBACK : 0;
+
+      return { value: wallValue(state, seat, pawn) + knock, target: { pawn: ref(pawn) } };
     })
   );
 }
@@ -99,9 +135,6 @@ export function builtDifferent(state, seat) {
     }))
   );
 }
-
-/** What standing still for a round costs, in steps. Roughly one average roll of the smaller dice. */
-const LOCK_COST = 5;
 
 /**
  * The same protection, and the pawn may not move for a round (Lock In).

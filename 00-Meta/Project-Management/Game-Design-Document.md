@@ -205,10 +205,22 @@ interrupt. This is the sequence the turn manager in `state/` implements and the 
 8. **End of turn.** The 3 drawn dice cards are returned to the pool and reshuffled (FR-21). The active
    player draws Skill Cards up to the hand limit (section 6.5). Then the active player advances.
 
-There is no extra turn for any roll. Classic Ludo grants another turn on a 6; here the equivalent
-would be "another turn on the die's maximum", which would compound with a D2 (maximum on half of all
-rolls) into a player rolling repeatedly. **Rejected for that reason**, and the effect is available as
-a skill card instead (`action-reroll`), where it costs a card.
+**A natural maximum on a die of six or more faces rolls that die again**, at most three rolls a turn
+(issue #89, decided 2026-09-06 after a playtest). Steps 5 to 7 repeat with the same dice card; no new card
+is drawn or chosen, the action phase is not revisited, and the roll modifiers of a card played into the
+first roll do not carry into the second. "Natural" means the face the die showed: a roll a card lifted to
+the maximum, or a number FR FR named, earns nothing. The D2 and the D4 give no bonus, and every dice card
+says which side of that line it is on.
+
+> **What this paragraph said until 2026-09-06, kept because the reason still shapes the rule:** there is
+> no extra turn for any roll. Classic Ludo grants another turn on a 6; here the equivalent would be
+> "another turn on the die's maximum", which would compound with a D2 (maximum on half of all rolls) into
+> a player rolling repeatedly. Rejected for that reason, and the effect is available as a skill card
+> instead (`action-reroll`), where it costs a card.
+>
+> The playtest asked for the classic bonus anyway, and the Product Owner took it with the D2 objection
+> built in as a floor: six faces or more. The cap of three is the classic three-sixes rule, and it is also
+> what lets the bot loop and the seeded tests end a turn whatever the RNG says.
 
 ---
 
@@ -672,8 +684,8 @@ over several squares at once.
 | `action-banana-peel` | Banana Peel | Action | blocking | track square | A trap. The next pawn to cross it is stunned and loses its next turn. |
 | `action-hyperbeam` | Hyperbeam | Action | offensive | own pawn, direction | Roll a D4. Every pawn on the next 1 to D4 squares in that direction goes home, yours included. |
 | `reaction-uno-reverse` | Uno Reverse | Reaction | troll | no | When an opponent lands on your pawn to capture it, their pawn goes home instead. |
-| `action-rock` | Rock | Action | blocking | own pawn | One of your pawns becomes immovable stone for 2 rounds. Nothing lands on it or passes through it. |
-| `action-big-ah-rock` | Big Ah Rock | Action | blocking | track square | A square becomes a boulder for 3 turns, and the enemy pawn directly behind you is knocked back 3. |
+| `action-rock` | Rock | Action | blocking | own pawn | One of your pawns becomes immovable stone for 2 rounds. Nothing lands on it or passes through it, and you cannot move it either (issue #90 made the second half true in code). |
+| `action-big-ah-rock` | Big Ah Rock | Action | blocking | own pawn | One of your pawns becomes immovable stone for 3 rounds, and the enemy pawn directly behind it is knocked back 3. ~~A square becomes a boulder for 3 turns~~: changed 2026-09-06 after a playtest, issue #90; the square reading is recorded in the project journal. |
 | `action-oil-spill` | Oil Spill | Action | blocking | track square | A trap. Whoever steps on it slides 3 to 5 squares forward, triggering no skill square on the way. |
 | `reaction-ghost-mode` | Ghost Mode | Reaction | movement | no | Played when someone captures or blocks you: pass through every blocker and ignore capture this turn. |
 | `action-head-out` | Aight Imma Head Out | Action | movement | own pawn, choice | Swap with a random pawn, or teleport to the nearest skill square. Your call. |

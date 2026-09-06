@@ -117,8 +117,8 @@ describe("the seven squares an It's Not That Deep protects", () => {
 
 describe("what does not project an aura", () => {
   /** One trap kind has this rule. A Banana Peel does nothing at all until it is stepped on. */
-  it("no other trap kind, and no blocker", () => {
-    for (const kind of [TRAP_KIND.BANANA_PEEL, TRAP_KIND.OIL_SPILL, TRAP_KIND.BIG_AH_ROCK]) {
+  it("no other trap kind", () => {
+    for (const kind of [TRAP_KIND.BANANA_PEEL, TRAP_KIND.OIL_SPILL]) {
       expect(nullifyingTrap([trap(kind, 17)], 17, 0)).toBeNull();
     }
   });

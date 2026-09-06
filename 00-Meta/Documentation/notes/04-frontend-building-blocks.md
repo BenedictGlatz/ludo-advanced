@@ -3012,6 +3012,283 @@ The changes were applied rule by rule instead, which is what § 1 of the spec as
 handoff is that a whole-file delivery is a diff whose base is unstated**, and the base is whatever the
 design side last read. Worth one line in the retrospective, because it will happen again.
 
+### The handoff loop got an exception, and it is the process change of Sprint 2: 2026-09-06, no issue
+
+**Small design fixes no longer go through Claude Design.** The rule in `CLAUDE.md` *Design and UI* was
+absolute from 2026-08-06 until now: every design change went through a brief and a spec. It is now split
+by the kind of change. Claude Code fixes what is already specified and visibly broken; Claude Design owns
+new screens, new components and the design system itself.
+
+**Requested by the Product Owner, and his reason is the one that matters for the report:** after sixteen
+handoffs the loop had become expensive for the wrong category of change, and prototyping is what he
+actually wants it for. The full decision block, with three rejected alternatives and the cost this
+knowingly accepts, is in [project-journal.md](../project-journal.md) under 2026-09-06.
+
+**Three conditions decide which side a change falls on**, and a change failing any one of them goes back
+to a brief:
+
+1. It repairs something already specified: a visual bug, a state the spec defines but the CSS does not
+   apply, or a value that contradicts the spec it came from.
+2. It uses only existing tokens and the patterns already in the neighbouring stylesheets. Needing a new
+   colour, token or unrelatable size makes it a design decision.
+3. It does not change how the screen looks when it is working. Repairing a broken state is a fix, making
+   a working state look different is not.
+
+**Why conditions rather than judgement:** the old rule was enforceable precisely because it was absolute,
+and "use your judgement" would hand this side the decision `CLAUDE.md` exists to withhold. The wording is
+built so that the ambiguous case fails a condition and leaves.
+
+**What this chapter should watch, and it is a negative finding waiting to happen:** the two trees drift
+further apart now. Fixes land in `src/ui/styles/` that the design side never sees, and it already read
+stale stylesheets twice (handoff 16, the section above). `01-Design/Handoff/00-open-requests.md` is the
+mitigation and it only works when this side notices that a fix contradicts a spec rather than the CSS.
+Whether that held is worth checking at the end of Sprint 3, either way.
+
+### The first fix under the new rule: the reaction bar was white on peach in the dark skin: 2026-09-06, issue #92
+
+**The defect.** A playtester reported the reaction plate at the foot of the rail as "light yellow with
+white writing". `prompt.css` painted `.prompt[data-mode="reaction"]` with `--card-reaction-wash`, which
+is `#ffeedc` in both skins on purpose (`tokens.css`, the D25 block: the wash sits behind card art drawn
+in dark ink and must not flip). The plate's text is `--color-text`, which is `light-dark(#3a2b55, #f6efff)`.
+In the dark skin that is near-white text on a pale ground. The countdown `.prompt__clock` had the same
+pairing with `--card-result-bg`, also fixed cream.
+
+**The fix.** Two grounds swapped for skin-paired tokens from the same family: `--color-warn-soft`
+(`light-dark(#fdeadb, #55391f)`) for the plate, `--color-surface` for the clock. Nothing else changed.
+In the light skin `#fdeadb` against `#ffeedc` is a difference nobody sees; in the dark skin the plate
+becomes dark orange under light text.
+
+**Why it qualifies as a small fix and did not go to Claude Design.** All three `CLAUDE.md` conditions
+hold: it repairs a visible bug, it uses only existing tokens and the pairing pattern the neighbouring
+plates already use, and the working state (the light skin) looks the same. One complication is worth
+recording: **no spec covers the reaction plate at all**. `prompt-view.js` says so in its header and
+spec 04 answered only the countdown ring and the plate's position in the rail. So the fix does not
+correct a spec line, it corrects the code's own borrowing of a card token for a non-card surface. It is
+still reported in `00-open-requests.md`, because the plate's real design is owed and whoever designs it
+should know which token the code reads today.
+
+**Why `--color-warn-soft` and not a `light-dark()` pair on `--card-reaction-wash` itself.** Changing the
+wash would change every Reaction card's face in the dark skin, which is a design-system change and
+exactly what the new rule keeps with Claude Design. The plate is the thing that was wrong, so the plate
+is what changed.
+
+**Coverage.** No end-to-end test asserts the plate's colours, and none was added: a colour assertion on
+a token-driven surface tests the token file rather than the fix. Checked by eye in both skins with
+`npm run dev`.
+
+### A pawn moves by pointing at its target: click the lit square, or drag: 2026-09-06, issue #91
+
+**The request.** A playtester wanted to move a pawn either by dragging it or by clicking where it should
+go. Until now the only gesture was two clicks on the pawn (`turn-controls.js`, issue #62), and the lit
+target squares from `move-hints.js` were highlights nothing listened to.
+
+**Two gestures, one rule.** Both are the same two-step move spelled differently, and the two-step safety
+from issue #62 is kept on purpose: a first gesture picks, a second commits, because a misclick on a
+capture costs another player most of a lap.
+
+- **Target click.** `events.js` binds `click` and Enter/Space on `.square[data-legal-target="true"]`
+  and hands the square's description to `onTargetActivated`. `move-targets.js` (new, jQuery-free)
+  translates the square back into the legal move it was lit for, using the same three `core/board.js`
+  functions `move-hints.js` used to light it, so the two cannot disagree. With nothing selected the click
+  selects the pawn that reaches the square; with that pawn selected it commits. The lit squares carry
+  `tabindex="0"` while lit, so the keyboard reaches them (NFR-08).
+- **Drag.** `drag-move.js` (new) turns `pointerdown`, `pointermove` and `pointerup` into
+  `onDragStarted` and `onDragEnded`. A press becomes a drag after `DRAG_THRESHOLD_PX` (6 px); the pawn
+  is then selected, so its one target lights under the pointer, and it follows the pointer through
+  `--drag-dx` / `--drag-dy`, applied in `pawn.css` as a `translate` that composes with the positioning
+  transform. Letting go on the target commits; anywhere else `render()` puts the pawn back and the
+  selection stays. Pointer capture keeps the gesture when the pointer leaves the board; `pointercancel` is
+  a drop on nothing; `touch-action: none` on a movable pawn stops a touch screen scrolling instead.
+
+**Two traps avoided, both worth recording.**
+
+- **Selecting on `pointerdown` was rejected.** The browser fires a `click` after every press, and a pawn
+  already selected by the press would have been committed by that click: two clicks turned into one for
+  every pawn. So nothing happens until the threshold, and after a real drag the trailing `click` is
+  swallowed in the capture phase on the board, before jQuery's delegated handlers see it.
+- **`pointer-events: none` on the carried pawn was rejected** as the way to see the square under it.
+  `elementsFromPoint` (plural) finds the square beneath the pawn without it, and the 2026-09-03 challenge
+  entry is the reason this project does not gate input on an attribute it has to remember to clear.
+
+**Where the exception to `events.js`'s rule is.** That file promises every jQuery handler lives in it and
+each does exactly one thing. A drag is one gesture across three events with state between them, so it has
+its own file and is bound from `bindMatchEvents` beside the board's clicks; the header of `events.js` says so.
+
+**What is not designed yet.** The carried pawn gets `data-dragging`, a `grabbing` cursor and the active
+z-index, and nothing else. What a pawn in the hand should look like (shadow, lift, the target's response)
+is a look, not a fix, and goes to brief 17 with the other pawn questions.
+
+**Tests.** `move-targets.test.js` and the two new groups in `turn-controls.test.js` cover the decisions
+without a browser; `pawn-moves.spec.js` gained five cases: target click after a pawn click, target click
+with nothing selected (picks, does not move), a drag onto the target, a drag dropped elsewhere (pawn back,
+still selected, nothing moved), and Enter on a focused target square.
+
+### A pawn now says what is stuck to it, in a `title`: 2026-09-06, issue #94
+
+**The gap.** `board-marks.js` has written `data-statuses` on every pawn since issue #45, and design spec
+07 styled two of the nine kinds (`stunned`, `slippery`). The other seven were invisible. A playtester ran
+into exactly that: a capture was refused, the message strip said "protected", and the pawn on the square
+looked like every other pawn. The report came in as "I cannot capture a pawn on its entry square", which
+the rules do allow; the pawn was almost certainly carrying Lock In or Built Different.
+
+**What ships.** `markStatuses` also writes a `title` attribute: one clause per status kind from the new
+`status.*` keys in `ui.json`, joined with `status.separator`. The wording lives in
+`src/ui/status-labels.js`, a jQuery-free sibling of `player-labels.js`, so that `status-title.test.js` can
+check every `STATUS` kind has a sentence without a DOM. A pawn carrying nothing has no `title` at all.
+
+**Why a native tooltip and not a designed one.** A `title` is text, not a look. Under the 2026-09-06
+rule it needs no brief, and it closes the "why can I not do this" gap the same day. The drawn marks for
+the seven unstyled kinds and a designed tooltip are asked for in brief 17 together with the protection
+aura the tester suggested; this attribute is the fallback until then, and it can stay underneath a drawn
+mark as the keyboard and screen-reader text.
+
+**Rejected: styling the seven kinds now with borrowed tokens.** It would have been exactly the case the
+rule sends back to a brief: seven new marks with nothing to derive them from.
+
+### Brief 17 sent: the last card, the six unstyled statuses, the tooltip and the carried pawn: 2026-09-06, issues #93, #94, #91
+
+The playtest of 2026-09-06 produced three things the player could not see, and under the same day's
+amendment to `CLAUDE.md` all three are new looks rather than fixes, so they went to Claude Design as one
+brief: [17-brief-last-card-and-pawn-status.md](../../../01-Design/Handoff/17-brief-last-card-and-pawn-status.md).
+
+- **D100**, the last-card slot: `state.lastCard` exists (issue #93), the element does not. The brief
+  proposes reusing the card component so spec 10's hover reveal gives the tester the card text on hover.
+- **D101**, marks for the six statuses D57 left unstyled, with the protection aura the tester suggested.
+  This is the item that turned from a leftover into a defect: `armoured` and `ghost` are why a capture is
+  refused and the pawn showed neither.
+- **D102**, whether the native `title` from issue #94 gets a designed replacement.
+- **D103**, the carried pawn from issue #91, deliberately unstyled until answered.
+
+The brief also records that D52 is retired (issue #90) and lists what Claude Code already shipped so the
+spec does not re-ask it. It is the first brief that reads against four feature branches at once, which is
+a consequence of one playtest becoming seven issues on one afternoon; the "Read against" line says so.
+
+### Handoff 17 landed: the last card is a plate, nine statuses are drawn, and a carried pawn has weight: 2026-09-06, issues #93, #94, #91, #90
+
+[17-spec-last-card-and-pawn-status.md](../../../01-Design/Handoff/17-spec-last-card-and-pawn-status.md)
+answered D100 to D103 and retired D52. All four answers are built, and the three things the playtest of
+that morning found invisible are now on screen.
+
+**Three new stylesheets, and two amendments that arrived as change lists rather than as files.**
+
+| File | State |
+| --- | --- |
+| `src/ui/styles/last-card.css` | New. D100, the plate |
+| `src/ui/styles/pawn-status.css` | New. D101, with D56's tilt and D57's tag moved into it |
+| `src/ui/styles/pawn-drag.css` | New. D103, the carried pawn and the field under it |
+| `src/ui/styles/pawn.css` | Amended. The whole status section and issue #91's drag rule left it |
+| `src/ui/styles/board-trap.css` | Amended. The blocker's tombstone comment left it, D52 is retired |
+
+**The change lists are the reason this handoff needed no reconciliation.** Handoffs 10, 11 and 16 each
+delivered whole stylesheet copies that predated this tree, and 16 cost an hour of comparing ten files to
+find the six that would have reverted work. This time the two amended files arrived as "find this
+comment, delete that rule", keyed on selectors rather than on line numbers, and both were applied in one
+pass with no judgement calls. That is the form to ask for from now on, and it is what the 2026-09-05
+status block had asked for in exactly those words.
+
+**Load order gained three entries and reordered nothing.** `pawn-status.css` after `pawn.css` because it
+sets `--pawn-tilt`, which `pawn.css`'s own transform reads; `pawn-drag.css` after both because it wins the
+carried pawn's scale over the selected pawn's at equal specificity and restates the pawn's transition with
+`translate` in it; `last-card.css` last in `main.js` because it copies the seat plate's chrome from
+`hud.css` and reads the card component's sizing from `card.css`. The reasons are in `main.js`'s own
+cascade comment, which is where every load-bearing position in this project is recorded.
+
+#### D100, the last card played
+
+**A fifth plate at the end of the HUD row**, built by the new `src/ui/last-card-view.js` and rendered as
+the last child of `.hud`. It shows the card's **name** in words, the seat that played it and the turn, and
+it holds the card itself at the reference size, revealed on hover or on focus.
+
+- **Why it is a child of the HUD row and not a region of the app grid.** The row spans both grid columns
+  and centres its plates, so a plate outside the row cannot sit at its end. That is also why
+  `hud-view.js` renders and updates it rather than `render.js` gaining an eighth region: two lines in the
+  HUD against a new region that would have to be positioned all over again.
+- **`data-player` and not `data-seat`.** `board.css` maps `--player` off `[data-player]` for the whole
+  document and has been the only place a seat colour is written since D97. A second attribute name would
+  mean a second mapping.
+- **Four attributes are the contract:** `data-player`, `data-outcome` (`resolved`, `pending`,
+  `nullified`, `negated`), `data-empty`, and `data-turn`, which no stylesheet reads and the end-to-end
+  spec does, because an attribute can be asked about without reading a translated sentence.
+- **Six locale keys**, `lastCard.heading`, `lastCard.empty` and one sentence per outcome, in both
+  languages (NFR-03). `{{player}}` is `player.named` or `player.botNamed`, the pair the line-up screen and
+  the reaction sentences already use, so a bot's play needs no second vocabulary.
+- **The card in the plate is the card component, unchanged.** `skillCard` in `skill-hand-view.js` is now
+  exported and takes a `focusable` override, so the plate and the hand resolve `card.skill.<id>.title` and
+  the drawing through one function. The card is `.card--full` inside `.last-card__reveal`, absolutely
+  positioned, so it costs the plate no height, and `pointer-events: none`, so it can never take a click
+  from a dice card underneath it.
+- **The plate is in the row from the first frame of the match**, dashed and dormant, with "nothing played
+  yet". A plate that appeared on turn three would move the other four sideways once, mid-game, for no
+  reason a player can see.
+
+**One declaration was added to the delivered stylesheet, and it is reported back in
+[00-open-requests.md](../../../01-Design/Handoff/00-open-requests.md).** The card in the plate is a record
+and not an offer, so the view describes it as unplayable, and `card-state.css` desaturates every card
+carrying `data-playable="false"`. That would have dimmed all four outcomes and left `nullified` and
+`negated` with nothing left to say, since their whole treatment is that same desaturation. The fix is
+`filter: none` on `.last-card__reveal .card`, which is the declaration `card-reveal.css` already puts on a
+hand card that is being read (D66, D67): a card being read is not a card being refused. The design side is
+told rather than left with a spec the code no longer follows.
+
+#### D101, nine statuses in three channels
+
+`data-statuses` is a space separated list and a pawn can carry two kinds at once, which is what one slot
+could not do: **Lock In writes `locked` and `armoured` in a single play**, so the most common
+multi-status pawn in the game needs two marks. The nine kinds sort by who the fact is aimed at.
+
+| Channel | Kinds | What it is |
+| --- | --- | --- |
+| The piece | `rock`, `stunned` | The whole object changes: square corners, closed eyes, a dormant mix, a longer shadow |
+| The shell | `armoured`, `ghost` | One ink `outline` standing off the disc. "You cannot take this" |
+| The tag | `locked`, `held`, `ragebait`, `slippery` | `.pawn__status`, one kind at a time |
+
+- **`armoured` and `ghost` share one mark on purpose.** They differ in how they end, and at the moment a
+  capture is refused they say the same thing. Which of the two it was is in the `title` from issue #94 and,
+  if the card was just played, in the new plate.
+- **The tag's precedence is source order**, `slippery` then `ragebait` then `held` then `locked`, each rule
+  setting the same properties on both pseudo-elements so the last match wins. There is not one `:not()`
+  chain in the file, which is what keeps a fifth kind from being a rewrite.
+- **The stone's square corner is D52's language one level up.** A trap is a small thing lying on the path,
+  a blocker is the path being gone. Issue #90 moved that rule from the field to the pawn and the mark moved
+  with it, which is why retiring D52 costs the game nothing.
+- **`purge` is board wide and never in `data-statuses`**, so nothing reads it. The `status.rock` wording in
+  both locale files was extended at the same time to say that not even the owner can move a petrified pawn,
+  which is the half of issue #90 the tooltip did not yet mention.
+
+#### D102 came back no, and that is an answer rather than a gap
+
+The native `title` from issue #94 stays as the accessible name and nothing replaces it. The argument is the
+tester's own report: they were **clicking**, not hovering, so a hover readout would not have reached them,
+and D101 is what puts the fact on the piece. What it costs is stated: a player who wants to know **which
+card** protected a pawn hovers it and waits for the browser, or reads the plate if it was recent.
+
+#### D103, the carried pawn, and the one attribute this side had to write
+
+The piece grows to 1.22, throws the longest shadow in the game and drops every transition it has, which is
+the load-bearing part: `pawn.css` moves a pawn over `--motion-move`, and 240 ms of easing behind a pointer
+reads as the game being slow rather than as the piece being heavy. `pawn-drag.css` also restates the pawn's
+transition with `translate` added, so the release is continuous: a carried pawn's position is the sum of
+`transform` from the grid coordinates and `translate` from the drag offsets, and the view clears the offsets
+and writes the new coordinates in the same frame.
+
+**`data-drop="true"` is written by `drag-move.js` on the lit target under the pointer**, one field at a
+time, cleared when the pointer leaves it and when the gesture ends. It marks a **lit target** and not
+simply whatever field is under the pointer, and the difference is the question the mark answers: the legal
+targets are already lit, so a carried piece is not asking "where may I go", it is asking "will it land
+here". A ring on a field the drop would refuse would answer that wrongly.
+
+#### Two findings recorded rather than fixed
+
+- **The plate is narrower than a seat plate, and the spec did not know it.** D100 asks for 15.5rem, "the
+  seat plate's own width", but `.hud__seat` has been `min-width: 15.5rem; width: auto` since the
+  2026-09-03 layout fix, so a seat plate grows with its four numbers and the new plate does not. Measured
+  on the fitted stage at 1440 by 900, the plate is about 223 px against a seat plate's roughly 289. It was
+  **not** changed to `width: auto`, because the row has about 236 px spare and a plate that grew to a seat
+  plate's width would push the row into wrapping, which is worse than a narrower fifth plate. It is a
+  question for the next spec, and it is in the status block.
+- **`.pawn__status` is now shown by four kinds and hidden by five**, so a pawn carrying only `rock` has an
+  empty span inside a squared disc. That is issue #45's contract and is right; it is written down here so
+  nobody deletes the span as dead markup.
 
 ## Decisions
 

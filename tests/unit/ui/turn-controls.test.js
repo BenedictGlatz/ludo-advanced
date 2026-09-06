@@ -138,3 +138,96 @@ describe("clicking a pawn", () => {
     expect(advance).not.toHaveBeenCalled();
   });
 });
+
+describe("pointing at a target square (issue #91)", () => {
+  // Seat 0's pawn 1 can advance to r = 5, which is absolute square 4.
+  const acting = (fields) =>
+    match({
+      phase: TURN_PHASE.ACT,
+      legalMoves: [{ player: 0, pawn: 1, kind: "advance", from: 2, to: 5, captures: null }],
+      ...fields,
+    });
+
+  it("selects the pawn that reaches the square when nothing is selected", () => {
+    const { board, applied, advance } = controls(acting({ selectedPawn: null }));
+
+    board.onTargetActivated({ square: 4 });
+
+    expect(applied).toEqual([{ type: INTENT.SELECT_PAWN, pawn: 1 }]);
+    expect(advance).not.toHaveBeenCalled();
+  });
+
+  it("commits when that pawn is already selected", () => {
+    const { board, applied, advance } = controls(acting({ selectedPawn: 1 }));
+
+    board.onTargetActivated({ square: 4 });
+
+    expect(applied).toEqual([{ type: INTENT.COMMIT_MOVE, pawn: 1 }]);
+    expect(advance).toHaveBeenCalled();
+  });
+
+  it("ignores a square no legal move ends on", () => {
+    const { board, applied } = controls(acting({ selectedPawn: 1 }));
+
+    board.onTargetActivated({ square: 30 });
+
+    expect(applied).toEqual([]);
+  });
+
+  it("does nothing on a bot's turn or while a card is being aimed", () => {
+    const bot = controls(acting({ activePlayer: 2, selectedPawn: null }));
+    bot.board.onTargetActivated({ square: 4 });
+    expect(bot.applied).toEqual([]);
+
+    const aiming = controls(acting({ selectedPawn: null }), { picking: true });
+    aiming.board.onTargetActivated({ square: 4 });
+    expect(aiming.applied).toEqual([]);
+  });
+});
+
+describe("dragging a pawn (issue #91)", () => {
+  const acting = (fields) =>
+    match({
+      phase: TURN_PHASE.ACT,
+      legalMoves: [{ player: 0, pawn: 1, kind: "advance", from: 2, to: 5, captures: null }],
+      ...fields,
+    });
+
+  it("selects the pawn when the drag starts, and only once", () => {
+    const fresh = controls(acting({ selectedPawn: null }));
+    fresh.board.onDragStarted(1);
+    expect(fresh.applied).toEqual([{ type: INTENT.SELECT_PAWN, pawn: 1 }]);
+
+    const already = controls(acting({ selectedPawn: 1 }));
+    already.board.onDragStarted(1);
+    expect(already.applied).toEqual([]);
+  });
+
+  it("commits when the pawn is dropped on its own target", () => {
+    const { board, applied, advance } = controls(acting({ selectedPawn: 1 }));
+
+    board.onDragEnded(1, { square: 4 });
+
+    expect(applied).toEqual([{ type: INTENT.COMMIT_MOVE, pawn: 1 }]);
+    expect(advance).toHaveBeenCalled();
+  });
+
+  it("only redraws when the pawn is dropped on nothing or on somebody else's target", () => {
+    const nowhere = controls(acting({ selectedPawn: 1 }));
+    nowhere.board.onDragEnded(1, null);
+    expect(nowhere.applied).toEqual([]);
+
+    const wrong = controls(acting({ selectedPawn: 1 }));
+    wrong.board.onDragEnded(3, { square: 4 });
+    expect(wrong.applied).toEqual([]);
+  });
+
+  it("does not pick up a bot's pawn during the bot's turn (FR-43)", () => {
+    const { board, applied } = controls(acting({ activePlayer: 2, selectedPawn: null }));
+
+    board.onDragStarted(1);
+    board.onDragEnded(1, { square: 4 });
+
+    expect(applied).toEqual([]);
+  });
+});

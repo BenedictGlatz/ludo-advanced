@@ -30,9 +30,17 @@ import {
   speedrun,
 } from "./roll-effects.js";
 import { doubleDip, noTakeBacksies, nuehue, potOfGreed, taxFraud } from "./card-effects.js";
-import { builtDifferent, holdPawn, lockIn, ragebait, rock, thePurge } from "./status-effects.js";
+import {
+  bigAhRock,
+  builtDifferent,
+  holdPawn,
+  lockIn,
+  ragebait,
+  rock,
+  thePurge,
+} from "./status-effects.js";
 import { ghostMode, headOut, letHimCook, unoReverse, yeet } from "./displacement-effects.js";
-import { bananaPeel, bigAhRock, notThatDeep, oilSpill } from "./trap-effects.js";
+import { bananaPeel, notThatDeep, oilSpill } from "./trap-effects.js";
 import { hyperbeam, jankyRpg, sixtySeven } from "./area-effects.js";
 
 /**

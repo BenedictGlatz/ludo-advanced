@@ -46,6 +46,7 @@ import {
   pawnStatuses,
   pickableSquares,
   playCardAndAwaitSquare,
+  reachOwnPawnOnTrack,
   square,
   trackSquares,
 } from "./trap-helpers.js";
@@ -91,18 +92,30 @@ test.describe("laying a trap", () => {
   });
 
   /**
-   * A blocker reads differently from a trap in the DOM, which is what design decision D52 will key
-   * off. Both are entries in one list in `core/`, and `data-trap` is the coarse behaviour.
+   * Big Ah Rock is no longer a square object (issue #90). It petrifies one of the caster's own pawns, so
+   * the picker asks for an own pawn, no field gains `data-trap`, and the pawn carries the `rock` status
+   * that `blockedSquares` reads. Seat 0 needs a pawn on the track first, so the spec plays turns until it has one.
    */
-  test("marks a blocker as a blocker and not as a trap", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce, withStack(["action-big-ah-rock"]));
+  test("turns one of the caster's own pawns to stone rather than marking a field", async ({
+    page,
+  }) => {
+    const board = await openMatch(page, SEEDS.advancesEarly, withStack(["action-big-ah-rock"]));
+    test.skip(!(await awaitCardInHand(board, "action-big-ah-rock", playTurn)), "card never drawn");
+    test.skip(
+      !(await reachOwnPawnOnTrack(board, playTurn)),
+      "seat 0 never had a track pawn to aim at"
+    );
+    await playCardAndAwaitSquare(board, "action-big-ah-rock", "own-pawn");
 
-    await chooseDiceCard(board);
-    await playCardAndAwaitSquare(board, "action-big-ah-rock");
-    await square(board, 17).click();
+    const target = board.locator('.pawn[data-pickable="true"]').first();
+    const seat = await target.getAttribute("data-player");
+    const index = await target.getAttribute("data-pawn");
+    await target.click();
 
-    await expect(square(board, 17)).toHaveAttribute("data-trap", "blocker");
-    await expect(square(board, 17)).toHaveAttribute("data-trap-kind", "big-ah-rock");
+    await expect(
+      board.locator(`.pawn[data-player="${seat}"][data-pawn="${index}"]`)
+    ).toHaveAttribute("data-statuses", /rock/);
+    expect(await objectsOnBoard(board)).toEqual({});
   });
 
   /**

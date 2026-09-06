@@ -64,6 +64,15 @@
  * card's size and re-flows its insides, which is why 10-spec § 2 split it out rather than making any one
  * of the three reach into the other two.
  *
+ * Handoff 17 added three more on 2026-09-06 and none of them reorders anything. `pawn-status.css` has
+ * to come after `pawn.css`, because it takes over the two status rules that used to be in it and sets
+ * `--pawn-tilt`, which `pawn.css`'s transform reads. `pawn-drag.css` has to come after both, because it
+ * restates the pawn's transition with `translate` in it and wins the carried pawn's scale over the
+ * selected pawn's at equal specificity, and both of those are decided by load order alone (D103).
+ * `last-card.css` is last in the file, because it copies the seat plate's chrome from `hud.css` and has
+ * to be able to win a tie with it, and because it reads the card component's own sizing from `card.css`.
+ * Nothing loads after it (D100).
+ *
  * `roll.css` is the fifth and it is last of the card files, after `card-reveal.css`, which is what
  * 11-spec § 1 asks for. **It is there because it composes rather than because it overrides**, and that is
  * worth the sentence: the throw is written on `rotate` and `translate` and never on `transform`, so it
@@ -99,6 +108,8 @@ import "./ui/styles/board-track.css";
 import "./ui/styles/board-regions.css";
 import "./ui/styles/board-trap.css";
 import "./ui/styles/pawn.css";
+import "./ui/styles/pawn-status.css";
+import "./ui/styles/pawn-drag.css";
 import "./ui/styles/message-strip.css";
 import "./ui/styles/card.css";
 import "./ui/styles/card-state.css";
@@ -114,6 +125,7 @@ import "./ui/styles/menu.css";
 import "./ui/styles/lineup.css";
 import "./ui/styles/handover.css";
 import "./ui/styles/pool.css";
+import "./ui/styles/last-card.css";
 
 /**
  * Boot the game.

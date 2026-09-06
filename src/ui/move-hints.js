@@ -9,7 +9,8 @@
  * ## Everything is an attribute, and that is the whole interface to the design
  *
  * `board.css` and `pawn.css` style `[data-legal-target]`, `[data-movable]` and `[data-selected]`.
- * This file sets and clears exactly those three, plus `data-reason-key` on the message region. It
+ * This file sets and clears exactly those three, plus `data-reason-key` on the message region and,
+ * since issue #91, a `tabindex` on the lit target squares so the keyboard can reach them. It
  * contains no colour, no size and no duration, so a design revision changes stylesheets and never
  * changes this file.
  *
@@ -51,7 +52,7 @@ function targetSquare($board, move) {
 
 /** Every hint attribute, removed. Called first, so no hint can survive a turn it does not belong to. */
 function clearHints($board) {
-  $board.find("[data-legal-target]").removeAttr("data-legal-target");
+  $board.find("[data-legal-target]").removeAttr("data-legal-target").removeAttr("tabindex");
   $board.find("[data-movable]").removeAttr("data-movable");
   $board.find("[data-selected]").removeAttr("data-selected");
   $board.find(".pawn").attr("tabindex", -1);
@@ -86,8 +87,11 @@ export function applyMoveHints($board, state) {
       ? state.legalMoves
       : state.legalMoves.filter((move) => move.pawn === state.selectedPawn);
 
+  // `tabindex` since issue #91, when the target became clickable: a square the mouse can activate has
+  // to be reachable from the keyboard too (NFR-08), and only while it is a target, for the reason
+  // `target-picker.js` gives about forty permanent tab stops.
   for (const move of shown) {
-    targetSquare($board, move).attr("data-legal-target", "true");
+    targetSquare($board, move).attr("data-legal-target", "true").attr("tabindex", 0);
   }
 }
 

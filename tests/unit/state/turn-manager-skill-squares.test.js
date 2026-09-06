@@ -18,9 +18,9 @@ import {
   commitMove,
   drawHand,
   passAction,
-  resolveMove,
   rollChosenDie,
 } from "../../../src/state/turn-manager.js";
+import { resolveMove } from "../../../src/state/turn-resolution.js";
 import { pawnsAt, rngForRolls } from "../../helpers/fixtures.js";
 
 describe("using up a skill square when a move resolves (FR-22)", () => {

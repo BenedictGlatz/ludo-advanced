@@ -2013,6 +2013,87 @@ fail the next time the design side moves one, which is a test that reports desig
 is a requirement.
 
 
+### The bonus roll re-timed every seeded match, and the turn drivers had to learn a turn can hold three moves: 2026-09-06, issue #89
+
+**Seeds.** A natural maximum on a D6 or larger now rolls again, so every match plays out differently
+from the same seed. `npm run test:seeds` was run and the block pasted into `tests/e2e/helpers.js`:
+`capturesEarly` moved from seed 83 to 166 (still turn 4), `winsQuickest` from 238 (seat 0, turn 77) to
+74 (seat 2, turn 56), and `advancesEarly` keeps seed 1 but now advances on the **second roll of turn 1**
+rather than on turn 3, which is the rule showing up in the data. The replay script itself needed one
+change: a `while` over the act phase instead of an `if`, because a turn can now hold up to three moves.
+This is the fourth time the seeds went stale and the second time the script made it one command.
+
+**The turn drivers.** 22 end-to-end cases failed after the rule landed, and all 22 had the same cause:
+`playTurn`, `playUntil`, `playPersonTurn` and the two handover cases made one move and then waited for
+the turn number to move on, which a bonus roll does not do. The fix is one question asked in one place:
+`afterMove(board, turnNumber, rolls)` in the new `tests/e2e/turn-helpers.js` polls until the turn has
+passed **or** the same turn is back in `act` with `data-rolls` above the count read before the move, and
+`playOutMoves` keeps moving until the answer is "passed". `playUntil` asks its `done` predicate about the
+bonus roll's `act` too, because "the pawn is on the track and about to advance" can now be true on the
+second roll of a turn. The bot helpers' `snapshot` and `waitPast` read `rollsThisTurn` for the same
+reason: a bonus roll brings the same turn back to the same phase, and without the count `waitPast` had
+nothing to see change.
+
+**`helpers.js` split.** The new drivers took it to 366 lines. The turn drivers moved to
+`turn-helpers.js` and `helpers.js` re-exports them, so no spec changed an import. The two files import
+each other (the drivers read the board through `boardState`), which ESM allows because every reference is
+inside a function body; noted here so nobody "fixes" it into a third file for no gain.
+
+**Coverage.** `bonus-roll.test.js` (core, 9 cases), `bonus-roll-turn.test.js` (state, 7 cases: back to
+`roll`, D4 floor, three-roll cap, no-move maximum, modifiers cleared, no bonus after a win),
+`roll-steps.test.js` and `pool-screen.test.js` extended, `match.test.js`'s scripted full match regrouped
+into 12 turns for player 0 instead of 33 and asserting the turn count from the same rule, and one new
+end-to-end case `bonus-roll.spec.js` that asserts the rule either way round depending on which die the
+seed hands slot 0.
+
+### One end-to-end case deleted with the rule it measured: 2026-09-06, issue #90
+
+`trap-fires.spec.js` had a case that measured D52: a blocker covers 76 per cent of its field with square
+corners, against a trap's 30 with round ones. Issue #90 removed the blocker as a square object, so the
+case had nothing left to measure and was deleted rather than skipped. The petrified pawn's own mark is
+owed by design brief 17 and gets its measurement when the mark exists. `traps.spec.js`'s "marks a blocker"
+case became "turns one of the caster's own pawns to stone", asserting `data-statuses~="rock"` on the
+pawn and an empty object list on the board. The new shared helper `reachOwnPawnOnTrack` in
+`trap-helpers.js` plays turns until the seat has a track pawn, because an own-pawn card has nothing to
+point at on turn 1 of any seed.
+
+Unit coverage moved rather than shrank: `rock-effects.test.js` (11 cases) replaces the 7 Big Ah Rock
+cases that left `trap-effects.test.js`, and adds the two rules that did not exist before, a stone cannot
+be knocked back and the knockback is reported.
+
+### Handoff 17's coverage is end to end, because the plate is jQuery: 2026-09-06, issue #93
+
+**A new spec, `last-card.spec.js`**, with four cases: the plate holds its place in the row before anybody
+has played anything, it names the card, the seat and the turn once a card has been played, it keeps the
+record after the turn has passed, and it holds the card itself with the reveal coming up on hover. The
+plate is `ui/`, and `ui/` has no unit tests in this project: `vitest.config.js` runs with
+`environment: "node"` and nothing configures a DOM, which is the second half of NFR-01's acceptance
+criterion. A DOM would be a new dev dependency, and that is a question for the Product Owner rather than a
+detail of this issue.
+
+**The playtest finding is one assertion.** `pawn-status.spec.js` gained a case that plays Lock In on an own
+pawn and asserts the pawn wears **two** marks, the filled tag and the shell, which is the thing the tester
+could not see. It asks about the properties that carry the marks, `opacity` on `.pawn__status` and
+`outline-style` on the disc, and not about their geometry: a case pinning an `inset` would report the next
+design adjustment as a defect, which 17-spec section 5 asks for in as many words.
+
+**The mark has to be polled rather than read once.** The first version read the tag's opacity straight
+after the click and measured 0.46, because the tag arrives over `--motion-feedback`. That is the same trap
+`chipRatio` in `trap-helpers.js` carries a comment about, and it cost a minute here because the comment was
+already there to read.
+
+**`pawn-moves.spec.js` gained the drag mark**: the field under a carried pawn carries `data-drop="true"`,
+exactly one field does, and nothing does once the pointer is up.
+
+**Two deletions that had already happened.** 17-spec section 5 asks for any case asserting the blocker chip
+to be deleted rather than pointed at the pawn. Issue #90 had already done it: `trap-fires.spec.js`'s D52
+measurement is gone and `traps.spec.js`'s "marks a blocker" became "turns one of the caster's own pawns to
+stone". Nothing was added for D101's geometry for the reason above.
+
+**The duplicated helper is gone.** `pawn-status.spec.js` carried its own copy of `reachOwnPawnOnTrack`
+because it was written on a different branch from `trap-helpers.js`'s version on the same afternoon. Both
+branches are in `dev` now, so the copy was deleted and the shared helper takes its two extra arguments.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

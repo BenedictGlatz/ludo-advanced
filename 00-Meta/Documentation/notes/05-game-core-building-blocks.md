@@ -1309,6 +1309,76 @@ failed a test immediately instead of leaking a stale card id into the next playe
 offensive cards records only the last one. It is possible and vanishingly rare, and one message a player
 can read beats a list nothing was built to display.
 
+### Both rock cards petrify an own pawn, and the trap list lost its second behaviour: 2026-09-06, issue #90
+
+**What the playtest found.** Two things at once: Rock's pawn could still be walked around by its owner,
+against the rulebook's "immovable stone", and Big Ah Rock targeted a field where the tester expected a
+pawn. The Product Owner decided both cards act on an own pawn and a petrified pawn is unmovable.
+
+**What changed in `core/`.**
+
+- `STATUS.ROCK` is now written by two cards. `status-effects.js` gained `bigAhRock` (three rounds,
+  `DURATION_ROUNDS.bigAhRock`) beside `rock` (two rounds). The knockback moved with it: the nearest enemy
+  pawn behind the **stone's square** is shoved back `KNOCKBACK = 3`, through `shove`, so it still
+  respects other stones, captures and traps.
+- `evaluatePawn` refuses a petrified pawn to its owner with the new `REFUSAL.PETRIFIED`
+  (`move.refused.petrified`), the same shape as `LOCKED`. `slideStop` returns the pawn's own position
+  for a petrified pawn, so a Yeet, a knockback or a trap cannot push a stone either.
+- `traps.js` lost `TRAP_KIND.BIG_AH_ROCK`, `BLOCKERS` and `isBlocker`. Every entry in the trap list is a
+  trap; `blockedSquares` reads statuses only and keeps its `board` parameter so no caller changed.
+  `expireTraps` stays although nothing writes a deadline any more (one line, and the seam is right).
+- `trap-effects.js` is back to three placement functions and no longer imports `enter.js`.
+- The knockback is announced: `bigAhRock` returns a `trapFired` report with `kind: "big-ah-rock"` when
+  the push moved the victim and set off no trap. Until now `trap.fired.big-ah-rock` in `ui.json` was
+  dead text, because a blocker never fired; the key is live for the first time.
+
+**Why one status and not a second kind `BOULDER`.** The two cards differ in duration and in a one-off
+push on play. Everything that *reads* the status (wall, refusal, no sliding) is identical, so a second
+kind would have been a second line in three readers for no rule difference. `source` on the status entry
+still says which card wrote it, which is what a future per-card mark would key on.
+
+**Why the knockback searches behind the stone and not behind the caster's furthest pawn.** The rulebook
+says "the enemy pawn directly behind you". With the card on a pawn, "you" is that pawn, and the 2026-09-02
+decision (behind the rock, not behind the caster) carries over unchanged.
+
+**What it cost.** `TRAP_KIND.BIG_AH_ROCK` was the fixture every blocker test used. Eleven test files
+changed: the blocker cases in `slide.test.js`, `enter.test.js`, `move-rules.test.js` and
+`movement-traps.test.js` now build the wall out of a `STATUS.ROCK` on a seat-2 pawn standing on the same
+absolute square, and the Big Ah Rock cases left `trap-effects.test.js` for a new `rock-effects.test.js`.
+`values-squares.js` lost `bigAhRock` to `values-pawns.js`, where it is priced as Rock plus a share of the
+knockback; both rock values now subtract `LOCK_COST`, because a stone pawn sits out exactly as a locked one
+does, and the Rock expectations in `values-pawns.test.js` moved from 6 and 0 to 1 and -5.
+
+**Two things deliberately not changed.** The `data-trap` attribute keeps its name and its single value
+`trap`, because `board-trap.css` and three specs key off it and a future standing object is one more
+value rather than a rename. And the trap list keeps `until`, for the same reason `expireTraps` stays.
+
+### Lock In was reported as a bug, and the rule was right: 2026-09-06, issue #88
+
+**The report:** "Lock In prevents all movement this turn; only the targeted player should be unable to
+move." Two misreadings in one sentence, both worth recording because a rulebook is graded on whether it
+can answer exactly this.
+
+- **Lock In has no opponent target.** GDD card table, `action-lock-in`: *your pawn* is immune to capture
+  until your next turn. `catalogue-extra.js` gives it `TARGET.OWN_PAWN`, `card-legality.js` refuses any
+  other seat's pawn, and `status-effects.js` writes `LOCKED` and `ARMOURED` on the caster's own pawn.
+- **The lock is on one pawn, not on the turn.** `evaluatePawn` in `move-rules.js` refuses the locked
+  pawn with `REFUSAL.LOCKED` and evaluates the other three normally. `move-rules.test.js` now has the
+  case in so many words: one pawn locked, three on the track, three moves offered.
+
+**What the tester actually saw.** Lock In on the only pawn on the track, then a roll below the die's
+maximum: the locked pawn is refused, and the three in the yard are refused by FR-09. Nothing moves, and
+every refusal is correct. The second new test in `move-rules.test.js` pins that situation.
+
+**What changed anyway.** The card text in both locales now says *you* cannot move it and *your other
+pawns move as usual*, because the old wording ("stays put") read as a passive fact rather than a cost the
+caster pays. The tooltip from issue #94 names the lock on the pawn itself.
+
+**One real deviation surfaced by the check, left open on purpose.** The GDD says the pawn is also immune
+to *forced* movement. `enter.js`'s `shove` checks no status, so Yeet, It's Not That Deep and Big Ah
+Rock's knockback all move a locked pawn today. That is a rule question for the Product Owner, recorded
+on #87, not something to fix while sharpening a card text.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

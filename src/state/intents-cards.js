@@ -161,6 +161,7 @@ function playActionCard(state, intent, deps) {
     // For the screen only, and both branches below inherit it. `game-state.js` carries the reason a
     // card play has to be recorded at all: a bot's card is played by nobody the player can see.
     lastCardPlayed: { seat, cardId: intent.cardId },
+    lastCard: lastCardEntry(state, entry, "pending"),
   });
 
   const window = openWindow(spent, TRIGGER.ON_CARD, seat);
@@ -176,8 +177,20 @@ function playActionCard(state, intent, deps) {
     nextState(spent, {
       ...result.changes,
       nullifiedCard: result.nullified ? entry.cardId : null,
+      lastCard: lastCardEntry(state, entry, result.nullified ? "nullified" : "resolved"),
     })
   );
+}
+
+/**
+ * The match-level record of a card play, for the last-card slot (issue #93).
+ *
+ * Written when the card leaves the hand, like `lastCardPlayed`, with `outcome: "pending"` when its rule
+ * has not run yet; `reaction-window.js` settles the outcome when the window shuts. The turn number is
+ * part of the record because the slot outlives the turn and has to say *when* as well as *what*.
+ */
+export function lastCardEntry(state, entry, outcome) {
+  return { seat: entry.seat, cardId: entry.cardId, turnNumber: state.turnNumber, outcome };
 }
 
 /**
@@ -204,6 +217,7 @@ function playReactionCard(state, intent) {
       ...discardChanges(state, seat, intent.cardId),
       ...recordPlay(state, entry),
       lastCardPlayed: { seat, cardId: intent.cardId },
+      lastCard: lastCardEntry(state, entry, "pending"),
     })
   );
 }

@@ -34,6 +34,14 @@
     "cards": "Cards",
     "finished": "home"
   },
+  "lastCard": {
+    "heading": "Last card",
+    "empty": "Nothing played yet",
+    "resolved": "{{player}}, turn {{turn}}",
+    "pending": "{{player}}, turn {{turn}}, unanswered",
+    "nullified": "{{player}}, turn {{turn}}, cancelled by an aura",
+    "negated": "{{player}}, turn {{turn}}, cancelled by Nühü"
+  },
   "menu": {
     "title": "Ludo Advanced",
     "text": "Ludo with a dice card pool and skill cards.",
@@ -98,6 +106,7 @@
       "held": "This pawn is being held and sits this turn out.",
       "stunned": "This pawn slipped on a trap and sits this turn out.",
       "locked": "This pawn is locked in and may not be moved.",
+      "petrified": "This pawn is petrified and cannot be moved until the effect wears off.",
       "blocked": "There is a rock in the way. Nothing gets past it.",
       "protected": "The pawn on that square is protected and cannot be captured.",
       "no-steps": "The roll came out at 0. Nobody moves this turn.",
@@ -109,17 +118,28 @@
     "label": {
       "banana-peel": "Banana Peel",
       "oil-spill": "Oil Spill",
-      "not-that-deep": "It's Not That Deep",
-      "big-ah-rock": "Big Ah Rock"
+      "not-that-deep": "It's Not That Deep"
     },
     "fired": {
       "banana-peel": "{{player}} slipped on {{owner}}'s Banana Peel and sits the next turn out.",
       "oil-spill": "{{player}} hit {{owner}}'s Oil Spill and slid {{squares}} squares on.",
       "not-that-deep": "{{player}} stepped on {{owner}}'s It's Not That Deep and went back one square.",
-      "big-ah-rock": "{{owner}} dropped a Big Ah Rock, and {{player}} was knocked back three squares."
+      "big-ah-rock": "{{owner}} turned a pawn to stone, and {{player}} was knocked back three squares."
     },
     "nullified": "An It's Not That Deep was lying nearby and cancelled that card.",
     "aura": "Protected by an It's Not That Deep"
+  },
+  "status": {
+    "separator": " · ",
+    "held": "Held (Hold Pawn): sits this turn out.",
+    "rock": "Petrified (Rock): a wall nothing gets past, and not even its owner can move it.",
+    "ghost": "Ghost (Ghost Mode): cannot be captured.",
+    "locked": "Locked in (Lock In): may not be moved and cannot be captured.",
+    "armoured": "Armoured (Built Different): cannot be captured.",
+    "ragebait": "Taunted (Ragebait): must be moved if it can move.",
+    "purge": "The Purge: every landing captures, own pawns included.",
+    "slippery": "Slippery (Oil Spill): skips the next skill square.",
+    "stunned": "Stunned (Banana Peel): sits the next turn out."
   },
   "intent": {
     "rejected": {
@@ -172,6 +192,7 @@
     }
   },
   "roll": {
+    "bonus": "Bonus roll: the last roll was the maximum",
     "step": {
       "base": "D{{faces}}: {{value}}",
       "fixed": "Named: {{value}}",
