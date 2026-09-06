@@ -152,41 +152,4 @@ test.describe("the object standing on a field", () => {
     await expect.poll(() => chipRatio(field)).toBeGreaterThan(0.2);
     expect(await chipRatio(field)).toBeLessThan(0.4);
   });
-
-  /**
-   * D52's whole message is the size difference, so the size difference is what this asserts.
-   *
-   * A trap is a small thing lying on a path and a blocker is the path being gone: 30 per cent of the
-   * field against 76. The second variable is the corner, square instead of round, and it is worth
-   * asserting too because it is the one that stops a 76 per cent chip reading as a large trap.
-   *
-   * Both objects are laid in one match so the comparison is against a real chip on the same board at the
-   * same board size, rather than against a number copied out of the spec.
-   */
-  test("draws a blocker as a wall rather than as a large trap", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce, withStack(["action-big-ah-rock"]));
-
-    await chooseDiceCard(board);
-    await playCardAndAwaitSquare(board, "action-big-ah-rock");
-    await square(board, 17).click();
-
-    await expect(square(board, 17)).toHaveAttribute("data-trap", "blocker");
-
-    const field = square(board, 17);
-
-    // The size is the message. A trap covers 30 per cent of the field, asserted in the case above on
-    // this same viewport; a blocker covers 76, which is the field being gone rather than an object
-    // lying on it. Anything over 0.6 is a wall and anything under 0.4 is a chip, so the two cases
-    // cannot pass each other's assertion by accident. Polled for the same reason as the trap chip.
-    await expect.poll(() => chipRatio(field)).toBeGreaterThan(0.6);
-
-    // The second variable, and the one that stops a large chip reading as a large trap: a squared
-    // corner. Asserted against the object's own width rather than against a token value, because a
-    // pill radius is by definition at least half the box and a squared one is well under it.
-    const chip = await field.locator(".square__trap").boundingBox();
-    const radius = await field
-      .locator(".square__trap")
-      .evaluate((span) => Number.parseFloat(window.getComputedStyle(span).borderTopLeftRadius));
-    expect(radius).toBeLessThan((chip?.width ?? 0) / 2);
-  });
 });

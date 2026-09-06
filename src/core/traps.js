@@ -3,27 +3,23 @@
  *
  * Pure `core/`: no DOM, no state object, no randomness.
  *
- * ## One list, two behaviours
+ * ## One list, one behaviour, since issue #90
  *
- * Five cards put an object on one of the forty shared track squares, and they split cleanly in two:
+ * Three cards put an object on one of the forty shared track squares: Banana Peel, Oil Spill and It's
+ * Not That Deep. A pawn crosses or lands on it, the effect fires, the object is gone. That is a trap,
+ * and it is the only kind of thing in this list.
  *
- * | Behaves like | Cards | What happens |
- * | --- | --- | --- |
- * | A trap | Banana Peel, Oil Spill, It's Not That Deep | A pawn crosses or lands on it, the effect fires, the object is gone |
- * | A blocker | Rock, Big Ah Rock | Nothing may cross or land on it while it stands |
+ * **Until issue #90 the list held a second behaviour.** Big Ah Rock was dropped on a square as a
+ * *blocker*, an entry with a deadline that nothing could cross, and `BLOCKERS` and `isBlocker` told the
+ * two apart. A playtest asked for the card to petrify one of the caster's own pawns instead, the way
+ * Rock already did, and the Product Owner agreed. So both rock cards are now a **status on a pawn**
+ * (`STATUS.ROCK`, written by `cards/effects/status-effects.js`), and the square they block is wherever
+ * that pawn stands. Storing the square would be storing a copy of a pawn position that goes stale the
+ * moment the pawn walks, which is why Rock was never stored here in the first place.
  *
- * They are one list and not two, because a square can only hold one of them and "what is on square
- * 17" should have one answer. The `kind` field says which behaviour applies, and `BLOCKERS` is the set
- * of kinds that stop a pawn instead of firing.
- *
- * ## Why a trap is stored and a blocker is mostly not
- *
- * Big Ah Rock is stored here: it is dropped on a square and stays there on its own. **Rock is not.**
- * Rock turns one of your own pawns into a blocker, so the blocked square moves when the pawn moves,
- * and storing a square would be storing a copy of the pawn's position that goes stale the moment it
- * walks. `blockedSquares`, below, therefore takes both: the entries in this list, and the squares that
- * pawns carrying the Rock status are standing on right now. It is the one function here that reads
- * pawns, and it is why this module imports `board.js` and `statuses.js` at all.
+ * `blockedSquares` is still here, because it answers "what is on which square", which is this module's
+ * subject, and because `core/slide.js` needs it. It is the one function here that reads pawns, and it is
+ * why this module imports `board.js` and `statuses.js` at all.
  *
  * ## The shape of an entry
  *
@@ -35,8 +31,9 @@
  * - `owner` is the seat that played the card. Kept so the view can say whose trap it is, and because
  *   a trap does not fire under its own owner's pawn: a card that punishes the player who played it is
  *   a card nobody plays.
- * - `until` is a turn number, or `null` for "until something steps on it". Big Ah Rock is the one
- *   entry with a deadline; the three traps wait as long as it takes.
+ * - `until` is a turn number, or `null` for "until something steps on it". Every trap today is `null`;
+ *   the field and `expireTraps` stay, because the deadline was the one thing about the old blocker that
+ *   a future object might want again and it costs one filter.
  */
 
 import { START_R, TRACK_LENGTH, absoluteSquare } from "./board.js";
@@ -48,43 +45,32 @@ export const TRAP_KIND = Object.freeze({
   BANANA_PEEL: "banana-peel",
   /** Oil Spill: the pawn slides 3 to 5 squares further and skips the skill square it lands on. */
   OIL_SPILL: "oil-spill",
-  /** It's Not That Deep: the pawn is pushed back a D6. */
+  /** It's Not That Deep: the pawn is pushed back one square. */
   NOT_THAT_DEEP: "not-that-deep",
-  /** Big Ah Rock: a blocker on a square of its own, with a deadline. */
-  BIG_AH_ROCK: "big-ah-rock",
 });
-
-/** The kinds that stop a pawn rather than firing at it. */
-export const BLOCKERS = Object.freeze([TRAP_KIND.BIG_AH_ROCK]);
-
-/** Is this kind a blocker rather than a trap? */
-export function isBlocker(kind) {
-  return BLOCKERS.includes(kind);
-}
 
 /**
  * Every absolute track square nothing may cross right now.
  *
- * Two sources, and they are stored differently on purpose. A Big Ah Rock is an entry in this list with
- * a square of its own. A Rock is a **status on a pawn**, so its square is wherever that pawn happens to
- * be standing this instant. Storing the Rock's square would be storing a copy of a pawn position that
- * goes stale the moment the pawn walks, which is exactly the kind of quiet duplication the state layer
- * is built to avoid.
+ * One source since issue #90: the pawns carrying `STATUS.ROCK`, from Rock or from Big Ah Rock. The
+ * square is wherever that pawn happens to be standing this instant, and a petrified pawn cannot move
+ * (`evaluatePawn` and `slideStop` both refuse it), so in practice the wall stands still for as long as
+ * the status lasts. It is still derived rather than stored, because storing it would be a copy of a
+ * pawn position that goes stale the day some rule moves a petrified pawn after all.
  *
  * Lived in `move-rules.js` until issue #45 and is re-exported from there, so no caller changed. It
  * belongs here because it answers "what is on which square", which is this module's subject, and
  * because `core/slide.js` needs it: a displacement module depending on the move rules would have been
- * the wrong way round.
+ * the wrong way round. `board.traps` is no longer read, and the parameter is kept so the callers and
+ * the signature `slide.js` relies on stay as they were.
  */
 export function blockedSquares(pawns, board) {
-  const fromTraps = board.traps.filter((trap) => isBlocker(trap.kind)).map((trap) => trap.square);
-
   const fromRocks = statusesOfKind(board.statuses, STATUS.ROCK)
     .map((status) => pawns.find((p) => p.player === status.player && p.pawn === status.pawn))
     .filter((pawn) => pawn !== undefined && pawn.r > START_R && pawn.r <= TRACK_LENGTH)
     .map((pawn) => absoluteSquare(pawn.player, pawn.r));
 
-  return [...new Set([...fromTraps, ...fromRocks])];
+  return [...new Set(fromRocks)];
 }
 
 /**
@@ -124,20 +110,25 @@ export function removeTrap(traps, square) {
  * match is the one that fires. A move that crosses two Banana Peels sets off the near one and stops
  * there, which is what a player expects and what keeps one move from having two outcomes.
  *
- * A trap never fires under a pawn belonging to the player who placed it. Blockers are skipped here
- * entirely: they are not traps, and `blockedSquares` is what stops a pawn reaching one.
+ * A trap never fires under a pawn belonging to the player who placed it.
  */
 export function firstTrapOnPath(traps, crossed, mover) {
   for (const square of crossed) {
     const trap = trapAt(traps, square);
-    if (trap === null || isBlocker(trap.kind) || trap.owner === mover.player) continue;
+    if (trap === null || trap.owner === mover.player) continue;
     return trap;
   }
 
   return null;
 }
 
-/** Every object with a deadline that has run out is dropped. Called once per turn, at its start. */
+/**
+ * Every object with a deadline that has run out is dropped. Called once per turn, at its start.
+ *
+ * No card writes a deadline since issue #90 moved Big Ah Rock onto a pawn, so today this filters
+ * nothing. Kept because it is one line, it is called from the same place `expireStatuses` is, and the
+ * next timed object would otherwise have to rediscover where expiry belongs.
+ */
 export function expireTraps(traps, turnNumber) {
   return traps.filter((entry) => entry.until === null || entry.until > turnNumber);
 }

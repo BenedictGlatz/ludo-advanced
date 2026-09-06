@@ -66,29 +66,11 @@
   scale: 1;
 }
 
-/* --- The blocker (D52). Same object, two variables changed: it covers the
-       field instead of a corner of it, and its corners are square. A trap is
-       a small thing lying on a path; a blocker is the path being gone. The
-       size difference is the whole message and it is legible at a glance,
-       which a difference of inner geometry would not be.
-
-       data-trap="blocker" is confirmed rather than replaced by the
-       data-blocked="true" that 01-spec section 5 predicted: which object is
-       standing there and whether one is standing there are one fact, and one
-       attribute is what keeps "one object per field" true in the DOM.
-
-       It stops short of the field's edge so the turn-off bar on squares 9,
-       19, 29 and 39 stays visible over it. Those four are legal trap targets
-       and board.css gives the bar a z-index for this. --- */
-
-.square[data-trap="blocker"] .square__trap {
-  left: 12%;
-  bottom: 12%;
-  width: 76%;
-  height: 76%;
-  border-width: var(--border-ink);
-  border-radius: var(--radius-sm);
-}
+/* --- The blocker (D52) is gone. Issue #90 turned Big Ah Rock into a
+       status on the caster's own pawn, so no square carries
+       data-trap="blocker" any more and the 76 per cent square-cornered
+       object that stood for it had no writer. The petrified pawn's own mark
+       is owed by design brief 17. --- */
 
 /* --- The aura (D58). Up to seven contiguous fields in which an offensive
        card does nothing. Drawn, because a player who cannot see it cannot

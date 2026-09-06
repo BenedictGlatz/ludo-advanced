@@ -72,20 +72,21 @@ describe("Yeet can throw a pawn onto a trap, which its own card text promises", 
    * so it stops on the square before the boulder, and walking backwards that is `r = 24`.
    */
   it("is stopped by a boulder in the way", () => {
-    const rock = trap(TRAP_KIND.BIG_AH_ROCK, 2);
+    // Issue #90: the boulder is a petrified pawn. Seat 0's own `r = 3` stands on absolute 2.
+    const stone = { kind: STATUS.ROCK, player: 0, pawn: 1, until: 99, source: "test" };
     const patch = play(
       "action-yeet",
       {
         actor: 0,
         target: { pawn: { player: 2, pawn: 0 } },
-        pawns: pawnsAt(4, { "2.0": 25 }),
-        traps: [rock],
+        pawns: pawnsAt(4, { "2.0": 25, "0.1": 3 }),
+        statuses: [stone],
       },
       [[3, 6]]
     );
 
     expect(rOf(patch, 2, 0)).toBe(24);
-    expect(patch.traps).toEqual([rock]);
+    expect(rOf(patch, 0, 1)).toBe(3);
   });
 
   /**

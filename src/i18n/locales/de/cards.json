@@ -86,11 +86,11 @@
       },
       "action-rock": {
         "title": "Rock",
-        "text": "Eine eigene Figur wird zwei Runden lang zur Mauer, an der niemand vorbeikommt."
+        "text": "Eine eigene Figur wird zwei Runden lang zu Stein: niemand kommt an ihr vorbei, und du selbst kannst sie nicht ziehen."
       },
       "action-big-ah-rock": {
         "title": "Big Ah Rock",
-        "text": "Mache ein Feld drei Runden lang zum Felsen und stoße die nächste gegnerische Figur dahinter drei Felder zurück."
+        "text": "Eine eigene Figur wird drei Runden lang zu Stein, und die nächste gegnerische Figur dahinter wird drei Felder zurückgestoßen."
       },
       "action-oil-spill": {
         "title": "Oil Spill",

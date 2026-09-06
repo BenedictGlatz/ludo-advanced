@@ -64,11 +64,13 @@ export const EXTRA_CARDS = [
     triggers: [TRIGGER.ACTION_PHASE],
   },
   {
+    // Issue #90: an own pawn, like Rock, and no longer a free square. The rulebook's "the enemy pawn
+    // directly behind you" is read as behind the pawn that turns to stone.
     id: "action-big-ah-rock",
     type: TYPE.ACTION,
     category: CATEGORY.BLOCKING,
     kind: KIND.UPGRADE,
-    targets: [TARGET.FREE_SQUARE],
+    targets: [TARGET.OWN_PAWN],
     triggers: [TRIGGER.ACTION_PHASE],
   },
   {

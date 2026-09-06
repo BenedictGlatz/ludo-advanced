@@ -43,7 +43,6 @@ import $ from "jquery";
 
 import { TRACK_LENGTH } from "../core/board.js";
 import { NULLIFY_RADIUS, nullifyingTrap } from "../core/trap-rules.js";
-import { isBlocker } from "../core/traps.js";
 import { t } from "../i18n/index.js";
 import { seatLabel } from "./player-labels.js";
 
@@ -71,9 +70,8 @@ function markSkillSquares($board, skillSquares) {
  *
  * Three attributes and not one, because the design will want to answer three different questions:
  *
- * - `data-trap` is the **behaviour**, `trap` or `blocker`. A trap is a single-use surprise that may not
- *   even be aimed at you; a blocker is a standing wall that refuses a move for three rounds. That is
- *   what D52 keys off, and a fifth kind of object is a line in `core/traps.js` and no CSS at all.
+ * - `data-trap` is the **behaviour**. It was `trap` or `blocker` until issue #90 moved Big Ah Rock onto
+ *   a pawn; every object on a square is now a trap, and the attribute keeps the seam for the next kind.
  * - `data-trap-kind` is the **specific object**, for the per-kind mark of D51.
  * - `data-player` on the span is the **owner**, and it goes on the span rather than the field because
  *   `board.css` already turns `[data-player]` on any element into `--player` and `--player-soft`. A
@@ -102,7 +100,10 @@ function markTraps($board, traps, match) {
       return;
     }
 
-    $square.attr("data-trap", isBlocker(trap.kind) ? "blocker" : "trap");
+    // Always "trap" since issue #90: Big Ah Rock stopped being a square object, so the "blocker" value
+    // D52 styled has no writer left. The attribute stays because board-trap.css and the specs key off
+    // it, and because a future standing object is one more value here and no CSS rewrite.
+    $square.attr("data-trap", "trap");
     $square.attr("data-trap-kind", trap.kind);
     $mark.attr("data-player", trap.owner);
     $mark.attr(

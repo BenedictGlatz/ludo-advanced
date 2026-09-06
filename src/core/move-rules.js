@@ -76,6 +76,8 @@ export const REFUSAL = {
   STUNNED: "move.refused.stunned",
   /** Lock In: this pawn's own player may not move it. */
   LOCKED: "move.refused.locked",
+  /** Rock or Big Ah Rock: this pawn is stone and its own player may not move it (issue #90). */
+  PETRIFIED: "move.refused.petrified",
   /** A Rock or a Big Ah Rock stands somewhere on the way. */
   BLOCKED: "move.refused.blocked",
   /** Built Different: the pawn on the target square cannot be captured. */
@@ -167,6 +169,13 @@ export function evaluatePawn(pawns, mover, roll, dieMax, board = EMPTY_BOARD) {
   }
   if (hasStatus(board.statuses, STATUS.LOCKED, mover)) {
     return { pawn: mover.pawn, move: null, reason: REFUSAL.LOCKED };
+  }
+  // Issue #90. The rulebook calls the Rock pawn "immovable stone", and until a playtest asked, the code
+  // only made it a wall for everybody else while its owner walked it around. Same shape as LOCKED: one
+  // pawn drops out, the owner's other three are untouched. A separate reason so the screen can say
+  // which card did it.
+  if (hasStatus(board.statuses, STATUS.ROCK, mover)) {
+    return { pawn: mover.pawn, move: null, reason: REFUSAL.PETRIFIED };
   }
 
   // FR-09. Leaving spends the whole roll: the pawn stops on the entry square and does not advance.

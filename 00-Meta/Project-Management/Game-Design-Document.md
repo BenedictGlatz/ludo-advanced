@@ -684,8 +684,8 @@ over several squares at once.
 | `action-banana-peel` | Banana Peel | Action | blocking | track square | A trap. The next pawn to cross it is stunned and loses its next turn. |
 | `action-hyperbeam` | Hyperbeam | Action | offensive | own pawn, direction | Roll a D4. Every pawn on the next 1 to D4 squares in that direction goes home, yours included. |
 | `reaction-uno-reverse` | Uno Reverse | Reaction | troll | no | When an opponent lands on your pawn to capture it, their pawn goes home instead. |
-| `action-rock` | Rock | Action | blocking | own pawn | One of your pawns becomes immovable stone for 2 rounds. Nothing lands on it or passes through it. |
-| `action-big-ah-rock` | Big Ah Rock | Action | blocking | track square | A square becomes a boulder for 3 turns, and the enemy pawn directly behind you is knocked back 3. |
+| `action-rock` | Rock | Action | blocking | own pawn | One of your pawns becomes immovable stone for 2 rounds. Nothing lands on it or passes through it, and you cannot move it either (issue #90 made the second half true in code). |
+| `action-big-ah-rock` | Big Ah Rock | Action | blocking | own pawn | One of your pawns becomes immovable stone for 3 rounds, and the enemy pawn directly behind it is knocked back 3. ~~A square becomes a boulder for 3 turns~~: changed 2026-09-06 after a playtest, issue #90; the square reading is recorded in the project journal. |
 | `action-oil-spill` | Oil Spill | Action | blocking | track square | A trap. Whoever steps on it slides 3 to 5 squares forward, triggering no skill square on the way. |
 | `reaction-ghost-mode` | Ghost Mode | Reaction | movement | no | Played when someone captures or blocks you: pass through every blocker and ignore capture this turn. |
 | `action-head-out` | Aight Imma Head Out | Action | movement | own pawn, choice | Swap with a random pawn, or teleport to the nearest skill square. Your call. |

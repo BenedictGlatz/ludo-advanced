@@ -86,11 +86,11 @@
       },
       "action-rock": {
         "title": "Rock",
-        "text": "One of your own pawns becomes a wall nothing gets past, for two rounds."
+        "text": "One of your own pawns turns to stone for two rounds: nothing gets past it, and you cannot move it yourself."
       },
       "action-big-ah-rock": {
         "title": "Big Ah Rock",
-        "text": "Turn one square into a boulder for three rounds, and knock the nearest enemy pawn behind it back three squares."
+        "text": "One of your own pawns turns to stone for three rounds, and the nearest enemy pawn behind it is knocked back three squares."
       },
       "action-oil-spill": {
         "title": "Oil Spill",

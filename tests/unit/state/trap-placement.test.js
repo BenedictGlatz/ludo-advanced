@@ -28,14 +28,9 @@ function board({ pawns = pawnsAt(4), traps = [] } = {}) {
 /** Absolute 5 is seat 0's `r = 6`, and no rule objects to it on an empty board. */
 const FREE = 5;
 
-const PLACEMENT_CARDS = [
-  "action-banana-peel",
-  "action-oil-spill",
-  "action-not-that-deep",
-  "action-big-ah-rock",
-];
+const PLACEMENT_CARDS = ["action-banana-peel", "action-oil-spill", "action-not-that-deep"];
 
-describe("the four cards that leave something standing on a square", () => {
+describe("the three cards that leave something standing on a square", () => {
   it("accept a free square", () => {
     for (const cardId of PLACEMENT_CARDS) {
       expect(checkTarget(board(), cardId, { square: FREE }, 0)).toBeNull();
@@ -118,7 +113,7 @@ describe("the squares the picker is told to offer", () => {
   it("never offers a square the rules would refuse", () => {
     const state = board({
       pawns: pawnsAt(4, { "0.0": 6, "2.0": 15 }),
-      traps: [trap(TRAP_KIND.BANANA_PEEL, 17), trap(TRAP_KIND.BIG_AH_ROCK, 23)],
+      traps: [trap(TRAP_KIND.BANANA_PEEL, 17), trap(TRAP_KIND.OIL_SPILL, 23)],
     });
 
     for (const cardId of [...PLACEMENT_CARDS, "action-janky-rpg"]) {

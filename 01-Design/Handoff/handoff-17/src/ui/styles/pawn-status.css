@@ -1,0 +1,225 @@
+/* What a card did to a pawn: the nine statuses of core/statuses.js, drawn on
+   the piece. Depends on tokens.css and pawn.css, and loads after pawn.css.
+   Reasoning: 01-Design/Handoff/17-spec-last-card-and-pawn-status.md, D101.
+
+   Split off pawn.css on 2026-09-06, at a real seam and for NFR-02: pawn.css
+   draws the piece and the five interactive states the player puts it in, this
+   file draws the states a card put it in. D56's tilt and D57's tag move here
+   unchanged, with their reasoning, so there is one file to read when a tenth
+   status arrives.
+
+   Three channels, because the nine kinds are not one size of fact:
+
+   1. The piece, for a status that stops the pawn being a pawn: rock and
+      stunned. The whole object changes.
+   2. The shell, for a status that refuses a capture: armoured and ghost. A
+      second ink ring standing off the disc.
+   3. The tag, for a status that only changes what this turn may do with the
+      pawn: locked, held, ragebait and slippery. One .pawn__status span, one
+      kind at a time, in the precedence order set out below.
+
+   purge is board-wide and is never in data-statuses, so nothing here reads
+   it. No user-facing string: every kind is also a clause in the pawn's title
+   attribute, which i18next writes from ui.json status.* (NFR-03, issue #94).
+
+   ==========================================================================
+   1. The piece
+   ========================================================================== */
+
+/* stunned: this pawn loses its next turn. It tips over, and its fill mixes
+   toward --color-dormant, the value the game already uses for a thing that is
+   present and not available. The seat colour stays under the mix, so the
+   piece is still identifiable while it is out.
+
+   The tilt is what makes it unmistakable rather than merely dull: it is the
+   only piece on the board that is not upright, it reads at a glance and it
+   reads in greyscale. It is a static transform and not a loop, so
+   prefers-reduced-motion has nothing to stop. A stunned pawn is also not
+   data-movable, which is true of eleven other pieces on a four-seat board and
+   is why the absent breathe ring could not carry this on its own. (D56) */
+.pawn[data-statuses~="stunned"] {
+  --pawn-tilt: -9deg;
+  cursor: default;
+}
+
+.pawn[data-statuses~="stunned"]::after {
+  background-color: color-mix(in oklab, var(--player) 58%, var(--color-dormant));
+}
+
+/* rock: Rock and Big Ah Rock petrify one of the caster's own pawns, and the
+   result is a wall that nothing passes, that its owner cannot move and that
+   cannot be pushed. It is the one status the other players plan around, so it
+   is the one status that changes the object rather than tagging it (D101.3).
+
+   Three changes and they say one thing. The corners square off, which is D52's
+   language exactly: a trap is a small thing lying on the path, a blocker is
+   the path being gone. D52 is retired with issue #90 and the blocker mark is
+   deleted from board-trap.css, so the square corner is free and it now means
+   the same thing one level up, on the piece the rule actually moved to. The
+   eyes close, because the creature is inside the stone and a face invites a
+   click that will be refused. The fill mixes toward --color-dormant, less far
+   than stunned's, because a rock is still somebody's pawn and comes back.
+
+   The shadow lengthens to --shadow-lift. A stone is the heaviest thing on the
+   board and it is the one piece that is deliberately in the way. */
+.pawn[data-statuses~="rock"] {
+  --pawn-tilt: 0deg;
+  cursor: default;
+}
+
+.pawn[data-statuses~="rock"]::after {
+  background-color: color-mix(in oklab, var(--player) 46%, var(--color-dormant));
+  background-image: none;
+  border-width: var(--border-ink);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lift);
+}
+
+/* ==========================================================================
+   2. The shell: cannot be captured
+   ========================================================================== */
+
+/* armoured and ghost are the reason a capture is refused, and until now the
+   pawn showed neither. One mark for both, and that is the answer to D101.2
+   rather than an economy: the difference between them is how they end, and
+   at the moment somebody points at the piece and is told no, both say the
+   same thing. Which one it was is in the title and in the last-card plate.
+
+   A second ink ring standing off the disc, drawn with `outline` because
+   `outline` is the one box property nothing on the pawn uses: ::after is the
+   disc, ::before is the state ring, and box-shadow on both is spoken for. It
+   is a ring and not a tint so it survives greyscale, it is ink so it survives
+   both skins on all four seat colours, and it follows border-radius, so an
+   armoured rock gets a squared shell for free.
+
+   Its outer edge is at 0.66 of the piece's width from the centre and the
+   state ring starts at 0.70, so the two are concentric and never touch. They
+   are also never confusable: this one is thin, ink and still, and the state
+   ring is thick, violet and breathing. */
+.pawn[data-statuses~="armoured"]::after,
+.pawn[data-statuses~="ghost"]::after {
+  outline: var(--border-hair) solid var(--color-ink);
+  outline-offset: calc(var(--pawn-size) * 0.09);
+}
+
+/* ==========================================================================
+   3. The tag: what this turn may do with the pawn
+   ========================================================================== */
+
+/* The tag is a dormant disc on the piece's upper right shoulder, clear of the
+   eyes. D57 built it for slippery and named it as the slot for the rest, and
+   this is the rest: four kinds share one box and differ by the ink inside it.
+
+   Precedence is expressed as source order and not as :not() chains. Each of
+   the four rules below sets the same property set on both pseudo-elements, so
+   the last one that matches wins outright, and the file is written in reverse
+   precedence: slippery, ragebait, held, locked. The order is what the player
+   can still do about it. locked and held both take the pawn out of this
+   turn's choice, and locked lasts a round while held lasts a turn. ragebait
+   puts the pawn into the choice and only matters if it is in it at all.
+   slippery is last because its one consequence has already happened by the
+   time the mark is read. */
+
+.pawn__status {
+  position: absolute;
+  top: -8%;
+  right: -8%;
+  z-index: 2;
+  width: 38%;
+  height: 38%;
+  border: var(--border-hair) solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  background: var(--color-dormant);
+  opacity: 0;
+  scale: 0.4;
+  transition:
+    opacity var(--motion-feedback) var(--ease-ui),
+    scale var(--motion-feedback) var(--ease-ui);
+}
+
+.pawn__status::before,
+.pawn__status::after {
+  content: "";
+  position: absolute;
+  border-radius: var(--radius-pill);
+  background: var(--color-ink);
+}
+
+/* One shape is the default and the second element is opted into, because
+   three of the four marks are a single stroke. */
+.pawn__status::after {
+  content: none;
+}
+
+/* slippery: the pawn slid rather than walked, so the field it stopped on
+   hands out no card. A skid, drawn across the tag (D57). */
+.pawn[data-statuses~="slippery"] .pawn__status::before {
+  content: "";
+  inset: 36% 14%;
+  rotate: -35deg;
+}
+
+.pawn[data-statuses~="slippery"] .pawn__status::after {
+  content: none;
+}
+
+/* ragebait: this pawn must be moved if it can move. The only status that
+   compels rather than prevents, so it is the only mark that is loud: a bar
+   over a dot, which is an exclamation drawn as geometry rather than set as a
+   character, so it needs no glyph that has to be right in two languages. */
+.pawn[data-statuses~="ragebait"] .pawn__status::before {
+  content: "";
+  inset: 14% 41% 48% 41%;
+  rotate: 0deg;
+}
+
+.pawn[data-statuses~="ragebait"] .pawn__status::after {
+  content: "";
+  inset: 70% 38% 12% 38%;
+}
+
+/* held: Hold Pawn drops this pawn out of this turn's move choice. Two upright
+   bars, the shape every player already reads as paused, and the only mark in
+   the set that is symmetrical, which is what tells it from the single stroke
+   of slippery at the board's smallest cell. */
+.pawn[data-statuses~="held"] .pawn__status::before {
+  content: "";
+  inset: 22% 58% 22% 22%;
+  rotate: 0deg;
+}
+
+.pawn[data-statuses~="held"] .pawn__status::after {
+  content: "";
+  inset: 22% 22% 22% 58%;
+}
+
+/* locked: Lock In. The tag fills solid, with no inner geometry at all: the
+   strongest mark in the set for the status that takes the most away, and the
+   only one that reads as a shape rather than as a drawing at 12 px.
+
+   Lock In writes locked and armoured in one play, so this is the pawn that
+   wears both channels at once: a filled tag on the shoulder and a shell
+   around the piece. That is the common case and it is deliberately not
+   collapsed into one mark, because the two facts are aimed at two different
+   people. The shell is for the player who wants to capture it; the tag is for
+   the owner, who cannot move it. */
+.pawn[data-statuses~="locked"] .pawn__status {
+  background: var(--color-ink);
+}
+
+.pawn[data-statuses~="locked"] .pawn__status::before,
+.pawn[data-statuses~="locked"] .pawn__status::after {
+  content: none;
+}
+
+/* The tag is present on every pawn and shows for these four (D57's mechanism,
+   three more kinds). rock, stunned, armoured and ghost are deliberately
+   absent: they are drawn on the piece, so a rock pawn that is also slippery
+   shows the skid rather than losing it to a status the piece already says. */
+.pawn[data-statuses~="slippery"] .pawn__status,
+.pawn[data-statuses~="ragebait"] .pawn__status,
+.pawn[data-statuses~="held"] .pawn__status,
+.pawn[data-statuses~="locked"] .pawn__status {
+  opacity: 1;
+  scale: 1;
+}
