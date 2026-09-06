@@ -754,6 +754,12 @@ the window; that card's rule never ran. The slot will name the Nühü (it was pl
 of the negated card is settled too, so a later reader of the state can tell "cancelled" from "did
 nothing visible", which is the distinction `nullifiedCard` exists for at turn level.
 
+**`game-state.js` was split to make room.** The new field took it to 301 lines. `boardOf` and
+`seatProgress`, the two read-only selectors, moved to `selectors.js` and are re-exported, so no importer
+changed. Chosen over moving `clearedTurnFields`, which is the other clean seam, because the bonus-roll
+branch (#89) edits that function and a move on one side of a merge and an edit on the other is the
+conflict nobody wants to resolve on merge day.
+
 **No view yet.** Design brief 17 asks where the slot goes and what it shows (D100). The state is
 testable without it: `last-card-played.test.js` covers the four outcomes and the survival of the turn.
 
