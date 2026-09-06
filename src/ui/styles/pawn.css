@@ -87,6 +87,21 @@
 
 .pawn[data-movable="true"] {
   cursor: pointer;
+  /* Issue #91: a movable pawn can be dragged, and on a touch screen the
+     browser would otherwise take the same gesture for a scroll. */
+  touch-action: none;
+}
+
+/* --- data-dragging: the pawn is following the pointer (issue #91). The
+       offset rides on `translate`, which composes with the positioning
+       transform above without touching it, and has no transition so the
+       pawn keeps up with the hand. Functional only: what a carried pawn
+       should look like beyond this is design brief 17's question. --- */
+.pawn[data-dragging="true"] {
+  z-index: var(--layer-pawn-active);
+  cursor: grabbing;
+  translate: var(--drag-dx, 0px) var(--drag-dy, 0px);
+  transition: none;
 }
 
 .pawn[data-movable="true"]::before {

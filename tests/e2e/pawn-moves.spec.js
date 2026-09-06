@@ -83,3 +83,113 @@ test.describe("a pawn advances along the track", () => {
     await expect(board.locator('.pawn[data-selected="true"]')).toHaveCount(1);
   });
 });
+
+test.describe("a pawn moves by pointing at its target (issue #91)", () => {
+  /** The centre of an element's box, for the mouse. */
+  async function centre(locator) {
+    const box = await locator.boundingBox();
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  }
+
+  test("a click on the pawn and a click on the lit square make the move", async ({ page }) => {
+    const board = await openMatch(page, SEEDS.advancesEarly);
+    await reachAnAdvance(board);
+
+    const { roll, activePlayer } = await boardState(board);
+    const pawn = firstMovablePawn(board);
+    const index = await pawn.getAttribute("data-pawn");
+    const before = Number(await pawn.getAttribute("data-r"));
+
+    await pawn.click();
+    await board.locator('.square[data-legal-target="true"]').click();
+
+    await expect
+      .poll(async () => (await pawnPositions(board))[`${activePlayer}.${index}`])
+      .toBe(before + roll);
+  });
+
+  /** The two-step safety survives: a first click on a square picks, it does not move. */
+  test("a click on a lit square with nothing selected picks the pawn that reaches it", async ({
+    page,
+  }) => {
+    const board = await openMatch(page, SEEDS.advancesEarly);
+    await reachAnAdvance(board);
+
+    const before = await pawnPositions(board);
+    await board.locator('.square[data-legal-target="true"]').first().click();
+
+    await expect(board.locator('.pawn[data-selected="true"]')).toHaveCount(1);
+    await expect(board.locator('.square[data-legal-target="true"]')).toHaveCount(1);
+    expect(await pawnPositions(board)).toEqual(before);
+  });
+
+  test("dragging the pawn onto its lit square makes the move", async ({ page }) => {
+    const board = await openMatch(page, SEEDS.advancesEarly);
+    await reachAnAdvance(board);
+
+    const { roll, activePlayer } = await boardState(board);
+    const pawn = firstMovablePawn(board);
+    const index = await pawn.getAttribute("data-pawn");
+    const before = Number(await pawn.getAttribute("data-r"));
+
+    const from = await centre(pawn);
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    // Past the drag threshold: the pawn is picked up and its one target lights.
+    await page.mouse.move(from.x + 12, from.y + 12, { steps: 3 });
+    await expect(pawn).toHaveAttribute("data-dragging", "true");
+    await expect(pawn).toHaveAttribute("data-selected", "true");
+    await expect(board.locator('.square[data-legal-target="true"]')).toHaveCount(1);
+
+    const to = await centre(board.locator('.square[data-legal-target="true"]'));
+    await page.mouse.move(to.x, to.y, { steps: 8 });
+    await page.mouse.up();
+
+    await expect
+      .poll(async () => (await pawnPositions(board))[`${activePlayer}.${index}`])
+      .toBe(before + roll);
+    await expect(board.locator('.pawn[data-dragging="true"]')).toHaveCount(0);
+  });
+
+  test("dropping the pawn anywhere else puts it back and moves nothing", async ({ page }) => {
+    const board = await openMatch(page, SEEDS.advancesEarly);
+    await reachAnAdvance(board);
+
+    const { turnNumber } = await boardState(board);
+    const pawn = firstMovablePawn(board);
+    const before = await pawnPositions(board);
+
+    const from = await centre(pawn);
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await page.mouse.move(from.x + 40, from.y - 40, { steps: 5 });
+    await expect(pawn).toHaveAttribute("data-dragging", "true");
+    await page.mouse.up();
+
+    await expect(board.locator('.pawn[data-dragging="true"]')).toHaveCount(0);
+    expect(await pawnPositions(board)).toEqual(before);
+    expect((await boardState(board)).turnNumber).toBe(turnNumber);
+    // The pawn stays picked, so the player can still finish with a click.
+    await expect(pawn).toHaveAttribute("data-selected", "true");
+  });
+
+  test("a lit square can be reached and activated from the keyboard (NFR-08)", async ({ page }) => {
+    const board = await openMatch(page, SEEDS.advancesEarly);
+    await reachAnAdvance(board);
+
+    const { roll, activePlayer } = await boardState(board);
+    const pawn = firstMovablePawn(board);
+    const index = await pawn.getAttribute("data-pawn");
+    const before = Number(await pawn.getAttribute("data-r"));
+
+    await pawn.click();
+    const target = board.locator('.square[data-legal-target="true"]');
+    await expect(target).toHaveAttribute("tabindex", "0");
+    await target.focus();
+    await page.keyboard.press("Enter");
+
+    await expect
+      .poll(async () => (await pawnPositions(board))[`${activePlayer}.${index}`])
+      .toBe(before + roll);
+  });
+});

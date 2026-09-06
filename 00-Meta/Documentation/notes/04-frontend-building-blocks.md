@@ -3044,6 +3044,53 @@ stale stylesheets twice (handoff 16, the section above). `01-Design/Handoff/00-o
 mitigation and it only works when this side notices that a fix contradicts a spec rather than the CSS.
 Whether that held is worth checking at the end of Sprint 3, either way.
 
+### A pawn moves by pointing at its target: click the lit square, or drag: 2026-09-06, issue #91
+
+**The request.** A playtester wanted to move a pawn either by dragging it or by clicking where it should
+go. Until now the only gesture was two clicks on the pawn (`turn-controls.js`, issue #62), and the lit
+target squares from `move-hints.js` were highlights nothing listened to.
+
+**Two gestures, one rule.** Both are the same two-step move spelled differently, and the two-step safety
+from issue #62 is kept on purpose: a first gesture picks, a second commits, because a misclick on a
+capture costs another player most of a lap.
+
+- **Target click.** `events.js` binds `click` and Enter/Space on `.square[data-legal-target="true"]`
+  and hands the square's description to `onTargetActivated`. `move-targets.js` (new, jQuery-free)
+  translates the square back into the legal move it was lit for, using the same three `core/board.js`
+  functions `move-hints.js` used to light it, so the two cannot disagree. With nothing selected the click
+  selects the pawn that reaches the square; with that pawn selected it commits. The lit squares carry
+  `tabindex="0"` while lit, so the keyboard reaches them (NFR-08).
+- **Drag.** `drag-move.js` (new) turns `pointerdown`, `pointermove` and `pointerup` into
+  `onDragStarted` and `onDragEnded`. A press becomes a drag after `DRAG_THRESHOLD_PX` (6 px); the pawn
+  is then selected, so its one target lights under the pointer, and it follows the pointer through
+  `--drag-dx` / `--drag-dy`, applied in `pawn.css` as a `translate` that composes with the positioning
+  transform. Letting go on the target commits; anywhere else `render()` puts the pawn back and the
+  selection stays. Pointer capture keeps the gesture when the pointer leaves the board; `pointercancel` is
+  a drop on nothing; `touch-action: none` on a movable pawn stops a touch screen scrolling instead.
+
+**Two traps avoided, both worth recording.**
+
+- **Selecting on `pointerdown` was rejected.** The browser fires a `click` after every press, and a pawn
+  already selected by the press would have been committed by that click: two clicks turned into one for
+  every pawn. So nothing happens until the threshold, and after a real drag the trailing `click` is
+  swallowed in the capture phase on the board, before jQuery's delegated handlers see it.
+- **`pointer-events: none` on the carried pawn was rejected** as the way to see the square under it.
+  `elementsFromPoint` (plural) finds the square beneath the pawn without it, and the 2026-09-03 challenge
+  entry is the reason this project does not gate input on an attribute it has to remember to clear.
+
+**Where the exception to `events.js`'s rule is.** That file promises every jQuery handler lives in it and
+each does exactly one thing. A drag is one gesture across three events with state between them, so it has
+its own file and is bound from `bindMatchEvents` beside the board's clicks; the header of `events.js` says so.
+
+**What is not designed yet.** The carried pawn gets `data-dragging`, a `grabbing` cursor and the active
+z-index, and nothing else. What a pawn in the hand should look like (shadow, lift, the target's response)
+is a look, not a fix, and goes to brief 17 with the other pawn questions.
+
+**Tests.** `move-targets.test.js` and the two new groups in `turn-controls.test.js` cover the decisions
+without a browser; `pawn-moves.spec.js` gained five cases: target click after a pawn click, target click
+with nothing selected (picks, does not move), a drag onto the target, a drag dropped elsewhere (pawn back,
+still selected, nothing moved), and Enter on a focused target square.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
