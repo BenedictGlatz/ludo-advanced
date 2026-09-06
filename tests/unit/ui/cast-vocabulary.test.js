@@ -17,7 +17,13 @@
 import { describe, expect, it } from "vitest";
 
 import { CARD_COUNT, SKILL_CARDS, cardIds } from "../../../src/core/cards/catalogue.js";
-import { castCardIds, castFamily, hasBoardStage } from "../../../src/ui/cast-vocabulary.js";
+import {
+  castCardIds,
+  castFamily,
+  castOutcome,
+  castsOnBoard,
+  hasBoardStage,
+} from "../../../src/ui/cast-vocabulary.js";
 
 /** The six values `data-cast-family` may take, and no seventh. D105. */
 const FAMILIES = ["roll", "hand", "status", "shove", "trap", "area"];
@@ -122,6 +128,63 @@ describe("which cards reach the board at all", () => {
     expect(pointed.length).toBeGreaterThan(0);
     for (const card of pointed) {
       expect(hasBoardStage(card.id), `${card.id} points at the board`).toBe(true);
+    }
+  });
+});
+
+describe("what became of the play narrows the stage it gets, D113", () => {
+  const played = { seat: 1, cardId: "action-banana-peel", target: { square: 7 } };
+  const record = (outcome) => ({
+    lastCard: { seat: 1, cardId: "action-banana-peel", turnNumber: 3, outcome },
+  });
+
+  it("reads the outcome off the record when it names the same play", () => {
+    expect(castOutcome(record("nullified"), played)).toBe("nullified");
+  });
+
+  /**
+   * The record can name a **different** play: a Reaction settled after this card in the same window,
+   * and the plate shows one card. The answer is then the outcome with no treatment on it, because a
+   * cast never guesses that something went wrong.
+   */
+  it("answers resolved when the record names some other card", () => {
+    const other = {
+      lastCard: { seat: 2, cardId: "reaction-nuehue", turnNumber: 3, outcome: "negated" },
+    };
+
+    expect(castOutcome(other, played)).toBe("resolved");
+    expect(castOutcome({ lastCard: null }, played)).toBe("resolved");
+    expect(castOutcome({}, played)).toBe("resolved");
+  });
+
+  /**
+   * A pending card is waiting in a window and its rule has not run, so there is nothing to land. The
+   * board stage comes back for the **second** moment, when the window shuts and the card resolves.
+   */
+  it("gives a pending card no board stage, and gives it one once it resolves", () => {
+    expect(castsOnBoard("action-banana-peel", "pending")).toBe(false);
+    expect(castsOnBoard("action-banana-peel", "resolved")).toBe(true);
+  });
+
+  /** A Nuehue stopped it, so nothing ever happened on the board and nothing is drawn there. */
+  it("gives a negated card no board stage at all", () => {
+    expect(castsOnBoard("action-banana-peel", "negated")).toBe(false);
+  });
+
+  /**
+   * A nullified card **does** get one, and this is the branch that is easiest to get backwards. An
+   * aura refused the card, and the board stage lights the aura's fields instead of the card's own
+   * target: the player sees the card go to the board, the hatched region answer, and the card grey.
+   * Not drawing it would make the cancellation look like a bug in the hand.
+   */
+  it("keeps the board stage for a nullified card, which lights the aura instead", () => {
+    expect(castsOnBoard("action-banana-peel", "nullified")).toBe(true);
+  });
+
+  /** A card that never had a board stage does not gain one from an outcome. */
+  it("does not give a roll card a board stage whatever became of it", () => {
+    for (const outcome of ["resolved", "pending", "negated", "nullified"]) {
+      expect(castsOnBoard("action-angel-die", outcome)).toBe(false);
     }
   });
 });

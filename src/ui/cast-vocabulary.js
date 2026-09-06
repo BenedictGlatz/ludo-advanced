@@ -138,3 +138,39 @@ export function hasBoardStage(cardId) {
 export function castCardIds() {
   return Object.keys(FAMILY_FOR);
 }
+
+/**
+ * Which of the four outcomes a card play had, for `data-outcome`. D113.
+ *
+ * Read off `lastCard`, the match-level record, because that is the field that carries an outcome at
+ * all and `intents-cards.js` writes both records in the same dispatch. When the record names some
+ * other play (a Reaction settled after it, say) the answer is `resolved`, which is the outcome with
+ * no treatment on it: a cast never guesses that something went wrong.
+ */
+export function castOutcome(state, played) {
+  const last = state.lastCard ?? null;
+  const sameCard = last !== null && last.seat === played.seat && last.cardId === played.cardId;
+
+  return sameCard ? last.outcome : "resolved";
+}
+
+/**
+ * Does **this play** get a board stage? The card's own answer, narrowed by what became of it. D113.
+ *
+ * Three of the four outcomes narrow it, and each for a different reason:
+ *
+ * - `pending`: the card is waiting in a reaction window and its rule has not run. There is nothing to
+ *   land yet, so the cast is the card stage alone and the card wears the violet ring the plate and a
+ *   selected card wear. When the window shuts the same card gets a **second** moment, which is the
+ *   board stage on its own.
+ * - `negated`: a Nuehue stopped it, so nothing ever happens on the board. What says no is the
+ *   Nuehue's own cast and the plate afterwards, not a board stage for a card that did nothing.
+ * - `nullified`: an aura refused it. There **is** a board stage and it lights the aura's fields
+ *   instead of the card's own target, which is `cast-hits.js`'s `auraHits`. That branch is why this
+ *   returns `true` here and the marks are chosen elsewhere.
+ */
+export function castsOnBoard(cardId, outcome) {
+  if (outcome === "pending" || outcome === "negated") return false;
+
+  return hasBoardStage(cardId);
+}

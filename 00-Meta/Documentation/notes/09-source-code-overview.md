@@ -160,7 +160,7 @@ measurement**; the blocks below it are kept so the growth is readable rather tha
 | Lines in `src/state/` | 3 | 2373 lines in 14 files, up 29 | 2026-09-06, after handoff 18 |
 | Lines in `src/ui/` | 3 | **7264 lines in 43 files**, plus 6166 lines of CSS | 2026-09-06, after handoff 18 |
 | Lines in `src/ai/` | 3 | 2768 lines in 18 files, **unchanged** | 2026-09-06, after handoff 18 |
-| Unit tests | 4 | **85 test files, 1044 tests**, all passing | 2026-09-06, after handoff 18 |
+| Unit tests | 4 | **85 test files, 1050 tests**, all passing | 2026-09-06, after handoff 18 |
 | End-to-end tests | 8 | **152 tests in 28 files per browser, 456 across the three**, all passing | 2026-09-06, after handoff 18 |
 | Coverage of the three headless layers, lines | 5c | 99.32 % (1325/1334) | 2026-09-06, after handoff 18 |
 | Coverage of `src/core/`, lines | 5c | 99.66 % (581/583) over 32 files | 2026-09-06, after handoff 18 |

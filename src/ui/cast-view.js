@@ -34,7 +34,7 @@ import { cardById } from "../core/cards/catalogue.js";
 import { isBot } from "../state/bots.js";
 import { GEOMETRY_PROPERTIES, castGeometry } from "./cast-geometry.js";
 import { auraHits, castHits } from "./cast-hits.js";
-import { castFamily, hasBoardStage } from "./cast-vocabulary.js";
+import { castFamily, castOutcome, castsOnBoard } from "./cast-vocabulary.js";
 import { createCard, updateCard } from "./card-view.js";
 import { skillCard } from "./skill-hand-view.js";
 
@@ -65,26 +65,6 @@ export function renderCast() {
 }
 
 /**
- * Which of the four outcomes this play had, for `data-outcome`.
- *
- * Read off `lastCard`, the match-level record, because that is the field that carries an outcome at
- * all and it names the same play: `intents-cards.js` writes both in the same dispatch. The three that
- * matter to the cast are D113's: `pending` skips the board stage and wears the violet ring, `nullified`
- * lights the aura instead of its own target, and `negated` never gets a board stage because the card
- * it negated is what did nothing.
- */
-function outcomeOf(state, played) {
-  const last = state.lastCard;
-  const sameCard =
-    last !== null &&
-    last !== undefined &&
-    last.seat === played.seat &&
-    last.cardId === played.cardId;
-
-  return sameCard ? last.outcome : "resolved";
-}
-
-/**
  * Fill the stage with one played card and put it in its first state.
  *
  * Returns the plan the driver needs: whether there is a board stage, and what that stage marks. The
@@ -95,12 +75,11 @@ export function fillCast($cast, state, played, { boardStageOnly = false } = {}) 
   const cardId = played.cardId;
   const card = cardById(cardId);
   const family = castFamily(cardId);
-  const outcome = outcomeOf(state, played);
+  const outcome = castOutcome(state, played);
 
-  // A card that did nothing on the board has no board stage, whatever its family would have had. A
-  // pending card has not resolved yet, so there is nothing to land; a negated one never will.
-  const board =
-    hasBoardStage(cardId) && outcome !== "pending" && outcome !== "negated" && family !== null;
+  // Which stage this play gets is `cast-vocabulary.js`'s answer, because it is a decision about the
+  // card and its outcome rather than about the DOM, and D113's three branches deserve a unit test.
+  const board = family !== null && castsOnBoard(cardId, outcome);
 
   const hits =
     outcome === "nullified"

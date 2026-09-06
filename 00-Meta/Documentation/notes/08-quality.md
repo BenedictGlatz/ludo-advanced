@@ -2165,6 +2165,31 @@ the board is clean afterwards.
 happen is the cast being skipped: a reduced-motion player would then be the only one at the table who
 never sees a bot's card, which is the thing the spec's D115 exists to prevent.
 
+#### The coverage that is missing, and why it is missing rather than forgotten
+
+**A cancelled card's cast has no end-to-end case.** D113 has four outcomes and three of them narrow
+what a cast draws: `pending` skips the board stage, `negated` never gets one, and `nullified` gets one
+that lights the aura instead of the card's own target. All three are covered as a **unit** test, and
+the decision was moved out of `cast-view.js` into the pure `cast-vocabulary.js` specifically so that it
+could be. What is not covered is the same three branches driving a real screen.
+
+Two things in the harness are in the way, and both were tried:
+
+1. **`?fast=1` shuts a reaction window at once.** The whole end-to-end suite runs with it, and the
+   comment in `helpers.js` already says the behaviour in as many words: with every delay at zero the
+   window behaves as though every eligible player declined immediately. So a card cannot be *observed*
+   sitting in a window under the flag every other spec uses.
+2. **Without the flag, driving several turns to line the situation up runs out of time.** Getting a
+   reaction card into a second seat's hand takes four turns of a four-player match, and at real speed
+   each of those turns now pays the roll's hold, the cast's hold and the handover, which is past the
+   15 second per-step timeout the turn helpers use.
+
+Neither is a reason to skip the coverage permanently, and the way through is one of two: a helper that
+opens a window with the clock overridden but the cast's hold left alone, which is a fifth key in
+`FAST_DELAYS` and not a rewrite; or a seed found by `find-seeds.js` that deals two named cards to two
+seats on the same turn, which the script cannot currently search for because it never plays a card.
+Recorded as owed rather than claimed as done.
+
 
 ## Decisions
 
