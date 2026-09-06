@@ -27,7 +27,7 @@
  * 2. **The aura.** An offensive card aimed inside somebody else's It's Not That Deep does nothing at
  *    all and is still spent. `nullifiedBy` is asked here, once, rather than in the six offensive
  *    values, because it is the same question for all of them and the target is what it depends on.
- * 3. **The threshold.** `PLAY_AT`, dropping to `PLAY_AT_FULL_HAND` when the hand is full. Below it the
+ * 3. **The threshold.** `playAt`, dropping to `playAtFullHand` when the hand is full. Below it the
  *    bot passes and keeps the card, which is the difference between a bot playing cards and a bot
  *    emptying its hand.
  *
@@ -46,11 +46,12 @@ import { INTENT } from "../state/intents.js";
 import { INTENT_CARD, playableCards } from "../state/intents-cards.js";
 import { checkTarget, nullifiedBy } from "../state/card-legality.js";
 import { valueOf } from "./card-values.js";
-import { PLAY_AT, PLAY_AT_FULL_HAND, handSize } from "./values-shared.js";
+import { DEFAULT_PROFILE, profileFor } from "./profile.js";
+import { handSize } from "./values-shared.js";
 
-/** How much a card has to be worth for this seat, right now. See `values-shared.js` for both numbers. */
-function threshold(state, seat) {
-  return handSize(state, seat) >= SKILL_HAND_LIMIT ? PLAY_AT_FULL_HAND : PLAY_AT;
+/** How much a card has to be worth for this seat, right now. See `profile.js` for both numbers. */
+function threshold(state, seat, profile) {
+  return handSize(state, seat) >= SKILL_HAND_LIMIT ? profile.playAtFullHand : profile.playAt;
 }
 
 /**
@@ -63,12 +64,12 @@ function threshold(state, seat) {
  * The `Set` removes duplicates. A hand can hold two copies of one card (the pool has two of each), and
  * pricing the same card twice would cost twice as much and answer the same thing.
  */
-function bestPlay(state, seat) {
-  const wanted = threshold(state, seat);
+function bestPlay(state, seat, profile) {
+  const wanted = threshold(state, seat, profile);
   let best = null;
 
   for (const cardId of new Set(playableCards(state, seat))) {
-    const scored = valueOf(state, seat, cardId);
+    const scored = valueOf(state, seat, cardId, profile);
     if (scored === null || scored.value < wanted) continue;
 
     // The card would be swallowed by an aura and spent for nothing. Priced as "do not play", not as
@@ -96,9 +97,9 @@ function playIntent(seat, best) {
  * skips it by itself when the seat holds nothing playable, so by the time this is asked there is at
  * least one card to consider and `skip-action` is the answer that nothing was worth it.
  */
-export function chooseAction(state) {
+export function chooseAction(state, profile = DEFAULT_PROFILE) {
   const seat = state.activePlayer;
-  const best = bestPlay(state, seat);
+  const best = bestPlay(state, seat, profileFor(profile, seat));
 
   return best === null ? { type: INTENT.SKIP_ACTION } : playIntent(seat, best);
 }
@@ -109,8 +110,8 @@ export function chooseAction(state) {
  * The seat is passed in rather than read off the state, because a window asks somebody who is **not**
  * the active player, and which of several eligible bots is being asked is the driver's question.
  */
-export function chooseReaction(state, seat) {
-  const best = bestPlay(state, seat);
+export function chooseReaction(state, seat, profile = DEFAULT_PROFILE) {
+  const best = bestPlay(state, seat, profileFor(profile, seat));
 
   return best === null ? { type: INTENT_CARD.DECLINE_REACTION, seat } : playIntent(seat, best);
 }

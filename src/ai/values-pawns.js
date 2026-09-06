@@ -1,19 +1,28 @@
 /**
- * What the cards that act on a pawn are worth. Issue #82, requirement FR-43.
+ * What the cards you play on **your own** pawns are worth. Issue #82, requirement FR-43.
  *
- * Pure `ai/`. Same signature as every other value, `(state, seat) => { value, target } | null`, and
- * the same currency: see [values-shared.js](values-shared.js).
+ * Pure `ai/`. Same signature as every other value, `(state, seat, profile) => { value, target } | null`,
+ * and the same currency: see [values-shared.js](values-shared.js).
  *
- * ## Every one of these seven searches, and that is the difference from the roll cards
+ * ## Own pawns here, opponents' pawns next door
+ *
+ * The file used to hold all seven pawn cards and was at 290 of NFR-02's 300 lines, so the bot tactics
+ * plan split it before adding anything. The seam is the one the old header already named without
+ * using it: **defensive against offensive**. Six cards below buy something for a pawn of mine, and the
+ * two in [values-attacks.js](values-attacks.js) take something off somebody else's. The two halves
+ * ask different questions (which of my four is worth protecting, against which opponent is worth
+ * hitting) and share only the vocabulary in `values-shared.js`.
+ *
+ * ## Every one of these searches, and that is the difference from the roll cards
  *
  * A roll card has one target or none. These name a pawn, and which pawn is the whole decision: Built
  * Different on a pawn nobody can reach is a wasted card, and on the leading pawn with two opponents
- * behind it, it is worth most of a pawn. So each value walks the seat's own pawns (or one opponent's),
- * prices each, and returns the best.
+ * behind it, it is worth most of a pawn. So each value walks the seat's own pawns, prices each, and
+ * returns the best.
  *
- * The danger term they lean on is `threatOn` in [threat.js](threat.js), which carries its own reasons
- * for being as crude as it is. What matters here is that it is the **same** term in all seven, so the
- * cards are ranked against each other and not against seven different ideas of danger.
+ * The danger term they lean on is `threatOn` in [threat.js](threat.js). What matters here is that it
+ * is the **same** term in all of them, and the same one `move-scoring.js` prices a move with, so the
+ * cards are ranked against each other and against moves rather than against several ideas of danger.
  *
  * ## Two of them are priced by asking the rules where the pawn would end up
  *
@@ -26,28 +35,25 @@
  * `slidePawn` is pure and returns a new list, so calling it to look is free and changes nothing.
  */
 
-import { HOME_R, TRACK_LENGTH } from "../core/board.js";
-import {
-  HEAD_OUT,
-  HEAD_OUT_STEPS,
-  YEET_DIE,
-  COOK_DIE,
-} from "../core/cards/effects/displacement-effects.js";
+import { HOME_R } from "../core/board.js";
+import { HEAD_OUT, HEAD_OUT_STEPS, COOK_DIE } from "../core/cards/effects/displacement-effects.js";
 import { KNOCKBACK } from "../core/cards/effects/status-effects.js";
 import { squareOf } from "../core/displacement.js";
 import { slidePawn } from "../core/slide.js";
 import { boardOf } from "../state/game-state.js";
-import { SCORE } from "./move-scoring.js";
-import { enemiesBehind, friendsBehind, oddsOfHit, pawnWorth, threatOn } from "./threat.js";
-import { enemiesOnTrack, opponents, ownOnTrack, pawnAt, share } from "./values-shared.js";
+import { enemiesBehind, friendsBehind } from "./geometry.js";
+import { DEFAULT_PROFILE } from "./profile.js";
+import { SCORE, pawnWorth } from "./score.js";
+import { threatOn } from "./threat.js";
+import { ownOnTrack, pawnAt, share } from "./values-shared.js";
 
 /** A pawn's identity as a card target. */
-function ref(pawn) {
+export function ref(pawn) {
   return { player: pawn.player, pawn: pawn.pawn };
 }
 
 /** The best of a list of `{ value, target }`, or `null`. First one wins a tie, so it is repeatable. */
-function best(candidates) {
+export function best(candidates) {
   let winner = null;
 
   for (const candidate of candidates) {
@@ -62,40 +68,34 @@ function best(candidates) {
 /** How far behind a Rock or a Big Ah Rock still matters. Six squares: one D6 away from walking into it. */
 const BLOCK_RANGE = 6;
 
-/** What one pawn being stopped by a blocker is worth. A guess, and the same one for both rock cards. */
-const BLOCK_WORTH = 3;
-
-/** What standing still for a round costs, in steps. Roughly one average roll of the smaller dice. */
-const LOCK_COST = 5;
-
 /**
  * What a wall on one of my pawns is worth: the enemies it stops, less my own pawns it stops, less the
  * pawn's own standstill.
  *
  * Shared by Rock and Big Ah Rock. The subtraction of friends is the card's whole character: a Rock
  * blocks its owner exactly as hard as everybody else. **The standstill is new in issue #90**, when a
- * petrified pawn stopped being movable by its owner: the same `LOCK_COST` Lock In pays, because it is
+ * petrified pawn stopped being movable by its owner: the same `lockCost` Lock In pays, because it is
  * the same fact, one pawn sitting out a round of walking.
  */
-function wallValue(state, seat, pawn) {
+function wallValue(state, seat, pawn, profile) {
   const square = squareOf(pawn);
   const enemies = enemiesBehind(state.pawns, square, BLOCK_RANGE, seat).length;
   const friends = friendsBehind(state.pawns, square, BLOCK_RANGE, seat).length;
 
-  return BLOCK_WORTH * (enemies - friends) - LOCK_COST;
+  return profile.blockWorth * (enemies - friends) - profile.lockCost;
 }
 
 /**
  * Turn one of your own pawns into a wall (Rock).
  *
- * Worth `BLOCK_WORTH` for every opponent pawn close enough behind to run into it, less the same for
+ * Worth `blockWorth` for every opponent pawn close enough behind to run into it, less the same for
  * every one of my own pawns behind it, less what the pawn gives up by standing still. A wall in front
  * of my own train of pawns is a card played against myself.
  */
-export function rock(state, seat) {
+export function rock(state, seat, profile = DEFAULT_PROFILE) {
   return best(
     ownOnTrack(state, seat).map((pawn) => ({
-      value: wallValue(state, seat, pawn),
+      value: wallValue(state, seat, pawn, profile),
       target: { pawn: ref(pawn) },
     }))
   );
@@ -104,18 +104,21 @@ export function rock(state, seat) {
 /**
  * The same wall for a round longer, and the nearest enemy behind it knocked back three (Big Ah Rock).
  *
- * Priced as Rock plus the knockback, taken as a share, when there is an enemy within `BLOCK_RANGE`
- * behind the pawn to knock. The rules push the nearest enemy anywhere round the ring, and a pawn
- * thirty squares behind is still pushed three; it is simply not worth spending the card on, which is
- * what the range says. Issue #90 moved this here from `values-squares.js`, where it priced a square.
+ * Priced as Rock plus the knockback, taken as a share of that enemy's own loss, when there is one
+ * within `BLOCK_RANGE` behind the pawn to knock. The rules push the nearest enemy anywhere round the
+ * ring, and a pawn thirty squares behind is still pushed three; it is simply not worth spending the
+ * card on, which is what the range says. Issue #90 moved this here from `values-squares.js`.
  */
-export function bigAhRock(state, seat) {
+export function bigAhRock(state, seat, profile = DEFAULT_PROFILE) {
   return best(
     ownOnTrack(state, seat).map((pawn) => {
-      const behind = enemiesBehind(state.pawns, squareOf(pawn), BLOCK_RANGE, seat).length > 0;
-      const knock = behind ? share(state) * KNOCKBACK : 0;
+      const [nearest] = enemiesBehind(state.pawns, squareOf(pawn), BLOCK_RANGE, seat);
+      const knock = nearest === undefined ? 0 : share(state, nearest.player) * KNOCKBACK;
 
-      return { value: wallValue(state, seat, pawn) + knock, target: { pawn: ref(pawn) } };
+      return {
+        value: wallValue(state, seat, pawn, profile) + knock,
+        target: { pawn: ref(pawn) },
+      };
     })
   );
 }
@@ -126,11 +129,16 @@ export function bigAhRock(state, seat) {
  * The value of insurance: how likely the pawn is to be taken, times what losing it would cost. A pawn
  * on `r = 38` with an opponent six squares behind is worth about six points of protection; the same
  * pawn with a clear track behind it is worth nothing at all, and the bot keeps the card.
+ *
+ * **This is not double counting against the move scorer's risk term**, and the difference is worth
+ * naming because the two look alike: the card buys safety for a pawn that **stays where it is**, and
+ * the move term prices where a pawn would **go**. On a threatened leading pawn with nowhere safe to
+ * walk, the card wins, and that is the case the test file pins.
  */
 export function builtDifferent(state, seat) {
   return best(
     ownOnTrack(state, seat).map((pawn) => ({
-      value: threatOn(state.pawns, pawn) * pawnWorth(pawn),
+      value: threatOn(state.pawns, pawn, boardOf(state)) * pawnWorth(pawn),
       target: { pawn: ref(pawn) },
     }))
   );
@@ -143,81 +151,10 @@ export function builtDifferent(state, seat) {
  * only when Built Different is not in the hand, which is the right order: the two cards protect the
  * same pawn and one of them also costs a turn of walking.
  */
-export function lockIn(state, seat) {
-  const insured = builtDifferent(state, seat);
+export function lockIn(state, seat, profile = DEFAULT_PROFILE) {
+  const insured = builtDifferent(state, seat, profile);
 
-  return insured === null ? null : { ...insured, value: insured.value - LOCK_COST };
-}
-
-/** What forcing an opponent to move the wrong pawn is worth, before the `share` rule is applied. */
-const TAUNT_WORTH = 3;
-
-/**
- * If a named opponent pawn can move, its owner has to move it (Ragebait).
- *
- * Aimed at the opponent's **rearmost** pawn, and only when they have one further ahead. That is the
- * whole card: forcing a player to walk the pawn that has got least far means the pawn that has got
- * furthest stands still, and `move-scoring.js`'s second tie-break says why that hurts: concentrating
- * on a leading pawn is what gets it home.
- *
- * Worth nothing against a player with one pawn on the board, because then the taunt names the only
- * pawn they were going to move anyway.
- */
-export function ragebait(state, seat) {
-  return best(
-    opponents(state, seat).map((other) => {
-      const theirs = state.pawns.filter((pawn) => pawn.player === other && squareOf(pawn) !== null);
-      if (theirs.length < 2) return null;
-
-      const rear = theirs.reduce((lowest, pawn) => (pawn.r < lowest.r ? pawn : lowest));
-
-      return { value: TAUNT_WORTH * share(state), target: { pawn: ref(rear) } };
-    })
-  );
-}
-
-/** The mean of a D6, rounded, for pricing where a Yeet is likely to leave its victim. */
-const YEET_PUSH = Math.round((YEET_DIE + 1) / 2);
-
-/**
- * Push an opponent's pawn back a D6 (Yeet).
- *
- * Three terms, and the third is the one a careless bot would miss:
- *
- * 1. **The steps the victim loses**, as a share. Capped by how far back it can actually go: the
- *    pushback floor is `r = 1`, so a pawn on `r = 2` loses one step and not three and a half.
- * 2. **The threat it stops being.** A pawn six squares behind mine is a one-in-six chance of losing
- *    that pawn; pushed back, it needs a bigger die to reach the same square, so some of that threat
- *    goes away. Priced as the drop in `oddsOfHit` over the expected push.
- * 3. **The risk of handing them a capture.** A push resolves a capture on the square it lands on, so
- *    one of my own pawns sitting one to six squares behind their pawn can be sent home by my own card.
- *    Each such pawn is a one-in-six chance of losing it outright, and that term is why the bot does
- *    not Yeet an opponent standing just in front of its own leader.
- */
-export function yeet(state, seat) {
-  return best(
-    enemiesOnTrack(state, seat)
-      .filter((victim) => victim.r > 1)
-      .map((victim) => {
-        const square = squareOf(victim);
-        const pushed = Math.min(YEET_PUSH, victim.r - 1);
-
-        let value = share(state) * pushed;
-
-        for (const mine of ownOnTrack(state, seat)) {
-          const ahead = (squareOf(mine) - square + TRACK_LENGTH) % TRACK_LENGTH;
-          if (ahead >= 1 && ahead <= YEET_DIE) {
-            value += (oddsOfHit(ahead) - oddsOfHit(ahead + pushed)) * pawnWorth(mine);
-          }
-        }
-
-        for (const mine of friendsBehind(state.pawns, square, YEET_DIE, seat)) {
-          value -= (1 / YEET_DIE) * pawnWorth(mine);
-        }
-
-        return { value, target: { pawn: ref(victim) } };
-      })
-  );
+  return insured === null ? null : { ...insured, value: insured.value - profile.lockCost };
 }
 
 /**
@@ -259,7 +196,7 @@ function advanceOption(state, pawn) {
 function retreatOption(state, pawn) {
   if (pawn.r <= 1) return null;
 
-  const relief = threatOn(state.pawns, pawn) * pawnWorth(pawn);
+  const relief = threatOn(state.pawns, pawn, boardOf(state)) * pawnWorth(pawn);
 
   return {
     value: relief - (pawn.r - 1),

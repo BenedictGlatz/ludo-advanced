@@ -1,0 +1,205 @@
+/* The board stage of a cast (D109): what a field, a pawn and the board itself
+   do while a card's effect lands on them. Depends on tokens.css, board.css,
+   board-trap.css and pawn.css, and loads after all four and before cast.css.
+   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D109, D112.
+
+   Everything in this file is an attribute state and not a finite animation,
+   with three exceptions that are movement only. data-cast-hit goes on when the
+   board stage starts and comes off at done, and the mark appears and leaves
+   on --motion-feedback. That is what makes D112 fall out: under reduced
+   motion the parts in cast.css never draw, and the marks below still say
+   which field and which pawn for the whole of the hold.
+
+   .square__cast is the second empty span on all 40 fields from build time,
+   on .square__trap's precedent: D10 forbids creating an element when it gets
+   content, and both pseudo-elements of .square are taken. The pawn gets no
+   new child. Its mark is `outline` on the .pawn box itself, which nothing on
+   the pawn uses: ::after's outline is the shell (pawn-status.css), and the
+   pawn's own outline is set to none under :focus-visible and nowhere else.
+
+   The hue is the type's, as in cast.css: green for an Action landing, orange
+   for a Reaction. Card ids start with the type, which is what makes one
+   prefix selector enough. */
+
+.board {
+  --cast-hue: var(--card-action);
+}
+
+.board[data-cast^="reaction-"] {
+  --cast-hue: var(--card-reaction);
+}
+
+/* --- Fields. Four kinds of hit, one span. --- */
+
+.square__cast {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  scale: 0.6;
+  transition:
+    opacity var(--motion-feedback) var(--ease-ui),
+    scale var(--motion-feedback) var(--ease-ui);
+}
+
+/* --cast-i is the field's place along a path, 0 first, written inline by the
+   view on path fields only. Every other field has none and reads 0, so a
+   single field arrives at once and a run of twelve arrives one after another,
+   a feedback beat apart. Under reduced motion the beat is the token's 90 ms
+   still, because the sequence is information: it is the run's length. */
+.square[data-cast-hit] .square__cast {
+  opacity: 1;
+  scale: 1;
+  transition-delay: calc(var(--cast-i, 0) * var(--motion-feedback));
+}
+
+/* direct: the field the card was aimed at. A filled ring in the cast hue,
+   inside the field's own edge. It is on the span, not on .square, so it joins
+   none of the inset rings D61 is still arguing about. */
+.square[data-cast-hit="direct"] .square__cast {
+  background: color-mix(in oklab, var(--cast-hue) 34%, transparent);
+  box-shadow: inset 0 0 0 var(--border-thick) var(--cast-hue);
+}
+
+/* splash: a neighbour the effect spills onto. The ring only, at hair weight:
+   it is touched, not chosen. */
+.square[data-cast-hit="splash"] .square__cast {
+  box-shadow: inset 0 0 0 var(--border-hair) var(--cast-hue);
+}
+
+/* path: a field the effect travels across. A dot with an ink edge in the
+   centre of the field, the size of a trap chip, so a run reads as a dotted
+   line and never as a row of chosen fields. */
+.square[data-cast-hit="path"] .square__cast {
+  background: radial-gradient(
+    circle,
+    var(--cast-hue) 0 11%,
+    var(--color-ink) 11% 15%,
+    transparent 16%
+  );
+}
+
+/* aura: the reach of an It's Not That Deep, and the fields that cancelled a
+   card (D113). The hatch is board-trap.css's, in the hue instead of the text
+   colour, so the region that already means "offensive cards do nothing here"
+   is the region that lights when one is refused. */
+.square[data-cast-hit="aura"] .square__cast {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 calc(var(--cell) * 0.07),
+    color-mix(in oklab, var(--cast-hue) 55%, transparent) calc(var(--cell) * 0.07)
+      calc(var(--cell) * 0.11)
+  );
+  box-shadow: inset 0 0 0 var(--border-hair) var(--cast-hue);
+}
+
+/* --- Pawns. Three kinds of hit, one outline, and a movement each. The ring
+       is the state, and stays; the movement is the hit, and goes. --- */
+
+.pawn[data-cast-hit] {
+  z-index: var(--layer-pawn-active);
+  border-radius: 50%;
+  outline: var(--border-ink) solid var(--cast-hue);
+  outline-offset: calc(var(--pawn-size) * 0.16);
+  transition:
+    transform var(--motion-move) var(--ease-move),
+    outline-color var(--motion-feedback) var(--ease-ui),
+    outline-offset var(--motion-feedback) var(--ease-ui);
+}
+
+/* The ring follows the piece's corner: round on a pawn, squared on a stone
+   (pawn-status.css), so a Rock landing draws a squared ring. */
+.pawn[data-cast-hit][data-statuses~="rock"] {
+  border-radius: var(--radius-sm);
+}
+
+/* victim: the enemy pawn this is being done to. The refusal orange, because
+   it is the one colour that means "something is happening to you", and a
+   shake, because it is not a rule being read, it is a hit landing. */
+.pawn[data-cast-hit="victim"] {
+  outline-color: var(--color-warn);
+  animation: cast-pawn-shake var(--motion-cast-board) var(--ease-ui) both;
+}
+
+@keyframes cast-pawn-shake {
+  0%,
+  43%,
+  100% {
+    rotate: 0deg;
+    translate: 0 0;
+  }
+  55% {
+    rotate: -9deg;
+    translate: -6% 0;
+  }
+  70% {
+    rotate: 8deg;
+    translate: 6% 0;
+  }
+  85% {
+    rotate: -4deg;
+    translate: -2% 0;
+  }
+}
+
+/* actor: the caster's own pawn. The hue, and a hop: the piece answers the
+   card that picked it. */
+.pawn[data-cast-hit="actor"] {
+  animation: cast-pawn-hop var(--motion-cast-board) var(--ease-ui) both;
+}
+
+@keyframes cast-pawn-hop {
+  0%,
+  43%,
+  100% {
+    translate: 0 0;
+  }
+  62% {
+    translate: 0 -18%;
+    animation-timing-function: var(--ease-capture);
+  }
+  80% {
+    translate: 0 3%;
+    animation-timing-function: var(--ease-move);
+  }
+}
+
+/* shielded: a pawn a capture is being refused on, or one that just took a
+   shell. Ink and not the hue, because the shell it settles into is ink
+   (D101.2), and the offset closes from wide to where the shell sits, so the
+   ring is seen arriving on the piece it will stay on. */
+.pawn[data-cast-hit="shielded"] {
+  outline-color: var(--color-ink);
+  outline-width: var(--border-hair);
+  outline-offset: calc(var(--pawn-size) * 0.09);
+  animation: cast-pawn-shield var(--motion-cast-board) var(--ease-ui) both;
+}
+
+@keyframes cast-pawn-shield {
+  0%,
+  43% {
+    outline-width: var(--border-ink);
+    outline-offset: calc(var(--pawn-size) * 0.45);
+    opacity: 1;
+  }
+  100% {
+    outline-width: var(--border-hair);
+    outline-offset: calc(var(--pawn-size) * 0.09);
+  }
+}
+
+/* --- The board itself, for the one card that has no target because it has
+       every target. The Purge turns the frame orange for the board stage, on
+       the frame's own transition: the board is the thing that changed. --- */
+
+.board[data-cast="reaction-the-purge"] {
+  outline-color: var(--color-warn);
+  transition:
+    box-shadow var(--motion-feedback) var(--ease-ui),
+    outline-color var(--motion-feedback) var(--ease-ui);
+}
+
+/* --- Reduced motion (D112). The three movements are on --motion-cast-board
+       and end in 1 ms; the rings stay for the hold. Nothing to add here. --- */

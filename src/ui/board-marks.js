@@ -208,3 +208,54 @@ export function applyBoardMarks($board, state) {
   markAura($board, state.traps);
   markStatuses($board, state.statuses);
 }
+
+/**
+ * The marks a **cast** leaves while a played card's effect lands. Design spec 18, D109.
+ *
+ * ## Why these two are here and not in `cast-view.js`
+ *
+ * This file is the one that owns marks on the board, and every rule the four above follow applies to
+ * these as well: written as attributes, cleared in full rather than tracked, and drawn by a stylesheet
+ * that this side does not write.
+ *
+ * ## Why they are not part of `applyBoardMarks`
+ *
+ * The four marks above are **derived from the state** and rewritten on every render. A cast's marks
+ * are not in the state at all: they last for one board stage, they are put on when it starts and taken
+ * off when it ends, and a render in between must not disturb them. So they are two calls of their own,
+ * made by the cast's driver at the two moments they change, and `updateBoard` never touches them.
+ *
+ * `--cast-i` is a field's place along a run, 0 first, and it is written **inline** rather than as an
+ * attribute because that is what `board-cast.css` reads to stagger the dots: a Let Him Cook of twelve
+ * draws itself from the pawn outward, one feedback beat at a time, which is D109's second geometric
+ * fact and the one piece of information reduced motion keeps.
+ */
+export function applyCastHits($board, { squares = [], pawns = [] }) {
+  for (const { square, hit, index } of squares) {
+    const $square = $board.find(`.square--track[data-square="${square}"]`);
+    if ($square.length === 0) continue;
+
+    $square.attr("data-cast-hit", hit);
+    if (Number.isInteger(index)) $square[0].style.setProperty("--cast-i", String(index));
+  }
+
+  for (const { player, pawn, hit } of pawns) {
+    $board.find(`.pawn[data-player="${player}"][data-pawn="${pawn}"]`).attr("data-cast-hit", hit);
+  }
+}
+
+/**
+ * Take every cast mark off again, in full.
+ *
+ * Cleared by sweep rather than by remembering what was written, which is the rule the four marks above
+ * already follow and for the same reason: a stuck `data-cast-hit` is a ring left standing on a field
+ * for the rest of the match, and the code that would have missed it is the code that tracked what it
+ * had written. The end-to-end spec asserts nothing is left behind.
+ */
+export function clearCastHits($board) {
+  $board.find("[data-cast-hit]").removeAttr("data-cast-hit");
+  $board.find(".square").each(function clearIndex() {
+    this.style.removeProperty("--cast-i");
+  });
+  $board.removeAttr("data-cast");
+}

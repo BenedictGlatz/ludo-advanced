@@ -103,12 +103,14 @@ import { FAST_DELAYS, readOptions } from "./options.js";
 import { createMatchFlow } from "./ui/match-flow.js";
 
 import "./ui/styles/tokens.css";
+import "./ui/styles/motion.css";
 import "./ui/styles/board.css";
 import "./ui/styles/board-track.css";
 import "./ui/styles/board-regions.css";
 import "./ui/styles/board-trap.css";
 import "./ui/styles/pawn.css";
 import "./ui/styles/pawn-status.css";
+import "./ui/styles/board-cast.css";
 import "./ui/styles/pawn-drag.css";
 import "./ui/styles/message-strip.css";
 import "./ui/styles/card.css";
@@ -126,6 +128,15 @@ import "./ui/styles/lineup.css";
 import "./ui/styles/handover.css";
 import "./ui/styles/pool.css";
 import "./ui/styles/last-card.css";
+import "./ui/styles/cast.css";
+import "./ui/styles/cast-base.css";
+import "./ui/styles/cast-parts.css";
+import "./ui/styles/cast-fx-roll.css";
+import "./ui/styles/cast-fx-hand.css";
+import "./ui/styles/cast-fx-trap.css";
+import "./ui/styles/cast-fx-status.css";
+import "./ui/styles/cast-fx-shove.css";
+import "./ui/styles/cast-fx-area.css";
 
 /**
  * Boot the game.

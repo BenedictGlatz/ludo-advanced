@@ -1,16 +1,23 @@
 import { describe, expect, it } from "vitest";
 
 import { STATUS } from "../../../src/core/statuses.js";
-import { SCORE } from "../../../src/ai/move-scoring.js";
+import { SCORE } from "../../../src/ai/score.js";
 import { chooseDie, expectedScore } from "../../../src/ai/dice-choice.js";
+import { PLAIN_PROFILE } from "../../../src/ai/profile.js";
 import { pawnsAt } from "../../helpers/fixtures.js";
 
 /**
- * The four fields `expectedScore` reads. Not a real match: `startMatch` would shuffle a card pool
- * and draw a hand, and neither has anything to do with the arithmetic under test here.
+ * The fields `expectedScore` reads. Not a real match: `startMatch` would shuffle a card pool and
+ * draw a hand, and neither has anything to do with the arithmetic under test here.
+ *
+ * `seats` and `skillSquares` joined the list with the bot tactics plan, because the move scorer
+ * now prices danger and what is lying on the landing square. Every board below is built so that both
+ * of the new terms come out at zero: no opponent is ever out of its yard, so nothing can be captured
+ * and nothing can be set up, and there are no skill squares. This file is about the **average over
+ * the faces** and the danger model has its own.
  */
 function board(pawns, hand, statuses = []) {
-  return { pawns, activePlayer: 0, hand, statuses, traps: [] };
+  return { pawns, seats: [0, 2], activePlayer: 0, hand, statuses, traps: [], skillSquares: [] };
 }
 
 /**
@@ -93,5 +100,26 @@ describe("chooseDie", () => {
 
     expect(chooseDie(state)).toBe(chooseDie(state));
     expect(chooseDie(state)).toBe(chooseDie(board(onePawnAt(30), [12, 10, 8])));
+  });
+});
+
+/**
+ * The die choice inherits the danger model for nothing. Bot tactics plan, phase 1.
+ *
+ * `chooseDie` averages `bestMove` over every face a die can roll, so the moment `scoreMove` learned
+ * about danger, every die started being priced by where it is likely to **land** rather than only by
+ * how far it walks. Nothing in `dice-choice.js` changed to make that happen, which is the whole
+ * argument for the correction living in the scorer.
+ */
+describe("chooseDie: the die whose landings are safe", () => {
+  it("takes the smaller die when the bigger one can only reach an entry square", () => {
+    // One pawn on r = 17, which is square 16. A D4 reaches r = 21, and seat 0's r = 21 is square 20,
+    // which is seat 2's entry square with four of its pawns waiting behind it. A D2 cannot get there.
+    const state = board(onePawnAt(17), [2, 4]);
+
+    expect(chooseDie(state)).toBe(2);
+
+    // Without the danger term the bigger die simply walks further, and the bot walks onto the trap.
+    expect(chooseDie(state, PLAIN_PROFILE)).toBe(4);
   });
 });

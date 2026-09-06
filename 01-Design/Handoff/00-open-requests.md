@@ -3,7 +3,192 @@
 **From:** Claude Code
 **To:** Claude Design
 **Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, four
-times on 2026-09-04, twice on 2026-09-05 and four times on 2026-09-06**
+times on 2026-09-04, twice on 2026-09-05 and seven times on 2026-09-06**
+
+---
+
+## Status on 2026-09-06, night: `data-face="down"` has a case in hot seat play after all
+
+**Nothing is owed as a brief. This is a correction to a delivered spec, filed so the design side is not
+working from a spec the code no longer follows.**
+
+Spec 10's D65 split `data-face` off `data-active` and drew the card back for `"down"`, and the closure
+note in this file says the value "has no case in hot seat play and is kept in the contract for a
+spectator view, a replay or the online mode".
+
+**It had two cases in hot seat play the whole time, and the Product Owner asked for both to be closed on
+2026-09-06.** Neither is a spectator view:
+
+| The hand on screen | Why no curtain covered it |
+| --- | --- |
+| A computer opponent's, for the whole of its turn | The handover screen correctly never appears for a bot: nobody is being handed anything |
+| The answering player's, during a reaction window | The handover screen only ever ran **between** turns, and a window opens in the middle of one |
+
+**Nothing was drawn for this and nothing needed to be.** The back in `card-state.css`, the closed-up
+`--overlap: 0.82` in `hand.css` and the reveal exclusions in `card-reveal.css` were all delivered with
+D65 and were all correct; they had simply never been switched on. What changed is one attribute value
+and where it comes from:
+
+| Before | Now |
+| --- | --- |
+| `data-face` hard-coded to `"up"` | `"up"` when the hand on show belongs to the seat holding the device, `"down"` otherwise |
+
+**One thing to know for the next spec that touches this region.** The handover screen is now used in two
+places rather than one: between turns as before, and twice inside a turn around a reaction window, to
+hand the screen to the answering player and to give it back. It uses `handover.title`,
+`handover.text` and `handover.ready` unchanged, because "Weitergeben an {{player}}" and "Gib den
+Bildschirm weiter, bevor du auf Bereit drückst." are as true for a reaction as for a turn change. If the
+screen is ever specified properly, it has to carry both jobs, or the reaction case needs words of its
+own and this side will ask for them rather than invent them.
+
+**One consequence worth knowing about, because it changes what a plate does.** A face-down hand offers
+nothing, so every card in it is `data-playable="false"` and the hand is `data-active="false"`. D65's
+meaning of `data-active` is unchanged, "some card here can be played this instant", and the reading is
+simply that a hand nobody at the screen may play from has nothing playable in it. The visible effect is
+that the skill plate stays dimmed through a bot's turn instead of lifting. If the design side wants a
+bot's plate to look **different** rather than dormant, that is a brief: `.hud__seat` already carries
+`data-controller="bot"` for exactly that, and nothing styles it yet.
+
+**One thing deliberately left alone**, because it is a design decision and not ours: **the dice card fan
+is not covered.** A computer's three drawn dice cards stay face up. The chosen one carries the rolled
+number and the throw animation runs on it, and `.hand--dice` has no card back designed for it. If an
+opponent's dice cards should also be secret, that is a brief and not a fix.
+
+---
+
+## Status on 2026-09-06, night: the message strip's layer moved off the strip and onto the plate
+
+**Nothing is owed as a brief. This is a correction to a delivered spec, filed so the design side is not
+working from a spec the code no longer follows.**
+
+Handoff 16's D98 hangs the message strip above `.app__skill` and gives `.message-strip` itself
+`z-index: var(--layer-refusal)`. Built exactly that way, and in play it covered the skill card the
+player was pointing at: the reveal magnifies a card upward out of the plate, straight into the band the
+strip hangs in, and the strip is 5 while a card being read is `--layer-card-reading`, 4.
+
+The two numbers are from **two different ladders** and were never meant to meet. `.app__skill` was
+`position: relative` with no `z-index`, so it is not a stacking context and the browser compared them
+anyway.
+
+**What changed in the delivered stylesheets:**
+
+| Before | Now |
+| --- | --- |
+| `.message-strip { z-index: var(--layer-refusal) }` | no `z-index` on the strip at all |
+| `.app__skill { position: relative }` | `.app__skill { position: relative; z-index: var(--layer-refusal) }` |
+
+No new token, no new value, and nothing looks different while it is working: the plate stands on the
+page's ladder exactly where the strip stood, so the strip still covers the dice plate and the cast stage
+still covers the rail. Inside the plate the strip is now below the card layers, which is what lets a
+card grown out of the plate be read.
+
+**The one thing to keep in mind when the strip is next specified:** a `z-index` on `.message-strip`
+would put it back on the page's ladder and re-break this, and both stylesheets carry a comment saying
+so. If the strip ever has to stand above something inside the plate, the number belongs on the card
+ladder, not on the page's.
+
+---
+
+
+## Status on 2026-09-06, night: handoff 18 landed whole, and four things come back
+
+All twelve answers are built. The ten stylesheets are in `src/ui/styles/` in the load order the
+delivery gave, both amendments are applied, and `handoff-18/` has been deleted. `cast.spec.js` covers
+the landing check the delivery asked for by name: a cast starts, finishes and leaves no
+`data-cast-hit` behind. **Nothing is owed as a brief.** Four things come back as corrections and
+questions.
+
+### 1. Four of the 29 card ids were spelled differently from the catalogue, and the selectors were changed
+
+The delivery said this was the one thing to change if it happened, so it was changed and nothing else.
+For the record, the catalogue's spellings:
+
+| The stylesheets said | `catalogue.js` says |
+| --- | --- |
+| `action-67` | `action-sixty-seven` |
+| `action-aight-imma-head-out` | `action-head-out` |
+| `action-its-not-that-deep` | `action-not-that-deep` |
+| `action-speedrun-any` | `action-speedrun` |
+
+`tests/unit/ui/cast-vocabulary.test.js` now walks the real catalogue against the family table, so the
+next mismatch is a red test rather than a card that animates as nothing. **If the review canvas is
+re-seeded, these are the four ids it needs.**
+
+### 2. `tokens.css` had to be split, and that was a decision this side took
+
+The delivery said the file "lands at 297 of 300". It landed at **322**, because the copy the spec was
+read against is shorter than the one in the repository. Rather than drop a token or compress a comment,
+`tokens.css` was split along the seam the reduced-motion block already implies: **`motion.css`** now
+holds every duration, every easing and the `prefers-reduced-motion` block, and loads immediately after
+`tokens.css`.
+
+**The outcome is better than the situation before the delivery**: `tokens.css` is 229 lines, `motion.css`
+is 115, and the longest stylesheet in the project went from 296 to 267. **A new motion token now goes in
+`motion.css`**, which is the only thing this changes for the design side.
+
+### 3. Hyperbeam's board mark reads `victim` on the caster's own pawn, and that may not be what D107 meant
+
+D107's table gives Hyperbeam `victim`, `path` 1 to 4. **Hyperbeam targets `OWN_PAWN`**: the player picks
+one of their own pieces and a direction, and the beam fires out in front of it. The card's own artwork
+says "friendly fire" and the rule does not filter the caster's pawns out of the sweep, so it is not
+wrong that a Hyperbeam can hurt its owner. But `victim` is `--color-warn`, which `board-cast.css` calls
+"the one colour that means this is happening to you", and it is currently painted on the piece that
+**fired** the beam.
+
+It is built as the table says, because inventing a design rule is not this side's to do. **The question
+is whether the shooter should be `actor` instead**, with `victim` reserved for the pieces the beam
+actually swept. The pieces it swept are not identifiable after the fact: they have been sent home, and
+the effect reports a distance rather than a list of casualties, so `victim` on them would need `core/`
+to report the sweep. Worth an answer either way, since the two other `area` cards mark fields only.
+
+### 4. The card comes from the hand plate, not from the hand slot, and it cannot come from the slot
+
+§ 5 asks for `--cast-from` to be the centre of the slot the card left. By the time a cast runs the card
+has already gone from the hand and the remaining cards have re-flowed into the gap, so there is no slot
+to measure. Identifying it would mean carrying the clicked slot from `card-controls.js` through the
+dispatch and into the driver, which is presentation state threaded through the loop for a few
+centimetres of arrival.
+
+**Built as the centre of the actor's `.hand--skill` plate**, and as the actor's `.hud__seat` when their
+hand is not the one on screen, which is D114's and D115's rule and is implemented exactly. In play the
+difference is that a card arrives from the middle of the hand rather than from its own slot in the fan.
+**If the slot matters, say so and it will be threaded through**; it is not free, but it is not hard.
+
+---
+
+## Status on 2026-09-06, night: the bots can be given a difficulty, and nowhere on screen says so
+
+**Nothing is owed on this one yet. It is a question for the Product Owner first and a brief only if the
+answer is yes.**
+
+The bot tactics plan landed and it gave every bot a **profile**: a frozen object of tuning knobs that
+`decide` takes as an argument (`src/ai/profile.js`). An easy bot, a normal one and a hard one are one
+object each and no other change anywhere. That was built because the arena needs it to seat a new bot
+against an old one, and a difficulty setting falls out of it for free.
+
+**The question is whether the line-up screen should offer the choice at all.** It is not a design
+question until somebody decides that, and it is a real product decision with three parts:
+
+1. **Should there be levels?** A hotseat game against one bot is a different thing to a four-seat game
+   with three of them, and the honest answer may be that a single well-tuned bot is enough for the MVP.
+2. **How many, and what are they called?** Three is the convention. Two (normal and hard) is defensible
+   and cheaper to explain.
+3. **Per seat or for the match?** The line-up screen (handoff 15, D95) already lets the player say which
+   seats are computers, one row at a time, so per seat is the shape the screen is already in. Whether a
+   player wants that much control is exactly the sort of thing this list should not guess at.
+
+**If the answer is yes, it is a brief and not a small fix**, by the 2026-09-06 rule: a new control on an
+existing screen is a design decision, and the line-up row has no room in it that Claude Code should be
+inventing. If the answer is no, the profile stays where it is and costs nothing, because the arena needs
+it either way.
+
+**One thing worth knowing before answering.** The arena's verdict on the phase-1 tactics was mostly
+negative: two of the three new terms in the move scorer made the bot measurably **worse** and are
+shipped switched off, and the third is a draw on win rate. So "hard" would today mean the same bot with
+the danger model on, and "easy" would mean a bot that walks into captures and never plays a card. Those
+are two real and visibly different opponents, but the spread between them is smaller than a difficulty
+ladder usually implies, and pretending otherwise on screen would be a promise the bot cannot keep. The
+runs are in `00-Meta/Documentation/notes/09-source-code-overview.md`.
 
 ---
 

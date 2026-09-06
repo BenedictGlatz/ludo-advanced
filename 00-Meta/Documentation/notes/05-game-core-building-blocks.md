@@ -1379,6 +1379,44 @@ to *forced* movement. `enter.js`'s `shove` checks no status, so Yeet, It's Not T
 Rock's knockback all move a locked pawn today. That is a rule question for the Product Owner, recorded
 on #87, not something to fix while sharpening a card text.
 
+### `cardReach`, a fourth report in the patch vocabulary (2026-09-06, design spec 18, D109)
+
+`PATCH_FIELDS` had three fields that are not board state: `negate`, `cancelMove` and `trapFired`. It
+now has a fourth, `cardReach`, written by exactly four of the 29 effects and by nothing else:
+
+| Card | Die rolled inside the effect | What the number decides |
+| --- | --- | --- |
+| Hyperbeam | D4 | How many squares in front of the pawn the beam sweeps |
+| Janky RPG | D6 | Whether the shot lands on the named square or hits both neighbours |
+| Yeet | D6 | How far back the opponent's pawn is pushed |
+| Let Him Cook | D12 | How far the pawn runs, and whether it overshoots and goes home |
+
+**Why it exists.** All four rolled the die, used it and threw it away. Afterwards the state says where
+a pawn ended up and nothing says how far it travelled, and those are not the same number: a Yeet is
+floored at the entry square, and a Let Him Cook that overshoots is sent home from wherever it started.
+The cast's board stage draws the run, so the run has to be reported.
+
+**Why it is a report and not board state.** Same argument as `trapFired`, which `core/enter.js`
+already writes for the same reason and which is described in that file as "a report and not board
+state". `assertPatch` lets it through and `applyPatch` does not write it to the board; `state/` copies
+it onto a turn-level field that dies with the turn.
+
+**Rejected: working the distance out in `ui/` by diffing the board.** Keep the previous state, compare
+pawn positions, infer the reach. It needs no rules change, and it is rule reconstruction in the view
+layer: it gets the wrong answer whenever an effect moves a pawn zero squares (a Yeet at a pawn already
+on the entry square, a Hyperbeam that sweeps four empty squares), and `CLAUDE.md` puts rules in
+`core/` for exactly this reason.
+
+**Janky RPG reports the die and not the squares it hit.** The view asks the same `JANKY_HIT` question
+the effect asks. Reporting the squares would be reporting one decision twice, in two places that can
+disagree.
+
+**The negative half is tested too.** `tests/unit/core/cards/card-reach.test.js` runs every effect in
+the table once and asserts the other 25 leave the field undefined. A card that reported a reach it does
+not have would make the cast draw a run for something that never travelled, and nothing else would
+notice.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -28,7 +28,7 @@
  *
  * ## The four economy cards are priced in cards, not in steps
  *
- * A card in hand is `CARD_WORTH` (3). Pot of Greed draws two, Tax Fraud moves one across the table,
+ * A card in hand is `cardWorth` (3). Pot of Greed draws two, Tax Fraud moves one across the table,
  * Double Dip buys a slot in the turn rather than a card, and No Take-Backsies buys the turn itself
  * being unanswerable. The last two are the only values in the project that are not a difference of two
  * board evaluations, and both are argued at their own function.
@@ -39,8 +39,8 @@ import { TYPE } from "../core/cards/vocabulary.js";
 import { cardById } from "../core/cards/catalogue.js";
 import { hasEffect } from "../core/cards/effects/index.js";
 import { SKILL_HAND_LIMIT } from "../core/skill-pool.js";
+import { DEFAULT_PROFILE } from "./profile.js";
 import {
-  CARD_WORTH,
   handSize,
   hasDie,
   modifiersAfter,
@@ -52,7 +52,8 @@ import {
 
 /** No target, and the value is what the card does to this turn's roll. Four of the five are this. */
 function rollBuff(cardId) {
-  return (state) => (hasDie(state) ? { value: rollChange(state, cardId), target: {} } : null);
+  return (state, seat, profile = DEFAULT_PROFILE) =>
+    hasDie(state) ? { value: rollChange(state, cardId, {}, profile), target: {} } : null;
 }
 
 export const criticalSuccess = rollBuff("action-critical-success");
@@ -71,14 +72,19 @@ export const sixtySeven = rollBuff("action-sixty-seven");
  * Ties go to the **smaller** number, because the loop keeps the first strict improvement. That matches
  * `chooseDie`'s tie-break and its reason: a smaller number overshoots the house less often (FR-13).
  */
-export function frFr(state) {
+export function frFr(state, seat, profile = DEFAULT_PROFILE) {
   if (!hasDie(state)) return null;
 
-  const before = turnValue(state);
+  const before = turnValue(state, state.modifiers, undefined, profile);
   let best = null;
 
   for (let number = 1; number <= state.chosenDie; number += 1) {
-    const value = turnValue(state, modifiersAfter(state, "action-fr-fr", { number }));
+    const value = turnValue(
+      state,
+      modifiersAfter(state, "action-fr-fr", { number }),
+      undefined,
+      profile
+    );
     if (best === null || value > best.value) best = { value, number };
   }
 
@@ -96,10 +102,10 @@ export function frFr(state) {
  * discard pile when the pool runs low, so the case where this comes back with nothing needs 58 cards
  * to be in hands and traps at once, and pricing it would cost a walk of the pool on every turn.
  */
-export function potOfGreed(state, seat) {
+export function potOfGreed(state, seat, profile = DEFAULT_PROFILE) {
   const room = Math.min(POT_OF_GREED_DRAWS, SKILL_HAND_LIMIT - handSize(state, seat) + 1);
 
-  return { value: CARD_WORTH * Math.max(0, room), target: {} };
+  return { value: profile.cardWorth * Math.max(0, room), target: {} };
 }
 
 /**
@@ -128,9 +134,6 @@ export function doubleDip(state, seat) {
   return { value: others.length > 0 ? 1 : 0, target: {} };
 }
 
-/** How much of a turn's worth No Take-Backsies protects. A guess: see the function below. */
-const LOCKOUT_SHARE = 0.15;
-
 /**
  * Shut every remaining reaction window of this turn (No Take-Backsies).
  *
@@ -139,30 +142,34 @@ const LOCKOUT_SHARE = 0.15;
  * `card-choice.js`), so it prices the risk instead: a fixed fraction of what the turn is worth,
  * charged only when at least one opponent is holding any card at all.
  *
- * `LOCKOUT_SHARE` is 0.15, which is a guess with an argument: of the 29 cards, four can be played into
+ * `lockoutShare` is 0.15, which is a guess with an argument: of the 29 cards, four can be played into
  * an `on-roll` or `on-capture` window, so a hand of a few cards answers a turn perhaps one time in
  * six, and not every answer costs the whole turn. On a big roll with a capture in it, 15 % of 60-odd
  * points clears `PLAY_AT` comfortably; on a wasted turn it does not, which is the behaviour wanted.
  *
  * The count is public information (D33), so reading it is not cheating.
  */
-export function noTakeBacksies(state, seat) {
+export function noTakeBacksies(state, seat, profile = DEFAULT_PROFILE) {
   const armed = opponents(state, seat).some((other) => handSize(state, other) > 0);
+  const turn = turnValue(state, state.modifiers, undefined, profile);
 
-  return { value: armed ? LOCKOUT_SHARE * turnValue(state) : 0, target: {} };
+  return { value: armed ? profile.lockoutShare * turn : 0, target: {} };
 }
 
 /**
  * Take one card at random out of an opponent's hand (Tax Fraud).
  *
- * Worth a card to me plus a share of a card off them, so `CARD_WORTH * (1 + share)`: in a duel that is
- * 6 and in a four-player match 4, which is the `share` rule doing exactly what it is for.
+ * Worth a card to me plus a share of a card off them, so `cardWorth * (1 + share)`: in a duel that is
+ * 6 and in a four-player match about 4, which is the `share` rule doing exactly what it is for.
+ *
+ * The victim's own `share` is used, so a hand taken off the leader is worth more than one taken off
+ * the last-placed player, which is the same lead weighting every other offensive card now gets.
  *
  * The victim is whoever holds the most cards, ties to the lowest seat, so the choice is repeatable.
  * An opponent holding nothing is not a target at all: the effect refuses quietly, and a card spent for
  * a quiet refusal is the worst play on the board.
  */
-export function taxFraud(state, seat) {
+export function taxFraud(state, seat, profile = DEFAULT_PROFILE) {
   let victim = null;
 
   for (const other of opponents(state, seat)) {
@@ -172,5 +179,8 @@ export function taxFraud(state, seat) {
 
   if (victim === null) return null;
 
-  return { value: CARD_WORTH * (1 + share(state)), target: { player: victim.player } };
+  return {
+    value: profile.cardWorth * (1 + share(state, victim.player)),
+    target: { player: victim.player },
+  };
 }

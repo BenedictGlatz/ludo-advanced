@@ -71,17 +71,22 @@ export function createSessionActions(session) {
       session.getLoop().resume();
     }
 
-    // **The turn passes before the curtain comes down, and that order is the whole point of the screen.**
-    // `passTurn` is what re-renders the rail for the arriving seat, so closing the overlay first left one
+    // **The game moves before the curtain comes down, and that order is the whole point of the screen.**
+    // `arrive` is what re-renders the rail for the arriving seat, so closing the overlay first left one
     // painted frame of the *leaving* player's five skill cards in front of the person picking the device
     // up, which is the exact leak D33's secrecy rule and D39's handover exist to prevent. Design spec 04
     // § 5 states it as its one ordering requirement, and no CSS can cover a frame already on screen.
     //
-    // The guard is not decoration: `passTurn` advances the turn, and an advance can reach `match-over`,
+    // It was `passTurn` until 2026-09-06, when the curtain stopped being a thing that only happens
+    // between turns: it now also goes up before a reaction window asks somebody else and again when
+    // that window shuts. A turn-end curtain still passes the turn and a mid-turn one carries the window
+    // on, and which of the two this was is `handover.js`'s to remember rather than this button's.
+    //
+    // The guard is not decoration: `arrive` can advance the turn, and an advance can reach `match-over`,
     // in which case `onMatchOver` has already put the win screen up and there is no curtain left to take
     // down. Without it, a win on the first move of a turn would be replaced by an empty screen.
     if (action === OVERLAY_ACTION.READY) {
-      session.getLoop().passTurn();
+      session.getLoop().arrive();
 
       if (session.getScreen() === OVERLAY_SCREEN.HANDOVER) {
         session.openScreen(OVERLAY_SCREEN.NONE);

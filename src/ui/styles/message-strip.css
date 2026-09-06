@@ -24,12 +24,18 @@
    skill plate, at the top of the rail's lower half. Same object, same motion,
    same no-jump property; app.css makes .app__skill the containing block. */
 
+/* No z-index, and that is the fix of 2026-09-06. --layer-refusal now sits on
+   .app__skill in app.css, which makes the plate a stacking context and puts
+   the whole rail where this strip used to stand. Inside that context the
+   strip stays below every card layer on purpose: it hangs in the band above
+   the plate, where nothing but a card grown out of the plate to be read can
+   ever meet it, and that card is the one thing on screen the player has
+   asked to see. Putting a number back here re-breaks it. */
 .message-strip {
   position: absolute;
   right: 0;
   bottom: calc(100% + var(--space-2));
   left: 0;
-  z-index: var(--layer-refusal);
   translate: 0 calc(var(--space-2) * -1);
   box-sizing: border-box;
   display: flex;

@@ -76,6 +76,12 @@ git ls-files -z 'src/*.css' | xargs -0 wc -l | sort -rn
 
 # 8. End-to-end test count, per browser. The suite runs three, so the total run is three times this.
 npx playwright test --list --project=chromium 2>&1 | tail -1
+
+# 9. How strong the bots are. Added 2026-09-06 with the bot tactics plan. Not a size measurement:
+#    it is the only command in the project that answers "did that change make it better", and every
+#    run of it belongs in the arena section below with its own seat list. 1200 matches takes about
+#    eight minutes; 400 takes two and a half.
+npm run bots:arena -- --matches=1200 --seats=default,plain
 ```
 
 **Commands 3 and 5c were both widened on 2026-09-04**, when `src/ai/` became the fourth layer under
@@ -139,6 +145,193 @@ The lesson is worth a sentence in the report on its own: a measurement taken onc
 of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
+
+### Measured 2026-09-06, after design handoff 18 landed
+
+Every command in the section above was re-run after the cast landed. **This is the current
+measurement**; the blocks below it are kept so the growth is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **17371 lines in 110 files**, up from 16247 in 104 | 2026-09-06, after handoff 18 |
+| Stylesheet lines in `src/` | 7 | **6166 lines in 32 files**, up from 4420 in 21 | 2026-09-06, after handoff 18 |
+| Test lines in `tests/` | 2 | **19599 lines in 118 files**, up from 18733 in 113 | 2026-09-06, after handoff 18 |
+| Lines in `src/core/` | 3 | 4543 lines in 32 files, up 31 | 2026-09-06, after handoff 18 |
+| Lines in `src/state/` | 3 | 2373 lines in 14 files, up 29 | 2026-09-06, after handoff 18 |
+| Lines in `src/ui/` | 3 | **7264 lines in 43 files**, plus 6166 lines of CSS | 2026-09-06, after handoff 18 |
+| Lines in `src/ai/` | 3 | 2768 lines in 18 files, **unchanged** | 2026-09-06, after handoff 18 |
+| Unit tests | 4 | **85 test files, 1050 tests**, all passing | 2026-09-06, after handoff 18 |
+| End-to-end tests | 8 | **152 tests in 28 files per browser, 456 across the three**, all passing | 2026-09-06, after handoff 18 |
+| Coverage of the three headless layers, lines | 5c | 99.32 % (1325/1334) | 2026-09-06, after handoff 18 |
+| Coverage of `src/core/`, lines | 5c | 99.66 % (581/583) over 32 files | 2026-09-06, after handoff 18 |
+| Coverage of `src/state/`, lines | 5c | 99.05 % (312/315) over 14 files | 2026-09-06, after handoff 18 |
+| Coverage of `src/ai/`, lines | 5c | 99.08 % (432/436) over 18 files | 2026-09-06, after handoff 18 |
+| Coverage, branches | 5a | 95.26 % | 2026-09-06, after handoff 18 |
+| Coverage, functions | 5a | 99.79 % | 2026-09-06, after handoff 18 |
+| Longest file of any kind | 6 | 300 lines, `src/ui/game-loop.js`, still the only one at the limit | 2026-09-06, after handoff 18 |
+| Longest stylesheet | 7 | **267 lines, `src/ui/styles/board.css`**, down from 296 | 2026-09-06, after handoff 18 |
+
+**Four readings.**
+
+1. **The stylesheets grew by 40 per cent in one delivery**, 1746 lines and eleven files, and it is the
+   largest single addition of CSS the project has had. Ten of the eleven are the cast; the eleventh is
+   `motion.css`, which is a split and not new code.
+2. **The longest stylesheet went *down* by 29 lines**, and that is the split doing its job.
+   `tokens.css` had been the longest at 296 of 300 for two deliveries and would have reached 322 with
+   the cast's four tokens in it. It is now 229 and `motion.css` is 115, and the file that is closest to
+   the limit is `board.css` at 267, which is where it has been all along.
+3. **`src/ai/` is byte-identical after a whole feature**, and `core/` moved by 31 lines, all of them
+   the `cardReach` report and its comments. A feature that is 1746 lines of CSS and 11 new JavaScript
+   files touched the rules layer with one field.
+4. **Coverage did not move**, and the reason is worth stating rather than leaving to be inferred:
+   `vitest.config.js` measures `src/core/**` and `src/state/**` only, so eleven new `ui/` files are
+   outside the figure by design. Three of them are covered by new unit tests that do not appear in it,
+   and the rest by `cast.spec.js`, which produces no percentage. The configuration was left alone
+   rather than widened, because widening it would quietly change what the NFR-05 figure means.
+
+### How many skill cards a match actually plays, measured 2026-09-06
+
+The figure design brief 18 § 4.4 said nobody had, and the one the cast's cost has to be judged
+against. The arena produces it as a by-product, because it already counts card plays per seat.
+
+```bash
+npm run bots:arena
+```
+
+```
+200 matches, 4 seats, seeds 1..200, rotating line-up, 313.8 turns per match on average
+
+profile    wins    rate       95 %  captures    cards
+---------------------------------------------------
+default     200  100.0 %  +/-  0.0      6.77    67.34
+```
+
+**67.34 card plays per seat per match**, four seats, so **about 269 card plays in a four-bot match of
+313.8 turns**. That is roughly 0.86 card plays per turn.
+
+**And this is the negative finding of the whole delivery, so it is written down plainly.** At the
+spec's 1.5 seconds with a board stage and 0.94 without, 269 card plays cost between **4.2 and 6.7
+minutes** of a four-player match, against the roll's 0.9 seconds per turn, which is about 4.7 minutes.
+**The cast is at least as expensive as the roll and possibly half as expensive again**, and design spec
+18's D108 said in as many words that the number to compare against was the roll's.
+
+Three things have to be said with it rather than after it:
+
+- **It is a bot measurement.** Four bots play every card they can afford every turn, because that is
+  what the profile is scored on. A four-person table will play fewer, and nobody has measured how many
+  fewer, because there is no way to measure a person with a seeded script.
+- **It is not what it replaces.** Before this delivery a bot's card play already held the turn for two
+  seconds through `midTurnAnnouncement`, and that hold was removed here. Against 269 card plays of
+  which some fraction are bots', the cast is not 4.2 minutes *added*; part of it was already being paid
+  for a sentence in the strip.
+- **The lever exists and it is one token.** `--motion-cast-hold` is 1500 ms in `motion.css` and nothing
+  else reads it. This is a Product Owner question and it is filed as one: the number can be halved
+  without a line of JavaScript changing.
+
+### Measured 2026-09-06, after the bot tactics plan
+
+Every command in the section above was re-run after the four phases of
+`00-Meta/Project-Management/Bot-Tactics-Plan.md` landed and before the closing commit. **This is the
+current measurement**; the blocks below it are kept so the growth is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **16247 lines in 104 files** | 2026-09-06, after the bot plan |
+| Stylesheet lines in `src/` | 7 | 4420 lines in 21 files | 2026-09-06, after the bot plan |
+| Test lines in `tests/` | 2 | **18733 lines in 113 files** | 2026-09-06, after the bot plan |
+| Lines in `src/core/` | 3 | 4512 lines in 32 files, **unchanged by the whole plan** | 2026-09-06, after the bot plan |
+| Lines in `src/state/` | 3 | 2344 lines in 14 files, also unchanged | 2026-09-06, after the bot plan |
+| Lines in `src/ui/` | 3 | 6208 lines in 37 files, plus 4420 lines of CSS, also unchanged | 2026-09-06, after the bot plan |
+| Lines in `src/ai/` | 3 | **2773 lines in 18 files**, up from 1901 in 12 | 2026-09-06, after the bot plan |
+| Unit tests | 4 | **81 test files, 996 tests**, all passing | 2026-09-06, after the bot plan |
+| End-to-end tests | 8 | **144 tests in 27 files per browser, 432 across the three**, all passing | 2026-09-06, after the bot plan |
+| Coverage of the three headless layers, lines | 5c | **99.33 % (1325/1334)** | 2026-09-06, after the bot plan |
+| Coverage of `src/core/`, lines | 5c | 99.66 % (581/583) over 32 files | 2026-09-06, after the bot plan |
+| Coverage of `src/state/`, lines | 5c | 99.05 % (312/315) over 14 files | 2026-09-06, after the bot plan |
+| Coverage of `src/ai/`, lines | 5c | **99.08 % (432/436) over 18 files** | 2026-09-06, after the bot plan |
+| Coverage, branches | 5a | 95.16 % | 2026-09-06, after the bot plan |
+| Coverage, functions | 5a | 99.79 % | 2026-09-06, after the bot plan |
+| Longest file of any kind | 6 | **300 lines, `src/ui/game-loop.js`**, and it is the only one at the limit | 2026-09-06, after the bot plan |
+| Longest stylesheet | 7 | 296 lines, `src/ui/styles/tokens.css` | 2026-09-06, after the bot plan |
+
+**Three readings.**
+
+1. **`core/`, `state/` and `ui/` are all byte-identical after a whole feature.** The bots learned a
+   probability model of the dice pool, a danger model, a lead-weighted damage model and a real trap
+   search, and **not one line outside `src/ai/` changed**. That is the sixth measurement in a row where
+   the rules layer did not move and the first where three layers did not.
+2. **`src/ai/` grew by 872 lines and six files, and four of the six are splits rather than new
+   subjects.** `score.js`, `geometry.js`, `values-attacks.js` and `values-nuehue.js` all came out of
+   files that were within ten lines of NFR-02's limit, which is what the limit is for: the split
+   happened before the code was written, along a seam the old file headers already named.
+3. **The `src/ai/` coverage floor holds at 99 % with the arena outside it.** `scripts/` is not measured
+   and is not meant to be, and the four uncovered lines in `ai/` are the two "the bot never plays this"
+   value functions and two defensive branches.
+
+### The arena, measured 2026-09-06
+
+```bash
+npm run bots:arena -- --matches=1200 --seats=default,plain
+npm run bots:arena -- --matches=400  --seats=default,random
+npm run bots:arena -- --matches=400  --seats=opportunityWeight=0+landingWeight=0,plain
+npm run bots:arena -- --matches=400  --seats=riskWeight=0+landingWeight=0,plain
+npm run bots:arena -- --matches=400  --seats=riskWeight=0+opportunityWeight=0,plain
+npm run bots:arena -- --matches=1200 --seats=opportunityWeight=0+landingWeight=0,plain
+npm run bots:arena -- --matches=1200 --seats=riskWeight=0+opportunityWeight=0,plain
+```
+
+Two seats each of the named profile and of `plain`, line-up rotated one seat per match, seeds
+`1..matches`. `plain` is the move scorer as it was before the plan, in the same build. Every rate is
+a share of **all** matches, so an even table is 50 % per profile and the interval is the one the
+script prints.
+
+**These are the runs the shipped `DEFAULT_PROFILE` was chosen from, and most of them are negative.**
+
+| Run | What was switched on | Matches | Win rate against `plain` | Verdict |
+| --- | --- | --- | --- | --- |
+| 1 | all three correction terms | 400 | 46.5 % +/- 4.9 | **worse** |
+| 2 | danger only | 400 | 49.5 % +/- 4.9 | a draw |
+| 3 | danger only, weight 0.5 | 400 | 49.0 % +/- 4.9 | a draw |
+| 4 | danger only, weight 2 | 400 | 47.8 % +/- 4.9 | a draw, trending worse |
+| 5 | opportunity only, as an absolute | 400 | 43.8 % +/- 4.9 | **worse** |
+| 6 | opportunity only, rewritten as a difference | 400 | 43.0 % +/- 4.9 | **worse, and the rewrite changed nothing** |
+| 7 | landing bonus only | 400 | 47.5 % +/- 4.9 | worse, inside the interval |
+| 8 | danger and landing | 400 | 45.3 % +/- 4.9 | **worse** |
+| 9 | danger only | 1200 | 49.7 % +/- 2.8 | **a draw, at four times the power** |
+| 10 | landing bonus only | 1200 | 47.3 % +/- 2.8 | **worse, outside the interval** |
+| 11 | the shipped profile | 1200 | 49.7 % +/- 2.8 | a draw |
+| 12 | the shipped profile against `random` | 400 | 100.0 % | the floor holds |
+
+Average match length is 325 turns and one run of 400 matches takes about two and a half minutes.
+
+**What the table decided.** `riskWeight: 1`, `opportunityWeight: 0`, `landingWeight: 0`. Runs 9 and 11
+are the same numbers because danger is the only term left on in the shipped profile.
+
+**Four findings worth a paragraph in the report each.**
+
+1. **The obvious improvement made the bot worse, and only the arena could say so.** Run 1 is the whole
+   plan switched on, as designed, by an argument everybody agreed with. It loses. The plan's first phase
+   was a measuring tool for exactly this reason and it earned its cost on its first use.
+2. **Chasing captures loses a race.** Runs 5 and 6 are the largest single effect in the table and both
+   show the same thing: a bot that goes out of its way to stop within a roll of an enemy takes more
+   captures per match and wins fewer matches. Ludo is a race and a capture is not worth the detour that
+   sets it up.
+3. **A reasonable diagnosis can be wrong, and the measurement is what shows it.** The opportunity term
+   was written as an absolute while danger was written as a difference, which is a real asymmetry and a
+   real defect: it pays for every short move ending near an enemy, including the ones that give up a
+   better position. Fixing it was the obvious next step, it was measured, and it moved the number by
+   0.8 points, which is a quarter of the interval. The defect was real and it was not the cause.
+4. **Danger is shipped on although it does not win.** Runs 2, 3, 4 and 9 put it inside the interval at
+   every weight tried, while it takes about 10 % more captures per match. It is kept because it removes
+   the two blunders a person watching a bot notices, which is a product judgement and is recorded as
+   one in the project journal rather than dressed up as a measurement.
+
+**The gap in the method, recorded rather than papered over.** Phase 2's card changes (the lead
+weighting in `share`, the trap search, Nühü's four receiving-end values) are **not** behind a profile
+knob, so `plain` and `default` both carry them and no run in the table says anything about whether they
+helped. They shipped on the strength of the argument for them, which is the thing this plan was written
+to stop. Putting them behind knobs is outstanding work and is the first thing the next arena session
+should do.
 
 ### Measured 2026-09-04, after the bots learned to play cards
 

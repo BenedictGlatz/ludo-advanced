@@ -84,6 +84,16 @@ export const CONTEXT_FIELDS = Object.freeze([
  * able to say so, and by the time the patch is written the board no longer shows what happened: the
  * trap has been removed and a Banana Peel does not move the pawn at all. It is listed here so that
  * `assertPatch` lets it through, and `applyPatch` deliberately does not write it to state.
+ *
+ * `cardReach` is the fourth, added on 2026-09-06 for the cast (design spec 18, D109), and it is
+ * `trapFired`'s problem in a second shape. Four cards roll a die **inside their own effect**:
+ * Hyperbeam's D4, Janky RPG's D6, Yeet's D6 and Let Him Cook's D12. The number decides how far the
+ * effect reached and is then thrown away, so afterwards nothing in the state says whether a Let Him
+ * Cook ran three squares or eleven. The view has to draw the run, so the roll is reported.
+ *
+ * Rejected: *working the distance out in `ui/` by diffing the board.* That is rule reconstruction in
+ * the view layer, it gets the wrong answer whenever an effect moves a pawn zero squares, and
+ * `CLAUDE.md` puts rules in `core/` for exactly this reason.
  */
 export const PATCH_FIELDS = Object.freeze([
   "pawns",
@@ -99,6 +109,7 @@ export const PATCH_FIELDS = Object.freeze([
   "negate",
   "cancelMove",
   "trapFired",
+  "cardReach",
 ]);
 
 /**

@@ -7,8 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **You can no longer see what the other players are holding.** A skill hand that is not yours is drawn
+  as a stack of card backs: a computer opponent's for the whole of its turn, and another person's while
+  a reaction window is waiting on them. How many cards each player holds is still shown, in the HUD as
+  before, and a card that has actually been played is still shown to everybody in full
+- **The screen is handed over before and after a reaction window too**, not only between turns. When
+  somebody else is being asked whether they want to react, the same "pass the screen on" screen comes up
+  for them, and again to give the screen back when the window has closed, and the thirty second clock
+  stops while it is up
+
 ### Added
 
+- **A played skill card now has a moment of its own.** The card comes out of the hand, stands large over
+  the board while it does the thing its kind of card does, shows its effect landing on the field or the
+  pawn it was aimed at, and then shrinks away into the last-card plate. Every one of the 29 cards has its
+  own touch on top of the movement its family shares, so a Banana Peel is thrown and squashes, a Rock
+  falls, a Hyperbeam bursts along its lane and a Nühü shakes its head. It is how a card played by a bot,
+  or by somebody at the other end of a hot-seat turn, is finally visible at all
+- **The board says where a card landed**: a ring on the field it was aimed at, a dotted line along the
+  fields an effect travelled across, a hatched region when an It's Not That Deep refused a card, and a
+  ring on every pawn a card touched, in orange when it was done to them and in ink when it protected them
+- **A played card remembers what it was aimed at.** The square, the pawn or the direction a skill card
+  acted on is kept with the record of the play, and the four cards that roll a die inside their own rule
+  (Hyperbeam, Janky RPG, Yeet, Let Him Cook) now report how far they reached. Nothing on screen shows it
+  yet; it is what the animation of a played card is built on
+- **The bots see danger.** A bot no longer parks a pawn one field in front of an opponent, walks out of
+  its yard onto an entry field somebody is queuing up behind, or picks the dice card whose likely
+  landing fields are the dangerous ones. How likely a capture really is now comes out of the dice pool's
+  own composition instead of a rule of thumb
+- **The bots pick on whoever is winning.** A card aimed at an opponent is now worth more against the
+  player closest to victory and less against the player who has not left their yard, so a Yeet, a
+  Ragebait or a Tax Fraud lands where it hurts most
+- **A bot lays its traps where somebody will actually walk.** Banana Peel and It's Not That Deep used to
+  go one field in front of the leading opponent, which is the one distance a victim is least likely to
+  roll. They now search every legal field and pick the one most likely to be walked on
+- **A bot knows what a card aimed at it is really worth.** Nühü used to stop anything aimed at the bot
+  for the same flat amount. It now prices the four cards an opponent can aim at a bot separately, so a
+  Yeet that shoves a leading pawn in front of two enemies is answered and a harmless one is not
+- `npm run bots:arena`, a script that plays hundreds of seeded bot-against-bot matches and prints who
+  won how often, with a confidence interval, so a change to the bot is judged by a measurement rather
+  than by an argument. Bots can be given different tuning profiles at the same table, and a
+  random-playing seat is available as the floor to compare against. Its first verdict was that two of
+  the three things the bots had just been taught made them **worse**, and both are shipped switched off
 - **Rolling the maximum on a D6 or larger rolls that die again**, up to three rolls a turn. The D2 and the
   D4 give no bonus roll, and every dice card now says on its face whether its maximum rolls again. A card
   played into the first roll does not carry into the second, and the message strip says when a roll is a
@@ -438,6 +480,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A card played by a bot is no longer announced twice.** It used to hold the turn for two seconds with
+  a sentence in the message strip; the card's own animation is that announcement now, and the extra two
+  seconds are gone. A trap that goes off afterwards still holds, because that is a second thing happening
 - **Rock and Big Ah Rock both turn one of your own pawns to stone, and stone does not move.** Rock's pawn
   used to stay movable by its owner; Big Ah Rock used to turn a field into a boulder. Now both cards aim at
   one of your pawns: nothing gets past it, you cannot move it, and no card can push it, for two rounds
@@ -749,6 +794,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The message bar no longer covers the skill card you are reading.** Pointing at a card in your hand
+  magnifies it upward, out of its own plate, and the bar that hangs above that plate painted straight
+  across the card's title and rules text, so the one thing the reveal exists to show was the thing being
+  hidden. The whole rail now stands where the bar stood, and inside it a card being read is above every
+  message
 - **The reaction countdown reads as a number in a ring again.** The ring was being given the whole
   sentence, "Reaktion? 27 s", inside a circle sized for two digits, so the text wrapped, spilled out on
   every side and covered the ring that shows how much time is left. The ring now shows only the seconds;

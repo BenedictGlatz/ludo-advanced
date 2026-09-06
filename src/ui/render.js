@@ -27,9 +27,10 @@ import { updateSkillHand } from "./skill-hand-view.js";
 /**
  * Bind the regions once and get back a `render(state, extras)`.
  *
- * `extras` carries the three things that are **presentation state** and are therefore not in the frozen
- * game state: which hand slot is mid-play, how many seconds are left on the reaction clock, and what the
- * target picker is currently asking for. `card-controls.js` owns all three.
+ * `extras` carries the four things that are **presentation state** and are therefore not in the frozen
+ * game state: which hand slot is mid-play, how many seconds are left on the reaction clock, what the
+ * target picker is currently asking for, and which seat's person is in front of the screen.
+ * `card-controls.js` owns the first three and `handover.js` the fourth.
  */
 export function createRenderer({
   $board,
@@ -40,7 +41,10 @@ export function createRenderer({
   $prompt,
   $message,
 }) {
-  return function render(state, { selectedSlot = -1, secondsLeft = null, pick = null } = {}) {
+  return function render(
+    state,
+    { selectedSlot = -1, secondsLeft = null, pick = null, viewerSeat = null } = {}
+  ) {
     updateBoard($board, state);
     applyMoveHints($board, state);
     updateHud($hud, state);
@@ -50,7 +54,7 @@ export function createRenderer({
     // renderer runs, so the seat is always the active one here, and `canPause` is left at its default.
     updateChrome($chrome, { turn: turnLine(state), player: state.activePlayer });
     updateDiceHand($diceHand, state);
-    updateSkillHand($skillHand, state, selectedSlot);
+    updateSkillHand($skillHand, state, selectedSlot, viewerSeat);
     updatePrompt($prompt, state, { secondsLeft, pick });
     showMessage($message, state);
   };

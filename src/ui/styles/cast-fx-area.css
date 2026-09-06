@@ -1,0 +1,143 @@
+/* The accents of the three area cards (D107, D109): more than one square at
+   once.
+   Depends on tokens.css, cast.css, cast-base.css and cast-parts.css, and
+   loads after them.
+   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D107, D109.
+
+   These are the loud casts, and they are loud in one way: more than one part
+   leaves the target. Where the parts go is --bx and --by on the element, in
+   cells, signed by --cast-dir where the card has a direction. The fields
+   under the parts light in sequence through data-cast-hit="path" and
+   --cast-i, which is board-cast.css's and is the part of the line that stays.
+   The family's gesture is the swell. */
+
+/* Hyperbeam: the flight, then three parts burst on along --cast-dir, a beam
+   that fans a little as it goes. The fields under it light in order. */
+.cast[data-card-id="action-hyperbeam"] .cast__part[data-part="1"] {
+  --bx: calc(var(--cast-dir, 1) * var(--cell) * 1.2);
+  --by: calc(var(--cell) * -0.55);
+}
+
+.cast[data-card-id="action-hyperbeam"] .cast__part[data-part="2"] {
+  --bx: calc(var(--cast-dir, 1) * var(--cell) * 2);
+  --by: 0px;
+}
+
+.cast[data-card-id="action-hyperbeam"] .cast__part[data-part="3"] {
+  --bx: calc(var(--cast-dir, 1) * var(--cell) * 1.2);
+  --by: calc(var(--cell) * 0.55);
+}
+
+.cast[data-cast="board"][data-card-id="action-hyperbeam"] .cast__part[data-part="1"],
+.cast[data-cast="board"][data-card-id="action-hyperbeam"] .cast__part[data-part="2"],
+.cast[data-cast="board"][data-card-id="action-hyperbeam"] .cast__part[data-part="3"] {
+  animation-name: cast-burst;
+}
+
+/* Janky RPG: the part wobbles in size on the way, because the roll decides
+   what it hits, and two parts splash to either side when it lands, because
+   under a four it hits both neighbours. */
+.cast[data-cast="board"][data-card-id="action-janky-rpg"] .cast__part[data-part="0"] {
+  animation-name: cast-fly-wobble;
+}
+
+@keyframes cast-fly-wobble {
+  0% {
+    translate: var(--at-stage);
+    scale: 0.5;
+    opacity: 1;
+    animation-timing-function: var(--ease-move);
+  }
+  15% {
+    scale: 1.3 0.7;
+  }
+  30% {
+    scale: 0.7 1.3;
+  }
+  43% {
+    translate: var(--at-to);
+    scale: 1;
+    opacity: 1;
+  }
+  60% {
+    translate: var(--at-to);
+    scale: 1.5;
+    opacity: 1;
+  }
+  100% {
+    translate: var(--at-to);
+    scale: 0.3;
+    opacity: 0;
+  }
+}
+
+.cast[data-card-id="action-janky-rpg"] .cast__part[data-part="1"] {
+  --bx: calc(var(--cell) * -1.1);
+  --by: 0px;
+}
+
+.cast[data-card-id="action-janky-rpg"] .cast__part[data-part="2"] {
+  --bx: calc(var(--cell) * 1.1);
+  --by: 0px;
+}
+
+.cast[data-cast="board"][data-card-id="action-janky-rpg"] .cast__part[data-part="1"],
+.cast[data-cast="board"][data-card-id="action-janky-rpg"] .cast__part[data-part="2"] {
+  animation-name: cast-burst;
+}
+
+/* The Purge: no target, because every landing is a capture for a round. The
+   four parts leave the card for the four corners of the board, and the board
+   frame turns orange under them (board-cast.css). This is the one card whose
+   default flight is replaced rather than added to. */
+.cast[data-card-id="reaction-the-purge"] .cast__part {
+  background: var(--color-warn);
+}
+
+.cast[data-card-id="reaction-the-purge"] .cast__part[data-part="0"] {
+  --bx: calc(var(--cell) * -4);
+  --by: calc(var(--cell) * -4);
+}
+
+.cast[data-card-id="reaction-the-purge"] .cast__part[data-part="1"] {
+  --bx: calc(var(--cell) * 4);
+  --by: calc(var(--cell) * -4);
+}
+
+.cast[data-card-id="reaction-the-purge"] .cast__part[data-part="2"] {
+  --bx: calc(var(--cell) * 4);
+  --by: calc(var(--cell) * 4);
+}
+
+.cast[data-card-id="reaction-the-purge"] .cast__part[data-part="3"] {
+  --bx: calc(var(--cell) * -4);
+  --by: calc(var(--cell) * 4);
+}
+
+.cast[data-cast="board"][data-card-id="reaction-the-purge"] .cast__part[data-part="0"],
+.cast[data-cast="board"][data-card-id="reaction-the-purge"] .cast__part[data-part="1"],
+.cast[data-cast="board"][data-card-id="reaction-the-purge"] .cast__part[data-part="2"],
+.cast[data-cast="board"][data-card-id="reaction-the-purge"] .cast__part[data-part="3"] {
+  animation-name: cast-scatter;
+}
+
+/* From the stage, not from a target: The Purge has --cast-to absent, so
+   --at-to would fall back to the stage anyway, but a keyframe should say what
+   it means. */
+@keyframes cast-scatter {
+  0% {
+    translate: var(--at-stage);
+    scale: 0.5;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    animation-timing-function: var(--ease-capture);
+  }
+  100% {
+    translate: calc(var(--cast-stage-x) - 50% + var(--bx, 0px))
+      calc(var(--cast-stage-y) - 50% + var(--by, 0px));
+    scale: 0.6;
+    opacity: 0;
+  }
+}

@@ -64,11 +64,15 @@ export const HEAD_OUT = Object.freeze({ ADVANCE: "advance", RETREAT: "retreat" }
  * The distance is rolled rather than fixed, which is the artwork's own design and is also what stops the
  * card being a precise tool: a player cannot line up a pushback that lands an opponent exactly where they
  * want them.
+ *
+ * **`cardReach` is the roll, reported and not applied** (design spec 18, D109). The pushback is
+ * backwards, so the number is how many squares the pawn travelled and the sign is the card's, not the
+ * report's: the view already knows a Yeet goes backwards.
  */
 export function yeet(context) {
   const steps = rollDie(YEET_DIE, context.rng);
 
-  return shove(worldIn(context), context.target.pawn, -steps);
+  return { ...shove(worldIn(context), context.target.pawn, -steps), cardReach: steps };
 }
 
 /**
@@ -102,6 +106,9 @@ export function headOut(context) {
  *
  * That is deliberately harsher than FR-13, which merely refuses an overshooting *move*. A move the
  * player chose is refused; a gamble the player took is lost.
+ *
+ * **`cardReach` is the D12, reported even when the run overshot** (design spec 18, D109). A pawn that
+ * crashed still ran the distance it rolled before it crashed, and the cast draws that run.
  */
 export function letHimCook(context) {
   const ref = context.target.pawn;
@@ -112,10 +119,10 @@ export function letHimCook(context) {
   const steps = rollDie(COOK_DIE, context.rng);
 
   if (pawn.r + steps > HOME_R) {
-    return { pawns: sendHome(context.pawns, ref) };
+    return { pawns: sendHome(context.pawns, ref), cardReach: steps };
   }
 
-  return shove(worldIn(context), ref, steps);
+  return { ...shove(worldIn(context), ref, steps), cardReach: steps };
 }
 
 /**

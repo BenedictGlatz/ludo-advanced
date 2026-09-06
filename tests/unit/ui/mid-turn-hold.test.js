@@ -27,7 +27,7 @@ import {
   botCardPlayed,
   holdMidTurn,
   midTurnAnnouncement,
-} from "../../../src/ui/timers.js";
+} from "../../../src/ui/holds.js";
 
 /** Returns the token name instead of a duration, so a test can see which one was asked for. */
 const nameToken = (token) => token;
@@ -150,28 +150,52 @@ describe("what the strip is announcing", () => {
 });
 
 /**
- * The third source of a mid-turn announcement, added by issue #82. A **bot's** card play is held on
- * screen for the same reason a trap is: it changed the board and nobody watched it happen.
+ * A bot's card play, which **stopped** being a mid-turn announcement on 2026-09-06.
+ *
+ * Issue #82 made it one: a card played by nobody the player can see changed the board and needed a
+ * guaranteed two seconds on screen. Design spec 18's cast is that announcement and a better one, so
+ * the hold moved to the cast rather than stacking on top of it. Leaving both in would add two seconds
+ * to every bot turn that plays a card, on top of the 1.5 second cast, on top of the 900 ms the bot
+ * already pauses before it acts.
+ *
+ * The cases below are the old ones inverted, and they are kept rather than deleted because the thing
+ * they guard is what would come back by accident: a second hold for an event that already has one.
  */
-describe("a bot's card play, which is the third thing worth holding for", () => {
-  const played = { seat: 2, cardId: "action-angel-die" };
+describe("a bot's card play, which the cast holds for now", () => {
+  const played = { seat: 2, cardId: "action-angel-die", target: {} };
 
-  it("holds for the trap token when a bot played a card", () => {
+  it("does not hold the turn on its own any more", () => {
     const state = { ...quiet, lastCardPlayed: played };
 
+    expect(holdMidTurn(state, {}, nameToken)).toBe(0);
+    expect(midTurnAnnouncement(state)).toBeNull();
+  });
+
+  /**
+   * A fired trap still holds, and that is the line between the two. The cast draws the card landing;
+   * a trap going off afterwards is a **second** event, which the cast did not show.
+   */
+  it("still holds for a trap the card set off", () => {
+    const state = { ...quiet, trapFired, lastCardPlayed: played };
+
+    expect(midTurnAnnouncement(state)).toBe(trapFired);
     expect(holdMidTurn(state, {}, nameToken)).toBe("--motion-trap-hold");
   });
 
   /**
-   * **A person's own card play is not an announcement**, which is the one case in this file that is
-   * about who did something rather than about what happened. The player clicked the card, watched the
-   * target picker, and pressed the last button: holding the turn to tell them what they just did would
-   * add two seconds to every card a person plays, in every match, including the all-human ones.
+   * `botCardPlayed` is still exported and still answers, because `move-hints.js` prints the sentence
+   * the strip shows and that sentence has not changed. What moved is the **hold**, not the words.
    */
-  it("does not hold when a person played the card", () => {
+  it("still names the card a bot played, for the sentence in the strip", () => {
+    const state = { ...quiet, lastCardPlayed: played };
+
+    expect(botCardPlayed(state)).toBe(played);
+  });
+
+  /** **A person's own card play was never an announcement**, and it still is not. */
+  it("says nothing about a card a person played", () => {
     const state = { ...quiet, lastCardPlayed: { seat: 0, cardId: "action-angel-die" } };
 
-    expect(holdMidTurn(state, {}, nameToken)).toBe(0);
     expect(botCardPlayed(state)).toBeNull();
   });
 
@@ -184,28 +208,8 @@ describe("a bot's card play, which is the third thing worth holding for", () => 
   });
 
   /**
-   * The identity that `card-controls.js` compares to hold one announcement once. It is the frozen
-   * object on the state, exactly as `trapFired` is, so two calls answer the same reference.
-   */
-  it("returns the play itself, so two calls can be compared by identity", () => {
-    const state = { ...quiet, lastCardPlayed: played };
-
-    expect(midTurnAnnouncement(state)).toBe(played);
-    expect(midTurnAnnouncement(state)).toBe(midTurnAnnouncement(state));
-  });
-
-  /** A trap outranks a card play: the trap is what the player did not expect. */
-  it("prefers a fired trap to a card play", () => {
-    const state = { ...quiet, trapFired, lastCardPlayed: played };
-
-    expect(midTurnAnnouncement(state)).toBe(trapFired);
-  });
-
-  /**
-   * **The asymmetry that keeps every bot turn as short as it was.** `holdAfterTurn` deliberately does
-   * not know about a bot's card play, so the handover is not delayed by four seconds at the end of
-   * every bot turn that played a card. The card was already held for its two seconds in the middle of
-   * the turn, which is where it belongs.
+   * The asymmetry that keeps every bot turn as short as it was: the end of the turn does not hold for
+   * a card play either, so nothing pays for the same card twice.
    */
   it("is not part of what the end of the turn holds for", () => {
     const state = { ...quiet, lastCardPlayed: played };

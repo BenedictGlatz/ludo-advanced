@@ -152,6 +152,7 @@ describe("clearedTurnFields", () => {
       nullifiedCard: null,
       trapFired: null,
       lastCardPlayed: null,
+      cardReach: null,
     });
   });
 

@@ -516,6 +516,22 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   Ch. 04 and in the decision blocks below, which are the copies that get maintained. Nothing committed
   linked to the file, and its history keeps it recoverable. Sprint 2.
 
+- **2026-09-06**: Bot tactics plan built in four phases: `npm run bots:arena` plus per-seat
+  tuning profiles, a hit table computed from the dice pool, danger and opportunity in the move
+  choice, lead-weighted card damage, a real trap search and four receiving-end values for Nühü.
+  The arena's verdict is in Ch. 09 and it is partly negative. Sprint 3.
+
+- **2026-09-06, night**: An opponent's skill hand is finally secret. New `src/ui/handover.js` holds
+  `viewerSeat`, the seat whose person is holding the device, and the hand on screen is face up only when
+  it is theirs. The handover curtain now also goes up before and after a reaction window. `game-loop.js`
+  was at 300 lines, so `src/ui/loop-parts.js` was split out of it. Sprint 3.
+
+- **2026-09-06, night**: Skill card animations planned. `Skill-Card-Animations-Brief.md` is design
+  brief 18, opening D104 to D115, and `Skill-Card-Animations-Plan.md` is the six-phase implementation
+  plan that consumes it. Both in the repository root, at the Product Owner's request; the brief belongs
+  at `01-Design/Handoff/18-brief-skill-card-animations.md` when the round is actually run. No code
+  changed. Sprint 3.
+
 ---
 
 ## Decisions
@@ -4897,6 +4913,346 @@ to get wrong later.
 - → Ch. 04, Ch. 11
 
 ---
+
+### 2026-09-06: The smarter bot starts with a scoreboard, not with a smarter bot
+
+- **Chosen:** the work to make the bots play tactically is planned in four phases in
+  `00-Meta/Project-Management/Bot-Tactics-Plan.md`, and the first phase builds a measuring tool
+  (`scripts/bot-arena.js`, seeded bot-against-bot matches with per-seat tuning profiles) before any
+  value in `ai/` changes. Danger and capture opportunity in the move choice come second, sharper card
+  targeting third, tuning of the guessed constants last.
+- **Rejected:** *starting with the danger term straight away.* It is the obvious gap and everybody agrees
+  it is the biggest one, and that is exactly why it is dangerous to build unmeasured: a wrong opponent
+  model plays worse than no model, as `move-scoring.js` already warns, and `bot-match.test.js` only
+  proves a match finishes, not that the bot got better. Every constant in `ai/` is labelled "a guess"
+  today, and the project's own documentation rule (numbers only next to the command that produced them)
+  has no command to point at for the bot.
+- **Also rejected:** *look-ahead search (minimax, Monte Carlo tree search).* Random dice, hidden cards and
+  up to four seats make the tree explode, `ai/` may not sample, and a one-move expected-value model is
+  how strong human Ludo players think anyway. The plan sharpens the model instead of searching over it.
+- **Consequence:** the per-seat profile that the arena needs is also the seam a difficulty setting would
+  use, so that becomes a Product Owner question rather than a rewrite. The plan is a working document
+  and is deleted once built, like the handoff 15 plan was.
+- → Ch. 06, Ch. 08, Ch. 09
+
+---
+### 2026-09-06: A real hit table replaces the guess, and the sum becomes a probability
+
+- **Chosen:** `oddsOfHit(d)` is computed once at import over all C(20, 3) = 1140 hands the dice pool can
+  deal, as the mean of `1 / (the smallest die in the hand that reaches d)`, and `threatOn` combines its
+  attackers as `1 - prod(1 - p)` instead of adding them up.
+- **Rejected:** *keeping the flat 1/6, 1/12, 1/20 by range.* It quietly assumes the opponent is holding
+  the smallest die that reaches, and a turn draws three cards out of twenty. At one square the real
+  number is nearly twice the guess and past twelve squares it is a quarter of it, so the guess was not
+  merely imprecise, it was wrong in **both** directions and the bot was brave up close and timid far away.
+- **Rejected:** *sampling the pool a few hundred times to get the same table.* `ai/` may hold no
+  randomness at all (NFR-09) and 1140 hands is 1140 iterations at import, so there is nothing to buy.
+- **Why the sum had to go.** The sum was defended in issue #82 and the defence was sound at the time: a
+  threat was only ever compared with another threat, and a sum keeps "twice as many attackers is twice
+  as bad" true. From the bot tactics plan on it is multiplied by a pawn's worth and compared against a
+  **gain**, such as the 25 points of leaving the yard, so it has to be a real number between 0 and 1.
+  With seven attackers the sum passes 1 and prices a pawn at more than a pawn.
+- **Consequence:** the pool's composition is read by `ai/`, which is fair rather than cheating: it is
+  printed on the pool overview screen and is the same twenty cards all match long. What stays secret is
+  which three cards an opponent holds right now, and nothing asks.
+- → Ch. 06, Ch. 09
+
+---
+
+### 2026-09-06: Danger is a correction to the categories, not a sixth category
+
+- **Chosen:** `scoreMove` keeps its five exclusive categories and adds three terms on top: risk,
+  opportunity and what is lying on the landing field. Each is in the same currency as the category it
+  corrects, so the two can be added at all.
+- **Rejected:** *a sixth category between "capture" and "leave the yard".* A category is all-or-nothing
+  and danger is a matter of degree: a pawn on `r = 3` in front of one enemy is a small risk and a pawn
+  on `r = 38` in front of three is a catastrophe. There is no honest place in the ranking for "this is a
+  bit dangerous", and putting one there would have made the ranking answer a question it is not for.
+- **Rejected:** *rewriting the ranking itself.* The file's own header says the order is the heuristic and
+  the distances are a knob, and five previous issues have left it alone. The correction leaves it alone
+  too: the biggest a board can produce is roughly one pawn's worth, so a finish still beats a capture.
+- **Consequence:** `SCORE` moved into a file of its own (`src/ai/score.js`). The scorer now imports the
+  danger model and the danger model needs the currency, and with the table left in the scorer those two
+  plus `threat.js` would have imported each other in a ring. A ring of ES modules works right up until
+  one of them reads another's `const` at import time.
+- **Consequence:** the die choice got smarter for nothing. `chooseDie` already averages `bestMove` over
+  every face, so a die is now priced by where it is likely to land, with no change in `dice-choice.js`.
+- → Ch. 06
+
+---
+
+### 2026-09-06: The arena says the new danger model does not win, and it is shipped anyway with the reason written down
+
+- **Chosen:** `DEFAULT_PROFILE` ships with `riskWeight: 1`, `opportunityWeight: 0` and
+  `landingWeight: 0`. Every one of those three numbers is what `npm run bots:arena` chose, and the runs
+  are in Ch. 09 next to their commands.
+- **The measurement, which is the point of the entry.** With all three terms on, the new bot **lost** to
+  the same build with them off. One term at a time over 400 matches: the opportunity term was the loss
+  and well outside the interval; the other two were inside it. Over 1200 matches the danger term alone
+  came out even on wins while taking noticeably more captures per match, which is a bot losing fewer
+  pawns and gaining no ground for it.
+- **Rejected:** *shipping all three on, as designed.* The plan's own rule is that a change is kept only
+  when it wins by more than the noise band, and it was written precisely to stop this: the danger term
+  is the obvious gap, everybody agrees it is the biggest one, and the argument for it is good. The
+  argument is not evidence.
+- **Rejected:** *shipping all three off, which the rule read strictly would give.* The danger term costs
+  nothing measurable and it removes the two blunders a person watching a bot actually notices: parking a
+  pawn one field in front of an opponent, and walking out of the yard onto an entry field with pawns
+  queued behind it. A bot that visibly blunders is a worse opponent to play against than its win rate
+  says. That is a product judgement and not a measurement, and it is recorded as one.
+- **The hypothesis that failed, kept because it is the useful half.** The opportunity term was written
+  as an absolute ("what is in front of where I land") while danger was written as a difference. That
+  asymmetry is a real defect: it pays the bot for every short move ending near an enemy, including the
+  ones that give up a better position. It was rewritten as a difference and measured again, and it
+  measured the same. So the asymmetry was not the reason; chasing captures simply costs more tempo than
+  the captures are worth in this game's economy. The corrected form is kept, switched off.
+- **Named as outstanding:** phase 2's card changes are not behind a knob, so the arena cannot compare
+  them with what they replaced. They shipped on the argument, which is the thing this plan exists to
+  stop. Gating them is the next piece of work, not a detail.
+- → Ch. 06, Ch. 08, Ch. 09, Ch. 11
+
+---
+
+### 2026-09-06: An opponent's loss is weighted by how far ahead they are, in one function
+
+- **Chosen:** `share(state, opponent)` multiplies the old `1 / (seats - 1)` by the victim's progress
+  against the table average, clamped between half and double. Every offensive card and every reaction
+  inherits it through the one function.
+- **Rejected:** *the flat share.* Hurting the player two turns from winning was worth exactly as much as
+  hurting the player who had not left the yard, which is the one thing every human player at a
+  four-seat table gets right without being told.
+- **Rejected:** *comparing the victim against the other opponents rather than against the whole table.*
+  It needs the asking seat as a third argument, and it makes a bot in the lead treat a distant second as
+  the runaway. Against the table average the asking seat's own progress is part of "who is ahead", which
+  is what it should be.
+- **Why the clamp.** Without it, a seat two turns from winning while everybody else is still in the yard
+  is worth four times a normal target at a four-seat table, and a reaction card priced at four times its
+  worth starts beating moves it has no business beating. The clamp keeps the ranking among the opponents,
+  which is the whole point, and keeps the size of a card the size of a card.
+- **Not measured.** `share` is not behind a profile knob, so the arena cannot say whether this helped.
+  See the entry above.
+- → Ch. 06
+
+---
+
+### 2026-09-06: Traps go where somebody will walk, and Nühü prices four cards instead of one number
+
+- **Chosen:** the two trap cards search **every** legal field, scoring each by the share-weighted chance
+  that an enemy lands on it, summed over every enemy pawn that could reach it. Nühü prices the four
+  cards an opponent can aim at a bot separately: Yeet by the steps lost plus the danger the pushback
+  drops the pawn into, Hold Pawn by what the turn loses, Ragebait by a taunt, Tax Fraud by a card.
+- **Rejected:** *the field one step in front of the leading opponent*, which is what both trap cards used
+  to take. It is the single distance a victim is least likely to roll: only a D2 or a natural 1 reaches
+  it, and the hit table now says so in a number.
+- **Rejected:** *a second value table for all 29 cards, seen from the receiving end*, which is what the
+  old flat 8 was standing in for and what the old comment gave as the reason for not doing it. Only four
+  cards in the catalogue can be aimed by an opponent at somebody else's pawn or at somebody else, so the
+  table is complete at four entries and the fear was of a job much larger than the job.
+- **Known simplification, recorded rather than half-built:** a trap also fires on a field merely crossed,
+  and `oddsOfHit` is the chance of landing exactly there, so the real chance is higher than the number
+  the value uses. It is higher for every field, so the ranking barely moves, and the alternative is a
+  second probability table modelling an opponent who is not aiming at anything.
+- **Consequence:** two files were split before anything was added to them, both close to NFR-02's 300
+  lines. `values-pawns.js` kept the cards played on your own pawns and `values-attacks.js` took the two
+  played on somebody else's; `values-window.js` kept six reactions and `values-nuehue.js` took the
+  seventh, which is now four cases long.
+- → Ch. 06
+
+### 2026-09-06: A played skill card gets a cast in two stages, and the 36 drawings are not touched
+
+- **Chosen:** every skill card gets an animation of its own, built as a **cast in two stages**. The card
+  shows itself large on a stage of its own, then its effect lands on the board. Each card's motion is a
+  **shared base per family plus an accent of its own**, and what moves is the **card as an object plus a
+  new effect layer**, never the inside of the illustration. The cast gets **its own moment in the turn**,
+  on D70's pattern: the loop decides that it waits, a token decides how long, `?fast=1` sets it to zero
+  and the shape of the turn is identical either way. A bot's card play animates like a person's.
+- **Rejected:** *animating the parts of the drawing itself*, the banana sliding, the angel flapping. It
+  is the strongest effect and it needs anchors, classes or data attributes per group, inside the
+  generated SVGs. Those files come out of a Claude Design artboard through
+  `scripts/extract-card-art.js` and brief 03 fixed them as generated and not hand-edited, so this is a
+  change to the extractor **and** to the artboard. It is a handoff of its own if it is ever wanted, and
+  it would have blocked every other part of the work behind an art round.
+- **Rejected:** *animating the card in place in the fan*, which is the cheapest option and needs no new
+  region and no new moment. A skill hand card is 159 by 233 px at the design resolution. Twenty-nine
+  animations that a player can tell apart at that size is not a thing, and the one that would read is
+  the one the dice hand already has.
+- **Rejected:** *twenty-nine fully independent choreographies.* Maximum variety, and it buys it by
+  giving up the property that makes the rest of this game look like one object: 29 hand-built keyframe
+  sets with nothing shared drift apart, and NFR-02's 300 lines would have decided the file split rather
+  than a seam. The family base is what holds the accents together.
+- **Four findings from reading the tree, each of which is work the plan now names rather than discovers:**
+  `lastCardPlayed` is `{ seat, cardId }` and carries **no target**, so nothing in `ui/` can know which
+  square a Banana Peel went on. Hyperbeam, Janky RPG, Yeet and Let Him Cook roll a die **inside their
+  own effect** and the number is dropped, so the board stage cannot know how far the effect reached; the
+  fix follows `trapFired`, which is already a report and not board state. **Twelve of the 29 cards do
+  nothing the board can show**, and seven of those twelve change the roll, which already has a stage.
+  And four of the files this work must touch have between **0 and 4 lines** of headroom against the
+  300-line limit, `game-loop.js` at exactly 300, so three splits are part of the work.
+- **Planned, not built:** a cast **replaces** the two-second hold that `timers.js` currently gives a
+  bot's card play, rather than stacking on top of it. A cast is that announcement and a better one. A
+  fired trap keeps its own hold, because a trap is a second event the cast did not show.
+- → Ch. 04, and Ch. 06 for the state field
+
+---
+
+### 2026-09-06: A card play records its target, and four cards report how far they reached
+
+- **Chosen:** `lastCardPlayed` grows a `target` field, and `PATCH_FIELDS` grows a `cardReach` report
+  written by the four cards that roll a die inside their own effect. Both are for the cast, both are
+  read by `ui/` only, and neither is read by a rule.
+- **Rejected:** *growing `lastCard`, the match-level record, in the same way.* It looks like the same
+  object and it answers a different question. The plate outlives the turn; a target from three turns
+  ago is a fact nobody reads.
+- **Rejected:** *reconstructing the reach in `ui/` by diffing the board between two states.* It needs
+  no rules change and it is rules in the view layer. It is also wrong wherever an effect moves a pawn
+  zero squares, which a Yeet at a pawn on the entry square does every time.
+- **Why the reach could not simply be recomputed:** the four effects roll through `context.rng`, which
+  is consumed. Re-rolling would give a different number, and there is no seed to replay.
+- **Consequence:** the four effects each gained one line and a paragraph of reasoning; the other 25 are
+  asserted to report nothing, which is the case that would otherwise fail silently.
+- → Ch. 05, Ch. 06
+
+
+### 2026-09-06: The cast is asked before the roll, and it takes the bot announcement's two seconds rather than adding to them
+
+- **Chosen:** one call in `advance()`, `waits.takeMoment(state)`, which asks for the card's moment
+  first and the roll's second. And `botCardPlayed` comes **out** of `midTurnAnnouncement`, so a bot's
+  card play is announced by the cast instead of by a second two-second hold.
+- **Why the card comes first:** seven of the 29 cards act on the roll chain and two more add a whole
+  extra die, so a turn that plays a card and then rolls owes two moments at once. Showing the modified
+  number before the card that modified it means the player sees a 14 on a D8 and only afterwards finds
+  out why.
+- **Rejected:** *leaving both holds in.* It adds two seconds to every bot turn that plays a card, on
+  top of the 1.5 second cast, on top of the 900 ms the bot already pauses before it acts.
+- **Kept:** a **fired trap** still holds. A trap is a second event that the cast did not show.
+- **Consequence:** `game-loop.js` got two lines **shorter** while gaining a wait, which is what let a
+  file already sitting at exactly 300 lines take the feature at all.
+- → Ch. 04, Ch. 06
+
+### 2026-09-06: The cast measures the DOM instead of computing a cell
+
+- **Chosen:** `cast-geometry.js` writes its four pairs of pixels from `getBoundingClientRect()` on the
+  board, the hand plate, the target square or pawn, and the last-card plate.
+- **Rejected:** *`board-geometry.js`'s `cellCentre` and `pawnCentre`*, which the implementation plan
+  proposed and which the pawn drag already uses. They answer in cell units from the board's top left,
+  so using them here means multiplying by a cell size read back off the stylesheet and adding the
+  board's offset: three numbers to get right, each of which can disagree with where the piece is
+  actually drawn. Every square and every pawn is in the DOM from the first frame, so the rectangle is
+  available directly and cannot be out of step with the screen. It is also right below the breakpoint,
+  where the board is a different size.
+- **What it costs:** the module only works in a browser, so the cast's geometry has no unit test and is
+  covered end to end instead. Recorded rather than hidden.
+- → Ch. 04, Ch. 08
+
+### 2026-09-06: `tokens.css` split rather than the cast's tokens living somewhere else
+
+- **Chosen:** `motion.css`, holding every duration, every easing and the `prefers-reduced-motion`
+  block. `tokens.css` keeps colours, spacing, type, radii, shadows, geometry and layering.
+- **Why:** the four cast tokens would have taken `tokens.css` to 322 lines against NFR-02's 300. The
+  implementation plan named this as a decision that was Claude Design's, and the spec's own note that
+  the file "lands at 297 of 300" was measured against a copy that is shorter than the one in the
+  repository, so the split had to be taken here.
+- **Why this seam and not a shorter comment:** `tokens.css` answers "what may this UI look like" and
+  `motion.css` answers "how long may it take, and what happens to a player who asked for less
+  movement". The second question has a rule of its own, restated by D20, D60, D70 and D111, and keeping
+  the two lists in one file put that rule 150 lines away from half the tokens it governs.
+- **Rejected:** *deleting a token to make room*, which the spec suggested as the alternative. There is
+  no token in the file that nothing reads.
+- **Measured outcome:** the longest stylesheet in the project went **down** from 296 lines to 267.
+- → Ch. 04, Ch. 09
+
+### 2026-09-06: A cast costs a four-bot match between four and seven minutes, and that is filed rather than fixed
+
+- **The measurement:** `npm run bots:arena` reports 67.34 card plays per seat per match over 200
+  four-seat matches, so about 269 card plays in a match of 313.8 turns. At the spec's 1.5 s with a
+  board stage and 0.94 s without, that is 4.2 to 6.7 minutes.
+- **Against what:** the roll's 0.9 s per turn is about 4.7 minutes of the same match, and D108 named
+  that as the figure to compare with.
+- **Chosen:** ship the spec's numbers unchanged and record the finding. Two reasons. The measurement is
+  of **bots**, which play every card they can afford because that is what their profile is scored on,
+  and nobody has measured a table of people. And part of the cost is not new: a bot's card play already
+  held the turn for two seconds before this delivery, and that hold was removed here.
+- **Rejected:** *quietly shortening `--motion-cast-hold` to make the number look better.* A duration in
+  `tokens.css` is a design rule, and this side does not invent design rules. The lever is one token in
+  `motion.css` and nothing else reads it, so halving it is a one-line change whenever the Product Owner
+  asks for it.
+- → Ch. 04, Ch. 09, Ch. 11
+
+
+### 2026-09-06: The plate carries the layer, so the two z-index scales stop being compared to each other
+
+- **The defect:** the message strip painted across the title and the rules paragraph of the skill card
+  the player was pointing at. Reported from a screenshot of a real match, exactly like the 2026-09-04
+  one, and it is the same mistake one level up.
+- **The cause:** `tokens.css` holds two z-index ladders, the page's (`--layer-square: 1` to
+  `--layer-chrome: 7`, with `--layer-refusal: 5` in it) and the cards' (`--layer-card: 1` to
+  `--layer-card-reading: 4`). `.app__skill` was `position: relative` with no `z-index`, so it is not a
+  stacking context and neither is `.hand`, and the browser compared 5 against 4 as though the two
+  numbers had ever been measured against the same thing.
+- **Chosen:** `--layer-refusal` moves off `.message-strip` and onto `.app__skill`. The plate becomes a
+  stacking context, so the card ladder is sealed inside it, and the plate stands on the page ladder
+  exactly where the strip stood, so nothing else on screen moves.
+- **Rejected:** *raising the revealed card above 5*, which is what the 2026-09-04 fix did one level
+  down. The only numbers above 5 are the overlay's and the chrome's, and a card painted there would
+  cover the cast stage as well, so a card under the pointer would poke through a card animation. The
+  defect would move rather than go.
+- **Rejected:** *lowering the strip's number and leaving both ladders in one context*, which fixes this
+  pair and leaves the next pair for a player to find. That is precisely what happened between
+  2026-09-04 and today.
+- **What it costs:** a rule that has to be understood in two files. `app.css` now holds a `z-index` that
+  a stylesheet three files away depends on not having one, and both comments say so.
+- **Filed back to design:** the delivered handoff 16 spec puts the layer on the strip, so
+  `01-Design/Handoff/00-open-requests.md` records that the code no longer follows it.
+- **Test:** `tests/e2e/card-reveal-stacking.spec.js`, new, two cases, and the 2026-09-04 case moved into
+  it because `card-reveal.spec.js` was at 273 of NFR-02's 300 lines.
+- → Ch. 04, Ch. 08
+
+
+### 2026-09-06: The screen knows who is sitting in front of it, and that is what makes a hand secret
+
+- **The defect, and it is two of them:** a bot's skill hand lay face up for the whole of its turn, and
+  during a reaction window the answering player's hand came up face up in front of the player whose turn
+  it still was. Both had been on screen since the features that produced them landed, and D33's "the
+  cards stay secret" had been answered by the Product Owner on 2026-09-01 with only its count half built.
+- **The cause:** there is one hand region and it shows `seatOnShow(state)`, but nothing in the code knew
+  **whose eyes** were in front of it. `skill-hand-view.js` therefore wrote `data-face="up"`
+  unconditionally, with a comment reserving `"down"` for "a spectator view, a replay, or the online
+  mode". The reserved case had been the ordinary case all along.
+- **Chosen:** one new value in `ui/`, `viewerSeat`, in a new `src/ui/handover.js`. The rule is one
+  comparison, `seatOnShow(state) === viewerSeat`. The same module answers when the screen has to change
+  hands, and it is now asked at three moments rather than one: the end of a turn, a reaction window
+  waiting on somebody else, and that window shutting again.
+- **Rejected:** *testing `isBot(seatOnShow(state))` and nothing else.* It is two lines and it closes the
+  bot leak completely. It misses the human-against-human case entirely, and that one is worse: a bot
+  cannot use what it saw, and the person sitting next to you can.
+- **Rejected:** *a new screen for the reaction handover.* The existing handover screen's three sentences
+  ("Weitergeben an {{player}}", "Gib den Bildschirm weiter, bevor du auf Bereit drückst.", "Bereit") are
+  exactly as true for a reaction as for a turn change, so this is one component in a second place and
+  needed no new locale key. A new screen would also have been Claude Design's to draw and not ours.
+- **Rejected:** *asking on the prompt strip instead of behind a curtain.* Smaller, and it would have
+  worked, because the only secret thing on screen is the hand and the hand is already face down. It was
+  turned down because it is a **new interaction on an existing component**, which is a design decision,
+  where reusing the handover screen unchanged is not.
+- **Rejected:** *covering the bot's dice card fan as well.* The Product Owner's call, and the reasons
+  are good: the chosen dice card carries the rolled number and the throw animation runs on it, so
+  hiding it makes a bot's roll unreadable, and `.hand--dice` has no card back designed for it at all.
+- **Rejected:** *putting `viewerSeat` in the game state.* Which human is holding the mouse is not a fact
+  about the match. Same argument `skill-hand-view.js` already records for a half-finished card play.
+- **What it cost:** `game-loop.js` was at exactly 300 lines before any of this, so the five siblings it
+  builds and the `halt()` that stops them moved to a new `src/ui/loop-parts.js` first.
+- **What it changed that nobody asked for, and it is a rule change:** FR-25's thirty seconds used to
+  cover a whole reaction window, deliberately, so it stayed one shared window rather than one per
+  player. A curtain between two eligible people pauses the match and therefore clears the deadline, so
+  with three or four people the clock now effectively restarts for each person who takes the screen.
+  Hard to avoid: one clock cannot run across two people who each have to pick the device up first, and
+  the seconds spent reading "hand the screen over" were never seconds spent deciding.
+- **What it does not buy:** `data-card-id` stays in the DOM on a face-down card. "Face down" means "not
+  on the screen", not "secret from anybody who opens the console", and the end-to-end specs depend on
+  that attribute being there.
+- **Tests:** `tests/unit/ui/handover.test.js` (10 cases, node environment, the second `ui/` module in
+  the project with unit tests) and `tests/e2e/hand-secrecy.spec.js` (2 cases, both without `?fast=1`).
+- → Ch. 04, Ch. 08
+
 
 ## Challenges
 

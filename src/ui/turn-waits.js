@@ -1,5 +1,5 @@
 /**
- * The two waits the turn loop takes by itself. Design spec 11, D70.
+ * The waits the turn loop takes by itself. Design spec 11's D70, and design spec 18's cast.
  *
  * `ui/` only. Split out of `game-loop.js` when D70's roll hold would have pushed it past 300 lines
  * (NFR-02), and the seam is the one `card-controls.js` and `turn-controls.js` already cut twice: the loop
@@ -9,9 +9,15 @@
  *
  * | Wait | What it holds for | Who owns it |
  * | --- | --- | --- |
+ * | A played card | 1.5 s, so a card that was played is seen being played (design spec 18) | `cast-driver.js` |
  * | The roll | 900 ms, so the number that the whole turn hangs on has a frame of its own (D70) | here |
  * | Before the handover | A move has to finish arriving and a refusal has to be readable (D9, D20) | here |
  * | A mid-turn announcement | A trap fired by a card, 2 s (D60) | `card-controls.js` |
+ *
+ * The first one is asked here and answered next door, because a cast is a **sequence** of four states
+ * where the roll is a single wait, and putting the sequence in this file would have taken it past
+ * NFR-02's 300 lines. What stays here is the one line that matters to the loop: which of the two
+ * moments a turn takes next.
  *
  * The third one is not here and that is deliberate, not an oversight. It belongs to a card being played,
  * which is `card-controls.js`'s subject, and it is entered from four call sites in that file rather than
@@ -32,9 +38,10 @@
  * game state depends on a hold, no rule branches on one, and no value changes while one runs.
  */
 
+import { createCastDriver } from "./cast-driver.js";
 import { endRoll } from "./dice-hand-view.js";
 import { motionMs } from "./board-view.js";
-import { holdAfterTurn, holdRoll } from "./timers.js";
+import { holdAfterTurn, holdRoll } from "./holds.js";
 
 /**
  * The loop's two waits.
@@ -49,6 +56,8 @@ import { holdAfterTurn, holdRoll } from "./timers.js";
  */
 export function createTurnWaits({ parts, timers, delays = {}, getState, refresh, resume }) {
   const { $board, $diceHand } = parts;
+
+  const cast = createCastDriver({ parts, timers, delays, getState, refresh, resume });
 
   /** Durations belong to `tokens.css`, so they are read off the board rather than written here. */
   const readToken = (token, fallback) => motionMs($board, token, fallback);
@@ -151,7 +160,39 @@ export function createTurnWaits({ parts, timers, delays = {}, getState, refresh,
     timers.set("handover", next, holdAfterTurn(getState(), delays, readToken));
   }
 
+  /**
+   * Take whichever moment the turn owes, if it owes one. `true` means the loop stops and waits.
+   *
+   * ## Why the cast is asked first
+   *
+   * **The card that was played is usually what changed the roll.** Seven of the 29 cards act on the
+   * roll chain and two more can add a whole extra die, so a turn that plays a card and then rolls has
+   * two moments owed at once. Showing the modified number before showing the card that modified it is
+   * the wrong order: the player sees a 14 on a D8 and only afterwards finds out why.
+   *
+   * ## Why one function and not two branches in the loop
+   *
+   * `advance()` asked `if (waits.needsRollMoment(state)) { waits.showRoll(); return; }`, which is
+   * three lines for one wait and would have been six for two. One call is a **net loss of two lines**
+   * in `game-loop.js`, which was at exactly 300, and it puts the choice of which moment to take in the
+   * file that is named for the loop's own waits.
+   */
+  function takeMoment(state) {
+    if (cast.needsMoment(state)) {
+      cast.show();
+      return true;
+    }
+
+    if (needsRollMoment(state)) {
+      showRoll();
+      return true;
+    }
+
+    return false;
+  }
+
   return {
+    takeMoment,
     needsRollMoment,
     showRoll,
     afterTurn,
@@ -167,6 +208,7 @@ export function createTurnWaits({ parts, timers, delays = {}, getState, refresh,
       timers.clear("roll");
       timers.clear("handover");
       endRoll($diceHand);
+      cast.stop();
     },
   };
 }

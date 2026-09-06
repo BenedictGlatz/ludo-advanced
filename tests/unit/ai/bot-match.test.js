@@ -7,6 +7,7 @@ import { MATCH_STATUS, TURN_PHASE } from "../../../src/state/game-state.js";
 import { INTENT, dispatch } from "../../../src/state/intents.js";
 import { matchDeps, startMatch } from "../../../src/state/match.js";
 import { decide } from "../../../src/ai/bot-policy.js";
+import { DEFAULT_PROFILE, PLAIN_PROFILE } from "../../../src/ai/profile.js";
 
 /**
  * A whole match played by nobody. Issue #43.
@@ -29,7 +30,7 @@ import { decide } from "../../../src/ai/bot-policy.js";
  */
 
 /** Every intent this match needed, so a failure can say what the bot was doing at the time. */
-function playOut(state, deps, limit) {
+function playOut(state, deps, limit, profile = DEFAULT_PROFILE) {
   let current = state;
   let steps = 0;
 
@@ -37,7 +38,7 @@ function playOut(state, deps, limit) {
     steps += 1;
     expect(steps, `the bot match did not finish within ${limit} intents`).toBeLessThan(limit);
 
-    const intent = decide(current) ?? mechanicalIntent(current);
+    const intent = decide(current, profile) ?? mechanicalIntent(current);
     const result = dispatch(current, intent, deps);
 
     // The assertion the whole file exists for: a bot never asks for something the rules refuse.
@@ -106,6 +107,26 @@ describe("a match with nobody at the keyboard (FR-43)", () => {
     // (FR-27) still holds: every card is in exactly one of pool, a hand or the discard pile.
     expect(state.skillDiscard.length).toBeGreaterThan(0);
     expect(state.seats.some((seat) => state.skillHands[seat].length > 0)).toBe(true);
+  });
+
+  /**
+   * Two different bots at one table, which is what `npm run bots:arena` does for a few hundred
+   * matches at a time. The arena is a script and is not run by the test suite, so this is the case
+   * that keeps the seam it depends on working: `decide` takes a function from a seat to a profile,
+   * and a table where the seats disagree about their knobs still produces nothing the rules refuse.
+   *
+   * A refused intent is much worse for a bot than for a person. `bot-driver.js` stops on a refusal,
+   * the loop redraws, and a match with only bots in it sits in one phase for ever.
+   */
+  it("finishes a match with two different profiles at the same table", () => {
+    const deps = matchDeps(createSeededRng(11));
+    const start = startMatch(4, deps, undefined, undefined, botSeatsFor(4, 4));
+    const mixed = (seat) => (seat % 2 === 0 ? DEFAULT_PROFILE : PLAIN_PROFILE);
+
+    const { state } = playOut(start, deps, 20000, mixed);
+
+    expect(state.status).toBe(MATCH_STATUS.WON);
+    expect(start.seats).toContain(state.winner);
   });
 
   it("plays the same match the same way twice", () => {

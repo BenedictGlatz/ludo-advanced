@@ -31,7 +31,7 @@ import { t } from "../i18n/index.js";
 import { pawnElement } from "./board-view.js";
 import { seatLabel } from "./player-labels.js";
 import { rollBreakdown } from "./roll-steps.js";
-import { botCardPlayed } from "./timers.js";
+import { botCardPlayed } from "./holds.js";
 
 /**
  * The square a move lands on.

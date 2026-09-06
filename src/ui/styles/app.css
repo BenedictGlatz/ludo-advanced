@@ -65,6 +65,11 @@ body {
 }
 
 .app {
+  /* `relative` was already here for the message strip, and since 2026-09-06 it
+     carries a second load (D104): the cast stage is the last child of .app and
+     hangs over the whole of it, and its geometry is written in px relative to
+     .app, so .app has to be its containing block. Two tenants, one
+     declaration, and neither of them may take it away. */
   position: relative;
   display: grid;
   grid-template-columns: auto minmax(28rem, 1fr);
@@ -115,9 +120,21 @@ body {
 /* `relative` is what lets the message strip hang above this plate instead of
    holding a grid row (D98). The strip still costs no layout and still cannot
    make the page jump, and it is now over the cards the player is reading
-   while it is up rather than over the foot of the board. */
+   while it is up rather than over the foot of the board.
+
+   The z-index is the strip's own, moved off the strip and onto the plate on
+   2026-09-06. The strip stood at --layer-refusal, 5, a card being read stands
+   at --layer-card-reading, 4, and neither this plate nor the hand inside it
+   was a stacking context, so those two numbers were compared directly and the
+   strip painted over the card whose paragraph the player had just asked to
+   read. The plate carries the layer instead: the rail still stands exactly
+   where the strip stood against the rest of the page, and inside the plate
+   the strip and the cards are ordered by the card layers alone. Same defect
+   as card-reveal.css's of 2026-09-04, one level up: a card is a stacking
+   context and a plate was not. */
 .app__skill {
   position: relative;
+  z-index: var(--layer-refusal);
   grid-area: 4 / 2;
 }
 

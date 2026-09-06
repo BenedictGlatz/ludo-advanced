@@ -804,6 +804,152 @@ conflict nobody wants to resolve on merge day.
 **No view yet.** Design brief 17 asks where the slot goes and what it shows (D100). The state is
 testable without it: `last-card-played.test.js` covers the four outcomes and the survival of the turn.
 
+### The bot gets a scoreboard, then a danger model: 2026-09-06, the bot tactics plan
+
+Four phases, planned in `00-Meta/Project-Management/Bot-Tactics-Plan.md` and built in that order.
+Everything below is still one currency: a point is one step of one pawn (`SCORE` in `src/ai/score.js`).
+
+**Phase 0, the arena.** `npm run bots:arena` plays seeded bot-against-bot matches through the real
+`startMatch` and `dispatch` and prints wins, captures and cards played per bot with a 95 % confidence
+interval. `decide(state, profile)` gained a second argument: a profile is a frozen object of tuning
+knobs, and it may be a **function from a seat to a profile**, which is how two different bots sit at the
+same table out of the same source. The alternative, keeping a copy of the old bot's code to play
+against, goes stale the first time either copy is edited. A `random` seat that picks a legal die and a
+legal move uniformly is the floor; it lives in `scripts/` and not in `src/ai/`, because `ai/` may hold
+no randomness at all (NFR-09).
+
+**Phase 1, danger and opportunity.** Three new files under `src/ai/`:
+
+- `score.js` holds the currency (`SCORE`, `pawnWorth`, the four standing worths) and imports nothing.
+  It exists because `move-scoring.js` now prices danger, danger is `threat.js`, and `threat.js` needs
+  the currency: with the table in the scorer those three would import each other in a ring.
+- `geometry.js` holds `pawnsBehind`, `pawnsAhead` and the rest, split out of `threat.js`.
+  `pawnsBehind` was rewritten as one pass over the pawns rather than one pass per distance, because the
+  move scorer asks it twice per candidate move inside `expectedMoveScore` inside every card value.
+- `hit-odds.js` computes, once at import, `P(hit at distance d)` for `d = 1..20` over all
+  C(20, 3) = 1140 hands the dice pool can deal, as the mean of `1 / (smallest die in the hand that
+  reaches d)`. It replaces the old flat guess of 1/6, 1/12 and 1/20 by range.
+
+`threat.js` changed in three ways and each was a real mistake: the odds became a calculation instead of
+a guess, the sum over attackers became `1 - prod(1 - p)` (it is now multiplied by a pawn's worth and
+compared against a gain such as the 25 of leaving the yard, so it has to be a real probability), and a
+pawn standing on an opponent's **entry square** is now counted as being in danger from that opponent's
+yard, which is the classic Ludo mistake the bot used to make happily. An armoured pawn answers 0.
+
+`scoreMove(move, pawns, context)` keeps the five exclusive categories and adds three corrections:
+risk (`threat x worth` after the move minus before), opportunity (the same difference for enemy pawns
+the landing field puts within a roll) and the landing field (a skill field earns a card, somebody
+else's Banana Peel costs a turn). A correction and not a sixth category, because danger is a matter of
+degree and there is no honest place for "this is a bit dangerous" between "capture" and "leave the
+yard". `scoreMove(move, pawns)` with no context answers exactly what it answered before.
+
+**Only the first of the three is switched on in the shipped bot.** The arena measured the other two as
+losses, so `DEFAULT_PROFILE` carries them at zero and `FULL_PROFILE` is what the plan designed. The code
+stays, tested and off, because deleting it would throw away both the measured finding and the knob a
+later run needs to re-test it. See phase 3 below.
+
+**The die choice improved for free.** `chooseDie` already averages `bestMove` over every face, so a
+smarter `scoreMove` prices every die by where it is likely to land, with no change in `dice-choice.js`.
+
+**Phase 2, sharper cards.** Four independent changes:
+
+- `share(state, opponent)` weights an opponent's loss by their progress against the table average,
+  clamped between half and double. One function, and every offensive card and every reaction inherits
+  it: the bot now gangs up on the leader.
+- The trap cards search **every** legal field by how likely somebody is to walk onto it, instead of
+  always taking the field one step in front of the leading opponent, which is the one distance a victim
+  is least likely to roll.
+- Nühü prices the four cards an opponent can aim at a bot separately (Yeet by the steps lost plus the
+  danger it lands in, Hold Pawn by what the turn loses, Ragebait by a taunt, Tax Fraud by a card)
+  instead of a flat 8 for all four. Four entries and not twenty-nine, because those are the only four
+  cards in the catalogue an opponent can aim at somebody else's pawn or at somebody else.
+- Two files were split before anything was added to them, both being close to NFR-02's 300 lines:
+  `values-pawns.js` (own-pawn cards) against `values-attacks.js` (the two cards played on an
+  opponent's pawn), and `values-window.js` against `values-nuehue.js`.
+
+**Phase 2d was not built.** Pricing each die as "the best of the turn without a roll card and the turn
+with the best held roll card" is written up in the plan and is the one item of it that is outstanding.
+It is the only change of the four that needs `chooseDie` to look at the skill hand, and the arena said
+the first three were worth measuring on their own first.
+
+**Phase 3, tuning, and it is the part with the negative finding in it.** See
+[09-source-code-overview.md](09-source-code-overview.md) for every run and its command. In short: with
+all three corrections on, the new bot **lost** to the old one, and the arena is the only reason anybody
+knows that. Measured one term at a time, the opportunity term was the loss; it was written as an
+absolute ("what is in front of where I land") while danger was written as a difference, so it paid the
+bot for every short move that ended near an enemy, including the ones that gave up a better position.
+Rewritten as a difference and measured again. The shipped `DEFAULT_PROFILE` is what the arena chose and
+nothing else.
+
+### `lastCardPlayed` carries the target, `lastCard` does not (2026-09-06, design spec 18)
+
+`lastCardPlayed` was `{ seat, cardId }`. It is now `{ seat, cardId, target }`, where `target` is the
+same object the intent carried: `{ square: 7 }`, `{ pawn: { player, pawn } }`, `{ direction: 1 }`, or
+`{}` for the 12 cards that point at nothing.
+
+**Why the field had to grow.** The cast (design spec 18) draws a played card's effect landing on the
+board. 17 of the 29 cards act on a place, and which place it was is the one fact about a card play
+that cannot be recovered afterwards: the card is in the discard pile with every other card of the
+match, and several cards (a Banana Peel, a nullified anything) leave the board looking exactly as it
+did before.
+
+**Why its match-level sibling did not grow with it.** `lastCard`, the record behind the HUD plate,
+still holds `{ seat, cardId, turnNumber, outcome }`. The plate outlives the turn and shows what was
+played and how it went; a target from three turns ago is a fact nobody reads. Growing both records
+because they look alike is how a field ends up with two meanings.
+
+**What was checked rather than assumed.** `card-controls.js`'s `carryOn` compares the announcement it
+is holding for by **identity**, so that one announcement is not held twice, and `botCardPlayed`
+returns this frozen object. Adding a field to an object that is built once per dispatch and then
+frozen does not touch that comparison, and the test pinning the behaviour stayed green.
+`clearedTurnFields()` already listed the field, so the growth costs nothing at the handover.
+
+
+### The turn's second moment, and the announcement it replaced (2026-09-06, design spec 18)
+
+**`advance()` now asks one question where it asked one before, and it covers two waits.** The loop's
+roll branch was `if (waits.needsRollMoment(state)) { waits.showRoll(); return; }`, three lines for one
+wait and six for two. It is now `if (waits.takeMoment(state)) return;`, which is a **net loss of two
+lines** in a file that was at exactly 300, and which puts the choice of which moment to take in the
+file named for the loop's own waits.
+
+**The cast is asked before the roll**, and the reason is a rule about the game rather than about the
+code: seven of the 29 cards act on the roll chain and two more add a whole extra die, so a turn that
+plays a card and then rolls owes two moments at once. Showing the modified number before the card that
+modified it is the wrong order, because the player sees a 14 on a D8 and only afterwards finds out why.
+
+**The question is asked of the state and not of the phase**, which is the lesson `turn-waits.js`
+already paid a red suite for. A card play arrives through four doors: a person's own play, a bot's
+play, a Reaction into an open window, and a window closing that resolves the card that opened it. The
+marker is `turnNumber`, the number of cards played this turn, the card id, **and the outcome the
+`lastCard` record carries**. The last part is what makes a pending card work: a card that opens a
+window is `pending` when it is played and settles when the window shuts, so the same card gets two
+moments with a window between them, and nothing else in the state changes at that instant.
+
+*Rejected: comparing `lastCardPlayed` by identity.* It is `null` for every turn in which nobody plays
+anything, and a marker that is null most of the time is one `??` away from a bug.
+
+#### A bot's card play stopped being a mid-turn announcement, and that is a subtraction
+
+Issue #82 made a bot's card play a mid-turn announcement: the strip said one sentence and the turn held
+two seconds for it, on the argument that a card played by nobody the player can see has to be
+announced. **The cast is that announcement and a better one**, so `botCardPlayed` came out of
+`midTurnAnnouncement` rather than stacking on top of it.
+
+Leaving both in would have added two seconds to every bot turn that plays a card, on top of the 1.5
+second cast, on top of the 900 ms the bot already pauses before it acts. A **fired trap** keeps its own
+hold, because a trap is a second event the cast did not show: the cast draws the card landing, and the
+trap goes off afterwards. `botCardPlayed` is still exported and still answers, because `move-hints.js`
+prints the sentence and that sentence has not changed. What moved is the hold, not the words.
+
+#### `timers.js` split into the registry and the holds
+
+The sixth named wait would have taken the file past 300 lines, and the seam is the one the file's own
+header already described in those words: *the loop decides that it waits, `holds.js` decides how long.*
+`timers.js` keeps the `setTimeout` registry and nothing else; `holds.js` holds every duration, every
+fallback constant, and the rule that separates a movement from a reading time.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

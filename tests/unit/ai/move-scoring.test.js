@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { HOME_R } from "../../../src/core/board.js";
 import { MOVE_KIND } from "../../../src/core/move-rules.js";
-import { SCORE, bestMove, scoreMove } from "../../../src/ai/move-scoring.js";
+import { bestMove, scoreMove } from "../../../src/ai/move-scoring.js";
+import { SCORE } from "../../../src/ai/score.js";
 
 /**
  * A move as `core/movement.js` builds one. Written out by hand rather than produced by

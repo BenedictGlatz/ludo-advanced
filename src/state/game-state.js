@@ -242,7 +242,26 @@ export function clearedTurnFields() {
     nullifiedCard: null,
 
     /**
-     * `{ seat, cardId }` of the last skill card played this turn, or `null`. Issue #82.
+     * How far the last card's own roll reached, or `null`. A number, reported by the effect.
+     *
+     * Written by the four cards that roll a die inside their own rule (Hyperbeam's D4, Janky RPG's
+     * D6, Yeet's D6, Let Him Cook's D12), and by nothing else. Like `lastCardPlayed` it carries no
+     * rule: it exists so the cast's board stage can draw the run the effect actually travelled
+     * (design spec 18, D109), and it cannot be derived afterwards because the board only shows where
+     * a pawn ended up. Turn-level, so it dies with the turn that produced it.
+     */
+    cardReach: null,
+
+    /**
+     * `{ seat, cardId, target }` of the last skill card played this turn, or `null`. Issue #82.
+     *
+     * **`target` since 2026-09-06**, for the cast (design spec 18, D109). It is the same
+     * `{ pawn }`, `{ square }`, `{ direction }` object the intent carried, `{}` for a card that
+     * points at nothing. The board half of a cast has to draw the effect landing *somewhere*, and
+     * which square or which pawn is the one fact about a card play that could not be recovered
+     * afterwards: 17 of the 29 cards act on a place, and several of them leave the board looking
+     * untouched. Its match-level sibling `lastCard` deliberately did **not** grow the field: that
+     * plate outlives the turn, and a target from three turns ago is a fact nobody reads.
      *
      * **The one field here that carries no rule at all**: nothing in `core/` or `state/` reads it and
      * a match plays out identically without it. It exists because a **bot** plays cards now, and a

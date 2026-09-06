@@ -44,7 +44,8 @@ import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { isBot } from "../state/bots.js";
 import { chooseAction, chooseReaction } from "./card-choice.js";
 import { chooseDie } from "./dice-choice.js";
-import { bestMove } from "./move-scoring.js";
+import { bestMove, scoringContext } from "./move-scoring.js";
+import { DEFAULT_PROFILE } from "./profile.js";
 
 /**
  * The one intent a bot wants dispatched right now, or `null` when no bot is being asked anything.
@@ -53,7 +54,7 @@ import { bestMove } from "./move-scoring.js";
  * single call returns `null`, which is exactly why the driver can be wired into the loop
  * unconditionally.
  */
-export function decide(state) {
+export function decide(state, profile = DEFAULT_PROFILE) {
   if (state.status !== MATCH_STATUS.RUNNING) return null;
 
   // The window comes first, and before the active-seat check on purpose: a bot can be asked to
@@ -61,20 +62,20 @@ export function decide(state) {
   // anything at all.
   if (state.reactionWindow !== null) {
     const seat = state.reactionWindow.eligible.find((eligible) => isBot(state, eligible));
-    return seat === undefined ? null : chooseReaction(state, seat);
+    return seat === undefined ? null : chooseReaction(state, seat, profile);
   }
 
   if (!isBot(state, state.activePlayer)) return null;
 
   switch (state.phase) {
     case TURN_PHASE.CHOOSE:
-      return { type: INTENT.CHOOSE_DIE, faces: chooseDie(state) };
+      return { type: INTENT.CHOOSE_DIE, faces: chooseDie(state, profile) };
 
     case TURN_PHASE.ACTION:
-      return chooseAction(state);
+      return chooseAction(state, profile);
 
     case TURN_PHASE.ACT:
-      return commitBestMove(state);
+      return commitBestMove(state, profile);
 
     default:
       // draw, roll, reaction, turn-end, match-over: the loop's own steps, see the module header.
@@ -93,8 +94,9 @@ export function decide(state) {
  * with no legal move is refused in `roll` and skips straight to `turn-end`, but a policy that trusts
  * its caller about the state of the board is a policy that crashes the day the caller changes.
  */
-function commitBestMove(state) {
-  const best = bestMove(state.legalMoves, state.pawns);
+function commitBestMove(state, profile) {
+  const seat = state.activePlayer;
+  const best = bestMove(state.legalMoves, state.pawns, scoringContext(state, seat, profile));
 
   return best === null ? null : { type: INTENT.COMMIT_MOVE, pawn: best.move.pawn };
 }

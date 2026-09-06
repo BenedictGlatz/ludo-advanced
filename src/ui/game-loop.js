@@ -30,11 +30,15 @@
  * - **`roll` rolls itself.** There is nothing to decide there. The phase exists so that the on-roll
  *   reaction window has a moment to open in, and so a roll animation has something to hang off (D70).
  * - **The turn hands over on its own** only when nobody is watching for it. Since issue #39 the pause
- *   after a move ends in the handover overlay rather than in the next turn: `onHandover` is called and a
- *   person presses Ready. The timer is still there and still uses the design's durations, because a move
- *   has to finish animating and a refusal has to be readable **before** anything covers the board. When
- *   no `onHandover` is given the loop passes the turn itself, which is what keeps a match driven straight
- *   out of `createGameLoop` playable and is how `?fast=1` keeps the end-to-end suite short.
+ *   after a move ends in the handover overlay rather than in the next turn, and `handover.js` decides
+ *   whether one is needed. The timer is still there and still uses the design's durations, because a
+ *   move has to finish animating and a refusal has to be readable **before** anything covers the board.
+ *   When no `onCurtain` is given the loop passes the turn itself, which is what keeps a match driven
+ *   straight out of `createGameLoop` playable and is how `?fast=1` keeps the end-to-end suite short.
+ *
+ * **Since the hand became secret the curtain also goes up mid-turn**, twice: once when a reaction window
+ * is waiting on somebody who is not holding the device, and once when it shuts and the active player
+ * wants their own turn back. Both are one line below and both ask the same `handover.handTo`.
  *
  * And one thing happens by itself only when there is nothing to decide: **the action phase is skipped
  * when the active player holds no playable card.** Waiting there would stall the game, which is not a
@@ -44,21 +48,23 @@
  *
  * It used to be, and the durations with it. Since design spec 11's D70 the roll has a hold of its own,
  * so both of the waits the loop takes by itself live in `turn-waits.js`, the reaction window's thirty
- * seconds are `card-controls.js`'s, and the bot's pause is `bot-driver.js`'s. What is left here is the
- * decision to wait, never how long, and never what the waiting looks like.
+ * seconds are `card-controls.js`'s, and the bot's pause is `bot-driver.js`'s. Design spec 18 added a
+ * third moment, a played card's own, and it went to `cast-driver.js` behind the same one call. What is
+ * left here is the decision to wait, never how long, and never what the waiting looks like.
+ *
+ * Since 2026-09-06 the five siblings are **built** one file over, in `loop-parts.js`, with the `halt`
+ * that stops all of them. Which modules exist and what each is handed is the question that changes
+ * every time one is added, and it is not the question this file is named for.
  */
 
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { INTENT, dispatch } from "../state/intents.js";
-import { playableCards } from "../state/intents-cards.js";
+import { playableCards, seatOnShow } from "../state/intents-cards.js";
 import { nextSeat } from "../state/turn-resolution.js";
-import { createBotDriver } from "./bot-driver.js";
-import { createCardControls } from "./card-controls.js";
 import { bindMatchEvents } from "./events.js";
+import { createLoopParts } from "./loop-parts.js";
 import { createRenderer } from "./render.js";
 import { createTimers } from "./timers.js";
-import { createTurnControls } from "./turn-controls.js";
-import { createTurnWaits } from "./turn-waits.js";
 
 /**
  * Drive a match. `deps` is the injected `{ rng, diceSource }` pair (NFR-09).
@@ -73,8 +79,9 @@ export function createGameLoop({
   deps,
   parts,
   delays = {},
-  onHandover = null,
+  onCurtain = null,
   onMatchOver = null,
+  skipHandover = false,
 }) {
   const { $board, $diceHand, $skillHand, $prompt } = parts;
 
@@ -83,12 +90,18 @@ export function createGameLoop({
   const timers = createTimers();
   const draw = createRenderer(parts);
 
-  /** Redraw, with the three pieces of presentation state `card-controls.js` owns. */
+  /**
+   * Redraw, with the presentation state that is not in the frozen game state.
+   *
+   * Three pieces belong to `card-controls.js` and the fourth to `handover.js`: which seat's person is
+   * actually in front of the screen, which is what decides whether the hand on show is face up.
+   */
   function render() {
     draw(state, {
       selectedSlot: cards.selectedSlot(),
       secondsLeft: cards.secondsLeft(),
       pick: cards.pick(),
+      viewerSeat: handover.seat(),
     });
   }
 
@@ -108,11 +121,8 @@ export function createGameLoop({
 
   /**
    * What every sibling that can wait needs from the loop: the timer registry, the durations, the one
-   * state reference, the one dispatcher, and the two ways back in.
-   *
-   * Written out three times identically until issue #43 was about to write it a fourth. It is not only
-   * repetition: the list **is** the contract of a sibling module, and having it in one place is what
-   * makes "no module holds its own copy of the state" checkable by reading five lines.
+   * state reference, the one dispatcher, and the two ways back in. `loop-parts.js` carries why it is
+   * one object rather than the same four arguments written out five times.
    */
   const wiring = {
     timers,
@@ -123,44 +133,12 @@ export function createGameLoop({
     resume: () => advance(),
   };
 
-  const cards = createCardControls({ $board, ...wiring });
-  const waits = createTurnWaits({ parts, ...wiring });
-  const bots = createBotDriver({ $board, ...wiring, afterCard: cards.carryOn });
-
-  const board = createTurnControls({
-    getState: () => state,
-    apply,
-    render,
-    advance: () => advance(),
-    isPicking: () => cards.isPicking(),
+  const { board, bots, cards, handover, waits, halt } = createLoopParts({
+    parts,
+    wiring,
+    onCurtain,
+    skipHandover,
   });
-
-  /**
-   * Stop everything that is waiting. Three callers wrote these lines out identically until the fourth
-   * sibling was about to be added to each of them, and the symptom of missing one is a timer firing
-   * into a match that is already gone.
-   *
-   * `bots.stop()` is redundant after `timers.clearAll()`, which clears every name. It is here on the
-   * convention `waits` already follows: **a module that starts a timer is asked to stop it**, so
-   * nothing depends on the registry's sweep also being right.
-   */
-  function halt() {
-    timers.clearAll();
-    cards.stop();
-    waits.stop();
-    bots.stop();
-  }
-
-  /**
-   * Hand the turn on and carry straight into the next one.
-   *
-   * Split out of `advance` because there are now two callers: the timer, when nothing is watching for the
-   * handover, and the Ready button on the handover overlay.
-   */
-  function passTurn() {
-    if (!apply({ type: INTENT.END_TURN })) return;
-    advance();
-  }
 
   /**
    * Render, then take whatever step the turn takes without the player.
@@ -183,14 +161,13 @@ export function createGameLoop({
       return;
     }
 
-    // **The roll's moment, asked before the phase and not inside the `roll` branch**, because a roll
-    // arrives through two doors: `roll-die` rolls when no card answers it, and `close-window` rolls
-    // when one did. Only the first of those comes back through the branch below. `turn-waits.js`
-    // carries the argument and what it cost to learn.
-    if (waits.needsRollMoment(state)) {
-      waits.showRoll();
-      return;
-    }
+    // **The moments the turn owes, asked before the phase and not inside a branch**, because both of
+    // them arrive through more doors than one: a roll happens in `roll-die` when no card answers it
+    // and in `close-window` when one did, and a card is played by a person, by a bot, into an open
+    // window, or by the window shutting. Only the first door of each comes back through the branches
+    // below. `turn-waits.js` carries the argument and what it cost to learn, and it takes the card
+    // before the roll because the card is usually what changed the roll.
+    if (waits.takeMoment(state)) return;
 
     if (state.reactionWindow !== null) {
       // **Bots answer first**, so the clock and the prompt only ever address people. Two things
@@ -198,6 +175,13 @@ export function createGameLoop({
       // thirty-second countdown, and in a mixed round `seatOnShow`, which is `eligible[0]`, is a
       // person. A decline takes no pause; a card play is scheduled and returns true, so the loop waits.
       if (bots.answerWindow()) return;
+
+      // **After the bots and before the clock.** The seat being asked may be a person who is not
+      // holding the device, and their hand must not come up face down and unusable in front of the
+      // player whose turn it still is. Asking before `answerWindow` would raise a curtain for a
+      // window the bots are about to empty by declining.
+      if (handover.handTo(seatOnShow(state))) return;
+
       if (cards.handleWindow()) return;
       advance();
       return;
@@ -226,7 +210,7 @@ export function createGameLoop({
     }
 
     if (state.phase === TURN_PHASE.TURN_END) {
-      waits.afterTurn(onHandover === null ? passTurn : () => onHandover(nextSeat(state)));
+      waits.afterTurn(() => handover.handTo(nextSeat(state), { endsTurn: true }));
       return;
     }
 
@@ -234,6 +218,12 @@ export function createGameLoop({
     // self-taken steps above, so a bot with nothing playable is skipped through the action phase with no
     // pause at all, rather than appearing to think about a decision it does not have.
     if (bots.takeTurn()) return;
+
+    // The three phases below wait for a person, and after a reaction window that person's device may
+    // still be in somebody else's hands. This is the curtain back, and it costs nothing in every turn
+    // where the window never moved the viewer: `handTo` on the seat that already has the device is
+    // false without touching anything.
+    if (handover.handTo(state.activePlayer)) return;
 
     // `choose`, `action` with a card in hand, and `act` are the phases that wait for a person.
   }
@@ -263,12 +253,21 @@ export function createGameLoop({
     stop: halt,
 
     /**
-     * Pass the turn on, which is what the handover overlay's Ready button does.
+     * The handover overlay's Ready button: the person named on the curtain now has the device.
+     *
+     * It replaced `passTurn` at that call site when the curtain stopped being a thing that only
+     * happens between turns. A turn-end curtain still passes the turn; a mid-turn one carries the
+     * window on. Which of the two it was is `handover.js`'s to remember, not the button's.
+     */
+    arrive: handover.arrive,
+
+    /**
+     * Pass the turn on without a curtain.
      *
      * Exposed rather than done inside the loop, because who decides that the screen has changed hands is
      * a question about the person in front of it and not about the turn.
      */
-    passTurn,
+    passTurn: handover.passTurn,
 
     /**
      * Freeze the match (FR-07). Every pending timer and the reaction clock stop.

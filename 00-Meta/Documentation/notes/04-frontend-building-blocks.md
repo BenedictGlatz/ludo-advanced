@@ -3331,6 +3331,313 @@ the test is known to see the bug it was written for. It opens a real window with
 Devil Die and **without `?fast=1`**, because `fast` collapses the window to nothing and the window is the
 subject.
 
+### Design handoff 18: a played skill card gets a moment of its own (2026-09-06)
+
+**What was missing.** A card play had no moment. The card left the hand, the effect happened in the
+same synchronous pass, and the only evidence afterwards was one sentence in the message strip and a
+small plate at the end of the HUD row. For a **bot's** card that meant a player could not tell what
+had just been done to them, which is the report the whole feature was raised against.
+
+**The one idea in all twelve answers of spec 18**, and everything below follows from it: *the card is
+the moment, the board is the consequence, the plate is the record.*
+
+#### The stage, and where it plays
+
+`.cast` is built empty once per match by `page.js` and mounted as the last child of `.app`, before the
+overlay. It plays **over the board**, centred on the board's centre, at the card's reference size, on
+`--layer-cast: 5`.
+
+D98 forbids a permanent tenant on the board, and D104 draws the line that lets this through: a
+permanent thing may not cover the board because the board is read *while the player decides*; a cast
+plays while the turn is held and nobody can decide anything, and it is gone before anybody can. The
+price is stated rather than hidden: at 1440 by 900 the card stands over sixteen of the forty track
+fields and the inner two fields of each home column, for 1.5 seconds, while nothing is clickable.
+
+#### Ten stylesheets, and why that is the 300-line rule rather than taste
+
+| File | What is in it | Lines |
+| --- | --- | --- |
+| `cast.css` | The stage, the four states, the card's arrival and exit, the parts | 199 |
+| `cast-base.css` | The six family gestures | 163 |
+| `cast-parts.css` | Part timing per stage, and the eleven shared movements | 245 |
+| `cast-fx-roll/hand/trap/status/shove/area.css` | The 29 accents, split by family | 95 to 184 |
+| `board-cast.css` | The marks on fields, on pawns and on the board frame | 205 |
+
+The accents are 29 blocks of 8 to 25 lines each and the seam they split along is the family, so a
+reader who wants Hyperbeam opens `cast-fx-area.css` and finds three cards. The six `cast-fx-*` files
+must load **after** `cast-base.css`: six of the 29 accents override the family gesture on the same
+element at equal specificity.
+
+#### The six families, and why the axis is the mechanic
+
+`data-cast-family` takes six values, and `cast-vocabulary.js` is the table: `roll` 7 cards, `hand` 5,
+`status` 7, `shove` 4, `trap` 3, `area` 3.
+
+The reason is what the family is **for**: it says, before the effect lands, what kind of thing is about
+to happen and where to look for it. The type is already the card's band and the category is already its
+pill, both on screen the whole time the card is on the stage, so a family keyed on either would draw a
+fact the card already carries. The one thing about a card that nothing drew yet is its mechanic.
+
+*Rejected: type plus category.* It draws the band and the pill a second time, and it puts Hyperbeam and
+67 in one family because both are offensive, when one of them lands on four fields and the other
+changes a number. *Rejected: `kind`*, the sub-kind label: nineteen values for 29 cards is a label and
+not a grouping.
+
+#### The board half, and the seventeen cards that have one
+
+`.square__cast` is the second empty span on every field from build time, on `.square__trap`'s
+precedent and for the same two reasons: D10 forbids creating an element at the moment it gets content,
+and both pseudo-elements of `.square` are already taken. A pawn gets no new child; its mark is
+`outline` on the `.pawn` box, which nothing else on the piece uses.
+
+Four kinds of field mark (`direct`, `splash`, `path`, `aura`) and three kinds of pawn mark (`victim`,
+`actor`, `shielded`), all written as `data-cast-hit` by `board-marks.js`, which is the file that
+already owns marks on the board. **They are not part of `applyBoardMarks`**, and that is the one thing
+worth reading twice: the four existing marks are derived from the state and rewritten on every render,
+and a cast's marks are not in the state at all. They go on when the board stage starts, come off when
+it ends, and a render in between must not disturb them.
+
+`--cast-i` is a field's place along a run, written inline, and it is what staggers a run of dots one
+feedback beat apart so a Let Him Cook of twelve draws itself from the pawn outward. It is also the one
+piece of the cast that reduced motion **keeps**, because the sequence is information: it is the run's
+length.
+
+#### The twelve without a board stage, and what that buys
+
+Seven cards change the roll, two change a hand, one shuts the remaining windows, one negates a card,
+one takes a card from a hand nobody on this screen can see. None of that happened on the board, so none
+of it is drawn there, and the hold for those twelve is the full hold minus the board stage: 940 ms,
+which is the roll's own moment within 40 ms.
+
+#### Six pairs of numbers, measured off the DOM and not computed
+
+`cast-geometry.js` writes `--cast-from`, `--cast-stage`, `--cast-to` and `--cast-rest` as px relative
+to `.app`, plus `--cast-dir`. Every one of them is a `getBoundingClientRect()` on an element that is
+already in the page.
+
+**The plan proposed `board-geometry.js`'s `cellCentre` and `pawnCentre`**, which answer in cell units
+from the board's top left. Using them would have meant multiplying by a cell size read back off the
+stylesheet and adding the board's own offset: three numbers to get right, each of which can disagree
+with where the piece is actually drawn. Measuring the element cannot be out of step with the screen and
+is also right below the breakpoint, where the board is a different size. The cost is that the module
+only works in a browser, which is why the cast's coverage is Playwright's.
+
+**Two known simplifications, recorded rather than left to be noticed.**
+
+- **The card comes from the hand *plate*, not from the slot.** Spec 18 asks for the slot the card left,
+  and by the time a cast runs the card has gone from the hand and the slot has re-flowed, so the slot
+  cannot be identified without threading a click's presentation state through the loop. A bot, or a
+  hot-seat player answering somebody else's card, has no hand on screen at all and comes from their
+  HUD plate, which is D114's and D115's rule and is implemented as asked.
+- **A shoved pawn's run is reconstructed** from where the pawn now stands plus `cardReach`, walking the
+  track back along the direction it travelled. A Yeet floored at the entry square draws the run the
+  card rolled rather than the two squares the pawn actually moved, and a Let Him Cook that overshot and
+  went home draws no run at all. Both are cosmetic and neither can be wrong in a way a player can act
+  on, which is the test for whether an approximation belongs in `ui/`.
+
+#### The two amendments to existing stylesheets
+
+`app.css`'s `.app` already carried `position: relative` for the message strip, and it now carries a
+second tenant: the cast is the last child of `.app` and its geometry is written against it. One
+declaration, two reasons, and neither of them may take it away.
+
+`tokens.css` gained four tokens and **was split**. Adding `--motion-cast`, `--motion-cast-board`,
+`--motion-cast-hold` and `--layer-cast` would have taken it to 322 lines against NFR-02's 300. The
+seam is a real one and it is the one the reduced-motion block already implies: `tokens.css` answers
+"what may this UI look like" and the new `motion.css` answers "how long may it take, and what happens
+to a player who asked for less movement". The second question has a rule of its own, and keeping the
+two lists in one file meant that rule was stated 150 lines away from half the tokens it governs.
+
+
+### The message bar covered the card being read, which is the same mistake as 2026-09-04 one level up: 2026-09-06, no issue
+
+Reported from a screenshot of a real match, in the same way and for the same underlying reason as the
+2026-09-04 defect above. Pointing at a skill card magnifies it upward out of its own plate, and the
+message strip, which since D98 hangs in the band just above that plate, painted straight across the
+card's title and its rules paragraph. The player asked to read a card and the game put a bar over it.
+
+#### Two z-index scales, one stacking context
+
+`tokens.css` holds two ladders. The page's own ladder runs `--layer-square: 1` through
+`--layer-chrome: 7` and has `--layer-refusal: 5` in it, which is the strip. The card ladder runs
+`--layer-card: 1` through `--layer-card-reading: 4` and is meant to order cards against each other
+inside a plate.
+
+**Two ladders only stay separate while something keeps them apart, and nothing did.** `.app__skill`
+had `position: relative` and no `z-index`, so it is not a stacking context; neither is `.hand`. The
+strip and the cards are both descendants of that plate, so the browser compared 5 against 4 straight
+across, as if the two numbers had ever been measured against the same thing. The strip won every time.
+
+This is the 2026-09-04 defect exactly, one level up: there it was two plates that were not stacking
+contexts, here it is the same plate failing to separate two ladders. **Worth keeping in the report as
+the second occurrence of one mistake**, because it says something the first one alone does not: a
+z-index scale is only a scale inside the context that contains it, and a project that keeps more than
+one scale has to say where each of them starts.
+
+#### The fix moves the layer up one element and takes it off the strip
+
+`--layer-refusal` now sits on `.app__skill` in `app.css`, and `.message-strip` carries no `z-index` at
+all. Two consequences, both of them the point:
+
+- The plate is a stacking context, so the card ladder is sealed inside it and can no longer be compared
+  against the page ladder.
+- The plate stands on the page ladder exactly where the strip used to stand, so nothing else on screen
+  changes: the strip still paints over the dice plate below it, and the cast stage, which is `--layer-cast: 5`
+  and a later sibling, still covers the rail while a card is being played.
+
+Inside the plate the strip is below every card layer on purpose. It hangs in the band above the cards
+and can only ever meet a card that has grown out of the plate to be read, and that card is the one thing
+on screen the player has explicitly asked to see.
+
+*Rejected: raising the revealed card above `--layer-refusal`*, which is the smaller diff and is what the
+2026-09-04 fix did one level down. It cannot work here: the only numbers above 5 are `--layer-overlay`
+and `--layer-chrome`, and a card painted there would also cover the cast stage, so a card under the
+pointer would poke through a card animation. The defect would move rather than go away.
+
+*Rejected: lowering the strip's number instead*, leaving both ladders in one context. It fixes this pair
+and leaves the next pair to be discovered by a player, which is what happened between 2026-09-04 and
+today.
+
+#### The test, and the file it forced
+
+`tests/e2e/card-reveal-stacking.spec.js` is new, holds two cases, and the second one is this defect. It
+is a **split and not only an addition**: `card-reveal.spec.js` was at 273 lines and NFR-02's limit is
+300, so the 2026-09-04 case moved into the new file with this one. The seam is real: the rest of
+`card-reveal.spec.js` is about the reveal itself and every case in it passes with the revealed card
+painted underneath something else.
+
+Both cases ask `document.elementFromPoint` what is painted in the middle of the intersection, for the
+reason the 2026-09-04 section gives, and the helper returns the string `"no overlap"` when the boxes do
+not meet, so a case that has stopped testing anything fails instead of passing quietly.
+
+**Getting the situation on screen was the expensive part of the case, not the assertion.** The strip has
+three voices and only one of them stays up long enough to point at a card: the roll breakdown (D73)
+stays for the whole `act` phase, a refusal passes the turn a few seconds later, and a trap holds the turn
+for `--motion-trap-hold`. So the case stacks the pool with Angel Dice and plays two turns without using
+one, because a seat draws a single card per turn (FR-23) and a hand that still has a card in it after
+playing one cannot exist on turn 1 at all.
+
+**A negative finding worth recording: the first run of the new case passed against unfixed CSS.** The
+Playwright config runs `npm run build && npm run preview` with `reuseExistingServer`, so a preview
+server left running from an earlier build serves the old bundle and the build step never runs. The case
+was only trustworthy after `npm run build` was run by hand and the new `z-index` was confirmed in
+`dist/assets/*.css`. Anybody chasing a stylesheet fix that "does not work" should check that first.
+
+
+### The hand on screen finally knows whose eyes are in front of it: 2026-09-06, no issue
+
+The Product Owner answered D33 on 2026-09-01: an opponent's skill cards stay secret and only the count
+is public. The count half was built the same day and sits in the HUD. **The secret half was not, and
+nobody noticed for two sprints**, because the code had no way to express it.
+
+#### The word that was missing
+
+There is one screen and one skill hand region, so it shows exactly one hand: `seatOnShow(state)`, which
+is the active player normally and the first still-eligible seat during a reaction window. Nothing
+anywhere knew **whose eyes** were in front of that region, so `skill-hand-view.js` wrote
+`data-face="up"` unconditionally, with a comment reserving `"down"` for "a spectator view, a replay, or
+the online mode".
+
+Two hands were on screen face up that nobody was allowed to see, and both had been there since the
+features that produced them landed:
+
+| Leak | Why no curtain covered it |
+| --- | --- |
+| A bot's hand, for the whole of its turn | `handoverNeeded` correctly says nobody is being handed anything when the next seat is a computer |
+| The answering player's hand during a reaction window | The handover screen only ever ran **between** turns, and a window opens in the middle of one |
+
+#### `viewerSeat`, and why it is in `ui/`
+
+The new module `src/ui/handover.js` holds one value: the seat whose person is holding the device. Both
+leaks close on one comparison, `faceUp = seatOnShow(state) === viewerSeat`. A bot is never made the
+viewer, so a bot's hand is never face up; a second person only becomes the viewer once they have said
+so, so their hand is only face up after they have taken the screen.
+
+It is **presentation state and never enters the game state**, on the same argument `skill-hand-view.js`
+already records for a half-finished card play and `match-flow.js` for which screen is up: which human
+is holding the mouse is not a fact about the match, `createGameState` has no field for it, and putting
+it in the frozen object would make the rules layer hold a fact about a chair.
+
+`handover.js` imports no jQuery and touches no DOM, which makes it the **second** `ui/` module in the
+project that is unit tested rather than only driven through Playwright, after `turn-controls.js`. That
+was deliberate: the failure mode of a secrecy rule is silent, because a hand that is face up when it
+should not be looks exactly like a hand that is correctly face up.
+
+#### The curtain now goes up three times, not once
+
+`handTo(seat)` is asked at three moments and answers the same question at all three: the end of a turn
+(which also passes the turn), a reaction window waiting on somebody who is not holding the device, and
+that window shutting again so the active player gets their own turn back. The third one is easy to
+forget and is a leak on its own: without it the answering player keeps the screen and the active
+player's hand comes up face up in front of them.
+
+**The screen it puts up is the existing handover screen, word for word.** "Weitergeben an {{player}}",
+"Gib den Bildschirm weiter, bevor du auf Bereit drückst.", "Bereit". Those three sentences were written
+for a turn change and are exactly as true for a reaction, so this is one component used in a second
+place rather than a new screen, and it needed no new locale key in either language.
+
+**The match pauses under a mid-turn curtain**, which the turn-end one never had to do: a reaction window
+has a thirty second clock on it and it must not run down while somebody reads "hand the screen over".
+`match-flow.js` answers with `loop.pause()`, the pause screen's own path, so the window reopens at the
+full thirty seconds on the way back out. That is the reading `game-loop.js` already gave a pause: the
+players stopped, so the window did too.
+
+#### What `?fast=1` does and does not take away
+
+Every end-to-end spec in the suite runs with `?fast=1`, and that flag passes every curtain without the
+button. It had to keep doing so, or the suite becomes four hundred Ready clicks. So the viewer follows
+every **person** immediately under that flag and no screen appears, and it still refuses to follow a
+bot. The flag takes the waiting away and not the secrecy, which is what lets the bot case be asserted
+in a fast run at all.
+
+#### One consequence, and it is a rule change worth stating plainly
+
+FR-25's thirty seconds were **one shared window**: `syncClock` is idempotent on purpose, so a window
+that is still open keeps the deadline it already had rather than restarting every time a seat plays or
+declines. With three or four people at the table, a curtain now stands between two eligible seats, and
+the curtain pauses the match, which clears the deadline. **So the thirty seconds effectively restart for
+each person who takes the device.**
+
+That is more generous than the requirement and it is hard to see an alternative: one clock cannot
+sensibly run across two people who each have to pick the screen up first, and the seconds a person
+spends reading "hand the screen over" are not seconds they spent deciding. It follows the reading
+`game-loop.js` already gave a pause, "the players stopped, so the window did too". It is written down
+here rather than quietly accepted, because the sentence "the countdown covers the whole window" in
+`intents-cards.js` and `card-controls.js` is now only true within one person's turn at the screen, and
+the two-human case is the one the report should not claim otherwise about.
+
+#### And a second: a plate that stays dormant
+
+`data-active` is derived from `playableCards`, and a face-down hand never asks for that list at all. So every
+card in a secret hand is `data-playable="false"` and the hand is `data-active="false"`, which means the
+skill plate stays dimmed through a bot's turn instead of lifting. D65's meaning of the attribute is
+unchanged; a hand nobody at the screen may play from simply has nothing playable in it. The alternative,
+a plate that lifts as though it were asking the viewer for a decision while every card in it refuses to
+be clicked, would have been the attribute contradicting itself.
+
+#### The honest limit, and it belongs in the report
+
+`data-card-id` stays in the DOM on a face-down card; the stylesheet hides the face and nothing removes
+the fact. This is a local hot-seat game, `window.ludo.getLoop().getState()` is exposed for the test
+suite anyway, and the end-to-end specs count `.card[data-card-id]`. **"Face down" here means "not on
+the screen", not "cryptographically secret"**, and a project that claimed the second would be claiming
+something an online mode would have to build from scratch.
+
+#### A file had to be split to fit the change
+
+`game-loop.js` was at exactly 300 lines, NFR-02's limit, before a single line of this went in. The five
+siblings it builds (`card-controls`, `turn-waits`, `bot-driver`, `turn-controls` and now `handover`)
+and the `halt()` that stops all of them moved to a new `src/ui/loop-parts.js`. The seam is a real one
+rather than where the count fell: that file answers *what the game does between the player's clicks*,
+and *which modules exist and what each is handed* is the question that changes every time one is added.
+It had been written out identically three times before issue #43 was about to write it a fourth.
+
+**And the stale-build trap below caught this change too.** The first run of the new spec failed with the
+old `data-face="up"` still in the bundle, and the second one "passed" the whole suite against code that
+was not in it. `npm run build` by hand before trusting an end-to-end result is not optional on this
+setup.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -3351,6 +3658,9 @@ subject.
     cards stay secret, the **count is public** and sits in the HUD. It turned out not to be only a
     presentation question, which is the interesting part: it is what forced the handover screen, because
     secrecy at one shared screen is whatever covers the screen while it changes hands.
+    **Built on 2026-09-06, and the count half had been the only half built for five days.** See the fact
+    block above: nothing in the code knew whose eyes were in front of the one hand region, so a bot's
+    hand and a reaction window's answering hand were both face up on somebody else's screen.
   - **NFR-12, telling the four seats apart without colour**, was still open from handoff 02 and is now
     **half answered**. Spec 04 gives four seat shapes as clip paths and puts them on the HUD, the chrome
     and two overlay panels. It does **not** put one on the pawn, which is where the requirement is

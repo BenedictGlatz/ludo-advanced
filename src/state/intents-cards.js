@@ -160,7 +160,9 @@ function playActionCard(state, intent, deps) {
 
     // For the screen only, and both branches below inherit it. `game-state.js` carries the reason a
     // card play has to be recorded at all: a bot's card is played by nobody the player can see.
-    lastCardPlayed: { seat, cardId: intent.cardId },
+    // The target travels with it since 2026-09-06, because the cast's board stage has to know which
+    // square or which pawn the effect is landing on and cannot work it out afterwards.
+    lastCardPlayed: { seat, cardId: intent.cardId, target: entry.target },
     lastCard: lastCardEntry(state, entry, "pending"),
   });
 
@@ -216,7 +218,7 @@ function playReactionCard(state, intent) {
       ...spendCard(state, seat),
       ...discardChanges(state, seat, intent.cardId),
       ...recordPlay(state, entry),
-      lastCardPlayed: { seat, cardId: intent.cardId },
+      lastCardPlayed: { seat, cardId: intent.cardId, target: entry.target },
       lastCard: lastCardEntry(state, entry, "pending"),
     })
   );

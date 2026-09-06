@@ -2094,6 +2094,167 @@ stone". Nothing was added for D101's geometry for the reason above.
 because it was written on a different branch from `trap-helpers.js`'s version on the same afternoon. Both
 branches are in `dev` now, so the copy was deleted and the shared helper takes its two extra arguments.
 
+### Measuring a bot is not testing a bot: 2026-09-06, the bot tactics plan
+
+The suite gained three test files and lost none: `geometry.test.js` and `hit-odds.test.js` split out of
+`threat.test.js` with the modules they cover, `move-risk.test.js` is new, and `values-attacks.test.js`
+and `values-nuehue.test.js` split out with their modules.
+
+**`move-risk.test.js` is built to a shape worth copying.** Every case places two moves of exactly the
+same category and exactly the same length, so the category score is a tie and only the new correction
+can decide, and then runs the same board twice: once with `PLAIN_PROFILE` and once with the shipping
+profile. The two have to **disagree**. An assertion about a number would pass just as well against a
+term that had been quietly switched off; an assertion that the two bots choose differently cannot.
+
+**What the test suite still does not tell you, and this is the point of the arena.**
+`bot-match.test.js` proves a bot can finish a match without producing an intent the rules refuse, over
+hundreds of turns with the full card pool. It says nothing at all about whether a change made the bot
+**better**. That question needs hundreds of matches and belongs to `npm run bots:arena`, whose runs are
+recorded in [09-source-code-overview.md](09-source-code-overview.md).
+
+`bot-match.test.js` gained one case for the seam the arena depends on: two different profiles at one
+table still finish a match with nothing refused.
+
+**Three negative findings from the arena, kept because they are the useful part.** With all three of
+phase 1's correction terms switched on the new bot **lost** to the old one. Measured one term at a
+time, the opportunity term was the loss and the other two were inside the noise. Rewriting the
+opportunity term from an absolute into a difference (the form the danger term always had) was a
+reasonable hypothesis about why, and it measured the same, so the hypothesis was wrong and the term is
+shipped switched off. None of that would have been visible without the arena, and all of it would have
+shipped as an improvement on the strength of the argument for it.
+
+**One gap in the method, named rather than papered over.** Phase 2's card changes (the lead weighting,
+the trap search, Nühü's four receiving-end values) are **not** behind a profile knob, so the arena
+cannot compare them with what they replaced. They shipped on the argument, which is exactly what the
+plan was written to stop. Putting them behind knobs is outstanding work.
+
+### Testing an animation without pinning a frame (2026-09-06, design spec 18)
+
+The cast is four attribute states, three timers, a set of marks written onto forty other elements, and
+a geometry read out of `getBoundingClientRect`. Splitting that into what a unit test can hold and what
+only a browser can is the whole test design.
+
+| File | What it covers | Why it is a unit test |
+| --- | --- | --- |
+| `cast-vocabulary.test.js` | All 29 ids resolve to one of six families; 17 of them reach the board | Walks the **real** catalogue, on `card-art.test.js`'s precedent |
+| `cast-hold.test.js` | Which token the hold asks for, and the subtraction for a card with no board stage | Pure arithmetic over an injected `readToken` |
+| `cast-hits.test.js` | Which fields and which pawns each family marks, and with which of the seven values | Pure: a state in, a list of marks out, no DOM |
+| `cast.spec.js` (Playwright) | A cast starts, finishes and leaves **no** `data-cast-hit` behind | Only a browser has a layout to measure |
+
+**Nothing is pinned by value**, which spec 18 § 5 asks for by name. A case asserting that a Banana
+Peel's arc is 1.6 cells high, or that the hold is 1500 ms, would report the next deliberate adjustment
+as a defect. The cases assert the contract: which attributes exist, which values they take, and that
+the board is clean afterwards.
+
+**Three failures the tests exist to catch, and none of them throws.**
+
+1. **A card missing from the family table.** No `data-cast-family` matches, no base movement plays, and
+   the cast looks like an animation somebody forgot to finish rather than like a bug. Four of the
+   spec's 29 card ids were spelled differently from the catalogue's (`action-67`,
+   `action-aight-imma-head-out`, `action-its-not-that-deep`, `action-speedrun-any`); the selectors were
+   corrected on landing, and this test is what would have found them if they had not been.
+2. **A stuck `data-cast-hit`.** A ring left standing on a field for the rest of the match. It is the
+   same shape as the stuck `data-rolling` that once made the dice hand permanently unclickable, which
+   is recorded in this project's own challenges list, and it is the reason the end-to-end case asserts
+   an absence rather than a presence.
+3. **A hold of zero.** The game goes back to exactly where it was before the feature existed, which is
+   the defect the feature was raised against. The end-to-end suite cannot catch it, because that suite
+   runs with every hold collapsed to nothing on purpose.
+
+**Reduced motion is tested end to end**, with Playwright's `reducedMotion: "reduce"`. What must not
+happen is the cast being skipped: a reduced-motion player would then be the only one at the table who
+never sees a bot's card, which is the thing the spec's D115 exists to prevent.
+
+#### The coverage that is missing, and why it is missing rather than forgotten
+
+**A cancelled card's cast has no end-to-end case.** D113 has four outcomes and three of them narrow
+what a cast draws: `pending` skips the board stage, `negated` never gets one, and `nullified` gets one
+that lights the aura instead of the card's own target. All three are covered as a **unit** test, and
+the decision was moved out of `cast-view.js` into the pure `cast-vocabulary.js` specifically so that it
+could be. What is not covered is the same three branches driving a real screen.
+
+Two things in the harness are in the way, and both were tried:
+
+1. **`?fast=1` shuts a reaction window at once.** The whole end-to-end suite runs with it, and the
+   comment in `helpers.js` already says the behaviour in as many words: with every delay at zero the
+   window behaves as though every eligible player declined immediately. So a card cannot be *observed*
+   sitting in a window under the flag every other spec uses.
+2. **Without the flag, driving several turns to line the situation up runs out of time.** Getting a
+   reaction card into a second seat's hand takes four turns of a four-player match, and at real speed
+   each of those turns now pays the roll's hold, the cast's hold and the handover, which is past the
+   15 second per-step timeout the turn helpers use.
+
+Neither is a reason to skip the coverage permanently, and the way through is one of two: a helper that
+opens a window with the clock overridden but the cast's hold left alone, which is a fifth key in
+`FAST_DELAYS` and not a rewrite; or a seed found by `find-seeds.js` that deals two named cards to two
+seats on the same turn, which the script cannot currently search for because it never plays a card.
+Recorded as owed rather than claimed as done.
+
+
+### A stale preview server made a regression test pass against the broken CSS: 2026-09-06, no issue
+
+The second stacking defect (Chapter 04) got a new end-to-end file, `card-reveal-stacking.spec.js`. Two
+things about it are worth keeping.
+
+**The split is the interesting half.** The new case belongs beside the 2026-09-04 one, and
+`card-reveal.spec.js` was at 273 lines against NFR-02's 300, so the older case moved out with it rather
+than the new one being wedged in. The seam is real and not an excuse: `card-reveal.spec.js` asserts that
+the reveal happens, and every case in it passes with the revealed card painted underneath something
+else. The two cases here assert only which of two things is painted on top. **The limit forced a split
+that was already the right shape**, which is the second time that has happened (`trap-marks.spec.js` off
+`traps.spec.js` was the first).
+
+**The negative finding: the new case passed against the unfixed stylesheet, and that nearly went
+unnoticed.** `playwright.config.js` runs `npm run build && npm run preview` with
+`reuseExistingServer: !process.env.CI`, so when a preview server from an earlier build is already
+listening, Playwright attaches to it and **the build step never runs**. The suite then measures whatever
+was in `dist/` at the time that server was started. The fix was confirmed only after `npm run build` was
+run by hand and the new rule was read back out of `dist/assets/*.css`.
+
+It does not affect CI, where `reuseExistingServer` is off and every run builds. It affects exactly the
+case a developer is in when they care most: a stylesheet fix, checked locally, against a dev session that
+has been open for a while. **Worth a line in the report under "what the tooling does not tell you":** a
+green suite is only evidence about the bundle that was actually served, and nothing in the output says
+which bundle that was.
+
+
+### Testing a rule whose failure is invisible: 2026-09-06, no issue
+
+An opponent's skill hand being face up when it should be face down is a defect with **no visible
+symptom to the person who could report it**. It looks exactly like a hand that is correctly face up,
+and the only person who can see the difference is the opponent sitting next to the screen. Two such
+leaks survived two sprints in a suite of a thousand unit tests and four hundred end-to-end cases,
+because nothing anywhere asked the question.
+
+That is the argument for the shape the tests took:
+
+- **`tests/unit/ui/handover.test.js`, 10 cases.** `handover.js` is the **second** `ui/` module in this
+  project with unit tests, after `turn-controls.js`, and it qualifies for the same reason: it imports
+  no jQuery, touches no DOM, and what it holds is a decision with branches in it. Chapter 08's standing
+  argument is that a coverage figure for jQuery rendering measures nothing, and it is unchanged; this
+  is the exception that argument allows for.
+- **`tests/e2e/hand-secrecy.spec.js`, 2 cases, both without `?fast=1`.** The bot case needs the bot's
+  thinking pause, because with the pauses gone a bot's turn is over inside one tick and there is nothing
+  on screen long enough to assert against. The reaction case needs the curtain, and `?fast=1` is the
+  flag that passes every curtain without the button. Same affordance `handover.spec.js` and
+  `reaction-prompt.spec.js` already use.
+- **The assertions are not only on the attribute.** `data-face="down"` being written is half of it; the
+  case also asserts that `.card__title` is genuinely not visible, that the card is `data-playable="false"`
+  and `tabindex="-1"`, and that the count is still published in the HUD. The attribute and the paint have
+  been out of step before, which is the whole reason `card-reveal.spec.js` exists.
+
+**A negative finding, and it is the second occurrence of one already on record.** The Playwright config
+runs `npm run build && npm run preview` with `reuseExistingServer`, so a preview server left running
+from an earlier build serves a stale bundle and the build step never runs. On 2026-09-04 that made a
+CSS fix look ineffective. On 2026-09-06 it did worse: a **full suite run reported 465 passes against
+code that was not in the bundle**. A green end-to-end run on this setup is only evidence after
+`npm run build` has been run by hand. It is written down twice now because it has cost time twice, and
+the fix (dropping `reuseExistingServer`, or making the preview server rebuild) is not yet made.
+
+**Still not covered:** `skill-hand-view.js` itself has no unit test and is not getting one. It imports
+jQuery and i18next, so it belongs to the Playwright half by the same rule that put `handover.js` in the
+Vitest half.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

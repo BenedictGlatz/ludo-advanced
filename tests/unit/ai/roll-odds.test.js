@@ -23,7 +23,7 @@ import { describe, expect, it } from "vitest";
 
 import { createModifiers, withModifier } from "../../../src/core/roll.js";
 import { expectedMoveScore, rollOdds } from "../../../src/ai/roll-odds.js";
-import { SCORE } from "../../../src/ai/move-scoring.js";
+import { SCORE } from "../../../src/ai/score.js";
 import { pawnsAt, stateFor } from "../../helpers/fixtures.js";
 
 /** The mean of a distribution, which is what every card value is ultimately a difference of. */

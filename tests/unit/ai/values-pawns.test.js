@@ -1,5 +1,7 @@
 /**
- * What the cards aimed at a pawn are worth, and which pawn they pick. Issue #82.
+ * What the cards played on your own pawns are worth, and which pawn they pick. Issue #82.
+ *
+ * The two offensive pawn cards moved to `values-attacks.test.js` with the module they price.
  *
  * ## The target is half of every one of these values
  *
@@ -15,16 +17,16 @@
 
 import { describe, expect, it } from "vitest";
 
-import { SCORE } from "../../../src/ai/move-scoring.js";
+import { SCORE } from "../../../src/ai/score.js";
+import { KNOCKBACK } from "../../../src/core/cards/effects/status-effects.js";
+import { ENTRY_ODDS, oddsOfHit } from "../../../src/ai/hit-odds.js";
 import {
   builtDifferent,
   headOut,
   letHimCook,
   bigAhRock,
   lockIn,
-  ragebait,
   rock,
-  yeet,
 } from "../../../src/ai/values-pawns.js";
 import { pawnsAt, stateFor } from "../../helpers/fixtures.js";
 
@@ -68,12 +70,20 @@ describe("Rock: a wall is worth what walks into it", () => {
 });
 
 describe("Big Ah Rock: the same wall, plus the knockback (issue #90)", () => {
-  /** Rock's value on the same board, plus the knockback as a share: 1 + 3 / 3 at four seats. */
-  it("is worth Rock plus a share of the knockback when an enemy is behind the pawn", () => {
+  /**
+   * Rock's value on the same board, plus the knockback as a share of the nearest enemy's loss.
+   *
+   * The nearest enemy behind square 10 is seat 1, two squares back, and seat 1 has walked 39 of the 88
+   * steps on the board while the table average is 22. So its loss counts `39 / 22` as much as an
+   * average seat's, which is the bot tactics plan's lead weighting: hurting whoever is winning is
+   * worth more than hurting whoever is not.
+   */
+  it("is worth Rock plus a lead-weighted share of the knockback", () => {
     const state = acting({ "0.0": 11, "0.1": 21, "1.0": 39, "3.0": 17 });
+    const knock = (KNOCKBACK * (39 / 22)) / 3;
 
     expect(bigAhRock(state, 0).target).toEqual(rock(state, 0).target);
-    expect(bigAhRock(state, 0).value).toBeCloseTo(rock(state, 0).value + 1, 10);
+    expect(bigAhRock(state, 0).value).toBeCloseTo(rock(state, 0).value + knock, 10);
   });
 
   it("is worth exactly Rock when nobody is behind the pawn to knock", () => {
@@ -89,19 +99,36 @@ describe("Big Ah Rock: the same wall, plus the knockback (issue #90)", () => {
 
 describe("Built Different and Lock In: insurance on one pawn", () => {
   /**
-   * The chance of losing the pawn times what losing it costs. One opponent two squares behind is a
-   * one-in-six chance, and the pawn has walked eleven steps, so `(11 + 25) / 6 = 6`.
+   * The chance of losing the pawn times what losing it costs.
+   *
+   * Seat 0's `r = 11` is square 10, which is two in front of seat 1's pawn **and** is seat 1's entry
+   * square, and seat 1 still has three pawns in its yard. So there are two ways to lose that pawn and
+   * `threatOn` combines them the way "at least one of them" is combined. The pawn on `r = 30` has
+   * nobody within twenty squares behind it and is worth nothing to insure.
    */
   it("insures the pawn most likely to be captured", () => {
     const state = acting({ "0.0": 11, "0.1": 30, "1.0": 39 });
     const scored = builtDifferent(state, 0);
+    const threat = 1 - (1 - oddsOfHit(2)) * (1 - ENTRY_ODDS);
 
     expect(scored.target).toEqual({ pawn: { player: 0, pawn: 0 } });
-    expect(scored.value).toBeCloseTo((11 + SCORE.LEAVE_START) / 6, 10);
+    expect(scored.value).toBeCloseTo(threat * (11 + SCORE.LEAVE_START), 10);
   });
 
+  /** `r = 12` is square 11, which belongs to nobody's entry, unlike the `r = 11` above it. */
   it("is worth nothing when nobody can reach any of my pawns", () => {
-    expect(builtDifferent(acting({ "0.0": 11, "0.1": 30 }), 0).value).toBe(0);
+    expect(builtDifferent(acting({ "0.1": 12, "0.2": 30 }), 0).value).toBe(0);
+  });
+
+  /**
+   * Parking on somebody's entry square is the classic Ludo mistake, and until the bot tactics plan the
+   * bot could not see it at all: the track behind square 10 is empty here, and the danger is entirely
+   * seat 1's four waiting pawns.
+   */
+  it("insures a pawn standing on an opponent's entry square with an empty track behind it", () => {
+    const scored = builtDifferent(acting({ "0.0": 11 }), 0);
+
+    expect(scored.value).toBeCloseTo(ENTRY_ODDS * (11 + SCORE.LEAVE_START), 10);
   });
 
   /** Lock In protects the same pawn and costs it a round of walking, so it is always worth less. */
@@ -115,59 +142,6 @@ describe("Built Different and Lock In: insurance on one pawn", () => {
   it("has nothing to insure with every pawn still in the yard", () => {
     expect(builtDifferent(acting({}), 0)).toBeNull();
     expect(lockIn(acting({}), 0)).toBeNull();
-  });
-});
-
-describe("Ragebait: forcing the wrong pawn to move", () => {
-  /**
-   * Aimed at the opponent's rearmost pawn, which is the pawn whose forced move wastes their turn. In
-   * a four-player match it is worth a third of what it costs them.
-   */
-  it("taunts the opponent's rearmost pawn", () => {
-    const state = acting({ "0.0": 11, "1.0": 30, "1.1": 5 });
-    const scored = ragebait(state, 0);
-
-    expect(scored.target).toEqual({ pawn: { player: 1, pawn: 1 } });
-    expect(scored.value).toBeCloseTo(3 / 3, 10);
-  });
-
-  it("is not worth playing against a player with only one pawn out", () => {
-    expect(ragebait(acting({ "0.0": 11, "1.0": 30 }), 0)).toBeNull();
-  });
-});
-
-describe("Yeet: pushing an opponent back", () => {
-  /** With nothing of mine nearby it is worth a share of the four steps the victim loses. */
-  it("is worth a share of the steps the victim loses", () => {
-    const state = acting({ "0.0": 11, "1.0": 20 });
-
-    expect(yeet(state, 0).target).toEqual({ pawn: { player: 1, pawn: 0 } });
-    expect(yeet(state, 0).value).toBeCloseTo(4 / 3, 10);
-  });
-
-  /**
-   * The term a careless bot would miss. A push resolves a capture on the square it lands on, so one
-   * of my own pawns sitting behind the victim can be sent home by my own card. Seat 1's `r = 20` is
-   * square 29 and seat 0's `r = 28` is square 27, two behind it, so one face of the D6 captures my
-   * own pawn and the value goes negative.
-   */
-  it("refuses to push a pawn back onto one of mine", () => {
-    const state = acting({ "0.0": 28, "1.0": 20 });
-
-    expect(yeet(state, 0).value).toBeLessThan(0);
-  });
-
-  /** The other side of it: pushing a pawn out of range of my own leader is worth extra. */
-  it("is worth more when it pushes an attacker away from my pawn", () => {
-    // Seat 0's r = 34 is square 33, four in front of seat 1's r = 20 on square 29.
-    const relieved = acting({ "0.0": 34, "1.0": 20 });
-    const plain = acting({ "0.0": 11, "1.0": 20 });
-
-    expect(yeet(relieved, 0).value).toBeGreaterThan(yeet(plain, 0).value);
-  });
-
-  it("cannot push a pawn that is already on its entry square", () => {
-    expect(yeet(acting({ "0.0": 11, "1.0": 1 }), 0)).toBeNull();
   });
 });
 
@@ -198,9 +172,10 @@ describe("Aight Imma Head Out: four forward, or back to the entry square", () =>
     // Seat 1's r = 30, 31 and 32 are squares 39, 0 and 1, which are 5, 4 and 3 behind square 4.
     const state = acting({ "0.0": 5, "1.0": 30, "1.1": 31, "1.2": 32 });
     const scored = headOut(state, 0);
+    const threat = 1 - (1 - oddsOfHit(3)) * (1 - oddsOfHit(4)) * (1 - oddsOfHit(5));
 
     expect(scored.target).toEqual({ pawn: { player: 0, pawn: 0 }, choice: "retreat" });
-    expect(scored.value).toBeCloseTo(0.5 * (5 + SCORE.LEAVE_START) - 4, 10);
+    expect(scored.value).toBeCloseTo(threat * (5 + SCORE.LEAVE_START) - 4, 10);
   });
 });
 
