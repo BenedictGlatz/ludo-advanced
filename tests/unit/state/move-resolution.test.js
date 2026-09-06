@@ -18,7 +18,7 @@ import { findPawn } from "../../../src/core/pawns.js";
 import { STATUS } from "../../../src/core/statuses.js";
 import { TRAP_KIND } from "../../../src/core/traps.js";
 import { TURN_PHASE, createGameState, nextState } from "../../../src/state/game-state.js";
-import { cancelPendingMove, resolveMove } from "../../../src/state/turn-manager.js";
+import { cancelPendingMove, resolveMove } from "../../../src/state/turn-resolution.js";
 import { pawnsAt, rngForDice } from "../../helpers/fixtures.js";
 
 const trap = (kind, square, owner = 2) => ({ kind, square, owner, until: null });

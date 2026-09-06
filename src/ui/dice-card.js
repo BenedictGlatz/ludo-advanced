@@ -13,6 +13,7 @@
  * of them importing each other.
  */
 
+import { BONUS_ROLL_MIN_FACES } from "../core/bonus-roll.js";
 import { t } from "../i18n/index.js";
 import { diceArt } from "./art/index.js";
 
@@ -26,7 +27,12 @@ import { diceArt } from "./art/index.js";
  * die can move a pawn, and the number it needs to get one out of the start area (FR-09). A hand holding
  * a D2 and a D20 is a choice between those two things, and a player should not have to remember which.
  *
- * `tags` appends further tags after those two. The pool overview passes the copy count that way, because
+ * **A third standing tag since issue #89** says whether the die's maximum rolls again. The bonus roll has
+ * a floor of six faces, so the D2 and the D4 say "no bonus roll" and the rest say the maximum rolls
+ * again. That is the Product Owner's condition for the rule: the difference must be readable on the
+ * card, not remembered.
+ *
+ * `tags` appends further tags after those three. The pool overview passes the copy count that way, because
  * "4 mal im Pool" is true of the pool and not of the card, and a card in a hand must not claim it.
  */
 export function diceCardDescription(faces, { tags = [] } = {}) {
@@ -37,7 +43,12 @@ export function diceCardDescription(faces, { tags = [] } = {}) {
     typeLabel: t("card.family.dice"),
     kindLabel: t(`card.dice.kind.${faces}`),
     title: t("card.dice.name", { faces }),
-    tags: [t("card.dice.range", { faces }), t("card.dice.leave", { faces }), ...tags],
+    tags: [
+      t("card.dice.range", { faces }),
+      t("card.dice.leave", { faces }),
+      faces >= BONUS_ROLL_MIN_FACES ? t("card.dice.bonus", { faces }) : t("card.dice.noBonus"),
+      ...tags,
+    ],
     art: diceArt(faces),
   };
 }

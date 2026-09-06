@@ -141,8 +141,11 @@ export function updateDiceHand($hand, state) {
 
   // The throw, gated on the turn exactly like the deal above it, so the pass that first sees a roll
   // starts it and the twenty passes after that leave it alone. See the note at the top of the file.
-  if ($hand.data("rolledTurn") !== state.turnNumber && state.roll !== null) {
-    $hand.data("rolledTurn", state.turnNumber);
+  // Keyed on the turn **and** the roll count, since issue #89 lets one turn roll up to three times and a
+  // bonus roll has to throw the dice again.
+  const rollKey = `${state.turnNumber}.${state.rollsThisTurn ?? 0}`;
+  if ($hand.data("rolledKey") !== rollKey && state.roll !== null) {
+    $hand.data("rolledKey", rollKey);
     replayRoll($hand);
   }
 

@@ -205,10 +205,22 @@ interrupt. This is the sequence the turn manager in `state/` implements and the 
 8. **End of turn.** The 3 drawn dice cards are returned to the pool and reshuffled (FR-21). The active
    player draws Skill Cards up to the hand limit (section 6.5). Then the active player advances.
 
-There is no extra turn for any roll. Classic Ludo grants another turn on a 6; here the equivalent
-would be "another turn on the die's maximum", which would compound with a D2 (maximum on half of all
-rolls) into a player rolling repeatedly. **Rejected for that reason**, and the effect is available as
-a skill card instead (`action-reroll`), where it costs a card.
+**A natural maximum on a die of six or more faces rolls that die again**, at most three rolls a turn
+(issue #89, decided 2026-09-06 after a playtest). Steps 5 to 7 repeat with the same dice card; no new card
+is drawn or chosen, the action phase is not revisited, and the roll modifiers of a card played into the
+first roll do not carry into the second. "Natural" means the face the die showed: a roll a card lifted to
+the maximum, or a number FR FR named, earns nothing. The D2 and the D4 give no bonus, and every dice card
+says which side of that line it is on.
+
+> **What this paragraph said until 2026-09-06, kept because the reason still shapes the rule:** there is
+> no extra turn for any roll. Classic Ludo grants another turn on a 6; here the equivalent would be
+> "another turn on the die's maximum", which would compound with a D2 (maximum on half of all rolls) into
+> a player rolling repeatedly. Rejected for that reason, and the effect is available as a skill card
+> instead (`action-reroll`), where it costs a card.
+>
+> The playtest asked for the classic bonus anyway, and the Product Owner took it with the D2 objection
+> built in as a floor: six faces or more. The cap of three is the classic three-sixes rule, and it is also
+> what lets the bot loop and the seeded tests end a turn whatever the RNG says.
 
 ---
 

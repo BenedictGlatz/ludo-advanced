@@ -24,7 +24,7 @@
 
 import { expect } from "@playwright/test";
 
-import { boardState, chooseAndCarryOn, moveFirstMovablePawn } from "./helpers.js";
+import { boardState, chooseAndCarryOn, moveFirstMovablePawn, playOutMoves } from "./helpers.js";
 
 /** The three phases that wait for somebody to click something. */
 const RESTING = ["choose", "action", "act"];
@@ -54,6 +54,9 @@ export function snapshot(page) {
       seat: state.activePlayer,
       isBot: state.bots.includes(state.activePlayer),
       turnNumber: state.turnNumber,
+      // Which roll of the turn this is (issue #89). `waitPast` reads it: a bonus roll brings the same
+      // turn back to the same phase, and without the count that would look like nothing happened.
+      rolls: state.rollsThisTurn,
       discards: state.skillDiscard.length,
       cards: Object.values(state.skillHands).reduce((total, hand) => total + hand.length, 0),
     };
@@ -93,7 +96,10 @@ export async function waitPast(page, from) {
         const now = await snapshot(page);
 
         return (
-          now.status !== "running" || now.turnNumber !== from.turnNumber || now.phase !== from.phase
+          now.status !== "running" ||
+          now.turnNumber !== from.turnNumber ||
+          now.phase !== from.phase ||
+          now.rolls !== from.rolls
         );
       },
       { timeout: 20_000 }
@@ -124,9 +130,18 @@ export async function playPersonTurn(page, board) {
   }
 
   const moving = await waitForPerson(page);
-  if (moving.status === "running" && moving.phase === "act") {
+  let pending = moving;
+
+  // One move per roll, and a natural maximum on a D6 or larger rolls again (issue #89), so the same
+  // turn can come back to `act` with the roll count up one. `waitPast` sees the count change; the read
+  // afterwards decides whether that was another roll or the turn passing.
+  while (pending.status === "running" && pending.phase === "act") {
     await moveFirstMovablePawn(board);
-    await waitPast(page, moving);
+    await waitPast(page, pending);
+
+    const now = await snapshot(page);
+    if (now === null || now.turnNumber !== pending.turnNumber || now.phase !== "act") break;
+    pending = now;
   }
 
   return moving;
@@ -141,7 +156,7 @@ export async function playPersonTurn(page, board) {
  */
 export async function playHumanTurn(board) {
   await chooseAndCarryOn(board);
-  if ((await boardState(board)).phase === "act") await moveFirstMovablePawn(board);
+  await playOutMoves(board);
 }
 
 /**

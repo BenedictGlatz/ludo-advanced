@@ -54,7 +54,7 @@ export function createTurnWaits({ parts, timers, delays = {}, getState, refresh,
   const readToken = (token, fallback) => motionMs($board, token, fallback);
 
   /** The turn whose roll has already had its moment, so one roll is never held twice. */
-  let heldTurn = null;
+  let heldRoll = null;
 
   /**
    * Has a roll just appeared that has not been shown yet?
@@ -75,12 +75,19 @@ export function createTurnWaits({ parts, timers, delays = {}, getState, refresh,
    * module takes it off, so the second door left the dice hand permanently unclickable from that turn on.
    * Three end-to-end specs failed on a click that never landed.
    *
-   * So the question is asked of the **state** and not of the phase: a roll exists and this turn has not
-   * been held for. `state.turnNumber` is the marker rather than the roll itself, because a roll of 0 is a
-   * real result once a card can subtract from a die.
+   * So the question is asked of the **state** and not of the phase: a roll exists and this roll has not
+   * been held for. The marker is the turn number **and** the roll count within the turn, not the roll
+   * itself, because a roll of 0 is a real result once a card can subtract from a die, and because issue
+   * #89 lets one turn roll up to three times: a bonus roll is a second roll in the same turn and it
+   * deserves its own moment, which a turn-number marker alone would have skipped.
    */
   function needsRollMoment(state) {
-    return state.roll !== null && state.turnNumber !== heldTurn;
+    return state.roll !== null && rollKey(state) !== heldRoll;
+  }
+
+  /** One roll's identity: the turn, and which roll of that turn it is. */
+  function rollKey(state) {
+    return `${state.turnNumber}.${state.rollsThisTurn ?? 0}`;
   }
 
   /**
@@ -114,7 +121,7 @@ export function createTurnWaits({ parts, timers, delays = {}, getState, refresh,
     const ms = holdRoll(delays, readToken);
 
     // Before anything that can re-enter the loop, or `resume()` would come straight back here.
-    heldTurn = turnNumber;
+    heldRoll = rollKey(getState());
 
     if (ms <= 0) {
       endRoll($diceHand);

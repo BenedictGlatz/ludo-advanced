@@ -52,6 +52,20 @@ describe("whether the strip speaks", () => {
    */
   it("says nothing when no roll has happened yet", () => {
     expect(rollBreakdown({ rollSteps: [] })).toBeNull();
+    expect(rollBreakdown({ rollSteps: [], bonusRoll: true })).toBeNull();
+  });
+
+  /**
+   * The one exception to "two or more, never one" (issue #89): a bonus roll has to say why a second
+   * roll happened, so a plain one-step bonus roll gets a bonus line and its own step.
+   */
+  it("explains a bonus roll even when nothing else changed the number", () => {
+    const list = rollBreakdown({ rollSteps: plain, bonusRoll: true });
+
+    expect(list).toHaveLength(2);
+    expect(list[0].kind).toBe("bonus");
+    expect(list[0].text).not.toContain("roll.");
+    expect(list[1].kind).toBe("base");
   });
 
   it("explains a roll that two or more steps produced", () => {

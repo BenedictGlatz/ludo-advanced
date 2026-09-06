@@ -172,6 +172,7 @@
     }
   },
   "roll": {
+    "bonus": "Bonuswurf: der letzte Wurf war das Maximum",
     "step": {
       "base": "W{{faces}}: {{value}}",
       "fixed": "Festgelegt: {{value}}",

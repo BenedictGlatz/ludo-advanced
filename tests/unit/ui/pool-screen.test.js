@@ -49,12 +49,12 @@ describe("the pool overview", () => {
     }
   });
 
-  it("carries the two tags a dice card always has, plus the copy count", () => {
+  it("carries the three tags a dice card always has, plus the copy count", () => {
     const six = poolScreen(MID_TURN).cards.find((card) => card.faces === 6);
 
-    expect(six.tags).toHaveLength(3);
+    expect(six.tags).toHaveLength(4);
     expect(six.tags[0]).toContain("6"); // range
-    expect(six.tags[2]).toContain("4"); // four copies of a D6 in the pool
+    expect(six.tags[3]).toContain("4"); // four copies of a D6 in the pool
     expect(six.art).toContain("<svg");
   });
 
