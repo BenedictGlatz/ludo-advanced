@@ -172,6 +172,7 @@
     }
   },
   "roll": {
+    "bonus": "Bonus roll: the last roll was the maximum",
     "step": {
       "base": "D{{faces}}: {{value}}",
       "fixed": "Named: {{value}}",

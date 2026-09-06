@@ -142,6 +142,8 @@ describe("clearedTurnFields", () => {
       pendingMove: null,
       refusalReason: null,
       modifiers: createModifiers(),
+      rollsThisTurn: 0,
+      bonusRoll: false,
       cardsPlayed: {},
       cardBudget: {},
       reactionsLocked: false,

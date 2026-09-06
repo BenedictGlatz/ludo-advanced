@@ -209,6 +209,8 @@ export function updateBoard($board, state) {
   $board.attr("data-status", state.status);
   $board.attr("data-roll", state.roll ?? "");
   $board.attr("data-die", state.chosenDie ?? "");
+  // Issue #89: which roll of the turn this is, so a spec can tell a bonus roll from the first one.
+  $board.attr("data-rolls", state.rollsThisTurn ?? 0);
 
   // `data-winner` joined them with issue #38, for the same kind of reason `data-die` did. The win
   // spec used to name seat 2 and the text "Spieler 3", because that was what the seed happened to

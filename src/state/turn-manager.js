@@ -11,10 +11,15 @@
  * | 1 Turn start, 2 Draw | `drawHand` | `choose` |
  * | 3 Choose a dice card | `chooseDie` | `action` |
  * | 4 Play an Action card, or pass | `passAction` | `roll` |
- * | 5 Roll, 6 Compute legal moves | `rollChosenDie` | `act`, or `turn-end` when nothing can move |
+ * | 5 Roll, 6 Compute legal moves | `rollChosenDie` | `act`, or `turn-end` when nothing can move, or `roll` again on a bonus (issue #89) |
  * | 7 Act | `commitMove` | `reaction` |
- * | 8 Resolve | `resolveMove` | `turn-end`, or `match-over`. Uses up a skill square (FR-22) |
- * | 9 End of turn | `endTurn` | `draw` for the next player |
+ * | 8 Resolve | `resolveMove` | `turn-end`, `roll` again on a bonus, or `match-over`. Uses up a skill square (FR-22). In `turn-resolution.js` |
+ * | 9 End of turn | `endTurn` | `draw` for the next player. In `turn-resolution.js` |
+ *
+ * **Steps 8 and 9 moved to `turn-resolution.js` in issue #89.** This file stood at exactly 300 lines and
+ * the bonus roll needed a few more. The seam is the one the table already shows: everything up to the
+ * committed move is here, everything from "the move happens" onward is there, and the one thing both
+ * need, `closeOrRollAgain`, lives on the resolution side because that is where a turn ends.
  *
  * ## What issue #38 changed, and what it deliberately did not
  *
@@ -43,14 +48,13 @@
  * no skill squares.
  */
 
-import { applyMove, evaluateTurn } from "../core/movement.js";
-import { findPawn } from "../core/pawns.js";
+import { evaluateTurn } from "../core/movement.js";
 import { resolveRoll } from "../core/roll.js";
 import { expireStatuses } from "../core/statuses.js";
 import { expireTraps } from "../core/traps.js";
-import { findWinner } from "../core/win.js";
-import { MATCH_STATUS, TURN_PHASE, boardOf, clearedTurnFields, nextState } from "./game-state.js";
-import { drawFor, skillSquareChanges, trapChanges } from "./skill-turn.js";
+import { TURN_PHASE, boardOf, nextState } from "./game-state.js";
+import { drawFor } from "./skill-turn.js";
+import { closeOrRollAgain } from "./turn-resolution.js";
 
 /**
  * Every function below refuses to run in the wrong phase.
@@ -152,13 +156,19 @@ export function rollChosenDie(state, deps) {
     boardOf(state)
   );
 
-  return nextState(state, {
+  const rolled_ = nextState(state, {
     roll: rolled.roll,
     rollSteps: rolled.steps,
     legalMoves: result.moves,
     refusalReason: result.reason,
-    phase: result.moves.length === 0 ? TURN_PHASE.TURN_END : TURN_PHASE.ACT,
+    rollsThisTurn: state.rollsThisTurn + 1,
   });
+
+  if (result.moves.length > 0) return nextState(rolled_, { phase: TURN_PHASE.ACT });
+
+  // Nothing can move. Since issue #89 that is not always the end of the turn: a natural maximum on a
+  // D6 or larger rolls again even when the roll it earned could not be used.
+  return closeOrRollAgain(rolled_);
 }
 
 /** Which pawns have at least one legal move this turn. `ui/` renders this as `data-movable`. */
@@ -201,100 +211,4 @@ export function commitMove(state, pawn) {
   }
 
   return nextState(state, { pendingMove: move, selectedPawn: pawn, phase: TURN_PHASE.REACTION });
-}
-
-/**
- * Step 8: the committed move is applied.
- *
- * Called when the reaction window has closed, which is `state/reaction-window.js`'s decision and not
- * this file's. A move that a Reaction card cancelled never reaches here: the window resolves to
- * `cancelPendingMove` instead, and the turn ends with the pawn where it stood.
- *
- * This is also where a skill square is used up (FR-22), and it is the right place for one reason: the
- * square only counts if the pawn **finished** here. Doing it any earlier would mean acting on a move a
- * reaction card can still cancel.
- */
-export function resolveMove(state, deps) {
-  assertPhase(state, TURN_PHASE.REACTION);
-
-  const move = state.pendingMove;
-  if (move === null) {
-    return nextState(state, { phase: TURN_PHASE.TURN_END });
-  }
-
-  // Three steps in one transition, and the order is the rule: the pawn arrives, then a trap it walked
-  // into goes off, and only then is the square it is actually standing on asked whether it hands out a
-  // card. A trap can move the pawn, so asking the skill square first would ask about a square the pawn
-  // is no longer on. `board` is `trapChanges`'s whole answer, never repacked: `skill-turn.js` says why.
-  const moved = { ...state, pawns: applyMove(state.pawns, move) };
-  const board = trapChanges(moved, move, deps);
-  const sprung = { ...moved, ...board };
-
-  const winner = findWinner(sprung.pawns);
-  if (winner !== null) {
-    return nextState(state, {
-      ...board,
-      pendingMove: null,
-      winner,
-      status: MATCH_STATUS.WON,
-      phase: TURN_PHASE.MATCH_OVER,
-    });
-  }
-
-  const landed = findPawn(sprung.pawns, move);
-
-  return nextState(state, {
-    ...board,
-    pendingMove: null,
-    ...skillSquareChanges(sprung, { ...move, to: landed.r }, deps),
-    phase: TURN_PHASE.TURN_END,
-  });
-}
-
-/**
- * The committed move is thrown away and the turn ends with nothing moved.
- *
- * What Ghost Mode and Uno Reverse resolve to. Kept here rather than in the card effects, because
- * "the declared move does not happen" is a step of the sequence and every card that reaches it needs
- * the same behaviour.
- */
-export function cancelPendingMove(state) {
-  return nextState(state, { pendingMove: null, phase: TURN_PHASE.TURN_END });
-}
-
-/**
- * Step 9: the drawn cards go back into the pool (FR-21) and the next player takes over (FR-04).
- *
- * `clearedTurnFields` is what makes this safe as skill cards pile more onto a turn: the roll
- * modifiers, the card budget and the reaction window all go with it, and the test in
- * `game-state.test.js` compares the result field by field against a fresh match rather than trusting
- * this list to be complete.
- */
-export function endTurn(state, deps) {
-  assertPhase(state, TURN_PHASE.TURN_END);
-
-  deps.diceSource.returnHand(state.hand);
-
-  return nextState(state, {
-    ...clearedTurnFields(),
-    activePlayer: nextSeat(state),
-    turnNumber: state.turnNumber + 1,
-    phase: TURN_PHASE.DRAW,
-  });
-}
-
-/**
- * The seat that takes the next turn (FR-04).
- *
- * Turn order is the order of `state.seats`, not `activePlayer + 1`. In a two-player match the seats are
- * 0 and 2, so counting upward would hand the turn to seat 1, which nobody is sitting in.
- *
- * **Exported since issue #39** because the handover overlay names the player it is passing to, and it has
- * to name the same one `endTurn` is about to hand the turn to. A second walk over `state.seats` in `ui/`
- * would be a second answer to the same question, and the two would disagree the first time turn order
- * changes.
- */
-export function nextSeat(state) {
-  const index = state.seats.indexOf(state.activePlayer);
-  return state.seats[(index + 1) % state.seats.length];
 }

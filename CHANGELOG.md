@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Rolling the maximum on a D6 or larger rolls that die again**, up to three rolls a turn. The D2 and the
+  D4 give no bonus roll, and every dice card now says on its face whether its maximum rolls again. A card
+  played into the first roll does not carry into the second, and the message strip says when a roll is a
+  bonus roll
 - `CLAUDE.md` defining the tech stack, architecture layering, testing, Git and AI prompt log conventions
 - `README.md` with project overview, setup instructions, scripts and contribution guidelines
 - This changelog

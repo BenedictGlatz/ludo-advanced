@@ -27,6 +27,8 @@
       },
       "range": "Reichweite 1 bis {{faces}}",
       "leave": "Start frei bei {{faces}}",
+      "bonus": "Bei {{faces}} noch einmal würfeln",
+      "noBonus": "Kein Bonuswurf",
       "copies": "{{copies}} mal im Pool"
     },
     "skill": {

@@ -734,6 +734,47 @@ sensible default. The screen lets the player put the computer on seat 0 and take
 default being overridden and not a rule being broken: `options.js` still refuses more bots than players
 for the address bar, and `canBeBot` refuses the last person on the screen.
 
+### A turn can roll three times, and steps 8 and 9 moved out of `turn-manager.js`: 2026-09-06, issue #89
+
+**The rule.** A natural maximum on a D6 or larger rolls the same die again, at most three rolls a turn.
+GDD § 3 had rejected any bonus roll because of the D2; the playtest asked for the classic rule and the
+Product Owner took it with a six-face floor and a three-roll cap. `core/bonus-roll.js` holds the whole
+decision as `grantsBonusRoll({ dieMax, rollSteps, rollsThisTurn })`: it reads the **natural** face out of
+`rollSteps` (`base`, or the kept value of an `advantage`/`disadvantage` pair; a `fixed` step from FR FR is
+not a roll), so no card can buy a second roll.
+
+**The transition.** `closeOrRollAgain(state, changes)` in the new `state/turn-resolution.js` replaces
+the three places that used to write `phase: TURN_END`: after a resolved move, after a cancelled move
+(Ghost Mode, Uno Reverse), and after a roll with no legal move. When the bonus is granted the turn goes
+back to `roll` with the same `chosenDie` and everything the last roll produced cleared: `roll`,
+`rollSteps`, `legalMoves`, `selectedPawn`, `pendingMove`, `refusalReason` and **`modifiers`**. A card
+buffs the roll it was played into; an Angel Die that buffed two rolls would be worth twice what it says.
+The hand, the die, the card budget and the reaction lock stay, so there is no second Action card.
+
+Two turn-level fields carry it: `rollsThisTurn` (the cap reads it, the view keys its roll moment on it)
+and `bonusRoll` (for the strip, stays `true` for the rest of the turn). `game-state.test.js`'s field
+comparison against a fresh match covers both.
+
+**Why `turn-manager.js` was split.** It stood at exactly 300 lines. Steps 8 and 9 (`resolveMove`,
+`cancelPendingMove`, `endTurn`, `nextSeat`) moved to `turn-resolution.js` together with
+`closeOrRollAgain`, because "the turn is over, or rolls again" is asked where turns end. `rollChosenDie`
+imports it back for the no-move case; there is no cycle, `turn-resolution.js` imports nothing from
+`turn-manager.js`. Importers changed: `intents.js`, `game-loop.js`, and four test files.
+
+**What the loop needed.** `game-loop.js` rolls by itself in `roll`, so a bonus roll happens with no new
+branch. Two places keyed on the turn number had to key on the roll instead: `turn-waits.js`'s roll moment
+(`needsRollMoment` compares `turnNumber.rollsThisTurn`, or the second roll would have had no animation
+and, worse, `data-rolling` would have been left on) and `dice-hand-view.js`'s throw replay. The board
+carries `data-rolls` so a spec can tell a bonus roll from the first one.
+
+**What the screen says.** Every dice card gained a third standing tag from `dice-card.js`: the D6 to D20
+say the maximum rolls again, the D2 and the D4 say "no bonus roll". That was the Product Owner's condition
+for the rule. `roll-steps.js` makes one exception to D73.3's "two or more, never one": a bonus roll is
+worth a first line saying why a second roll happened, even when nothing else changed the number.
+
+**The bot.** No change. A bot in `act` after a bonus roll is a bot in `act`, and `bot-match.test.js`
+plays full matches through the new transition unchanged.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

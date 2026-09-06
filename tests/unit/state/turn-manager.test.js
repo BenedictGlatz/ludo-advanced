@@ -14,14 +14,13 @@ import {
   chooseDie,
   commitMove,
   drawHand,
-  endTurn,
   moveForPawn,
   movablePawns,
   passAction,
-  resolveMove,
   rollChosenDie,
   selectPawn,
 } from "../../../src/state/turn-manager.js";
+import { endTurn, resolveMove } from "../../../src/state/turn-resolution.js";
 import { pawnsAt, rngForRolls } from "../../helpers/fixtures.js";
 
 /** A match of `playerCount` players with a scripted roll sequence and the D6 stand-in pool. */
@@ -97,8 +96,11 @@ describe("the nine-step sequence (section 3 of the game design document)", () =>
     // Nothing has moved yet: the window is open and the move is still pending.
     expect(findPawn(committed.pawns, { player: 0, pawn: 0 }).r).toBe(0);
 
+    // A 6 on a D6 is the maximum, so since issue #89 the resolved move hands the turn back to `roll`
+    // rather than to `turn-end`. What this case asserts is unchanged: the window closed and the move
+    // happened. `bonus-roll-turn.test.js` owns the second roll.
     const resolved = resolveMove(committed, d);
-    expect(resolved.phase).toBe(TURN_PHASE.TURN_END);
+    expect(resolved.phase).toBe(TURN_PHASE.ROLL);
     expect(resolved.pendingMove).toBeNull();
     expect(findPawn(resolved.pawns, { player: 0, pawn: 0 }).r).toBe(1);
   });
@@ -154,7 +156,9 @@ describe("turn order (FR-04)", () => {
   });
 
   it("clears everything that belonged to the finished turn", () => {
-    const { state, deps: d } = afterRoll(pawnsAt(2), [6]);
+    // A 3, not a 6: a maximum would roll again (issue #89) and the turn would not be over yet.
+    // The spare rolls feed a skill square respawn, should the pawn land on one.
+    const { state, deps: d } = afterRoll(pawnsAt(2, { "0.0": 5 }), [3, 2, 2]);
     const ended = endTurn(resolveMove(commitMove(state, 0), d), d);
 
     expect(ended.hand).toEqual([]);

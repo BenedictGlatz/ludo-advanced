@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { BONUS_ROLL_LIMIT } from "../../../src/core/bonus-roll.js";
 import { HOME_R, START_R } from "../../../src/core/board.js";
 import { createSeededRng, fixedDieSource } from "../../../src/core/dice-source.js";
 import { findPawn, pawnsOf } from "../../../src/core/pawns.js";
@@ -183,8 +184,22 @@ describe("a complete match, played end to end on a scripted RNG (NFR-09)", () =>
     }
     expect(playerZeroRolls).toHaveLength(33);
 
+    // Player 1's 1 is scripted after every **turn** of player 0, not after every roll. Since issue #89
+    // a 6 on a D6 rolls again, up to three rolls a turn, so player 0's 33 rolls group into fewer turns
+    // and the interleaving has to follow the same rule the turn manager applies.
     const rolls = [];
-    for (const roll of playerZeroRolls) rolls.push(roll, 1);
+    let zeroTurns = 0;
+    let inTurn = 0;
+    for (const roll of playerZeroRolls) {
+      rolls.push(roll);
+      inTurn += 1;
+      if (roll !== 6 || inTurn === BONUS_ROLL_LIMIT) {
+        rolls.push(1);
+        zeroTurns += 1;
+        inTurn = 0;
+      }
+    }
+    expect(zeroTurns).toBe(12);
 
     // No skill squares: `deps.rng` is drawn from for a skill square respawn as well as for the roll,
     // so a script written as a list of rolls would shift the moment a pawn landed on one. This test is
@@ -199,9 +214,13 @@ describe("a complete match, played end to end on a scripted RNG (NFR-09)", () =>
 
       state = dispatch(state, { type: INTENT.CHOOSE_DIE, faces: state.hand[0] }, deps).state;
       state = dispatch(state, { type: INTENT.SKIP_ACTION }, deps).state;
-      state = dispatch(state, { type: INTENT.ROLL_DIE }, deps).state;
 
-      if (state.phase === TURN_PHASE.ACT) {
+      // Roll, move, and roll again for as long as the turn earns it (issue #89).
+      while (state.phase === TURN_PHASE.ROLL || state.phase === TURN_PHASE.ACT) {
+        if (state.phase === TURN_PHASE.ROLL) {
+          state = dispatch(state, { type: INTENT.ROLL_DIE }, deps).state;
+          continue;
+        }
         const pawn = furthestMovablePawn(state);
         state = dispatch(state, { type: INTENT.COMMIT_MOVE, pawn }, deps).state;
         state = dispatch(state, { type: INTENT.CLOSE_WINDOW }, deps).state;
@@ -215,10 +234,11 @@ describe("a complete match, played end to end on a scripted RNG (NFR-09)", () =>
     expect(state.phase).toBe(TURN_PHASE.MATCH_OVER);
     expect(state.winner).toBe(0);
 
-    // 33 rolls take player 0's four pawns into the house, and player 1 takes a turn between every
-    // pair of them, so the match ends on turn 2 x 33 - 1.
-    expect(turns).toBe(65);
-    expect(state.turnNumber).toBe(65);
+    // 33 rolls in 12 turns take player 0's four pawns into the house (a 6 rolls again, three rolls a
+    // turn at most), and player 1 takes a turn between every pair of them, so the match ends on turn
+    // 2 x 12 - 1. It was 65 before issue #89, when every roll was a turn of its own.
+    expect(turns).toBe(2 * zeroTurns - 1);
+    expect(state.turnNumber).toBe(23);
 
     expect(pawnsOf(state.pawns, 0).map((pawn) => pawn.r)).toEqual([HOME_R, 43, 42, 41]);
 

@@ -2013,6 +2013,39 @@ fail the next time the design side moves one, which is a test that reports desig
 is a requirement.
 
 
+### The bonus roll re-timed every seeded match, and the turn drivers had to learn a turn can hold three moves: 2026-09-06, issue #89
+
+**Seeds.** A natural maximum on a D6 or larger now rolls again, so every match plays out differently
+from the same seed. `npm run test:seeds` was run and the block pasted into `tests/e2e/helpers.js`:
+`capturesEarly` moved from seed 83 to 166 (still turn 4), `winsQuickest` from 238 (seat 0, turn 77) to
+74 (seat 2, turn 56), and `advancesEarly` keeps seed 1 but now advances on the **second roll of turn 1**
+rather than on turn 3, which is the rule showing up in the data. The replay script itself needed one
+change: a `while` over the act phase instead of an `if`, because a turn can now hold up to three moves.
+This is the fourth time the seeds went stale and the second time the script made it one command.
+
+**The turn drivers.** 22 end-to-end cases failed after the rule landed, and all 22 had the same cause:
+`playTurn`, `playUntil`, `playPersonTurn` and the two handover cases made one move and then waited for
+the turn number to move on, which a bonus roll does not do. The fix is one question asked in one place:
+`afterMove(board, turnNumber, rolls)` in the new `tests/e2e/turn-helpers.js` polls until the turn has
+passed **or** the same turn is back in `act` with `data-rolls` above the count read before the move, and
+`playOutMoves` keeps moving until the answer is "passed". `playUntil` asks its `done` predicate about the
+bonus roll's `act` too, because "the pawn is on the track and about to advance" can now be true on the
+second roll of a turn. The bot helpers' `snapshot` and `waitPast` read `rollsThisTurn` for the same
+reason: a bonus roll brings the same turn back to the same phase, and without the count `waitPast` had
+nothing to see change.
+
+**`helpers.js` split.** The new drivers took it to 366 lines. The turn drivers moved to
+`turn-helpers.js` and `helpers.js` re-exports them, so no spec changed an import. The two files import
+each other (the drivers read the board through `boardState`), which ESM allows because every reference is
+inside a function body; noted here so nobody "fixes" it into a third file for no gain.
+
+**Coverage.** `bonus-roll.test.js` (core, 9 cases), `bonus-roll-turn.test.js` (state, 7 cases: back to
+`roll`, D4 floor, three-roll cap, no-move maximum, modifiers cleared, no bonus after a win),
+`roll-steps.test.js` and `pool-screen.test.js` extended, `match.test.js`'s scripted full match regrouped
+into 12 turns for player 0 instead of 33 and asserting the turn count from the same rule, and one new
+end-to-end case `bonus-roll.spec.js` that asserts the rule either way round depending on which die the
+seed hands slot 0.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

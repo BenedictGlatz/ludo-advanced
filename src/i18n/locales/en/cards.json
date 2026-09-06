@@ -27,6 +27,8 @@
       },
       "range": "Range 1 to {{faces}}",
       "leave": "Leaves start on {{faces}}",
+      "bonus": "Rolling {{faces}} rolls again",
+      "noBonus": "No bonus roll",
       "copies": "{{copies}} in the pool"
     },
     "skill": {

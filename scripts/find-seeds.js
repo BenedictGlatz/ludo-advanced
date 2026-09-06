@@ -125,7 +125,13 @@ function replay(seed, playerCount) {
     if (settled.failed) return { ...settled, turns };
     state = settled.state;
 
-    if (state.phase === TURN_PHASE.ACT) {
+    if (state.phase !== TURN_PHASE.ACT && state.refusalReason !== null && found.passed === null) {
+      found.passed = state.turnNumber;
+    }
+
+    // A loop and not an `if`, since issue #89: a natural maximum on a D6 or larger rolls the same die
+    // again, so one turn can hold up to three act phases. `settle` rolls the bonus die on the way back.
+    while (state.phase === TURN_PHASE.ACT) {
       const pawn = lowestMovablePawn(state);
       const move = state.legalMoves.find((entry) => entry.pawn === pawn);
       const turnNumber = state.turnNumber;
@@ -142,8 +148,7 @@ function replay(seed, playerCount) {
       const resolved = settle(played.state, deps);
       if (resolved.failed) return { ...resolved, turns };
       state = resolved.state;
-    } else if (state.refusalReason !== null && found.passed === null) {
-      found.passed = state.turnNumber;
+      if (state.status !== MATCH_STATUS.RUNNING) break;
     }
 
     if (state.status !== MATCH_STATUS.RUNNING) break;

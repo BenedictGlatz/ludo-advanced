@@ -4697,6 +4697,33 @@ to get wrong later.
 
 ---
 
+### 2026-09-06: The bonus roll comes in with the objection that once rejected it built in as a floor
+
+- **What prompted it:** playtest item 2 (issue #89): a player who rolls the die's maximum should roll
+  that die again. GDD § 3 had rejected exactly this, because a D2 rolls its maximum every other time.
+- **Chosen:** the Product Owner took the rule with a six-face floor and asked that the D2 and D4 cards
+  say they give no bonus. Added: a cap of three rolls a turn, the natural face rather than the modified
+  total, modifiers cleared between rolls, no second Action card, and a bonus even after a maximum that
+  could not be used.
+- **Rejected: no floor, the classic rule on every die.** It is what the tester asked for word for word,
+  and it is the case the GDD's own arithmetic rules out: a D2 turn would roll again half the time, three
+  times in a row an eighth of the time, and the card that makes the D2 a gamble would make it a machine.
+- **Rejected: no cap.** With real dice a run of maxima ends by itself; with a scripted RNG that always
+  answers the maximum it never does, and the bot loop and every seeded test would hang. The classic
+  three-sixes rule gives the cap a reading players already know.
+- **Rejected: the modified total counting as the maximum.** Angel Die, Speedrun and FR FR would all buy
+  a second roll, FR FR every single time. The face the die showed is the only reading under which the
+  bonus is a property of the roll and not of the hand.
+- **Rejected: leaving `refusalReason` standing on a no-move maximum.** The strip would say "no move is
+  possible" for the instant before the bonus die is thrown, then contradict itself. Cleared with the rest
+  of the roll's leftovers; the bonus line in the roll breakdown says what happened instead.
+- **What it cost:** `turn-manager.js` had to be split first (300 lines), 22 end-to-end cases and the
+  scripted full match had to learn that a turn can hold three moves, and three of five seeds moved.
+  Chapter 08 has the details. About two hours, most of it in the test drivers rather than in the rule.
+- → Ch. 01, Ch. 05, Ch. 06, Ch. 08
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

@@ -244,6 +244,9 @@ export function clearedTurnFields() {
 
     /** The roll modifiers played this turn (`core/roll.js`). */
     modifiers: createModifiers(),
+    /** Rolls made this turn, and whether a bonus roll was earned (issue #89, `core/bonus-roll.js`). */
+    rollsThisTurn: 0,
+    bonusRoll: false,
     /** How many cards each seat has played this turn, and how many it is allowed (FR-23). */
     cardsPlayed: {},
     cardBudget: {},
