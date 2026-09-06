@@ -509,6 +509,12 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   wrapped inside a 3 rem circle and drew itself across the ring. `prompt-view.js` now writes the number
   and puts the sentence on `aria-label`; one end-to-end case covers it, written against the broken bundle
   first so it is known to fail without the fix. Sprint 2.
+- **2026-09-06, night**: `15-implementation-plan-bot-setup-menu.md` deleted from the repository root. It
+  was the step-by-step plan for the line-up screen, written on 2026-09-05 against a tree that no longer
+  exists ("read against `2d01e73`", with line numbers), and issue #76 landed with handoff 15 the same day.
+  A plan whose work is built is a document that can only go stale and be believed: what it decided is in
+  Ch. 04 and in the decision blocks below, which are the copies that get maintained. Nothing committed
+  linked to the file, and its history keeps it recoverable. Sprint 2.
 
 ---
 
