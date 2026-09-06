@@ -4898,6 +4898,29 @@ to get wrong later.
 
 ---
 
+### 2026-09-06: The smarter bot starts with a scoreboard, not with a smarter bot
+
+- **Chosen:** the work to make the bots play tactically is planned in four phases in
+  `00-Meta/Project-Management/Bot-Tactics-Plan.md`, and the first phase builds a measuring tool
+  (`scripts/bot-arena.js`, seeded bot-against-bot matches with per-seat tuning profiles) before any
+  value in `ai/` changes. Danger and capture opportunity in the move choice come second, sharper card
+  targeting third, tuning of the guessed constants last.
+- **Rejected:** *starting with the danger term straight away.* It is the obvious gap and everybody agrees
+  it is the biggest one, and that is exactly why it is dangerous to build unmeasured: a wrong opponent
+  model plays worse than no model, as `move-scoring.js` already warns, and `bot-match.test.js` only
+  proves a match finishes, not that the bot got better. Every constant in `ai/` is labelled "a guess"
+  today, and the project's own documentation rule (numbers only next to the command that produced them)
+  has no command to point at for the bot.
+- **Also rejected:** *look-ahead search (minimax, Monte Carlo tree search).* Random dice, hidden cards and
+  up to four seats make the tree explode, `ai/` may not sample, and a one-move expected-value model is
+  how strong human Ludo players think anyway. The plan sharpens the model instead of searching over it.
+- **Consequence:** the per-seat profile that the arena needs is also the seam a difficulty setting would
+  use, so that becomes a Product Owner question rather than a rewrite. The plan is a working document
+  and is deleted once built, like the handoff 15 plan was.
+- → Ch. 06, Ch. 08, Ch. 09
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first
