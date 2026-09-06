@@ -521,6 +521,12 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   choice, lead-weighted card damage, a real trap search and four receiving-end values for Nühü.
   The arena's verdict is in Ch. 09 and it is partly negative. Sprint 3.
 
+- **2026-09-06, night**: Skill card animations planned. `Skill-Card-Animations-Brief.md` is design
+  brief 18, opening D104 to D115, and `Skill-Card-Animations-Plan.md` is the six-phase implementation
+  plan that consumes it. Both in the repository root, at the Product Owner's request; the brief belongs
+  at `01-Design/Handoff/18-brief-skill-card-animations.md` when the round is actually run. No code
+  changed. Sprint 3.
+
 ---
 
 ## Decisions
@@ -5046,6 +5052,41 @@ to get wrong later.
   played on somebody else's; `values-window.js` kept six reactions and `values-nuehue.js` took the
   seventh, which is now four cases long.
 - → Ch. 06
+
+### 2026-09-06: A played skill card gets a cast in two stages, and the 36 drawings are not touched
+
+- **Chosen:** every skill card gets an animation of its own, built as a **cast in two stages**. The card
+  shows itself large on a stage of its own, then its effect lands on the board. Each card's motion is a
+  **shared base per family plus an accent of its own**, and what moves is the **card as an object plus a
+  new effect layer**, never the inside of the illustration. The cast gets **its own moment in the turn**,
+  on D70's pattern: the loop decides that it waits, a token decides how long, `?fast=1` sets it to zero
+  and the shape of the turn is identical either way. A bot's card play animates like a person's.
+- **Rejected:** *animating the parts of the drawing itself*, the banana sliding, the angel flapping. It
+  is the strongest effect and it needs anchors, classes or data attributes per group, inside the
+  generated SVGs. Those files come out of a Claude Design artboard through
+  `scripts/extract-card-art.js` and brief 03 fixed them as generated and not hand-edited, so this is a
+  change to the extractor **and** to the artboard. It is a handoff of its own if it is ever wanted, and
+  it would have blocked every other part of the work behind an art round.
+- **Rejected:** *animating the card in place in the fan*, which is the cheapest option and needs no new
+  region and no new moment. A skill hand card is 159 by 233 px at the design resolution. Twenty-nine
+  animations that a player can tell apart at that size is not a thing, and the one that would read is
+  the one the dice hand already has.
+- **Rejected:** *twenty-nine fully independent choreographies.* Maximum variety, and it buys it by
+  giving up the property that makes the rest of this game look like one object: 29 hand-built keyframe
+  sets with nothing shared drift apart, and NFR-02's 300 lines would have decided the file split rather
+  than a seam. The family base is what holds the accents together.
+- **Four findings from reading the tree, each of which is work the plan now names rather than discovers:**
+  `lastCardPlayed` is `{ seat, cardId }` and carries **no target**, so nothing in `ui/` can know which
+  square a Banana Peel went on. Hyperbeam, Janky RPG, Yeet and Let Him Cook roll a die **inside their
+  own effect** and the number is dropped, so the board stage cannot know how far the effect reached; the
+  fix follows `trapFired`, which is already a report and not board state. **Twelve of the 29 cards do
+  nothing the board can show**, and seven of those twelve change the roll, which already has a stage.
+  And four of the files this work must touch have between **0 and 4 lines** of headroom against the
+  300-line limit, `game-loop.js` at exactly 300, so three splits are part of the work.
+- **Planned, not built:** a cast **replaces** the two-second hold that `timers.js` currently gives a
+  bot's card play, rather than stacking on top of it. A cast is that announcement and a better one. A
+  fired trap keeps its own hold, because a trap is a second event the cast did not show.
+- → Ch. 04, and Ch. 06 for the state field
 
 ---
 
