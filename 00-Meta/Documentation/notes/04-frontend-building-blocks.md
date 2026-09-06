@@ -3449,6 +3449,81 @@ to a player who asked for less movement". The second question has a rule of its 
 two lists in one file meant that rule was stated 150 lines away from half the tokens it governs.
 
 
+### The message bar covered the card being read, which is the same mistake as 2026-09-04 one level up: 2026-09-06, no issue
+
+Reported from a screenshot of a real match, in the same way and for the same underlying reason as the
+2026-09-04 defect above. Pointing at a skill card magnifies it upward out of its own plate, and the
+message strip, which since D98 hangs in the band just above that plate, painted straight across the
+card's title and its rules paragraph. The player asked to read a card and the game put a bar over it.
+
+#### Two z-index scales, one stacking context
+
+`tokens.css` holds two ladders. The page's own ladder runs `--layer-square: 1` through
+`--layer-chrome: 7` and has `--layer-refusal: 5` in it, which is the strip. The card ladder runs
+`--layer-card: 1` through `--layer-card-reading: 4` and is meant to order cards against each other
+inside a plate.
+
+**Two ladders only stay separate while something keeps them apart, and nothing did.** `.app__skill`
+had `position: relative` and no `z-index`, so it is not a stacking context; neither is `.hand`. The
+strip and the cards are both descendants of that plate, so the browser compared 5 against 4 straight
+across, as if the two numbers had ever been measured against the same thing. The strip won every time.
+
+This is the 2026-09-04 defect exactly, one level up: there it was two plates that were not stacking
+contexts, here it is the same plate failing to separate two ladders. **Worth keeping in the report as
+the second occurrence of one mistake**, because it says something the first one alone does not: a
+z-index scale is only a scale inside the context that contains it, and a project that keeps more than
+one scale has to say where each of them starts.
+
+#### The fix moves the layer up one element and takes it off the strip
+
+`--layer-refusal` now sits on `.app__skill` in `app.css`, and `.message-strip` carries no `z-index` at
+all. Two consequences, both of them the point:
+
+- The plate is a stacking context, so the card ladder is sealed inside it and can no longer be compared
+  against the page ladder.
+- The plate stands on the page ladder exactly where the strip used to stand, so nothing else on screen
+  changes: the strip still paints over the dice plate below it, and the cast stage, which is `--layer-cast: 5`
+  and a later sibling, still covers the rail while a card is being played.
+
+Inside the plate the strip is below every card layer on purpose. It hangs in the band above the cards
+and can only ever meet a card that has grown out of the plate to be read, and that card is the one thing
+on screen the player has explicitly asked to see.
+
+*Rejected: raising the revealed card above `--layer-refusal`*, which is the smaller diff and is what the
+2026-09-04 fix did one level down. It cannot work here: the only numbers above 5 are `--layer-overlay`
+and `--layer-chrome`, and a card painted there would also cover the cast stage, so a card under the
+pointer would poke through a card animation. The defect would move rather than go away.
+
+*Rejected: lowering the strip's number instead*, leaving both ladders in one context. It fixes this pair
+and leaves the next pair to be discovered by a player, which is what happened between 2026-09-04 and
+today.
+
+#### The test, and the file it forced
+
+`tests/e2e/card-reveal-stacking.spec.js` is new, holds two cases, and the second one is this defect. It
+is a **split and not only an addition**: `card-reveal.spec.js` was at 273 lines and NFR-02's limit is
+300, so the 2026-09-04 case moved into the new file with this one. The seam is real: the rest of
+`card-reveal.spec.js` is about the reveal itself and every case in it passes with the revealed card
+painted underneath something else.
+
+Both cases ask `document.elementFromPoint` what is painted in the middle of the intersection, for the
+reason the 2026-09-04 section gives, and the helper returns the string `"no overlap"` when the boxes do
+not meet, so a case that has stopped testing anything fails instead of passing quietly.
+
+**Getting the situation on screen was the expensive part of the case, not the assertion.** The strip has
+three voices and only one of them stays up long enough to point at a card: the roll breakdown (D73)
+stays for the whole `act` phase, a refusal passes the turn a few seconds later, and a trap holds the turn
+for `--motion-trap-hold`. So the case stacks the pool with Angel Dice and plays two turns without using
+one, because a seat draws a single card per turn (FR-23) and a hand that still has a card in it after
+playing one cannot exist on turn 1 at all.
+
+**A negative finding worth recording: the first run of the new case passed against unfixed CSS.** The
+Playwright config runs `npm run build && npm run preview` with `reuseExistingServer`, so a preview
+server left running from an earlier build serves the old bundle and the build step never runs. The case
+was only trustworthy after `npm run build` was run by hand and the new `z-index` was confirmed in
+`dist/assets/*.css`. Anybody chasing a stylesheet fix that "does not work" should check that first.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

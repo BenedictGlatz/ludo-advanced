@@ -783,6 +783,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The message bar no longer covers the skill card you are reading.** Pointing at a card in your hand
+  magnifies it upward, out of its own plate, and the bar that hangs above that plate painted straight
+  across the card's title and rules text, so the one thing the reveal exists to show was the thing being
+  hidden. The whole rail now stands where the bar stood, and inside it a card being read is above every
+  message
 - **The reaction countdown reads as a number in a ring again.** The ring was being given the whole
   sentence, "Reaktion? 27 s", inside a circle sized for two digits, so the text wrapped, spilled out on
   every side and covered the ring that shows how much time is left. The ring now shows only the seconds;

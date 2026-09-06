@@ -7,6 +7,40 @@ times on 2026-09-04, twice on 2026-09-05 and six times on 2026-09-06**
 
 ---
 
+## Status on 2026-09-06, night: the message strip's layer moved off the strip and onto the plate
+
+**Nothing is owed as a brief. This is a correction to a delivered spec, filed so the design side is not
+working from a spec the code no longer follows.**
+
+Handoff 16's D98 hangs the message strip above `.app__skill` and gives `.message-strip` itself
+`z-index: var(--layer-refusal)`. Built exactly that way, and in play it covered the skill card the
+player was pointing at: the reveal magnifies a card upward out of the plate, straight into the band the
+strip hangs in, and the strip is 5 while a card being read is `--layer-card-reading`, 4.
+
+The two numbers are from **two different ladders** and were never meant to meet. `.app__skill` was
+`position: relative` with no `z-index`, so it is not a stacking context and the browser compared them
+anyway.
+
+**What changed in the delivered stylesheets:**
+
+| Before | Now |
+| --- | --- |
+| `.message-strip { z-index: var(--layer-refusal) }` | no `z-index` on the strip at all |
+| `.app__skill { position: relative }` | `.app__skill { position: relative; z-index: var(--layer-refusal) }` |
+
+No new token, no new value, and nothing looks different while it is working: the plate stands on the
+page's ladder exactly where the strip stood, so the strip still covers the dice plate and the cast stage
+still covers the rail. Inside the plate the strip is now below the card layers, which is what lets a
+card grown out of the plate be read.
+
+**The one thing to keep in mind when the strip is next specified:** a `z-index` on `.message-strip`
+would put it back on the page's ladder and re-break this, and both stylesheets carry a comment saying
+so. If the strip ever has to stand above something inside the plate, the number belongs on the card
+ladder, not on the page's.
+
+---
+
+
 ## Status on 2026-09-06, night: handoff 18 landed whole, and four things come back
 
 All twelve answers are built. The ten stylesheets are in `src/ui/styles/` in the load order the

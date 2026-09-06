@@ -5174,6 +5174,35 @@ to get wrong later.
 - → Ch. 04, Ch. 09, Ch. 11
 
 
+### 2026-09-06: The plate carries the layer, so the two z-index scales stop being compared to each other
+
+- **The defect:** the message strip painted across the title and the rules paragraph of the skill card
+  the player was pointing at. Reported from a screenshot of a real match, exactly like the 2026-09-04
+  one, and it is the same mistake one level up.
+- **The cause:** `tokens.css` holds two z-index ladders, the page's (`--layer-square: 1` to
+  `--layer-chrome: 7`, with `--layer-refusal: 5` in it) and the cards' (`--layer-card: 1` to
+  `--layer-card-reading: 4`). `.app__skill` was `position: relative` with no `z-index`, so it is not a
+  stacking context and neither is `.hand`, and the browser compared 5 against 4 as though the two
+  numbers had ever been measured against the same thing.
+- **Chosen:** `--layer-refusal` moves off `.message-strip` and onto `.app__skill`. The plate becomes a
+  stacking context, so the card ladder is sealed inside it, and the plate stands on the page ladder
+  exactly where the strip stood, so nothing else on screen moves.
+- **Rejected:** *raising the revealed card above 5*, which is what the 2026-09-04 fix did one level
+  down. The only numbers above 5 are the overlay's and the chrome's, and a card painted there would
+  cover the cast stage as well, so a card under the pointer would poke through a card animation. The
+  defect would move rather than go.
+- **Rejected:** *lowering the strip's number and leaving both ladders in one context*, which fixes this
+  pair and leaves the next pair for a player to find. That is precisely what happened between
+  2026-09-04 and today.
+- **What it costs:** a rule that has to be understood in two files. `app.css` now holds a `z-index` that
+  a stylesheet three files away depends on not having one, and both comments say so.
+- **Filed back to design:** the delivered handoff 16 spec puts the layer on the strip, so
+  `01-Design/Handoff/00-open-requests.md` records that the code no longer follows it.
+- **Test:** `tests/e2e/card-reveal-stacking.spec.js`, new, two cases, and the 2026-09-04 case moved into
+  it because `card-reveal.spec.js` was at 273 of NFR-02's 300 lines.
+- → Ch. 04, Ch. 08
+
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

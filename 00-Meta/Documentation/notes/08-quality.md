@@ -2191,6 +2191,33 @@ seats on the same turn, which the script cannot currently search for because it 
 Recorded as owed rather than claimed as done.
 
 
+### A stale preview server made a regression test pass against the broken CSS: 2026-09-06, no issue
+
+The second stacking defect (Chapter 04) got a new end-to-end file, `card-reveal-stacking.spec.js`. Two
+things about it are worth keeping.
+
+**The split is the interesting half.** The new case belongs beside the 2026-09-04 one, and
+`card-reveal.spec.js` was at 273 lines against NFR-02's 300, so the older case moved out with it rather
+than the new one being wedged in. The seam is real and not an excuse: `card-reveal.spec.js` asserts that
+the reveal happens, and every case in it passes with the revealed card painted underneath something
+else. The two cases here assert only which of two things is painted on top. **The limit forced a split
+that was already the right shape**, which is the second time that has happened (`trap-marks.spec.js` off
+`traps.spec.js` was the first).
+
+**The negative finding: the new case passed against the unfixed stylesheet, and that nearly went
+unnoticed.** `playwright.config.js` runs `npm run build && npm run preview` with
+`reuseExistingServer: !process.env.CI`, so when a preview server from an earlier build is already
+listening, Playwright attaches to it and **the build step never runs**. The suite then measures whatever
+was in `dist/` at the time that server was started. The fix was confirmed only after `npm run build` was
+run by hand and the new rule was read back out of `dist/assets/*.css`.
+
+It does not affect CI, where `reuseExistingServer` is off and every run builds. It affects exactly the
+case a developer is in when they care most: a stylesheet fix, checked locally, against a dev session that
+has been open for a while. **Worth a line in the report under "what the tooling does not tell you":** a
+green suite is only evidence about the bundle that was actually served, and nothing in the output says
+which bundle that was.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
