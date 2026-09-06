@@ -146,6 +146,88 @@ of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
 
+### Measured 2026-09-06, after design handoff 18 landed
+
+Every command in the section above was re-run after the cast landed. **This is the current
+measurement**; the blocks below it are kept so the growth is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **17371 lines in 110 files**, up from 16247 in 104 | 2026-09-06, after handoff 18 |
+| Stylesheet lines in `src/` | 7 | **6166 lines in 32 files**, up from 4420 in 21 | 2026-09-06, after handoff 18 |
+| Test lines in `tests/` | 2 | **19599 lines in 118 files**, up from 18733 in 113 | 2026-09-06, after handoff 18 |
+| Lines in `src/core/` | 3 | 4543 lines in 32 files, up 31 | 2026-09-06, after handoff 18 |
+| Lines in `src/state/` | 3 | 2373 lines in 14 files, up 29 | 2026-09-06, after handoff 18 |
+| Lines in `src/ui/` | 3 | **7264 lines in 43 files**, plus 6166 lines of CSS | 2026-09-06, after handoff 18 |
+| Lines in `src/ai/` | 3 | 2768 lines in 18 files, **unchanged** | 2026-09-06, after handoff 18 |
+| Unit tests | 4 | **85 test files, 1044 tests**, all passing | 2026-09-06, after handoff 18 |
+| End-to-end tests | 8 | **152 tests in 28 files per browser, 456 across the three**, all passing | 2026-09-06, after handoff 18 |
+| Coverage of the three headless layers, lines | 5c | 99.32 % (1325/1334) | 2026-09-06, after handoff 18 |
+| Coverage of `src/core/`, lines | 5c | 99.66 % (581/583) over 32 files | 2026-09-06, after handoff 18 |
+| Coverage of `src/state/`, lines | 5c | 99.05 % (312/315) over 14 files | 2026-09-06, after handoff 18 |
+| Coverage of `src/ai/`, lines | 5c | 99.08 % (432/436) over 18 files | 2026-09-06, after handoff 18 |
+| Coverage, branches | 5a | 95.26 % | 2026-09-06, after handoff 18 |
+| Coverage, functions | 5a | 99.79 % | 2026-09-06, after handoff 18 |
+| Longest file of any kind | 6 | 300 lines, `src/ui/game-loop.js`, still the only one at the limit | 2026-09-06, after handoff 18 |
+| Longest stylesheet | 7 | **267 lines, `src/ui/styles/board.css`**, down from 296 | 2026-09-06, after handoff 18 |
+
+**Four readings.**
+
+1. **The stylesheets grew by 40 per cent in one delivery**, 1746 lines and eleven files, and it is the
+   largest single addition of CSS the project has had. Ten of the eleven are the cast; the eleventh is
+   `motion.css`, which is a split and not new code.
+2. **The longest stylesheet went *down* by 29 lines**, and that is the split doing its job.
+   `tokens.css` had been the longest at 296 of 300 for two deliveries and would have reached 322 with
+   the cast's four tokens in it. It is now 229 and `motion.css` is 115, and the file that is closest to
+   the limit is `board.css` at 267, which is where it has been all along.
+3. **`src/ai/` is byte-identical after a whole feature**, and `core/` moved by 31 lines, all of them
+   the `cardReach` report and its comments. A feature that is 1746 lines of CSS and 11 new JavaScript
+   files touched the rules layer with one field.
+4. **Coverage did not move**, and the reason is worth stating rather than leaving to be inferred:
+   `vitest.config.js` measures `src/core/**` and `src/state/**` only, so eleven new `ui/` files are
+   outside the figure by design. Three of them are covered by new unit tests that do not appear in it,
+   and the rest by `cast.spec.js`, which produces no percentage. The configuration was left alone
+   rather than widened, because widening it would quietly change what the NFR-05 figure means.
+
+### How many skill cards a match actually plays, measured 2026-09-06
+
+The figure design brief 18 § 4.4 said nobody had, and the one the cast's cost has to be judged
+against. The arena produces it as a by-product, because it already counts card plays per seat.
+
+```bash
+npm run bots:arena
+```
+
+```
+200 matches, 4 seats, seeds 1..200, rotating line-up, 313.8 turns per match on average
+
+profile    wins    rate       95 %  captures    cards
+---------------------------------------------------
+default     200  100.0 %  +/-  0.0      6.77    67.34
+```
+
+**67.34 card plays per seat per match**, four seats, so **about 269 card plays in a four-bot match of
+313.8 turns**. That is roughly 0.86 card plays per turn.
+
+**And this is the negative finding of the whole delivery, so it is written down plainly.** At the
+spec's 1.5 seconds with a board stage and 0.94 without, 269 card plays cost between **4.2 and 6.7
+minutes** of a four-player match, against the roll's 0.9 seconds per turn, which is about 4.7 minutes.
+**The cast is at least as expensive as the roll and possibly half as expensive again**, and design spec
+18's D108 said in as many words that the number to compare against was the roll's.
+
+Three things have to be said with it rather than after it:
+
+- **It is a bot measurement.** Four bots play every card they can afford every turn, because that is
+  what the profile is scored on. A four-person table will play fewer, and nobody has measured how many
+  fewer, because there is no way to measure a person with a seeded script.
+- **It is not what it replaces.** Before this delivery a bot's card play already held the turn for two
+  seconds through `midTurnAnnouncement`, and that hold was removed here. Against 269 card plays of
+  which some fraction are bots', the cast is not 4.2 minutes *added*; part of it was already being paid
+  for a sentence in the strip.
+- **The lever exists and it is one token.** `--motion-cast-hold` is 1500 ms in `motion.css` and nothing
+  else reads it. This is a Product Owner question and it is filed as one: the number can be halved
+  without a line of JavaScript changing.
+
 ### Measured 2026-09-06, after the bot tactics plan
 
 Every command in the section above was re-run after the four phases of

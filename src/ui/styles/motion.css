@@ -1,0 +1,115 @@
+/* Ludo Advanced motion tokens: every duration, every easing, and the one
+   media query that takes the movement out of them.
+   Split out of tokens.css on 2026-09-06, when design spec 18's four cast
+   tokens would have taken that file past NFR-02's 300 lines. Loads
+   immediately after it and before every other stylesheet.
+
+   Why this is the seam rather than a shorter comment. tokens.css answers
+   "what may this UI look like": colours, spacing, type, radii, shadows,
+   geometry, layering. This file answers "how long may it take, and what
+   happens to a player who asked for less movement". The second question has
+   a rule of its own that the first does not have, and it is the block at the
+   foot of this file: a duration is either a movement, which collapses to
+   1 ms, or a reading time, which does not. Keeping the two lists in one file
+   meant that rule was stated 150 lines away from half the tokens it governs.
+
+   The line between the two kinds is D20's, restated by D60, D70 and D111:
+   a player who asked for less movement has not asked for less time to read.
+   --motion-refusal-hold, --motion-trap-hold, --motion-roll-hold and
+   --motion-cast-hold are the four tokens on the reading side, and none of
+   them appears in the reduced-motion block. */
+
+:root {
+  /* --- Motion (D8). --motion-feedback is the NFR-11 budget. --- */
+  --motion-feedback: 90ms;
+  --motion-move: 240ms;
+  --motion-capture: 320ms;
+  --motion-pulse: 1200ms;
+  --motion-deal-stagger: 60ms;
+
+  /* The reveal of a card in your own hand (D68). 160 ms rather than
+     --motion-feedback, because 47 per cent of growth inside 90 ms is a jump
+     and not a movement, and rather than --motion-move, which is the budget
+     for a piece crossing the board. --motion-reveal-delay is how long the
+     growth waits, so sweeping the pointer across a fan of five does not fire
+     five reveals. The lift still answers inside --motion-feedback with no
+     delay, which is the response NFR-11 measures. */
+  --motion-reveal: 160ms;
+  --motion-reveal-delay: 120ms;
+  --ease-ui: cubic-bezier(0.2, 0, 0, 1);
+  --ease-move: cubic-bezier(0.34, 1.1, 0.64, 1);
+  --ease-capture: cubic-bezier(0.55, 0, 0.85, 0.3);
+
+  /* Overlays (D38, D39). --motion-curtain moves the handover panel, never the
+     sheet: the sheet is opaque in frame one or it conceals nothing. */
+  --overlay-veil: color-mix(in srgb, var(--color-app-bg) 74%, transparent);
+  --motion-overlay: 180ms;
+  --motion-curtain: 320ms;
+  --ease-curtain: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* The refusal message holds for four seconds (D20, now a token). */
+  --motion-refusal-hold: 4s;
+
+  /* The roll (D70). --motion-roll is the kept dice card's throw. Its first
+     46 per cent is the wind up, which runs while the two cards nobody kept
+     travel home on --motion-move, and the number lands as it ends.
+     --motion-roll-hold is what game-loop.js waits before the turn carries on:
+     the roll's turn on screen, not a movement, so it stays out of the
+     reduced-motion block on the D20 and D60 argument. */
+  --motion-roll: 520ms;
+  --motion-roll-hold: 900ms;
+
+  /* A trap announcement holds for two seconds before the turn may carry on
+     (D60). Shorter than the refusal, because a refusal follows the player's
+     own click and they are already looking at the board, while a trap fired
+     by a card interrupts a turn that is under way. Long enough that the strip
+     cannot be missed. The view reads it; no stylesheet does. */
+  --motion-trap-hold: 2s;
+
+  /* The cast (D108, D111): a played skill card's own moment. --motion-cast is
+     the card stage, 640 ms: the first 37.5 per cent is the card leaving the
+     hand for the stage on --motion-move's 240 ms, the rest is the family's
+     gesture. --motion-cast-board is the board stage, 560 ms: the effect
+     crosses to its target in --motion-move and lands in --motion-capture.
+     --motion-cast-hold is what the loop waits: both stages, the card's
+     --motion-move exit to the last-card plate, and 60 ms of the card at
+     rest. A card with no board stage costs the hold minus the board stage,
+     940 ms, which is the roll's own moment. Movement is inside the
+     reduced-motion block, the hold is outside it, on D70's argument. */
+  --motion-cast: 640ms;
+  --motion-cast-board: 560ms;
+  --motion-cast-hold: 1500ms;
+
+  /* The reaction window, and the point at which it starts shouting. */
+  --clock-window: 30s;
+  --clock-urgent: 8s;
+}
+
+/* D12: loops stop, feedback stays. The curtain keeps its opacity and loses
+   only its travel, because concealment is not a decoration (D39). */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-move: 1ms;
+    --motion-capture: 1ms;
+    --motion-pulse: 0ms;
+    --motion-deal-stagger: 0ms;
+    --motion-overlay: 1ms;
+    --motion-curtain: 1ms;
+
+    /* The reveal stays and arrives at once (D12, D68): reading a card is
+       feedback. --motion-reveal-delay keeps its value, because it is a guard
+       against a latch and not a movement, the same argument that keeps
+       --motion-refusal-hold and --motion-trap-hold out of this block. */
+    --motion-reveal: 1ms;
+
+    /* The throw goes; the landing stays, because the number arriving is the
+       feedback D12 keeps. --motion-roll-hold is deliberately absent (D70). */
+    --motion-roll: 1ms;
+
+    /* The cast's two stages go; the hold does not (D111, D112). The card is on
+       the stage in frame one and the board marks are attribute states, so a
+       player who asked for less movement still sees which card and where. */
+    --motion-cast: 1ms;
+    --motion-cast-board: 1ms;
+  }
+}

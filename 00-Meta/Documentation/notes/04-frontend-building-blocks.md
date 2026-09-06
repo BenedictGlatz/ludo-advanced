@@ -3331,6 +3331,124 @@ the test is known to see the bug it was written for. It opens a real window with
 Devil Die and **without `?fast=1`**, because `fast` collapses the window to nothing and the window is the
 subject.
 
+### Design handoff 18: a played skill card gets a moment of its own (2026-09-06)
+
+**What was missing.** A card play had no moment. The card left the hand, the effect happened in the
+same synchronous pass, and the only evidence afterwards was one sentence in the message strip and a
+small plate at the end of the HUD row. For a **bot's** card that meant a player could not tell what
+had just been done to them, which is the report the whole feature was raised against.
+
+**The one idea in all twelve answers of spec 18**, and everything below follows from it: *the card is
+the moment, the board is the consequence, the plate is the record.*
+
+#### The stage, and where it plays
+
+`.cast` is built empty once per match by `page.js` and mounted as the last child of `.app`, before the
+overlay. It plays **over the board**, centred on the board's centre, at the card's reference size, on
+`--layer-cast: 5`.
+
+D98 forbids a permanent tenant on the board, and D104 draws the line that lets this through: a
+permanent thing may not cover the board because the board is read *while the player decides*; a cast
+plays while the turn is held and nobody can decide anything, and it is gone before anybody can. The
+price is stated rather than hidden: at 1440 by 900 the card stands over sixteen of the forty track
+fields and the inner two fields of each home column, for 1.5 seconds, while nothing is clickable.
+
+#### Ten stylesheets, and why that is the 300-line rule rather than taste
+
+| File | What is in it | Lines |
+| --- | --- | --- |
+| `cast.css` | The stage, the four states, the card's arrival and exit, the parts | 199 |
+| `cast-base.css` | The six family gestures | 163 |
+| `cast-parts.css` | Part timing per stage, and the eleven shared movements | 245 |
+| `cast-fx-roll/hand/trap/status/shove/area.css` | The 29 accents, split by family | 95 to 184 |
+| `board-cast.css` | The marks on fields, on pawns and on the board frame | 205 |
+
+The accents are 29 blocks of 8 to 25 lines each and the seam they split along is the family, so a
+reader who wants Hyperbeam opens `cast-fx-area.css` and finds three cards. The six `cast-fx-*` files
+must load **after** `cast-base.css`: six of the 29 accents override the family gesture on the same
+element at equal specificity.
+
+#### The six families, and why the axis is the mechanic
+
+`data-cast-family` takes six values, and `cast-vocabulary.js` is the table: `roll` 7 cards, `hand` 5,
+`status` 7, `shove` 4, `trap` 3, `area` 3.
+
+The reason is what the family is **for**: it says, before the effect lands, what kind of thing is about
+to happen and where to look for it. The type is already the card's band and the category is already its
+pill, both on screen the whole time the card is on the stage, so a family keyed on either would draw a
+fact the card already carries. The one thing about a card that nothing drew yet is its mechanic.
+
+*Rejected: type plus category.* It draws the band and the pill a second time, and it puts Hyperbeam and
+67 in one family because both are offensive, when one of them lands on four fields and the other
+changes a number. *Rejected: `kind`*, the sub-kind label: nineteen values for 29 cards is a label and
+not a grouping.
+
+#### The board half, and the seventeen cards that have one
+
+`.square__cast` is the second empty span on every field from build time, on `.square__trap`'s
+precedent and for the same two reasons: D10 forbids creating an element at the moment it gets content,
+and both pseudo-elements of `.square` are already taken. A pawn gets no new child; its mark is
+`outline` on the `.pawn` box, which nothing else on the piece uses.
+
+Four kinds of field mark (`direct`, `splash`, `path`, `aura`) and three kinds of pawn mark (`victim`,
+`actor`, `shielded`), all written as `data-cast-hit` by `board-marks.js`, which is the file that
+already owns marks on the board. **They are not part of `applyBoardMarks`**, and that is the one thing
+worth reading twice: the four existing marks are derived from the state and rewritten on every render,
+and a cast's marks are not in the state at all. They go on when the board stage starts, come off when
+it ends, and a render in between must not disturb them.
+
+`--cast-i` is a field's place along a run, written inline, and it is what staggers a run of dots one
+feedback beat apart so a Let Him Cook of twelve draws itself from the pawn outward. It is also the one
+piece of the cast that reduced motion **keeps**, because the sequence is information: it is the run's
+length.
+
+#### The twelve without a board stage, and what that buys
+
+Seven cards change the roll, two change a hand, one shuts the remaining windows, one negates a card,
+one takes a card from a hand nobody on this screen can see. None of that happened on the board, so none
+of it is drawn there, and the hold for those twelve is the full hold minus the board stage: 940 ms,
+which is the roll's own moment within 40 ms.
+
+#### Six pairs of numbers, measured off the DOM and not computed
+
+`cast-geometry.js` writes `--cast-from`, `--cast-stage`, `--cast-to` and `--cast-rest` as px relative
+to `.app`, plus `--cast-dir`. Every one of them is a `getBoundingClientRect()` on an element that is
+already in the page.
+
+**The plan proposed `board-geometry.js`'s `cellCentre` and `pawnCentre`**, which answer in cell units
+from the board's top left. Using them would have meant multiplying by a cell size read back off the
+stylesheet and adding the board's own offset: three numbers to get right, each of which can disagree
+with where the piece is actually drawn. Measuring the element cannot be out of step with the screen and
+is also right below the breakpoint, where the board is a different size. The cost is that the module
+only works in a browser, which is why the cast's coverage is Playwright's.
+
+**Two known simplifications, recorded rather than left to be noticed.**
+
+- **The card comes from the hand *plate*, not from the slot.** Spec 18 asks for the slot the card left,
+  and by the time a cast runs the card has gone from the hand and the slot has re-flowed, so the slot
+  cannot be identified without threading a click's presentation state through the loop. A bot, or a
+  hot-seat player answering somebody else's card, has no hand on screen at all and comes from their
+  HUD plate, which is D114's and D115's rule and is implemented as asked.
+- **A shoved pawn's run is reconstructed** from where the pawn now stands plus `cardReach`, walking the
+  track back along the direction it travelled. A Yeet floored at the entry square draws the run the
+  card rolled rather than the two squares the pawn actually moved, and a Let Him Cook that overshot and
+  went home draws no run at all. Both are cosmetic and neither can be wrong in a way a player can act
+  on, which is the test for whether an approximation belongs in `ui/`.
+
+#### The two amendments to existing stylesheets
+
+`app.css`'s `.app` already carried `position: relative` for the message strip, and it now carries a
+second tenant: the cast is the last child of `.app` and its geometry is written against it. One
+declaration, two reasons, and neither of them may take it away.
+
+`tokens.css` gained four tokens and **was split**. Adding `--motion-cast`, `--motion-cast-board`,
+`--motion-cast-hold` and `--layer-cast` would have taken it to 322 lines against NFR-02's 300. The
+seam is a real one and it is the one the reduced-motion block already implies: `tokens.css` answers
+"what may this UI look like" and the new `motion.css` answers "how long may it take, and what happens
+to a player who asked for less movement". The second question has a rule of its own, and keeping the
+two lists in one file meant that rule was stated 150 lines away from half the tokens it governs.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

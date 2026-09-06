@@ -49,6 +49,8 @@ export const FAST_DELAYS = {
   reaction: 0,
   roll: 0,
   bot: 0,
+  cast: 0,
+  castBoard: 0,
 };
 
 /**

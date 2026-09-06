@@ -68,6 +68,11 @@ export function motionMs($board, token, fallback) {
  *    `::after` is the turn-off bar on squares 9, 19, 29 and 39, all four of which are legal trap
  *    targets. There was no third layer to give the mark, which is the same situation `.pawn__status`
  *    solves for the piece in design handoff 07.
+ *
+ * `.square__cast` joined it on 2026-09-06 (design spec 18, D109) for exactly the same two reasons, and
+ * it is the mark a **cast** leaves: which field a card was aimed at, which fields its effect crossed,
+ * and which region refused it. It is built on the home-column fields too, because an effect can reach
+ * one, and it renders nothing without `[data-cast-hit]`.
  */
 function trackSquares() {
   const entries = new Map(SEATS.map((seat) => [entrySquare(seat), seat]));
@@ -79,7 +84,10 @@ function trackSquares() {
     if (entries.has(index)) $square.attr("data-entry-of", entries.get(index));
     if (turnOffs.has(index)) $square.attr("data-turnoff-of", turnOffs.get(index));
 
-    return $square.append($("<span>", { class: "square__trap" }));
+    return $square.append(
+      $("<span>", { class: "square__trap" }),
+      $("<span>", { class: "square__cast" })
+    );
   });
 }
 
@@ -98,6 +106,7 @@ function house(seat) {
     $("<div>", { class: "square square--home-column" })
       .attr("data-player", seat)
       .attr("data-home-step", index + 1)
+      .append($("<span>", { class: "square__cast" }))
   );
 
   return $("<div>", { class: "home-column" }).attr("data-player", seat).append(squares);

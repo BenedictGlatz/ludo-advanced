@@ -1,0 +1,199 @@
+/* The cast: the moment a skill card is played. Its place, its four states,
+   the card's arrival and exit, and the effect layer's parts. Depends on
+   tokens.css and card.css and loads after both; app.css makes .app its
+   containing block. Family gestures are in cast-base.css, the 29 accents in
+   cast-fx-*.css, the marks on the board in board-cast.css.
+   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D104, D108,
+   D110 to D115.
+
+   Where it plays (D104). Over the board, centred on the board's centre, and
+   only while the turn is held. D98 forbids a permanent tenant on the board
+   because the board is read while the player decides; during a cast nobody
+   can decide anything, so there is nothing to hide from them, and the card
+   stands over the finished pieces in the centre and nothing else. It leaves
+   for the last-card plate, so the moment ends where the record begins.
+
+   Geometry is six pairs of px written inline by cast-view.js: --cast-from
+   (the hand slot), --cast-stage (the board's centre), --cast-to (the target),
+   --cast-rest (the last-card plate), plus --cast-span and --cast-dir. Every
+   position below is one of the four --at-* pairs, and each one resolves its
+   -50% against the element that uses it, so a card and a part centre
+   themselves on the same point. If a pair is missing the stage stands in.
+
+   `rotate`, `translate` and `scale`, never `transform`: card.css transitions
+   transform and card-state.css writes into it (roll.css header).
+
+   The turn is held for --motion-cast-hold and every state below is written
+   by the view; the stylesheet only ever answers data-cast. */
+
+.cast {
+  --cast-hue: var(--card-action);
+  --at-from: calc(var(--cast-from-x, var(--cast-stage-x)) - 50%)
+    calc(var(--cast-from-y, var(--cast-stage-y)) - 50%);
+  --at-stage: calc(var(--cast-stage-x) - 50%) calc(var(--cast-stage-y) - 50%);
+  --at-to: calc(var(--cast-to-x, var(--cast-stage-x)) - 50%)
+    calc(var(--cast-to-y, var(--cast-stage-y)) - 50%);
+  --at-rest: calc(var(--cast-rest-x, var(--cast-stage-x)) - 50%)
+    calc(var(--cast-rest-y, var(--cast-stage-y)) - 50%);
+  position: absolute;
+  inset: 0;
+  z-index: var(--layer-cast);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.cast[data-cast="idle"] {
+  visibility: hidden;
+}
+
+/* The hue is the type's, because the type is the one fact about a card that
+   is a rule: green landed means an Action happened, orange a Reaction. The
+   category is on the card itself, which is on screen the whole time. */
+.cast[data-card-type="reaction"] {
+  --cast-hue: var(--card-reaction);
+}
+
+/* --- The card. One .card.card--full from card-view.js, exactly as the plate
+       holds one (D28, D100). The wrapper carries the travel, the card inside
+       carries the family's gesture, so the two never fight over a property.
+       --- */
+
+.cast__card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  translate: var(--at-stage);
+  will-change: translate, scale;
+}
+
+.cast__card > .card {
+  transform-origin: 50% 50%;
+}
+
+/* Arrival. The card leaves its slot at hand size and reaches the stage at
+   the reference size in the first 37.5 per cent of --motion-cast, which is
+   240 ms, on the curve a piece crossing the board uses. The slight rotation
+   is the card coming out of a fan. It then stands for the rest of the stage
+   while the family's gesture plays on the card inside. The click that played
+   it is answered inside --motion-feedback by the slot emptying and the card
+   appearing at the slot in the same frame (NFR-11). */
+.cast[data-cast="card"] .cast__card {
+  animation: cast-arrive var(--motion-cast) var(--ease-ui) both;
+}
+
+@keyframes cast-arrive {
+  0% {
+    translate: var(--at-from);
+    scale: 0.68;
+    rotate: -6deg;
+    animation-timing-function: var(--ease-move);
+  }
+  37.5%,
+  100% {
+    translate: var(--at-stage);
+    scale: 1;
+    rotate: 0deg;
+  }
+}
+
+/* Exit. The card shrinks toward the last-card plate on --motion-move and the
+   curve a captured piece leaves on. `forwards`, so the card stays gone until
+   the view writes idle. */
+.cast[data-cast="done"] .cast__card {
+  animation: cast-leave var(--motion-move) var(--ease-capture) forwards;
+}
+
+@keyframes cast-leave {
+  to {
+    translate: var(--at-rest);
+    scale: 0.22;
+    opacity: 0;
+  }
+}
+
+/* --- Outcomes (D113). pending wears the violet ring the plate and the
+       selected card wear: the card is in a window and not yet a fact.
+       nullified takes the unplayable desaturation from card-state.css as it
+       lands, and the aura fields answer on the board (board-cast.css). A
+       negated card never reaches the board: its cast played as pending, and
+       the Nuehue's own cast is the one that says no (cast-fx-roll-hand.css).
+       --- */
+
+.cast[data-outcome="pending"] .cast__card > .card {
+  box-shadow:
+    0 0 0 0.25rem var(--color-hint),
+    0.5rem 1rem 0 var(--ink-dim);
+}
+
+.cast[data-outcome="nullified"] .cast__card > .card {
+  filter: saturate(0.5) contrast(0.97);
+  transition-delay: calc(var(--motion-cast) * 0.375);
+}
+
+/* --- The effect layer (D110). Four generic parts, empty spans, and no card
+       needs a fifth: the table in the spec spends at most four on any one
+       card. A part is a disc in the cast hue with an ink edge and the piece's
+       shadow, a small solid object like everything else in this game, and
+       an accent may reshape it into a bar, a ring or a card silhouette. It is
+       centred on the stage and invisible until an accent moves it. --- */
+
+.cast__fx {
+  position: absolute;
+  inset: 0;
+}
+
+.cast__part {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: calc(var(--cell) * 0.42);
+  height: calc(var(--cell) * 0.42);
+  translate: var(--at-stage);
+  background: var(--cast-hue);
+  border: var(--border-hair) solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-piece);
+  opacity: 0;
+  will-change: translate, scale, opacity;
+}
+
+/* The default board stage (D109), and eleven of the seventeen board cards use
+   it as is: one part crosses from the card to the target in the first 43 per
+   cent of --motion-cast-board, which is --motion-move, and lands over the
+   rest, which is --motion-capture. Landing is the part swelling and going,
+   because what it leaves behind is the mark on the field or the pawn, and
+   those are drawn by board-cast.css off attributes, not by this flight. */
+.cast[data-cast="board"][data-board="true"] .cast__part[data-part="0"] {
+  animation: cast-fly var(--motion-cast-board) var(--ease-ui) both;
+}
+
+@keyframes cast-fly {
+  0% {
+    translate: var(--at-stage);
+    scale: 0.5;
+    opacity: 1;
+    animation-timing-function: var(--ease-move);
+  }
+  43% {
+    translate: var(--at-to);
+    scale: 1;
+    opacity: 1;
+  }
+  60% {
+    translate: var(--at-to);
+    scale: 1.5;
+    opacity: 1;
+  }
+  100% {
+    translate: var(--at-to);
+    scale: 0.3;
+    opacity: 0;
+  }
+}
+
+/* No media query in this file. --motion-cast and --motion-cast-board are 1 ms
+   under prefers-reduced-motion, so the card is on the stage in frame one, the
+   parts never draw, and the exit runs on --motion-move, which is 1 ms too.
+   The hold is unchanged and the board's marks are attribute states, so what
+   survives is a still card over the board and the marks under it (D112). */

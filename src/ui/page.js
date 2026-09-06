@@ -12,6 +12,7 @@
 import $ from "jquery";
 
 import { renderBoard } from "./board-view.js";
+import { renderCast } from "./cast-view.js";
 import { renderDiceHand } from "./dice-hand-view.js";
 import { renderHud } from "./hud-view.js";
 import { renderPrompt } from "./prompt-view.js";
@@ -32,6 +33,7 @@ export function matchParts(state, handSize) {
     $skillHand: renderSkillHand(),
     $prompt: renderPrompt(),
     $message: $("<div>", { class: "message-strip" }),
+    $cast: renderCast(),
   };
 }
 
@@ -49,6 +51,7 @@ export function emptyParts() {
     $skillHand: $("<div>", { class: "hand hand--skill" }),
     $prompt: renderPrompt(),
     $message: $("<div>", { class: "message-strip" }),
+    $cast: renderCast(),
   };
 }
 
@@ -78,6 +81,11 @@ export function emptyParts() {
  * responding. `.detach()` is the documented way to take an element out of the document and keep what is
  * bound to it.
  *
+ * **The cast stage is the last child before the overlay**, which is design spec 18's D104. It hangs
+ * over the whole page and is measured against it: `app.css` makes `.app` the containing block, and
+ * `cast-view.js` writes its geometry in px relative to that. It is under the overlay on purpose, at
+ * `--layer-cast: 5` against the overlay's 6, because a paused game must cover a cast in flight.
+ *
  * **`session.$app` is written here**, because the shell element is built in this function and rebuilt on
  * every match, and `match-flow.js` needs a handle on it to write `data-paused`. Design spec 04 asks for
  * that attribute so the reaction countdown's CSS animation can stop when FR-07's pause is up: an
@@ -99,6 +107,7 @@ export function mount($root, parts, session) {
         $("<div>", { class: "app__dice" }).append(parts.$diceHand),
         $("<div>", { class: "app__skill" }).append(parts.$message, parts.$skillHand),
         parts.$prompt,
+        parts.$cast,
         session.$overlay
       )
     );

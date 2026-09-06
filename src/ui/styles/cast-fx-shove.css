@@ -1,0 +1,164 @@
+/* The accents of the four shove cards (D107, D109): a pawn moved without a
+   move.
+   Depends on tokens.css, cast.css, cast-base.css and cast-parts.css, and
+   loads after them.
+   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D107, D109.
+
+   These are the loud casts, and they are loud in one way: more than one part
+   leaves the target. Where the parts go is --bx and --by on the element, in
+   cells, signed by --cast-dir where the card has a direction. The fields
+   under the parts light in sequence through data-cast-hit="path" and
+   --cast-i, which is board-cast.css's and is the part of the line that stays.
+   The family's gesture is the lunge, and Uno Reverse replaces it. */
+
+/* Yeet: the flight, and two smaller parts trailing it. A pawn is thrown, and
+   the throw has a wake. */
+.cast[data-card-id="action-yeet"] .cast__part[data-part="1"],
+.cast[data-card-id="action-yeet"] .cast__part[data-part="2"] {
+  width: calc(var(--cell) * 0.26);
+  height: calc(var(--cell) * 0.26);
+}
+
+.cast[data-cast="board"][data-card-id="action-yeet"] .cast__part[data-part="1"],
+.cast[data-cast="board"][data-card-id="action-yeet"] .cast__part[data-part="2"] {
+  animation-name: cast-fly;
+}
+
+.cast[data-cast="board"][data-card-id="action-yeet"] .cast__part[data-part="1"] {
+  animation-delay: calc(var(--motion-feedback) * 0.7);
+}
+
+.cast[data-cast="board"][data-card-id="action-yeet"] .cast__part[data-part="2"] {
+  animation-delay: calc(var(--motion-feedback) * 1.4);
+}
+
+/* Uno Reverse: the card turns over, a half turn on the stage, because that is
+   what the card is. The part is a bar and spins as it crosses, so the turn
+   is seen twice: once on the card, once on the way to the attacker. */
+.cast[data-cast="card"][data-card-id="reaction-uno-reverse"] .cast__card > .card {
+  animation-name: cast-turn;
+}
+
+@keyframes cast-turn {
+  0% {
+    rotate: 0deg;
+    animation-timing-function: var(--ease-move);
+  }
+  100% {
+    rotate: 180deg;
+  }
+}
+
+.cast[data-card-id="reaction-uno-reverse"] .cast__part[data-part="0"] {
+  width: calc(var(--cell) * 0.7);
+  height: calc(var(--cell) * 0.22);
+}
+
+.cast[data-cast="board"][data-card-id="reaction-uno-reverse"] .cast__part[data-part="0"] {
+  animation-name: cast-fly-spin;
+}
+
+@keyframes cast-fly-spin {
+  0% {
+    translate: var(--at-stage);
+    rotate: 0deg;
+    scale: 0.5;
+    opacity: 1;
+    animation-timing-function: var(--ease-move);
+  }
+  43% {
+    translate: var(--at-to);
+    rotate: 180deg;
+    scale: 1;
+    opacity: 1;
+  }
+  60% {
+    translate: var(--at-to);
+    rotate: 180deg;
+    scale: 1.4;
+    opacity: 1;
+  }
+  100% {
+    translate: var(--at-to);
+    rotate: 180deg;
+    scale: 0.3;
+    opacity: 0;
+  }
+}
+
+/* Aight Imma Head Out: the flight, then the part hops once, high, off the
+   pawn. Four fields forward or home to the entry square, one jump either way. */
+.cast[data-cast="board"][data-card-id="action-head-out"] .cast__part[data-part="0"] {
+  animation-name: cast-fly-hop;
+}
+
+@keyframes cast-fly-hop {
+  0% {
+    translate: var(--at-stage);
+    scale: 0.5;
+    opacity: 1;
+    animation-timing-function: var(--ease-move);
+  }
+  43% {
+    translate: var(--at-to);
+    scale: 1;
+    animation-timing-function: var(--ease-capture);
+  }
+  62% {
+    translate: calc(var(--cast-to-x) - 50% + var(--cast-dir, 1) * var(--cell) * 0.5)
+      calc(var(--cast-to-y) - 50% - var(--cell) * 1.3);
+    scale: 1;
+    animation-timing-function: var(--ease-move);
+  }
+  80% {
+    translate: calc(var(--cast-to-x) - 50% + var(--cast-dir, 1) * var(--cell))
+      calc(var(--cast-to-y) - 50%);
+    scale: 1.2 0.8;
+    opacity: 1;
+  }
+  100% {
+    translate: calc(var(--cast-to-x) - 50% + var(--cast-dir, 1) * var(--cell))
+      calc(var(--cast-to-y) - 50%);
+    scale: 0.3;
+    opacity: 0;
+  }
+}
+
+/* Let Him Cook: the flight, then heat: three small parts rise off the pawn
+   one after another, each a little to one side. The run itself is the path
+   lighting field by field for up to twelve, which is board-cast.css's. */
+.cast[data-card-id="action-let-him-cook"] .cast__part[data-part="1"],
+.cast[data-card-id="action-let-him-cook"] .cast__part[data-part="2"],
+.cast[data-card-id="action-let-him-cook"] .cast__part[data-part="3"] {
+  width: calc(var(--cell) * 0.22);
+  height: calc(var(--cell) * 0.22);
+}
+
+.cast[data-card-id="action-let-him-cook"] .cast__part[data-part="1"] {
+  --bx: calc(var(--cell) * -0.3);
+  --by: calc(var(--cell) * -1.5);
+}
+
+.cast[data-card-id="action-let-him-cook"] .cast__part[data-part="2"] {
+  --bx: calc(var(--cell) * 0.1);
+  --by: calc(var(--cell) * -1.7);
+}
+
+.cast[data-card-id="action-let-him-cook"] .cast__part[data-part="3"] {
+  --bx: calc(var(--cell) * 0.4);
+  --by: calc(var(--cell) * -1.4);
+}
+
+.cast[data-cast="board"][data-card-id="action-let-him-cook"] .cast__part[data-part="1"],
+.cast[data-cast="board"][data-card-id="action-let-him-cook"] .cast__part[data-part="2"],
+.cast[data-cast="board"][data-card-id="action-let-him-cook"] .cast__part[data-part="3"] {
+  animation-name: cast-burst;
+}
+
+.cast[data-cast="board"][data-card-id="action-let-him-cook"] .cast__part[data-part="2"] {
+  animation-delay: calc(var(--motion-feedback) * 0.8);
+}
+
+.cast[data-cast="board"][data-card-id="action-let-him-cook"] .cast__part[data-part="3"] {
+  animation-delay: calc(var(--motion-feedback) * 1.6);
+}

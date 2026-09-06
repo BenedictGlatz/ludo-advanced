@@ -41,7 +41,7 @@ import { isBot } from "../state/bots.js";
 import { motionMs } from "./board-view.js";
 import { PROMPT_ACTION } from "./prompt-view.js";
 import { createTargetPicker } from "./target-picker.js";
-import { announcement, holdMidTurn } from "./timers.js";
+import { announcement, holdMidTurn } from "./holds.js";
 
 /** How long a reaction window stays open (FR-25). The Product Owner's number. */
 export const REACTION_WINDOW_MS = 30_000;

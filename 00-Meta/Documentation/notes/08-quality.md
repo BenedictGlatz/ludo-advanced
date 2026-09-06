@@ -2128,6 +2128,44 @@ the trap search, Nühü's four receiving-end values) are **not** behind a profil
 cannot compare them with what they replaced. They shipped on the argument, which is exactly what the
 plan was written to stop. Putting them behind knobs is outstanding work.
 
+### Testing an animation without pinning a frame (2026-09-06, design spec 18)
+
+The cast is four attribute states, three timers, a set of marks written onto forty other elements, and
+a geometry read out of `getBoundingClientRect`. Splitting that into what a unit test can hold and what
+only a browser can is the whole test design.
+
+| File | What it covers | Why it is a unit test |
+| --- | --- | --- |
+| `cast-vocabulary.test.js` | All 29 ids resolve to one of six families; 17 of them reach the board | Walks the **real** catalogue, on `card-art.test.js`'s precedent |
+| `cast-hold.test.js` | Which token the hold asks for, and the subtraction for a card with no board stage | Pure arithmetic over an injected `readToken` |
+| `cast-hits.test.js` | Which fields and which pawns each family marks, and with which of the seven values | Pure: a state in, a list of marks out, no DOM |
+| `cast.spec.js` (Playwright) | A cast starts, finishes and leaves **no** `data-cast-hit` behind | Only a browser has a layout to measure |
+
+**Nothing is pinned by value**, which spec 18 § 5 asks for by name. A case asserting that a Banana
+Peel's arc is 1.6 cells high, or that the hold is 1500 ms, would report the next deliberate adjustment
+as a defect. The cases assert the contract: which attributes exist, which values they take, and that
+the board is clean afterwards.
+
+**Three failures the tests exist to catch, and none of them throws.**
+
+1. **A card missing from the family table.** No `data-cast-family` matches, no base movement plays, and
+   the cast looks like an animation somebody forgot to finish rather than like a bug. Four of the
+   spec's 29 card ids were spelled differently from the catalogue's (`action-67`,
+   `action-aight-imma-head-out`, `action-its-not-that-deep`, `action-speedrun-any`); the selectors were
+   corrected on landing, and this test is what would have found them if they had not been.
+2. **A stuck `data-cast-hit`.** A ring left standing on a field for the rest of the match. It is the
+   same shape as the stuck `data-rolling` that once made the dice hand permanently unclickable, which
+   is recorded in this project's own challenges list, and it is the reason the end-to-end case asserts
+   an absence rather than a presence.
+3. **A hold of zero.** The game goes back to exactly where it was before the feature existed, which is
+   the defect the feature was raised against. The end-to-end suite cannot catch it, because that suite
+   runs with every hold collapsed to nothing on purpose.
+
+**Reduced motion is tested end to end**, with Playwright's `reducedMotion: "reduce"`. What must not
+happen is the cast being skipped: a reduced-motion player would then be the only one at the table who
+never sees a bot's card, which is the thing the spec's D115 exists to prevent.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

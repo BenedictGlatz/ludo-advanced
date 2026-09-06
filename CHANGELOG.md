@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A played skill card now has a moment of its own.** The card comes out of the hand, stands large over
+  the board while it does the thing its kind of card does, shows its effect landing on the field or the
+  pawn it was aimed at, and then shrinks away into the last-card plate. Every one of the 29 cards has its
+  own touch on top of the movement its family shares, so a Banana Peel is thrown and squashes, a Rock
+  falls, a Hyperbeam bursts along its lane and a Nühü shakes its head. It is how a card played by a bot,
+  or by somebody at the other end of a hot-seat turn, is finally visible at all
+- **The board says where a card landed**: a ring on the field it was aimed at, a dotted line along the
+  fields an effect travelled across, a hatched region when an It's Not That Deep refused a card, and a
+  ring on every pawn a card touched, in orange when it was done to them and in ink when it protected them
 - **A played card remembers what it was aimed at.** The square, the pawn or the direction a skill card
   acted on is kept with the record of the play, and the four cards that roll a die inside their own rule
   (Hyperbeam, Janky RPG, Yeet, Let Him Cook) now report how far they reached. Nothing on screen shows it
@@ -460,6 +469,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A card played by a bot is no longer announced twice.** It used to hold the turn for two seconds with
+  a sentence in the message strip; the card's own animation is that announcement now, and the extra two
+  seconds are gone. A trap that goes off afterwards still holds, because that is a second thing happening
 - **Rock and Big Ah Rock both turn one of your own pawns to stone, and stone does not move.** Rock's pawn
   used to stay movable by its owner; Big Ah Rock used to turn a field into a boulder. Now both cards aim at
   one of your pawns: nothing gets past it, you cannot move it, and no card can push it, for two rounds

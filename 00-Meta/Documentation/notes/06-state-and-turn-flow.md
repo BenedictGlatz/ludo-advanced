@@ -905,6 +905,51 @@ frozen does not touch that comparison, and the test pinning the behaviour stayed
 `clearedTurnFields()` already listed the field, so the growth costs nothing at the handover.
 
 
+### The turn's second moment, and the announcement it replaced (2026-09-06, design spec 18)
+
+**`advance()` now asks one question where it asked one before, and it covers two waits.** The loop's
+roll branch was `if (waits.needsRollMoment(state)) { waits.showRoll(); return; }`, three lines for one
+wait and six for two. It is now `if (waits.takeMoment(state)) return;`, which is a **net loss of two
+lines** in a file that was at exactly 300, and which puts the choice of which moment to take in the
+file named for the loop's own waits.
+
+**The cast is asked before the roll**, and the reason is a rule about the game rather than about the
+code: seven of the 29 cards act on the roll chain and two more add a whole extra die, so a turn that
+plays a card and then rolls owes two moments at once. Showing the modified number before the card that
+modified it is the wrong order, because the player sees a 14 on a D8 and only afterwards finds out why.
+
+**The question is asked of the state and not of the phase**, which is the lesson `turn-waits.js`
+already paid a red suite for. A card play arrives through four doors: a person's own play, a bot's
+play, a Reaction into an open window, and a window closing that resolves the card that opened it. The
+marker is `turnNumber`, the number of cards played this turn, the card id, **and the outcome the
+`lastCard` record carries**. The last part is what makes a pending card work: a card that opens a
+window is `pending` when it is played and settles when the window shuts, so the same card gets two
+moments with a window between them, and nothing else in the state changes at that instant.
+
+*Rejected: comparing `lastCardPlayed` by identity.* It is `null` for every turn in which nobody plays
+anything, and a marker that is null most of the time is one `??` away from a bug.
+
+#### A bot's card play stopped being a mid-turn announcement, and that is a subtraction
+
+Issue #82 made a bot's card play a mid-turn announcement: the strip said one sentence and the turn held
+two seconds for it, on the argument that a card played by nobody the player can see has to be
+announced. **The cast is that announcement and a better one**, so `botCardPlayed` came out of
+`midTurnAnnouncement` rather than stacking on top of it.
+
+Leaving both in would have added two seconds to every bot turn that plays a card, on top of the 1.5
+second cast, on top of the 900 ms the bot already pauses before it acts. A **fired trap** keeps its own
+hold, because a trap is a second event the cast did not show: the cast draws the card landing, and the
+trap goes off afterwards. `botCardPlayed` is still exported and still answers, because `move-hints.js`
+prints the sentence and that sentence has not changed. What moved is the hold, not the words.
+
+#### `timers.js` split into the registry and the holds
+
+The sixth named wait would have taken the file past 300 lines, and the seam is the one the file's own
+header already described in those words: *the loop decides that it waits, `holds.js` decides how long.*
+`timers.js` keeps the `setTimeout` registry and nothing else; `holds.js` holds every duration, every
+fallback constant, and the rule that separates a movement from a reading time.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

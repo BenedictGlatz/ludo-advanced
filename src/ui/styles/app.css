@@ -65,6 +65,11 @@ body {
 }
 
 .app {
+  /* `relative` was already here for the message strip, and since 2026-09-06 it
+     carries a second load (D104): the cast stage is the last child of .app and
+     hangs over the whole of it, and its geometry is written in px relative to
+     .app, so .app has to be its containing block. Two tenants, one
+     declaration, and neither of them may take it away. */
   position: relative;
   display: grid;
   grid-template-columns: auto minmax(28rem, 1fr);

@@ -19,7 +19,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { ROLL_HOLD_MS, holdRoll } from "../../../src/ui/timers.js";
+import { ROLL_HOLD_MS, holdRoll } from "../../../src/ui/holds.js";
 
 /** Returns the token name instead of a duration, so a test can see which one was asked for. */
 const nameToken = (token) => token;

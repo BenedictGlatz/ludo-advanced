@@ -21,7 +21,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { REFUSAL_MIN_MS, holdAfterTurn } from "../../../src/ui/timers.js";
+import { REFUSAL_MIN_MS, holdAfterTurn } from "../../../src/ui/holds.js";
 
 /** Returns the token name instead of a duration, so a test can see which one was asked for. */
 const nameToken = (token) => token;

@@ -41,7 +41,7 @@
 import { decide } from "../ai/bot-policy.js";
 import { INTENT_CARD } from "../state/intents-cards.js";
 import { motionMs } from "./board-view.js";
-import { holdBot } from "./timers.js";
+import { holdBot } from "./holds.js";
 
 /**
  * The bot's hands on the controls.

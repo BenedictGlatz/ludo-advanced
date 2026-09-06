@@ -5108,6 +5108,72 @@ to get wrong later.
 - → Ch. 05, Ch. 06
 
 
+### 2026-09-06: The cast is asked before the roll, and it takes the bot announcement's two seconds rather than adding to them
+
+- **Chosen:** one call in `advance()`, `waits.takeMoment(state)`, which asks for the card's moment
+  first and the roll's second. And `botCardPlayed` comes **out** of `midTurnAnnouncement`, so a bot's
+  card play is announced by the cast instead of by a second two-second hold.
+- **Why the card comes first:** seven of the 29 cards act on the roll chain and two more add a whole
+  extra die, so a turn that plays a card and then rolls owes two moments at once. Showing the modified
+  number before the card that modified it means the player sees a 14 on a D8 and only afterwards finds
+  out why.
+- **Rejected:** *leaving both holds in.* It adds two seconds to every bot turn that plays a card, on
+  top of the 1.5 second cast, on top of the 900 ms the bot already pauses before it acts.
+- **Kept:** a **fired trap** still holds. A trap is a second event that the cast did not show.
+- **Consequence:** `game-loop.js` got two lines **shorter** while gaining a wait, which is what let a
+  file already sitting at exactly 300 lines take the feature at all.
+- → Ch. 04, Ch. 06
+
+### 2026-09-06: The cast measures the DOM instead of computing a cell
+
+- **Chosen:** `cast-geometry.js` writes its four pairs of pixels from `getBoundingClientRect()` on the
+  board, the hand plate, the target square or pawn, and the last-card plate.
+- **Rejected:** *`board-geometry.js`'s `cellCentre` and `pawnCentre`*, which the implementation plan
+  proposed and which the pawn drag already uses. They answer in cell units from the board's top left,
+  so using them here means multiplying by a cell size read back off the stylesheet and adding the
+  board's offset: three numbers to get right, each of which can disagree with where the piece is
+  actually drawn. Every square and every pawn is in the DOM from the first frame, so the rectangle is
+  available directly and cannot be out of step with the screen. It is also right below the breakpoint,
+  where the board is a different size.
+- **What it costs:** the module only works in a browser, so the cast's geometry has no unit test and is
+  covered end to end instead. Recorded rather than hidden.
+- → Ch. 04, Ch. 08
+
+### 2026-09-06: `tokens.css` split rather than the cast's tokens living somewhere else
+
+- **Chosen:** `motion.css`, holding every duration, every easing and the `prefers-reduced-motion`
+  block. `tokens.css` keeps colours, spacing, type, radii, shadows, geometry and layering.
+- **Why:** the four cast tokens would have taken `tokens.css` to 322 lines against NFR-02's 300. The
+  implementation plan named this as a decision that was Claude Design's, and the spec's own note that
+  the file "lands at 297 of 300" was measured against a copy that is shorter than the one in the
+  repository, so the split had to be taken here.
+- **Why this seam and not a shorter comment:** `tokens.css` answers "what may this UI look like" and
+  `motion.css` answers "how long may it take, and what happens to a player who asked for less
+  movement". The second question has a rule of its own, restated by D20, D60, D70 and D111, and keeping
+  the two lists in one file put that rule 150 lines away from half the tokens it governs.
+- **Rejected:** *deleting a token to make room*, which the spec suggested as the alternative. There is
+  no token in the file that nothing reads.
+- **Measured outcome:** the longest stylesheet in the project went **down** from 296 lines to 267.
+- → Ch. 04, Ch. 09
+
+### 2026-09-06: A cast costs a four-bot match between four and seven minutes, and that is filed rather than fixed
+
+- **The measurement:** `npm run bots:arena` reports 67.34 card plays per seat per match over 200
+  four-seat matches, so about 269 card plays in a match of 313.8 turns. At the spec's 1.5 s with a
+  board stage and 0.94 s without, that is 4.2 to 6.7 minutes.
+- **Against what:** the roll's 0.9 s per turn is about 4.7 minutes of the same match, and D108 named
+  that as the figure to compare with.
+- **Chosen:** ship the spec's numbers unchanged and record the finding. Two reasons. The measurement is
+  of **bots**, which play every card they can afford because that is what their profile is scored on,
+  and nobody has measured a table of people. And part of the cost is not new: a bot's card play already
+  held the turn for two seconds before this delivery, and that hold was removed here.
+- **Rejected:** *quietly shortening `--motion-cast-hold` to make the number look better.* A duration in
+  `tokens.css` is a design rule, and this side does not invent design rules. The lever is one token in
+  `motion.css` and nothing else reads it, so halving it is a one-line change whenever the Product Owner
+  asks for it.
+- → Ch. 04, Ch. 09, Ch. 11
+
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

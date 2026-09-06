@@ -1,0 +1,95 @@
+/* The accents of the three trap cards (D107, D109).
+   Depends on tokens.css, cast.css, cast-base.css and cast-parts.css, and
+   loads after them.
+   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D107, D109.
+
+   All of these have a board stage and most use cast.css's default flight for
+   part 0, the disc crossing from the card to the target. What each card adds
+   is the landing: how the part arrives, and what the other parts do at the
+   target once it has. The marks that stay on the field or the pawn are
+   board-cast.css's and are not repeated here. The family's gesture is the
+   drop. */
+
+/* Banana Peel: the part is thrown, so it arcs, and it squashes when it lands.
+   The trap chip then appears under it from board-trap.css off data-trap. */
+.cast[data-cast="board"][data-card-id="action-banana-peel"] .cast__part[data-part="0"] {
+  animation-name: cast-arc;
+}
+
+@keyframes cast-arc {
+  0% {
+    translate: var(--at-stage);
+    scale: 0.5;
+    opacity: 1;
+    animation-timing-function: var(--ease-ui);
+  }
+  22% {
+    translate: calc((var(--cast-stage-x) + var(--cast-to-x)) / 2 - 50%)
+      calc((var(--cast-stage-y) + var(--cast-to-y)) / 2 - 50% - var(--cell) * 1.6);
+    scale: 1.1;
+    animation-timing-function: var(--ease-capture);
+  }
+  43% {
+    translate: var(--at-to);
+    scale: 1;
+  }
+  55% {
+    translate: var(--at-to);
+    scale: 1.4 0.7;
+    animation-timing-function: var(--ease-move);
+  }
+  100% {
+    translate: var(--at-to);
+    scale: 0.3;
+    opacity: 0;
+  }
+}
+
+/* Oil Spill: the part lands and spreads flat, wider than the field. */
+.cast[data-cast="board"][data-card-id="action-oil-spill"] .cast__part[data-part="0"] {
+  animation-name: cast-spill;
+}
+
+@keyframes cast-spill {
+  0% {
+    translate: var(--at-stage);
+    scale: 0.5;
+    opacity: 1;
+    animation-timing-function: var(--ease-move);
+  }
+  43% {
+    translate: var(--at-to);
+    scale: 1;
+  }
+  62% {
+    translate: var(--at-to);
+    scale: 2.1 0.55;
+    opacity: 1;
+  }
+  100% {
+    translate: var(--at-to);
+    scale: 2.6 0.3;
+    opacity: 0;
+  }
+}
+
+/* It's Not That Deep: the default flight, then two rings go out from the
+   field, the reach of the aura the fields themselves show as a hatch. */
+.cast[data-card-id="action-not-that-deep"] .cast__part[data-part="1"],
+.cast[data-card-id="action-not-that-deep"] .cast__part[data-part="2"] {
+  width: calc(var(--cell) * 0.8);
+  height: calc(var(--cell) * 0.8);
+  background: transparent;
+  border-width: var(--border-thick);
+  border-color: var(--cast-hue);
+  box-shadow: none;
+}
+
+.cast[data-cast="board"][data-card-id="action-not-that-deep"] .cast__part[data-part="1"],
+.cast[data-cast="board"][data-card-id="action-not-that-deep"] .cast__part[data-part="2"] {
+  animation-name: cast-ring-out-at;
+}
+
+.cast[data-cast="board"][data-card-id="action-not-that-deep"] .cast__part[data-part="2"] {
+  animation-delay: var(--motion-feedback);
+}

@@ -44,8 +44,9 @@
  *
  * It used to be, and the durations with it. Since design spec 11's D70 the roll has a hold of its own,
  * so both of the waits the loop takes by itself live in `turn-waits.js`, the reaction window's thirty
- * seconds are `card-controls.js`'s, and the bot's pause is `bot-driver.js`'s. What is left here is the
- * decision to wait, never how long, and never what the waiting looks like.
+ * seconds are `card-controls.js`'s, and the bot's pause is `bot-driver.js`'s. Design spec 18 added a
+ * third moment, a played card's own, and it went to `cast-driver.js` behind the same one call. What is
+ * left here is the decision to wait, never how long, and never what the waiting looks like.
  */
 
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
@@ -183,14 +184,13 @@ export function createGameLoop({
       return;
     }
 
-    // **The roll's moment, asked before the phase and not inside the `roll` branch**, because a roll
-    // arrives through two doors: `roll-die` rolls when no card answers it, and `close-window` rolls
-    // when one did. Only the first of those comes back through the branch below. `turn-waits.js`
-    // carries the argument and what it cost to learn.
-    if (waits.needsRollMoment(state)) {
-      waits.showRoll();
-      return;
-    }
+    // **The moments the turn owes, asked before the phase and not inside a branch**, because both of
+    // them arrive through more doors than one: a roll happens in `roll-die` when no card answers it
+    // and in `close-window` when one did, and a card is played by a person, by a bot, into an open
+    // window, or by the window shutting. Only the first door of each comes back through the branches
+    // below. `turn-waits.js` carries the argument and what it cost to learn, and it takes the card
+    // before the roll because the card is usually what changed the roll.
+    if (waits.takeMoment(state)) return;
 
     if (state.reactionWindow !== null) {
       // **Bots answer first**, so the clock and the prompt only ever address people. Two things
