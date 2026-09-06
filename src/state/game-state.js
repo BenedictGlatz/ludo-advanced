@@ -45,7 +45,7 @@
  *
  * | Lives for | Fields | Cleared by |
  * | --- | --- | --- |
- * | The match | `pawns`, `seats`, `bots`, `skillSquares`, `skillPool`, `skillDiscard`, `skillHands` | nothing |
+ * | The match | `pawns`, `seats`, `bots`, `skillSquares`, `skillPool`, `skillDiscard`, `skillHands`, `lastCard` | nothing |
  * | Several turns | `statuses`, `traps` | their own deadline, or being used up |
  * | One turn | `hand`, `chosenDie`, `roll`, `modifiers`, `cardsPlayed`, `reactionWindow`, ... | `clearedTurnFields` |
  *
@@ -161,6 +161,10 @@ export function createGameState(playerCount, skillSquares = INITIAL_SKILL_SQUARE
     // Longer than a turn, shorter than the match: both carry their own end condition.
     statuses: [],
     traps: [],
+
+    // The last skill card anybody played, `{ seat, cardId, turnNumber, outcome }`, for the last-card
+    // slot (issue #93). Match-level so it survives the turn; `intents-cards.js` says the rest.
+    lastCard: null,
 
     // Everything below is cleared at the end of every turn.
     ...clearedTurnFields(),

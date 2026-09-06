@@ -102,3 +102,75 @@ describe("lastCardPlayed", () => {
     expect(current.lastCardPlayed).toBeNull();
   });
 });
+
+describe("lastCard, the match-level record for the last-card slot (issue #93)", () => {
+  it("is empty in a fresh match", () => {
+    expect(createGameState(4).lastCard).toBeNull();
+  });
+
+  it("records a card that resolved at once as resolved, with the turn it was played in", () => {
+    const state = inActionPhase({ 0: ["action-angel-die"] });
+
+    expect(play(state, 0, "action-angel-die").state.lastCard).toEqual({
+      seat: 0,
+      cardId: "action-angel-die",
+      turnNumber: 1,
+      outcome: "resolved",
+    });
+  });
+
+  /** A card somebody can answer is pending until the window shuts, then it is settled. */
+  it("is pending while the card waits in a window, and resolved once the window shuts", () => {
+    const state = inActionPhase({ 0: ["action-angel-die"], 2: ["reaction-nuehue"] });
+    const open = play(state, 0, "action-angel-die").state;
+    expect(open.lastCard.outcome).toBe("pending");
+
+    const shut = dispatch(open, { type: INTENT.CLOSE_WINDOW }, deps).state;
+    expect(shut.lastCard).toEqual({
+      seat: 0,
+      cardId: "action-angel-die",
+      turnNumber: 1,
+      outcome: "resolved",
+    });
+  });
+
+  /** The reaction is the last card played, so it is the one the slot names once everything resolves. */
+  it("names the reaction that answered, and settles it when the window shuts", () => {
+    const state = inActionPhase({ 0: ["action-angel-die"], 2: ["reaction-nuehue"] });
+    const open = play(state, 0, "action-angel-die").state;
+    const answered = play(open, 2, "reaction-nuehue").state;
+    expect(answered.lastCard).toMatchObject({
+      seat: 2,
+      cardId: "reaction-nuehue",
+      outcome: "pending",
+    });
+
+    const shut = dispatch(answered, { type: INTENT.CLOSE_WINDOW }, deps).state;
+    expect(shut.lastCard).toMatchObject({
+      seat: 2,
+      cardId: "reaction-nuehue",
+      outcome: "resolved",
+    });
+  });
+
+  /**
+   * The reason the field is match-level and `lastCardPlayed` is not: the slot has to show the last thing
+   * that happened to a player who was not watching, and that is a turn or more later.
+   */
+  it("survives the end of the turn, unlike lastCardPlayed", () => {
+    const state = inActionPhase({ 0: ["action-angel-die"] });
+    let current = play(state, 0, "action-angel-die").state;
+
+    const steps = [INTENT.SKIP_ACTION, INTENT.ROLL_DIE, INTENT.CLOSE_WINDOW, INTENT.END_TURN];
+    for (let pass = 0; pass < 4 && current.turnNumber === 1; pass += 1) {
+      for (const type of steps) {
+        const result = dispatch(current, { type }, deps);
+        if (result.accepted) current = result.state;
+      }
+    }
+
+    expect(current.turnNumber).toBe(2);
+    expect(current.lastCardPlayed).toBeNull();
+    expect(current.lastCard).toMatchObject({ cardId: "action-angel-die", turnNumber: 1 });
+  });
+});

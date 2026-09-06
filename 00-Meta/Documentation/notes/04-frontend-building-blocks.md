@@ -3044,6 +3044,24 @@ stale stylesheets twice (handoff 16, the section above). `01-Design/Handoff/00-o
 mitigation and it only works when this side notices that a fix contradicts a spec rather than the CSS.
 Whether that held is worth checking at the end of Sprint 3, either way.
 
+### Brief 17 sent: the last card, the six unstyled statuses, the tooltip and the carried pawn: 2026-09-06, issues #93, #94, #91
+
+The playtest of 2026-09-06 produced three things the player could not see, and under the same day's
+amendment to `CLAUDE.md` all three are new looks rather than fixes, so they went to Claude Design as one
+brief: [17-brief-last-card-and-pawn-status.md](../../../01-Design/Handoff/17-brief-last-card-and-pawn-status.md).
+
+- **D100**, the last-card slot: `state.lastCard` exists (issue #93), the element does not. The brief
+  proposes reusing the card component so spec 10's hover reveal gives the tester the card text on hover.
+- **D101**, marks for the six statuses D57 left unstyled, with the protection aura the tester suggested.
+  This is the item that turned from a leftover into a defect: `armoured` and `ghost` are why a capture is
+  refused and the pawn showed neither.
+- **D102**, whether the native `title` from issue #94 gets a designed replacement.
+- **D103**, the carried pawn from issue #91, deliberately unstyled until answered.
+
+The brief also records that D52 is retired (issue #90) and lists what Claude Code already shipped so the
+spec does not re-ask it. It is the first brief that reads against four feature branches at once, which is
+a consequence of one playtest becoming seven issues on one afternoon; the "Read against" line says so.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

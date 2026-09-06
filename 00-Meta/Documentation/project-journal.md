@@ -4697,6 +4697,28 @@ to get wrong later.
 
 ---
 
+### 2026-09-06: The last card gets a match-level field before it gets a place on screen
+
+- **What prompted it:** playtest item 6 (issue #93): a place that shows the last card played and what it
+  did. A new component, so Claude Design's under the day's rule; the Product Owner chose to prepare the
+  data now and let the look wait for the spec.
+- **Chosen:** `state.lastCard = { seat, cardId, turnNumber, outcome }`, match-level, overwritten and never
+  cleared, settled by `reaction-window.js` when a window shuts. Brief 17 asks for the slot (D100) and
+  bundles the other two invisible things from the playtest, the status marks (D101, D102) and the carried
+  pawn (D103).
+- **Rejected: making `lastCardPlayed` survive the turn.** It drives the bot announcement and its being
+  cleared is what stops the strip repeating a play from a turn ago (issue #82). One field with two jobs
+  would need a flag saying which job applies on each read.
+- **Rejected: building a provisional slot with existing tokens.** The Product Owner was offered exactly
+  this and declined: it is the case the 2026-09-06 rule sends to a brief, and a provisional component
+  becomes the design by inertia.
+- **Rejected: a scrolling event log.** The strip is a single slot by D73, and a log is a new kind of
+  thing on a screen with no room for one. Recorded in the brief as rejected on this side, not as a
+  constraint on the design.
+- → Ch. 04, Ch. 06
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

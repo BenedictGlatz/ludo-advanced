@@ -7,6 +7,27 @@ times on 2026-09-04, and twice on 2026-09-05**
 
 ---
 
+## Status on 2026-09-06, evening: brief 17 is out, and it carries three things a playtester could not see
+
+**[17-brief-last-card-and-pawn-status.md](17-brief-last-card-and-pawn-status.md) asks D100 to D103.** A
+teammate's playtest (issue #87) found three things the player could not see: a protected pawn looked like
+any other pawn, nobody could tell what the last card played was, and, once issue #91 landed the same
+afternoon, a pawn can be dragged with nothing said about how a carried pawn looks.
+
+- **D100** the last-card slot. `state.lastCard` exists since issue #93; the element does not.
+- **D101** marks for the six statuses D57 left unstyled, with the protection aura the tester asked for.
+  `armoured` and `ghost` are the reason a capture is refused, and the pawn shows neither.
+- **D102** whether the native `title` from issue #94 gets a designed replacement.
+- **D103** the carried pawn from issue #91.
+
+**D52 is retired** with issue #90: Big Ah Rock petrifies a pawn now, no square carries
+`data-trap="blocker"`, and the blocker mark is deleted from `board-trap.css`. The stone pawn is part of D101.
+
+The brief reads against `dev` plus four feature branches, which is new and is said in its header; the four
+land in `dev` together once reviewed.
+
+---
+
 ## Status on 2026-09-05: handoff 16 landed, and it was applied rule by rule rather than copied
 
 **[16-spec-seat-dots-and-message-strip.md](16-spec-seat-dots-and-message-strip.md) answered D97 to D99
@@ -877,6 +898,11 @@ deliver the 06 spec.** It is fifteen lines and it closes a requirement.
 | D41 | The 36 illustrations against the two skins | 04 | No |
 | D42 | The two, now **three**, persistent controls | 04 | No |
 | ~~D43~~ | Seven cards at once: what size, what arrangement | 05 | **Closed.** Four then three at `--card-u: 0.68` in a 54.5rem panel, centred |
+| ~~D52~~ | How a blocker reads differently from a trap | 07 | **Retired 2026-09-06, issue #90.** Big Ah Rock is a status on a pawn now; nothing writes `data-trap="blocker"` and the mark is deleted. The stone pawn is D101 |
+| D100 | The last-card slot: where it lives, what it says, how the four outcomes read | 17 | No, but it answers a playtest finding |
+| D101 | Marks for `rock`, `locked`, `armoured`, `ghost`, `held`, `ragebait`, and the protection aura | 17 | Indirectly: NFR-08, a refusal the player can see coming |
+| D102 | A designed status tooltip, or the native `title` | 17 | No |
+| D103 | The carried pawn during a drag, and whether the target answers | 17 | No |
 | ~~D44~~ | How the copy count is shown, and whether the weighting is readable as a shape | 05 | **Closed.** Both: the number stays in the tag and the card is drawn as the pile it stands for |
 | ~~D45~~ | Where the face-down sentence sits, and how loud it is | 05 | **Closed.** It stays where it is, unchanged, because the number barely moves |
 | ~~D46~~ | A third chrome button. Answer with D42 if that is easier | 05 | **Closed** inside D42, and spec 05 confirms three buttons need no new structure |
