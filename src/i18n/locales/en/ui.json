@@ -34,6 +34,14 @@
     "cards": "Cards",
     "finished": "home"
   },
+  "lastCard": {
+    "heading": "Last card",
+    "empty": "Nothing played yet",
+    "resolved": "{{player}}, turn {{turn}}",
+    "pending": "{{player}}, turn {{turn}}, unanswered",
+    "nullified": "{{player}}, turn {{turn}}, cancelled by an aura",
+    "negated": "{{player}}, turn {{turn}}, cancelled by Nühü"
+  },
   "menu": {
     "title": "Ludo Advanced",
     "text": "Ludo with a dice card pool and skill cards.",
@@ -124,7 +132,7 @@
   "status": {
     "separator": " · ",
     "held": "Held (Hold Pawn): sits this turn out.",
-    "rock": "Petrified (Rock): a wall nothing gets past.",
+    "rock": "Petrified (Rock): a wall nothing gets past, and not even its owner can move it.",
     "ghost": "Ghost (Ghost Mode): cannot be captured.",
     "locked": "Locked in (Lock In): may not be moved and cannot be captured.",
     "armoured": "Armoured (Built Different): cannot be captured.",

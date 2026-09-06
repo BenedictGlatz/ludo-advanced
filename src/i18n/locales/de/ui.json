@@ -34,6 +34,14 @@
     "cards": "Karten",
     "finished": "im Ziel"
   },
+  "lastCard": {
+    "heading": "Letzte Karte",
+    "empty": "Noch nichts gespielt",
+    "resolved": "{{player}}, Zug {{turn}}",
+    "pending": "{{player}}, Zug {{turn}}, noch offen",
+    "nullified": "{{player}}, Zug {{turn}}, von einer Aura aufgehoben",
+    "negated": "{{player}}, Zug {{turn}}, von Nühü aufgehoben"
+  },
   "menu": {
     "title": "Ludo Advanced",
     "text": "Ein Ludo mit Würfelkarten und Skill-Karten.",
@@ -124,7 +132,7 @@
   "status": {
     "separator": " · ",
     "held": "Festgehalten (Hold Pawn): setzt diesen Zug aus.",
-    "rock": "Versteinert (Rock): eine Mauer, an der niemand vorbeikommt.",
+    "rock": "Versteinert (Rock): eine Mauer, an der niemand vorbeikommt, und auch der eigene Spieler kann sie nicht bewegen.",
     "ghost": "Geist (Ghost Mode): kann nicht geschlagen werden.",
     "locked": "Eingesperrt (Lock In): darf nicht gezogen und nicht geschlagen werden.",
     "armoured": "Gepanzert (Built Different): kann nicht geschlagen werden.",

@@ -2061,6 +2061,39 @@ Unit coverage moved rather than shrank: `rock-effects.test.js` (11 cases) replac
 cases that left `trap-effects.test.js`, and adds the two rules that did not exist before, a stone cannot
 be knocked back and the knockback is reported.
 
+### Handoff 17's coverage is end to end, because the plate is jQuery: 2026-09-06, issue #93
+
+**A new spec, `last-card.spec.js`**, with four cases: the plate holds its place in the row before anybody
+has played anything, it names the card, the seat and the turn once a card has been played, it keeps the
+record after the turn has passed, and it holds the card itself with the reveal coming up on hover. The
+plate is `ui/`, and `ui/` has no unit tests in this project: `vitest.config.js` runs with
+`environment: "node"` and nothing configures a DOM, which is the second half of NFR-01's acceptance
+criterion. A DOM would be a new dev dependency, and that is a question for the Product Owner rather than a
+detail of this issue.
+
+**The playtest finding is one assertion.** `pawn-status.spec.js` gained a case that plays Lock In on an own
+pawn and asserts the pawn wears **two** marks, the filled tag and the shell, which is the thing the tester
+could not see. It asks about the properties that carry the marks, `opacity` on `.pawn__status` and
+`outline-style` on the disc, and not about their geometry: a case pinning an `inset` would report the next
+design adjustment as a defect, which 17-spec section 5 asks for in as many words.
+
+**The mark has to be polled rather than read once.** The first version read the tag's opacity straight
+after the click and measured 0.46, because the tag arrives over `--motion-feedback`. That is the same trap
+`chipRatio` in `trap-helpers.js` carries a comment about, and it cost a minute here because the comment was
+already there to read.
+
+**`pawn-moves.spec.js` gained the drag mark**: the field under a carried pawn carries `data-drop="true"`,
+exactly one field does, and nothing does once the pointer is up.
+
+**Two deletions that had already happened.** 17-spec section 5 asks for any case asserting the blocker chip
+to be deleted rather than pointed at the pawn. Issue #90 had already done it: `trap-fires.spec.js`'s D52
+measurement is gone and `traps.spec.js`'s "marks a blocker" became "turns one of the caster's own pawns to
+stone". Nothing was added for D101's geometry for the reason above.
+
+**The duplicated helper is gone.** `pawn-status.spec.js` carried its own copy of `reachOwnPawnOnTrack`
+because it was written on a different branch from `trap-helpers.js`'s version on the same afternoon. Both
+branches are in `dev` now, so the copy was deleted and the shared helper takes its two extra arguments.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

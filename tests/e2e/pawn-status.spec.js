@@ -13,25 +13,8 @@
 
 import { expect, test } from "@playwright/test";
 
-import { SEEDS, boardState, chooseDiceCard, openMatch, playTurn } from "./helpers.js";
-import { awaitCardInHand, pawnStatuses, skillHand } from "./trap-helpers.js";
-
-/** Drive the match to seat 0's action phase on a turn where seat 0 has a pawn on the track. */
-async function reachOwnPawnOnTrack(board) {
-  for (let step = 0; step < 6; step += 1) {
-    const { activePlayer, phase } = await boardState(board);
-    const onTrack = await board
-      .locator('.pawn[data-player="0"]')
-      .evaluateAll((pawns) => pawns.some((p) => Number(p.getAttribute("data-r")) > 0));
-
-    if (activePlayer === 0 && phase === "choose" && onTrack) {
-      await chooseDiceCard(board);
-      return (await boardState(board)).phase === "action";
-    }
-    await playTurn(board);
-  }
-  return false;
-}
+import { SEEDS, openMatch, playTurn } from "./helpers.js";
+import { awaitCardInHand, pawnStatuses, reachOwnPawnOnTrack, skillHand } from "./trap-helpers.js";
 
 test("a locked pawn carries a title naming both of Lock In's statuses", async ({ page }) => {
   const board = await openMatch(page, SEEDS.advancesEarly, {
@@ -42,7 +25,10 @@ test("a locked pawn carries a title naming both of Lock In's statuses", async ({
     !(await awaitCardInHand(board, "action-lock-in", playTurn)),
     "card never reached a hand"
   );
-  test.skip(!(await reachOwnPawnOnTrack(board)), "seat 0 had no action phase with a track pawn");
+  test.skip(
+    !(await reachOwnPawnOnTrack(board, playTurn)),
+    "seat 0 had no action phase with a track pawn"
+  );
 
   await skillHand(board).locator('.card[data-card-id="action-lock-in"]').first().click();
   await expect(board).toHaveAttribute("data-picking", "own-pawn");
@@ -59,6 +45,46 @@ test("a locked pawn carries a title naming both of Lock In's statuses", async ({
 
   const statuses = await pawnStatuses(board);
   expect(statuses[`${seat}.${index}`]).toEqual(expect.arrayContaining(["locked", "armoured"]));
+});
+
+test("a locked pawn wears two marks, the tag and the shell (D101)", async ({ page }) => {
+  const board = await openMatch(page, SEEDS.advancesEarly, {
+    fast: true,
+    stack: ["action-lock-in"],
+  });
+  test.skip(
+    !(await awaitCardInHand(board, "action-lock-in", playTurn)),
+    "card never reached a hand"
+  );
+  test.skip(
+    !(await reachOwnPawnOnTrack(board, playTurn)),
+    "seat 0 had no action phase with a track pawn"
+  );
+
+  await skillHand(board).locator('.card[data-card-id="action-lock-in"]').first().click();
+  await board.locator('.pawn[data-pickable="true"]').first().click();
+
+  const pawn = board.locator('.pawn[data-statuses~="locked"]').first();
+  await expect(pawn).toHaveAttribute("data-statuses", /armoured/);
+
+  // Two channels, one play. Lock In writes `locked` and `armoured` together, and design spec 17 draws
+  // them in two places on purpose: the shell is for the player who wants to capture the pawn, the tag
+  // is for its owner, who cannot move it. This is the playtest finding as one case.
+  //
+  // The two marks are asked about by the property that carries them and not by their geometry. An
+  // `inset` or an `outline-offset` would report the next design adjustment as a defect (17-spec § 5.4),
+  // while "the tag is shown" and "the disc has an outline" are what the marks *are*.
+  const marks = () =>
+    pawn.evaluate((element) => ({
+      tag: window.getComputedStyle(element.querySelector(".pawn__status")).opacity,
+      shell: window.getComputedStyle(element, "::after").outlineStyle,
+    }));
+
+  // Polled rather than read once, for the reason `chipRatio` in `trap-helpers.js` carries in a comment:
+  // the tag arrives over --motion-feedback, so a measurement taken straight after the click reads the
+  // beginning of the transition rather than the state.
+  await expect.poll(async () => Number((await marks()).tag)).toBe(1);
+  expect((await marks()).shell).toBe("solid");
 });
 
 test("a pawn carrying nothing has no title at all", async ({ page }) => {

@@ -29,9 +29,21 @@
  *   (the browser taking the pointer for a scroll, a lost touch) ends it as a drop on nothing.
  *
  * The pawn follows the pointer through two custom properties, `--drag-dx` and `--drag-dy`, which
- * `pawn.css` applies as a `translate` on top of the positioning transform. `data-dragging` is the attribute
- * the stylesheet and the tests key on. Neither survives the drop: `turn-controls.js`'s `render()` puts the
- * pawn where the state says it is, and the properties are cleared here first so there is nothing to undo.
+ * `pawn-drag.css` applies as a `translate` on top of the positioning transform. `data-dragging` is the
+ * attribute the stylesheet and the tests key on. Neither survives the drop: `turn-controls.js`'s
+ * `render()` puts the pawn where the state says it is, and the properties are cleared here first so there
+ * is nothing to undo.
+ *
+ * ## `data-drop`, the one attribute design spec 17 asked for
+ *
+ * D103 draws the field the pawn would land on with an ink ring inside its own edge, and this file is what
+ * says which field that is: `data-drop="true"` goes on the lit target under the pointer, one field at a
+ * time, and comes off when the pointer moves away, when the drag ends and when it is cancelled.
+ *
+ * **It marks a lit target and not simply whatever field is under the pointer**, and the difference is the
+ * question the mark answers. A carried piece is not asking "where may I go", because the legal targets are
+ * already lit; it is asking "will it land here". A ring on a field the drop would refuse would answer that
+ * question wrongly, so a drag across the middle of the board rings nothing until it reaches a target.
  */
 
 import $ from "jquery";
@@ -41,21 +53,37 @@ import { targetOfElement } from "./move-targets.js";
 /** How far the pointer has to travel before a press counts as a drag rather than a click. */
 export const DRAG_THRESHOLD_PX = 6;
 
-/** The lit target square under the point, as a target description, or `null`. */
-function targetUnder(x, y) {
+/** The lit target square under the point, as an element, or `null`. */
+function squareUnder(x, y) {
   for (const element of document.elementsFromPoint(x, y)) {
     const square = element.closest?.('.square[data-legal-target="true"]');
-    if (square) return targetOfElement(square);
+    if (square) return square;
   }
 
   return null;
 }
 
-/** Take the drag styling off a pawn, so `render()` has nothing to fight. */
+/**
+ * Move the drop mark to `square`, which may be `null`.
+ *
+ * The previously marked field is cleared first, so the attribute is on at most one field at any moment
+ * (D103). It is read back off the DOM rather than remembered in `drag`, for the same reason `hud-view.js`
+ * reads its own seats back: one source of truth, and no field that can drift from what is on screen.
+ */
+function markDrop(square) {
+  for (const marked of document.querySelectorAll('[data-drop="true"]')) {
+    if (marked !== square) marked.removeAttribute("data-drop");
+  }
+
+  square?.setAttribute("data-drop", "true");
+}
+
+/** Take the drag styling off a pawn and the board, so `render()` has nothing to fight. */
 function release(element) {
   element.removeAttribute("data-dragging");
   element.style.removeProperty("--drag-dx");
   element.style.removeProperty("--drag-dy");
+  markDrop(null);
 }
 
 /**
@@ -111,6 +139,7 @@ export function bindDragEvents($board, handlers) {
 
     drag.element.style.setProperty("--drag-dx", `${dx}px`);
     drag.element.style.setProperty("--drag-dy", `${dy}px`);
+    markDrop(squareUnder(pointer.clientX, pointer.clientY));
   });
 
   function end(event, dropped) {
@@ -121,12 +150,11 @@ export function bindDragEvents($board, handlers) {
     drag = null;
     if (!finished.moving) return;
 
+    const square = dropped ? squareUnder(pointer.clientX, pointer.clientY) : null;
+
     release(finished.element);
     swallowNextClick = true;
-    handlers.onDragEnded(
-      finished.pawn,
-      dropped ? targetUnder(pointer.clientX, pointer.clientY) : null
-    );
+    handlers.onDragEnded(finished.pawn, square === null ? null : targetOfElement(square));
   }
 
   $board.on("pointerup", (event) => end(event, true));

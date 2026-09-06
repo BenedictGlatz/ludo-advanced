@@ -489,7 +489,17 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   sub-issues #88 to #94, linked with `addSubIssue`, all in Sprint 2 with 17 story points between them.
   The Product Owner decided the three rule questions in the same conversation: Lock In stays, the bonus
   roll comes in from D6 upward, and both rock cards move onto an own pawn. Sprint 2.
-
+- **2026-09-06, evening**: the six feature branches of the playtest parent #87 were merged into `dev`
+  locally, in issue order, as merge commits. Nothing was pushed. Four of the five merges conflicted, all
+  of them in documentation: `CHANGELOG.md`, `project-journal.md`, `00-open-requests.md` and three chapter
+  notes, every time because two branches had appended a block at the same anchor. Every conflict was
+  resolved by keeping both sides, which is what an append-only note means, and no code file conflicted at
+  all. The merged `dev` passes lint, 973 unit tests in 76 files and 137 Chromium end-to-end cases. Sprint 2.
+- **2026-09-06, night**: design handoff 17 landed on `dev`, which closes the last two open items of the
+  playtest parent #87: the last-card slot (#93) and the drawn status marks that were the aura half of #94.
+  Three new stylesheets, two amended by change list, one new view file, one new attribute, six locale keys
+  in both languages and one new end-to-end spec. D52 is retired, D100 to D103 are answered, and D102 came
+  back as a deliberate no. Sprint 2.
 
 ---
 
@@ -4809,6 +4819,42 @@ to get wrong later.
   thing on a screen with no room for one. Recorded in the brief as rejected on this side, not as a
   constraint on the design.
 - → Ch. 04, Ch. 06
+
+---
+
+### 2026-09-06: The last card is a plate in the HUD row, and a protected pawn finally looks protected
+
+- **What prompted it:** design handoff 17, answering the brief sent the same afternoon for the three
+  things the playtest of #87 found invisible. D100 to D103, with D52 retired.
+- **Chosen for D100:** a fifth plate at the end of the HUD row, showing the card's name in words, the seat
+  and the turn, with the card itself one hover away at the reference size. It is a child of `.hud`, because
+  that row spans both grid columns and centres its plates, so a plate outside it cannot sit at its end.
+- **Chosen for D101:** three channels rather than one slot. The piece changes for `rock` and `stunned`, one
+  ink shell serves `armoured` and `ghost` together, and the existing tag carries `locked`, `held`,
+  `ragebait` and `slippery` one at a time. A Lock In pawn wears two marks, which is the playtest finding.
+- **Chosen for D103:** the carried pawn grows, casts the longest shadow in the game and loses every
+  transition, and the lit target under the pointer answers with an ink ring. `drag-move.js` writes
+  `data-drop="true"` on that one field.
+- **Rejected: the plate in the rail above the dice hand.** It is where the eye already is, and it is paid
+  for out of `--card-u`, the one size in the game a player is asked to compare three objects at. Measured
+  on the fitted stage, the rail's three plates leave about 15 px of slack in 738.
+- **Rejected: rendering the plate only once a card has been played.** One sideways jump of the other four
+  plates, in the middle of a match, is worse than a dashed rectangle for two turns.
+- **Rejected: a designed status tooltip (D102).** The tester was clicking, not hovering, so a hover readout
+  would not have reached them, and it would be a fifth place to say a thing the piece, the strip and the
+  plate now say between them. The native `title` from issue #94 stays as the accessible name.
+- **Rejected: two shell weights, one each for `armoured` and `ghost`.** Two ring weights would be a
+  distinction nobody looks up, on the one mark that has to be read instantly by somebody being told no.
+- **Rejected: `width: auto` on the plate, to match what `.hud__seat` actually does.** The seat plate has
+  been `min-width: 15.5rem` since 2026-09-03, so it grows and the new plate does not, and at the design
+  resolution the plate measures about 223 px against a seat plate's 289. Matching it would push the HUD row
+  into wrapping, which is a worse defect than a narrower fifth plate. Reported back instead.
+- **What it cost:** the delivered `last-card.css` assumed the card in the plate would not already be
+  desaturated, and it is, because a record card is described as unplayable and `card-state.css` dims those.
+  One declaration, `filter: none`, taken from `card-reveal.css`'s own answer to the same question (D66), and
+  reported back in `00-open-requests.md`. Otherwise the change lists applied without a single judgement
+  call, which is the first handoff since 09 that needed no reconciliation at all.
+- → Ch. 04, Ch. 08
 
 ---
 

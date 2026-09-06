@@ -3163,6 +3163,133 @@ The brief also records that D52 is retired (issue #90) and lists what Claude Cod
 spec does not re-ask it. It is the first brief that reads against four feature branches at once, which is
 a consequence of one playtest becoming seven issues on one afternoon; the "Read against" line says so.
 
+### Handoff 17 landed: the last card is a plate, nine statuses are drawn, and a carried pawn has weight: 2026-09-06, issues #93, #94, #91, #90
+
+[17-spec-last-card-and-pawn-status.md](../../../01-Design/Handoff/17-spec-last-card-and-pawn-status.md)
+answered D100 to D103 and retired D52. All four answers are built, and the three things the playtest of
+that morning found invisible are now on screen.
+
+**Three new stylesheets, and two amendments that arrived as change lists rather than as files.**
+
+| File | State |
+| --- | --- |
+| `src/ui/styles/last-card.css` | New. D100, the plate |
+| `src/ui/styles/pawn-status.css` | New. D101, with D56's tilt and D57's tag moved into it |
+| `src/ui/styles/pawn-drag.css` | New. D103, the carried pawn and the field under it |
+| `src/ui/styles/pawn.css` | Amended. The whole status section and issue #91's drag rule left it |
+| `src/ui/styles/board-trap.css` | Amended. The blocker's tombstone comment left it, D52 is retired |
+
+**The change lists are the reason this handoff needed no reconciliation.** Handoffs 10, 11 and 16 each
+delivered whole stylesheet copies that predated this tree, and 16 cost an hour of comparing ten files to
+find the six that would have reverted work. This time the two amended files arrived as "find this
+comment, delete that rule", keyed on selectors rather than on line numbers, and both were applied in one
+pass with no judgement calls. That is the form to ask for from now on, and it is what the 2026-09-05
+status block had asked for in exactly those words.
+
+**Load order gained three entries and reordered nothing.** `pawn-status.css` after `pawn.css` because it
+sets `--pawn-tilt`, which `pawn.css`'s own transform reads; `pawn-drag.css` after both because it wins the
+carried pawn's scale over the selected pawn's at equal specificity and restates the pawn's transition with
+`translate` in it; `last-card.css` last in `main.js` because it copies the seat plate's chrome from
+`hud.css` and reads the card component's sizing from `card.css`. The reasons are in `main.js`'s own
+cascade comment, which is where every load-bearing position in this project is recorded.
+
+#### D100, the last card played
+
+**A fifth plate at the end of the HUD row**, built by the new `src/ui/last-card-view.js` and rendered as
+the last child of `.hud`. It shows the card's **name** in words, the seat that played it and the turn, and
+it holds the card itself at the reference size, revealed on hover or on focus.
+
+- **Why it is a child of the HUD row and not a region of the app grid.** The row spans both grid columns
+  and centres its plates, so a plate outside the row cannot sit at its end. That is also why
+  `hud-view.js` renders and updates it rather than `render.js` gaining an eighth region: two lines in the
+  HUD against a new region that would have to be positioned all over again.
+- **`data-player` and not `data-seat`.** `board.css` maps `--player` off `[data-player]` for the whole
+  document and has been the only place a seat colour is written since D97. A second attribute name would
+  mean a second mapping.
+- **Four attributes are the contract:** `data-player`, `data-outcome` (`resolved`, `pending`,
+  `nullified`, `negated`), `data-empty`, and `data-turn`, which no stylesheet reads and the end-to-end
+  spec does, because an attribute can be asked about without reading a translated sentence.
+- **Six locale keys**, `lastCard.heading`, `lastCard.empty` and one sentence per outcome, in both
+  languages (NFR-03). `{{player}}` is `player.named` or `player.botNamed`, the pair the line-up screen and
+  the reaction sentences already use, so a bot's play needs no second vocabulary.
+- **The card in the plate is the card component, unchanged.** `skillCard` in `skill-hand-view.js` is now
+  exported and takes a `focusable` override, so the plate and the hand resolve `card.skill.<id>.title` and
+  the drawing through one function. The card is `.card--full` inside `.last-card__reveal`, absolutely
+  positioned, so it costs the plate no height, and `pointer-events: none`, so it can never take a click
+  from a dice card underneath it.
+- **The plate is in the row from the first frame of the match**, dashed and dormant, with "nothing played
+  yet". A plate that appeared on turn three would move the other four sideways once, mid-game, for no
+  reason a player can see.
+
+**One declaration was added to the delivered stylesheet, and it is reported back in
+[00-open-requests.md](../../../01-Design/Handoff/00-open-requests.md).** The card in the plate is a record
+and not an offer, so the view describes it as unplayable, and `card-state.css` desaturates every card
+carrying `data-playable="false"`. That would have dimmed all four outcomes and left `nullified` and
+`negated` with nothing left to say, since their whole treatment is that same desaturation. The fix is
+`filter: none` on `.last-card__reveal .card`, which is the declaration `card-reveal.css` already puts on a
+hand card that is being read (D66, D67): a card being read is not a card being refused. The design side is
+told rather than left with a spec the code no longer follows.
+
+#### D101, nine statuses in three channels
+
+`data-statuses` is a space separated list and a pawn can carry two kinds at once, which is what one slot
+could not do: **Lock In writes `locked` and `armoured` in a single play**, so the most common
+multi-status pawn in the game needs two marks. The nine kinds sort by who the fact is aimed at.
+
+| Channel | Kinds | What it is |
+| --- | --- | --- |
+| The piece | `rock`, `stunned` | The whole object changes: square corners, closed eyes, a dormant mix, a longer shadow |
+| The shell | `armoured`, `ghost` | One ink `outline` standing off the disc. "You cannot take this" |
+| The tag | `locked`, `held`, `ragebait`, `slippery` | `.pawn__status`, one kind at a time |
+
+- **`armoured` and `ghost` share one mark on purpose.** They differ in how they end, and at the moment a
+  capture is refused they say the same thing. Which of the two it was is in the `title` from issue #94 and,
+  if the card was just played, in the new plate.
+- **The tag's precedence is source order**, `slippery` then `ragebait` then `held` then `locked`, each rule
+  setting the same properties on both pseudo-elements so the last match wins. There is not one `:not()`
+  chain in the file, which is what keeps a fifth kind from being a rewrite.
+- **The stone's square corner is D52's language one level up.** A trap is a small thing lying on the path,
+  a blocker is the path being gone. Issue #90 moved that rule from the field to the pawn and the mark moved
+  with it, which is why retiring D52 costs the game nothing.
+- **`purge` is board wide and never in `data-statuses`**, so nothing reads it. The `status.rock` wording in
+  both locale files was extended at the same time to say that not even the owner can move a petrified pawn,
+  which is the half of issue #90 the tooltip did not yet mention.
+
+#### D102 came back no, and that is an answer rather than a gap
+
+The native `title` from issue #94 stays as the accessible name and nothing replaces it. The argument is the
+tester's own report: they were **clicking**, not hovering, so a hover readout would not have reached them,
+and D101 is what puts the fact on the piece. What it costs is stated: a player who wants to know **which
+card** protected a pawn hovers it and waits for the browser, or reads the plate if it was recent.
+
+#### D103, the carried pawn, and the one attribute this side had to write
+
+The piece grows to 1.22, throws the longest shadow in the game and drops every transition it has, which is
+the load-bearing part: `pawn.css` moves a pawn over `--motion-move`, and 240 ms of easing behind a pointer
+reads as the game being slow rather than as the piece being heavy. `pawn-drag.css` also restates the pawn's
+transition with `translate` added, so the release is continuous: a carried pawn's position is the sum of
+`transform` from the grid coordinates and `translate` from the drag offsets, and the view clears the offsets
+and writes the new coordinates in the same frame.
+
+**`data-drop="true"` is written by `drag-move.js` on the lit target under the pointer**, one field at a
+time, cleared when the pointer leaves it and when the gesture ends. It marks a **lit target** and not
+simply whatever field is under the pointer, and the difference is the question the mark answers: the legal
+targets are already lit, so a carried piece is not asking "where may I go", it is asking "will it land
+here". A ring on a field the drop would refuse would answer that wrongly.
+
+#### Two findings recorded rather than fixed
+
+- **The plate is narrower than a seat plate, and the spec did not know it.** D100 asks for 15.5rem, "the
+  seat plate's own width", but `.hud__seat` has been `min-width: 15.5rem; width: auto` since the
+  2026-09-03 layout fix, so a seat plate grows with its four numbers and the new plate does not. Measured
+  on the fitted stage at 1440 by 900, the plate is about 223 px against a seat plate's roughly 289. It was
+  **not** changed to `width: auto`, because the row has about 236 px spare and a plate that grew to a seat
+  plate's width would push the row into wrapping, which is worse than a narrower fifth plate. It is a
+  question for the next spec, and it is in the status block.
+- **`.pawn__status` is now shown by four kinds and hidden by five**, so a pawn carrying only `rock` has an
+  empty span inside a squared disc. That is issue #45's contract and is right; it is written down here so
+  nobody deletes the span as dead markup.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

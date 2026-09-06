@@ -543,6 +543,13 @@ review away.
   anchors will conflict on merge in the documentation files, not in the code; the order to merge them is
   the order above.
 
+- **2026-09-06, night:** the six branches merged into `dev` and design handoff 17 landed on top, which
+  closes the last two open items of #87. All 17 points of the playtest parent are delivered inside Sprint 2
+  after all, on the sprint's last day, which is the opposite of what the entry above expected. What made it
+  possible was that six of the seven items were one afternoon's work each and the seventh was a design
+  answer that arrived the same evening. The merge cost was documentation conflicts only, four of five
+  merges, every one an append at the same anchor.
+
 > The resource/energy system appears only in this sprint plan, not in the one-pager or the README.
 > Whether it is in scope is undecided: see [notes/01-requirements-and-goals.md](notes/01-requirements-and-goals.md).
 > Multiplayer has no chosen technology and may end up local hot-seat only.

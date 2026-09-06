@@ -168,6 +168,18 @@
   }
 }
 
+/* Added by Claude Code on 2026-09-06, and reported back in 00-open-requests.md.
+   The card in the plate is a record and not an offer, so the view describes it
+   as unplayable, and card-state.css desaturates every card that carries
+   data-playable="false". That would have dimmed all four outcomes and left the
+   two cancelled ones with nothing to say. card-reveal.css already answers this
+   for the hand card, with filter: none on a card that is being read (D66, D67);
+   this is the same declaration on the same idea. The nullified and negated rule
+   below is more specific, so it still wins where it should. */
+.last-card__reveal .card {
+  filter: none;
+}
+
 .last-card[data-outcome="nullified"] .last-card__line,
 .last-card[data-outcome="negated"] .last-card__line {
   color: var(--color-text-muted);
