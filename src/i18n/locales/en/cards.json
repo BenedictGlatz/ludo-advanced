@@ -120,7 +120,7 @@
       },
       "action-lock-in": {
         "title": "Lock In",
-        "text": "One of your own pawns stays put for a round and cannot be captured while it does."
+        "text": "Locks one of your own pawns in for a round: you cannot move it yourself, and nobody can capture it. Your other pawns move as usual."
       },
       "action-not-that-deep": {
         "title": "It's Not That Deep",

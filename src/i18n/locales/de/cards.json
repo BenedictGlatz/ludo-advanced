@@ -120,7 +120,7 @@
       },
       "action-lock-in": {
         "title": "Lock In",
-        "text": "Eine eigene Figur bleibt eine Runde stehen und kann in dieser Zeit nicht geschlagen werden."
+        "text": "Sperrt eine eigene Figur eine Runde lang ein: du selbst kannst sie nicht ziehen, und niemand kann sie schlagen. Deine anderen Figuren ziehen wie gewohnt."
       },
       "action-not-that-deep": {
         "title": "It's Not That Deep",

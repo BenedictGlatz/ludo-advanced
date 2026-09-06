@@ -3044,6 +3044,28 @@ stale stylesheets twice (handoff 16, the section above). `01-Design/Handoff/00-o
 mitigation and it only works when this side notices that a fix contradicts a spec rather than the CSS.
 Whether that held is worth checking at the end of Sprint 3, either way.
 
+### A pawn now says what is stuck to it, in a `title`: 2026-09-06, issue #94
+
+**The gap.** `board-marks.js` has written `data-statuses` on every pawn since issue #45, and design spec
+07 styled two of the nine kinds (`stunned`, `slippery`). The other seven were invisible. A playtester ran
+into exactly that: a capture was refused, the message strip said "protected", and the pawn on the square
+looked like every other pawn. The report came in as "I cannot capture a pawn on its entry square", which
+the rules do allow; the pawn was almost certainly carrying Lock In or Built Different.
+
+**What ships.** `markStatuses` also writes a `title` attribute: one clause per status kind from the new
+`status.*` keys in `ui.json`, joined with `status.separator`. The wording lives in
+`src/ui/status-labels.js`, a jQuery-free sibling of `player-labels.js`, so that `status-title.test.js` can
+check every `STATUS` kind has a sentence without a DOM. A pawn carrying nothing has no `title` at all.
+
+**Why a native tooltip and not a designed one.** A `title` is text, not a look. Under the 2026-09-06
+rule it needs no brief, and it closes the "why can I not do this" gap the same day. The drawn marks for
+the seven unstyled kinds and a designed tooltip are asked for in brief 17 together with the protection
+aura the tester suggested; this attribute is the fallback until then, and it can stay underneath a drawn
+mark as the keyboard and screen-reader text.
+
+**Rejected: styling the seven kinds now with borrowed tokens.** It would have been exactly the case the
+rule sends back to a brief: seven new marks with nothing to derive them from.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

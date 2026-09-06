@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Pointing at a pawn tells you what is stuck to it.** A pawn carrying a card effect (locked in, armoured,
+  petrified, stunned and the rest) now has a tooltip naming each effect and what it does, so a refused
+  capture or a pawn that will not move can be explained by looking at the pawn rather than guessing
 - `CLAUDE.md` defining the tech stack, architecture layering, testing, Git and AI prompt log conventions
 - `README.md` with project overview, setup instructions, scripts and contribution guidelines
 - This changelog
@@ -420,6 +423,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Lock In's card text says what it costs you.** It now reads that you cannot move the locked pawn yourself
+  and that your other pawns move as usual. The rule is unchanged: a playtest read the card as locking the
+  whole turn, and the old wording did not say otherwise
 - **Choosing a player count no longer starts the match on its own** (issue #76). It sizes the match and
   opens the line-up screen, and Start on that screen is what begins the match. Two gestures where there
   used to be one, which is the price of the computer being reachable without the address bar. The
