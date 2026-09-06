@@ -7,6 +7,24 @@ times on 2026-09-04, and twice on 2026-09-05**
 
 ---
 
+## Status on 2026-09-06: one small fix landed under the new rule, and it touches a surface nobody has designed yet
+
+**The reaction plate now reads `--color-warn-soft`, and its countdown `--color-surface`** (issue #92).
+Both used to read card tokens, `--card-reaction-wash` and `--card-result-bg`, which are fixed light in
+both skins by D25 because they sit behind ink-drawn art. On the plate they sat under `--color-text`, so
+the dark skin showed near-white text on pale peach. A playtester called it unreadable, and it was.
+
+This is the first fix made under the 2026-09-06 amendment to `CLAUDE.md` (small fixes stay with Claude
+Code), and it is reported here because of the one thing that makes it not quite a textbook case: **no
+spec covers the reaction plate**. Spec 04 answered the countdown ring and the plate's position in the
+rail, and stopped. So there is no spec line this fix restores; it only stops the code borrowing a card
+token for a non-card surface. When the plate does get a design, the two tokens above are what the code
+reads today, and the card tokens were never meant for it.
+
+Nothing else in the loop changed. The open items below stand as they were on 2026-09-05.
+
+---
+
 ## Status on 2026-09-05: handoff 16 landed, and it was applied rule by rule rather than copied
 
 **[16-spec-seat-dots-and-message-strip.md](16-spec-seat-dots-and-message-strip.md) answered D97 to D99
