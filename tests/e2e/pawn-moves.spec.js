@@ -173,6 +173,32 @@ test.describe("a pawn moves by pointing at its target (issue #91)", () => {
     await expect(pawn).toHaveAttribute("data-selected", "true");
   });
 
+  test("rings the field under the carried pawn, and only that one (D103)", async ({ page }) => {
+    const board = await openMatch(page, SEEDS.advancesEarly);
+    await reachAnAdvance(board);
+
+    const pawn = firstMovablePawn(board);
+    const from = await centre(pawn);
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await page.mouse.move(from.x + 12, from.y + 12, { steps: 3 });
+    await expect(pawn).toHaveAttribute("data-dragging", "true");
+
+    // Nothing is marked while the pointer is between fields: a carried piece is not asking "where may
+    // I go", the lit targets already answer that, it is asking "will it land here".
+    const target = board.locator('.square[data-legal-target="true"]');
+    const to = await centre(target);
+    await page.mouse.move(to.x, to.y, { steps: 8 });
+
+    await expect(target).toHaveAttribute("data-drop", "true");
+    await expect(board.locator('[data-drop="true"]')).toHaveCount(1);
+
+    await page.mouse.up();
+
+    // The mark belongs to the gesture, so it goes with it.
+    await expect(board.locator('[data-drop="true"]')).toHaveCount(0);
+  });
+
   test("a lit square can be reached and activated from the keyboard (NFR-08)", async ({ page }) => {
     const board = await openMatch(page, SEEDS.advancesEarly);
     await reachAnAdvance(board);

@@ -1,5 +1,11 @@
-/* The objects a card puts on a track field: the three traps, the blocker,
-   the seat that owns each one, and the It's Not That Deep aura.
+/* The objects a card puts on a track field: the three traps, the seat that
+   owns each one, and the It's Not That Deep aura.
+
+   Amended 2026-09-06 with issue #90 and D101: the blocker is gone from this
+   file. Big Ah Rock petrifies one of the caster's own pawns now, nothing
+   writes data-trap="blocker", and D52 is retired. Its square corner was the
+   whole of its message and that message moved with the rule: pawn-status.css
+   squares off the corners of a rock pawn.
    Depends on tokens.css and on the seat mapping in board.css, which supplies
    --player to any element carrying data-player.
 
@@ -16,7 +22,7 @@
 
 /* --- The object itself (D51, D53).
 
-       One construction for all four objects, and it is the pawn's: a body in
+       One construction for all three objects, and it is the pawn's: a body in
        the owner's seat colour with a 3px ink edge. Amended 2026-09-05, D97:
        the ink shape inside the chip goes with the rest of the seat shapes, so
        the chip is a dot in the owner's colour and nothing more. It was 10 px
@@ -65,12 +71,6 @@
   opacity: 1;
   scale: 1;
 }
-
-/* --- The blocker (D52) is gone. Issue #90 turned Big Ah Rock into a
-       status on the caster's own pawn, so no square carries
-       data-trap="blocker" any more and the 76 per cent square-cornered
-       object that stood for it had no writer. The petrified pawn's own mark
-       is owed by design brief 17. --- */
 
 /* --- The aura (D58). Up to seven contiguous fields in which an offensive
        card does nothing. Drawn, because a player who cannot see it cannot

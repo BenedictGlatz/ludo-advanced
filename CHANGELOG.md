@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   drag the pawn onto the lit square and let go. Dropping it anywhere else puts it back. The lit squares can
   also be reached with the keyboard and activated with Enter or Space. The two clicks on the pawn still
   work, and a single click on a square only picks the pawn, so a misclick still cannot capture anything
+- **The last card anybody played is on screen**, as a plate at the end of the HUD row: the card's name, who
+  played it, on which turn, and whether it resolved, is still waiting for an answer or was cancelled.
+  Pointing at the plate, or tabbing to it, brings the card itself up at full size
+- **A pawn shows what a card did to it.** All nine statuses are drawn now: a petrified pawn squares off,
+  closes its eyes and gets heavier, a pawn that cannot be captured wears a second ink ring, and locked in,
+  held, taunted and slippery each get their own mark on the shoulder. A pawn that is locked in wears two of
+  them, because Lock In does two things at once
 - **Pointing at a pawn tells you what is stuck to it.** A pawn carrying a card effect (locked in, armoured,
   petrified, stunned and the rest) now has a tooltip naming each effect and what it does, so a refused
   capture or a pawn that will not move can be explained by looking at the pawn rather than guessing
@@ -436,6 +443,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   one of your pawns: nothing gets past it, you cannot move it, and no card can push it, for two rounds
   (Rock) or three (Big Ah Rock). Big Ah Rock still knocks the nearest enemy pawn behind the stone back
   three squares, and that push is now announced in the message strip
+- **A pawn being dragged looks like it is being carried**: it grows, it casts the longest shadow in the
+  game, it follows the pointer with no delay at all, and the field it would land on answers with a ring
+  drawn inside its own edge
+- **A petrified pawn's tooltip now says that its owner cannot move it either**, which is the half of the
+  rock cards' change the wording had left out
 - **Lock In's card text says what it costs you.** It now reads that you cannot move the locked pawn yourself
   and that your other pawns move as usual. The rule is unchanged: a playtest read the card as locking the
   whole turn, and the old wording did not say otherwise

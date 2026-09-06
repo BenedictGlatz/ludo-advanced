@@ -43,11 +43,17 @@ import { createCard, updateCard } from "./card-view.js";
 /**
  * One card's description, with every string already translated.
  *
- * `focusable: true` regardless of `playable`, which is D67. A card in your own hand can be read by
- * pointing at it or by tabbing to it, so every real card needs a tab stop; `card-view.js` explains why
- * that is a field on the card rather than a rule inside the shared component.
+ * `focusable` defaults to `true` regardless of `playable`, which is D67. A card in your own hand can be
+ * read by pointing at it or by tabbing to it, so every real card needs a tab stop; `card-view.js`
+ * explains why that is a field on the card rather than a rule inside the shared component.
+ *
+ * **Exported since issue #93**, because `last-card-view.js` shows the last card played at the same
+ * reference size and out of the same catalogue. Resolving `card.skill.<id>.title` and the drawing in two
+ * files would be two places to change when a card gains a field, and the plate would be the one that
+ * silently fell behind. The plate is the caller that overrides `focusable`: the card in it is a record,
+ * the section around it is the tab stop, and a stop on the card would be a second one.
  */
-function skillCard(cardId, { playable, selected }) {
+export function skillCard(cardId, { playable, selected, focusable = true }) {
   const card = cardById(cardId);
 
   return {
@@ -62,7 +68,7 @@ function skillCard(cardId, { playable, selected }) {
     tags: card.category === null ? [] : [t(`card.category.${card.category}`)],
     art: skillArt(cardId),
     playable,
-    focusable: true,
+    focusable,
     selected,
   };
 }

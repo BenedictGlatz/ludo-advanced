@@ -26,6 +26,13 @@
  * out, on the grounds that no rule for it exists anywhere in the rulebook. Pool and discard counters were
  * considered at the same time and dropped, so that sixteen numbers on screen do not become twenty-four.
  *
+ * ## The fifth plate is not a seat
+ *
+ * Since issue #93 the row ends with the last card anybody played (D100 of design spec 17).
+ * `last-card-view.js` owns it completely, and it sits in this row rather than in a region of its own
+ * because the row spans both grid columns and centres its plates: a plate outside it cannot sit at its
+ * end. Two lines here are all that costs, one in `renderHud` and one in `updateHud`.
+ *
  * ## Design note, and it is a gap rather than a decision
  *
  * **No design specification covers this region.** Handoffs 01 and 03 both excluded the HUD explicitly.
@@ -40,6 +47,7 @@ import { PAWNS_PER_PLAYER } from "../core/board.js";
 import { t } from "../i18n/index.js";
 import { seatProgress } from "../state/game-state.js";
 import { isBot } from "../state/bots.js";
+import { renderLastCard, updateLastCard } from "./last-card-view.js";
 import { seatLabel, seatName } from "./player-labels.js";
 
 /**
@@ -77,7 +85,7 @@ function seatRow(seat) {
 export function renderHud(state) {
   return $("<div>", { class: "hud" })
     .attr("data-players", state.playerCount)
-    .append(...state.seats.map(seatRow));
+    .append(...state.seats.map(seatRow), renderLastCard());
 }
 
 /**
@@ -108,7 +116,7 @@ export function updateHud($hud, state) {
     $hud
       .attr("data-players", state.playerCount)
       .empty()
-      .append(...state.seats.map(seatRow));
+      .append(...state.seats.map(seatRow), renderLastCard());
   }
 
   for (const seat of state.seats) {
@@ -145,6 +153,12 @@ export function updateHud($hud, state) {
       $count.children(".hud__label").text(t(`hud.${kind}`));
     });
   }
+
+  // The fifth plate (issue #93, D100). It is a child of this row rather than a region of its own,
+  // because the row spans both grid columns and centres its plates, so a plate outside it cannot sit at
+  // its end. `last-card-view.js` owns everything about it; this line is what keeps it from going stale,
+  // and the rebuild above re-appends it for the same reason the seat rows are rebuilt there.
+  updateLastCard($hud.children(".last-card"), state);
 
   return $hud;
 }
