@@ -98,6 +98,7 @@
       "held": "Diese Figur wird festgehalten und setzt diesen Zug aus.",
       "stunned": "Diese Figur ist in eine Falle getreten und setzt diesen Zug aus.",
       "locked": "Diese Figur ist eingesperrt und darf nicht gezogen werden.",
+      "petrified": "Diese Figur ist versteinert und kann nicht gezogen werden, bis der Effekt abläuft.",
       "blocked": "Auf dem Weg liegt ein Stein. Da kommt niemand vorbei.",
       "protected": "Die Figur auf dem Zielfeld ist geschützt und kann nicht geschlagen werden.",
       "no-steps": "Der Wurf ist auf 0 gefallen. Diese Runde bewegt sich niemand.",
@@ -109,14 +110,13 @@
     "label": {
       "banana-peel": "Banana Peel",
       "oil-spill": "Oil Spill",
-      "not-that-deep": "It's Not That Deep",
-      "big-ah-rock": "Big Ah Rock"
+      "not-that-deep": "It's Not That Deep"
     },
     "fired": {
       "banana-peel": "{{player}} ist auf die Banana Peel von {{owner}} getreten und setzt den nächsten Zug aus.",
       "oil-spill": "{{player}} ist in den Oil Spill von {{owner}} geraten und {{squares}} Felder weitergerutscht.",
       "not-that-deep": "{{player}} ist in It's Not That Deep von {{owner}} getreten und ein Feld zurückgegangen.",
-      "big-ah-rock": "{{owner}} hat einen Big Ah Rock abgelegt, und {{player}} wurde drei Felder zurückgestoßen."
+      "big-ah-rock": "{{owner}} hat eine Figur versteinert, und {{player}} wurde drei Felder zurückgestoßen."
     },
     "nullified": "In der Nähe lag ein It's Not That Deep und hat diese Karte aufgehoben.",
     "aura": "Von einem It's Not That Deep geschützt"

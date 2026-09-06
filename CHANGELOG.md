@@ -420,6 +420,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Rock and Big Ah Rock both turn one of your own pawns to stone, and stone does not move.** Rock's pawn
+  used to stay movable by its owner; Big Ah Rock used to turn a field into a boulder. Now both cards aim at
+  one of your pawns: nothing gets past it, you cannot move it, and no card can push it, for two rounds
+  (Rock) or three (Big Ah Rock). Big Ah Rock still knocks the nearest enemy pawn behind the stone back
+  three squares, and that push is now announced in the message strip
 - **Choosing a player count no longer starts the match on its own** (issue #76). It sizes the match and
   opens the line-up screen, and Start on that screen is what begins the match. Two gestures where there
   used to be one, which is the price of the computer being reachable without the address bar. The

@@ -2013,6 +2013,21 @@ fail the next time the design side moves one, which is a test that reports desig
 is a requirement.
 
 
+### One end-to-end case deleted with the rule it measured: 2026-09-06, issue #90
+
+`trap-fires.spec.js` had a case that measured D52: a blocker covers 76 per cent of its field with square
+corners, against a trap's 30 with round ones. Issue #90 removed the blocker as a square object, so the
+case had nothing left to measure and was deleted rather than skipped. The petrified pawn's own mark is
+owed by design brief 17 and gets its measurement when the mark exists. `traps.spec.js`'s "marks a blocker"
+case became "turns one of the caster's own pawns to stone", asserting `data-statuses~="rock"` on the
+pawn and an empty object list on the board. The new shared helper `reachOwnPawnOnTrack` in
+`trap-helpers.js` plays turns until the seat has a track pawn, because an own-pawn card has nothing to
+point at on turn 1 of any seed.
+
+Unit coverage moved rather than shrank: `rock-effects.test.js` (11 cases) replaces the 7 Big Ah Rock
+cases that left `trap-effects.test.js`, and adds the two rules that did not exist before, a stone cannot
+be knocked back and the knockback is reported.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

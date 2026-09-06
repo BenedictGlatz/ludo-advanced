@@ -35,12 +35,6 @@ describe("the three reasons a square cannot take an object", () => {
     expect(trapPlacementRefusal(pawnsAt(4), traps, FREE)).toBe(PLACEMENT.OCCUPIED);
   });
 
-  it("refuses a square that holds a blocker, which is in the same list", () => {
-    const traps = [trap(TRAP_KIND.BIG_AH_ROCK, FREE)];
-
-    expect(trapPlacementRefusal(pawnsAt(4), traps, FREE)).toBe(PLACEMENT.OCCUPIED);
-  });
-
   /**
    * A trap only fires when something **enters** its square, so one laid under a pawn already standing
    * there does nothing until that pawn leaves and comes all the way back round the ring. It looks like a
@@ -101,7 +95,7 @@ describe("the list the target picker is given", () => {
    */
   it("agrees with the refusal on every one of the forty squares", () => {
     const pawns = pawnsAt(4, { "0.0": 6, "2.0": 15 });
-    const traps = [trap(TRAP_KIND.BANANA_PEEL, 17), trap(TRAP_KIND.BIG_AH_ROCK, 23)];
+    const traps = [trap(TRAP_KIND.BANANA_PEEL, 17), trap(TRAP_KIND.OIL_SPILL, 23)];
     const offered = placeableSquares(pawns, traps);
 
     for (let square = 0; square < TRACK_LENGTH; square += 1) {

@@ -179,3 +179,29 @@ export async function playUntilTrapFires(board, maxTurns = 60) {
 
   return null;
 }
+
+/**
+ * Drive the match until `seat` is choosing a die with at least one pawn on the track, choose the die,
+ * and return whether the turn stopped in the action phase. Issue #90.
+ *
+ * An own-pawn card (Rock, Big Ah Rock, Lock In, Built Different) has nothing to point at while every
+ * pawn is in the yard, so a spec that plays one has to wait for a track pawn first. `playTurn` is passed
+ * in rather than imported, for the same reason `awaitCardInHand` takes it: the helper file drives no
+ * turns of its own.
+ */
+export async function reachOwnPawnOnTrack(board, playTurn, seat = 0, maxTurns = 8) {
+  for (let step = 0; step < maxTurns; step += 1) {
+    const { activePlayer, phase } = await boardState(board);
+    const onTrack = await board
+      .locator(`.pawn[data-player="${seat}"]`)
+      .evaluateAll((pawns) => pawns.some((p) => Number(p.getAttribute("data-r")) > 0));
+
+    if (activePlayer === seat && phase === "choose" && onTrack) {
+      await chooseDiceCard(board);
+      return (await boardState(board)).phase === "action";
+    }
+    await playTurn(board);
+  }
+
+  return false;
+}

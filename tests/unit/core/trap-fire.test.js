@@ -160,7 +160,7 @@ describe("the trap list afterwards", () => {
   });
 });
 
-describe("a blocker must never get here", () => {
+describe("an unknown kind must never get here", () => {
   /**
    * **This case inverted in issue #45**, and the inversion is the point. It used to assert that a
    * blocker reaching `fireTrap` did nothing and stayed standing, which meant a missing rule for a new
@@ -171,6 +171,6 @@ describe("a blocker must never get here", () => {
    * worth an exception rather than a no-op that hides which.
    */
   it("throws rather than quietly doing nothing", () => {
-    expect(() => fire(TRAP_KIND.BIG_AH_ROCK)).toThrow(/not a trap/);
+    expect(() => fire("big-ah-rock")).toThrow(/not a trap/);
   });
 });

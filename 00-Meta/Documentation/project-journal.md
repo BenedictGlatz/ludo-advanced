@@ -4697,6 +4697,28 @@ to get wrong later.
 
 ---
 
+### 2026-09-06: Big Ah Rock stops being a square object, and both rock cards petrify a pawn
+
+- **What prompted it:** playtest item 3 (issue #90). The tester read Rock's movable pawn as a bug and
+  Big Ah Rock's field target as the wrong target. The GDD backed the first half ("immovable stone") and
+  contradicted the second (it said "track square").
+- **Chosen:** the Product Owner picked the larger change: both cards act on an own pawn, and a petrified
+  pawn can neither be moved by its owner nor pushed by a card. Big Ah Rock keeps its three rounds and its
+  knockback, now measured behind the stone.
+- **Rejected: fix Rock only and leave Big Ah Rock on a square, which is what the GDD said.** Cheaper by
+  eleven test files, and it keeps two cards with the same name and two different kinds of object on the
+  board, which is the confusion the tester reported in the first place. The Product Owner chose the
+  consistent pair.
+- **Rejected: a separate status kind `BOULDER` for Big Ah Rock.** Three readers would gain a second
+  line each and no rule would differ. `source` already records which card wrote the status.
+- **Consequence:** the trap list has one behaviour again and `traps.js` is simpler than before issue
+  #45. D52 of design spec 07 (the blocker's 76 per cent mark) has nothing to draw and is retired in
+  `00-open-requests.md`; the stone pawn's mark is a question for brief 17. The GDD card table row was
+  rewritten with the old reading struck through rather than deleted.
+- → Ch. 05, Ch. 06, Ch. 08
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

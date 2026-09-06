@@ -4,7 +4,7 @@
  * Pure `ai/`. Same signature and currency as the other three value files: see
  * [values-shared.js](values-shared.js).
  *
- * ## The four trap cards all ask the same question
+ * ## The three trap cards all ask the same question
  *
  * "Which free square is worth putting this on?" And they all give a version of the same answer: **one
  * square in front of an opponent's pawn**, because that is the square that pawn is most likely to
@@ -29,11 +29,10 @@
 
 import { TRACK_LENGTH } from "../core/board.js";
 import { HYPERBEAM_DIE, JANKY_DIE, JANKY_HIT } from "../core/cards/effects/area-effects.js";
-import { KNOCKBACK } from "../core/cards/effects/trap-effects.js";
 import { squareOf } from "../core/displacement.js";
 import { neighbourSquares, ringDistance, squareRun } from "../core/path.js";
 import { pickableSquares } from "../state/card-legality.js";
-import { friendsBehind, squareAhead } from "./threat.js";
+import { squareAhead } from "./threat.js";
 import { enemiesOnTrack, ownOnTrack, share, squareSwing } from "./values-shared.js";
 
 /** The best of a list of `{ value, target }`, or `null`. First one wins a tie, so it is repeatable. */
@@ -122,34 +121,6 @@ export function notThatDeep(state, seat) {
       ).length;
 
       return { value: NOT_THAT_DEEP_BASE + guarded, target: { square } };
-    })
-  );
-}
-
-/** What a boulder standing in the way is worth, and what one of my own pawns stuck behind it costs. */
-const BOULDER_WORTH = 4;
-const BOULDER_COST = 2;
-
-/** How far behind a boulder still matters. Six squares: one D6 away from running into it. */
-const BOULDER_RANGE = 6;
-
-/**
- * Drop a Big Ah Rock in front of an opponent (`knock back three, then block for three rounds`).
- *
- * Two halves, and the card only makes sense when both land: the pawn directly behind the square is
- * knocked back `KNOCKBACK`, and the square then blocks everything for three rounds. So it is worth the
- * knockback plus the blocking, as a share, less what my own pawns behind it lose by being stuck too.
- * The boulder is nobody's friend, exactly like Rock.
- */
-export function bigAhRock(state, seat) {
-  return best(
-    squaresAheadOfEnemies(state, seat, "action-big-ah-rock").map(({ square }) => {
-      const mine = friendsBehind(state.pawns, square, BOULDER_RANGE, seat).length;
-
-      return {
-        value: share(state) * (KNOCKBACK + BOULDER_WORTH) - BOULDER_COST * mine,
-        target: { square },
-      };
     })
   );
 }

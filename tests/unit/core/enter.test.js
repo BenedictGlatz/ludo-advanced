@@ -145,16 +145,17 @@ describe("the chain a trap that moves the pawn starts", () => {
    * The boulder is on absolute 12, the one square the pushback wants, so the pawn cannot move at all
    * and stays where its move put it.
    */
-  it("a blocker stops the push and the pawn stays in front of it", () => {
-    const rock = trap(TRAP_KIND.BIG_AH_ROCK, 12);
+  it("a stone stops the push and the pawn stays in front of it", () => {
+    // Issue #90: the boulder is a petrified pawn now. Seat 2 at `r = 33` is the stone on absolute 12.
     const world = worldWith({
-      pawns: pawnsAt(4, { "0.0": 14 }),
-      traps: [trap(TRAP_KIND.NOT_THAT_DEEP, 13), rock],
+      pawns: pawnsAt(4, { "0.0": 14, "2.0": 33 }),
+      traps: [trap(TRAP_KIND.NOT_THAT_DEEP, 13)],
+      statuses: [{ kind: STATUS.ROCK, player: 2, pawn: 0, until: 99, source: "test" }],
     });
     const result = enterSquares(world, mover, 13, 14);
 
     expect(rOf(result, 0, 0)).toBe(14);
-    expect(result.traps).toEqual([rock]);
+    expect(result.traps).toEqual([]);
   });
 
   /**
@@ -221,14 +222,15 @@ describe("shove, the entry point card-driven movement uses", () => {
   });
 
   it("fires nothing when the push could not move the pawn at all", () => {
-    const rock = trap(TRAP_KIND.BIG_AH_ROCK, 20);
+    // Seat 2 at `r = 1` is the stone on absolute 20, the first square the push wants.
     const world = worldWith({
-      pawns: pawnsAt(4, { "0.0": 20 }),
-      traps: [rock, trap(TRAP_KIND.BANANA_PEEL, 22)],
+      pawns: pawnsAt(4, { "0.0": 20, "2.0": 1 }),
+      traps: [trap(TRAP_KIND.BANANA_PEEL, 22)],
+      statuses: [{ kind: STATUS.ROCK, player: 2, pawn: 0, until: 99, source: "test" }],
     });
     const result = shove(world, mover, 3);
 
     expect(rOf(result, 0, 0)).toBe(20);
-    expect(result.traps).toHaveLength(2);
+    expect(result.traps).toHaveLength(1);
   });
 });

@@ -20,6 +20,7 @@ import {
   builtDifferent,
   headOut,
   letHimCook,
+  bigAhRock,
   lockIn,
   ragebait,
   rock,
@@ -42,7 +43,8 @@ describe("Rock: a wall is worth what walks into it", () => {
     const scored = rock(state, 0);
 
     expect(scored.target).toEqual({ pawn: { player: 0, pawn: 0 } });
-    expect(scored.value).toBe(6);
+    // Two enemies at 3 each, less the 5 the pawn gives up by standing still (issue #90).
+    expect(scored.value).toBe(1);
   });
 
   /**
@@ -53,7 +55,35 @@ describe("Rock: a wall is worth what walks into it", () => {
     // Seat 0's r = 7 is square 6, four behind square 10, so it is stuck behind its own wall.
     const state = acting({ "0.0": 11, "0.1": 7, "1.0": 39 });
 
-    expect(rock(state, 0).value).toBe(0);
+    expect(rock(state, 0).value).toBe(-5);
+  });
+
+  /**
+   * Issue #90 made the stone immovable, and the price of that is the same `LOCK_COST` Lock In pays.
+   * A wall with nobody to stop is now a card played against myself, so the bot keeps it.
+   */
+  it("prices a wall nobody walks into below zero, because the pawn stands still for it", () => {
+    expect(rock(acting({ "0.0": 11 }), 0).value).toBeLessThan(0);
+  });
+});
+
+describe("Big Ah Rock: the same wall, plus the knockback (issue #90)", () => {
+  /** Rock's value on the same board, plus the knockback as a share: 1 + 3 / 3 at four seats. */
+  it("is worth Rock plus a share of the knockback when an enemy is behind the pawn", () => {
+    const state = acting({ "0.0": 11, "0.1": 21, "1.0": 39, "3.0": 17 });
+
+    expect(bigAhRock(state, 0).target).toEqual(rock(state, 0).target);
+    expect(bigAhRock(state, 0).value).toBeCloseTo(rock(state, 0).value + 1, 10);
+  });
+
+  it("is worth exactly Rock when nobody is behind the pawn to knock", () => {
+    const state = acting({ "0.0": 11 });
+
+    expect(bigAhRock(state, 0).value).toBe(rock(state, 0).value);
+  });
+
+  it("is null with no pawn on the track, like every own-pawn card", () => {
+    expect(bigAhRock(acting({}), 0)).toBeNull();
   });
 });
 

@@ -7,6 +7,21 @@ times on 2026-09-04, and twice on 2026-09-05**
 
 ---
 
+## Status on 2026-09-06: D52 is retired, and the stone it drew is now a pawn
+
+**Big Ah Rock no longer stands on a field** (issue #90, from a playtest). Both rock cards now petrify one
+of the caster's own pawns: the status `rock` that Rock has always written, for two or three rounds. So
+`data-trap="blocker"` has no writer any more, the 76 per cent square-cornered object of **D52 is deleted
+from `board-trap.css`**, and the one spec case that measured it is gone. `data-trap` itself stays, always
+`trap`, so nothing else in spec 07 moves.
+
+What that leaves owed is the **petrified pawn's mark**, one of the six statuses D57 left for a later spec
+(`rock`, `locked`, `armoured`, `ghost`, `held`, `ragebait`). It is now the most visible of the six: a stone
+pawn is a wall everybody has to walk around and its owner cannot move, and it looks exactly like every
+other pawn. Brief 17 will ask for all six together, with the protection aura a tester asked for.
+
+---
+
 ## Status on 2026-09-05: handoff 16 landed, and it was applied rule by rule rather than copied
 
 **[16-spec-seat-dots-and-message-strip.md](16-spec-seat-dots-and-message-strip.md) answered D97 to D99
