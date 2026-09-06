@@ -3012,6 +3012,37 @@ The changes were applied rule by rule instead, which is what § 1 of the spec as
 handoff is that a whole-file delivery is a diff whose base is unstated**, and the base is whatever the
 design side last read. Worth one line in the retrospective, because it will happen again.
 
+### The handoff loop got an exception, and it is the process change of Sprint 2: 2026-09-06, no issue
+
+**Small design fixes no longer go through Claude Design.** The rule in `CLAUDE.md` *Design and UI* was
+absolute from 2026-08-06 until now: every design change went through a brief and a spec. It is now split
+by the kind of change. Claude Code fixes what is already specified and visibly broken; Claude Design owns
+new screens, new components and the design system itself.
+
+**Requested by the Product Owner, and his reason is the one that matters for the report:** after sixteen
+handoffs the loop had become expensive for the wrong category of change, and prototyping is what he
+actually wants it for. The full decision block, with three rejected alternatives and the cost this
+knowingly accepts, is in [project-journal.md](../project-journal.md) under 2026-09-06.
+
+**Three conditions decide which side a change falls on**, and a change failing any one of them goes back
+to a brief:
+
+1. It repairs something already specified: a visual bug, a state the spec defines but the CSS does not
+   apply, or a value that contradicts the spec it came from.
+2. It uses only existing tokens and the patterns already in the neighbouring stylesheets. Needing a new
+   colour, token or unrelatable size makes it a design decision.
+3. It does not change how the screen looks when it is working. Repairing a broken state is a fix, making
+   a working state look different is not.
+
+**Why conditions rather than judgement:** the old rule was enforceable precisely because it was absolute,
+and "use your judgement" would hand this side the decision `CLAUDE.md` exists to withhold. The wording is
+built so that the ambiguous case fails a condition and leaves.
+
+**What this chapter should watch, and it is a negative finding waiting to happen:** the two trees drift
+further apart now. Fixes land in `src/ui/styles/` that the design side never sees, and it already read
+stale stylesheets twice (handoff 16, the section above). `01-Design/Handoff/00-open-requests.md` is the
+mitigation and it only works when this side notices that a fix contradicts a spec rather than the CSS.
+Whether that held is worth checking at the end of Sprint 3, either way.
 
 ## Decisions
 

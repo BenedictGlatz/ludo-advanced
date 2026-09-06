@@ -477,6 +477,11 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   on the merged `dev`. One branch stays open: `docs/appendix-board-screenshot` (PR #51, one docs
   commit from 2026-08-09) conflicts with `dev` and needs a manual resolution, so it was left alone
   rather than resolved unasked. Sprint 2.
+- **2026-09-06**: The *Design and UI* convention in `CLAUDE.md` was changed at the Product Owner's
+  request. Small design fixes are now Claude Code's, with three conditions defining what counts as
+  small; Claude Design keeps new designs and the design system. `01-Design/README.md` gained a
+  section naming what no longer goes through the handoff loop. Documentation only, no code change.
+  Sprint 2.
 
 
 ---
@@ -4611,6 +4616,45 @@ to get wrong later.
   whatever the design side last read. The two trees have now drifted twice. Worth naming in the
   retrospective and worth a line in the next brief.
 - → Ch. 04, Ch. 11
+
+---
+
+### 2026-09-06: Small design fixes leave the handoff loop, new designs stay in it
+
+- **What prompted it:** the Product Owner's own observation after sixteen handoffs. Routing every
+  design change through Claude Design makes fixing small visual problems very time-consuming, and the
+  purpose he actually wants the loop for is prototyping new screens before they are built.
+- **Chosen:** split the rule by *kind of change* rather than by tool. Claude Code fixes what is already
+  specified and visibly broken; Claude Design owns anything new and the design system itself. Three
+  conditions in `CLAUDE.md` decide which side a change falls on: the fix repairs something already
+  specified, it uses only existing tokens and patterns, and it does not change how the screen looks when
+  it is working. Two obligations come with it: a fix whose spec line or visible bug cannot be named is
+  not small, and a fix that corrects the *spec* rather than the CSS goes into
+  `01-Design/Handoff/00-open-requests.md`.
+- **Why a cost argument, not a competence one:** the loop's price is the same for every change that
+  enters it, roughly a brief, a wait and a spec. For a screen that does not exist yet, that price buys
+  a design decision with alternatives on the record. For a clipped label it buys a change nobody would
+  have designed differently. The loop was never wrong, it was just charged uniformly.
+- **Why the three conditions instead of "use your judgement":** the old rule was enforceable because it
+  was absolute. Replacing it with a judgement call would hand this side exactly the decision
+  `CLAUDE.md` exists to withhold, which is inventing design rules. The conditions are written so that
+  failing any one of them sends the change back to a brief.
+- **Rejected: letting Claude Code fix anything visual and only asking for genuinely new screens.**
+  Cheaper still, and it loses the thing the rule protects. "Make the panel a bit warmer" passes no
+  test for brokenness and would quietly become a second palette next to the design system's.
+- **Rejected: a size threshold, for example fixes under about ten CSS lines.** Easy to check and
+  measures the wrong thing. A one-line colour change can redefine a token everywhere, and repairing a
+  broken responsive layout can take forty lines without deciding anything at all.
+- **Rejected: keeping the loop and batching small fixes into a periodic collected handoff.** It keeps
+  every decision with the design side, which is tidy, and it leaves visible bugs sitting in the build
+  until the batch goes out. Sprint 2 already had a clipped label and a stale `:empty` rule waiting on
+  unrelated handoffs.
+- **Known cost, recorded because it will show up:** the two trees drift. The design side works from
+  stylesheets it last read, and small fixes now land without it hearing about them. That drift already
+  bit twice before this change (see the 2026-09-05 decision above), and this makes it more frequent
+  rather than less. `00-open-requests.md` is the mitigation and it is a weak one, since it depends on
+  this side noticing that a fix contradicts the spec.
+- → Ch. 04, Ch. 10
 
 
 ---

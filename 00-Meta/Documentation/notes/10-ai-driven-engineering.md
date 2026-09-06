@@ -31,6 +31,14 @@
 - Design and UI are developed with **Claude Design**, which has access to this directory. Claude
   Code does not invent design rules and does not overwrite existing ones; where a design
   specification is missing it asks rather than filling the gap.
+- **That boundary was narrowed on 2026-09-06, and the narrowing is itself a finding for this
+  chapter.** Small design fixes are now Claude Code's: repairs to something already specified, using
+  only existing tokens, that do not change how a working screen looks. Claude Design keeps new
+  designs and the design system. The reason is that a two-tool loop charges the same price for every
+  change that enters it, which is worth paying for a screen that does not exist yet and not worth it
+  for a clipped label. The cost knowingly accepted is drift between the two sides' views of the
+  stylesheets. Decision block of 2026-09-06 in [project-journal.md](../project-journal.md),
+  consequences in [04-frontend-building-blocks.md](04-frontend-building-blocks.md).
 - Documentation is written alongside development rather than afterwards: see
   [02-project-management.md](02-project-management.md) and the journal.
 

@@ -186,11 +186,35 @@ Before writing any report *prose*, read [reference/style-reference.md](00-Meta/D
 
 ## Design and UI
 
-Design and UI are developed with **Claude Design**, which has access to this directory.
+**New designs are developed with Claude Design**, which has access to this directory. It owns the design system:
+colour palette, spacing scale, typography, component looks, and the appearance of anything that does not exist yet.
+That is what the handoff loop in [01-Design/README.md](01-Design/README.md) is for, and it is what lets the Product
+Owner prototype a screen before it gets built.
 
-Claude Code does **not** invent design rules (no colour palettes, spacing scales, typography systems or component
-looks) and does not overwrite existing ones. When a design specification is missing for something you need to build,
-ask the user rather than filling the gap yourself.
+**Small design fixes are Claude Code's job and do not go through a handoff.** Look at the problem in the running
+app, fix it, and say what you changed. Sending a two-line CSS bug through a brief-and-spec round costs days for a
+change nobody would have designed differently. A fix qualifies when all three of these hold:
+
+1. **It repairs something that is already specified.** A visual bug (overlap, clipping, text cut off, a layout that
+   breaks at a normal window size), a state the spec defines but the CSS does not actually apply, or a value that
+   contradicts the spec it came from.
+2. **It uses only what already exists.** Tokens from `src/ui/styles/tokens.css` and the patterns already in the
+   neighbouring stylesheets. A fix that needs a new colour, a new token or a size with nothing to derive it from is
+   not a fix, it is a design decision.
+3. **It does not change how the screen looks when it is working.** Correcting a broken state is a fix; making a
+   working state look different is a design change.
+
+**Still Claude Design's, without exception:** a new screen or component, a change to the design system itself
+(palette, spacing scale, typography, a component's look), and anything where the honest description of the change is
+"it should look different" rather than "it is broken". Claude Code still does not invent design rules.
+
+Two obligations come with the new freedom:
+
+- **If you cannot name the spec line or the visible bug the fix restores, it is not a small fix.** Ask the user, or
+  write a brief.
+- **When a fix corrects the specification itself and not just the CSS**, add it to
+  [01-Design/Handoff/00-open-requests.md](01-Design/Handoff/00-open-requests.md), so the design side is not left
+  working from a spec the code no longer follows.
 
 ## Git workflow
 
