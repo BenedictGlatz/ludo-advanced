@@ -521,6 +521,11 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   choice, lead-weighted card damage, a real trap search and four receiving-end values for Nühü.
   The arena's verdict is in Ch. 09 and it is partly negative. Sprint 3.
 
+- **2026-09-06, night**: An opponent's skill hand is finally secret. New `src/ui/handover.js` holds
+  `viewerSeat`, the seat whose person is holding the device, and the hand on screen is face up only when
+  it is theirs. The handover curtain now also goes up before and after a reaction window. `game-loop.js`
+  was at 300 lines, so `src/ui/loop-parts.js` was split out of it. Sprint 3.
+
 - **2026-09-06, night**: Skill card animations planned. `Skill-Card-Animations-Brief.md` is design
   brief 18, opening D104 to D115, and `Skill-Card-Animations-Plan.md` is the six-phase implementation
   plan that consumes it. Both in the repository root, at the Product Owner's request; the brief belongs
@@ -5200,6 +5205,52 @@ to get wrong later.
   `01-Design/Handoff/00-open-requests.md` records that the code no longer follows it.
 - **Test:** `tests/e2e/card-reveal-stacking.spec.js`, new, two cases, and the 2026-09-04 case moved into
   it because `card-reveal.spec.js` was at 273 of NFR-02's 300 lines.
+- → Ch. 04, Ch. 08
+
+
+### 2026-09-06: The screen knows who is sitting in front of it, and that is what makes a hand secret
+
+- **The defect, and it is two of them:** a bot's skill hand lay face up for the whole of its turn, and
+  during a reaction window the answering player's hand came up face up in front of the player whose turn
+  it still was. Both had been on screen since the features that produced them landed, and D33's "the
+  cards stay secret" had been answered by the Product Owner on 2026-09-01 with only its count half built.
+- **The cause:** there is one hand region and it shows `seatOnShow(state)`, but nothing in the code knew
+  **whose eyes** were in front of it. `skill-hand-view.js` therefore wrote `data-face="up"`
+  unconditionally, with a comment reserving `"down"` for "a spectator view, a replay, or the online
+  mode". The reserved case had been the ordinary case all along.
+- **Chosen:** one new value in `ui/`, `viewerSeat`, in a new `src/ui/handover.js`. The rule is one
+  comparison, `seatOnShow(state) === viewerSeat`. The same module answers when the screen has to change
+  hands, and it is now asked at three moments rather than one: the end of a turn, a reaction window
+  waiting on somebody else, and that window shutting again.
+- **Rejected:** *testing `isBot(seatOnShow(state))` and nothing else.* It is two lines and it closes the
+  bot leak completely. It misses the human-against-human case entirely, and that one is worse: a bot
+  cannot use what it saw, and the person sitting next to you can.
+- **Rejected:** *a new screen for the reaction handover.* The existing handover screen's three sentences
+  ("Weitergeben an {{player}}", "Gib den Bildschirm weiter, bevor du auf Bereit drückst.", "Bereit") are
+  exactly as true for a reaction as for a turn change, so this is one component in a second place and
+  needed no new locale key. A new screen would also have been Claude Design's to draw and not ours.
+- **Rejected:** *asking on the prompt strip instead of behind a curtain.* Smaller, and it would have
+  worked, because the only secret thing on screen is the hand and the hand is already face down. It was
+  turned down because it is a **new interaction on an existing component**, which is a design decision,
+  where reusing the handover screen unchanged is not.
+- **Rejected:** *covering the bot's dice card fan as well.* The Product Owner's call, and the reasons
+  are good: the chosen dice card carries the rolled number and the throw animation runs on it, so
+  hiding it makes a bot's roll unreadable, and `.hand--dice` has no card back designed for it at all.
+- **Rejected:** *putting `viewerSeat` in the game state.* Which human is holding the mouse is not a fact
+  about the match. Same argument `skill-hand-view.js` already records for a half-finished card play.
+- **What it cost:** `game-loop.js` was at exactly 300 lines before any of this, so the five siblings it
+  builds and the `halt()` that stops them moved to a new `src/ui/loop-parts.js` first.
+- **What it changed that nobody asked for, and it is a rule change:** FR-25's thirty seconds used to
+  cover a whole reaction window, deliberately, so it stayed one shared window rather than one per
+  player. A curtain between two eligible people pauses the match and therefore clears the deadline, so
+  with three or four people the clock now effectively restarts for each person who takes the screen.
+  Hard to avoid: one clock cannot run across two people who each have to pick the device up first, and
+  the seconds spent reading "hand the screen over" were never seconds spent deciding.
+- **What it does not buy:** `data-card-id` stays in the DOM on a face-down card. "Face down" means "not
+  on the screen", not "secret from anybody who opens the console", and the end-to-end specs depend on
+  that attribute being there.
+- **Tests:** `tests/unit/ui/handover.test.js` (10 cases, node environment, the second `ui/` module in
+  the project with unit tests) and `tests/e2e/hand-secrecy.spec.js` (2 cases, both without `?fast=1`).
 - → Ch. 04, Ch. 08
 
 

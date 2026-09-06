@@ -2218,6 +2218,43 @@ green suite is only evidence about the bundle that was actually served, and noth
 which bundle that was.
 
 
+### Testing a rule whose failure is invisible: 2026-09-06, no issue
+
+An opponent's skill hand being face up when it should be face down is a defect with **no visible
+symptom to the person who could report it**. It looks exactly like a hand that is correctly face up,
+and the only person who can see the difference is the opponent sitting next to the screen. Two such
+leaks survived two sprints in a suite of a thousand unit tests and four hundred end-to-end cases,
+because nothing anywhere asked the question.
+
+That is the argument for the shape the tests took:
+
+- **`tests/unit/ui/handover.test.js`, 10 cases.** `handover.js` is the **second** `ui/` module in this
+  project with unit tests, after `turn-controls.js`, and it qualifies for the same reason: it imports
+  no jQuery, touches no DOM, and what it holds is a decision with branches in it. Chapter 08's standing
+  argument is that a coverage figure for jQuery rendering measures nothing, and it is unchanged; this
+  is the exception that argument allows for.
+- **`tests/e2e/hand-secrecy.spec.js`, 2 cases, both without `?fast=1`.** The bot case needs the bot's
+  thinking pause, because with the pauses gone a bot's turn is over inside one tick and there is nothing
+  on screen long enough to assert against. The reaction case needs the curtain, and `?fast=1` is the
+  flag that passes every curtain without the button. Same affordance `handover.spec.js` and
+  `reaction-prompt.spec.js` already use.
+- **The assertions are not only on the attribute.** `data-face="down"` being written is half of it; the
+  case also asserts that `.card__title` is genuinely not visible, that the card is `data-playable="false"`
+  and `tabindex="-1"`, and that the count is still published in the HUD. The attribute and the paint have
+  been out of step before, which is the whole reason `card-reveal.spec.js` exists.
+
+**A negative finding, and it is the second occurrence of one already on record.** The Playwright config
+runs `npm run build && npm run preview` with `reuseExistingServer`, so a preview server left running
+from an earlier build serves a stale bundle and the build step never runs. On 2026-09-04 that made a
+CSS fix look ineffective. On 2026-09-06 it did worse: a **full suite run reported 465 passes against
+code that was not in the bundle**. A green end-to-end run on this setup is only evidence after
+`npm run build` has been run by hand. It is written down twice now because it has cost time twice, and
+the fix (dropping `reuseExistingServer`, or making the preview server rebuild) is not yet made.
+
+**Still not covered:** `skill-hand-view.js` itself has no unit test and is not getting one. It imports
+jQuery and i18next, so it belongs to the Playwright half by the same rule that put `handover.js` in the
+Vitest half.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

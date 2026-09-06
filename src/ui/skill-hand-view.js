@@ -23,6 +23,12 @@
  * holding the mouse, and four hands on one screen would show every hand to everybody. The thirty seconds
  * still cover the whole window.
  *
+ * ## And whether the hand on screen may be looked at
+ *
+ * `viewerSeat` comes from `handover.js` and is the seat whose person is holding the device. The hand is
+ * face up when it is theirs and face down when it is not, which is the whole of it. Everything a face
+ * down hand looks like is already in `card-state.css` and `hand.css`.
+ *
  * ## The card component is shared and takes translated strings
  *
  * `card-view.js` renders dice cards and skill cards from the same DOM tree, and it calls no `t()`,
@@ -124,10 +130,11 @@ function emptySlot() {
  * light up two cards when the player picked one, and the player would have no way to tell which of the
  * two the game thought they meant.
  */
-export function updateSkillHand($hand, state, selectedSlot = -1) {
+export function updateSkillHand($hand, state, selectedSlot = -1, viewerSeat = null) {
   const seat = seatOnShow(state);
   const cards = state.skillHands[seat] ?? [];
-  const playable = playableCards(state, seat);
+  const secret = seat !== viewerSeat;
+  const playable = secret ? [] : playableCards(state, seat);
 
   $hand.attr("data-count", cards.length);
   $hand.attr("data-active", String(playable.length > 0));
@@ -144,12 +151,15 @@ export function updateSkillHand($hand, state, selectedSlot = -1) {
   // move, and again once their card budget was spent. `intents-cards.js` had already refused the same
   // conflation one layer up, in a comment that describes this bug in advance.
   //
-  // In hot seat play the hand on show is always the viewer's, so this is always "up". Hot-seat secrecy
-  // is not what this attribute buys and never was: `session-actions.js` passes the turn before the
-  // curtain lifts, so a hand belonging to somebody else is never on screen with the board visible.
-  // "down" stays in the contract for the first hand that is genuinely not the viewer's, which is a
-  // spectator view, a replay, or the online mode.
-  $hand.attr("data-face", "up");
+  // "down" waited in the contract for "the first hand that is genuinely not the viewer's", and on
+  // 2026-09-06 it turned out there had been two of them all along. A bot's hand is on show for the
+  // whole of the bot's turn and no curtain ever covers it, because `handoverNeeded` correctly says
+  // that nobody is being handed anything. And during a reaction window `seatOnShow` moves to the seat
+  // being asked, so the answering player's hand came up in front of the player whose turn it was.
+  //
+  // So the question is not "is this seat a computer" and never was. It is "is this hand the viewer's",
+  // and `handover.js` is the file that finally knows who the viewer is.
+  $hand.attr("data-face", secret ? "down" : "up");
   $hand.attr("data-seat", seat);
 
   $hand.children(".card").each(function updateSlot() {
@@ -162,11 +172,16 @@ export function updateSkillHand($hand, state, selectedSlot = -1) {
       return;
     }
 
+    // A card nobody may look at is also a card nobody may click or tab to. The back in
+    // `card-state.css` hides the face, and these two take away the pointer cursor and the tab stop
+    // that would otherwise still be on it: `card-controls.js` refuses the click anyway, and offering
+    // a gesture that is then refused is the worst kind of bug in a card game.
     updateCard(
       $card,
       skillCard(cardId, {
         playable: playable.includes(cardId),
-        selected: slot === selectedSlot,
+        selected: !secret && slot === selectedSlot,
+        focusable: !secret,
       })
     );
   });

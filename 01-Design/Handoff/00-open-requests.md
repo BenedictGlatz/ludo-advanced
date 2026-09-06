@@ -3,7 +3,56 @@
 **From:** Claude Code
 **To:** Claude Design
 **Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, four
-times on 2026-09-04, twice on 2026-09-05 and six times on 2026-09-06**
+times on 2026-09-04, twice on 2026-09-05 and seven times on 2026-09-06**
+
+---
+
+## Status on 2026-09-06, night: `data-face="down"` has a case in hot seat play after all
+
+**Nothing is owed as a brief. This is a correction to a delivered spec, filed so the design side is not
+working from a spec the code no longer follows.**
+
+Spec 10's D65 split `data-face` off `data-active` and drew the card back for `"down"`, and the closure
+note in this file says the value "has no case in hot seat play and is kept in the contract for a
+spectator view, a replay or the online mode".
+
+**It had two cases in hot seat play the whole time, and the Product Owner asked for both to be closed on
+2026-09-06.** Neither is a spectator view:
+
+| The hand on screen | Why no curtain covered it |
+| --- | --- |
+| A computer opponent's, for the whole of its turn | The handover screen correctly never appears for a bot: nobody is being handed anything |
+| The answering player's, during a reaction window | The handover screen only ever ran **between** turns, and a window opens in the middle of one |
+
+**Nothing was drawn for this and nothing needed to be.** The back in `card-state.css`, the closed-up
+`--overlap: 0.82` in `hand.css` and the reveal exclusions in `card-reveal.css` were all delivered with
+D65 and were all correct; they had simply never been switched on. What changed is one attribute value
+and where it comes from:
+
+| Before | Now |
+| --- | --- |
+| `data-face` hard-coded to `"up"` | `"up"` when the hand on show belongs to the seat holding the device, `"down"` otherwise |
+
+**One thing to know for the next spec that touches this region.** The handover screen is now used in two
+places rather than one: between turns as before, and twice inside a turn around a reaction window, to
+hand the screen to the answering player and to give it back. It uses `handover.title`,
+`handover.text` and `handover.ready` unchanged, because "Weitergeben an {{player}}" and "Gib den
+Bildschirm weiter, bevor du auf Bereit drückst." are as true for a reaction as for a turn change. If the
+screen is ever specified properly, it has to carry both jobs, or the reaction case needs words of its
+own and this side will ask for them rather than invent them.
+
+**One consequence worth knowing about, because it changes what a plate does.** A face-down hand offers
+nothing, so every card in it is `data-playable="false"` and the hand is `data-active="false"`. D65's
+meaning of `data-active` is unchanged, "some card here can be played this instant", and the reading is
+simply that a hand nobody at the screen may play from has nothing playable in it. The visible effect is
+that the skill plate stays dimmed through a bot's turn instead of lifting. If the design side wants a
+bot's plate to look **different** rather than dormant, that is a brief: `.hud__seat` already carries
+`data-controller="bot"` for exactly that, and nothing styles it yet.
+
+**One thing deliberately left alone**, because it is a design decision and not ours: **the dice card fan
+is not covered.** A computer's three drawn dice cards stay face up. The chosen one carries the rolled
+number and the throw animation runs on it, and `.hand--dice` has no card back designed for it. If an
+opponent's dice cards should also be secret, that is a brief and not a fix.
 
 ---
 

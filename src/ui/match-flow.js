@@ -39,7 +39,7 @@
  */
 
 import { createDicePool } from "../core/dice-pool.js";
-import { botSeatsFor, handoverNeeded } from "../state/bots.js";
+import { botSeatsFor } from "../state/bots.js";
 import { matchDeps, restartMatch, startMatch } from "../state/match.js";
 import { renderChrome, updateChrome } from "./chrome-view.js";
 import { bindChromeEvents, bindOverlayEvents } from "./events.js";
@@ -61,7 +61,9 @@ import { createSessionActions } from "./session-actions.js";
  *   the menu existed working unchanged.
  * - `skipHandover` passes the turn without waiting for the Ready button. Tied to `?fast=1`, for the same
  *   reason that flag already collapses the thirty-second reaction window: the shape of the turn is
- *   identical either way and only the waiting is gone.
+ *   identical either way and only the waiting is gone. It takes the **waiting** away and not the
+ *   secrecy: `handover.js` still refuses to make a bot the viewer, so a computer's hand stays face
+ *   down in a fast run too.
  * - `stack` is a list of skill card ids that becomes the top of the pool, from `?stack=`. It changes no
  *   rule: `startMatch` has accepted a stacked pool since issue #38 and nothing in production passed one,
  *   so a test can put a named card in a hand instead of hoping a seed does. `main.js` carries the reason
@@ -142,30 +144,30 @@ export function createMatchFlow({
   }
 
   /**
-   * The turn is finished and the screen is about to change hands.
+   * The screen has to change hands: put the curtain up over whatever is behind it.
    *
-   * `seat` is `nextSeat` from the turn manager, so the overlay names the same player `endTurn` is about
-   * to hand the turn to rather than working it out a second time.
+   * **Whether one is needed at all is `handover.js`'s question, not this one.** That module knows who
+   * is holding the device, and a bot, a soloist playing three bots, and the person who already has the
+   * screen all get no curtain and no call. What arrives here is the seat the overlay has to name.
    *
-   * **The screen only goes up when a second person is actually going to take it** (FR-43). A bot is not
-   * handed anything, and a soloist playing three bots never puts the mouse down, so `handoverNeeded`
-   * answers both cases and the turn simply passes.
+   * Since 2026-09-06 there are three moments it arrives from, not one: the end of a turn, a reaction
+   * window waiting on somebody else, and that window shutting again. The hold in `waits.afterTurn`
+   * still runs before the first of them, unchanged: a move has to finish arriving and a refusal has to
+   * be readable whoever plays next.
    *
-   * The hold in `waits.afterTurn` still runs first, unchanged: a move has to finish arriving and a
-   * refusal has to be readable whoever plays next. Only what happens **after** the hold is different.
+   * **The match pauses under the curtain**, which the turn-end handover never had to do and a
+   * mid-turn one does: a reaction window has a thirty second clock on it and it must not run down
+   * while somebody is reading "hand the screen over". This is the pause screen's own path, so the
+   * window reopens at the full thirty seconds on the way back out.
    *
    * Why the flow and not the loop: the loop's own comment says that who decides the screen has changed
    * hands is a question about the person in front of it and not about the turn, and this is that
-   * question. The flow owns the screens and is already handed `nextSeat(state)`.
+   * question.
    */
-  function onHandover(seat) {
+  function onCurtain(seat) {
     state = loop.getState();
 
-    if (!handoverNeeded(state, seat)) {
-      loop.passTurn();
-      return;
-    }
-
+    loop.pause();
     openScreen(OVERLAY_SCREEN.HANDOVER, seat);
   }
 
@@ -182,8 +184,9 @@ export function createMatchFlow({
       deps,
       parts: { ...parts, $chrome: session.$chrome },
       delays,
-      onHandover: skipHandover ? null : onHandover,
+      onCurtain,
       onMatchOver,
+      skipHandover,
     });
 
     openScreen(OVERLAY_SCREEN.NONE);

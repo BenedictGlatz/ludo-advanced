@@ -3524,6 +3524,120 @@ was only trustworthy after `npm run build` was run by hand and the new `z-index`
 `dist/assets/*.css`. Anybody chasing a stylesheet fix that "does not work" should check that first.
 
 
+### The hand on screen finally knows whose eyes are in front of it: 2026-09-06, no issue
+
+The Product Owner answered D33 on 2026-09-01: an opponent's skill cards stay secret and only the count
+is public. The count half was built the same day and sits in the HUD. **The secret half was not, and
+nobody noticed for two sprints**, because the code had no way to express it.
+
+#### The word that was missing
+
+There is one screen and one skill hand region, so it shows exactly one hand: `seatOnShow(state)`, which
+is the active player normally and the first still-eligible seat during a reaction window. Nothing
+anywhere knew **whose eyes** were in front of that region, so `skill-hand-view.js` wrote
+`data-face="up"` unconditionally, with a comment reserving `"down"` for "a spectator view, a replay, or
+the online mode".
+
+Two hands were on screen face up that nobody was allowed to see, and both had been there since the
+features that produced them landed:
+
+| Leak | Why no curtain covered it |
+| --- | --- |
+| A bot's hand, for the whole of its turn | `handoverNeeded` correctly says nobody is being handed anything when the next seat is a computer |
+| The answering player's hand during a reaction window | The handover screen only ever ran **between** turns, and a window opens in the middle of one |
+
+#### `viewerSeat`, and why it is in `ui/`
+
+The new module `src/ui/handover.js` holds one value: the seat whose person is holding the device. Both
+leaks close on one comparison, `faceUp = seatOnShow(state) === viewerSeat`. A bot is never made the
+viewer, so a bot's hand is never face up; a second person only becomes the viewer once they have said
+so, so their hand is only face up after they have taken the screen.
+
+It is **presentation state and never enters the game state**, on the same argument `skill-hand-view.js`
+already records for a half-finished card play and `match-flow.js` for which screen is up: which human
+is holding the mouse is not a fact about the match, `createGameState` has no field for it, and putting
+it in the frozen object would make the rules layer hold a fact about a chair.
+
+`handover.js` imports no jQuery and touches no DOM, which makes it the **second** `ui/` module in the
+project that is unit tested rather than only driven through Playwright, after `turn-controls.js`. That
+was deliberate: the failure mode of a secrecy rule is silent, because a hand that is face up when it
+should not be looks exactly like a hand that is correctly face up.
+
+#### The curtain now goes up three times, not once
+
+`handTo(seat)` is asked at three moments and answers the same question at all three: the end of a turn
+(which also passes the turn), a reaction window waiting on somebody who is not holding the device, and
+that window shutting again so the active player gets their own turn back. The third one is easy to
+forget and is a leak on its own: without it the answering player keeps the screen and the active
+player's hand comes up face up in front of them.
+
+**The screen it puts up is the existing handover screen, word for word.** "Weitergeben an {{player}}",
+"Gib den Bildschirm weiter, bevor du auf Bereit drückst.", "Bereit". Those three sentences were written
+for a turn change and are exactly as true for a reaction, so this is one component used in a second
+place rather than a new screen, and it needed no new locale key in either language.
+
+**The match pauses under a mid-turn curtain**, which the turn-end one never had to do: a reaction window
+has a thirty second clock on it and it must not run down while somebody reads "hand the screen over".
+`match-flow.js` answers with `loop.pause()`, the pause screen's own path, so the window reopens at the
+full thirty seconds on the way back out. That is the reading `game-loop.js` already gave a pause: the
+players stopped, so the window did too.
+
+#### What `?fast=1` does and does not take away
+
+Every end-to-end spec in the suite runs with `?fast=1`, and that flag passes every curtain without the
+button. It had to keep doing so, or the suite becomes four hundred Ready clicks. So the viewer follows
+every **person** immediately under that flag and no screen appears, and it still refuses to follow a
+bot. The flag takes the waiting away and not the secrecy, which is what lets the bot case be asserted
+in a fast run at all.
+
+#### One consequence, and it is a rule change worth stating plainly
+
+FR-25's thirty seconds were **one shared window**: `syncClock` is idempotent on purpose, so a window
+that is still open keeps the deadline it already had rather than restarting every time a seat plays or
+declines. With three or four people at the table, a curtain now stands between two eligible seats, and
+the curtain pauses the match, which clears the deadline. **So the thirty seconds effectively restart for
+each person who takes the device.**
+
+That is more generous than the requirement and it is hard to see an alternative: one clock cannot
+sensibly run across two people who each have to pick the screen up first, and the seconds a person
+spends reading "hand the screen over" are not seconds they spent deciding. It follows the reading
+`game-loop.js` already gave a pause, "the players stopped, so the window did too". It is written down
+here rather than quietly accepted, because the sentence "the countdown covers the whole window" in
+`intents-cards.js` and `card-controls.js` is now only true within one person's turn at the screen, and
+the two-human case is the one the report should not claim otherwise about.
+
+#### And a second: a plate that stays dormant
+
+`data-active` is derived from `playableCards`, and a face-down hand never asks for that list at all. So every
+card in a secret hand is `data-playable="false"` and the hand is `data-active="false"`, which means the
+skill plate stays dimmed through a bot's turn instead of lifting. D65's meaning of the attribute is
+unchanged; a hand nobody at the screen may play from simply has nothing playable in it. The alternative,
+a plate that lifts as though it were asking the viewer for a decision while every card in it refuses to
+be clicked, would have been the attribute contradicting itself.
+
+#### The honest limit, and it belongs in the report
+
+`data-card-id` stays in the DOM on a face-down card; the stylesheet hides the face and nothing removes
+the fact. This is a local hot-seat game, `window.ludo.getLoop().getState()` is exposed for the test
+suite anyway, and the end-to-end specs count `.card[data-card-id]`. **"Face down" here means "not on
+the screen", not "cryptographically secret"**, and a project that claimed the second would be claiming
+something an online mode would have to build from scratch.
+
+#### A file had to be split to fit the change
+
+`game-loop.js` was at exactly 300 lines, NFR-02's limit, before a single line of this went in. The five
+siblings it builds (`card-controls`, `turn-waits`, `bot-driver`, `turn-controls` and now `handover`)
+and the `halt()` that stops all of them moved to a new `src/ui/loop-parts.js`. The seam is a real one
+rather than where the count fell: that file answers *what the game does between the player's clicks*,
+and *which modules exist and what each is handed* is the question that changes every time one is added.
+It had been written out identically three times before issue #43 was about to write it a fourth.
+
+**And the stale-build trap below caught this change too.** The first run of the new spec failed with the
+old `data-face="up"` still in the bundle, and the second one "passed" the whole suite against code that
+was not in it. `npm run build` by hand before trusting an end-to-end result is not optional on this
+setup.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
@@ -3544,6 +3658,9 @@ was only trustworthy after `npm run build` was run by hand and the new `z-index`
     cards stay secret, the **count is public** and sits in the HUD. It turned out not to be only a
     presentation question, which is the interesting part: it is what forced the handover screen, because
     secrecy at one shared screen is whatever covers the screen while it changes hands.
+    **Built on 2026-09-06, and the count half had been the only half built for five days.** See the fact
+    block above: nothing in the code knew whose eyes were in front of the one hand region, so a bot's
+    hand and a reaction window's answering hand were both face up on somebody else's screen.
   - **NFR-12, telling the four seats apart without colour**, was still open from handoff 02 and is now
     **half answered**. Spec 04 gives four seat shapes as clip paths and puts them on the HUD, the chrome
     and two overlay panels. It does **not** put one on the pawn, which is where the requirement is

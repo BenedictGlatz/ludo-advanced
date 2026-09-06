@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **You can no longer see what the other players are holding.** A skill hand that is not yours is drawn
+  as a stack of card backs: a computer opponent's for the whole of its turn, and another person's while
+  a reaction window is waiting on them. How many cards each player holds is still shown, in the HUD as
+  before, and a card that has actually been played is still shown to everybody in full
+- **The screen is handed over before and after a reaction window too**, not only between turns. When
+  somebody else is being asked whether they want to react, the same "pass the screen on" screen comes up
+  for them, and again to give the screen back when the window has closed, and the thirty second clock
+  stops while it is up
+
 ### Added
 
 - **A played skill card now has a moment of its own.** The card comes out of the hand, stands large over
