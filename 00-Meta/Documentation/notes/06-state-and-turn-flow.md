@@ -775,6 +775,35 @@ worth a first line saying why a second roll happened, even when nothing else cha
 **The bot.** No change. A bot in `act` after a bonus roll is a bot in `act`, and `bot-match.test.js`
 plays full matches through the new transition unchanged.
 
+### An eighth match-level field, and it carries no rule at all: 2026-09-06, issue #93
+
+`state.lastCard = { seat, cardId, turnNumber, outcome }` records the last skill card anybody played, for
+the last-card slot a playtest asked for. It is written where `lastCardPlayed` is written
+(`intents-cards.js`, both paths a card play takes) and settled in `reaction-window.js` when a window
+shuts: `pending` until then, `resolved`, `nullified` (an aura cancelled it) or `negated` (a Nühü cancelled
+the card that opened the window). It is **match-level**, in the first row of the lifetime table, because
+the slot's whole purpose is to survive the turn: the player who was not watching wants to know what the
+last thing that happened was, and that is a turn or more later. Overwritten by the next play, cleared by
+nothing.
+
+**Why not widen `lastCardPlayed`.** That field is turn-level on purpose (issue #82): it drives the bot
+announcement and has to be gone by the next turn or the strip would keep announcing a card from a turn
+ago. Two fields with two lifetimes beat one field with a flag saying which lifetime applies.
+
+**Why `negated` is a fourth outcome and not a case of `resolved`.** A Nühü cancels the card that opened
+the window; that card's rule never ran. The slot will name the Nühü (it was played last), but the record
+of the negated card is settled too, so a later reader of the state can tell "cancelled" from "did
+nothing visible", which is the distinction `nullifiedCard` exists for at turn level.
+
+**`game-state.js` was split to make room.** The new field took it to 301 lines. `boardOf` and
+`seatProgress`, the two read-only selectors, moved to `selectors.js` and are re-exported, so no importer
+changed. Chosen over moving `clearedTurnFields`, which is the other clean seam, because the bonus-roll
+branch (#89) edits that function and a move on one side of a merge and an edit on the other is the
+conflict nobody wants to resolve on merge day.
+
+**No view yet.** Design brief 17 asks where the slot goes and what it shows (D100). The state is
+testable without it: `last-card-played.test.js` covers the four outcomes and the survival of the turn.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

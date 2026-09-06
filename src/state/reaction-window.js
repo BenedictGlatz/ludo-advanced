@@ -143,12 +143,23 @@ export function closeWindow(state, deps) {
   let cancelMove = false;
   let nullifiedCard = null;
 
+  // Issue #93: the last-card record was written as `pending` when the card left the hand, and this is
+  // the moment its outcome is known. Only the card the record names is settled; the others resolved too,
+  // but the slot shows one card.
+  const settle = (entry, outcome) => {
+    const last = current.lastCard;
+    if (last !== null && last.seat === entry.seat && last.cardId === entry.cardId) {
+      current = nextState(current, { lastCard: { ...last, outcome } });
+    }
+  };
+
   for (const entry of window?.played ?? []) {
     const result = resolveCard(current, entry, deps);
     current = nextState(current, result.changes);
     negated = negated || result.negate;
     cancelMove = cancelMove || result.cancelMove;
     if (result.nullified) nullifiedCard = entry.cardId;
+    settle(entry, result.nullified ? "nullified" : "resolved");
   }
 
   // The card that opened the window resolves last, and only if nothing cancelled it (Nühü).
@@ -157,6 +168,9 @@ export function closeWindow(state, deps) {
     current = nextState(current, result.changes);
     cancelMove = cancelMove || result.cancelMove;
     if (result.nullified) nullifiedCard = state.pendingCard.cardId;
+    settle(state.pendingCard, result.nullified ? "nullified" : "resolved");
+  } else if (state.pendingCard !== null) {
+    settle(state.pendingCard, "negated");
   }
 
   // The **last** card an aura cancelled, not a list. A window resolving two nullified offensive cards
