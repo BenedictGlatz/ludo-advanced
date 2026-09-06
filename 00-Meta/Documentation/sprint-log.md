@@ -526,6 +526,14 @@ review away.
   document and belongs to issue #37. Nothing in the MVP depends on it, because the MVP runs on one
   fixed die.
 
+- **2026-09-06:** the first structured playtest, and its findings booked on the last day of the sprint.
+  Seven items from a teammate, checked against the code and the GDD before booking: three are rules
+  working as designed, four are defects or gaps. Parent #87 with sub-issues #88 to #94, all Sprint 2, 17
+  points in total (1, 3, 5, 3, 1, 2, 2). None of it can land inside Sprint 2, so this is the first scope
+  that is knowingly booked into a sprint it will overrun; the alternative was Sprint 3, and the Product
+  Owner chose Sprint 2. Details in [notes/02-project-management.md](notes/02-project-management.md),
+  reasoning in [project-journal.md](project-journal.md).
+
 > The resource/energy system appears only in this sprint plan, not in the one-pager or the README.
 > Whether it is in scope is undecided: see [notes/01-requirements-and-goals.md](notes/01-requirements-and-goals.md).
 > Multiplayer has no chosen technology and may end up local hot-seat only.

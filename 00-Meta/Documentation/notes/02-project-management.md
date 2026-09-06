@@ -861,6 +861,32 @@ closed. Two process facts:
 Design handoff 07 is open as a result, the first brief since 02 that blocks a preference and not a
 requirement. The loop had been empty for a few hours.
 
+### Playtest findings booked as a parent with seven sub-issues: 2026-09-06, issue #87
+
+- **Source:** a teammate's playtest, seven items, delivered as a chat list. The first feedback in the
+  project that came from playing rather than from reading a spec.
+- **Triage before booking.** Every item was traced to its code path and its GDD line. Three of seven
+  are rules behaving as specified; the decision to book them anyway, as text-and-display work, is in
+  [project-journal.md](../project-journal.md) (2026-09-06).
+- **Structure on the board:** #87 is the parent (labels `4-implementation`, `gameplay`, `ui`,
+  `must have`, 0 points by design like the epics). Children #88 to #94 carry `bug` or `enhancement`
+  plus `4-implementation` and `gameplay` or `ui`. Linked with the `addSubIssue` GraphQL mutation, the
+  second time that route was used (first: #62 on 2026-08-29). All eight items were added with
+  `gh project item-add` and had `Sprint`, `Status` and `Story Points` set with `gh project item-edit`,
+  which works now that the token carries the `project` scope.
+- **Points:** #88 1, #89 3, #90 5, #91 3, #92 1, #93 2, #94 2; 17 in total. #90 (both rock cards onto an
+  own pawn) is the largest because it deletes a board-object kind and rewrites fixtures in eleven test
+  files.
+- **Sprint placement is a known overrun.** Booked into Sprint 2 on its last day, 2026-09-06, at the
+  Product Owner's choice. Nothing in the set can close inside the sprint, so the Sprint 2 closing read
+  will show 17 booked points that carry over. Recorded here so the carry-over is a decision on file
+  and not a surprise in the burn figures.
+- **`bug` and `enhancement` used for the first time.** Both are GitHub default labels that had sat
+  unused since 2026-08-06. They are used here because the tester's own split (Bug / Enhance) was the
+  most useful thing about the list, and the parent's table keeps it.
+- **Issue bodies:** all eight are non-empty and each child names the files it touches, continuing the
+  2026-08-29 practice.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

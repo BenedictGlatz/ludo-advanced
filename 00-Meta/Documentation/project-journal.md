@@ -482,6 +482,13 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   small; Claude Design keeps new designs and the design system. `01-Design/README.md` gained a
   section naming what no longer goes through the handoff loop. Documentation only, no code change.
   Sprint 2.
+- **2026-09-06**: A teammate's playtest produced seven findings. Each was checked against the code and
+  the game design document before anything was booked: three of the seven are rules behaving as
+  designed (Lock In targets the caster's own pawn, the bonus roll was rejected in GDD § 3, every track
+  square is capturable), four are defects or missing features. Issue #87 opened as the parent with seven
+  sub-issues #88 to #94, linked with `addSubIssue`, all in Sprint 2 with 17 story points between them.
+  The Product Owner decided the three rule questions in the same conversation: Lock In stays, the bonus
+  roll comes in from D6 upward, and both rock cards move onto an own pawn. Sprint 2.
 
 
 ---
@@ -4656,6 +4663,37 @@ to get wrong later.
   this side noticing that a fix contradicts the spec.
 - → Ch. 04, Ch. 10
 
+
+---
+
+### 2026-09-06: A playtest finding is checked against the rulebook before it becomes an issue
+
+- **What prompted it:** a teammate's playtest list of seven "bugs" and enhancements. Three of the
+  seven describe rules that work exactly as the game design document specifies: Lock In locks the
+  caster's **own** pawn (GDD card table, `action-lock-in`), the bonus roll on a maximum was rejected in
+  GDD § 3 because of the D2, and no track square is safe (GDD § 4.3, FR-15 not built). Booked as
+  reported, they would have been three tickets to "fix" working code.
+- **Chosen:** every finding was traced to the code path and the GDD line first, then put to the Product
+  Owner with the finding attached, and only then written up. The parent issue #87 carries the table
+  with the "not a bug" reasoning so the tester can read why. The three rule questions were still
+  decided, and two of them **changed the rulebook**: the bonus roll comes in with a D6 floor and a
+  three-roll cap, and both rock cards move onto an own pawn. Lock In keeps its rule and gets a sharper
+  card text instead.
+- **Why the "not a bug" items still got sub-issues:** the tester's impression is the finding. A rule that
+  reads as a defect at the table has a presentation problem even when the code is right, and the
+  cheapest fix for that is text and a tooltip, not an argument.
+- **Rejected: booking the seven items as reported and sorting them out during implementation.** Faster
+  to write, and it would have put "Lock In blocks all movement" on the board as a bug, which the code
+  would then have been changed to match. The GDD exists so that a rule question is answered by reading,
+  not by whoever touches the code next.
+- **Rejected: one ticket for the whole list.** Seven items touch `core/`, `state/`, `ai/`, `ui/`, the
+  locale files and a design brief, at very different risk. One ticket would carry one estimate for all
+  of it and close only when the slowest item does. Seven sub-issues under one parent keep the list
+  together and let each land on its own branch.
+- **Consequence:** the bonus-roll and rock decisions are rule changes and go into the GDD in the same
+  commits as the code. The Lock In "immune to forced movement" clause, which the code does not
+  implement either, is recorded on #87 as an open question rather than fixed by the way.
+- → Ch. 01, Ch. 02, Ch. 05
 
 ---
 
