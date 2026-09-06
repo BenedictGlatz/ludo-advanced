@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   D4 give no bonus roll, and every dice card now says on its face whether its maximum rolls again. A card
   played into the first roll does not carry into the second, and the message strip says when a roll is a
   bonus roll
+- **A pawn can be moved by pointing at where it should go.** Click the pawn, then click the lit square; or
+  drag the pawn onto the lit square and let go. Dropping it anywhere else puts it back. The lit squares can
+  also be reached with the keyboard and activated with Enter or Space. The two clicks on the pawn still
+  work, and a single click on a square only picks the pawn, so a misclick still cannot capture anything
 - `CLAUDE.md` defining the tech stack, architecture layering, testing, Git and AI prompt log conventions
 - `README.md` with project overview, setup instructions, scripts and contribution guidelines
 - This changelog

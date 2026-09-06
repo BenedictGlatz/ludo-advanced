@@ -40,6 +40,21 @@ other pawn. Brief 17 will ask for all six together, with the protection aura a t
 
 ---
 
+## Status on 2026-09-06: a pawn can be dragged, and the carried pawn is deliberately unstyled
+
+**A pawn moves by pointing at its target since issue #91**, from a playtest: click the lit square, or drag
+the pawn onto it. The gesture is built and tested; the **look** of a carried pawn is not. It gets
+`data-dragging="true"`, a `grabbing` cursor and the active z-index, and follows the pointer through
+`--drag-dx` / `--drag-dy` applied as a `translate` in `pawn.css`. Nothing else, on purpose: a shadow, a
+lift, a tilt, or the target square answering the approach are all looks and not fixes under the
+2026-09-06 rule, so they are asked rather than invented.
+
+**For brief 17**, together with the pawn-status marks that are already owed: what a pawn in the hand looks
+like, and whether `[data-legal-target]` reacts while a pawn is being carried towards it. The DOM contract
+is in place, so the answer is a stylesheet and not a rewrite.
+
+---
+
 ## Status on 2026-09-05: handoff 16 landed, and it was applied rule by rule rather than copied
 
 **[16-spec-seat-dots-and-message-strip.md](16-spec-seat-dots-and-message-strip.md) answered D97 to D99

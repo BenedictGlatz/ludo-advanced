@@ -18,6 +18,7 @@
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { INTENT } from "../state/intents.js";
 import { isBot } from "../state/bots.js";
+import { moveReaching } from "./move-targets.js";
 
 /**
  * Is somebody allowed to click right now? Issue #43.
@@ -91,5 +92,65 @@ export function createTurnControls({ getState, apply, render, advance, isPicking
     advance();
   }
 
-  return { onDiceCardActivated, onPawnActivated };
+  /**
+   * A click, a keypress or a drop on a lit target square. Issue #91.
+   *
+   * The square stands for the move that lights it, so this is the pawn's activation in another place:
+   * with nothing selected it selects the pawn that reaches the square, with that pawn selected it
+   * commits. **The two-step safety is kept on purpose.** A playtester asked to move by pointing at the
+   * destination, and pointing at the destination first is a fine way to *pick*; committing on that one
+   * click would be the misclick-captures-a-pawn problem `onPawnActivated` describes, moved to a square.
+   *
+   * A square nothing reaches, which happens when the highlight is a frame behind the state, is ignored.
+   */
+  function onTargetActivated(target) {
+    const state = getState();
+    if (!playableBy(state, TURN_PHASE.ACT)) return;
+    if (isPicking()) return;
+
+    const move = moveReaching(state, target);
+    if (move === null) return;
+
+    onPawnActivated(move.pawn);
+  }
+
+  /**
+   * A pawn is being dragged. Issue #91.
+   *
+   * Selecting is what a drag starts with, so the pawn's one target lights up under the pointer while it
+   * is carried. Nothing is committed here: a drag that ends anywhere but on that target is a change of
+   * mind, and `onDragEnded` puts the pawn back.
+   */
+  function onDragStarted(pawn) {
+    const state = getState();
+    if (!playableBy(state, TURN_PHASE.ACT)) return;
+    if (isPicking()) return;
+    if (state.selectedPawn === pawn) return;
+
+    if (apply({ type: INTENT.SELECT_PAWN, pawn })) render();
+  }
+
+  /**
+   * The drag is over, on `target` or on nothing (`null`). Issue #91.
+   *
+   * On the pawn's target this is the second half of the gesture and commits; anywhere else the pawn
+   * snaps back to where the state says it is, which a plain `render()` does because the drag never
+   * changed the state. The selection stays, so the player can still finish with a click.
+   */
+  function onDragEnded(pawn, target) {
+    if (target === null) {
+      render();
+      return;
+    }
+
+    const state = getState();
+    if (moveReaching(state, target)?.pawn !== pawn) {
+      render();
+      return;
+    }
+
+    onTargetActivated(target);
+  }
+
+  return { onDiceCardActivated, onPawnActivated, onTargetActivated, onDragStarted, onDragEnded };
 }

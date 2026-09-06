@@ -4746,6 +4746,29 @@ to get wrong later.
 
 ---
 
+### 2026-09-06: Pointing at the destination picks, and only the second gesture moves
+
+- **What prompted it:** playtest item 4 (issue #91): move a pawn by dragging it or by clicking the
+  destination, not only by two clicks on the pawn.
+- **Chosen:** both gestures, and both keep the two-step move from issue #62. A click on a lit square
+  with nothing selected picks the pawn that reaches it; with that pawn selected it commits. A drag picks
+  the pawn up (selects it) once the pointer has moved six pixels, and letting go on the lit square
+  commits. Anywhere else puts the pawn back and keeps it selected.
+- **Rejected: one click on the destination moves.** It is the shortest gesture and it is the one the
+  2026-08-29 decision ruled out for pawns: a misclick captures an opponent with no way back, in a game
+  where a capture costs most of a lap. Nothing about a square makes that safer than a pawn.
+- **Rejected: selecting on `pointerdown` so a drag starts instantly.** Every press is followed by a
+  `click`, and a pawn the press had selected would be committed by it. The threshold is what keeps a
+  click a click.
+- **Rejected: jQuery UI or another drag library.** A new runtime dependency needs the Product Owner's
+  approval, and the gesture is three pointer events and a little state. Pointer events also cover touch
+  and pen in one binding, which a mouse-only library would not.
+- **Consequence:** `events.js` has its first exception to "every handler lives here"; `drag-move.js` says
+  why in its header. The look of a carried pawn is deliberately unstyled and goes to brief 17.
+- → Ch. 04
+
+---
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

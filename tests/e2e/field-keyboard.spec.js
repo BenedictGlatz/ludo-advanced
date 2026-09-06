@@ -63,7 +63,9 @@ test.describe("a field can be picked from the keyboard (NFR-08)", () => {
     await expect(board.locator(".square--track[tabindex]")).toHaveCount(36);
 
     await square(board, 17).click();
-    await expect(board.locator(".square--track[tabindex]")).toHaveCount(0);
+    // Only the pick's tab stops go. Since issue #91 a lit move target carries a `tabindex` of its own
+    // for as long as it is lit, and with nothing else to play the turn has rolled on by now.
+    await expect(board.locator(".square--track[tabindex]:not([data-legal-target])")).toHaveCount(0);
   });
 
   /**
