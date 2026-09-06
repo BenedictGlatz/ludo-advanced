@@ -3,7 +3,43 @@
 **From:** Claude Code
 **To:** Claude Design
 **Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, four
-times on 2026-09-04, twice on 2026-09-05 and four times on 2026-09-06**
+times on 2026-09-04, twice on 2026-09-05 and five times on 2026-09-06**
+
+---
+
+## Status on 2026-09-06, night: the bots can be given a difficulty, and nowhere on screen says so
+
+**Nothing is owed on this one yet. It is a question for the Product Owner first and a brief only if the
+answer is yes.**
+
+The bot tactics plan landed and it gave every bot a **profile**: a frozen object of tuning knobs that
+`decide` takes as an argument (`src/ai/profile.js`). An easy bot, a normal one and a hard one are one
+object each and no other change anywhere. That was built because the arena needs it to seat a new bot
+against an old one, and a difficulty setting falls out of it for free.
+
+**The question is whether the line-up screen should offer the choice at all.** It is not a design
+question until somebody decides that, and it is a real product decision with three parts:
+
+1. **Should there be levels?** A hotseat game against one bot is a different thing to a four-seat game
+   with three of them, and the honest answer may be that a single well-tuned bot is enough for the MVP.
+2. **How many, and what are they called?** Three is the convention. Two (normal and hard) is defensible
+   and cheaper to explain.
+3. **Per seat or for the match?** The line-up screen (handoff 15, D95) already lets the player say which
+   seats are computers, one row at a time, so per seat is the shape the screen is already in. Whether a
+   player wants that much control is exactly the sort of thing this list should not guess at.
+
+**If the answer is yes, it is a brief and not a small fix**, by the 2026-09-06 rule: a new control on an
+existing screen is a design decision, and the line-up row has no room in it that Claude Code should be
+inventing. If the answer is no, the profile stays where it is and costs nothing, because the arena needs
+it either way.
+
+**One thing worth knowing before answering.** The arena's verdict on the phase-1 tactics was mostly
+negative: two of the three new terms in the move scorer made the bot measurably **worse** and are
+shipped switched off, and the third is a draw on win rate. So "hard" would today mean the same bot with
+the danger model on, and "easy" would mean a bot that walks into captures and never plays a card. Those
+are two real and visibly different opponents, but the spread between them is smaller than a difficulty
+ladder usually implies, and pretending otherwise on screen would be a promise the bot cannot keep. The
+runs are in `00-Meta/Documentation/notes/09-source-code-overview.md`.
 
 ---
 
