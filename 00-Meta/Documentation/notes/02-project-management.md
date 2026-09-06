@@ -887,6 +887,27 @@ requirement. The loop had been empty for a few hours.
 - **Issue bodies:** all eight are non-empty and each child names the files it touches, continuing the
   2026-08-29 practice.
 
+### The playtest issues were written in German and had to be rewritten: 2026-09-06, issue #87
+
+**All eight issues of the playtest parent, #87 to #94, were opened in German and were rewritten in
+English the same evening**, titles, bodies and the status comment on #87. The Product Owner named the
+rule: English is the repository's language on GitHub as well as in the code, and `CLAUDE.md` says so now
+under *Project management*.
+
+**Why it was wrong to begin with.** The playtest findings arrived in German, the conversation that
+triaged them was in German, and the issues were written in the language they were discussed in. Nothing
+in the repository said otherwise at the time: `CLAUDE.md` fixed the language of commit subjects and of
+the documentation notes and was silent about issues.
+
+**What it cost.** Eight titles, eight bodies and one comment, rewritten and pushed through `gh issue
+edit` in one pass, so about twenty minutes. The cheap part was that the issues were still fresh; the
+expensive version of this mistake is the one where half a board is German and the other half English and
+nobody rewrites either.
+
+**The lesson for the report.** A convention that is not written down is not a convention. The three
+languages in this project are already split by purpose, German for the team's own conversation, English
+for everything the repository keeps, and the split held for four weeks by habit rather than by rule.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

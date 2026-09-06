@@ -499,7 +499,10 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   playtest parent #87: the last-card slot (#93) and the drawn status marks that were the aura half of #94.
   Three new stylesheets, two amended by change list, one new view file, one new attribute, six locale keys
   in both languages and one new end-to-end spec. D52 is retired, D100 to D103 are answered, and D102 came
-  back as a deliberate no. Sprint 2.
+  back as a deliberate no. Sprint 2.- **2026-09-06, night**: the eight issues of the playtest parent #87 were rewritten from German into
+  English, titles, bodies and the status comment, at the Product Owner's request: English is the
+  repository's language on GitHub as well as in the code. `CLAUDE.md` gained the rule under *Project
+  management*, so the next issue is written in English rather than translated afterwards. Sprint 2.
 
 ---
 

@@ -321,4 +321,10 @@ GitHub Projects v2 board *Ludo Advanced* with Roadmap, Backlog and Kanban views.
 - Scrum: 3 sprints of 2 weeks plus a buffer sprint: see
   [01-Github-Project.md](00-Meta/Project-Management/01-Github-Project.md)
 
+**Everything on GitHub is written in English**: issue titles and bodies, issue comments, pull request
+titles and bodies, and board items, the same as commit subjects. The team speaks German and the
+repository does not: a mixed-language board cannot be read end to end by anybody who joins it, and the
+project report quotes issues verbatim. The documentation notes under `00-Meta/Documentation/` are English
+for the same reason.
+
 Roles: Fabian Gemming (Product Owner), Lars Bolender and Benedict Glatz (Scrum Members / implementation).
