@@ -3044,6 +3044,38 @@ stale stylesheets twice (handoff 16, the section above). `01-Design/Handoff/00-o
 mitigation and it only works when this side notices that a fix contradicts a spec rather than the CSS.
 Whether that held is worth checking at the end of Sprint 3, either way.
 
+### The first fix under the new rule: the reaction bar was white on peach in the dark skin: 2026-09-06, issue #92
+
+**The defect.** A playtester reported the reaction plate at the foot of the rail as "light yellow with
+white writing". `prompt.css` painted `.prompt[data-mode="reaction"]` with `--card-reaction-wash`, which
+is `#ffeedc` in both skins on purpose (`tokens.css`, the D25 block: the wash sits behind card art drawn
+in dark ink and must not flip). The plate's text is `--color-text`, which is `light-dark(#3a2b55, #f6efff)`.
+In the dark skin that is near-white text on a pale ground. The countdown `.prompt__clock` had the same
+pairing with `--card-result-bg`, also fixed cream.
+
+**The fix.** Two grounds swapped for skin-paired tokens from the same family: `--color-warn-soft`
+(`light-dark(#fdeadb, #55391f)`) for the plate, `--color-surface` for the clock. Nothing else changed.
+In the light skin `#fdeadb` against `#ffeedc` is a difference nobody sees; in the dark skin the plate
+becomes dark orange under light text.
+
+**Why it qualifies as a small fix and did not go to Claude Design.** All three `CLAUDE.md` conditions
+hold: it repairs a visible bug, it uses only existing tokens and the pairing pattern the neighbouring
+plates already use, and the working state (the light skin) looks the same. One complication is worth
+recording: **no spec covers the reaction plate at all**. `prompt-view.js` says so in its header and
+spec 04 answered only the countdown ring and the plate's position in the rail. So the fix does not
+correct a spec line, it corrects the code's own borrowing of a card token for a non-card surface. It is
+still reported in `00-open-requests.md`, because the plate's real design is owed and whoever designs it
+should know which token the code reads today.
+
+**Why `--color-warn-soft` and not a `light-dark()` pair on `--card-reaction-wash` itself.** Changing the
+wash would change every Reaction card's face in the dark skin, which is a design-system change and
+exactly what the new rule keeps with Claude Design. The plate is the thing that was wrong, so the plate
+is what changed.
+
+**Coverage.** No end-to-end test asserts the plate's colours, and none was added: a colour assertion on
+a token-driven surface tests the token file rather than the fix. Checked by eye in both skins with
+`npm run dev`.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -718,6 +718,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The reaction bar is readable in the dark skin.** Its plate was a fixed light peach and its text the
+  skin's text colour, which is near-white in the dark skin; the countdown had the same pairing. Both grounds
+  are now skin-paired tokens, so the light skin looks as before and the dark one has dark text on a dark
+  orange plate
 - **The skill card you are reading is no longer covered by the dice card you chose.** Pointing at a card in
   your hand magnifies it upward, out of its own row and over the foot of the dice row, and the dice card you
   had just picked painted over its top third. The card being read is now the top card layer, so it covers

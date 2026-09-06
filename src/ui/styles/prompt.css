@@ -41,9 +41,15 @@
 }
 
 /* A reaction window is the one moment in the game with a deadline on it, so
-   the plate that carries it is the one plate that is not the panel colour. */
+   the plate that carries it is the one plate that is not the panel colour.
+
+   --color-warn-soft and not --card-reaction-wash (issue #92). The wash is a
+   fixed light peach with no dark-skin pair, because it sits behind card art
+   that is drawn in dark ink. This plate carries --color-text, which flips to
+   near-white in the dark skin, so the reaction bar was white text on a pale
+   ground. --color-warn-soft is the same orange family, paired in both skins. */
 .prompt[data-mode="reaction"] {
-  background: var(--card-reaction-wash);
+  background: var(--color-warn-soft);
 }
 
 /* One line, one clock, the buttons: the plate is a single row, because the
@@ -109,7 +115,9 @@
   font-variant-numeric: tabular-nums;
   font-weight: var(--weight-strong);
   color: var(--color-text);
-  background: var(--card-result-bg);
+  /* --color-surface, paired in both skins, for the same reason as the plate
+     above: --card-result-bg is fixed cream and the number is --color-text. */
+  background: var(--color-surface);
   border-radius: var(--radius-pill);
   box-shadow: inset 0 0 0 var(--border-card) var(--color-ink);
 }
