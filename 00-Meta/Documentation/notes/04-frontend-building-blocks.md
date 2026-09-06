@@ -3290,6 +3290,47 @@ here". A ring on a field the drop would refuse would answer that wrongly.
   empty span inside a squared disc. That is issue #45's contract and is right; it is written down here so
   nobody deletes the span as dead markup.
 
+### The countdown ring had a whole sentence in it: 2026-09-06, no issue
+
+**The defect.** A playtest screenshot showed the reaction plate reading "Bot 3 würfelt" on the left and
+"Reaktion? 27 s" on the right, wrapped over two lines, spilling out of the countdown ring on every side
+and painting itself across the ring's own stroke. The number was not readable and neither was the ring.
+
+**The cause is one line of `prompt-view.js` against one line of spec 04.** `.prompt__clock` is a
+`var(--space-7)` circle, 3 rem, and design spec 04 says what belongs in it: "It was a bare number. It is
+now that number inside a ring that empties." The view wrote `t("reaction.prompt", { seconds })` into it,
+which is the whole locale sentence, `Reaktion? {{seconds}} s` in German and `React? {{seconds}} s` in
+English. The sentence has been in the locales since issue #34, when the countdown really was a bare
+`<span>` in a full-width strip at the foot of the page and the sentence fitted. Handoff 04 turned that
+span into a 3 rem ring and the string that fed it was never revisited, so the regression was introduced
+by the design landing rather than by the code that predates it.
+
+**The fix.** A `setClock` helper in `prompt-view.js` writes `String(secondsLeft)` into the ring and moves
+the sentence to `aria-label` on the same element, which now carries `role="timer"`; a span with a label
+and no role is not exposed to a screen reader at all. No stylesheet changed and no locale key changed:
+`reaction.prompt` is still read, still translated and still interpolated, just not on screen.
+
+**Why the sentence moved instead of being deleted.** On screen the ring is not carrying the question by
+itself: the plate is the one plate in the game that is not the panel colour, the line beside it names who
+is acting, the button beside it says *Ablehnen*, and the ring is visibly draining. A screen reader has
+none of that shape, so it is the one place where "Reaktion? 27 s" is still the right amount of words.
+*Rejected: dropping the key and shortening the ring's contents to a number everywhere.* That would have
+removed the unit and the question from the only output that has no other way to carry them.
+
+**Why it qualifies as a small fix.** The three `CLAUDE.md` conditions hold, and this one meets the first
+in its strongest form: the fix does not merely repair a visible bug, it restores a sentence the
+specification already wrote. It uses no new token, no new value, and the working state is unchanged,
+because there was no working state.
+
+**Coverage.** `tests/e2e/reaction-prompt.spec.js`, one case, and it is a real end-to-end test rather than
+a unit test on purpose: the defect was not what the string said but that the box was too small for it, so
+it needs real fonts and the real stylesheet to be visible at all. The case asserts the ring's text is
+digits only **and** measures `scrollWidth`/`scrollHeight` against the element's client box, which is the
+overflow itself. It was run against the pre-fix bundle first and failed there with "Reaktion? 30 s", so
+the test is known to see the bug it was written for. It opens a real window with `?bots=1` and a stack of
+Devil Die and **without `?fast=1`**, because `fast` collapses the window to nothing and the window is the
+subject.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

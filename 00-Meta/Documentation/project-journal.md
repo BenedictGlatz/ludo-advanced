@@ -499,10 +499,16 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   playtest parent #87: the last-card slot (#93) and the drawn status marks that were the aura half of #94.
   Three new stylesheets, two amended by change list, one new view file, one new attribute, six locale keys
   in both languages and one new end-to-end spec. D52 is retired, D100 to D103 are answered, and D102 came
-  back as a deliberate no. Sprint 2.- **2026-09-06, night**: the eight issues of the playtest parent #87 were rewritten from German into
+  back as a deliberate no. Sprint 2.
+- **2026-09-06, night**: the eight issues of the playtest parent #87 were rewritten from German into
   English, titles, bodies and the status comment, at the Product Owner's request: English is the
   repository's language on GitHub as well as in the code. `CLAUDE.md` gained the rule under *Project
   management*, so the next issue is written in English rather than translated afterwards. Sprint 2.
+- **2026-09-06, night**: playtest fix, the reaction countdown. The ring was being handed the whole
+  sentence `reaction.prompt` instead of the bare number design spec 04 asks for, so "Reaktion? 27 s"
+  wrapped inside a 3 rem circle and drew itself across the ring. `prompt-view.js` now writes the number
+  and puts the sentence on `aria-label`; one end-to-end case covers it, written against the broken bundle
+  first so it is known to fail without the fix. Sprint 2.
 
 ---
 
@@ -4858,6 +4864,31 @@ to get wrong later.
   reported back in `00-open-requests.md`. Otherwise the change lists applied without a single judgement
   call, which is the first handoff since 09 that needed no reconciliation at all.
 - → Ch. 04, Ch. 08
+
+---
+
+### 2026-09-06: The countdown ring says the number, the label says the sentence
+
+- **Chosen:** `.prompt__clock` renders `String(secondsLeft)` and carries the full `reaction.prompt`
+  sentence in `aria-label`, with `role="timer"` so a screen reader is given the label at all. The locale
+  key stays exactly as it is, in both languages.
+- **Rejected:** *shortening the locale key to a bare number and deleting the question and the unit.* It
+  is the tidier diff and it is wrong for the one output that cannot see the plate. On screen the question
+  is carried by four other things at once (the plate is the only one in the game that is not the panel
+  colour, the line names who is acting, the button says *Ablehnen*, and the ring is visibly draining); a
+  screen reader has none of them and needs the words.
+- **Also rejected:** *making the ring wider so the sentence fits.* That is a design change to a component
+  design spec 04 specified deliberately, and the spec's own wording ("a bare number inside a ring") is
+  what the code was failing to do. Widening it would have made the code correct against nothing.
+- **How the defect got in, which is the part worth carrying into Ch. 11:** the sentence was correct when
+  it was written in issue #34, where the countdown was a bare span in a full-width strip at the foot of
+  the page. Design handoff 04 replaced that span with a 3 rem ring, and the string feeding it was never
+  looked at, because the change was delivered as CSS and reviewed as CSS. **A design landing can break a
+  string it never mentions**, and nothing in the five landing checks looks for that.
+- **Consequence:** `tests/e2e/reaction-prompt.spec.js` measures the element's overflow rather than only
+  reading its text, so the class of defect (content too big for the box design specified) fails a test
+  run instead of a playtest.
+- → Ch. 04, Ch. 11
 
 ---
 

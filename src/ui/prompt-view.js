@@ -56,7 +56,7 @@ export function renderPrompt() {
     .attr("data-mode", PROMPT_MODE.NONE)
     .append(
       $("<p>", { class: "prompt__line" }),
-      $("<span>", { class: "prompt__clock" }),
+      $("<span>", { class: "prompt__clock" }).attr("role", "timer"),
       $("<div>", { class: "prompt__buttons" })
     );
 }
@@ -134,6 +134,27 @@ function targetButtons(kind, { seats, bots, actor, chosenDie, choices }) {
   }
 }
 
+/**
+ * The countdown: the bare number in the element, the whole sentence in the label.
+ *
+ * The ring is a 3 rem circle sized for a figure, and it used to be handed `reaction.prompt`, which is a
+ * whole sentence ("Reaktion? 27 s"). The sentence wrapped, spilled out of the circle on every side and
+ * drew itself across the ring, which is the bug the playtest screenshot shows and is exactly what spec 04 asked for
+ * instead: "It was a bare number. It is now that number inside a ring that empties."
+ *
+ * The sentence is not lost, it moves to `aria-label`, where it is the only place the question and the
+ * unit are actually needed: the ring says "27" and its shape says the rest, a screen reader has no ring
+ * and gets "Reaktion? 27 s". The span carries `role="timer"` because a bare span with a label is not
+ * exposed at all.
+ */
+function setClock($clock, secondsLeft) {
+  if (secondsLeft === null) return $clock.text("").removeAttr("aria-label");
+
+  return $clock
+    .text(String(secondsLeft))
+    .attr("aria-label", t("reaction.prompt", { seconds: secondsLeft }));
+}
+
 /** Redraw the strip for whatever the game is waiting on. `pick` is the target picker's state, or `null`. */
 export function updatePrompt($prompt, state, { secondsLeft = null, pick = null } = {}) {
   const $line = $prompt.find(".prompt__line");
@@ -143,7 +164,7 @@ export function updatePrompt($prompt, state, { secondsLeft = null, pick = null }
   if (pick !== null) {
     $prompt.attr("data-mode", PROMPT_MODE.TARGET);
     $line.text(t(`action.target.${pick.kind}`));
-    $clock.text("");
+    setClock($clock, null);
     $buttons.append(
       ...targetButtons(pick.kind, pick),
       button(t("action.target.cancel"), PROMPT_ACTION.CANCEL)
@@ -154,7 +175,7 @@ export function updatePrompt($prompt, state, { secondsLeft = null, pick = null }
   if (state.reactionWindow !== null) {
     $prompt.attr("data-mode", PROMPT_MODE.REACTION);
     $line.text(windowLine(state, state.reactionWindow));
-    $clock.text(secondsLeft === null ? "" : t("reaction.prompt", { seconds: secondsLeft }));
+    setClock($clock, secondsLeft);
     $buttons.append(button(t("reaction.decline"), PROMPT_ACTION.DECLINE));
     return $prompt;
   }
@@ -162,14 +183,14 @@ export function updatePrompt($prompt, state, { secondsLeft = null, pick = null }
   if (state.phase === "action") {
     $prompt.attr("data-mode", PROMPT_MODE.ACTION);
     $line.text(t("action.prompt"));
-    $clock.text("");
+    setClock($clock, null);
     $buttons.append(button(t("action.skip"), PROMPT_ACTION.SKIP));
     return $prompt;
   }
 
   $prompt.attr("data-mode", PROMPT_MODE.NONE);
   $line.text("");
-  $clock.text("");
+  setClock($clock, null);
 
   return $prompt;
 }

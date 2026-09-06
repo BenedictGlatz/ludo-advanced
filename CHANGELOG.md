@@ -749,6 +749,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The reaction countdown reads as a number in a ring again.** The ring was being given the whole
+  sentence, "Reaktion? 27 s", inside a circle sized for two digits, so the text wrapped, spilled out on
+  every side and covered the ring that shows how much time is left. The ring now shows only the seconds;
+  screen readers still hear the full sentence
 - **The reaction bar is readable in the dark skin.** Its plate was a fixed light peach and its text the
   skin's text colour, which is near-white in the dark skin; the countdown had the same pairing. Both grounds
   are now skin-paired tokens, so the light skin looks as before and the dark one has dark text on a dark
