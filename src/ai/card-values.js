@@ -22,6 +22,7 @@
  */
 
 import { cardIds } from "../core/cards/catalogue.js";
+import { DEFAULT_PROFILE } from "./profile.js";
 import {
   angelDie,
   criticalSuccess,
@@ -33,26 +34,18 @@ import {
   speedrun,
   taxFraud,
 } from "./values-roll.js";
-import {
-  bigAhRock,
-  builtDifferent,
-  headOut,
-  letHimCook,
-  lockIn,
-  ragebait,
-  rock,
-  yeet,
-} from "./values-pawns.js";
+import { bigAhRock, builtDifferent, headOut, letHimCook, lockIn, rock } from "./values-pawns.js";
+import { ragebait, yeet } from "./values-attacks.js";
 import { bananaPeel, hyperbeam, jankyRpg, notThatDeep, oilSpill } from "./values-squares.js";
 import {
   criticalFailure,
   devilDie,
   ghostMode,
   holdPawn,
-  nuehue,
   thePurge,
   unoReverse,
 } from "./values-window.js";
+import { nuehue } from "./values-nuehue.js";
 
 /** Every card, and what the bot thinks it is worth. Grouped by mechanic, as the effects are. */
 export const VALUE_OF = Object.freeze({
@@ -67,7 +60,7 @@ export const VALUE_OF = Object.freeze({
   "action-no-take-backsies": noTakeBacksies,
   "action-tax-fraud": taxFraud,
 
-  // Cards aimed at a pawn.
+  // Cards aimed at a pawn: your own in `values-pawns.js`, somebody else's in `values-attacks.js`.
   "action-rock": rock,
   "action-lock-in": lockIn,
   "action-built-different": builtDifferent,
@@ -114,12 +107,16 @@ for (const cardId of cardIds()) {
  * plays or because there is nothing on the board for it to act on. The caller treats that exactly as
  * it treats a value below the threshold, which is why no card has to return a large negative number
  * to mean "no".
+ *
+ * Every value takes the same three arguments, `(state, seat, profile)`, whether it reads the profile
+ * or not. A table of functions with two different signatures in it is a table that needs a comment at
+ * every call site, and the uniform shape is what lets the check above be a check on the **keys**.
  */
-export function valueOf(state, seat, cardId) {
+export function valueOf(state, seat, cardId, profile = DEFAULT_PROFILE) {
   const value = VALUE_OF[cardId];
   if (value === undefined) {
     throw new Error(`card "${cardId}" has no value in src/ai/card-values.js`);
   }
 
-  return value(state, seat) ?? null;
+  return value(state, seat, profile) ?? null;
 }

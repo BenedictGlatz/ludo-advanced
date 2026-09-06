@@ -9,20 +9,24 @@
  * and rarely in a crowd, and it is asserted rather than described: the two-player case below is the
  * same board with three times the value.
  *
+ * **The lead weighting doubles that third in every case below**, and not by accident: seat 0 is the
+ * only player who has moved a pawn at all, so it is four times the table average and the clamp in
+ * `share` pulls that back to two. A board where the victim is the runaway leader is the normal board
+ * for a Reaction card, and pinning the factor here is what stops the clamp being changed silently.
+ *
  * Seat 0 is the active player throughout and seat 2 is the bot being asked, which is the shape of
  * every real window: `eligible` never contains the actor.
  */
 
 import { describe, expect, it } from "vitest";
 
-import { SCORE } from "../../../src/ai/move-scoring.js";
+import { PLAIN_PROFILE } from "../../../src/ai/profile.js";
+import { SCORE } from "../../../src/ai/score.js";
 import {
   criticalFailure,
   devilDie,
   ghostMode,
   holdPawn,
-  nuehue,
-  thePurge,
   unoReverse,
 } from "../../../src/ai/values-window.js";
 import { pawnsAt, stateFor } from "../../helpers/fixtures.js";
@@ -44,8 +48,12 @@ describe("the two cards that spoil a roll", () => {
   it("prices Critical Failure as a share of what the roll loses", () => {
     const state = window("on-roll", { pawns: pawnsAt(4, walking) });
 
-    // Disadvantage on a D6 takes the mean from 3.5 to about 2.53, a third of which is 0.32.
-    expect(criticalFailure(state, 2).value).toBeCloseTo((3.5 - 91 / 36) / 3, 6);
+    // Disadvantage on a D6 takes the mean from 3.5 to about 2.53. A third of that, doubled by the
+    // lead weighting, is two thirds.
+    expect(criticalFailure(state, 2, PLAIN_PROFILE).value).toBeCloseTo(
+      ((3.5 - 91 / 36) * 2) / 3,
+      6
+    );
   });
 
   it("prices Devil Die the same way, and higher in a duel than in a crowd", () => {
@@ -61,14 +69,15 @@ describe("Hold Pawn: taking one pawn out of the choice", () => {
   /**
    * Seat 0 has one pawn one step from home and three in the yard on a D6, so the turn is worth
    * `(100 + 25) / 6`. Holding the leading pawn leaves only the 6 that empties the yard, `25 / 6`. A
-   * third of the difference is what the card is worth, and the pawn it names is the leader.
+   * third of the difference, doubled by the lead weighting, is what the card is worth, and the pawn it
+   * names is the leader.
    */
   it("holds the pawn the turn depends on", () => {
     const state = window("on-roll", { pawns: pawnsAt(4, { "0.0": 43 }) });
     const scored = holdPawn(state, 2);
 
     expect(scored.target).toEqual({ pawn: { player: 0, pawn: 0 } });
-    expect(scored.value).toBeCloseTo(SCORE.FINISH / 6 / 3, 6);
+    expect(scored.value).toBeCloseTo((SCORE.FINISH / 6 / 3) * 2, 6);
   });
 
   /**
@@ -136,87 +145,5 @@ describe("the two cards that answer a declared capture", () => {
     });
 
     expect(unoReverse(state, 2).value).toBeCloseTo((5 + SCORE.LEAVE_START) / 3, 10);
-  });
-});
-
-describe("Nühü: cancelling the card that opened the window", () => {
-  const onCard = (entry, placements) =>
-    window("on-card", { pawns: pawnsAt(4, placements), pendingCard: entry });
-
-  it("cancels a card aimed straight at one of my pawns", () => {
-    const state = onCard(
-      { seat: 0, cardId: "action-yeet", target: { pawn: { player: 2, pawn: 0 } } },
-      { "0.0": 5, "2.0": 15 }
-    );
-
-    expect(nuehue(state, 2).value).toBe(8);
-  });
-
-  it("cancels a card aimed at me as a player", () => {
-    const state = onCard({ seat: 0, cardId: "action-tax-fraud", target: { player: 2 } }, {});
-
-    expect(nuehue(state, 2).value).toBe(8);
-  });
-
-  /** A buff on the active player's roll is worth a share of the gain it would have given them. */
-  it("cancels a roll buff for a share of what it would have been worth", () => {
-    const state = onCard(
-      { seat: 0, cardId: "action-angel-die", target: {} },
-      {
-        "0.0": 36,
-        "0.1": 5,
-        "0.2": 10,
-        "0.3": 15,
-      }
-    );
-
-    expect(nuehue(state, 2).value).toBeGreaterThan(4);
-  });
-
-  /**
-   * An area card is priced by what my own pawns standing in it would cost me. Seat 2's `r = 15` is
-   * square 34, and Janky RPG hits what it aimed at on three faces of six.
-   */
-  it("cancels an area card by what it would cost my own pawns", () => {
-    const state = onCard(
-      { seat: 0, cardId: "action-janky-rpg", target: { square: 34 } },
-      {
-        "2.0": 15,
-      }
-    );
-
-    expect(nuehue(state, 2).value).toBeCloseTo(0.5 * (15 + SCORE.LEAVE_START), 10);
-  });
-
-  /** A trap laid one to six squares in front of one of my pawns is a trap I am about to walk into. */
-  it("cancels a trap laid in front of one of my own pawns", () => {
-    const state = onCard(
-      { seat: 0, cardId: "action-banana-peel", target: { square: 35 } },
-      {
-        "2.0": 15,
-      }
-    );
-
-    expect(nuehue(state, 2).value).toBe(5);
-  });
-
-  it("is worth nothing against a card that does not touch me", () => {
-    const state = onCard({ seat: 0, cardId: "action-pot-of-greed", target: {} }, { "2.0": 15 });
-
-    expect(nuehue(state, 2).value).toBe(0);
-  });
-
-  it("has nothing to cancel when no card opened the window", () => {
-    expect(nuehue(window("on-roll"), 2)).toBeNull();
-  });
-});
-
-describe("The Purge: the one Reaction the bot never plays", () => {
-  /**
-   * A recorded decision rather than a gap. The card suspends the rule that an own pawn blocks,
-   * board-wide and for everybody, and whether that is good depends on four seats' positions at once.
-   */
-  it("is never played", () => {
-    expect(thePurge(window("on-roll", { pawns: pawnsAt(4, walking) }), 2)).toBeNull();
   });
 });

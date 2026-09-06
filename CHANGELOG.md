@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The bots see danger.** A bot no longer parks a pawn one field in front of an opponent, walks out of
+  its yard onto an entry field somebody is queuing up behind, or picks the dice card whose likely
+  landing fields are the dangerous ones. How likely a capture really is now comes out of the dice pool's
+  own composition instead of a rule of thumb
+- **The bots pick on whoever is winning.** A card aimed at an opponent is now worth more against the
+  player closest to victory and less against the player who has not left their yard, so a Yeet, a
+  Ragebait or a Tax Fraud lands where it hurts most
+- **A bot lays its traps where somebody will actually walk.** Banana Peel and It's Not That Deep used to
+  go one field in front of the leading opponent, which is the one distance a victim is least likely to
+  roll. They now search every legal field and pick the one most likely to be walked on
+- **A bot knows what a card aimed at it is really worth.** Nühü used to stop anything aimed at the bot
+  for the same flat amount. It now prices the four cards an opponent can aim at a bot separately, so a
+  Yeet that shoves a leading pawn in front of two enemies is answered and a harmless one is not
+- `npm run bots:arena`, a script that plays hundreds of seeded bot-against-bot matches and prints who
+  won how often, with a confidence interval, so a change to the bot is judged by a measurement rather
+  than by an argument. Bots can be given different tuning profiles at the same table, and a
+  random-playing seat is available as the floor to compare against. Its first verdict was that two of
+  the three things the bots had just been taught made them **worse**, and both are shipped switched off
 - **Rolling the maximum on a D6 or larger rolls that die again**, up to three rolls a turn. The D2 and the
   D4 give no bonus roll, and every dice card now says on its face whether its maximum rolls again. A card
   played into the first roll does not carry into the second, and the message strip says when a roll is a

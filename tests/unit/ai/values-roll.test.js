@@ -13,7 +13,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { SCORE } from "../../../src/ai/move-scoring.js";
+import { SCORE } from "../../../src/ai/score.js";
 import {
   angelDie,
   criticalSuccess,
@@ -24,7 +24,8 @@ import {
   sixtySeven,
   taxFraud,
 } from "../../../src/ai/values-roll.js";
-import { CARD_WORTH } from "../../../src/ai/values-shared.js";
+import { CARD_WORTH } from "../../../src/ai/score.js";
+import { DEFAULT_PROFILE } from "../../../src/ai/profile.js";
 import { pawnsAt, stateFor } from "../../helpers/fixtures.js";
 
 /** The action phase of seat 0's turn, with a die already chosen. */
@@ -65,14 +66,20 @@ describe("the five cards that change the roll", () => {
   /**
    * 67 is a gamble: five faces in six collapse to nothing and the sixth is doubled. On a board where
    * the doubled 12 finishes a pawn it is worth ten points; on a board where the walk is all there is,
-   * throwing away five faces out of six is a bad trade and the value says so.
+   * throwing away five faces out of six is a bad trade and the card stays in the hand.
+   *
+   * **The walking case is compared against `playAt` and not against zero**, and that is a change the
+   * bot tactics plan made rather than a weakening of the test. Two of the small rolls on this board
+   * walk a pawn onto an opponent's entry square, so the phase-1 danger term makes the ordinary turn
+   * slightly worse and 67 comes out a fraction above zero instead of a fraction below it. What has to
+   * stay true is that the bot does not play it, and the threshold is what decides that.
    */
   it("plays 67 only when the doubled roll lands on something", () => {
     const reachable = acting({ pawns: pawnsAt(4, { "0.0": 32 }) });
     const walking = acting({ pawns: pawnsAt(4, { "0.0": 5, "0.1": 9, "0.2": 13, "0.3": 17 }) });
 
     expect(sixtySeven(reachable, 0).value).toBeGreaterThan(5);
-    expect(sixtySeven(walking, 0).value).toBeLessThan(0);
+    expect(sixtySeven(walking, 0).value).toBeLessThan(DEFAULT_PROFILE.playAt);
   });
 
   /**

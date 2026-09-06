@@ -1,130 +1,101 @@
 /**
- * How much danger a pawn is in, and who is standing where. Issue #82, requirement FR-43.
+ * How much danger a pawn is in. Issue #82, rebuilt by the bot tactics plan's phase 1.
  *
- * Pure `ai/`: geometry over the pawn list, no state transitions, no randomness.
+ * Pure `ai/`: probabilities over the pawn list, no state transitions, no randomness. The geometry it
+ * stands on is [geometry.js](geometry.js) and the probabilities are [hit-odds.js](hit-odds.js); what
+ * is left here is the one question the card values and the move scorer both ask, **"what is the chance
+ * I lose this pawn before I move it again?"**
  *
- * ## The term `move-scoring.js` said was missing
+ * ## Three things changed in phase 1, and each was a real mistake
  *
- * That file's header names danger as "deliberately missing" and says why: it needs absolute-square
- * arithmetic across seats plus a model of what an opponent could roll, and a wrong model plays worse
- * than no model. Card values need exactly that term. Built Different is worth nothing on a pawn
- * nobody can reach and worth a whole pawn on one with two opponents sitting six squares behind it.
+ * **1. The odds were a guess and are now a calculation.** `oddsOfHit` used to be `1/6`, `1/12` or
+ * `1/20` by range. It is now averaged over all 1140 hands the dice pool can deal, and at short range
+ * that is nearly twice as dangerous as the guess said. See `hit-odds.js` for the arithmetic and for
+ * why reading the pool's composition is not cheating.
  *
- * So the model is here, it is deliberately crude, and the crudeness is the decision:
+ * **2. The sum became a probability.** `threatOn` used to add the attackers' chances up. That was
+ * defended in issue #82 and the defence was sound *at the time*: a threat was only ever compared with
+ * another threat, and a sum keeps "twice as many attackers is twice as bad" true. From phase 1 on the
+ * threat is multiplied by a pawn's worth and compared against a **gain**, such as the 25 points of
+ * getting a pawn out of the yard, so it has to be a real number between 0 and 1. Four attackers six
+ * squares back add up to about 0.55 and the true chance is about 0.45, and with seven attackers the
+ * sum passes 1 and prices a pawn at more than a pawn.
  *
- * **A pawn `d` squares behind yours hits you if it rolls exactly `d`, on whichever die its owner
- * happens to pick.** The chance of that is `1/6` for `d` up to 6, `1/12` up to 12 and `1/20` up to 20,
- * which is the odds of naming one face of the smallest die that can reach that far. Beyond 20 the
- * chance is zero, because no card in the pool has more faces.
+ * **3. Yards were invisible.** A pawn standing on an opponent's entry square is captured the moment
+ * that opponent rolls a maximum with a pawn in the yard, which happens more than a quarter of the
+ * time. Standing there is the classic Ludo mistake and the bot used to make it happily.
  *
- * What it ignores, on purpose, is which cards the opponent actually holds (a bot may not look: see
- * `card-choice.js`), that they might prefer a different move, and that the dice pool draws three cards
- * rather than offering all ten. Each of those makes the number more accurate and none of them changes
- * the **ranking** of two of my own pawns, which is the only thing the number is ever used for.
+ * ## What it still ignores, on purpose
+ *
+ * That an attacker might be held, stunned, locked or petrified and cannot move at all; that they
+ * might have something better to do than capture; and that a Rock between us would stop them. All
+ * three make the number **smaller**, so ignoring them keeps the model pessimistic, which is the side
+ * to be wrong on: a lost pawn costs up to 65 points and a lost tempo costs a handful.
  */
 
-import { TRACK_LENGTH } from "../core/board.js";
+import { START_R, entrySquare } from "../core/board.js";
 import { squareOf } from "../core/displacement.js";
-import { SCORE } from "./move-scoring.js";
+import { EMPTY_BOARD } from "../core/move-rules.js";
+import { STATUS, hasStatus } from "../core/statuses.js";
+import { enemiesBehind } from "./geometry.js";
+import { ENTRY_ODDS, MAX_REACH, oddsOfHit } from "./hit-odds.js";
 
-/** The faces a die can have, smallest first. `1/6` and not `1/2`, because a D2 cannot roll a 4. */
-const REACH = Object.freeze([6, 12, 20]);
-
-/** The chance that a pawn `distance` squares behind rolls exactly that number. */
-export function oddsOfHit(distance) {
-  if (!Number.isInteger(distance) || distance < 1) return 0;
-
-  const faces = REACH.find((max) => distance <= max);
-
-  return faces === undefined ? 0 : 1 / faces;
+/** Is this pawn sitting in its own start area, waiting for a maximum to get out? */
+function inYard(pawn) {
+  return pawn.r === START_R;
 }
 
 /**
- * What a pawn is worth to its owner, as the loss if it were sent home.
+ * Every chance of losing `pawn` this round, one per attacker, as a flat list of probabilities.
  *
- * `r` steps walked plus `LEAVE_START`, because a captured pawn loses the walk **and** has to be got
- * out of the yard again. Same currency as every other value in `ai/`, which is the point.
- */
-export function pawnWorth(pawn) {
-  return pawn.r + SCORE.LEAVE_START;
-}
-
-/**
- * Every pawn standing on one of the `range` squares behind `square`, nearest first.
+ * Two sources, and the second is the one a person sees and a program has to be told about:
  *
- * Each entry is the pawn plus the `distance` it would have to roll. "Behind" needs no per-seat
- * reasoning: `absoluteSquare` grows with `r` for all four seats, so every pawn walks the ring the same
- * way round and behind is simply the lower square number, modulo forty.
+ * 1. **Somebody behind it on the track.** One entry per enemy pawn within twenty squares, at the odds
+ *    of rolling exactly that distance.
+ * 2. **Somebody's yard, when the pawn is standing on their entry square.** A pawn entering the board
+ *    lands on that square and captures whatever is there, and it enters on a maximum, so the chance is
+ *    `ENTRY_ODDS` for every opponent who still has a pawn waiting. It is one entry per opponent and
+ *    not per waiting pawn: they get one roll, and one roll gets one pawn out.
  */
-export function pawnsBehind(pawns, square, range) {
-  const found = [];
+function dangers(pawns, pawn, square) {
+  const odds = enemiesBehind(pawns, square, MAX_REACH, pawn.player).map((enemy) =>
+    oddsOfHit(enemy.distance)
+  );
 
-  for (let distance = 1; distance <= Math.min(range, TRACK_LENGTH - 1); distance += 1) {
-    const at = (square - distance + TRACK_LENGTH) % TRACK_LENGTH;
+  const seats = new Set(pawns.map((other) => other.player));
+  for (const seat of seats) {
+    if (seat === pawn.player || entrySquare(seat) !== square) continue;
 
-    for (const pawn of pawns) {
-      if (squareOf(pawn) === at) found.push({ ...pawn, distance });
-    }
+    const waiting = pawns.some((other) => other.player === seat && inYard(other));
+    if (waiting) odds.push(ENTRY_ODDS);
   }
 
-  return found;
-}
-
-/** The same list with the pawns of `seat` taken out. What "somebody could hit this" is asked of. */
-export function enemiesBehind(pawns, square, range, seat) {
-  return pawnsBehind(pawns, square, range).filter((pawn) => pawn.player !== seat);
-}
-
-/** The pawns of `seat` among them. What "my own pawns are in the way" is asked of. */
-export function friendsBehind(pawns, square, range, seat) {
-  return pawnsBehind(pawns, square, range).filter((pawn) => pawn.player === seat);
+  return odds;
 }
 
 /**
  * The chance that this pawn is captured before its owner moves it again, as a number 0 to 1.
  *
- * The sum of `oddsOfHit` over every opponent pawn within twenty squares behind it. A sum and not a
- * proper "at least one of them" probability, which would be `1 - prod(1 - p)`: with four opponents
- * six squares back the sum reads 0.67 and the true chance is 0.52. It is never compared against
- * anything but another threat, and the sum keeps "twice as many attackers is twice as bad" true, which
- * is the property the card values actually lean on.
+ * `1 - prod(1 - p)`, the proper "at least one of them succeeds". See the module header for why this
+ * used to be a sum and why a sum stopped being good enough.
  *
- * A pawn in a start area or a home column answers 0, through `squareOf`: neither is a shared square,
- * so nothing can reach it there.
+ * Two answers are exactly zero and both matter:
+ *
+ * - **A pawn in a start area or a home column**, through `squareOf`. Neither is a shared square, so
+ *   nothing can reach it there.
+ * - **An armoured pawn** (Built Different). The next capture of it is refused outright, so the whole
+ *   point of the card is that this number is zero, and a bot that still saw danger there would buy
+ *   the insurance twice.
  */
-export function threatOn(pawns, pawn) {
+export function threatOn(pawns, pawn, board = EMPTY_BOARD) {
   const square = squareOf(pawn);
   if (square === null) return 0;
 
-  return enemiesBehind(pawns, square, TRACK_LENGTH - 1, pawn.player).reduce(
-    (total, enemy) => total + oddsOfHit(enemy.distance),
-    0
-  );
-}
+  if (hasStatus(board.statuses, STATUS.ARMOURED, { player: pawn.player, pawn: pawn.pawn })) {
+    return 0;
+  }
 
-/**
- * The absolute square `steps` in front of a pawn, or `null` when it is not on the track.
- *
- * Where the four trap cards are aimed: one square in front of an opponent is the square that opponent
- * is most likely to enter next, and `absoluteSquare` growing with `r` for every seat is again what
- * makes "in front" one line rather than four.
- */
-export function squareAhead(pawn, steps) {
-  const square = squareOf(pawn);
-  if (square === null) return null;
+  const safe = dangers(pawns, pawn, square).reduce((product, p) => product * (1 - p), 1);
 
-  // A pawn about to turn into its own house will never reach the square ahead of it on the ring.
-  if (pawn.r + steps > TRACK_LENGTH) return null;
-
-  return (square + steps) % TRACK_LENGTH;
-}
-
-/**
- * Is this pawn out on the shared track, where cards and captures can reach it?
- *
- * The question nine of the pawn-targeting cards ask first, and `squareOf` already answers it: a pawn
- * in a start area or a home column has no shared square at all.
- */
-export function onTrack(pawn) {
-  return squareOf(pawn) !== null;
+  return 1 - safe;
 }

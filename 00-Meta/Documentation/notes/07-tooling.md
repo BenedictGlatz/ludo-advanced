@@ -361,6 +361,33 @@ prevent. The cost is one line the day a second such file appears.
 
 Why the file exists at all is a testing question and belongs to [08-quality.md](08-quality.md).
 
+### A fifth script: `npm run bots:arena`, 2026-09-06
+
+`scripts/bot-arena.js` plus `scripts/arena-options.js` and `scripts/arena-report.js`. It plays seeded
+bot-against-bot matches through the real `startMatch` and `dispatch` and prints a table of wins,
+captures and cards played per bot with a 95 % confidence interval beside each rate.
+
+**It is a script and not a test, for the reason `scripts/dice-balance.js` already carries.** Telling
+one bot from another needs a few hundred matches, because at a four-seat table a bot exactly as good
+as the others wins one match in four and the noise around that is wide. A test suite must never run
+for minutes. One run of 400 matches takes about two and a half minutes on the development machine, and
+1200 about eight.
+
+Three flags, all named, nothing positional: `--players`, `--matches` and `--seats`. A seat is
+`default`, `plain`, `random`, or a list of profile knob overrides joined by `+`
+(`riskWeight=0.5+landingWeight=0`). A shorter seat list is repeated to fill the table, so
+`--seats=default,plain` at four seats means two of each.
+
+**The line-up rotates one seat per match by default.** Seat 0 plays first and that is worth something;
+without the rotation a comparison would be measuring the seat as much as the bot. The report prints
+wins by seat as the control, and a lopsided seat table means the rotation is not doing its job.
+
+**One flag-parsing bug worth recording**, because it cost three wasted runs: the first version split
+`--name=value` on **every** `=`, and a seat spec is full of them
+(`--seats=riskWeight=0+landingWeight=0,plain` has three). The value was silently truncated after the
+first, and the failure surfaced as "knob riskWeight needs a number, got undefined", which names a
+completely different part of the program. It splits at the first `=` now.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -76,6 +76,12 @@ git ls-files -z 'src/*.css' | xargs -0 wc -l | sort -rn
 
 # 8. End-to-end test count, per browser. The suite runs three, so the total run is three times this.
 npx playwright test --list --project=chromium 2>&1 | tail -1
+
+# 9. How strong the bots are. Added 2026-09-06 with the bot tactics plan. Not a size measurement:
+#    it is the only command in the project that answers "did that change make it better", and every
+#    run of it belongs in the arena section below with its own seat list. 1200 matches takes about
+#    eight minutes; 400 takes two and a half.
+npm run bots:arena -- --matches=1200 --seats=default,plain
 ```
 
 **Commands 3 and 5c were both widened on 2026-09-04**, when `src/ai/` became the fourth layer under
@@ -139,6 +145,111 @@ The lesson is worth a sentence in the report on its own: a measurement taken onc
 of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
+
+### Measured 2026-09-06, after the bot tactics plan
+
+Every command in the section above was re-run after the four phases of
+`00-Meta/Project-Management/Bot-Tactics-Plan.md` landed and before the closing commit. **This is the
+current measurement**; the blocks below it are kept so the growth is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **16247 lines in 104 files** | 2026-09-06, after the bot plan |
+| Stylesheet lines in `src/` | 7 | 4420 lines in 21 files | 2026-09-06, after the bot plan |
+| Test lines in `tests/` | 2 | **18733 lines in 113 files** | 2026-09-06, after the bot plan |
+| Lines in `src/core/` | 3 | 4512 lines in 32 files, **unchanged by the whole plan** | 2026-09-06, after the bot plan |
+| Lines in `src/state/` | 3 | 2344 lines in 14 files, also unchanged | 2026-09-06, after the bot plan |
+| Lines in `src/ui/` | 3 | 6208 lines in 37 files, plus 4420 lines of CSS, also unchanged | 2026-09-06, after the bot plan |
+| Lines in `src/ai/` | 3 | **2773 lines in 18 files**, up from 1901 in 12 | 2026-09-06, after the bot plan |
+| Unit tests | 4 | **81 test files, 996 tests**, all passing | 2026-09-06, after the bot plan |
+| End-to-end tests | 8 | **144 tests in 27 files per browser, 432 across the three**, all passing | 2026-09-06, after the bot plan |
+| Coverage of the three headless layers, lines | 5c | **99.33 % (1325/1334)** | 2026-09-06, after the bot plan |
+| Coverage of `src/core/`, lines | 5c | 99.66 % (581/583) over 32 files | 2026-09-06, after the bot plan |
+| Coverage of `src/state/`, lines | 5c | 99.05 % (312/315) over 14 files | 2026-09-06, after the bot plan |
+| Coverage of `src/ai/`, lines | 5c | **99.08 % (432/436) over 18 files** | 2026-09-06, after the bot plan |
+| Coverage, branches | 5a | 95.16 % | 2026-09-06, after the bot plan |
+| Coverage, functions | 5a | 99.79 % | 2026-09-06, after the bot plan |
+| Longest file of any kind | 6 | **300 lines, `src/ui/game-loop.js`**, and it is the only one at the limit | 2026-09-06, after the bot plan |
+| Longest stylesheet | 7 | 296 lines, `src/ui/styles/tokens.css` | 2026-09-06, after the bot plan |
+
+**Three readings.**
+
+1. **`core/`, `state/` and `ui/` are all byte-identical after a whole feature.** The bots learned a
+   probability model of the dice pool, a danger model, a lead-weighted damage model and a real trap
+   search, and **not one line outside `src/ai/` changed**. That is the sixth measurement in a row where
+   the rules layer did not move and the first where three layers did not.
+2. **`src/ai/` grew by 872 lines and six files, and four of the six are splits rather than new
+   subjects.** `score.js`, `geometry.js`, `values-attacks.js` and `values-nuehue.js` all came out of
+   files that were within ten lines of NFR-02's limit, which is what the limit is for: the split
+   happened before the code was written, along a seam the old file headers already named.
+3. **The `src/ai/` coverage floor holds at 99 % with the arena outside it.** `scripts/` is not measured
+   and is not meant to be, and the four uncovered lines in `ai/` are the two "the bot never plays this"
+   value functions and two defensive branches.
+
+### The arena, measured 2026-09-06
+
+```bash
+npm run bots:arena -- --matches=1200 --seats=default,plain
+npm run bots:arena -- --matches=400  --seats=default,random
+npm run bots:arena -- --matches=400  --seats=opportunityWeight=0+landingWeight=0,plain
+npm run bots:arena -- --matches=400  --seats=riskWeight=0+landingWeight=0,plain
+npm run bots:arena -- --matches=400  --seats=riskWeight=0+opportunityWeight=0,plain
+npm run bots:arena -- --matches=1200 --seats=opportunityWeight=0+landingWeight=0,plain
+npm run bots:arena -- --matches=1200 --seats=riskWeight=0+opportunityWeight=0,plain
+```
+
+Two seats each of the named profile and of `plain`, line-up rotated one seat per match, seeds
+`1..matches`. `plain` is the move scorer as it was before the plan, in the same build. Every rate is
+a share of **all** matches, so an even table is 50 % per profile and the interval is the one the
+script prints.
+
+**These are the runs the shipped `DEFAULT_PROFILE` was chosen from, and most of them are negative.**
+
+| Run | What was switched on | Matches | Win rate against `plain` | Verdict |
+| --- | --- | --- | --- | --- |
+| 1 | all three correction terms | 400 | 46.5 % +/- 4.9 | **worse** |
+| 2 | danger only | 400 | 49.5 % +/- 4.9 | a draw |
+| 3 | danger only, weight 0.5 | 400 | 49.0 % +/- 4.9 | a draw |
+| 4 | danger only, weight 2 | 400 | 47.8 % +/- 4.9 | a draw, trending worse |
+| 5 | opportunity only, as an absolute | 400 | 43.8 % +/- 4.9 | **worse** |
+| 6 | opportunity only, rewritten as a difference | 400 | 43.0 % +/- 4.9 | **worse, and the rewrite changed nothing** |
+| 7 | landing bonus only | 400 | 47.5 % +/- 4.9 | worse, inside the interval |
+| 8 | danger and landing | 400 | 45.3 % +/- 4.9 | **worse** |
+| 9 | danger only | 1200 | 49.7 % +/- 2.8 | **a draw, at four times the power** |
+| 10 | landing bonus only | 1200 | 47.3 % +/- 2.8 | **worse, outside the interval** |
+| 11 | the shipped profile | 1200 | 49.7 % +/- 2.8 | a draw |
+| 12 | the shipped profile against `random` | 400 | 100.0 % | the floor holds |
+
+Average match length is 325 turns and one run of 400 matches takes about two and a half minutes.
+
+**What the table decided.** `riskWeight: 1`, `opportunityWeight: 0`, `landingWeight: 0`. Runs 9 and 11
+are the same numbers because danger is the only term left on in the shipped profile.
+
+**Four findings worth a paragraph in the report each.**
+
+1. **The obvious improvement made the bot worse, and only the arena could say so.** Run 1 is the whole
+   plan switched on, as designed, by an argument everybody agreed with. It loses. The plan's first phase
+   was a measuring tool for exactly this reason and it earned its cost on its first use.
+2. **Chasing captures loses a race.** Runs 5 and 6 are the largest single effect in the table and both
+   show the same thing: a bot that goes out of its way to stop within a roll of an enemy takes more
+   captures per match and wins fewer matches. Ludo is a race and a capture is not worth the detour that
+   sets it up.
+3. **A reasonable diagnosis can be wrong, and the measurement is what shows it.** The opportunity term
+   was written as an absolute while danger was written as a difference, which is a real asymmetry and a
+   real defect: it pays for every short move ending near an enemy, including the ones that give up a
+   better position. Fixing it was the obvious next step, it was measured, and it moved the number by
+   0.8 points, which is a quarter of the interval. The defect was real and it was not the cause.
+4. **Danger is shipped on although it does not win.** Runs 2, 3, 4 and 9 put it inside the interval at
+   every weight tried, while it takes about 10 % more captures per match. It is kept because it removes
+   the two blunders a person watching a bot notices, which is a product judgement and is recorded as
+   one in the project journal rather than dressed up as a measurement.
+
+**The gap in the method, recorded rather than papered over.** Phase 2's card changes (the lead
+weighting in `share`, the trap search, Nühü's four receiving-end values) are **not** behind a profile
+knob, so `plain` and `default` both carry them and no run in the table says anything about whether they
+helped. They shipped on the strength of the argument for them, which is the thing this plan was written
+to stop. Putting them behind knobs is outstanding work and is the first thing the next arena session
+should do.
 
 ### Measured 2026-09-04, after the bots learned to play cards
 

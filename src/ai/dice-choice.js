@@ -33,6 +33,7 @@
  */
 
 import { createModifiers } from "../core/roll.js";
+import { DEFAULT_PROFILE } from "./profile.js";
 import { expectedMoveScore } from "./roll-odds.js";
 
 /**
@@ -51,8 +52,8 @@ import { expectedMoveScore } from "./roll-odds.js";
  * phase before any Action card can be played, so there is nothing in force yet; asking for the empty
  * set says that plainly instead of relying on it.
  */
-export function expectedScore(state, faces) {
-  return expectedMoveScore(state, state.activePlayer, faces, createModifiers());
+export function expectedScore(state, faces, profile = DEFAULT_PROFILE) {
+  return expectedMoveScore(state, state.activePlayer, faces, createModifiers(), undefined, profile);
 }
 
 /**
@@ -62,11 +63,11 @@ export function expectedScore(state, faces) {
  * count), and when a big die is genuinely better the advance term has already said so by scoring it
  * higher. Ties after that go to the card that was drawn first, so the choice is repeatable.
  */
-export function chooseDie(state) {
+export function chooseDie(state, profile = DEFAULT_PROFILE) {
   let best = null;
 
   for (const faces of state.hand) {
-    const score = expectedScore(state, faces);
+    const score = expectedScore(state, faces, profile);
     if (best === null || score > best.score || (score === best.score && faces < best.faces)) {
       best = { faces, score };
     }

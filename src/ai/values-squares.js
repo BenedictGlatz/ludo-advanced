@@ -1,17 +1,27 @@
 /**
  * What the cards that act on a square are worth. Issue #82, requirement FR-43.
  *
- * Pure `ai/`. Same signature and currency as the other three value files: see
+ * Pure `ai/`. Same signature and currency as the other value files: see
  * [values-shared.js](values-shared.js).
  *
- * ## The three trap cards all ask the same question
+ * ## The trap cards used to aim at the one square the victim was least likely to enter
  *
- * "Which free square is worth putting this on?" And they all give a version of the same answer: **one
- * square in front of an opponent's pawn**, because that is the square that pawn is most likely to
- * enter next. It is not the cleverest possible answer. A trap laid 4 squares ahead catches a D6 more
- * often than one laid at 1 catches anything, and pricing that properly needs the distribution of what
- * the victim will roll, which depends on a dice hand that does not exist yet. Recorded as the obvious
- * next improvement rather than half-built.
+ * Both of them laid the trap **one** square in front of an opponent's leading pawn, and the old header
+ * admitted why: pricing it properly needs the distribution of what the victim will roll, and that did
+ * not exist yet. It does now (`hit-odds.js`), and the old answer turns out to be close to the worst
+ * available. One square ahead is reached only by a D2 or a natural 1, which is the least likely
+ * distance in the whole table; four squares ahead of three different pawns is a far better trap.
+ *
+ * So `trapSquares` prices **every legal square** by how likely somebody is to walk into it, summed
+ * over every enemy pawn that could reach it and weighted by how far ahead that enemy is. A square
+ * three pawns can each reach beats a square only the leader can reach, and among equals the leader's
+ * square wins.
+ *
+ * **The known simplification, kept on purpose.** `oddsOfHit` is the chance of landing *exactly* there,
+ * and a trap also fires on a square merely crossed, so the real chance is higher than the number
+ * below. It is higher for every square, so the ranking is barely affected, and the alternative is a
+ * second probability table modelling an opponent who is not aiming at anything. Recorded rather than
+ * half-built, the same way the old one-square rule was.
  *
  * `pickableSquares` is asked for the list of legal squares rather than the rule being repeated here.
  * A trap may not go on an occupied square, under a pawn, or on one of the four entry squares, and
@@ -32,7 +42,8 @@ import { HYPERBEAM_DIE, JANKY_DIE, JANKY_HIT } from "../core/cards/effects/area-
 import { squareOf } from "../core/displacement.js";
 import { neighbourSquares, ringDistance, squareRun } from "../core/path.js";
 import { pickableSquares } from "../state/card-legality.js";
-import { squareAhead } from "./threat.js";
+import { MAX_REACH, oddsOfHit } from "./hit-odds.js";
+import { DEFAULT_PROFILE } from "./profile.js";
 import { enemiesOnTrack, ownOnTrack, share, squareSwing } from "./values-shared.js";
 
 /** The best of a list of `{ value, target }`, or `null`. First one wins a tie, so it is repeatable. */
@@ -49,38 +60,54 @@ function best(candidates) {
 }
 
 /**
- * Every free square one step in front of an opponent's pawn, leading pawn first.
+ * Every legal square for this trap card, with the share-weighted chance that an enemy walks into it.
  *
- * Sorted by how far the victim has got, then by seat and pawn, so that two squares of equal value are
- * always chosen between the same way. Without the sort the answer would depend on the order of the
- * pawn list, which is a repeatability bug rather than a strategy.
+ * `catch` is the sum over enemy pawns of `P(that pawn lands here) * share of its owner's loss`, so it
+ * is already in the layer's currency: multiply it by what the trap does to a victim and the answer is
+ * the expected value of laying it there.
+ *
+ * Squares nobody can reach are dropped, so a card with nothing worth trapping returns `null` rather
+ * than picking square 0 by accident.
+ *
+ * Sorted by chance, then by square number, so two equally good squares are always chosen between the
+ * same way. Without the sort the answer would depend on the order `pickableSquares` happened to
+ * return, which is a repeatability bug rather than a strategy.
  */
-function squaresAheadOfEnemies(state, seat, cardId) {
+function trapSquares(state, seat, cardId) {
   const free = pickableSquares(state, cardId) ?? [];
+  const enemies = enemiesOnTrack(state, seat);
 
-  return enemiesOnTrack(state, seat)
-    .slice()
-    .sort((a, b) => b.r - a.r || a.player - b.player || a.pawn - b.pawn)
-    .map((victim) => ({ victim, square: squareAhead(victim, 1) }))
-    .filter((entry) => entry.square !== null && free.includes(entry.square));
+  return free
+    .map((square) => {
+      let caught = 0;
+
+      for (const enemy of enemies) {
+        const distance = (square - squareOf(enemy) + TRACK_LENGTH) % TRACK_LENGTH;
+        if (distance < 1 || distance > MAX_REACH) continue;
+
+        caught += oddsOfHit(distance) * share(state, enemy.player);
+      }
+
+      return { square, caught };
+    })
+    .filter((entry) => entry.caught > 0)
+    .sort((a, b) => b.caught - a.caught || a.square - b.square);
 }
-
-/** What losing a turn costs, in steps: roughly one average roll of the middle of the dice pool. */
-const STUN_WORTH = 7;
 
 /**
  * Lay a Banana Peel (`stun`) on a square an opponent is about to walk onto.
  *
- * A stun costs the victim their next turn with that pawn, priced as `STUN_WORTH` steps and taken as a
- * share. It is the same number wherever it is laid, so the leading opponent pawn wins by the sort
- * above rather than by the arithmetic.
+ * A stun costs the victim their next turn with that pawn, priced as `stunWorth` steps. Unlike the old
+ * flat value this one differs from square to square, so the search is a real search: the best square
+ * is the one most likely to be walked on by the player most worth stopping.
  */
-export function bananaPeel(state, seat) {
-  const [first] = squaresAheadOfEnemies(state, seat, "action-banana-peel");
-
-  return first === undefined
-    ? null
-    : { value: share(state) * STUN_WORTH, target: { square: first.square } };
+export function bananaPeel(state, seat, profile = DEFAULT_PROFILE) {
+  return best(
+    trapSquares(state, seat, "action-banana-peel").map(({ square, caught }) => ({
+      value: caught * profile.stunWorth,
+      target: { square },
+    }))
+  );
 }
 
 /**
@@ -100,7 +127,7 @@ export function oilSpill() {
 }
 
 /** What an It's Not That Deep is worth for its pushback alone, before the aura is counted. */
-const NOT_THAT_DEEP_BASE = 2;
+const NOT_THAT_DEEP_PUSH = 1;
 
 /** How far the aura reaches, in squares either side. `core/trap-rules.js` owns the number. */
 const AURA_RADIUS = 3;
@@ -112,15 +139,27 @@ const AURA_RADIUS = 3;
  * is the **aura**: an offensive card aimed within three squares of it does nothing at all, so it is
  * area denial for whatever of mine is standing nearby. Priced as one point per own pawn inside the
  * radius, on top of the pushback.
+ *
+ * The aura is why this card searches every legal square and not only the ones an enemy can reach: a
+ * square nobody will ever step on is still worth laying it on when three of my pawns are standing
+ * beside it. So the candidate list is the free squares themselves, with `trapSquares` consulted for
+ * the pushback half.
  */
 export function notThatDeep(state, seat) {
+  const caughtAt = new Map(
+    trapSquares(state, seat, "action-not-that-deep").map((entry) => [entry.square, entry.caught])
+  );
+
   return best(
-    squaresAheadOfEnemies(state, seat, "action-not-that-deep").map(({ square }) => {
+    (pickableSquares(state, "action-not-that-deep") ?? []).map((square) => {
       const guarded = ownOnTrack(state, seat).filter(
         (pawn) => ringDistance(squareOf(pawn), square) <= AURA_RADIUS
       ).length;
 
-      return { value: NOT_THAT_DEEP_BASE + guarded, target: { square } };
+      return {
+        value: (caughtAt.get(square) ?? 0) * NOT_THAT_DEEP_PUSH + guarded,
+        target: { square },
+      };
     })
   );
 }

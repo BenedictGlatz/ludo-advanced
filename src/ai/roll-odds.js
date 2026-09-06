@@ -35,7 +35,8 @@
 import { createModifiers } from "../core/roll.js";
 import { evaluateTurn } from "../core/movement.js";
 import { boardOf } from "../state/game-state.js";
-import { bestMove } from "./move-scoring.js";
+import { bestMove, scoringContext } from "./move-scoring.js";
+import { DEFAULT_PROFILE } from "./profile.js";
 
 /** One value's probability added to a distribution. A `Map` from total to probability. */
 function add(dist, value, p) {
@@ -133,13 +134,26 @@ export function rollOdds(dieMax, modifiers = createModifiers()) {
  * `board` is `{ statuses, traps }` and defaults to the one the state is in. Passing a different board
  * is how the bot prices a card that changes the board rather than the roll: Hold Pawn is priced by
  * asking this same question with a `held` status added to the list.
+ *
+ * `profile` is the seat's tuning knobs (see [profile.js](profile.js)) and it is threaded through to
+ * `scoreMove`, which is what makes the phase-1 danger and opportunity terms show up **inside every
+ * card value** as well as in the move choice. A bot that avoided danger when it walked but ignored it
+ * when it priced a card would contradict itself once a turn.
  */
-export function expectedMoveScore(state, seat, dieMax, modifiers, board = boardOf(state)) {
+export function expectedMoveScore(
+  state,
+  seat,
+  dieMax,
+  modifiers,
+  board = boardOf(state),
+  profile = DEFAULT_PROFILE
+) {
+  const context = scoringContext(state, seat, profile, board);
   let total = 0;
 
   for (const { roll, p } of rollOdds(dieMax, modifiers)) {
     const { moves } = evaluateTurn(state.pawns, seat, roll, dieMax, board);
-    total += p * (bestMove(moves, state.pawns)?.score ?? 0);
+    total += p * (bestMove(moves, state.pawns, context)?.score ?? 0);
   }
 
   return total;

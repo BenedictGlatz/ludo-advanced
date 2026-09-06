@@ -23,6 +23,9 @@ function match(fields) {
     activePlayer: 2,
     phase: TURN_PHASE.CHOOSE,
     pawns: pawnsAt(4),
+    // No skill squares, so nothing on this board hands out a card and the move scorer's landing
+    // bonus is zero everywhere. A real state always carries the list, so a hand-built one has to.
+    skillSquares: [],
     hand: [6, 20, 4],
     legalMoves: [],
     statuses: [],
@@ -138,7 +141,11 @@ describe("decide: the three phases a person would be asked in", () => {
       to: 1,
       captures: null,
     };
-    const state = match({ phase: TURN_PHASE.ACT, legalMoves: [walk, exit] });
+    const state = match({
+      phase: TURN_PHASE.ACT,
+      pawns: pawnsAt(4, { "2.0": 5 }),
+      legalMoves: [walk, exit],
+    });
 
     // Leaving the yard beats a four-step walk, so pawn 3 and not pawn 0.
     expect(decide(state)).toEqual({ type: INTENT.COMMIT_MOVE, pawn: 3 });
@@ -149,7 +156,8 @@ describe("decide: the three phases a person would be asked in", () => {
       { player: 2, pawn: 1, kind: MOVE_KIND.ADVANCE, from: 12, to: 18, captures: null },
       { player: 2, pawn: 2, kind: MOVE_KIND.ADVANCE, from: 30, to: 36, captures: null },
     ];
-    const intent = decide(match({ phase: TURN_PHASE.ACT, legalMoves: moves }));
+    const board = pawnsAt(4, { "2.1": 12, "2.2": 30 });
+    const intent = decide(match({ phase: TURN_PHASE.ACT, pawns: board, legalMoves: moves }));
 
     expect(moves.map((move) => move.pawn)).toContain(intent.pawn);
   });

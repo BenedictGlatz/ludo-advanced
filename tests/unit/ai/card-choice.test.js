@@ -43,6 +43,16 @@ function acting(fields) {
  * - Pot of Greed is worth one card, 3, because a full hand has room for one of its two draws.
  */
 const quiet = { pawns: pawnsAt(4, { "0.0": 40 }) };
+
+/**
+ * The same idea with seats 1 and 2 level with seat 0, which the Tax Fraud case below needs.
+ *
+ * Since the bot tactics plan an opponent'''s loss is weighted by how far ahead they are, and on the
+ *  board seats 1 and 2 have walked nothing at all, so robbing either of them is worth half a
+ * normal share and falls under the threshold. Three seats level is the board where the weighting is
+ * exactly one and the case is about the card count again rather than about the lead.
+ */
+const even = { pawns: pawnsAt(4, { "0.0": 40, "1.0": 40, "2.0": 40 }) };
 const cheap = ["action-rock", "action-built-different", "action-lock-in", "action-let-him-cook"];
 
 describe("the threshold: playing a card is not the same as having one", () => {
@@ -118,8 +128,8 @@ describe("the bot reads only what a person can see", () => {
     const hands = { 0: ["action-tax-fraud"], 1: ["action-rock"], 2: ["action-rock"], 3: [] };
     const richer = { ...hands, 2: ["action-rock", "action-yeet"] };
 
-    const first = chooseAction(acting({ ...quiet, skillHands: hands }));
-    const second = chooseAction(acting({ ...quiet, skillHands: richer }));
+    const first = chooseAction(acting({ ...even, skillHands: hands }));
+    const second = chooseAction(acting({ ...even, skillHands: richer }));
 
     expect(first.target).toEqual({ player: 1 });
     expect(second.target).toEqual({ player: 2 });

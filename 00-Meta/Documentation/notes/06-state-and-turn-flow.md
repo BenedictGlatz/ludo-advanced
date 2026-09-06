@@ -804,6 +804,83 @@ conflict nobody wants to resolve on merge day.
 **No view yet.** Design brief 17 asks where the slot goes and what it shows (D100). The state is
 testable without it: `last-card-played.test.js` covers the four outcomes and the survival of the turn.
 
+### The bot gets a scoreboard, then a danger model: 2026-09-06, the bot tactics plan
+
+Four phases, planned in `00-Meta/Project-Management/Bot-Tactics-Plan.md` and built in that order.
+Everything below is still one currency: a point is one step of one pawn (`SCORE` in `src/ai/score.js`).
+
+**Phase 0, the arena.** `npm run bots:arena` plays seeded bot-against-bot matches through the real
+`startMatch` and `dispatch` and prints wins, captures and cards played per bot with a 95 % confidence
+interval. `decide(state, profile)` gained a second argument: a profile is a frozen object of tuning
+knobs, and it may be a **function from a seat to a profile**, which is how two different bots sit at the
+same table out of the same source. The alternative, keeping a copy of the old bot's code to play
+against, goes stale the first time either copy is edited. A `random` seat that picks a legal die and a
+legal move uniformly is the floor; it lives in `scripts/` and not in `src/ai/`, because `ai/` may hold
+no randomness at all (NFR-09).
+
+**Phase 1, danger and opportunity.** Three new files under `src/ai/`:
+
+- `score.js` holds the currency (`SCORE`, `pawnWorth`, the four standing worths) and imports nothing.
+  It exists because `move-scoring.js` now prices danger, danger is `threat.js`, and `threat.js` needs
+  the currency: with the table in the scorer those three would import each other in a ring.
+- `geometry.js` holds `pawnsBehind`, `pawnsAhead` and the rest, split out of `threat.js`.
+  `pawnsBehind` was rewritten as one pass over the pawns rather than one pass per distance, because the
+  move scorer asks it twice per candidate move inside `expectedMoveScore` inside every card value.
+- `hit-odds.js` computes, once at import, `P(hit at distance d)` for `d = 1..20` over all
+  C(20, 3) = 1140 hands the dice pool can deal, as the mean of `1 / (smallest die in the hand that
+  reaches d)`. It replaces the old flat guess of 1/6, 1/12 and 1/20 by range.
+
+`threat.js` changed in three ways and each was a real mistake: the odds became a calculation instead of
+a guess, the sum over attackers became `1 - prod(1 - p)` (it is now multiplied by a pawn's worth and
+compared against a gain such as the 25 of leaving the yard, so it has to be a real probability), and a
+pawn standing on an opponent's **entry square** is now counted as being in danger from that opponent's
+yard, which is the classic Ludo mistake the bot used to make happily. An armoured pawn answers 0.
+
+`scoreMove(move, pawns, context)` keeps the five exclusive categories and adds three corrections:
+risk (`threat x worth` after the move minus before), opportunity (the same difference for enemy pawns
+the landing field puts within a roll) and the landing field (a skill field earns a card, somebody
+else's Banana Peel costs a turn). A correction and not a sixth category, because danger is a matter of
+degree and there is no honest place for "this is a bit dangerous" between "capture" and "leave the
+yard". `scoreMove(move, pawns)` with no context answers exactly what it answered before.
+
+**Only the first of the three is switched on in the shipped bot.** The arena measured the other two as
+losses, so `DEFAULT_PROFILE` carries them at zero and `FULL_PROFILE` is what the plan designed. The code
+stays, tested and off, because deleting it would throw away both the measured finding and the knob a
+later run needs to re-test it. See phase 3 below.
+
+**The die choice improved for free.** `chooseDie` already averages `bestMove` over every face, so a
+smarter `scoreMove` prices every die by where it is likely to land, with no change in `dice-choice.js`.
+
+**Phase 2, sharper cards.** Four independent changes:
+
+- `share(state, opponent)` weights an opponent's loss by their progress against the table average,
+  clamped between half and double. One function, and every offensive card and every reaction inherits
+  it: the bot now gangs up on the leader.
+- The trap cards search **every** legal field by how likely somebody is to walk onto it, instead of
+  always taking the field one step in front of the leading opponent, which is the one distance a victim
+  is least likely to roll.
+- Nühü prices the four cards an opponent can aim at a bot separately (Yeet by the steps lost plus the
+  danger it lands in, Hold Pawn by what the turn loses, Ragebait by a taunt, Tax Fraud by a card)
+  instead of a flat 8 for all four. Four entries and not twenty-nine, because those are the only four
+  cards in the catalogue an opponent can aim at somebody else's pawn or at somebody else.
+- Two files were split before anything was added to them, both being close to NFR-02's 300 lines:
+  `values-pawns.js` (own-pawn cards) against `values-attacks.js` (the two cards played on an
+  opponent's pawn), and `values-window.js` against `values-nuehue.js`.
+
+**Phase 2d was not built.** Pricing each die as "the best of the turn without a roll card and the turn
+with the best held roll card" is written up in the plan and is the one item of it that is outstanding.
+It is the only change of the four that needs `chooseDie` to look at the skill hand, and the arena said
+the first three were worth measuring on their own first.
+
+**Phase 3, tuning, and it is the part with the negative finding in it.** See
+[09-source-code-overview.md](09-source-code-overview.md) for every run and its command. In short: with
+all three corrections on, the new bot **lost** to the old one, and the arena is the only reason anybody
+knows that. Measured one term at a time, the opportunity term was the loss; it was written as an
+absolute ("what is in front of where I land") while danger was written as a difference, so it paid the
+bot for every short move that ended near an enemy, including the ones that gave up a better position.
+Rewritten as a difference and measured again. The shipped `DEFAULT_PROFILE` is what the arena chose and
+nothing else.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

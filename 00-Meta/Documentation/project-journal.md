@@ -516,6 +516,11 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   Ch. 04 and in the decision blocks below, which are the copies that get maintained. Nothing committed
   linked to the file, and its history keeps it recoverable. Sprint 2.
 
+- **2026-09-06**: Bot tactics plan built in four phases: `npm run bots:arena` plus per-seat
+  tuning profiles, a hit table computed from the dice pool, danger and opportunity in the move
+  choice, lead-weighted card damage, a real trap search and four receiving-end values for Nühü.
+  The arena's verdict is in Ch. 09 and it is partly negative. Sprint 3.
+
 ---
 
 ## Decisions
@@ -4918,6 +4923,129 @@ to get wrong later.
   use, so that becomes a Product Owner question rather than a rewrite. The plan is a working document
   and is deleted once built, like the handoff 15 plan was.
 - → Ch. 06, Ch. 08, Ch. 09
+
+---
+### 2026-09-06: A real hit table replaces the guess, and the sum becomes a probability
+
+- **Chosen:** `oddsOfHit(d)` is computed once at import over all C(20, 3) = 1140 hands the dice pool can
+  deal, as the mean of `1 / (the smallest die in the hand that reaches d)`, and `threatOn` combines its
+  attackers as `1 - prod(1 - p)` instead of adding them up.
+- **Rejected:** *keeping the flat 1/6, 1/12, 1/20 by range.* It quietly assumes the opponent is holding
+  the smallest die that reaches, and a turn draws three cards out of twenty. At one square the real
+  number is nearly twice the guess and past twelve squares it is a quarter of it, so the guess was not
+  merely imprecise, it was wrong in **both** directions and the bot was brave up close and timid far away.
+- **Rejected:** *sampling the pool a few hundred times to get the same table.* `ai/` may hold no
+  randomness at all (NFR-09) and 1140 hands is 1140 iterations at import, so there is nothing to buy.
+- **Why the sum had to go.** The sum was defended in issue #82 and the defence was sound at the time: a
+  threat was only ever compared with another threat, and a sum keeps "twice as many attackers is twice
+  as bad" true. From the bot tactics plan on it is multiplied by a pawn's worth and compared against a
+  **gain**, such as the 25 points of leaving the yard, so it has to be a real number between 0 and 1.
+  With seven attackers the sum passes 1 and prices a pawn at more than a pawn.
+- **Consequence:** the pool's composition is read by `ai/`, which is fair rather than cheating: it is
+  printed on the pool overview screen and is the same twenty cards all match long. What stays secret is
+  which three cards an opponent holds right now, and nothing asks.
+- → Ch. 06, Ch. 09
+
+---
+
+### 2026-09-06: Danger is a correction to the categories, not a sixth category
+
+- **Chosen:** `scoreMove` keeps its five exclusive categories and adds three terms on top: risk,
+  opportunity and what is lying on the landing field. Each is in the same currency as the category it
+  corrects, so the two can be added at all.
+- **Rejected:** *a sixth category between "capture" and "leave the yard".* A category is all-or-nothing
+  and danger is a matter of degree: a pawn on `r = 3` in front of one enemy is a small risk and a pawn
+  on `r = 38` in front of three is a catastrophe. There is no honest place in the ranking for "this is a
+  bit dangerous", and putting one there would have made the ranking answer a question it is not for.
+- **Rejected:** *rewriting the ranking itself.* The file's own header says the order is the heuristic and
+  the distances are a knob, and five previous issues have left it alone. The correction leaves it alone
+  too: the biggest a board can produce is roughly one pawn's worth, so a finish still beats a capture.
+- **Consequence:** `SCORE` moved into a file of its own (`src/ai/score.js`). The scorer now imports the
+  danger model and the danger model needs the currency, and with the table left in the scorer those two
+  plus `threat.js` would have imported each other in a ring. A ring of ES modules works right up until
+  one of them reads another's `const` at import time.
+- **Consequence:** the die choice got smarter for nothing. `chooseDie` already averages `bestMove` over
+  every face, so a die is now priced by where it is likely to land, with no change in `dice-choice.js`.
+- → Ch. 06
+
+---
+
+### 2026-09-06: The arena says the new danger model does not win, and it is shipped anyway with the reason written down
+
+- **Chosen:** `DEFAULT_PROFILE` ships with `riskWeight: 1`, `opportunityWeight: 0` and
+  `landingWeight: 0`. Every one of those three numbers is what `npm run bots:arena` chose, and the runs
+  are in Ch. 09 next to their commands.
+- **The measurement, which is the point of the entry.** With all three terms on, the new bot **lost** to
+  the same build with them off. One term at a time over 400 matches: the opportunity term was the loss
+  and well outside the interval; the other two were inside it. Over 1200 matches the danger term alone
+  came out even on wins while taking noticeably more captures per match, which is a bot losing fewer
+  pawns and gaining no ground for it.
+- **Rejected:** *shipping all three on, as designed.* The plan's own rule is that a change is kept only
+  when it wins by more than the noise band, and it was written precisely to stop this: the danger term
+  is the obvious gap, everybody agrees it is the biggest one, and the argument for it is good. The
+  argument is not evidence.
+- **Rejected:** *shipping all three off, which the rule read strictly would give.* The danger term costs
+  nothing measurable and it removes the two blunders a person watching a bot actually notices: parking a
+  pawn one field in front of an opponent, and walking out of the yard onto an entry field with pawns
+  queued behind it. A bot that visibly blunders is a worse opponent to play against than its win rate
+  says. That is a product judgement and not a measurement, and it is recorded as one.
+- **The hypothesis that failed, kept because it is the useful half.** The opportunity term was written
+  as an absolute ("what is in front of where I land") while danger was written as a difference. That
+  asymmetry is a real defect: it pays the bot for every short move ending near an enemy, including the
+  ones that give up a better position. It was rewritten as a difference and measured again, and it
+  measured the same. So the asymmetry was not the reason; chasing captures simply costs more tempo than
+  the captures are worth in this game's economy. The corrected form is kept, switched off.
+- **Named as outstanding:** phase 2's card changes are not behind a knob, so the arena cannot compare
+  them with what they replaced. They shipped on the argument, which is the thing this plan exists to
+  stop. Gating them is the next piece of work, not a detail.
+- → Ch. 06, Ch. 08, Ch. 09, Ch. 11
+
+---
+
+### 2026-09-06: An opponent's loss is weighted by how far ahead they are, in one function
+
+- **Chosen:** `share(state, opponent)` multiplies the old `1 / (seats - 1)` by the victim's progress
+  against the table average, clamped between half and double. Every offensive card and every reaction
+  inherits it through the one function.
+- **Rejected:** *the flat share.* Hurting the player two turns from winning was worth exactly as much as
+  hurting the player who had not left the yard, which is the one thing every human player at a
+  four-seat table gets right without being told.
+- **Rejected:** *comparing the victim against the other opponents rather than against the whole table.*
+  It needs the asking seat as a third argument, and it makes a bot in the lead treat a distant second as
+  the runaway. Against the table average the asking seat's own progress is part of "who is ahead", which
+  is what it should be.
+- **Why the clamp.** Without it, a seat two turns from winning while everybody else is still in the yard
+  is worth four times a normal target at a four-seat table, and a reaction card priced at four times its
+  worth starts beating moves it has no business beating. The clamp keeps the ranking among the opponents,
+  which is the whole point, and keeps the size of a card the size of a card.
+- **Not measured.** `share` is not behind a profile knob, so the arena cannot say whether this helped.
+  See the entry above.
+- → Ch. 06
+
+---
+
+### 2026-09-06: Traps go where somebody will walk, and Nühü prices four cards instead of one number
+
+- **Chosen:** the two trap cards search **every** legal field, scoring each by the share-weighted chance
+  that an enemy lands on it, summed over every enemy pawn that could reach it. Nühü prices the four
+  cards an opponent can aim at a bot separately: Yeet by the steps lost plus the danger the pushback
+  drops the pawn into, Hold Pawn by what the turn loses, Ragebait by a taunt, Tax Fraud by a card.
+- **Rejected:** *the field one step in front of the leading opponent*, which is what both trap cards used
+  to take. It is the single distance a victim is least likely to roll: only a D2 or a natural 1 reaches
+  it, and the hit table now says so in a number.
+- **Rejected:** *a second value table for all 29 cards, seen from the receiving end*, which is what the
+  old flat 8 was standing in for and what the old comment gave as the reason for not doing it. Only four
+  cards in the catalogue can be aimed by an opponent at somebody else's pawn or at somebody else, so the
+  table is complete at four entries and the fear was of a job much larger than the job.
+- **Known simplification, recorded rather than half-built:** a trap also fires on a field merely crossed,
+  and `oddsOfHit` is the chance of landing exactly there, so the real chance is higher than the number
+  the value uses. It is higher for every field, so the ranking barely moves, and the alternative is a
+  second probability table modelling an opponent who is not aiming at anything.
+- **Consequence:** two files were split before anything was added to them, both close to NFR-02's 300
+  lines. `values-pawns.js` kept the cards played on your own pawns and `values-attacks.js` took the two
+  played on somebody else's; `values-window.js` kept six reactions and `values-nuehue.js` took the
+  seventh, which is now four cases long.
+- → Ch. 06
 
 ---
 

@@ -2094,6 +2094,40 @@ stone". Nothing was added for D101's geometry for the reason above.
 because it was written on a different branch from `trap-helpers.js`'s version on the same afternoon. Both
 branches are in `dev` now, so the copy was deleted and the shared helper takes its two extra arguments.
 
+### Measuring a bot is not testing a bot: 2026-09-06, the bot tactics plan
+
+The suite gained three test files and lost none: `geometry.test.js` and `hit-odds.test.js` split out of
+`threat.test.js` with the modules they cover, `move-risk.test.js` is new, and `values-attacks.test.js`
+and `values-nuehue.test.js` split out with their modules.
+
+**`move-risk.test.js` is built to a shape worth copying.** Every case places two moves of exactly the
+same category and exactly the same length, so the category score is a tie and only the new correction
+can decide, and then runs the same board twice: once with `PLAIN_PROFILE` and once with the shipping
+profile. The two have to **disagree**. An assertion about a number would pass just as well against a
+term that had been quietly switched off; an assertion that the two bots choose differently cannot.
+
+**What the test suite still does not tell you, and this is the point of the arena.**
+`bot-match.test.js` proves a bot can finish a match without producing an intent the rules refuse, over
+hundreds of turns with the full card pool. It says nothing at all about whether a change made the bot
+**better**. That question needs hundreds of matches and belongs to `npm run bots:arena`, whose runs are
+recorded in [09-source-code-overview.md](09-source-code-overview.md).
+
+`bot-match.test.js` gained one case for the seam the arena depends on: two different profiles at one
+table still finish a match with nothing refused.
+
+**Three negative findings from the arena, kept because they are the useful part.** With all three of
+phase 1's correction terms switched on the new bot **lost** to the old one. Measured one term at a
+time, the opportunity term was the loss and the other two were inside the noise. Rewriting the
+opportunity term from an absolute into a difference (the form the danger term always had) was a
+reasonable hypothesis about why, and it measured the same, so the hypothesis was wrong and the term is
+shipped switched off. None of that would have been visible without the arena, and all of it would have
+shipped as an improvement on the strength of the argument for it.
+
+**One gap in the method, named rather than papered over.** Phase 2's card changes (the lead weighting,
+the trap search, Nühü's four receiving-end values) are **not** behind a profile knob, so the arena
+cannot compare them with what they replaced. They shipped on the argument, which is exactly what the
+plan was written to stop. Putting them behind knobs is outstanding work.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
