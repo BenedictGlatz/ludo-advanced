@@ -71,6 +71,10 @@ notes. They live in `00-Meta/Project-Management/` and are cited from the chapter
 - [Project-Structure-Plan.md](../Project-Management/Project-Structure-Plan.md): the complete
   decomposition into subprojects and work packages, adopting the board's epic tree, structure only
   with no points, dates or owners (issue #17). Feeds Ch. 02.
+- [Online-Multiplayer-Options.md](../Project-Management/Online-Multiplayer-Options.md): six
+  architecture options for FR-42 (issue #42), weighted by the same method as the utility value
+  analysis, with the finding that no option both closes the issue and fits the time left before the
+  2026-09-14 feature freeze. **Recommends, does not decide.** Feeds Ch. 03 and Ch. 06.
 
 ---
 

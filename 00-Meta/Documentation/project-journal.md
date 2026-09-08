@@ -531,6 +531,10 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   plan that consumes it. Both in the repository root, at the Product Owner's request; the brief belongs
   at `01-Design/Handoff/18-brief-skill-card-animations.md` when the round is actually run. No code
   changed. Sprint 3.
+- **2026-09-08**: Six architecture options for FR-42 (online multiplayer, issue #42) weighed in
+  [Online-Multiplayer-Options.md](../Project-Management/Online-Multiplayer-Options.md), using the
+  weighted-criteria method of the utility value analysis. No networking code written and no
+  dependency added: the document recommends, the Product Owner decides. Sprint 3.
 
 ---
 
@@ -5252,6 +5256,51 @@ to get wrong later.
 - **Tests:** `tests/unit/ui/handover.test.js` (10 cases, node environment, the second `ui/` module in
   the project with unit tests) and `tests/e2e/hand-secrecy.spec.js` (2 cases, both without `?fast=1`).
 - → Ch. 04, Ch. 08
+
+### 2026-09-08: FR-42 is weighed in a standing analysis document, and the recommendation is to cut it
+
+- **Chosen:** one standing document,
+  [Online-Multiplayer-Options.md](../Project-Management/Online-Multiplayer-Options.md), holding six
+  architecture options for online multiplayer with the same weighted-criteria method as
+  [Utility-Value-Analysis.md](../Project-Management/Utility-Value-Analysis.md). Seven criteria at
+  100 %, scores 1 to 5, and a recommendation that FR-42 be **cut** from the release after a two-day
+  timeboxed spike on the lockstep core.
+- **Rejected:** *appending the options to
+  [03-tech-stack.md](notes/03-tech-stack.md) as facts.* The chapter notes are prose-free fact
+  collections read once when the report is written. This is a comparison the team has to read
+  **before** deciding, during sprint planning, which is the same argument the 2026-08-09 goals
+  decision already made for the goal catalogue. Also rejected: *writing an implementation plan
+  instead.* A plan presumes the decision that has not been made, and four of the six options are ruled
+  out by two questions (is there hosting, and do the hands have to be cheat-proof) that only the
+  Product Owner can answer.
+- **Why no code was written:** FR-42 is `should have`, estimated at 13 points, and
+  [Effort-Estimation.md](../Project-Management/Effort-Estimation.md) already says that 13 is "a
+  statement, not a measurement". Section 4.4 of
+  [Project-Plan.md](../Project-Management/Project-Plan.md) leaves #42 unscheduled and its Sprint 3
+  closing window (2026-09-14 to 2026-09-17) is bug fixes only. Roughly four working days of feature
+  time were available on the day this was written.
+- **The finding worth carrying into Ch. 03 and Ch. 11:** the **spread**, not the winner. The
+  2D/2.5D/3D analysis produced a winner at 4.20 with a 1.45 gap to second place. Here the top five
+  options sit inside 0.45 of each other and the best is 3.55, because the two cheapest options do not
+  close the issue and the two that close it properly do not fit the time. **No option both satisfies
+  FR-42 and fits the calendar**, which is the measured version of the requirements specification's
+  claim that FR-42 is the largest available cut.
+- **The second finding, on the tie at 3.15:** option D (a dumb WebSocket relay with a host-authoritative
+  client) and option E (a server that imports `src/core/` and `src/state/` and sends redacted per-seat
+  views) score identically for opposite reasons. E is the only design where reading an opponent's hand
+  is impossible rather than merely rude, and it is the only one that would demonstrate that the
+  `CLAUDE.md` layering rules paid off, because `core/` and `state/` run under Node unchanged. If time
+  appears after 2026-09-17, E is the option to build and D is only the compromise.
+- **The one fact the code contributed:** `dispatch(` occurs exactly **once** in all of `src/ui/`, at
+  `game-loop.js:116` inside `apply(intent)`. Every networked option replaces that single function and
+  nothing else in `ui/` learns that a network exists. Two things complicate it and are recorded in the
+  document: `deps = { rng, diceSource }` is mutable match state living outside the frozen state
+  object, so state-shipping options must serialize the dice pool and the mulberry32 counter (which is
+  also exactly FR-45's work), and the reaction window's thirty seconds need a single owner.
+- **Consequence:** no `src/net/` layer, no `ws` and no `peerjs`, and `CHANGELOG.md` is untouched
+  because nothing user-visible changed. The five open decisions at the foot of the document are the
+  input the Product Owner needs; the first two of them rule out four options on their own.
+- → Ch. 03, Ch. 06, Ch. 11
 
 
 ## Challenges
