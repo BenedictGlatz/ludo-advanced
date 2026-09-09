@@ -109,6 +109,47 @@ const aiLayerBans = {
   "no-restricted-globals": noBrowserGlobals,
 };
 
+// NFR-01's fourth headless layer, `net/` (issue #42). It carries a match between two browsers, so it
+// may read the state and ask `state/` about the rules, and it must never draw or translate: what a
+// refusal says is `ui/`'s job in both players' languages. The globals are the ones a peer connection
+// and a compressed invite code need, and `document` and `window` are deliberately not among them, so
+// a bare DOM access is a `no-undef` on top of the ban below.
+const netLayerBans = {
+  "no-restricted-imports": [
+    "error",
+    {
+      patterns: [
+        {
+          group: ["**/ui/*", "**/ui/**", "**/i18n/*", "**/i18n/**"],
+          message:
+            "src/net/ carries intents and states, it draws nothing. It must not import from ui/ or i18n/. See NFR-01.",
+        },
+      ],
+      paths: [
+        { name: "jquery", message: "src/net/ runs without a DOM. jQuery belongs in src/ui/. See NFR-01." },
+        { name: "i18next", message: "src/net/ never produces text. i18next belongs in src/ui/. See NFR-01." },
+      ],
+    },
+  ],
+  "no-restricted-globals": noBrowserGlobals,
+};
+
+const netGlobals = {
+  RTCPeerConnection: "readonly",
+  RTCSessionDescription: "readonly",
+  CompressionStream: "readonly",
+  DecompressionStream: "readonly",
+  TextEncoder: "readonly",
+  TextDecoder: "readonly",
+  Response: "readonly",
+  btoa: "readonly",
+  atob: "readonly",
+  queueMicrotask: "readonly",
+  setTimeout: "readonly",
+  clearTimeout: "readonly",
+  console: "readonly",
+};
+
 export default [
   {
     ignores: [
@@ -174,6 +215,12 @@ export default [
   {
     files: ["src/ai/**/*.js"],
     rules: aiLayerBans,
+  },
+
+  {
+    files: ["src/net/**/*.js"],
+    rules: netLayerBans,
+    languageOptions: { globals: netGlobals },
   },
 
   {
