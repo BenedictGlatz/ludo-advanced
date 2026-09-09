@@ -440,6 +440,62 @@ exercises the new base path on every future run.
   still travels by hand and the connection is still browser to browser. Whether two DS-Lite endpoints
   find each other is decided by STUN and the routers, not by where the page came from.
 
+### Enabling Pages was not one switch, and the manual trigger was unusable: 2026-09-09, issue #42
+
+The section above said the owner "has to set Settings > Pages > Source to **GitHub Actions** once,
+after which every run works without further intervention". **That was measured wrong in two places.**
+Both were found by testing the live site rather than by trusting the plan.
+
+**First: the setting has two modes, and the one that was chosen serves the wrong thing.** Pages was
+enabled as `"build_type": "legacy"` with `"source": {"branch": "dev", "path": "/"}`, which is the
+older *Deploy from a branch* mode. It publishes the branch **as it is in version control**, so the
+site served the repository's own `index.html`, the one that still points at `/src/main.js` because
+Vite has not rewritten it yet. The page came up with a title and an empty `<div id="app">`:
+
+```
+overlay screen  null
+menu buttons    0
+#app is empty   true
+404 https://benedictglatz.github.io/src/main.js
+```
+
+Note where that 404 points: `benedictglatz.github.io/src/main.js`, without the repository name. Even
+with the file present in the branch, the absolute path in the un-built `index.html` asks the domain
+root. This is the same failure mode `base: "./"` fixes for the build, and it is why *Deploy from a
+branch* cannot work here without committing `dist/`. The reason for rejecting a committed `dist/`
+is unchanged.
+
+**Second: `workflow_dispatch` cannot be used yet, and the reason is structural.** GitHub only offers a
+manual run for a workflow that exists on the **default branch**. Measured directly:
+
+```
+gh workflow run pages.yml --ref feature/42-online-multiplayer
+HTTP 404: workflow pages.yml not found on the default branch
+```
+
+`gh workflow list` confirms it from the other side: the repository offers `build-check` and
+`pages-build-deployment`, and no `pages`. **The default branch has no `.github/workflows/` directory
+at all**, so `build-check.yml` has the same problem: its own header comment promises manual runs
+"once this file is on the default branch", and it has been on `dev` only since 2026-09-02. Nobody
+noticed because nobody needed a manual run.
+
+**The fix, and what it changes about the design:** `pages.yml` now triggers on a push to `main` **or
+`dev`**, not `main` alone. The push trigger works from any branch it names, with no default-branch
+requirement, so publishing no longer depends on a button that is not there. That the site follows
+`dev` is a gain rather than a workaround: `dev` is the integration branch and is meant to be a
+working build, so the published site is always what the team last integrated, instead of nothing at
+all until a release. `workflow_dispatch` stays in the file for when it reaches `main`.
+
+**What still needs the repository owner**, and it is genuinely one switch this time: Settings > Pages
+> Source from *Deploy from a branch* to *GitHub Actions*. Changing it through the API is also an
+administrator operation, so it could not be done from here.
+
+**One thing that could not be checked in advance:** when Pages runs from Actions, GitHub creates a
+`github-pages` deployment environment, and that environment can restrict which branches may deploy to
+it. Whether it will accept a deployment from `dev` is not readable from here, because
+`GET /repos/.../actions/permissions` answers 403 without administrator rights. If the deploy job
+fails on the environment rather than on the build, that restriction is the reason.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
