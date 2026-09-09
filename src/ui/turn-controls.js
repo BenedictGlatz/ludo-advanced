@@ -20,6 +20,9 @@ import { INTENT } from "../state/intents.js";
 import { isBot } from "../state/bots.js";
 import { moveReaching } from "./move-targets.js";
 
+/** The hot-seat answer to "may a person here click for `seat`": anybody who is not a bot. */
+const notABot = (getState) => (seat) => !isBot(getState(), seat);
+
 /**
  * Is somebody allowed to click right now? Issue #43.
  *
@@ -32,12 +35,15 @@ import { moveReaching } from "./move-targets.js";
  *
  * A guard here and not a `pointer-events: none` in the stylesheet: the guard is what the tests can
  * read, and this project has already learned once what a stuck `pointer-events: none` costs.
+ *
+ * **Since issue #42 the third clause asks `isLocal` rather than `isBot`.** Online, the active player
+ * can be a person at another screen, and to this screen that is what a bot is: their pawns carry
+ * `data-movable` too, and a click here would play their move for them. The default is `!isBot`, so a
+ * hot-seat match is unchanged.
  */
-function playableBy(state, phase) {
+function playableBy(state, phase, isLocal) {
   return (
-    state.status === MATCH_STATUS.RUNNING &&
-    state.phase === phase &&
-    !isBot(state, state.activePlayer)
+    state.status === MATCH_STATUS.RUNNING && state.phase === phase && isLocal(state.activePlayer)
   );
 }
 
@@ -49,8 +55,16 @@ function playableBy(state, phase) {
  * - `render()` redraws without advancing the turn.
  * - `advance()` lets the loop take whatever automatic steps follow.
  * - `isPicking()` is `card-controls.js` saying a card is mid-aim.
+ * - `isLocal(seat)` says whether a person at this screen plays `seat` (issue #42).
  */
-export function createTurnControls({ getState, apply, render, advance, isPicking }) {
+export function createTurnControls({
+  getState,
+  apply,
+  render,
+  advance,
+  isPicking,
+  isLocal = notABot(getState),
+}) {
   /**
    * A click or a keypress on one of the three drawn dice cards (FR-19).
    *
@@ -60,7 +74,7 @@ export function createTurnControls({ getState, apply, render, advance, isPicking
    */
   function onDiceCardActivated(faces) {
     const state = getState();
-    if (!playableBy(state, TURN_PHASE.CHOOSE)) return;
+    if (!playableBy(state, TURN_PHASE.CHOOSE, isLocal)) return;
 
     if (!apply({ type: INTENT.CHOOSE_DIE, faces })) return;
     advance();
@@ -80,7 +94,7 @@ export function createTurnControls({ getState, apply, render, advance, isPicking
    */
   function onPawnActivated(pawn) {
     const state = getState();
-    if (!playableBy(state, TURN_PHASE.ACT)) return;
+    if (!playableBy(state, TURN_PHASE.ACT, isLocal)) return;
     if (isPicking()) return;
 
     if (state.selectedPawn !== pawn) {
@@ -105,7 +119,7 @@ export function createTurnControls({ getState, apply, render, advance, isPicking
    */
   function onTargetActivated(target) {
     const state = getState();
-    if (!playableBy(state, TURN_PHASE.ACT)) return;
+    if (!playableBy(state, TURN_PHASE.ACT, isLocal)) return;
     if (isPicking()) return;
 
     const move = moveReaching(state, target);
@@ -123,7 +137,7 @@ export function createTurnControls({ getState, apply, render, advance, isPicking
    */
   function onDragStarted(pawn) {
     const state = getState();
-    if (!playableBy(state, TURN_PHASE.ACT)) return;
+    if (!playableBy(state, TURN_PHASE.ACT, isLocal)) return;
     if (isPicking()) return;
     if (state.selectedPawn === pawn) return;
 

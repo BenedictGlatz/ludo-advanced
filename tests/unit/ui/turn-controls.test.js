@@ -231,3 +231,24 @@ describe("dragging a pawn (issue #91)", () => {
     expect(applied).toEqual([]);
   });
 });
+
+describe("a seat played from another screen (issue #42)", () => {
+  it("ignores every click while a remote person's turn is on", () => {
+    const applied = [];
+    const board = createTurnControls({
+      getState: () => match({ phase: TURN_PHASE.CHOOSE, bots: [], activePlayer: 0 }),
+      apply: (intent) => {
+        applied.push(intent);
+        return true;
+      },
+      render: vi.fn(),
+      advance: vi.fn(),
+      isPicking: () => false,
+      isLocal: (seat) => seat === 2,
+    });
+
+    board.onDiceCardActivated(6);
+
+    expect(applied).toEqual([]);
+  });
+});

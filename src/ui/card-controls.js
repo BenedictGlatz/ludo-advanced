@@ -10,29 +10,17 @@
  * 300 lines again on 2026-09-03, when the roll got a hold of its own. It was the branch of the loop that
  * read a window this module already owned end to end, so it came here rather than to a new file.
  *
- * ## The thirty seconds (FR-25)
+ * ## The thirty seconds (FR-25) live next door since 2026-09-09
  *
- * The rules layer is not allowed to read a clock, so the countdown is here and expiry is an ordinary
- * intent. Two timers, which is why `timers.js` had to become a registry:
+ * The countdown is `reaction-clock.js`, split out when issue #42's `isLocal` guards took this file past
+ * 300 lines. The seam was already drawn in this header: the clock is about time passing, and everything
+ * else here is about a card being played. What this file keeps is the `announcement` timer, the D60 hold
+ * that gives a trap fired by a card two seconds before the turn carries on.
  *
- * | Timer | What it does |
- * | --- | --- |
- * | `reaction` | Fires once, at the deadline, and dispatches `close-window` |
- * | `reaction-tick` | Fires every second, only so the number on screen changes |
- * | `announcement` | The D60 hold: a trap fired by a card gets two seconds before the turn carries on |
- * | `handover` (the loop's) | The pause after a finished turn |
- *
- * **`announcement` is deliberately not cleared by `stopClock`.** `syncClock` calls that on every advance
- * where no window is open, so clearing the hold there would cancel it the instant it was set. It is
- * cleared by `stop()` and by the loop's own `clearAll`, which is what a torn-down or paused match needs.
- *
- * **A timeout and "everybody declined" are the same dispatch**, which is what FR-25 asks for: if everyone
- * declines the window shuts at once without waiting, and if the clock runs out it shuts as though they
- * had. Nothing in `state/` can tell the two apart, and nothing needs to.
- *
- * The duration is overridable, like the loop's two pauses, and `?fast=1` sets it to zero. That is what
- * keeps a Playwright run from spending thirty seconds per window; the shape of the turn is identical
- * either way and only the waiting is shorter.
+ * **`announcement` is deliberately not cleared by the clock's `stop`.** `syncClock` runs on every
+ * advance where no window is open, so clearing the hold there would cancel it the instant it was set.
+ * It is cleared by `stop()` below and by the loop's own `clearAll`, which is what a torn-down or paused
+ * match needs.
  */
 
 import { INTENT } from "../state/intents.js";
@@ -42,19 +30,17 @@ import { motionMs } from "./board-view.js";
 import { PROMPT_ACTION } from "./prompt-view.js";
 import { createTargetPicker } from "./target-picker.js";
 import { announcement, holdMidTurn } from "./holds.js";
+import { REACTION_WINDOW_MS, createReactionClock } from "./reaction-clock.js";
 
-/** How long a reaction window stays open (FR-25). The Product Owner's number. */
-export const REACTION_WINDOW_MS = 30_000;
-
-/** How often the countdown on screen is redrawn. One second, because it is displayed in seconds. */
-const TICK_MS = 1000;
+export { REACTION_WINDOW_MS };
 
 /**
  * The card half of the loop.
  *
  * `getState` and `apply` come from `game-loop.js` so that there is still exactly one state reference in
  * `ui/` and one place that dispatches. `refresh` re-renders; `resume` carries the turn on after something
- * this module dispatched changed the phase.
+ * this module dispatched changed the phase. `isLocal(seat)` says whether a person at this screen plays
+ * `seat` (issue #42); the default is "not a bot", which is what a hot-seat match means.
  */
 export function createCardControls({
   $board,
@@ -64,63 +50,24 @@ export function createCardControls({
   refresh,
   resume,
   delays = {},
+  isLocal = (seat) => !isBot(getState(), seat),
 }) {
-  /** When the open window shuts, as a timestamp, or `null` when no window is open. */
-  let deadline = null;
-
   /** The announcement `carryOn` has already held for, so that one message is not held twice. */
   let held = null;
 
   /** Durations belong to `tokens.css`, so they are read off the board rather than written here. */
   const readToken = (token, fallback) => motionMs($board, token, fallback);
 
-  function windowMs() {
-    return delays.reaction ?? REACTION_WINDOW_MS;
-  }
-
-  /** Whole seconds left on the open window, or `null`. What the prompt prints. */
-  function secondsLeft() {
-    if (deadline === null) return null;
-
-    return Math.max(0, Math.ceil((deadline - Date.now()) / TICK_MS));
-  }
-
-  function stopClock() {
-    deadline = null;
-    timers.clear("reaction");
-    timers.clear("reaction-tick");
-  }
-
-  function tick() {
-    refresh();
-    if (deadline !== null) timers.set("reaction-tick", tick, TICK_MS);
-  }
-
-  /**
-   * Start, keep or stop the clock, to match whether a window is open.
-   *
-   * Called by the loop on every advance. It is idempotent on purpose: a window that is still open keeps
-   * the deadline it already had, so the thirty seconds cover **the whole window** rather than restarting
-   * every time a seat plays or declines. That is what makes it one shared window and not one per player.
-   */
-  function syncClock() {
-    if (getState().reactionWindow === null) {
-      stopClock();
-      return;
-    }
-    if (deadline !== null) return;
-
-    deadline = Date.now() + windowMs();
-    timers.set(
-      "reaction",
-      () => {
-        stopClock();
-        if (apply({ type: INTENT.CLOSE_WINDOW })) carryOn();
-      },
-      windowMs()
-    );
-    timers.set("reaction-tick", tick, TICK_MS);
-  }
+  /** The thirty seconds. `carryOn` is a function declaration below, so it is hoisted and safe here. */
+  const clock = createReactionClock({
+    timers,
+    getState,
+    apply,
+    refresh,
+    delays,
+    onClosed: () => carryOn(),
+  });
+  const { secondsLeft, syncClock } = clock;
 
   /**
    * An open window, handled before the phase, because one can be open in three different phases and the
@@ -212,15 +159,16 @@ export function createCardControls({
    * The seat is `seatOnShow` and not simply the active player: during a reaction window the hand on screen
    * belongs to whoever is being asked, and they are the one playing the card.
    *
-   * **A bot's hand is not clickable during its own turn** (issue #43). Declining an open window stays
-   * allowed and needs no guard: `bot-driver.js` takes every bot out of `eligible` before the prompt is
-   * drawn, so the seat on show during a window is always a person.
+   * **A hand that is not this screen's is not clickable** (issues #43 and #42): a bot's during its own
+   * turn, and online another person's during theirs or while a window asks them. `seatOnShow` is the
+   * seat whose hand is drawn, so it is the seat the guard asks about; in hot-seat play it is always a
+   * person during a window, because `bot-driver.js` empties the bots out of `eligible` first.
    */
   function onSkillCardActivated(cardId, slot) {
     if (picker.isPicking()) return;
 
     const state = getState();
-    if (state.reactionWindow === null && isBot(state, state.activePlayer)) return;
+    if (!isLocal(seatOnShow(state))) return;
 
     picker.start(state, cardId, slot, seatOnShow(state));
   }
@@ -230,8 +178,8 @@ export function createCardControls({
 
     switch (action) {
       case PROMPT_ACTION.SKIP:
-        // Carry on is the bot's own step during its turn, so a person cannot press it for it.
-        if (isBot(state, state.activePlayer)) return;
+        // Carry on is the active seat's own step, so nobody at another screen, or for a bot, presses it.
+        if (!isLocal(state.activePlayer)) return;
         if (apply({ type: INTENT.SKIP_ACTION })) carryOn();
         return;
       case PROMPT_ACTION.DECLINE:
@@ -255,6 +203,9 @@ export function createCardControls({
    * eligible list. Otherwise the next seat is asked with the same deadline still running.
    */
   function onDecline(state) {
+    // Online, the seat on show may be a person at another screen, and this screen's Decline must not
+    // answer the window for them (issue #42).
+    if (!isLocal(seatOnShow(state))) return;
     if (apply({ type: INTENT_CARD.DECLINE_REACTION, seat: seatOnShow(state) })) carryOn();
   }
 
@@ -288,7 +239,7 @@ export function createCardControls({
 
     /** Stop everything. Called when the loop stops, so a torn-down match leaves no clock running. */
     stop() {
-      stopClock();
+      clock.stop();
       timers.clear("announcement");
       picker.cancel();
     },

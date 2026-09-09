@@ -26,7 +26,8 @@ import { createTurnWaits } from "./turn-waits.js";
  * Build the five, and the `halt` that stops them.
  *
  * `wiring` is what every sibling that can wait needs from the loop: the timer registry, the durations,
- * the one state reference, the one dispatcher, and the two ways back in (`refresh` and `resume`). The
+ * the one state reference, the one dispatcher, `isLocal` (who may click at this screen, issue #42), and
+ * the two ways back in (`refresh` and `resume`). The
  * list **is** the contract of a sibling module, and having it in one place is what makes "no module
  * holds its own copy of the state" checkable by reading five lines.
  *
@@ -50,6 +51,7 @@ export function createLoopParts({ parts, wiring, onCurtain = null, skipHandover 
   const board = createTurnControls({
     getState: wiring.getState,
     apply: wiring.apply,
+    isLocal: wiring.isLocal,
     render: wiring.refresh,
     advance: wiring.resume,
     isPicking: () => cards.isPicking(),
