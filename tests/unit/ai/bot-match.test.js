@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createSeededRng } from "../../../src/core/dice-source.js";
 import { pawnsOf } from "../../../src/core/pawns.js";
+import { autoIntent } from "../../../src/state/auto-steps.js";
 import { botSeatsFor } from "../../../src/state/bots.js";
 import { MATCH_STATUS, TURN_PHASE } from "../../../src/state/game-state.js";
 import { INTENT, dispatch } from "../../../src/state/intents.js";
@@ -52,23 +53,17 @@ function playOut(state, deps, limit, profile = DEFAULT_PROFILE) {
 /**
  * The steps the loop takes for itself, in the loop's own order.
  *
- * The open window comes first for the same reason it does in `advance()`: while one is open, `dispatch`
- * refuses everything except the three window intents, so a `roll-die` here would be rejected rather
- * than merely early.
+ * `autoIntent` is the same list `ui/game-loop.js` dispatches from since issue #42, so this file no
+ * longer keeps a second copy of it. What it adds is the one step the loop does **not** take at once:
+ * `end-turn`, which in the browser waits for the handover hold and the curtain, and here waits for
+ * nothing.
  */
 function mechanicalIntent(state) {
-  if (state.reactionWindow !== null) return { type: INTENT.CLOSE_WINDOW };
+  const auto = autoIntent(state);
+  if (auto !== null) return auto;
+  if (state.phase === TURN_PHASE.TURN_END) return { type: INTENT.END_TURN };
 
-  switch (state.phase) {
-    case TURN_PHASE.ROLL:
-      return { type: INTENT.ROLL_DIE };
-    case TURN_PHASE.REACTION:
-      return { type: INTENT.CLOSE_WINDOW };
-    case TURN_PHASE.TURN_END:
-      return { type: INTENT.END_TURN };
-    default:
-      throw new Error(`nothing knows how to leave phase ${state.phase}`);
-  }
+  throw new Error(`nothing knows how to leave phase ${state.phase}`);
 }
 
 describe("a match with nobody at the keyboard (FR-43)", () => {
