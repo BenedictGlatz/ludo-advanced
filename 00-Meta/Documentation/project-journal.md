@@ -544,10 +544,43 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   Verified against a static server under the `/ludo-advanced/` prefix and with the full `chromium`
   Playwright project. Not live yet: enabling Pages needs administrator rights on the repository, and
   this account has `write`. Sprint 3.
+- **2026-09-09**: Pages enabled by the repository owner and tested: the site is reachable and
+  **broken**, because it was enabled in *Deploy from a branch* mode and therefore serves the
+  un-built `dev` branch, whose `index.html` still points at `/src/main.js`. Also found that
+  `workflow_dispatch` cannot be used at all, since the default branch carries no workflows.
+  `pages.yml` now publishes on a push to `main` or `dev`. Yesterday's claim that one switch would be
+  enough corrected in Ch. 07. Sprint 3.
 
 ---
 
 ## Decisions
+
+### 2026-09-09: The published site follows `dev`, because the manual trigger does not exist
+
+- **Corrects the entry below**, written the same day, which assumed a feature branch could be
+  published by hand with `workflow_dispatch` and that enabling Pages was a single click. Both were
+  wrong, and both were found by loading the live site instead of reasoning about it.
+- **Chosen:** `pages.yml` triggers on a push to `main` or `dev`. The published site is therefore
+  whatever the team last integrated.
+- **Why the original plan could not work:** GitHub only offers a manual run for a workflow that is
+  present on the **default branch**. `gh workflow run pages.yml` answers `HTTP 404: workflow
+  pages.yml not found on the default branch`, and the default branch turns out to have no
+  `.github/workflows/` directory at all. `build-check.yml` carries the same latent problem: its
+  header has promised manual runs since 2026-09-02, and they have never been available.
+- **Rejected:** *putting `pages.yml` on `main` first, so the dispatch button appears.* It reverses the
+  order that matters. A change reaches `main` after it has been tested, and this workflow exists in
+  order to test something.
+- **Rejected, again:** *keeping the mode Pages was actually enabled in.* It was set to *Deploy from a
+  branch* with `dev` as the source, which serves the branch as committed. The site came up with an
+  empty `<div id="app">` and a 404 for `benedictglatz.github.io/src/main.js`, without the repository
+  name in the path, because the un-built `index.html` asks the domain root. Making that mode work
+  needs a committed `dist/`, which was rejected yesterday for reasons that have not changed.
+- **What the accident is worth keeping for:** the 404 was the exact failure `base: "./"` was added to
+  prevent, arriving by a different route. It is a decent argument that a base path is not a detail of
+  the bundler configuration but a property of where a build is allowed to live.
+- **Still open, and not checkable from here:** the `github-pages` deployment environment can restrict
+  which branches deploy to it. `GET /repos/.../actions/permissions` answers 403 without
+  administrator rights, so whether `dev` is allowed will be visible only when the job runs.
 
 ### 2026-09-09: The playable build is published by a workflow, and its asset paths became relative
 
