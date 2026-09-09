@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The game can be published as a link.** The build now uses relative paths to its own files, so it
+  works when it is served from a subdirectory instead of the root of a domain, which is how GitHub
+  Pages serves a project site. Nothing changes for a player: the same build, in the same place, looks
+  and behaves exactly as before
 - **The three dice cards are no longer offered on a turn that is not yours to play.** During a bot's
   turn, and online during another player's, the dice cards are drawn but not clickable, where before they
   looked clickable and the click was silently refused

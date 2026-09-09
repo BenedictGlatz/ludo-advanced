@@ -539,10 +539,48 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   layer, `isLocal(seat)` through the loop's siblings, a guest mirror loop, the lobby with manual invite
   codes over WebRTC, a whole online match as a Vitest loopback test and a two-context Playwright spec.
   Seven commits, the last one with the notes, the changelog and this entry. Sprint 3.
+- **2026-09-09**: GitHub Pages deployment prepared for issue #42: `.github/workflows/pages.yml` plus
+  `base: "./"` in the Vite config, so the build survives being served from a repository subdirectory.
+  Verified against a static server under the `/ludo-advanced/` prefix and with the full `chromium`
+  Playwright project. Not live yet: enabling Pages needs administrator rights on the repository, and
+  this account has `write`. Sprint 3.
 
 ---
 
 ## Decisions
+
+### 2026-09-09: The playable build is published by a workflow, and its asset paths became relative
+
+- **Chosen:** a second GitHub Actions workflow, `pages.yml`, that runs `npm run build` and hands
+  `dist/` to `actions/deploy-pages`, together with `base: "./"` in `vite.config.js`. A player needs a
+  link and a browser, and nothing else.
+- **Why now, and why it is not cosmetic:** FR-42 is a connection between two browsers. The only test
+  that means anything puts them on two *different* networks, and the second network is somebody's home
+  connection, on a machine with no Node, no repository and no toolchain. Every other delivery form
+  asks that machine to install something first, which is the kind of setup step that quietly does not
+  happen. A URL asks for nothing.
+- **Rejected:** *a `gh-pages` branch holding a committed `dist/`.* It needs no Pages configuration at
+  all, which is genuinely simpler, but it puts a build artefact into version control, where it goes
+  stale the first time somebody forgets to rebuild before pushing, and it does so silently.
+- **Rejected:** *`base: "/ludo-advanced/"`.* It is the more explicit form and the one the GitHub
+  documentation shows. It also hardcodes the repository name into the build, so a rename or a fork
+  produces a blank page, and it is the wrong value for the second delivery form the same relative
+  build serves, a single file opened from disk on a machine without a toolchain.
+- **Rejected:** *repeating lint and the test suite inside `pages.yml`.* `build-check.yml` already runs
+  the five gates on every pull request. A second copy would make publishing slower without changing
+  any decision, and two copies of a gate drift.
+- **Negative finding, recorded because it is the reason the feature is not live:** the development
+  account has `write` on the repository and not `admin` (`"admin": false` from the collaborator
+  permission endpoint), and `GET /repos/.../pages` answers 404. Creating a Pages site is an
+  administrator operation, so the workflow is committed in a state where its deploy job fails until
+  the repository owner sets Settings > Pages > Source to *GitHub Actions* once. Committing it anyway
+  was deliberate: the switch is a ten second click, and the alternative was leaving the work
+  uncommitted while waiting for it.
+- **What publishing does not buy:** `https` makes the clipboard and WebRTC's secure-context
+  requirement comfortable, but the invite code still travels by hand through a chat, and whether two
+  DS-Lite endpoints find each other is decided by STUN and the routers, not by where the page was
+  served from. See the 2026-09-09 entry on what the two-context Playwright test does and does not
+  prove.
 
 ### 2026-08-09: Goals are catalogued in Project-Management, not in the chapter note
 

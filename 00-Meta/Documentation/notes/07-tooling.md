@@ -388,6 +388,58 @@ wins by seat as the control, and a lopsided seat table means the rotation is not
 first, and the failure surfaced as "knob riskWeight needs a number, got undefined", which names a
 completely different part of the program. It splits at the first `=` now.
 
+### A second workflow, and the build learned to live in a subdirectory: 2026-09-09, issue #42
+
+`.github/workflows/pages.yml` builds the site and deploys it to GitHub Pages, on a push to `main` and
+on a manual `workflow_dispatch` from any branch.
+
+**Why publishing became a tooling question at all.** FR-42 is online play between two browsers, and
+the only honest test of it needs two machines on two *different* networks. A second machine that has
+to clone the repository and install a toolchain first is not a test setup a team member will actually
+run, and the second network in the test is typically somebody's home connection. A URL is the one
+delivery form that needs nothing on the far side but a browser.
+
+**One line of the Vite config had to change: `base: "./"`.** Vite defaults to `base: "/"`, which
+writes `<script src="/assets/index-*.js">` into `dist/index.html`. A GitHub Pages *project* site is
+served from `https://<user>.github.io/<repository>/`, so that absolute path asks for
+`https://<user>.github.io/assets/index-*.js` and gets a 404. The page loads, the console shows the
+missing files, and the screen stays blank. Relative paths were chosen over hardcoding
+`base: "/ludo-advanced/"` because the hardcoded form breaks if the repository is ever renamed or
+forked, and because the same relative build is what a file on disk needs.
+
+**Verified rather than assumed**, since a base path breaks in a way that is invisible until it is
+served from the right place: a throwaway static server was pointed at `dist/` under the prefix
+`/ludo-advanced/`, and the page came up with the menu, three doors, no console error and no failed
+request. The full `chromium` Playwright project was run afterwards and stayed green, which matters
+here because `playwright.config.js` tests the production build through `npm run preview` and therefore
+exercises the new base path on every future run.
+
+**Three decisions inside the workflow, with what they rejected:**
+
+- **The site is built by the workflow, not served from a `gh-pages` branch.** The branch variant is
+  older and needs no Pages configuration, but it means committing `dist/` to version control, where a
+  build artefact goes stale the first time somebody forgets to rebuild it.
+- **`workflow_dispatch` is in the triggers, and it accepts any branch.** Online play has to be tried
+  before it is merged, so the branch that needs publishing during a test is a feature branch. A
+  push-to-`main`-only trigger would have forced a merge to test the thing that decides whether the
+  merge is a good idea.
+- **No lint and no test step.** `build-check.yml` owns the five quality gates on every pull request.
+  Repeating them here would make publishing slower without deciding anything.
+
+**Two negative findings, both measured, both blocking:**
+
+- **The account that develops here cannot enable Pages.** `GET /repos/BenedictGlatz/ludo-advanced/
+  collaborators/lbolender/permission` answers `"role_name": "write"` with `"admin": false`, and
+  creating a Pages site is an administrator operation. `GET /repos/.../pages` answers 404, so no site
+  exists yet. The workflow is therefore committed in a state where its `deploy` job would fail: the
+  repository owner has to set Settings > Pages > Source to **GitHub Actions** once, after which every
+  run works without further intervention. Reading `/actions/permissions` is refused with 403 for the
+  same reason, so whether Actions itself is restricted could not be checked from here.
+- **Publishing is not a substitute for the NAT test.** A published site is loaded over `https`, which
+  makes the clipboard and the secure-context requirements of WebRTC comfortable, but the invite code
+  still travels by hand and the connection is still browser to browser. Whether two DS-Lite endpoints
+  find each other is decided by STUN and the routers, not by where the page came from.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
