@@ -1,0 +1,21 @@
+<svg viewBox="0 0 232 128" aria-hidden="true" focusable="false">
+          <g stroke="#2B1A3D" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" fill="none">
+            <path d="M46 62 Q120 -8 206 46" stroke="#E8A79C" stroke-width="4" stroke-dasharray="10 10"></path>
+            <g transform="translate(46 110)">
+              <ellipse cx="0" cy="4" rx="38" ry="9" fill="#E0492F"></ellipse>
+              <path d="M-34,4 C-34,-4 -25,-7 -18,-13 C-12,-18 -10,-25 -10,-31 L10,-31 C10,-25 12,-18 18,-13 C25,-7 34,-4 34,4 Z" fill="#E0492F"></path>
+              <circle cx="0" cy="-48" r="23" fill="#FF8A5C"></circle>
+              <path d="M-15,-56 Q-9,-62 -3,-55" stroke-width="4"></path>
+              <path d="M4,-55 Q10,-62 16,-56" stroke-width="4"></path>
+              <path d="M-9,-36 Q0,-46 10,-36 Q0,-26 -9,-36 Z" fill="#FFF3E2"></path>
+              <path d="M18,-62 Q40,-78 52,-64" stroke-width="5"></path>
+            </g>
+            <g transform="translate(190 46) rotate(150) scale(.62)">
+              <ellipse cx="0" cy="4" rx="38" ry="9" fill="#4C86F9"></ellipse>
+              <path d="M-34,4 C-34,-4 -25,-7 -18,-13 C-12,-18 -10,-25 -10,-31 L10,-31 C10,-25 12,-18 18,-13 C25,-7 34,-4 34,4 Z" fill="#4C86F9"></path>
+              <circle cx="0" cy="-48" r="23" fill="#7FB0FF"></circle>
+              <path d="M-16,-56 L-4,-46 M-16,-46 L-4,-56 M4,-56 L16,-46 M4,-46 L16,-56" stroke-width="4"></path>
+            </g>
+            <g stroke="#2B1A3D" stroke-width="4"><path d="M148 92 L164 84 M158 108 L176 104 M138 112 L146 100"></path></g>
+          </g>
+        </svg>

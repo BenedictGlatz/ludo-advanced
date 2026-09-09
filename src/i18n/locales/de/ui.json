@@ -1,0 +1,256 @@
+{
+  "app": {
+    "title": "Ludo Advanced"
+  },
+  "player": {
+    "name": "Spieler {{number}}",
+    "named": "Spieler {{number}} ({{colour}})",
+    "bot": "Bot {{number}}",
+    "botNamed": "Bot {{number}} ({{colour}})",
+    "colour": {
+      "0": "Rot",
+      "1": "Gelb",
+      "2": "Grün",
+      "3": "Blau"
+    }
+  },
+  "turn": {
+    "prompt": "{{player}} ist am Zug",
+    "chooseDie": "Wähle eine Würfelkarte",
+    "cardPlayed": "{{name}} spielt {{card}}",
+    "selectPawn": "Wähle eine Figur",
+    "end": "Zug beenden"
+  },
+  "match": {
+    "won": "{{player}} hat gewonnen",
+    "abandoned": "Die Partie wurde abgebrochen",
+    "restart": "Neue Partie"
+  },
+  "hud": {
+    "heading": "Spielstand",
+    "start": "Start",
+    "track": "Strecke",
+    "home": "Ziel",
+    "cards": "Karten",
+    "finished": "im Ziel"
+  },
+  "lastCard": {
+    "heading": "Letzte Karte",
+    "empty": "Noch nichts gespielt",
+    "resolved": "{{player}}, Zug {{turn}}",
+    "pending": "{{player}}, Zug {{turn}}, noch offen",
+    "nullified": "{{player}}, Zug {{turn}}, von einer Aura aufgehoben",
+    "negated": "{{player}}, Zug {{turn}}, von Nühü aufgehoben"
+  },
+  "menu": {
+    "title": "Ludo Advanced",
+    "text": "Ein Ludo mit Würfelkarten und Skill-Karten.",
+    "hotseat": {
+      "label": "Hotseat",
+      "hint": "Zwei bis vier Spieler an einem Bildschirm, der herumgegeben wird."
+    },
+    "online": {
+      "label": "Online-Mehrspieler",
+      "hint": "Zwei bis vier Spieler an eigenen Bildschirmen, verbunden über einen Einladungscode."
+    },
+    "settings": {
+      "label": "Einstellungen",
+      "hint": "Die Sprache wechselst du in der Leiste oben. Ton ist noch nicht gebaut."
+    }
+  },
+  "setup": {
+    "title": "Wie viele spielen mit?",
+    "text": "Alle spielen an einem Bildschirm.",
+    "players": "{{players}} Spieler",
+    "start": "Los"
+  },
+  "lineup": {
+    "title": "Spieler oder Bot?",
+    "text": "Mindestens ein Sitz gehört einem Spieler. Ein Bot spielt einen ganzen Zug: Würfelkarte, Wurf, Zug und Skillkarten.",
+    "human": "Spieler",
+    "bot": "Bot",
+    "begin": "Spiel starten",
+    "back": "Zurück"
+  },
+  "pause": {
+    "open": "Pause",
+    "title": "Pause",
+    "resume": "Weiterspielen",
+    "quit": "Partie abbrechen",
+    "online": {
+      "host": "Du bist der Host: die Partie ist für alle angehalten.",
+      "guest": "Nur dein Bildschirm ist angehalten. Die Partie beim Host läuft weiter, und die Uhr auch."
+    }
+  },
+  "win": {
+    "quit": "Zurück zum Menü"
+  },
+  "handover": {
+    "title": "Weitergeben an {{player}}",
+    "text": "Gib den Bildschirm weiter, bevor du auf Bereit drückst.",
+    "ready": "Bereit"
+  },
+  "pool": {
+    "open": "Kartenpool",
+    "label": "Den Würfelkartenpool ansehen",
+    "title": "Der Würfelkartenpool",
+    "text": "{{remaining}} von {{total}} Karten liegen verdeckt im Pool.",
+    "close": "Zurück zur Partie"
+  },
+  "language": {
+    "label": "Sprache wechseln",
+    "switch": "English"
+  },
+  "move": {
+    "refused": {
+      "needs-maximum": "Zum Verlassen des Startfeldes brauchst du die höchste Zahl des Würfels.",
+      "own-pawn": "Auf dem Zielfeld steht schon eine eigene Figur.",
+      "overshoot": "Der Wurf ist zu hoch: ins Ziel geht es nur mit der genauen Zahl.",
+      "already-home": "Diese Figur ist schon im Ziel und wird nicht mehr gezogen.",
+      "held": "Diese Figur wird festgehalten und setzt diesen Zug aus.",
+      "stunned": "Diese Figur ist in eine Falle getreten und setzt diesen Zug aus.",
+      "locked": "Diese Figur ist eingesperrt und darf nicht gezogen werden.",
+      "petrified": "Diese Figur ist versteinert und kann nicht gezogen werden, bis der Effekt abläuft.",
+      "blocked": "Auf dem Weg liegt ein Stein. Da kommt niemand vorbei.",
+      "protected": "Die Figur auf dem Zielfeld ist geschützt und kann nicht geschlagen werden.",
+      "no-steps": "Der Wurf ist auf 0 gefallen. Diese Runde bewegt sich niemand.",
+      "none-available": "Mit diesem Wurf ist kein Zug möglich."
+    }
+  },
+  "trap": {
+    "owned": "{{object}}, gelegt von {{player}}",
+    "label": {
+      "banana-peel": "Banana Peel",
+      "oil-spill": "Oil Spill",
+      "not-that-deep": "It's Not That Deep"
+    },
+    "fired": {
+      "banana-peel": "{{player}} ist auf die Banana Peel von {{owner}} getreten und setzt den nächsten Zug aus.",
+      "oil-spill": "{{player}} ist in den Oil Spill von {{owner}} geraten und {{squares}} Felder weitergerutscht.",
+      "not-that-deep": "{{player}} ist in It's Not That Deep von {{owner}} getreten und ein Feld zurückgegangen.",
+      "big-ah-rock": "{{owner}} hat eine Figur versteinert, und {{player}} wurde drei Felder zurückgestoßen."
+    },
+    "nullified": "In der Nähe lag ein It's Not That Deep und hat diese Karte aufgehoben.",
+    "aura": "Von einem It's Not That Deep geschützt"
+  },
+  "status": {
+    "separator": " · ",
+    "held": "Festgehalten (Hold Pawn): setzt diesen Zug aus.",
+    "rock": "Versteinert (Rock): eine Mauer, an der niemand vorbeikommt, und auch der eigene Spieler kann sie nicht bewegen.",
+    "ghost": "Geist (Ghost Mode): kann nicht geschlagen werden.",
+    "locked": "Eingesperrt (Lock In): darf nicht gezogen und nicht geschlagen werden.",
+    "armoured": "Gepanzert (Built Different): kann nicht geschlagen werden.",
+    "ragebait": "Provoziert (Ragebait): muss gezogen werden, wenn sie ziehen kann.",
+    "purge": "The Purge: jede Landung schlägt, auch eigene Figuren.",
+    "slippery": "Rutschig (Oil Spill): überspringt das nächste Skill-Feld.",
+    "stunned": "Benommen (Banana Peel): setzt den nächsten Zug aus."
+  },
+  "intent": {
+    "rejected": {
+      "match-over": "Die Partie ist beendet.",
+      "wrong-phase": "Das geht in diesem Schritt des Zuges nicht.",
+      "unknown-intent": "Diese Aktion gibt es nicht.",
+      "card-not-in-hand": "Diese Würfelkarte liegt nicht auf der Hand.",
+      "no-move-for-pawn": "Diese Figur kann mit dem Wurf nicht ziehen.",
+      "not-your-turn": "Aktionskarten spielst du nur in deinem eigenen Zug.",
+      "card-budget-spent": "Du hast in diesem Zug schon eine Karte gespielt.",
+      "reactions-locked": "No Take-Backsies: in diesem Zug geht kein Reaktionsfenster mehr auf.",
+      "card-not-playable-now": "Diese Karte passt nicht in diesen Moment.",
+      "card-not-in-skill-hand": "Diese Skill-Karte liegt nicht auf deiner Hand.",
+      "needs-target": "Für diese Karte fehlt noch ein Ziel.",
+      "bad-target": "Dieses Ziel passt nicht zu der Karte.",
+      "no-window": "Gerade ist kein Reaktionsfenster offen.",
+      "not-eligible": "Du bist an diesem Reaktionsfenster nicht beteiligt.",
+      "not-your-seat": "Das ist nicht dein Platz.",
+      "loop-owned": "Diesen Schritt macht die Partie von selbst.",
+      "paused": "Der Host hat die Partie angehalten."
+    }
+  },
+  "reaction": {
+    "prompt": "Reaktion? {{seconds}} s",
+    "trigger": {
+      "on-card": "{{name}} spielt eine Karte",
+      "on-roll": "{{name}} würfelt",
+      "on-capture": "{{name}} will eine Figur schlagen"
+    },
+    "decline": "Ablehnen",
+    "waiting": "Warte auf {{name}}",
+    "declined": "{{name}} hat abgelehnt",
+    "played": "{{name}}: {{card}}",
+    "negated": "wurde abgesagt"
+  },
+  "action": {
+    "prompt": "Aktionskarte spielen oder weiter",
+    "skip": "Weiter",
+    "target": {
+      "own-pawn": "Wähle eine eigene Figur",
+      "enemy-pawn": "Wähle eine gegnerische Figur",
+      "track-square": "Wähle ein Feld auf der Strecke",
+      "free-square": "Wähle ein freies Feld auf der Strecke",
+      "direction": "Vorwärts oder rückwärts?",
+      "number": "Nenne eine Zahl",
+      "player": "Wähle einen Gegner",
+      "choice": "Wähle eine der beiden Möglichkeiten",
+      "forward": "Vorwärts",
+      "backward": "Rückwärts",
+      "cancel": "Abbrechen",
+      "advance": "Vier Felder vor",
+      "retreat": "Zurück zum Eingangsfeld"
+    }
+  },
+  "roll": {
+    "bonus": "Bonuswurf: der letzte Wurf war das Maximum",
+    "step": {
+      "base": "W{{faces}}: {{value}}",
+      "fixed": "Festgelegt: {{value}}",
+      "advantage": "Zweimal gewürfelt, höher: {{value}}",
+      "disadvantage": "Zweimal gewürfelt, niedriger: {{value}}",
+      "add-die": "Plus W{{faces}}: {{value}}",
+      "sub-die": "Minus W{{faces}}: {{value}}",
+      "multiplier": "Mal {{factor}}: {{value}}",
+      "missed": "Mindestens {{needed}} gebraucht, {{rolled}} gewürfelt: 0",
+      "floor": "Nicht unter 0"
+    }
+  },
+  "online": {
+    "title": "Online-Mehrspieler",
+    "text": "Zwei bis vier Spieler, jeder an seinem eigenen Bildschirm. Einer eröffnet die Partie und schickt den anderen einen Einladungscode, zum Beispiel per Chat.",
+    "host": "Partie eröffnen",
+    "join": "Partie beitreten",
+    "back": "Zurück",
+    "hostTitle": "Partie eröffnen",
+    "joinTitle": "Partie beitreten",
+    "playerCount": "Wie viele spielen mit, dich eingerechnet?",
+    "inviteLabel": "Einladungscode",
+    "replyLabel": "Antwortcode",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "connect": "Verbinden",
+    "addGuest": "Nächsten Spieler einladen",
+    "start": "Partie starten",
+    "seat": {
+      "host": "Du (Host)",
+      "waiting": "Wartet auf Verbindung",
+      "connected": "Verbunden"
+    },
+    "stage": {
+      "gathering": "Code wird erzeugt …",
+      "waiting": "Warte auf die Antwort der anderen Seite.",
+      "connecting": "Verbinde …",
+      "connected": "Verbunden.",
+      "lost": "Die Verbindung ist abgebrochen.",
+      "stale": "Der Code ist abgelaufen. Erzeuge einen neuen."
+    },
+    "hint": {
+      "host": "Kopiere den Einladungscode und schicke ihn dem Mitspieler. Füge dann seinen Antwortcode unten ein und drücke Verbinden.",
+      "join": "Füge den Einladungscode des Hosts ein und drücke Verbinden. Schicke dann deinen Antwortcode an den Host zurück.",
+      "nat": "Ohne Vermittlungsserver klappt die Verbindung nicht hinter jedem Router."
+    },
+    "error": {
+      "badCode": "Das ist kein gültiger Code. Kopiere ihn bitte vollständig.",
+      "failed": "Die Verbindung ist fehlgeschlagen. Codes halten nur ein paar Minuten: erzeugt einen neuen und versucht es noch einmal.",
+      "nat": "Keine Verbindung nach 20 Sekunden. Es gibt keinen Vermittlungsserver, deshalb klappt es hinter manchen Routern nicht. Versucht ein anderes Netz, zum Beispiel einen Handy-Hotspot.",
+      "version": "Die andere Seite spielt eine andere Version des Spiels."
+    }
+  }
+}

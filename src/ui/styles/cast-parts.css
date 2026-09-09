@@ -1,0 +1,245 @@
+/* The parts' shared vocabulary (D110): when a part animates in each stage,
+   and the eleven movements more than one card uses. Depends on tokens.css and
+   cast.css and loads after both, before the six cast-fx-*.css family files,
+   which only ever name a keyframe from here or add one of their own.
+   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D107, D110.
+
+   Two timings. A part in the card stage plays beside the family gesture, in
+   the 400 ms after the card has arrived, and starts and ends invisible with
+   `forwards`, so it is never seen sitting on the card while it waits. A part
+   in the board stage plays over --motion-cast-board with `both`; part 0 has
+   its default flight from cast.css and the others take their timing here.
+
+   A part's position is set on the element where it does not move, and in the
+   keyframe where it does, so one keyframe serves several places. A keyframe
+   that ends at an offset reads --bx and --by, set on the element in cells,
+   signed by --cast-dir where the card has a direction. Forwards is 1 and
+   reads as rightwards, which is the way the track is read from the HUD. */
+
+/* --- Timing --- */
+
+.cast[data-cast="card"] .cast__part {
+  animation-duration: calc(var(--motion-cast) * 0.625);
+  animation-delay: calc(var(--motion-cast) * 0.375);
+  animation-timing-function: var(--ease-ui);
+  animation-fill-mode: forwards;
+}
+
+.cast[data-cast="board"] .cast__part {
+  animation-duration: var(--motion-cast-board);
+  animation-timing-function: var(--ease-ui);
+  animation-fill-mode: both;
+}
+
+/* --- In the card stage, beside the card --- */
+
+/* Something appears beside the card, holds, and goes. Position is the part's. */
+@keyframes cast-pop {
+  0% {
+    scale: 0;
+    opacity: 0;
+    animation-timing-function: var(--ease-move);
+  }
+  30%,
+  70% {
+    scale: 1;
+    opacity: 1;
+  }
+  100% {
+    scale: 1;
+    opacity: 0;
+  }
+}
+
+/* A ring leaves the card. */
+@keyframes cast-ring-out {
+  0% {
+    scale: 0.5;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    scale: 3.4;
+    opacity: 0;
+  }
+}
+
+/* A ring closes on the card: the shape of a no. */
+@keyframes cast-ring-in {
+  0% {
+    scale: 3.4;
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    scale: 0.9;
+    opacity: 0;
+  }
+}
+
+/* Something rises out of the card and fades: the roll going up. */
+@keyframes cast-rise {
+  0% {
+    translate: var(--at-stage);
+    scale: 0.6;
+    opacity: 0;
+  }
+  15% {
+    scale: 1;
+    opacity: 1;
+  }
+  100% {
+    translate: calc(var(--cast-stage-x) - 50%) calc(var(--cast-stage-y) - 50% - 10rem);
+    scale: 0.8;
+    opacity: 0;
+  }
+}
+
+/* And down. */
+@keyframes cast-sink {
+  0% {
+    translate: var(--at-stage);
+    scale: 0.6;
+    opacity: 0;
+  }
+  15% {
+    scale: 1;
+    opacity: 1;
+  }
+  100% {
+    translate: calc(var(--cast-stage-x) - 50%) calc(var(--cast-stage-y) - 50% + 10rem);
+    scale: 0.8;
+    opacity: 0;
+  }
+}
+
+/* A card silhouette travels from the stage to the hand slot the card left. */
+@keyframes cast-to-hand {
+  0% {
+    translate: var(--at-stage);
+    scale: 1;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    translate: var(--at-from);
+    scale: 0.6;
+    opacity: 0;
+  }
+}
+
+/* --- In the board stage, at the target --- */
+
+/* A ring opens at the target after the part has landed. */
+@keyframes cast-ring-out-at {
+  0%,
+  43% {
+    translate: var(--at-to);
+    scale: 0.5;
+    opacity: 0;
+  }
+  52% {
+    opacity: 1;
+  }
+  100% {
+    translate: var(--at-to);
+    scale: 3;
+    opacity: 0;
+  }
+}
+
+/* A ring closes on the target: something is being fastened. */
+@keyframes cast-ring-in-at {
+  0%,
+  43% {
+    translate: var(--at-to);
+    scale: 3;
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    translate: var(--at-to);
+    scale: 0.8;
+    opacity: 0;
+  }
+}
+
+/* Something pops up beside the target once the part has landed. Position is
+   the element's own. */
+@keyframes cast-pop-at {
+  0%,
+  43% {
+    scale: 0;
+    opacity: 0;
+  }
+  60% {
+    scale: 1;
+    opacity: 1;
+    animation-timing-function: var(--ease-move);
+  }
+  85% {
+    scale: 1;
+    opacity: 1;
+  }
+  100% {
+    scale: 1;
+    opacity: 0;
+  }
+}
+
+/* Something falls onto the target from above and is heavy when it lands. */
+@keyframes cast-fall {
+  0%,
+  28% {
+    translate: calc(var(--cast-to-x) - 50%) calc(var(--cast-to-y) - 50% - var(--cell) * 2.2);
+    scale: 1;
+    opacity: 0;
+  }
+  32% {
+    opacity: 1;
+    animation-timing-function: var(--ease-capture);
+  }
+  56% {
+    translate: var(--at-to);
+    scale: 1;
+  }
+  66% {
+    translate: var(--at-to);
+    scale: 1.35 0.75;
+    animation-timing-function: var(--ease-move);
+  }
+  100% {
+    translate: var(--at-to);
+    scale: 0.3;
+    opacity: 0;
+  }
+}
+
+/* A part leaves the target toward --bx, --by. Big Ah Rock's shard, Let Him
+   Cook's heat, Hyperbeam's beam and Janky RPG's splash are all this. */
+@keyframes cast-burst {
+  0%,
+  43% {
+    translate: var(--at-to);
+    scale: 0.6;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+    animation-timing-function: var(--ease-capture);
+  }
+  100% {
+    translate: calc(var(--cast-to-x) - 50% + var(--bx, 0px))
+      calc(var(--cast-to-y) - 50% + var(--by, 0px));
+    scale: 0.4;
+    opacity: 0;
+  }
+}

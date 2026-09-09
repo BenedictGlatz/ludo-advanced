@@ -1,0 +1,29 @@
+<svg viewBox="0 0 232 128" aria-hidden="true" focusable="false">
+          <g stroke="#2B1A3D" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" fill="none">
+            <g stroke="#D9C2EE" stroke-width="3">
+              <path d="M-10 100 L242 100"></path><path d="M62 86 L48 128"></path><path d="M168 86 L182 128"></path>
+            </g>
+            <g transform="translate(104 108)">
+              <path d="M-58,0 C-64,-22 -48,-40 -34,-46 C-26,-64 4,-70 18,-56 C42,-58 58,-38 54,-16 C52,-6 48,0 48,0 Z" fill="#9C8FB0"></path>
+              <path d="M-34,-46 C-20,-40 -14,-26 -18,0" stroke-width="3.5"></path>
+              <path d="M18,-56 C14,-40 22,-24 34,-14" stroke-width="3.5"></path>
+              <path d="M-40,-18 L-28,-24 L-34,-10" stroke-width="3"></path>
+              <ellipse cx="-8" cy="-38" rx="7" ry="9" fill="#2B1A3D" stroke="none"></ellipse>
+              <ellipse cx="18" cy="-40" rx="7" ry="9" fill="#2B1A3D" stroke="none"></ellipse>
+              <path d="M-6,-20 Q6,-12 20,-20" stroke-width="4"></path>
+            </g>
+            <g transform="translate(196 104) scale(.68) rotate(-14)">
+              <ellipse cx="0" cy="4" rx="38" ry="9" fill="#FFC93C"></ellipse>
+              <path d="M-34,4 C-34,-4 -25,-7 -18,-13 C-12,-18 -10,-25 -10,-31 L10,-31 C10,-25 12,-18 18,-13 C25,-7 34,-4 34,4 Z" fill="#FFC93C"></path>
+              <circle cx="0" cy="-48" r="23" fill="#FFE28A"></circle>
+              <path d="M-16,-56 L-4,-46 M-16,-46 L-4,-56 M4,-56 L16,-46 M4,-46 L16,-56" stroke-width="4"></path>
+              <path d="M-8,-30 Q0,-24 8,-30" stroke-width="4"></path>
+            </g>
+            <g stroke="#2B1A3D" stroke-width="4">
+              <path d="M162 44 L176 34 M166 62 L182 60 M156 26 L162 12"></path>
+            </g>
+            <g fill="#EDE2F6" stroke-width="3.5">
+              <circle cx="34" cy="30" r="9"></circle><circle cx="52" cy="18" r="6"></circle>
+            </g>
+          </g>
+        </svg>

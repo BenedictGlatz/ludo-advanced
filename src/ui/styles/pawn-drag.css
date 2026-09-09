@@ -1,0 +1,86 @@
+/* The carried pawn: the drag gesture issue #91 shipped unstyled.
+   Depends on tokens.css, pawn.css and board.css, and loads after all three
+   and after pawn-status.css, so a pawn being carried looks the same whatever
+   it is carrying.
+   Reasoning: 01-Design/Handoff/17-spec-last-card-and-pawn-status.md, D103.
+
+   Its own file rather than eight more lines in pawn.css, for the reason
+   brief 17 section 1 gives: pawn.css is at the NFR-02 ceiling. It also owns
+   the one rule that is not on the pawn, the field under the pointer, and that
+   rule is here rather than in board.css because the state exists only while a
+   drag is under way and would otherwise be a field state with no cause in
+   sight.
+
+   No new token and no new duration. The gesture is the one thing in the game
+   that is not on a clock: it lasts exactly as long as the pointer is down. */
+
+/* The piece in the hand. It is bigger than the selected pawn on purpose:
+   data-selected is set in the same moment as data-dragging (issue #91), so
+   1.14 is already on the piece and the carry has to be visibly more than the
+   pick. The seat colour, the eyes, the ink edge and any status mark are all
+   untouched: the player is carrying the same object, not a proxy for it.
+
+   transition: none is the load-bearing declaration. pawn.css moves a pawn on
+   --motion-move, which is right for a piece crossing the board on its own and
+   fatal for one following a finger: 240 ms of easing behind the pointer reads
+   as the game being slow rather than as the piece being heavy. --pawn-scale
+   wins over the selected pawn's 1.14 by load order at equal specificity. */
+.pawn[data-dragging="true"] {
+  --pawn-scale: 1.22;
+  z-index: var(--layer-pawn-active);
+  cursor: grabbing;
+  translate: var(--drag-dx, 0px) var(--drag-dy, 0px);
+  transition: none;
+}
+
+/* The shadow is the whole of the lift. --shadow-lift is 0.18 of a cell and is
+   what a selected or revealed thing casts; the carried piece throws 0.30,
+   which is the longest shadow in the game and the only one a player produces
+   by holding something. Hard and unblurred, like every other shadow (D14). */
+.pawn[data-dragging="true"]::after {
+  box-shadow: 0 calc(var(--cell) * 0.3) 0 var(--ink-dim);
+}
+
+/* The release. This is pawn.css's transition with `translate` added to it,
+   restated here rather than amended there so that the whole gesture is in one
+   file. It matters: at the moment the pointer comes up the view clears
+   --drag-dx and --drag-dy and writes the new --pawn-col and --pawn-row in the
+   same frame, so the piece's position is the sum of two properties that both
+   have to travel. With only `transform` animated the piece would snap back to
+   the square it left and then slide, which is the one thing a drag must never
+   do. With both animated the path is continuous and starts exactly where the
+   hand let go. */
+.pawn {
+  transition:
+    transform var(--motion-move) var(--ease-move),
+    translate var(--motion-move) var(--ease-move),
+    opacity var(--motion-feedback) var(--ease-ui);
+}
+
+/* The field under the pointer answers, and it answers as a field rather than
+   as a target: an ink ring drawn inside its own edge. It is told apart from
+   everything else on a square by being the only one of them made of
+   `outline`. --legal-target, --pickable and the square's own edge are all
+   box-shadow: inset, they collide with each other already (D61, open), and a
+   fourth inset ring would join that argument for no reason. outline-offset
+   with a negative value is the same trick hud.css uses on the seat dot.
+
+   Ink and not a hue, so this rule is correct whichever way D61 is settled,
+   and so that a field that is already lit as a legal target can also say
+   "this one" without a second colour appearing on the board. It stands 9 per
+   cent of a cell inside the field's own edge, which is far enough in that the
+   legal-target ring and this one are two rings and not a thick one.
+
+   It answers only under the pointer, never on all the legal targets at once:
+   those are already lit, and the question a carried piece asks is not "where
+   may I go" but "will it land here". */
+[data-drop="true"] {
+  z-index: var(--layer-region);
+  outline: var(--border-ink) solid var(--color-ink);
+  outline-offset: calc(var(--cell) * -0.09);
+}
+
+/* Nothing here loops and nothing here is timed, so prefers-reduced-motion has
+   nothing to reduce. The scale and the shadow arrive in the frame the pointer
+   goes down, which is the response NFR-11 measures, and they arrive with no
+   transition at all, which is the fastest a thing can answer. */

@@ -1,0 +1,229 @@
+/* Ludo Advanced design tokens.
+   Every value the UI layer is allowed to use lives here, on :root, so that
+   core/ and state/ never see a colour, a size or a font (NFR-01).
+   Reasoning is in 01-Design/Handoff/01-spec-foundations-and-board.md and
+   03-spec-cards-and-hands.md; the 2026-09-01 additions are 04-spec.
+
+   Tone (D14): friend-slop party game. Flat fills, a 3px ink outline on every
+   card, pill and pawn, hard offset shadows that are never blurred, big radii.
+   No gradients, no soft shading. Two skins (D13): Picnic (light) and
+   Night In (dark plum), switched by color-scheme / data-theme on <html>. */
+
+:root {
+  color-scheme: light dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root {
+  /* --- Surfaces and text (D1, D13) --- */
+  --color-app-bg: light-dark(#e9d3ae, #2a1e3f);
+  --color-board-bg: light-dark(#fffcf3, #3b2c53);
+  --color-board-edge: light-dark(#3a2b55, #1c1230);
+  --color-square: light-dark(#fffefa, #4d3c65);
+  --color-square-edge: light-dark(#3a2b55, #1c1230);
+  --color-panel: light-dark(#fffcf3, #3b2c53);
+  --color-surface: light-dark(#ffffff, #453659);
+  --color-text: light-dark(#3a2b55, #f6efff);
+  --color-text-muted: light-dark(#7a6b93, #b3a6cc);
+  --color-dormant: light-dark(#c9bfae, #5d5273);
+  --color-dormant-soft: light-dark(#f1e9da, #342a4a);
+
+  /* --- Ink and the hard shadow (D14) --- */
+  --color-ink: light-dark(#3a2b55, #1c1230);
+  --ink-dim: light-dark(rgb(58 43 85 / 0.22), rgb(0 0 0 / 0.38));
+
+  /* --- Player colours (D1, D2), from the layout template verbatim. --- */
+  --color-p0: #ff5d5d;
+  --color-p1: #ffc93c;
+  --color-p2: #2fbf71;
+  --color-p3: #4c86f9;
+  --color-p0-soft: light-dark(#ffe3e0, #593048);
+  --color-p1-soft: light-dark(#ffefcd, #5c4a3f);
+  --color-p2-soft: light-dark(#dcf3e5, #2f4a50);
+  --color-p3-soft: light-dark(#dfe9fe, #3a3a6e);
+
+  /* --- Seat marks (D97, retiring D16). One geometry for all four seats: a
+         dot in the seat's colour. The four --seat-shape-* clip paths are
+         withdrawn, and with them the shape half of NFR-12; what carries
+         NFR-12 now is in 16-spec section 4. --seat-mark is the size of the
+         dot on the HUD and stays. --- */
+  --seat-mark: 0.85rem;
+
+  /* --- Signal colours (D7, D9). Violet and orange are outside the
+         player hue set, so a highlight can never be read as a player. --- */
+  --color-hint: light-dark(#a35de0, #c08bf2);
+  --color-hint-soft: light-dark(#f3e6fd, #4f3a6e);
+  --color-warn: light-dark(#e07038, #f2955c);
+  --color-warn-soft: light-dark(#fdeadb, #55391f);
+  --color-focus: light-dark(#a35de0, #c08bf2);
+
+  /* --- Spacing (D4). A 4 px base in rem, so it follows browser zoom. --- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* --- Typography (D5), from the layout template: Baloo 2 for headings and
+         buttons, Nunito for names, body and labels. The page loads them;
+         production self-hosts them (see the spec). --- */
+  --font-display: "Baloo 2", "Nunito", system-ui, sans-serif;
+  --font-ui: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-num: "Nunito", ui-monospace, Menlo, Consolas, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.5rem;
+  --leading-tight: 1.2;
+  --leading-body: 1.5;
+  --weight-regular: 600;
+  --weight-medium: 700;
+  --weight-strong: 800;
+  --tracking-wide: 0.08em;
+
+  /* --- The stage (Claude Code, 2026-09-03, sent back as D62).
+
+         D6 answers "what resolution is this drawn for" with "none, the board
+         is one fluid unit", and that answer only covers the board. Everything
+         else on the page is rem, so the rail costs a fixed 705 px and the page
+         820 px of height with nothing being asked, and D35's 882 with the
+         prompt strip up, whatever the window does. Every window shorter than
+         that scrolls, which is FR-31 broken on any laptop that is not 900 px
+         tall. Measured at 1438 by 770: 50 px of scrolling, 112 with a prompt.
+
+         So the page is drawn on a stage of a fixed 16:9 shape instead, and
+         app.css fits the stage to the window by making 1rem one per cent of
+         the stage width. 100 by 56.25rem is 1600 by 900 at the default text
+         size: the 900 keeps D35's height budget, which is measured and
+         tested, and 1600 is what makes it 16:9. --- */
+
+  --stage-w: 100rem;
+  --stage-h: 56.25rem;
+
+  /* --- Board geometry (D6). One fluid unit, now measured against the stage
+         instead of against the window. --- */
+
+  /* Reverted to 44vw by Claude Design on 2026-09-01, D35 of handoff 04.
+     Issue #39 had taken it to 39vw to buy a HUD row and a chrome row. The
+     answer to D35 pays for both rows out of the foot of the page instead: the
+     refusal strip and the prompt strip stop holding 116 px of grid, so the
+     board keeps its size. The arithmetic is in 04-spec § D35.
+
+     The two percentages below are D6's own, unchanged: 82 % of the height and
+     44 % of the width. What changed is only what they are a percentage of, the
+     stage rather than the viewport, so the board is 44rem and stops depending
+     on the shape of the window. */
+  --board-size: clamp(24rem, min(calc(var(--stage-h) * 0.82), calc(var(--stage-w) * 0.44)), 60rem);
+  --cell: calc(var(--board-size) / 11);
+  --pawn-size: calc(var(--cell) * 0.78);
+  --pawn-scale: 1;
+  --slot-size: calc(var(--cell) * 0.8);
+  /* D6's smallest in-spec viewport. It now describes the stage, which is
+     always in spec, and the window below the 84rem breakpoint, where the
+     stacked layout of D30 takes over and scrolling is allowed again. */
+  --board-min-width: 80rem;
+  --board-min-height: 45rem;
+
+  /* --- Radii and edges. Template chrome radii are 16 / 18 / 28 px; inside
+         the board they scale with the cell instead. --- */
+  --radius-sm: calc(var(--cell) * 0.22);
+  --radius-md: calc(var(--cell) * 0.32);
+  --radius-lg: calc(var(--cell) * 0.5);
+  --radius-card: 1.125rem;
+  --radius-pill: 999px;
+  --border-hair: max(2px, calc(var(--cell) * 0.055));
+  --border-thick: max(2px, calc(var(--cell) * 0.06));
+  --border-ink: max(3px, calc(var(--cell) * 0.07));
+  --border-board: max(4px, calc(var(--cell) * 0.13));
+  --border-card: 3px;
+
+  /* --- Hard offset shadows (D14). Never blurred. --- */
+  --shadow-board: 0 calc(var(--cell) * 0.18) 0 var(--ink-dim);
+  --shadow-piece: 0 calc(var(--cell) * 0.09) 0 var(--ink-dim);
+  --shadow-region: 0 calc(var(--cell) * 0.12) 0 var(--ink-dim);
+  --shadow-lift: 0 calc(var(--cell) * 0.18) 0 var(--ink-dim);
+  --shadow-card: 0 0.4rem 0 var(--ink-dim);
+
+  /* --- Cards (D25). The card artwork's palette, folded into the two skins.
+         Two hues are the same hex in both: the family hue, because green
+         means Action and must not shift with the lights, and the wash behind
+         the art, because all 29 illustrations are drawn with dark ink lines
+         and would vanish on a dark ground. The face, the body text and the
+         page around them are paired. --- */
+  --card-face: light-dark(#fff8ec, #473758);
+  --card-text: light-dark(#4a3b2e, #ece2f7);
+  --card-band-text: #fff8ec;
+  --card-result-bg: #fff8ec;
+  --card-back: light-dark(#6b3fa0, #3d245c);
+  --card-back-mark: light-dark(#b98ce0, #7c58a8);
+  --card-back-frame: light-dark(rgb(255 243 226 / 0.5), rgb(255 243 226 / 0.32));
+  --card-dormant-wash: #efe7d8;
+
+  /* The artwork's own two values (D41). Fixed in both skins: the drawings are
+     dark ink on cream and a card is a printed object. The extraction map
+     points the raw hex at these, so the ink is a token from now on. */
+  --card-art-ground: #fff8ec;
+  --card-art-ink: #2b1a3d;
+
+  /* Type, which decides when a card may be played, carried by the band. */
+  --card-action: #3fa35b;
+  --card-action-wash: #e3f4e8;
+  --card-reaction: #ff9a3c;
+  --card-reaction-wash: #ffeedc;
+  --card-dice: #8b5fb8;
+  --card-dice-wash: #f3e6fb;
+
+  /* Category, which is grouping and flavour, carried by the kind pill and
+     the wash. Four hues from artboard 4a. */
+  --card-movement: #4c86f9;
+  --card-movement-wash: #e4eeff;
+  --card-blocking: #b98ce0;
+  --card-blocking-wash: #f0e4f9;
+  --card-troll: #ffc93c;
+  --card-troll-wash: #fff0c9;
+  --card-offensive: #ff5d5d;
+  --card-offensive-wash: #ffe6e1;
+
+  /* Card geometry (D26). --card-u is a factor on the artboard, 260 by 380.
+     A hand sets it; the card reads it. Declared here and not on .card so a
+     hand can override it by inheritance. */
+  --card-u: 1;
+
+  /* --- The skill square (D27). Teal is the only hue left: it is not a seat
+         colour, not the violet hint and not the orange refusal, so a field
+         can be a skill square and a legal target at the same time. --- */
+  --color-skill: light-dark(#0f9c93, #33d2c4);
+  --color-skill-soft: light-dark(#d3f1ee, #1c4b4b);
+
+  /* --- Layering --- */
+  --layer-square: 1;
+  --layer-region: 2;
+  --layer-pawn: 3;
+  --layer-pawn-active: 4;
+  --layer-refusal: 5;
+  --layer-overlay: 6;
+  --layer-chrome: 7;
+
+  /* The cast stage (D104). Above the board and the pawns, below the overlay,
+     because a paused game must cover a cast in flight. It shares the
+     refusal's value on purpose: the two never share a pixel, the cast is over
+     the board and the strip is in the rail. */
+  --layer-cast: 5;
+  --layer-card: 1;
+  --layer-card-raised: 2;
+  --layer-card-selected: 3;
+  /* The card being read (D66), added 2026-09-04: both hands share one z-index
+     space, so a chosen dice card at --layer-card-selected covered the revealed
+     card growing up into it. See card-reveal.css. */
+  --layer-card-reading: 4;
+}

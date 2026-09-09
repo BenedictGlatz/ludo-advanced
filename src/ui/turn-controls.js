@@ -1,0 +1,170 @@
+/**
+ * What a click on a dice card or on a pawn means. Issues #31 and #62, moved here by #39.
+ *
+ * `ui/` only: it turns an activation into an intent and holds no rule. `events.js` still owns the jQuery
+ * binding; this owns the decision about what the activation means.
+ *
+ * ## Why this is its own file
+ *
+ * `game-loop.js` passed the 300-line limit (NFR-02) when the handover gate and the pause landed, and this
+ * is the seam that was already half cut: **`card-controls.js` has done exactly this job for card clicks
+ * since issue #34.** Splitting the other two out makes the pair symmetric, and it separates two questions
+ * that had been sharing a file: what a click means, and what the game does when nobody is clicking.
+ *
+ * The dependencies are injected the same way `card-controls.js` injects them, so this file never holds
+ * the state object and cannot get out of step with the loop's copy of it.
+ */
+
+import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
+import { INTENT } from "../state/intents.js";
+import { isBot } from "../state/bots.js";
+import { moveReaching } from "./move-targets.js";
+
+/** The hot-seat answer to "may a person here click for `seat`": anybody who is not a bot. */
+const notABot = (getState) => (seat) => !isBot(getState(), seat);
+
+/**
+ * Is somebody allowed to click right now? Issue #43.
+ *
+ * The match is running, the turn is in the phase this control answers, **and a person is playing it**.
+ *
+ * The third clause is the new one and it closes a real hole rather than a theoretical one. During the
+ * bot's thinking pause the phase is already `act` and its pawns already carry `data-movable="true"`,
+ * so a click on the bot's pawn would have committed the bot's move for it, a second early and possibly
+ * with a different pawn than the one the bot had chosen.
+ *
+ * A guard here and not a `pointer-events: none` in the stylesheet: the guard is what the tests can
+ * read, and this project has already learned once what a stuck `pointer-events: none` costs.
+ *
+ * **Since issue #42 the third clause asks `isLocal` rather than `isBot`.** Online, the active player
+ * can be a person at another screen, and to this screen that is what a bot is: their pawns carry
+ * `data-movable` too, and a click here would play their move for them. The default is `!isBot`, so a
+ * hot-seat match is unchanged.
+ */
+function playableBy(state, phase, isLocal) {
+  return (
+    state.status === MATCH_STATUS.RUNNING && state.phase === phase && isLocal(state.activePlayer)
+  );
+}
+
+/**
+ * The two direct board controls.
+ *
+ * - `getState()` hands back the loop's current state.
+ * - `apply(intent)` dispatches and returns whether it was accepted.
+ * - `render()` redraws without advancing the turn.
+ * - `advance()` lets the loop take whatever automatic steps follow.
+ * - `isPicking()` is `card-controls.js` saying a card is mid-aim.
+ * - `isLocal(seat)` says whether a person at this screen plays `seat` (issue #42).
+ */
+export function createTurnControls({
+  getState,
+  apply,
+  render,
+  advance,
+  isPicking,
+  isLocal = notABot(getState),
+}) {
+  /**
+   * A click or a keypress on one of the three drawn dice cards (FR-19).
+   *
+   * One activation, not two. Selecting a pawn first exists because a misclick there costs another player
+   * most of a lap; picking a card costs nobody anything and is undone by the next turn, so a confirmation
+   * step would be a click charged for no risk.
+   */
+  function onDiceCardActivated(faces) {
+    const state = getState();
+    if (!playableBy(state, TURN_PHASE.CHOOSE, isLocal)) return;
+
+    if (!apply({ type: INTENT.CHOOSE_DIE, faces })) return;
+    advance();
+  }
+
+  /**
+   * A click or a keypress on a pawn that can move.
+   *
+   * **The first activation selects and the second commits.** One click would be fewer clicks, and it would
+   * also mean that a misclick captures an opponent with no way back, in a game where a capture costs the
+   * other player most of a lap. Selecting first is also what makes FR-32 literal: the target of the move
+   * about to be played is lit before it is played.
+   *
+   * **A pawn click means something else entirely while a card is being aimed**, and that case is caught
+   * here rather than by the two handlers racing: `bindPickEvents` filters on `[data-pickable]` and this one
+   * on `[data-movable]`, and a pawn can carry both.
+   */
+  function onPawnActivated(pawn) {
+    const state = getState();
+    if (!playableBy(state, TURN_PHASE.ACT, isLocal)) return;
+    if (isPicking()) return;
+
+    if (state.selectedPawn !== pawn) {
+      if (apply({ type: INTENT.SELECT_PAWN, pawn })) render();
+      return;
+    }
+
+    if (!apply({ type: INTENT.COMMIT_MOVE, pawn })) return;
+    advance();
+  }
+
+  /**
+   * A click, a keypress or a drop on a lit target square. Issue #91.
+   *
+   * The square stands for the move that lights it, so this is the pawn's activation in another place:
+   * with nothing selected it selects the pawn that reaches the square, with that pawn selected it
+   * commits. **The two-step safety is kept on purpose.** A playtester asked to move by pointing at the
+   * destination, and pointing at the destination first is a fine way to *pick*; committing on that one
+   * click would be the misclick-captures-a-pawn problem `onPawnActivated` describes, moved to a square.
+   *
+   * A square nothing reaches, which happens when the highlight is a frame behind the state, is ignored.
+   */
+  function onTargetActivated(target) {
+    const state = getState();
+    if (!playableBy(state, TURN_PHASE.ACT, isLocal)) return;
+    if (isPicking()) return;
+
+    const move = moveReaching(state, target);
+    if (move === null) return;
+
+    onPawnActivated(move.pawn);
+  }
+
+  /**
+   * A pawn is being dragged. Issue #91.
+   *
+   * Selecting is what a drag starts with, so the pawn's one target lights up under the pointer while it
+   * is carried. Nothing is committed here: a drag that ends anywhere but on that target is a change of
+   * mind, and `onDragEnded` puts the pawn back.
+   */
+  function onDragStarted(pawn) {
+    const state = getState();
+    if (!playableBy(state, TURN_PHASE.ACT, isLocal)) return;
+    if (isPicking()) return;
+    if (state.selectedPawn === pawn) return;
+
+    if (apply({ type: INTENT.SELECT_PAWN, pawn })) render();
+  }
+
+  /**
+   * The drag is over, on `target` or on nothing (`null`). Issue #91.
+   *
+   * On the pawn's target this is the second half of the gesture and commits; anywhere else the pawn
+   * snaps back to where the state says it is, which a plain `render()` does because the drag never
+   * changed the state. The selection stays, so the player can still finish with a click.
+   */
+  function onDragEnded(pawn, target) {
+    if (target === null) {
+      render();
+      return;
+    }
+
+    const state = getState();
+    if (moveReaching(state, target)?.pawn !== pawn) {
+      render();
+      return;
+    }
+
+    onTargetActivated(target);
+  }
+
+  return { onDiceCardActivated, onPawnActivated, onTargetActivated, onDragStarted, onDragEnded };
+}

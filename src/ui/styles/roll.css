@@ -1,0 +1,96 @@
+/* The roll: the throw, and the number landing on the card that produced it.
+   Depends on tokens.css, card.css, card-state.css and hand.css, and loads
+   after all four. The breakdown of a roll that cards changed is not here: it
+   is a third voice in the message strip and it lives in message-strip.css
+   with the other two.
+   Reasoning is in 01-Design/Handoff/11-spec-roll-animation.md, D70 to D74.
+
+   The kept dice card is the die. The game has never drawn a die as an object
+   and it does not start here: a D8 card already depicts one, so a tumbling
+   die beside it would be the same die drawn twice in two languages. The card
+   the player chose performs the roll, and the number lands in the badge D32
+   put on it.
+
+   `rotate` and `translate`, never `transform`. card.css transitions
+   `transform`, and card-state.css and hand.css both write `translateY` into
+   it, so a keyframe on `transform` would replace the lift rather than add to
+   it. The individual properties compose with it, which is the precedent
+   card-reveal.css set when it took `scale`.
+
+   Scoped to `.hand--dice[data-rolling="true"]`. The pool overview renders the
+   same component and inherits nothing from this file. */
+
+.hand--dice[data-rolling="true"] {
+  pointer-events: none;
+}
+
+.hand--dice[data-rolling="true"] .card[data-selected="true"] {
+  transform-origin: 50% 100%;
+  animation: dice-throw var(--motion-roll) var(--ease-ui);
+}
+
+/* The wind up is the first 46 per cent, which at 520 ms is 240 ms, which is
+   exactly what the two cards nobody kept take to travel back to the pool on
+   --motion-move. They leave while the kept card draws back, so the shake and
+   the landing happen with one card on screen and nothing else moving. */
+@keyframes dice-throw {
+  0% {
+    rotate: 0deg;
+    translate: 0 0;
+    animation-timing-function: var(--ease-capture);
+  }
+  46% {
+    rotate: -5deg;
+    translate: 0 3.5%;
+  }
+  58% {
+    rotate: 6deg;
+    translate: 1.5% -3%;
+  }
+  70% {
+    rotate: -5.5deg;
+    translate: -1.5% -1.5%;
+  }
+  82% {
+    rotate: 4deg;
+    translate: 1% -2.5%;
+    animation-timing-function: var(--ease-move);
+  }
+  100% {
+    rotate: 0deg;
+    translate: 0 0;
+  }
+}
+
+/* The number lands as the card comes to rest. `backwards` holds the first
+   keyframe through the whole delay, so the badge carries the number for the
+   entire roll and is simply not legible yet: that is D72, and it is why
+   `card-state.css`'s `:empty { display: none }` is left exactly as it is.
+   An element that is already in the layout has a start state to move from.
+
+   `scale` and not a width, so a two or three digit result stamps the same. */
+.hand--dice[data-rolling="true"] .card[data-selected="true"] .card__result {
+  animation: roll-land calc(var(--motion-feedback) * 2) var(--ease-move) var(--motion-roll)
+    backwards;
+}
+
+@keyframes roll-land {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+  60% {
+    opacity: 1;
+    scale: 1.14;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+/* No media query in this file. Under prefers-reduced-motion --motion-roll is
+   1 ms, so the throw is gone and the number is on screen in the first frame
+   of the hold instead of at 520 ms into it. The landing keeps its 180 ms:
+   D12 stops loops and keeps feedback, and the badge arriving is the feedback
+   the whole request was about. */

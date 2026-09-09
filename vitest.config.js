@@ -1,0 +1,42 @@
+import { defineConfig } from "vitest/config";
+
+// `environment: "node"` is not a default we happened to keep. It is the second half of NFR-01's
+// acceptance criterion: `core/` and `state/` unit tests run with no DOM configured at all, so a
+// module in either layer that reaches for `document`, `window` or jQuery fails a test run rather
+// than a code review. `ui/` is deliberately not unit tested; Playwright covers it in a real browser.
+export default defineConfig({
+  test: {
+    environment: "node",
+    include: ["tests/unit/**/*.test.js"],
+    // Playwright owns tests/e2e. Vitest must not try to run those files.
+    exclude: ["node_modules/**", "dist/**", "tests/e2e/**"],
+    coverage: {
+      provider: "v8",
+      // `json-summary` is in this list because of a measured defect, not for completeness: on this
+      // setup the `text` reporter prints correct totals and an **empty per-file table**, so the
+      // per-directory figure NFR-05 asks for cannot be read off the terminal output. The numbers in
+      // `coverage/coverage-summary.json` are correct and are what Chapter 09 quotes.
+      reporter: ["text", "json-summary", "html"],
+      reportsDirectory: "coverage",
+      // NFR-05 applies to these layers only, for the reason given in Chapter 08: a coverage figure
+      // for `ui/` would measure how much jQuery ran, not whether anything works.
+      //
+      // `src/ai/` joined the list in issue #43, and the argument for it is the one already written
+      // above, word for word: it is pure, it needs no browser, and it is unit tested directly. A bot
+      // that is not covered is a bot nobody can tell has stopped playing well.
+      //
+      // `src/net/` joined in issue #42 on the same argument, with one file excepted: `webrtc-link.js`
+      // wraps `RTCPeerConnection`, which does not exist under Node, and is covered by the two-context
+      // Playwright spec instead. Everything else in the layer runs a whole match over a loopback pair.
+      include: ["src/core/**/*.js", "src/state/**/*.js", "src/ai/**/*.js", "src/net/**/*.js"],
+      exclude: ["src/net/webrtc-link.js"],
+      // `all: true` counts files that no test imports at all. Without it a module nobody tested is
+      // simply absent from the report, and the percentage stays high by leaving work out of the
+      // denominator. That is the one way a coverage floor can be met while getting worse.
+      all: true,
+      thresholds: {
+        lines: 80,
+      },
+    },
+  },
+});

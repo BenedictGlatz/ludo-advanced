@@ -1,0 +1,21 @@
+<svg viewBox="0 0 232 128" aria-hidden="true" focusable="false">
+          <g stroke="#2B1A3D" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" fill="none">
+            <g transform="translate(70 108) scale(.9)">
+              <ellipse cx="0" cy="4" rx="38" ry="9" fill="#3FA35B"></ellipse>
+              <path d="M-34,4 C-34,-4 -25,-7 -18,-13 C-12,-18 -10,-25 -10,-31 L10,-31 C10,-25 12,-18 18,-13 C25,-7 34,-4 34,4 Z" fill="#3FA35B"></path>
+              <circle cx="0" cy="-48" r="23" fill="#78D18F"></circle>
+              <path d="M-17,-52 L-3,-56 M3,-56 L17,-52" stroke-width="4"></path>
+              <path d="M-10,-36 Q0,-28 11,-36" stroke-width="4"></path>
+              <path d="M20,-58 Q42,-70 56,-56" stroke-width="5"></path>
+            </g>
+            <g transform="translate(166 44) rotate(10)">
+              <rect x="-30" y="-30" width="60" height="60" rx="12" fill="#FFF8EC"></rect>
+              <g fill="#2B1A3D" stroke="none"><circle cx="-13" cy="-13" r="5"></circle><circle cx="13" cy="-13" r="5"></circle><circle cx="0" cy="0" r="5"></circle><circle cx="-13" cy="13" r="5"></circle><circle cx="13" cy="13" r="5"></circle></g>
+            </g>
+            <g transform="translate(196 112) rotate(-24) scale(.5)" opacity=".5">
+              <rect x="-30" y="-30" width="60" height="60" rx="12" fill="#EADCC0"></rect>
+              <path d="M-30,-30 L30,30 M30,-30 L-30,30" stroke-width="7"></path>
+            </g>
+            <g stroke="#2B1A3D" stroke-width="3.5"><path d="M108 22 L118 12 M100 40 L88 36"></path></g>
+          </g>
+        </svg>

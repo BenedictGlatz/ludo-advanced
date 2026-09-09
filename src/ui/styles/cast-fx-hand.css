@@ -1,0 +1,142 @@
+/* The accents of the five hand cards (D107, D109, D113).
+   Depends on tokens.css, cast.css, cast-base.css and cast-parts.css, and
+   loads after them.
+   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D107, D109.
+
+   None of these cards has a board stage, and the answer to "what do they do
+   instead" is: they end on the card stage, and the thing they changed says
+   the rest. Two grow or shrink a hand and the hand re-flows; one shuts
+   the reaction window; one negates a card and the plate reads negated. The
+   family's gesture is the deal, and the parts are cards and rings. */
+
+/* A ring: the disc with no fill and no shadow, edged in the hue, or in the
+   refusal orange for the one card that is a no. */
+.cast[data-card-id="action-double-dip"] .cast__part,
+.cast[data-card-id="reaction-nuehue"] .cast__part {
+  width: calc(var(--cell) * 0.9);
+  height: calc(var(--cell) * 0.9);
+  background: transparent;
+  border-width: var(--border-thick);
+  border-color: var(--cast-hue);
+  box-shadow: none;
+}
+
+.cast[data-card-id="reaction-nuehue"] .cast__part {
+  border-color: var(--color-warn);
+}
+
+/* A card: the face, the ink edge, the card's corner, at a fifth of the size. */
+.cast[data-card-id="action-pot-of-greed"] .cast__part,
+.cast[data-card-id="action-tax-fraud"] .cast__part {
+  width: 3.25rem;
+  height: 4.75rem;
+  background: var(--card-face);
+  border-width: var(--border-hair);
+  border-radius: 0.5rem;
+}
+
+/* A bar of ink. */
+.cast[data-card-id="action-no-take-backsies"] .cast__part {
+  background: var(--color-ink);
+  border: none;
+  box-shadow: none;
+}
+
+/* Pot of Greed: two cards leave the stage for the hand, one after the other. */
+.cast[data-cast="card"][data-card-id="action-pot-of-greed"] .cast__part[data-part="0"],
+.cast[data-cast="card"][data-card-id="action-pot-of-greed"] .cast__part[data-part="1"] {
+  animation-name: cast-to-hand;
+}
+
+.cast[data-cast="card"][data-card-id="action-pot-of-greed"] .cast__part[data-part="1"] {
+  animation-delay: calc(var(--motion-cast) * 0.375 + var(--motion-feedback));
+}
+
+/* Double Dip: two rings out, one after the other. A second card this turn. */
+.cast[data-cast="card"][data-card-id="action-double-dip"] .cast__part[data-part="0"],
+.cast[data-cast="card"][data-card-id="action-double-dip"] .cast__part[data-part="1"] {
+  animation-name: cast-ring-out;
+}
+
+.cast[data-cast="card"][data-card-id="action-double-dip"] .cast__part[data-part="1"] {
+  animation-delay: calc(var(--motion-cast) * 0.375 + var(--motion-feedback) * 1.5);
+}
+
+/* No Take-Backsies: a bar shuts across the card's foot. No window opens. */
+.cast[data-card-id="action-no-take-backsies"] .cast__part[data-part="0"] {
+  width: 13rem;
+  height: 0.6rem;
+  translate: calc(var(--cast-stage-x) - 50%) calc(var(--cast-stage-y) - 50% + 8.75rem);
+  border-radius: var(--radius-pill);
+}
+
+.cast[data-cast="card"][data-card-id="action-no-take-backsies"] .cast__part[data-part="0"] {
+  animation-name: cast-shut;
+}
+
+@keyframes cast-shut {
+  0% {
+    scale: 0 1;
+    opacity: 1;
+    animation-timing-function: var(--ease-move);
+  }
+  45%,
+  80% {
+    scale: 1 1;
+    opacity: 1;
+  }
+  100% {
+    scale: 1 1;
+    opacity: 0;
+  }
+}
+
+/* Nuehue: the card shakes its head, and a warn ring closes on it. This is the
+   one cast that exists to say another card did nothing (D113), and it says so
+   with the one gesture every player reads as no. It plays alone: the card it
+   answers was cast as pending and is already on the plate. */
+.cast[data-cast="card"][data-card-id="reaction-nuehue"] .cast__card > .card {
+  animation-name: cast-headshake;
+}
+
+@keyframes cast-headshake {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  20% {
+    rotate: -6deg;
+  }
+  45% {
+    rotate: 6deg;
+  }
+  70% {
+    rotate: -3deg;
+  }
+}
+
+.cast[data-cast="card"][data-card-id="reaction-nuehue"] .cast__part[data-part="0"] {
+  animation-name: cast-ring-in;
+}
+
+/* Tax Fraud: a card lifts out of the card and away, up and to the right,
+   toward the HUD row where the other seats are. */
+.cast[data-cast="card"][data-card-id="action-tax-fraud"] .cast__part[data-part="0"] {
+  animation-name: cast-lift-away;
+}
+
+@keyframes cast-lift-away {
+  0% {
+    translate: var(--at-stage);
+    rotate: 0deg;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    translate: calc(var(--cast-stage-x) - 50% + 10rem) calc(var(--cast-stage-y) - 50% - 9rem);
+    rotate: 16deg;
+    opacity: 0;
+  }
+}

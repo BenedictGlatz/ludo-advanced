@@ -1,0 +1,252 @@
+/* =============================================================================
+   prompt.css -- the strip that asks the player a question, the reaction
+   countdown, and the board's "point at something" state.
+   Depends on tokens.css. Reasoning: 04-spec, D35 and § 4 (the countdown and
+   the pickable pawn, both owed since spec 03 § 5).
+
+   The strip has moved. It used to be a full-width row at the foot of the
+   page, which cost 70 px of grid whenever it was up and 0 px of usefulness
+   whenever it was not, and it asked about cards while sitting as far from the
+   cards as the page allows. It is now the third plate in the rail, under the
+   skill hand, next to the thing it is asking about.
+   ========================================================================== */
+
+.app > .prompt {
+  grid-area: 5 / 2;
+}
+
+.prompt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: var(--space-1) var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+  background: var(--color-panel);
+  border: var(--border-card) solid var(--color-ink);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+/* Nothing is being asked, so the strip takes no room at all rather than
+   sitting there empty. An empty plate reads as a control that has stopped
+   working, and the rail gives the height back to the board column. */
+.prompt[data-mode="none"] {
+  display: none;
+}
+
+/* A reaction window is the one moment in the game with a deadline on it, so
+   the plate that carries it is the one plate that is not the panel colour.
+
+   --color-warn-soft and not --card-reaction-wash (issue #92). The wash is a
+   fixed light peach with no dark-skin pair, because it sits behind card art
+   that is drawn in dark ink. This plate carries --color-text, which flips to
+   near-white in the dark skin, so the reaction bar was white text on a pale
+   ground. --color-warn-soft is the same orange family, paired in both skins. */
+.prompt[data-mode="reaction"] {
+  background: var(--color-warn-soft);
+}
+
+/* One line, one clock, the buttons: the plate is a single row, because the
+   rail has 64 px for it and a second row costs the board its size. */
+.prompt__line {
+  flex: 1 1 8rem;
+  min-width: 0;
+  margin: 0;
+  font-weight: var(--weight-medium);
+  text-wrap: pretty;
+}
+
+/* --- The countdown (owed since spec 03 § 5).
+
+       It was a bare number. It is now a number inside a ring that empties, so
+       the remaining time is a shape before it is a figure, and the ring turns
+       warning-orange for the last eight seconds. Both are CSS animations off
+       one attribute: jQuery writes data-mode and nothing else (NFR-01), and
+       no user-facing string is involved.
+
+       @property is what makes an angle and a colour animatable. --- */
+
+@property --clock-sweep {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 360deg;
+}
+
+@property --clock-ink {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #a35de0;
+}
+
+@keyframes clock-drain {
+  from {
+    --clock-sweep: 360deg;
+    --clock-ink: var(--color-hint);
+  }
+  73% {
+    --clock-ink: var(--color-hint);
+  }
+  74% {
+    --clock-ink: var(--color-warn);
+  }
+  to {
+    --clock-sweep: 0deg;
+    --clock-ink: var(--color-warn);
+  }
+}
+
+.prompt__clock {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--space-7);
+  height: var(--space-7);
+  font-family: var(--font-num);
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-strong);
+  color: var(--color-text);
+  /* --color-surface, paired in both skins, for the same reason as the plate
+     above: --card-result-bg is fixed cream and the number is --color-text. */
+  background: var(--color-surface);
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 var(--border-card) var(--color-ink);
+}
+
+.prompt__clock:empty {
+  display: none;
+}
+
+/* The ring itself, drawn on top of the plate and masked to an annulus so the
+   number underneath stays legible at every angle. */
+.prompt__clock::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(var(--clock-ink) var(--clock-sweep), transparent 0);
+  border-radius: var(--radius-pill);
+  mask: radial-gradient(farthest-side, transparent 74%, #000 75%);
+}
+
+.prompt[data-mode="reaction"] .prompt__clock::before {
+  animation: clock-drain var(--clock-window) linear forwards;
+}
+
+/* FR-07 puts the pause inside the reaction window, so the clock has to be
+   able to stop. data-paused on .app is the second attribute this spec asks
+   the DOM contract to add. */
+.app[data-paused="true"] .prompt__clock::before {
+  animation-play-state: paused;
+}
+
+/* --- The buttons. The dice cards and the pawns are divs with a tabindex,
+       because a card is not a button. These are real buttons, so they get
+       Enter and Space and a focus ring for free. --- */
+
+.prompt__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: center;
+}
+
+.prompt__button {
+  box-sizing: border-box;
+  min-height: 2.25rem;
+  padding: var(--space-1) var(--space-3);
+  font: inherit;
+  font-weight: var(--weight-medium);
+  color: var(--color-text);
+  cursor: pointer;
+  background: var(--color-surface);
+  border: var(--border-ink) solid var(--color-ink);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-piece);
+  transition:
+    background var(--motion-feedback) var(--ease-ui),
+    box-shadow var(--motion-feedback) var(--ease-ui);
+}
+
+.prompt__button:hover {
+  background: var(--color-hint-soft);
+  box-shadow: var(--shadow-lift);
+}
+
+.prompt__button:focus-visible {
+  outline: var(--border-thick) solid var(--color-focus);
+  outline-offset: var(--space-1);
+}
+
+/* Up to twenty number buttons, so they get the compact treatment rather than
+   each carrying a word's worth of padding. */
+.prompt[data-mode="target"] .prompt__button {
+  min-width: var(--space-8);
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* --- Aiming a card at the board (owed since spec 03 § 5: how a pickable
+       pawn differs from a movable one).
+
+       They were two rings in two tokens, which is a difference nobody reads
+       at a glance. They are now two different kinds of mark: MOVABLE is an
+       outline, the piece is ready; PICKABLE is a filled halo in the skill
+       teal, the piece is a target for the card in your hand. Outline versus
+       fill survives greyscale, two hues do not. --- */
+
+.board[data-picking] .pawn:not([data-pickable="true"]),
+.board[data-picking] .square--track:not([data-pickable="true"]) {
+  opacity: 0.45;
+}
+
+.board[data-picking] [data-pickable="true"] {
+  cursor: pointer;
+}
+
+.pawn[data-pickable="true"] {
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--color-skill) 55%, transparent) 60%,
+    transparent 61%
+  );
+  box-shadow:
+    0 0 0 var(--border-ink) var(--color-skill),
+    var(--shadow-piece);
+}
+
+.square--track[data-pickable="true"] {
+  background: var(--color-skill-soft);
+  box-shadow: inset 0 0 0 var(--border-ink) var(--color-skill);
+}
+
+@media (max-width: 84rem), (orientation: portrait) {
+  /* The reset lives here and not in app.css because this file loads after it
+     and owns the selector: a placement declared later wins at equal weight. */
+  .app > .prompt {
+    grid-area: auto;
+  }
+
+  .prompt__button {
+    min-height: 2.75rem;
+  }
+}
+
+/* --- Reduced motion. The ring keeps draining, because thirty seconds of
+       linear progress is information and not decoration, and it is the only
+       way the deadline is visible at all. The button transitions go. --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .prompt__button {
+    transition: none;
+  }
+}

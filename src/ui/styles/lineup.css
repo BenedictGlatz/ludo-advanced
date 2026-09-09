@@ -1,0 +1,231 @@
+/* =============================================================================
+   lineup.css -- S3, the line-up: for each seat this match has, whether a
+   player or a bot plays it (FR-43, and FR-01 for the lower bound of one
+   player). The screen between the player count and the match.
+   Split out of overlay.css on the handover.css and menu.css precedent, which
+   is one screen's own stylesheet and not a second component (D90).
+   Depends on tokens.css, on overlay.css, and on the seat mapping in board.css
+   which supplies --player and --player-soft to any element carrying
+   data-player. Loads after overlay.css.
+   Reasoning: 15-spec-bot-setup-menu.md, D90 to D96.
+
+   The screen keeps the curtain and keeps the panel as a card, because it is a
+   pre-match question and that is what the other curtains look like. What is
+   new is the row: a seat plate, the seat's name, and one control with two
+   positions, of which exactly one is chosen. The chosen position keeps the
+   face and the hard shadow every raised object in this game has; the other
+   lies flat. So the state of a row survives greyscale twice over, in that
+   raised position and in the word in the name (NFR-12).
+
+   Scoping rule in this file, and it is deliberate after menu.css declared
+   .overlay__label and .overlay__hint unscoped: an element that exists only on
+   this screen is matched by its own class, and an element the other six
+   screens share is always matched through [data-screen="lineup"].
+   ========================================================================== */
+
+/* The sheet. The curtain stays opaque and stays --color-app-bg: behind a
+   pre-match screen there is no match to see through to.
+
+   --overlay-panel-w is set here rather than on the panel, and the sheet
+   becomes a flex line rather than the grid the other screens use, for the
+   reason menu.css found and commented: the panel's width is
+   min(var(--overlay-panel-w), 100%), and in .overlay's grid that percentage
+   resolves against a single auto sized column track that the panel's own
+   content sized, so the number silently does not land. A flex line has a
+   definite content box. 44rem is 634 px at the design resolution, which is
+   the width of the widest row this screen holds and not a decorative choice:
+   a plate, the longest German seat name, and a pair of positions. */
+.overlay[data-screen="lineup"] {
+  --overlay-panel-w: 44rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The one sentence on the screen carries two facts, the FR-01 rule and what
+   a bot does with a turn, so it is given more measure than the 34ch of
+   overlay.css. 46ch on a 44rem panel is still a column and not a paragraph
+   the width of the card. */
+.overlay[data-screen="lineup"] .overlay__text {
+  max-width: 46ch;
+}
+
+/* --- The rows. Their own group, so their rhythm is theirs and not the
+       panel's --space-4: four rows read as one table that way, and the panel
+       keeps its own spacing between the title, the sentence and the
+       actions. --- */
+
+.overlay__seats {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+/* Added by Claude Code, not delivered with the spec, on pool.css's precedent
+   for .overlay__cards. The group is built once and lives in the panel on all
+   seven screens, and .overlay__panel is a flex column with a --space-4 gap,
+   so an empty group leaves a hole on the other six. Same fix, same reason,
+   named here so it is not read as a design decision. */
+.overlay__seats:empty {
+  display: none;
+}
+
+/* One row, one seat. data-player is what board.css maps --player and
+   --player-soft from, so the seat's colour comes for free and is not restated
+   here (D2). The badge is a dot: the four seat shapes are withdrawn (D97).
+
+   The wash is the seat's own soft tone. It is the cheapest thing on this
+   screen that makes four seats read as four seats before a word is read, and
+   it is one declaration in both skins because --player-soft is paired. */
+.overlay__seat {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  box-sizing: border-box;
+  padding: var(--space-2) var(--space-3);
+  background: var(--player-soft);
+  border-radius: var(--radius-card);
+}
+
+/* The seat plate: the same two lines of chrome the HUD plate, the chrome
+   row's turn sentence and the win panel already use, so a seat is the same
+   object in all four places. */
+.overlay__seat::before {
+  content: "";
+  width: var(--space-5);
+  height: var(--space-5);
+  background: var(--player);
+  border-radius: var(--radius-pill);
+  outline: var(--border-hair) solid var(--color-ink);
+  outline-offset: calc(var(--border-hair) * -1);
+}
+
+/* The name is the seat's, in the two vocabularies player-labels.js already
+   has: "Spieler 2 (Gelb)" when the row is a person and "Bot 2 (Gelb)" when it
+   is not. It is the second of the two greyscale safe cues: the word changes
+   with the row's state. The panel centres its text and a row does not. */
+.overlay__seat-name {
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+  text-align: start;
+}
+
+/* --- The control. Two positions, exactly one chosen, and both of them named
+       at all times: a player can see what the other position would be
+       without clicking it, which is the whole reason it is not one button
+       that flips.
+
+       The pair is a grid of two equal tracks, so the two positions are the
+       same width whatever the two words are, in German and in English, and
+       so the four rows' controls line up as a column. 14rem is the pair's
+       width and it is the one number on this screen that is not a token, for
+       the same reason menu.css's door sizes are not: it is a measurement of
+       one screen. --- */
+
+.overlay__seat-choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  width: 14rem;
+}
+
+/* The positions are .overlay__button and keep everything overlay.css gives
+   them: the min-height of 2.75rem, which is the 44 px target, the ink edge,
+   the radius, the hover lift, the press and the focus ring. What they give up
+   is the word shaped horizontal padding, because two of them share a row
+   with a name. */
+.overlay[data-screen="lineup"] .overlay__button[data-action="controller"] {
+  padding: var(--space-2) var(--space-3);
+}
+
+/* The position that is not chosen loses its face and its hard shadow and
+   lies flat on the row's wash. That is the same subtraction menu.css makes
+   for a door that cannot be opened, and the difference between the two is
+   the edge: a dead door's edge is dashed and at low weight, because nothing
+   is behind it, while this position's edge is the full ink edge, because it
+   is a live choice one click away. Its label stays at full strength for the
+   same reason.
+
+   The state is read off aria-pressed and not off the row's data-controller,
+   so what the screen shows and what a screen reader announces cannot drift
+   apart: they are one attribute. */
+.overlay[data-screen="lineup"] .overlay__button[aria-pressed="false"] {
+  background: none;
+  box-shadow: none;
+}
+
+/* --- The last player cannot be turned into a bot (FR-01). The rule is said
+       once, above the rows, in .overlay__text, and the control that would
+       break it is disabled, which is D77.2's answer to the same question one
+       screen earlier: the browser stops the click for free, the tab stop goes
+       away where Enter would do nothing, and the reason is permanent text on
+       screen rather than something a focus reveals.
+
+       It is drawn in --color-dormant, which is what this project draws a
+       thing that is not asking anything in, and not in the dashed low weight
+       ink of an empty slot: the control exists and is refused, which is not
+       the same fact as nothing being there.
+
+       The row that locks is never the row under the pointer. To lock a row a
+       player has to make some other row a bot, and the lock then lands on
+       whichever row is still a person, so a control never goes disabled
+       under the hand that is on it. --- */
+
+.overlay[data-screen="lineup"] .overlay__button[data-action="controller"]:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+  background: none;
+  border-color: var(--color-dormant);
+  box-shadow: none;
+}
+
+/* A hover that lifts and then refuses is worse than no hover at all. */
+.overlay[data-screen="lineup"] .overlay__button:disabled:hover {
+  translate: none;
+}
+
+/* --- .overlay__actions is not touched. It is a centred wrapping row in
+       overlay.css and that is what a Back and a Start want to be: the Start
+       is the screen's one primary under the rule at overlay.css lines 183 to
+       187, the Back is a plain button, and the two are told apart by the
+       violet fill and by nothing else needing to be added here. --- */
+
+/* --- Below the design resolution the pair cannot sit beside the name, so it
+       goes under it and spans the row, and its two positions become two half
+       width targets. The plate and the name keep their line. This is the one
+       screen a player may meet on a phone before the board, exactly as the
+       menu is, and it answers it the same way the menu does. --- */
+
+@media (max-width: 84rem), (orientation: portrait) {
+  .overlay[data-screen="lineup"] {
+    --overlay-panel-w: 26rem;
+    align-items: start;
+  }
+
+  .overlay__seat {
+    grid-template-columns: auto 1fr;
+    row-gap: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .overlay__seat-choice {
+    grid-column: 1 / -1;
+    width: auto;
+  }
+}
+
+/* --- What is deliberately not here.
+
+       No @media (prefers-reduced-motion) block. This file declares no
+       transition and no animation, and the two things that move on this
+       screen, the hover lift and the focus ring, are already answered in
+       overlay.css lines 220 to 228.
+
+       No rule for the row's state beyond the control's. A bot row does not
+       change its wash and does not go dormant: the seat is played, and a
+       dormant ground is what board-regions.css draws a seat that is not in
+       the match in. The state is carried by the raised position and by the
+       word in the name, which is two cues, both of them without colour. --- */

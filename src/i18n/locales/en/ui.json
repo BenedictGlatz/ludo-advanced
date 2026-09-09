@@ -1,0 +1,256 @@
+{
+  "app": {
+    "title": "Ludo Advanced"
+  },
+  "player": {
+    "name": "Player {{number}}",
+    "named": "Player {{number}} ({{colour}})",
+    "bot": "Bot {{number}}",
+    "botNamed": "Bot {{number}} ({{colour}})",
+    "colour": {
+      "0": "red",
+      "1": "yellow",
+      "2": "green",
+      "3": "blue"
+    }
+  },
+  "turn": {
+    "prompt": "{{player}} to move",
+    "chooseDie": "Choose a dice card",
+    "cardPlayed": "{{name}} plays {{card}}",
+    "selectPawn": "Choose a pawn",
+    "end": "End turn"
+  },
+  "match": {
+    "won": "{{player}} wins",
+    "abandoned": "The match was abandoned",
+    "restart": "New match"
+  },
+  "hud": {
+    "heading": "Progress",
+    "start": "Start",
+    "track": "Track",
+    "home": "Home",
+    "cards": "Cards",
+    "finished": "home"
+  },
+  "lastCard": {
+    "heading": "Last card",
+    "empty": "Nothing played yet",
+    "resolved": "{{player}}, turn {{turn}}",
+    "pending": "{{player}}, turn {{turn}}, unanswered",
+    "nullified": "{{player}}, turn {{turn}}, cancelled by an aura",
+    "negated": "{{player}}, turn {{turn}}, cancelled by Nühü"
+  },
+  "menu": {
+    "title": "Ludo Advanced",
+    "text": "Ludo with a dice card pool and skill cards.",
+    "hotseat": {
+      "label": "Hotseat",
+      "hint": "Two to four players, one screen, passed around the table."
+    },
+    "online": {
+      "label": "Online Multiplayer",
+      "hint": "Two to four players at their own screens, connected with an invite code."
+    },
+    "settings": {
+      "label": "Settings",
+      "hint": "The language switch is in the bar above. Sound is not built yet."
+    }
+  },
+  "setup": {
+    "title": "How many players?",
+    "text": "Everyone plays at the same screen.",
+    "players": "{{players}} players",
+    "start": "Go"
+  },
+  "lineup": {
+    "title": "Player or bot?",
+    "text": "At least one seat is a player's. A bot plays a whole turn: dice card, roll, move and skill cards.",
+    "human": "Player",
+    "bot": "Bot",
+    "begin": "Start the match",
+    "back": "Back"
+  },
+  "pause": {
+    "open": "Pause",
+    "title": "Paused",
+    "resume": "Resume",
+    "quit": "Abandon match",
+    "online": {
+      "host": "You are the host: the match is paused for everybody.",
+      "guest": "Only your screen is paused. The match keeps running on the host's side, and so does the clock."
+    }
+  },
+  "win": {
+    "quit": "Back to the menu"
+  },
+  "handover": {
+    "title": "Pass to {{player}}",
+    "text": "Hand the screen over before you press Ready.",
+    "ready": "Ready"
+  },
+  "pool": {
+    "open": "Card pool",
+    "label": "Look at the dice card pool",
+    "title": "The dice card pool",
+    "text": "{{remaining}} of {{total}} cards are face down in the pool.",
+    "close": "Back to the match"
+  },
+  "language": {
+    "label": "Switch language",
+    "switch": "Deutsch"
+  },
+  "move": {
+    "refused": {
+      "needs-maximum": "Leaving the start area needs the die's highest number.",
+      "own-pawn": "One of your own pawns is already on that square.",
+      "overshoot": "The roll is too high: getting home needs the exact number.",
+      "already-home": "This pawn is home and does not move again.",
+      "held": "This pawn is being held and sits this turn out.",
+      "stunned": "This pawn slipped on a trap and sits this turn out.",
+      "locked": "This pawn is locked in and may not be moved.",
+      "petrified": "This pawn is petrified and cannot be moved until the effect wears off.",
+      "blocked": "There is a rock in the way. Nothing gets past it.",
+      "protected": "The pawn on that square is protected and cannot be captured.",
+      "no-steps": "The roll came out at 0. Nobody moves this turn.",
+      "none-available": "No move is possible with this roll."
+    }
+  },
+  "trap": {
+    "owned": "{{object}}, laid by {{player}}",
+    "label": {
+      "banana-peel": "Banana Peel",
+      "oil-spill": "Oil Spill",
+      "not-that-deep": "It's Not That Deep"
+    },
+    "fired": {
+      "banana-peel": "{{player}} slipped on {{owner}}'s Banana Peel and sits the next turn out.",
+      "oil-spill": "{{player}} hit {{owner}}'s Oil Spill and slid {{squares}} squares on.",
+      "not-that-deep": "{{player}} stepped on {{owner}}'s It's Not That Deep and went back one square.",
+      "big-ah-rock": "{{owner}} turned a pawn to stone, and {{player}} was knocked back three squares."
+    },
+    "nullified": "An It's Not That Deep was lying nearby and cancelled that card.",
+    "aura": "Protected by an It's Not That Deep"
+  },
+  "status": {
+    "separator": " · ",
+    "held": "Held (Hold Pawn): sits this turn out.",
+    "rock": "Petrified (Rock): a wall nothing gets past, and not even its owner can move it.",
+    "ghost": "Ghost (Ghost Mode): cannot be captured.",
+    "locked": "Locked in (Lock In): may not be moved and cannot be captured.",
+    "armoured": "Armoured (Built Different): cannot be captured.",
+    "ragebait": "Taunted (Ragebait): must be moved if it can move.",
+    "purge": "The Purge: every landing captures, own pawns included.",
+    "slippery": "Slippery (Oil Spill): skips the next skill square.",
+    "stunned": "Stunned (Banana Peel): sits the next turn out."
+  },
+  "intent": {
+    "rejected": {
+      "match-over": "The match is over.",
+      "wrong-phase": "That is not possible at this step of the turn.",
+      "unknown-intent": "That action does not exist.",
+      "card-not-in-hand": "That dice card is not in the hand.",
+      "no-move-for-pawn": "That pawn cannot move with this roll.",
+      "not-your-turn": "Action cards are only playable on your own turn.",
+      "card-budget-spent": "You have already played a card this turn.",
+      "reactions-locked": "No Take-Backsies: no more reaction windows open this turn.",
+      "card-not-playable-now": "That card does not fit this moment.",
+      "card-not-in-skill-hand": "That skill card is not in your hand.",
+      "needs-target": "That card still needs a target.",
+      "bad-target": "That target does not fit the card.",
+      "no-window": "No reaction window is open right now.",
+      "not-eligible": "You are not part of this reaction window.",
+      "not-your-seat": "That is not your seat.",
+      "loop-owned": "The match takes that step by itself.",
+      "paused": "The host has paused the match."
+    }
+  },
+  "reaction": {
+    "prompt": "React? {{seconds}} s",
+    "trigger": {
+      "on-card": "{{name}} plays a card",
+      "on-roll": "{{name}} rolls",
+      "on-capture": "{{name}} is about to capture a pawn"
+    },
+    "decline": "Decline",
+    "waiting": "Waiting for {{name}}",
+    "declined": "{{name}} declined",
+    "played": "{{name}}: {{card}}",
+    "negated": "was cancelled"
+  },
+  "action": {
+    "prompt": "Play an action card or carry on",
+    "skip": "Carry on",
+    "target": {
+      "own-pawn": "Choose one of your own pawns",
+      "enemy-pawn": "Choose an opponent's pawn",
+      "track-square": "Choose a square on the track",
+      "free-square": "Choose a free square on the track",
+      "direction": "Forwards or backwards?",
+      "number": "Name a number",
+      "player": "Choose an opponent",
+      "choice": "Pick one of the two options",
+      "forward": "Forwards",
+      "backward": "Backwards",
+      "cancel": "Cancel",
+      "advance": "Four squares forward",
+      "retreat": "Back to the entry square"
+    }
+  },
+  "roll": {
+    "bonus": "Bonus roll: the last roll was the maximum",
+    "step": {
+      "base": "D{{faces}}: {{value}}",
+      "fixed": "Named: {{value}}",
+      "advantage": "Rolled twice, higher: {{value}}",
+      "disadvantage": "Rolled twice, lower: {{value}}",
+      "add-die": "Plus a D{{faces}}: {{value}}",
+      "sub-die": "Minus a D{{faces}}: {{value}}",
+      "multiplier": "Times {{factor}}: {{value}}",
+      "missed": "Needed at least {{needed}}, rolled {{rolled}}: 0",
+      "floor": "Never below 0"
+    }
+  },
+  "online": {
+    "title": "Online Multiplayer",
+    "text": "Two to four players, each at their own screen. One of you hosts the match and sends the others an invite code, for example through a chat.",
+    "host": "Host a match",
+    "join": "Join a match",
+    "back": "Back",
+    "hostTitle": "Host a match",
+    "joinTitle": "Join a match",
+    "playerCount": "How many are playing, yourself included?",
+    "inviteLabel": "Invite code",
+    "replyLabel": "Reply code",
+    "copy": "Copy",
+    "copied": "Copied",
+    "connect": "Connect",
+    "addGuest": "Invite the next player",
+    "start": "Start the match",
+    "seat": {
+      "host": "You (host)",
+      "waiting": "Waiting to connect",
+      "connected": "Connected"
+    },
+    "stage": {
+      "gathering": "Making the code …",
+      "waiting": "Waiting for the other side to answer.",
+      "connecting": "Connecting …",
+      "connected": "Connected.",
+      "lost": "The connection was lost.",
+      "stale": "The code has expired. Make a new one."
+    },
+    "hint": {
+      "host": "Copy the invite code and send it to the other player. Then paste their reply code below and press Connect.",
+      "join": "Paste the host's invite code and press Connect. Then send your reply code back to the host.",
+      "nat": "Without a relay server the connection does not work behind every router."
+    },
+    "error": {
+      "badCode": "That is not a valid code. Please copy all of it.",
+      "failed": "The connection failed. Codes only last a few minutes: make a new one and try again.",
+      "nat": "No connection after 20 seconds. There is no relay server, so it does not work behind some routers. Try a different network, for example a phone hotspot.",
+      "version": "The other side is playing a different version of the game."
+    }
+  }
+}

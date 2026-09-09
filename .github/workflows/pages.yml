@@ -1,0 +1,81 @@
+# Publishes the playable build to GitHub Pages, so a player needs a browser and a link and nothing
+# else: no npm, no clone, no toolchain. That is what makes FR-42 testable at all, because two
+# browsers on two different networks are the only way to see whether the WebRTC connection survives
+# a real NAT.
+#
+# Three decisions in here are easy to undo by accident. The reasons are in notes/07-tooling.md:
+#
+#   * The site is built by this workflow, not served from a `gh-pages` branch. A branch would mean a
+#     committed `dist/`, which is a build artefact in version control and goes stale the moment
+#     somebody forgets to rebuild.
+#   * `workflow_dispatch` accepts any branch on purpose. Online play has to be tried before it is
+#     merged, and a feature branch is exactly what needs publishing then.
+#   * Relative asset paths come from `base: "./"` in `vite.config.js`. Without it the page loads and
+#     stays blank, because a project site lives under /ludo-advanced/ and not at the domain root.
+
+name: pages
+
+on:
+  push:
+    branches: [main]
+  # Publish any branch by hand, from the Actions tab. Used to test a feature before it is merged.
+  workflow_dispatch:
+
+# `pages` and `id-token` are what actions/deploy-pages needs. `contents: read` is everything else.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time, and a newer one waits rather than cancelling the running one. A
+# cancelled deployment can leave the site half published, which a cancelled test run cannot.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  # The same version as build-check.yml. Both are pinned in one place in notes/07-tooling.md.
+  NODE_VERSION: "24"
+
+jobs:
+  build:
+    name: build the static site
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # No lint and no tests here. build-check.yml owns the quality gates on every pull request,
+      # and repeating them would only make publishing slower without deciding anything.
+      - name: Build
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # Named so the URL of the last deployment is visible on the repository page.
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,264 @@
+/* =============================================================================
+   menu.css -- S1, the main menu. The front door: the one screen a player
+   looks at before they have decided to play, and the only content of the
+   overlay component that is not the game stopping to ask a question.
+   Split out of overlay.css on the handover.css precedent, which is one
+   screen's own stylesheet and not a second component (D75).
+   Depends on tokens.css and overlay.css. Loads after both.
+   Reasoning: 12-spec-main-menu.md, D75 to D80. Artboard 12c of three.
+
+   The menu keeps every element overlay-view.js already builds and adds no
+   token. What changes is what those elements are arranged into: the panel
+   stops being a 432 px card in the middle of the stage, and the three items
+   become three doors in the game's own card language, dealt across the middle
+   of it with Hotseat the tall one. The one thing that does not change is
+   .overlay__actions, which stays the centred wrapping row it is everywhere
+   else: three doors side by side is what that row was already shaped like.
+
+   Three new elements inside an item are named in the spec and are the only
+   markup this file needs: .overlay__art, the illustration, then
+   .overlay__label and .overlay__hint.
+   ========================================================================== */
+
+/* The curtain stays opaque: there is no match behind the menu to see through
+   to, so the veil of pause and win would be a window onto the page's own
+   background. It gains the room the chrome row occupies, because the
+   language button floats above the overlay at --layer-chrome by design
+   (FR-34, chrome.css lines 7 to 9), and the menu's content starts below it
+   rather than under it.
+
+   --overlay-panel-w is set here rather than on the panel, the way
+   handover.css sets it, and the sheet becomes a flex line rather than the
+   grid the other five screens use. The reason is the panel's own width,
+   min(var(--overlay-panel-w), 100%): in a grid whose single column is auto
+   sized that percentage resolves against a track the panel's own content
+   sized, so 84rem does not mean 84rem. A flex line has a definite content
+   box and the number lands. 84rem is 1210 px at the design resolution, which
+   is 84 per cent of the stage against the 30 per cent the panel uses
+   today (D75.3). */
+.overlay[data-screen="menu"] {
+  --overlay-panel-w: 84rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(2.25rem + var(--space-5) * 2) var(--space-6) var(--space-6);
+}
+
+/* The panel gives up its chrome and becomes the ground the doors are dealt
+   on. A card in the middle of the stage is right for "are you sure you want
+   to abandon this match", and on the front door it is what makes the game's
+   entry point read as an interruption of a game that has not started. It
+   also cannot hold this content: a card inside a card is two edges saying
+   the same thing. */
+.overlay[data-screen="menu"] .overlay__panel {
+  gap: var(--space-5);
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* The name stays at --text-xl and D40 keeps its exclusive on --text-2xl.
+   On this screen the three doors are the loud thing, and a 36 px name over
+   them would be two things competing on a page that has room for one. */
+.overlay[data-screen="menu"] .overlay__text {
+  margin-bottom: var(--space-4);
+}
+
+/* .overlay__actions is not touched apart from its rhythm: it is a centred
+   wrapping row in overlay.css lines 158 to 163 and that is exactly what
+   three doors side by side want. align-items: end is what lets Hotseat be
+   taller without lifting the other two off the line they share. */
+.overlay[data-screen="menu"] .overlay__actions {
+  gap: var(--space-5);
+  align-items: end;
+}
+
+/* --- The door. It is the game's card chrome and not a card: the same face,
+       the same 3 px ink edge, the same hard offset shadow and the same
+       radius, at a size no hand uses. What it is not is .card, and the
+       reason is in the spec: a card is a thing you hold and play, and none
+       of the three items is one.
+
+       The first row is the illustration, .overlay__art, drawn in the same
+       hand as the 36 card drawings: 232 by 128, dark ink, flat fills, the
+       pawn creature of D14. It is decoration, so it is aria-hidden and the
+       door's name is carried by .overlay__label. --- */
+.overlay[data-screen="menu"] .overlay__button {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  gap: var(--space-2);
+  box-sizing: border-box;
+  width: 15rem;
+  min-height: 19rem;
+  padding: var(--space-4);
+  text-align: start;
+  background: var(--card-face);
+  border-radius: var(--radius-card);
+}
+
+/* The drawing fills the door's width and sits in the middle of its row, so
+   the three doors, which are two sizes, keep their pictures on one visual
+   line. Sizing lives here and not on the svg, the same split card.css makes
+   for .card__art, so the drawing files carry no inline style. */
+.overlay__art {
+  display: block;
+  align-self: center;
+  width: 100%;
+}
+
+.overlay__art > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.overlay__label {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-strong);
+  line-height: var(--leading-tight);
+}
+
+/* The second line, on all three doors and not only on the two that do not
+   work (D78). On Hotseat it says what the mode is; on the other two it says
+   why they cannot be used, and those two sentences are different because the
+   two reasons are: one was never built, the other already happened in the
+   bar above. Text in the DOM, never a content: property (NFR-03). */
+.overlay__hint {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-body);
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
+
+/* Hotseat is the game (FR-01) and the other two are not, so the three are not
+   dealt as equals: it is two rem wider and three taller, it carries the one
+   primary fill this component allows per screen, and it is first in the DOM,
+   which is where overlay-view.js lines 169 to 171 put the keyboard when the
+   screen opens.
+
+   The fill is restated rather than inherited, and that is not redundancy:
+   the door's own face at overlay.css line 183's specificity would otherwise
+   win over the primary fill and Hotseat would be cream on cream. */
+.overlay[data-screen="menu"] .overlay__button[data-variant="primary"] {
+  background: var(--color-hint);
+}
+
+.overlay[data-screen="menu"] .overlay__button[data-action="hotseat"] {
+  width: 17rem;
+  min-height: 22rem;
+  padding: var(--space-5) var(--space-4);
+}
+
+.overlay[data-screen="menu"] .overlay__button[data-action="hotseat"] .overlay__label {
+  font-size: var(--text-xl);
+}
+
+.overlay[data-screen="menu"] .overlay__button[data-variant="primary"] .overlay__hint {
+  color: var(--card-band-text);
+}
+
+/* --- A door you cannot open (D77). There was no precedent for a control,
+       and there is one for a thing that is not there: the empty skill hand
+       slot at hand.css lines 137 to 141, which is the card's silhouette in
+       dashed ink at low weight, with no face, no shadow, no lift and no tab
+       stop. This is that, at door size, which is why the treatment is a
+       reuse rather than an invention, and why this direction gets it almost
+       for free: the object it takes the fill away from is already a card.
+
+       Three cues, and two of them are not colour, because NFR-12 is measured
+       with the colour taken away:
+
+       1. No face and no shadow. Every card, pill, pawn and panel in this
+          game is a raised object with a hard offset shadow under it. A door
+          that is an outline lying flat on the curtain is the only unraised
+          control in the project, and next to Hotseat it says "a door with
+          nothing behind it" before a word of it is read.
+       2. A dashed edge, which is already how this project spells "there is
+          nothing here yet".
+       3. The muted label, which is what a dormant thing is drawn in
+          everywhere else.
+
+       The tab stop goes with the face: :disabled is what the spec answers
+       D77.2 with, so the click stops without a filter in session-actions.js
+       and the keyboard is not offered a stop where Enter does nothing
+       (spec 05 § 5, and D67 in the other direction). The reason is permanent
+       text on the door rather than something a focus reveals, so nothing is
+       lost by not being able to reach it. --- */
+
+.overlay[data-screen="menu"] .overlay__button:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+  background: none;
+  border-color: color-mix(in srgb, var(--color-ink) 32%, transparent);
+  border-style: dashed;
+  box-shadow: none;
+}
+
+/* A hover that lifts and then refuses is worse than no hover at all. */
+.overlay[data-screen="menu"] .overlay__button:disabled:hover {
+  translate: none;
+}
+
+/* The drawing on a door you cannot open fades with the label rather than
+   losing its colour: NFR-12 is carried by the missing face and shadow, and a
+   half present picture is what "not built yet" looks like on a card. */
+.overlay[data-screen="menu"] .overlay__button:disabled .overlay__art {
+  opacity: 0.5;
+}
+
+/* --- Below the design resolution three doors cannot stand side by side, and
+       this is the one screen a player may open on a phone before they have
+       ever seen a board. The row already wraps, so what is needed is only
+       for a door to stop being taller than it is wide: it goes full width,
+       gives up its fixed height and turns its drawing sideways into a small
+       picture beside the name, so three doors stack without scrolling. The
+       top padding follows chrome.css, where the controls grow to 44 px
+       here. --- */
+
+@media (max-width: 84rem), (orientation: portrait) {
+  .overlay[data-screen="menu"] {
+    --overlay-panel-w: 34rem;
+    align-items: start;
+    padding: calc(2.75rem + var(--space-5) * 2) var(--space-5) var(--space-6);
+  }
+
+  .overlay[data-screen="menu"] .overlay__actions {
+    gap: var(--space-3);
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .overlay[data-screen="menu"] .overlay__button,
+  .overlay[data-screen="menu"] .overlay__button[data-action="hotseat"] {
+    grid-template-columns: 6.5rem 1fr;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: var(--space-4);
+    width: 100%;
+    min-height: 0;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .overlay[data-screen="menu"] .overlay__art {
+    grid-row: 1 / span 2;
+  }
+
+  .overlay[data-screen="menu"] .overlay__hint {
+    align-self: start;
+  }
+
+  .overlay[data-screen="menu"] .overlay__button[data-action="hotseat"] .overlay__label {
+    font-size: var(--text-lg);
+  }
+}
+
+/* --- What is deliberately not here.
+
+       No @media (prefers-reduced-motion) block. This file declares no
+       transition and no animation, and the two things that move on this
+       screen, the hover lift and the focus ring, are already answered in
+       overlay.css lines 220 to 228. --- */

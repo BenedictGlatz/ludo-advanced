@@ -1,0 +1,47 @@
+[
+  {
+    "timestamp": "2026-08-10T09:00:00+02:00",
+    "model": "claude-sonnet-5",
+    "prompt": "Please transfer the ai prompts in gitignore. Otherwise we can't do anything without committing again",
+    "issue": null,
+    "topic": "tooling-tests",
+    "use": "implementation",
+    "summary": "Added 00-Meta/AI-Prompts/ to a new .gitignore, untracked the two existing log files with git rm --cached (kept locally), updated CLAUDE.md's mandatory per-change steps and AI prompt log section to reflect the log no longer being committed, recorded the decision and its consequence (docs:ai-index needs contributors' logs collected out of band) in project-journal.md, added a CHANGELOG entry, and committed"
+  },
+  {
+    "timestamp": "2026-08-10T11:30:00+02:00",
+    "model": "claude-sonnet-5",
+    "prompt": "Please add a real stakeholder analysis with RACI matrix, based on the existing documentation.",
+    "issue": null,
+    "topic": "process-docs",
+    "use": "implementation",
+    "summary": "Rewrote 00-Meta/Project-Management/02-Stakeholder-Analysis.md from an empty stub into a stakeholder register, Mendelow power-interest grid and two RACI matrices (cross-cutting phases, per-sprint deliverables), after confirming with the user that Lamya Abdullah is the module professor/supervisor and that both phase-level and sprint-deliverable rows should be covered. Deliberately excluded the anonymous Developer A/B/C technical-lead table from 01-Github-Project.md since it contradicts 00-One-Pager.md and is an open, unresolved question. Updated notes/02-project-management.md, added two decision blocks to project-journal.md, and added a CHANGELOG entry."
+  },
+  {
+    "timestamp": "2026-08-10T12:15:00+02:00",
+    "model": "claude-sonnet-5",
+    "prompt": "Presentation & delivery\tI\tA/R\tR\tR\n---\n\nThis line is wrong, Lars and Benedict are also responsible for it at the end.\nAlso, are there other Stakeholders you would include here except the obvious 4 people? Like other (Kommilitonen)? Tell me what you would/could add and I will give you the go.",
+    "issue": null,
+    "topic": "process-docs",
+    "use": "revised",
+    "summary": "Fixed the Presentation & delivery and Buffer sprint-deliverable RACI rows to mark Fabian, Lars and Benedict jointly A/R instead of only Fabian, extending the existing joint-A/R convention with a stated reason (buffer-sprint presentation tasks name no single owner). Proposed three additional stakeholders (external playtesters, fellow students/course peers, future players/open-source community) with confidence levels (fact/assumption/speculative) via AskUserQuestion; user approved all three. Added them to the register, power-interest grid and RACI legend footnote. Updated notes/02-project-management.md, project-journal.md and CHANGELOG.md."
+  },
+  {
+    "timestamp": "2026-08-10T14:00:00+02:00",
+    "model": "claude-sonnet-5",
+    "prompt": "I created a pull request for feature #10 for main. It shouldve been to dev instead. Please fix that for me.",
+    "issue": 10,
+    "topic": "process-docs",
+    "use": "implementation",
+    "summary": "Found PR #55 (feature/10-functional-non-functional-goals) had already been merged into main instead of dev, leaving dev missing the goal-catalogue commits. Asked the user how to correct it via AskUserQuestion; user chose cherry-picking over a dev merge. Cherry-picked the three commits (7566a93, efc2731, 236bc76) onto dev without rewriting main's already-pushed history, verified the resulting file matches main byte-for-byte, and recorded this as a third branching-policy deviation in notes/02-project-management.md and project-journal.md, alongside the first two."
+  },
+  {
+    "timestamp": "2026-08-10T15:30:00+02:00",
+    "model": "claude-sonnet-5",
+    "prompt": "Based on our other documentation, think of possible risks and add them to this list. Append the list how you seem fit / how it is best practice for companies.",
+    "issue": 11,
+    "topic": "process-docs",
+    "use": "implementation",
+    "summary": "Rewrote 00-Meta/Project-Management/03-Risk-Analysis.md's Risk Ratings table from a bare 3-row Likelihood/Impact/Priority table into a company-style risk register: added Category and Mitigation/Response columns, backfilled them for the three existing risks (Multiplayer, Complexity, Sickness), and added 13 new risks mined from project-journal.md, sprint-log.md, 01-Github-Project.md and CLAUDE.md (schedule contradiction, missing velocity/burn-down data, undecided multiplayer tech and resource/energy scope, underspecified rulebook, coverage/documentation discipline, role concentration, external-playtester dependency, unstable board-parsing route, dependency-approval bottleneck, public-repo academic-integrity exposure, presentation hardware-failure fallback). Added a one-line Priority legend under the matrix."
+  }
+]

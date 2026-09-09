@@ -1,0 +1,153 @@
+/* The accents of the seven roll cards (D107, D109).
+   Depends on tokens.css, cast.css, cast-base.css and cast-parts.css, and
+   loads after them.
+   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D107, D109.
+
+   None of these cards has a board stage, and the answer to "what do they do
+   instead" is: they end on the card stage, and the thing they changed says
+   the rest. All seven change the roll, and the roll has D70's throw and
+   D73's breakdown in the strip. So the accent is small and it is about the
+   card: the family's throw at half amplitude, and one part going the way the
+   roll is going.
+
+   The card ids are the two-part form the plate already uses,
+   `action-banana-peel`, `reaction-nuehue`; if catalogue.js spells one
+   differently, the selector is the one thing to change. */
+
+/* A ring: the disc with no fill and no shadow, edged in the hue. */
+.cast[data-card-id="action-angel-die"] .cast__part,
+.cast[data-card-id="action-fr-fr"] .cast__part {
+  width: calc(var(--cell) * 0.9);
+  height: calc(var(--cell) * 0.9);
+  background: transparent;
+  border-width: var(--border-thick);
+  border-color: var(--cast-hue);
+  box-shadow: none;
+}
+
+/* A bar of ink. */
+.cast[data-card-id="reaction-devil-die"] .cast__part,
+.cast[data-card-id="action-speedrun"] .cast__part {
+  background: var(--color-ink);
+  border: none;
+  box-shadow: none;
+}
+
+/* Critical Success: one dot rises out of the card. Roll twice, keep the higher. */
+.cast[data-cast="card"][data-card-id="action-critical-success"] .cast__part[data-part="0"] {
+  animation-name: cast-rise;
+}
+
+/* Angel Die: a halo rises, slower than the dot. Add a die. */
+.cast[data-cast="card"][data-card-id="action-angel-die"] .cast__part[data-part="0"] {
+  animation-name: cast-rise;
+  animation-timing-function: var(--ease-capture);
+}
+
+/* Critical Failure: the dot sinks. The lower counts. */
+.cast[data-cast="card"][data-card-id="reaction-critical-failure"] .cast__part[data-part="0"] {
+  animation-name: cast-sink;
+}
+
+/* Devil Die: two horns pop at the card's top corners. Subtract a die. */
+.cast[data-card-id="reaction-devil-die"] .cast__part {
+  width: 0.55rem;
+  height: 1.75rem;
+  border-radius: var(--radius-pill);
+}
+
+.cast[data-card-id="reaction-devil-die"] .cast__part[data-part="0"] {
+  translate: calc(var(--cast-stage-x) - 50% - 6rem) calc(var(--cast-stage-y) - 50% - 12.6rem);
+  rotate: -28deg;
+}
+
+.cast[data-card-id="reaction-devil-die"] .cast__part[data-part="1"] {
+  translate: calc(var(--cast-stage-x) - 50% + 6rem) calc(var(--cast-stage-y) - 50% - 12.6rem);
+  rotate: 28deg;
+}
+
+.cast[data-cast="card"][data-card-id="reaction-devil-die"] .cast__part[data-part="0"],
+.cast[data-cast="card"][data-card-id="reaction-devil-die"] .cast__part[data-part="1"] {
+  animation-name: cast-pop;
+}
+
+/* 67: two dots stamp above the card, one after the other. A gamble on a six
+   or more, so the card counts. */
+.cast[data-card-id="action-sixty-seven"] .cast__part[data-part="0"] {
+  translate: calc(var(--cast-stage-x) - 50% - 1.6rem) calc(var(--cast-stage-y) - 50% - 13.5rem);
+}
+
+.cast[data-card-id="action-sixty-seven"] .cast__part[data-part="1"] {
+  translate: calc(var(--cast-stage-x) - 50% + 1.6rem) calc(var(--cast-stage-y) - 50% - 13.5rem);
+}
+
+.cast[data-cast="card"][data-card-id="action-sixty-seven"] .cast__part[data-part="0"],
+.cast[data-cast="card"][data-card-id="action-sixty-seven"] .cast__part[data-part="1"] {
+  animation-name: cast-pop;
+}
+
+.cast[data-cast="card"][data-card-id="action-sixty-seven"] .cast__part[data-part="1"] {
+  animation-delay: calc(var(--motion-cast) * 0.375 + var(--motion-feedback));
+}
+
+/* Speedrun Any%: the lunge, twice, and three streaks trail off the card. The
+   roll is doubled, so the gesture is doubled. */
+.cast[data-cast="card"][data-card-id="action-speedrun"] .cast__card > .card {
+  animation-name: cast-lunge-twice;
+}
+
+@keyframes cast-lunge-twice {
+  0%,
+  50%,
+  100% {
+    translate: 0 0;
+  }
+  25%,
+  75% {
+    translate: 8% 0;
+    animation-timing-function: var(--ease-move);
+  }
+}
+
+.cast[data-card-id="action-speedrun"] .cast__part {
+  width: 2.5rem;
+  height: 0.45rem;
+}
+
+.cast[data-cast="card"][data-card-id="action-speedrun"] .cast__part[data-part="0"],
+.cast[data-cast="card"][data-card-id="action-speedrun"] .cast__part[data-part="1"],
+.cast[data-cast="card"][data-card-id="action-speedrun"] .cast__part[data-part="2"] {
+  animation-name: cast-streak;
+}
+
+.cast[data-cast="card"][data-card-id="action-speedrun"] .cast__part[data-part="1"] {
+  animation-delay: calc(var(--motion-cast) * 0.375 + var(--motion-feedback) * 0.6);
+}
+
+.cast[data-cast="card"][data-card-id="action-speedrun"] .cast__part[data-part="2"] {
+  animation-delay: calc(var(--motion-cast) * 0.375 + var(--motion-feedback) * 1.2);
+}
+
+@keyframes cast-streak {
+  0% {
+    translate: calc(var(--cast-stage-x) - 50% - 9rem) calc(var(--cast-stage-y) - 50% - 4rem);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    translate: calc(var(--cast-stage-x) - 50% - 16rem) calc(var(--cast-stage-y) - 50% + 4rem);
+    opacity: 0;
+  }
+}
+
+/* FR FR: the stamp, which is the status family's gesture, and one ring going
+   out. A number is named instead of rolled, so nothing is thrown. */
+.cast[data-cast="card"][data-card-id="action-fr-fr"] .cast__card > .card {
+  animation-name: cast-stamp;
+}
+
+.cast[data-cast="card"][data-card-id="action-fr-fr"] .cast__part[data-part="0"] {
+  animation-name: cast-ring-out;
+}

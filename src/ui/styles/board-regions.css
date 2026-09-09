@@ -1,0 +1,135 @@
+/* Board regions: the four yards, the four houses, the slots a waiting pawn
+   stands on, and the draining of the seats nobody is sitting in.
+
+   Split out of board.css on 2026-08-31, when the skill square of design spec
+   03 took that file to 314 lines and past NFR-02. The seam is a field against
+   a region that holds fields: board.css styles .board and .square, this file
+   styles .start-area, .home-column and .slot.
+
+   Section 1 of spec 03 predicted the split and named the 40 track placements
+   as the seam. Those had already moved to board-track.css in handoff 02, so
+   the next seam down was taken instead.
+
+   Depends on board.css for the grid and the seat colour variables. Load it
+   after board.css. */
+
+/* --- Start areas, the yards: the four 4 by 4 corners. No margin, so the 4 by 4
+       sub-grid stays aligned to the board grid and the pawns land on the
+       slot centres (D3). The comment delivered here said 6 by 6, which was
+       left over from the 15 by 15 board; the rules below have always been
+       4 by 4 and are what the 11 by 11 grid needs. --- */
+
+.start-area {
+  position: relative;
+  z-index: var(--layer-region);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  border-radius: var(--radius-lg);
+  background: var(--player);
+  box-shadow:
+    inset 0 0 0 var(--border-ink) var(--color-ink),
+    var(--shadow-region);
+}
+
+.start-area[data-player="0"] {
+  grid-area: 1 / 1 / 5 / 5;
+}
+.start-area[data-player="1"] {
+  grid-area: 1 / 8 / 5 / 12;
+}
+.start-area[data-player="2"] {
+  grid-area: 8 / 8 / 12 / 12;
+}
+.start-area[data-player="3"] {
+  grid-area: 8 / 1 / 12 / 5;
+}
+
+.start-area .slot[data-slot="0"] {
+  grid-area: 2 / 2;
+}
+.start-area .slot[data-slot="1"] {
+  grid-area: 2 / 3;
+}
+.start-area .slot[data-slot="2"] {
+  grid-area: 3 / 2;
+}
+.start-area .slot[data-slot="3"] {
+  grid-area: 3 / 3;
+}
+
+/* --- Home columns: the house. Four squares, step 1 against the turn-off
+       square, step 4 the last one and the square a pawn finishes on. The
+       fifth cell of the arm's middle lane is the turn-off field itself, so
+       the house fits the arm exactly with nothing left over (D3). --- */
+
+.home-column {
+  z-index: var(--layer-region);
+  display: flex;
+  justify-content: flex-start;
+}
+
+.home-column .square {
+  flex: 1 1 0;
+}
+
+.home-column[data-player="0"] {
+  grid-area: 6 / 2 / 7 / 6;
+  flex-direction: row;
+}
+.home-column[data-player="1"] {
+  grid-area: 2 / 6 / 6 / 7;
+  flex-direction: column;
+}
+.home-column[data-player="2"] {
+  grid-area: 6 / 7 / 7 / 11;
+  flex-direction: row-reverse;
+}
+.home-column[data-player="3"] {
+  grid-area: 7 / 6 / 11 / 7;
+  flex-direction: column-reverse;
+}
+
+/* --- Slots: the empty receptacle a pawn stands on --- */
+
+/* A start slot is a field like any other, so a waiting pawn stands on the
+   same thing it will stand on for the rest of the game. */
+.slot {
+  place-self: center;
+  z-index: var(--layer-region);
+  width: var(--slot-size);
+  height: var(--slot-size);
+  border-radius: var(--radius-sm);
+  background: var(--color-square);
+  box-shadow: inset 0 0 0 var(--border-hair) var(--color-square-edge);
+}
+
+/* --- Empty seats, 2 and 3 player matches (D3). Present, drained, and
+       outlined rather than filled, so the board reads as complete. --- */
+
+.board[data-players="2"] [data-player="1"],
+.board[data-players="2"] [data-player="3"],
+.board[data-players="3"] [data-player="3"] {
+  --player: var(--color-dormant);
+  --player-soft: var(--color-dormant-soft);
+  --marked: var(--color-dormant);
+}
+
+.board[data-players="2"] .start-area[data-player="1"],
+.board[data-players="2"] .start-area[data-player="3"],
+.board[data-players="3"] .start-area[data-player="3"] {
+  background: var(--color-dormant-soft);
+  box-shadow: inset 0 0 0 var(--border-hair) var(--color-dormant);
+}
+
+/* Entry and turn-off squares belong to the 52-square topology, so they carry
+   data-entry-of and data-turnoff-of whatever the seat count is. They are
+   drained here rather than by the view. */
+.board[data-players="2"] .square[data-entry-of="1"],
+.board[data-players="2"] .square[data-turnoff-of="1"],
+.board[data-players="2"] .square[data-entry-of="3"],
+.board[data-players="2"] .square[data-turnoff-of="3"],
+.board[data-players="3"] .square[data-entry-of="3"],
+.board[data-players="3"] .square[data-turnoff-of="3"] {
+  --marked: var(--color-dormant);
+}

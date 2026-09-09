@@ -1,0 +1,5 @@
+<svg viewBox="0 0 232 128" aria-hidden="true" focusable="false">
+          <g stroke="#35204A" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" fill="none">
+            <g transform="translate(56 4)"><path d="M60,16 L102,102 L18,102 Z" fill="#FFF3E2"></path><path d="M60,16 L60,76 L18,102 Z" fill="#EFD9BC" stroke="none"></path><g stroke-width="3.5"><path d="M60,16 L60,76"></path><path d="M60,76 L18,102"></path><path d="M60,76 L102,102"></path></g><text x="60" y="95" text-anchor="middle" font-family="Baloo 2, cursive" font-size="18" font-weight="800" fill="#35204A" stroke="none">4</text></g>
+          </g>
+        </svg>

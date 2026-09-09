@@ -1,6 +1,6 @@
 # Ludo Advanced
 
-A 2D web remake of Ludo where the single die is replaced by two card pools — draw your dice, play your skills.
+A 2D web remake of Ludo where the single die is replaced by two card pools: draw your dice, play your skills.
 
 ![Status](https://img.shields.io/badge/status-in%20development-orange)
 ![License](https://img.shields.io/badge/license-TBD-lightgrey)
@@ -10,10 +10,10 @@ A 2D web remake of Ludo where the single die is replaced by two card pools — d
 Classic Ludo gives you one die and one decision: which pawn to move. Ludo Advanced adds two layers of choice on top of
 the familiar board:
 
-- **Dice Card Pool** — cards ranging from **D2 to D20**. At the start of your turn you draw 3 cards, pick the die you
-  want to roll, and the 3 cards are shuffled back into the pool. A D20 can carry a pawn across the board — or overshoot
+- **Dice Card Pool**: cards ranging from **D2 to D20**. At the start of your turn you draw 3 cards, pick the die you
+  want to roll, and the 3 cards are shuffled back into the pool. A D20 can carry a pawn across the board: or overshoot
   the goal.
-- **Skill Card Pool** — **Action** cards you play on your own turn and **Reaction** cards you play in response to
+- **Skill Card Pool**: **Action** cards you play on your own turn and **Reaction** cards you play in response to
   another player's move (shield a pawn, swap positions, force a reroll).
 
 Everything else stays true to Ludo: 2–4 players, four pawns each, leave the start area on the highest roll, capture by
@@ -25,7 +25,7 @@ The full rules are in [00-One-Pager.md](00-Meta/Project-Management/00-One-Pager.
 
 | Area          | Choice                            |
 | ------------- | --------------------------------- |
-| Language      | JavaScript (ES modules) — no TypeScript |
+| Language      | JavaScript (ES modules): no TypeScript |
 | DOM / UI      | jQuery                            |
 | Build         | Vite                              |
 | Localization  | i18next (`de`, `en`)              |
@@ -47,7 +47,7 @@ npm install
 npm run dev
 ```
 
-The dev server prints a local URL — open it in your browser to play.
+The dev server prints a local URL: open it in your browser to play.
 
 ## Scripts
 
@@ -64,12 +64,46 @@ The dev server prints a local URL — open it in your browser to play.
 | `npm run test:coverage` | Unit tests with a coverage report  |
 | `npm run test:e2e`      | Run Playwright end-to-end tests    |
 
+Four more exist and are not part of the everyday loop. They generate things rather than check them, so
+each is run by hand when its input changes:
+
+| Command                   | Description                                                                    |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| `npm run assets:card-art` | Extract the 36 card illustrations out of the Claude Design artboard into `src/ui/art/` |
+| `npm run docs:ai-index`   | Generate the AI index chapter from the local AI prompt logs                    |
+| `npm run docs:dice-balance` | Derive and measure the dice pool balance quoted in the game design document  |
+| `npm run test:seeds`      | Search for the fixed RNG seeds the end-to-end suite pins                       |
+
+## The address bar
+
+Read once, by `src/options.js`, on behalf of `src/main.js`. Every one of them falls back rather than
+failing, so a malformed URL starts a normal game.
+
+| Parameter    | Effect                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------- |
+| `?seed=42`   | Fixes the RNG, so the same match plays out the same way every time (NFR-09)                 |
+| `?players=4` | Starts a match with that many players at once, **skipping the main menu**. 2, 3 or 4        |
+| `?bots=3`    | Hands the last seats to the computer. Needs `?players=`, and always leaves one person in    |
+| `?fast=1`    | Shortens the pauses in the turn loop and passes the handover screen without waiting for it  |
+
+**`?bots=` is how you play alone today.** `/?players=4&bots=3` seats you first and lets the computer
+play the other three: they pick their dice card, roll it, move a pawn, and play a skill card whenever
+one is worth more to them than keeping it. When a bot plays a card, the strip under the board says so
+for two seconds, naming the seat and the card. The hand-over screen stays away, because there is nobody
+to hand the keyboard to. Choosing bots from the menu instead of the address bar is a separate issue,
+waiting on a design for the setup screen.
+
+`?players=` and `?fast=1` exist for the end-to-end suite. They are what let every spec written before
+the main menu and the handover screen existed keep running unchanged, and they change the waiting rather
+than the rules: a run with `?fast=1` plays exactly the same turn, only quicker.
+
 ## Project structure
 
 ```
 src/
-  core/    Pure game rules — board, movement, capture, turn manager, card pools
+  core/    Pure game rules: board, movement, capture, turn manager, card pools
   state/   Game state and its transitions
+  ai/      Rule-based bot players: reads state, returns intents
   ui/      jQuery rendering and input handling
   i18n/    i18next setup and locale files
 tests/
@@ -98,7 +132,7 @@ Target coverage is at least 80 % of lines in `src/core/` and `src/state/`; the U
 
 ## Localization
 
-The interface ships in **German (`de`)** and **English (`en`)**. No user-facing string is hardcoded — every one of them
+The interface ships in **German (`de`)** and **English (`en`)**. No user-facing string is hardcoded: every one of them
 is an i18next key.
 
 To add a language, copy `src/i18n/locales/en.json` to `<code>.json`, translate the values (leave the keys untouched),
@@ -135,8 +169,8 @@ Details: [01-Github-Project.md](00-Meta/Project-Management/01-Github-Project.md)
 | Name            | Role                              |
 | --------------- | --------------------------------- |
 | Fabian Gemming  | Product Owner                     |
-| Lars Bolender   | Scrum Member — implementation     |
-| Benedict Glatz  | Scrum Member — implementation     |
+| Lars Bolender   | Scrum Member: implementation     |
+| Benedict Glatz  | Scrum Member: implementation     |
 
 ## License
 

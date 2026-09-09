@@ -11,52 +11,1028 @@ written down after that command has actually been run. Never estimate, never rec
 never copy a figure from an earlier draft.
 
 The reason is that a number goes stale silently. A line count written into a chapter in week three
-is quietly wrong by week five and nothing flags it. A command is never wrong — it is re-run before
+is quietly wrong by week five and nothing flags it. A command is never wrong: it is re-run before
 submission and the output replaces whatever was there.
 
 The other chapters therefore never state a figure. They refer here.
 
+**Values are replaced, not appended.** When a command is re-run, its new output overwrites the old
+one and the *Taken on* column moves with it. The point of this table is what is true now, not a
+history of what was true.
+
 ## Commands
 
-Nothing to run yet — there is no source code. When `src/` exists, record each metric as a command
-plus its last output and the date it was taken.
+Run from the repository root, in Git Bash. Every command below has been executed. Five of the ones
+suggested when this file was first written turned out to be wrong and were corrected, which is
+noted under them.
 
-Suggested starting set, to be adjusted once the project is bootstrapped:
+Every path is passed null-delimited (`git ls-files -z | xargs -0`) since 2026-09-01, because a
+directory with a space in its name silently broke command 6. See the correction below.
 
 ```bash
-# Source files and lines, excluding tests
-git ls-files 'src/**/*.js' | xargs wc -l | tail -1
+# 1. Source files and lines, excluding tests
+git ls-files 'src/*.js' | wc -l                          # files
+git ls-files -z 'src/*.js' | xargs -0 wc -l | tail -1    # lines
 
-# Test files and lines
-git ls-files 'tests/**/*.js' | xargs wc -l | tail -1
+# 2. Test files and lines
+git ls-files 'tests/*.js' | wc -l
+git ls-files -z 'tests/*.js' | xargs -0 wc -l | tail -1
 
-# Lines per architecture layer
-for d in src/core src/state src/ui src/i18n; do
-  printf '%s ' "$d"; git ls-files "$d" | xargs wc -l | tail -1
+# 3. Lines per architecture layer. `src/ai` joined the list on 2026-09-04 with issue #43, which is
+#    the whole reason it is a loop over a list rather than four commands.
+for d in src/core src/state src/ui src/i18n src/ai src/net; do
+  printf '%s %s files ' "$d" "$(git ls-files "$d/*.js" | wc -l)"
+  git ls-files -z "$d/*.js" | xargs -0 wc -l | tail -1
 done
 
-# Unit test count
-npx vitest run --reporter=basic
+# 4. Unit test count
+npx vitest run --reporter=default 2>&1 | grep -E "Test Files|Tests "
 
-# Coverage
+# 5a. Coverage totals
 npm run test:coverage
 
-# Longest files — evidence for the 300-line rule
-git ls-files 'src/**/*.js' | xargs wc -l | sort -rn | head -10
+# 5b. Coverage per file, including the files command 5a leaves out (see the correction below)
+node -e "const j=require('./coverage/coverage-summary.json');
+for (const [k,v] of Object.entries(j))
+  console.log((k === 'total' ? k : 'src' + k.split('src').pop()) + ' lines ' + v.lines.pct + '%');"
+
+# 5c. Coverage per directory, which is what NFR-05 actually asks for
+node -e "const j=require('./coverage/coverage-summary.json'); const a={};
+for (const [k,v] of Object.entries(j)) { if (k === 'total') continue;
+  const p = k.split(String.fromCharCode(92)).join('/');
+  const d = p.includes('/core/') ? 'src/core' : p.includes('/state/') ? 'src/state' : p.includes('/net/') ? 'src/net' : 'src/ai';
+  a[d] = a[d] || {c:0,t:0,f:0}; a[d].c += v.lines.covered; a[d].t += v.lines.total; a[d].f += 1; }
+for (const [d,x] of Object.entries(a))
+  console.log(d, x.f + ' files', x.c + '/' + x.t, (100*x.c/x.t).toFixed(2) + '%');"
+
+# 6. Longest files: evidence for the 300-line rule. CSS counts, so it is in the pattern.
+#    Scoped and null-delimited since 2026-09-01, see the correction below.
+#    The workflow file joined the pattern on 2026-09-02, see the note below.
+git ls-files -z 'src/*.js' 'src/*.css' 'tests/*.js' 'scripts/*.js' '*.config.js' \
+  '.github/*.yml' | xargs -0 wc -l | sort -rn | sed -n '2,7p'
+
+# 7. Stylesheet lines. Added 2026-08-30, when src/ui/styles/ stopped being empty.
+git ls-files -z 'src/*.css' | xargs -0 wc -l | sort -rn
+
+# 8. End-to-end test count, per browser. The suite runs three, so the total run is three times this.
+npx playwright test --list --project=chromium 2>&1 | tail -1
+
+# 9. How strong the bots are. Added 2026-09-06 with the bot tactics plan. Not a size measurement:
+#    it is the only command in the project that answers "did that change make it better", and every
+#    run of it belongs in the arena section below with its own seat list. 1200 matches takes about
+#    eight minutes; 400 takes two and a half.
+npm run bots:arena -- --matches=1200 --seats=default,plain
 ```
+
+**Commands 3 and 5c were both widened on 2026-09-04**, when `src/ai/` became the fourth layer under
+`src/`. Command 3's loop gained `src/ai`, and command 5c's one-line classifier had two branches for
+three directories, so a bot file was silently counted as `src/state`. **It also matched on the substring
+`core` anywhere in the path**, which was correct only because no directory outside `src/core/` happened
+to contain those four letters. Both now split the path on the separator and match a directory rather
+than a substring, and the run on Windows needs the backslash, which is why the split is written with
+`String.fromCharCode(92)`: this file's own rule bans no character, but a literal backslash inside a
+double-quoted `node -e` inside a Markdown code fence is three levels of escaping and one of them always
+gets it wrong.
+
+The lesson is the same one command 6 already carries: **a measurement command that was written for the
+directories that existed at the time reports confidently on the wrong set once a directory is added.**
+Command 5c would have gone on producing two believable rows for three layers.
+
+**Command 6 changed on 2026-08-30** and the change matters. It used to list `*.js` only. NFR-02
+applies to "source, tests and config", and a stylesheet is source: the delivered `board.css` was the
+first file in the project to come near the limit, and a JavaScript-only command would not have seen
+it.
+
+**Command 6 changed again on 2026-09-02**, for the second half of the same sentence. NFR-02 says
+"source, tests **and config**", and `.github/workflows/build-check.yml` from issue #68 is config that
+no pattern in this file was looking at. `.github/*.yml` is now in the list. Measured on 2026-09-02
+after the change: the workflow is **116 lines**, so it does not appear in the top six and the six
+longest files are unchanged. That is the useful outcome to record. **A pattern that only gets widened
+after a file grows too long measures nothing**, and this one was widened while the answer was still
+boring.
+
+**Two corrections to the commands this file was created with**, both found by running them:
+
+- The original pattern was `git ls-files 'src/**/*.js'`, which returns **nothing**. Git pathspecs are
+  not shell globs: a plain `*` already matches across `/`, and `**` is not treated the way a shell
+  treats it here. `src/*.js` is the working form and it does recurse.
+- The original test-count command was `npx vitest run --reporter=basic`. The `basic` reporter was
+  **removed in Vitest 4**, and the command fails with `Failed to load custom Reporter from basic`.
+  `--reporter=default` plus a `grep` for the summary lines replaces it.
+
+Command 6 uses `sed -n '2,7p'` rather than `head` because `wc -l` puts its `total` line first after
+the reverse sort, and that total is not a file.
+
+**A third correction to command 5b itself.** Its first version split the file path on
+`/[\\\\/]/` and took the last three segments, which left the full Windows path in the output
+untouched. Splitting on the literal string `src` and rebuilding the path from there works and is
+readable, which is all this command has to be.
+
+**A fourth correction, and this one withdraws an earlier claim rather than fixing a typo.** After
+issue #26 this file recorded that `npm run test:coverage` printed an **empty per-file table** and
+called it a measured defect in the tool. **That was wrong, and the cause is worth writing down.**
+The v8 text reporter omits files that are at 100 %. At #26 there was exactly one measured file,
+`board.js`, and it was at 100 %, so its row was omitted and the table looked broken. After #27
+there are ten measured files, one of them below 100 %, and that one row renders correctly. The
+other nine are still omitted, which is the same behaviour and now obviously deliberate.
+
+The workaround stands and is still worth having: `json-summary` is in the coverage reporters in
+`vitest.config.js`, and commands 5b and 5c read `coverage/coverage-summary.json`, which reports
+every file whatever its percentage and can be aggregated per directory the way NFR-05 asks. What
+changes is the reason. It is a reporting default that hides good news, not a defect.
+
+The lesson is worth a sentence in the report on its own: a measurement taken once, against a sample
+of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
 
+### Measured 2026-09-09, after issue #42 landed
+
+Every command in the section above was re-run after online multiplayer landed. **This is the current
+measurement**; the blocks below it are kept so the growth is readable rather than asserted. Command 3
+and 5c now include `src/net`, which is the fourth layer NFR-05 measures since this change.
+
 | Metric | Command | Value | Taken on |
 | --- | --- | --- | --- |
-| — | — | — | — |
+| JavaScript lines in `src/` | 1 | **19745 lines in 131 files**, up from 17371 in 110 | 2026-09-09, after issue #42 |
+| Stylesheet lines in `src/` | 7 | **6298 lines in 36 files**, up from 6166 in 32 | 2026-09-09, after issue #42 |
+| Test lines in `tests/` | 2 | **21748 lines in 134 files**, up from 19599 in 118 | 2026-09-09, after issue #42 |
+| Lines in `src/core/` | 3 | 4543 lines in 32 files, **unchanged** | 2026-09-09, after issue #42 |
+| Lines in `src/state/` | 3 | 2447 lines in 15 files, up 74 (`auto-steps.js`) | 2026-09-09, after issue #42 |
+| Lines in `src/ui/` | 3 | **8807 lines in 56 files**, plus 6298 lines of CSS | 2026-09-09, after issue #42 |
+| Lines in `src/ai/` | 3 | 2768 lines in 18 files, **unchanged** | 2026-09-09, after issue #42 |
+| Lines in `src/net/` | 3 | **756 lines in 7 files**, new | 2026-09-09, after issue #42 |
+| Unit tests | 4 | **98 test files, 1133 tests**, all passing | 2026-09-09, after issue #42 |
+| End-to-end tests | 8 | **157 tests in 31 files per browser**, all passing on Chromium; `online.spec.js`'s 2 skip on the other two | 2026-09-09, after issue #42 |
+| Coverage of the four headless layers, lines | 5c | 99.27 % (1502/1513) | 2026-09-09, after issue #42 |
+| Coverage of `src/core/`, lines | 5c | 99.66 % (581/583) over 32 files | 2026-09-09, after issue #42 |
+| Coverage of `src/state/`, lines | 5c | 99.07 % (321/324) over 15 files | 2026-09-09, after issue #42 |
+| Coverage of `src/ai/`, lines | 5c | 99.08 % (432/436) over 18 files | 2026-09-09, after issue #42 |
+| Coverage of `src/net/`, lines | 5c | 98.82 % (168/170) over 6 files, `webrtc-link.js` excluded | 2026-09-09, after issue #42 |
+| Coverage, branches | 5a | 94.89 % | 2026-09-09, after issue #42 |
+| Coverage, functions | 5a | 98.91 % | 2026-09-09, after issue #42 |
+| Longest file of any kind | 6 | 299 lines, `tests/unit/state/intents-cards.test.js`; longest source `src/state/game-state.js` at 292 | 2026-09-09, after issue #42 |
+| Longest stylesheet | 7 | 267 lines, `src/ui/styles/board.css`, unchanged | 2026-09-09, after issue #42 |
+
+**Four readings.**
+
+1. **`core/` and `ai/` are byte-identical after a networking feature.** The whole of online play is 756
+   lines of `net/`, 74 lines of `state/`, and `ui/`. That is the layering doing what the architecture
+   document said it would: a rule change is cheap because a rule lives in one place, and here the
+   reverse held, a transport change touched no rule.
+2. **`game-loop.js` is no longer at the limit.** It was the only file at 300 for three deliveries and is
+   269 after the state cell moved to `loop-store.js`. Three other files were split for the same reason
+   in this change and none is above 292.
+3. **`ui/` grew by 1543 lines and 13 files**, of which `guest-loop.js`, `guest-role.js`, `host-role.js`,
+   `online-flow.js` and `lobby-screen.js` are the feature and the other eight are splits and the
+   regions that took the lobby's fields.
+4. **The coverage floor widened and did not fall.** `src/net/` enters at 98.82 % on its first
+   measurement, with the two uncovered lines in `guest-session.js`'s `default` branch and
+   `host-session.js`'s `loop === null` refusal.
+
+### Measured 2026-09-06, after design handoff 18 landed
+
+Every command in the section above was re-run after the cast landed. **This is the current
+measurement**; the blocks below it are kept so the growth is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **17371 lines in 110 files**, up from 16247 in 104 | 2026-09-06, after handoff 18 |
+| Stylesheet lines in `src/` | 7 | **6166 lines in 32 files**, up from 4420 in 21 | 2026-09-06, after handoff 18 |
+| Test lines in `tests/` | 2 | **19599 lines in 118 files**, up from 18733 in 113 | 2026-09-06, after handoff 18 |
+| Lines in `src/core/` | 3 | 4543 lines in 32 files, up 31 | 2026-09-06, after handoff 18 |
+| Lines in `src/state/` | 3 | 2373 lines in 14 files, up 29 | 2026-09-06, after handoff 18 |
+| Lines in `src/ui/` | 3 | **7264 lines in 43 files**, plus 6166 lines of CSS | 2026-09-06, after handoff 18 |
+| Lines in `src/ai/` | 3 | 2768 lines in 18 files, **unchanged** | 2026-09-06, after handoff 18 |
+| Unit tests | 4 | **85 test files, 1050 tests**, all passing | 2026-09-06, after handoff 18 |
+| End-to-end tests | 8 | **152 tests in 28 files per browser, 456 across the three**, all passing | 2026-09-06, after handoff 18 |
+| Coverage of the three headless layers, lines | 5c | 99.32 % (1325/1334) | 2026-09-06, after handoff 18 |
+| Coverage of `src/core/`, lines | 5c | 99.66 % (581/583) over 32 files | 2026-09-06, after handoff 18 |
+| Coverage of `src/state/`, lines | 5c | 99.05 % (312/315) over 14 files | 2026-09-06, after handoff 18 |
+| Coverage of `src/ai/`, lines | 5c | 99.08 % (432/436) over 18 files | 2026-09-06, after handoff 18 |
+| Coverage, branches | 5a | 95.26 % | 2026-09-06, after handoff 18 |
+| Coverage, functions | 5a | 99.79 % | 2026-09-06, after handoff 18 |
+| Longest file of any kind | 6 | 300 lines, `src/ui/game-loop.js`, still the only one at the limit | 2026-09-06, after handoff 18 |
+| Longest stylesheet | 7 | **267 lines, `src/ui/styles/board.css`**, down from 296 | 2026-09-06, after handoff 18 |
+
+**Four readings.**
+
+1. **The stylesheets grew by 40 per cent in one delivery**, 1746 lines and eleven files, and it is the
+   largest single addition of CSS the project has had. Ten of the eleven are the cast; the eleventh is
+   `motion.css`, which is a split and not new code.
+2. **The longest stylesheet went *down* by 29 lines**, and that is the split doing its job.
+   `tokens.css` had been the longest at 296 of 300 for two deliveries and would have reached 322 with
+   the cast's four tokens in it. It is now 229 and `motion.css` is 115, and the file that is closest to
+   the limit is `board.css` at 267, which is where it has been all along.
+3. **`src/ai/` is byte-identical after a whole feature**, and `core/` moved by 31 lines, all of them
+   the `cardReach` report and its comments. A feature that is 1746 lines of CSS and 11 new JavaScript
+   files touched the rules layer with one field.
+4. **Coverage did not move**, and the reason is worth stating rather than leaving to be inferred:
+   `vitest.config.js` measures `src/core/**` and `src/state/**` only, so eleven new `ui/` files are
+   outside the figure by design. Three of them are covered by new unit tests that do not appear in it,
+   and the rest by `cast.spec.js`, which produces no percentage. The configuration was left alone
+   rather than widened, because widening it would quietly change what the NFR-05 figure means.
+
+### How many skill cards a match actually plays, measured 2026-09-06
+
+The figure design brief 18 § 4.4 said nobody had, and the one the cast's cost has to be judged
+against. The arena produces it as a by-product, because it already counts card plays per seat.
+
+```bash
+npm run bots:arena
+```
+
+```
+200 matches, 4 seats, seeds 1..200, rotating line-up, 313.8 turns per match on average
+
+profile    wins    rate       95 %  captures    cards
+---------------------------------------------------
+default     200  100.0 %  +/-  0.0      6.77    67.34
+```
+
+**67.34 card plays per seat per match**, four seats, so **about 269 card plays in a four-bot match of
+313.8 turns**. That is roughly 0.86 card plays per turn.
+
+**And this is the negative finding of the whole delivery, so it is written down plainly.** At the
+spec's 1.5 seconds with a board stage and 0.94 without, 269 card plays cost between **4.2 and 6.7
+minutes** of a four-player match, against the roll's 0.9 seconds per turn, which is about 4.7 minutes.
+**The cast is at least as expensive as the roll and possibly half as expensive again**, and design spec
+18's D108 said in as many words that the number to compare against was the roll's.
+
+Three things have to be said with it rather than after it:
+
+- **It is a bot measurement.** Four bots play every card they can afford every turn, because that is
+  what the profile is scored on. A four-person table will play fewer, and nobody has measured how many
+  fewer, because there is no way to measure a person with a seeded script.
+- **It is not what it replaces.** Before this delivery a bot's card play already held the turn for two
+  seconds through `midTurnAnnouncement`, and that hold was removed here. Against 269 card plays of
+  which some fraction are bots', the cast is not 4.2 minutes *added*; part of it was already being paid
+  for a sentence in the strip.
+- **The lever exists and it is one token.** `--motion-cast-hold` is 1500 ms in `motion.css` and nothing
+  else reads it. This is a Product Owner question and it is filed as one: the number can be halved
+  without a line of JavaScript changing.
+
+### Measured 2026-09-06, after the bot tactics plan
+
+Every command in the section above was re-run after the four phases of
+`00-Meta/Project-Management/Bot-Tactics-Plan.md` landed and before the closing commit. **This is the
+current measurement**; the blocks below it are kept so the growth is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **16247 lines in 104 files** | 2026-09-06, after the bot plan |
+| Stylesheet lines in `src/` | 7 | 4420 lines in 21 files | 2026-09-06, after the bot plan |
+| Test lines in `tests/` | 2 | **18733 lines in 113 files** | 2026-09-06, after the bot plan |
+| Lines in `src/core/` | 3 | 4512 lines in 32 files, **unchanged by the whole plan** | 2026-09-06, after the bot plan |
+| Lines in `src/state/` | 3 | 2344 lines in 14 files, also unchanged | 2026-09-06, after the bot plan |
+| Lines in `src/ui/` | 3 | 6208 lines in 37 files, plus 4420 lines of CSS, also unchanged | 2026-09-06, after the bot plan |
+| Lines in `src/ai/` | 3 | **2773 lines in 18 files**, up from 1901 in 12 | 2026-09-06, after the bot plan |
+| Unit tests | 4 | **81 test files, 996 tests**, all passing | 2026-09-06, after the bot plan |
+| End-to-end tests | 8 | **144 tests in 27 files per browser, 432 across the three**, all passing | 2026-09-06, after the bot plan |
+| Coverage of the three headless layers, lines | 5c | **99.33 % (1325/1334)** | 2026-09-06, after the bot plan |
+| Coverage of `src/core/`, lines | 5c | 99.66 % (581/583) over 32 files | 2026-09-06, after the bot plan |
+| Coverage of `src/state/`, lines | 5c | 99.05 % (312/315) over 14 files | 2026-09-06, after the bot plan |
+| Coverage of `src/ai/`, lines | 5c | **99.08 % (432/436) over 18 files** | 2026-09-06, after the bot plan |
+| Coverage, branches | 5a | 95.16 % | 2026-09-06, after the bot plan |
+| Coverage, functions | 5a | 99.79 % | 2026-09-06, after the bot plan |
+| Longest file of any kind | 6 | **300 lines, `src/ui/game-loop.js`**, and it is the only one at the limit | 2026-09-06, after the bot plan |
+| Longest stylesheet | 7 | 296 lines, `src/ui/styles/tokens.css` | 2026-09-06, after the bot plan |
+
+**Three readings.**
+
+1. **`core/`, `state/` and `ui/` are all byte-identical after a whole feature.** The bots learned a
+   probability model of the dice pool, a danger model, a lead-weighted damage model and a real trap
+   search, and **not one line outside `src/ai/` changed**. That is the sixth measurement in a row where
+   the rules layer did not move and the first where three layers did not.
+2. **`src/ai/` grew by 872 lines and six files, and four of the six are splits rather than new
+   subjects.** `score.js`, `geometry.js`, `values-attacks.js` and `values-nuehue.js` all came out of
+   files that were within ten lines of NFR-02's limit, which is what the limit is for: the split
+   happened before the code was written, along a seam the old file headers already named.
+3. **The `src/ai/` coverage floor holds at 99 % with the arena outside it.** `scripts/` is not measured
+   and is not meant to be, and the four uncovered lines in `ai/` are the two "the bot never plays this"
+   value functions and two defensive branches.
+
+### The arena, measured 2026-09-06
+
+```bash
+npm run bots:arena -- --matches=1200 --seats=default,plain
+npm run bots:arena -- --matches=400  --seats=default,random
+npm run bots:arena -- --matches=400  --seats=opportunityWeight=0+landingWeight=0,plain
+npm run bots:arena -- --matches=400  --seats=riskWeight=0+landingWeight=0,plain
+npm run bots:arena -- --matches=400  --seats=riskWeight=0+opportunityWeight=0,plain
+npm run bots:arena -- --matches=1200 --seats=opportunityWeight=0+landingWeight=0,plain
+npm run bots:arena -- --matches=1200 --seats=riskWeight=0+opportunityWeight=0,plain
+```
+
+Two seats each of the named profile and of `plain`, line-up rotated one seat per match, seeds
+`1..matches`. `plain` is the move scorer as it was before the plan, in the same build. Every rate is
+a share of **all** matches, so an even table is 50 % per profile and the interval is the one the
+script prints.
+
+**These are the runs the shipped `DEFAULT_PROFILE` was chosen from, and most of them are negative.**
+
+| Run | What was switched on | Matches | Win rate against `plain` | Verdict |
+| --- | --- | --- | --- | --- |
+| 1 | all three correction terms | 400 | 46.5 % +/- 4.9 | **worse** |
+| 2 | danger only | 400 | 49.5 % +/- 4.9 | a draw |
+| 3 | danger only, weight 0.5 | 400 | 49.0 % +/- 4.9 | a draw |
+| 4 | danger only, weight 2 | 400 | 47.8 % +/- 4.9 | a draw, trending worse |
+| 5 | opportunity only, as an absolute | 400 | 43.8 % +/- 4.9 | **worse** |
+| 6 | opportunity only, rewritten as a difference | 400 | 43.0 % +/- 4.9 | **worse, and the rewrite changed nothing** |
+| 7 | landing bonus only | 400 | 47.5 % +/- 4.9 | worse, inside the interval |
+| 8 | danger and landing | 400 | 45.3 % +/- 4.9 | **worse** |
+| 9 | danger only | 1200 | 49.7 % +/- 2.8 | **a draw, at four times the power** |
+| 10 | landing bonus only | 1200 | 47.3 % +/- 2.8 | **worse, outside the interval** |
+| 11 | the shipped profile | 1200 | 49.7 % +/- 2.8 | a draw |
+| 12 | the shipped profile against `random` | 400 | 100.0 % | the floor holds |
+
+Average match length is 325 turns and one run of 400 matches takes about two and a half minutes.
+
+**What the table decided.** `riskWeight: 1`, `opportunityWeight: 0`, `landingWeight: 0`. Runs 9 and 11
+are the same numbers because danger is the only term left on in the shipped profile.
+
+**Four findings worth a paragraph in the report each.**
+
+1. **The obvious improvement made the bot worse, and only the arena could say so.** Run 1 is the whole
+   plan switched on, as designed, by an argument everybody agreed with. It loses. The plan's first phase
+   was a measuring tool for exactly this reason and it earned its cost on its first use.
+2. **Chasing captures loses a race.** Runs 5 and 6 are the largest single effect in the table and both
+   show the same thing: a bot that goes out of its way to stop within a roll of an enemy takes more
+   captures per match and wins fewer matches. Ludo is a race and a capture is not worth the detour that
+   sets it up.
+3. **A reasonable diagnosis can be wrong, and the measurement is what shows it.** The opportunity term
+   was written as an absolute while danger was written as a difference, which is a real asymmetry and a
+   real defect: it pays for every short move ending near an enemy, including the ones that give up a
+   better position. Fixing it was the obvious next step, it was measured, and it moved the number by
+   0.8 points, which is a quarter of the interval. The defect was real and it was not the cause.
+4. **Danger is shipped on although it does not win.** Runs 2, 3, 4 and 9 put it inside the interval at
+   every weight tried, while it takes about 10 % more captures per match. It is kept because it removes
+   the two blunders a person watching a bot notices, which is a product judgement and is recorded as
+   one in the project journal rather than dressed up as a measurement.
+
+**The gap in the method, recorded rather than papered over.** Phase 2's card changes (the lead
+weighting in `share`, the trap search, Nühü's four receiving-end values) are **not** behind a profile
+knob, so `plain` and `default` both carry them and no run in the table says anything about whether they
+helped. They shipped on the strength of the argument for them, which is the thing this plan was written
+to stop. Putting them behind knobs is outstanding work and is the first thing the next arena session
+should do.
+
+### Measured 2026-09-04, after the bots learned to play cards
+
+Every command in the section above was re-run after issues #43 and #82 landed and before the closing
+commit. **This is the current measurement**; the ones below it are kept so the growth is readable rather
+than asserted. The previous block is from before `src/ai/` existed, so the layer rows are new here.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **14108 lines in 89 files** | 2026-09-04, after #82 |
+| Stylesheet lines in `src/` | 7 | 3717 lines in 20 files | 2026-09-04, after #82 |
+| Test lines in `tests/` | 2 | **16332 lines in 95 files** | 2026-09-04, after #82 |
+| Lines in `src/core/` | 3 | 4411 lines in 31 files, **unchanged by both issues** | 2026-09-04, after #82 |
+| Lines in `src/state/` | 3 | 2171 lines in 12 files | 2026-09-04, after #82 |
+| Lines in `src/ui/` | 3 | 5232 lines in 31 files, plus 3717 lines of CSS | 2026-09-04, after #82 |
+| Lines in `src/ai/` | 3 | **1901 lines in 12 files**, the layer that did not exist yesterday | 2026-09-04, after #82 |
+| Unit tests | 4 | **69 test files, 893 tests**, all passing | 2026-09-04, after #82 |
+| End-to-end tests | 8 | **121 tests in 22 files per browser, 363 across the three** | 2026-09-04, after #82 |
+| Coverage of the three headless layers, lines | 5c | **99.49 % (1171/1177)** | 2026-09-04, after #82 |
+| Coverage of `src/core/`, lines | 5c | 99.65 % (566/568) over 31 files | 2026-09-04, after #82 |
+| Coverage of `src/state/`, lines | 5c | 98.98 % (290/293) over 12 files | 2026-09-04, after #82 |
+| Coverage of `src/ai/`, lines | 5c | **99.68 % (315/316) over 12 files** | 2026-09-04, after #82 |
+| Coverage, branches | 5a | 95.40 % | 2026-09-04, after #82 |
+| Coverage, functions | 5a | 100 % | 2026-09-04, after #82 |
+| Longest file of any kind | 6 | **300 lines, and there are three of them**: `tests/e2e/helpers.js`, `src/ui/game-loop.js` and `src/state/turn-manager.js` | 2026-09-04, after #82 |
+| Longest stylesheet | 7 | 294 lines, `src/ui/styles/tokens.css`, unchanged | 2026-09-04, after #82 |
+
+**Five readings, and two of them are warnings.**
+
+1. **`src/core/` is byte-identical after two whole features**, which is the fifth measurement in a row
+   where the rules layer did not move. This is the strongest case for the layering the project has
+   produced so far: the bots decide what to play, the value model prices 29 cards, the announcement
+   reaches the screen, and **not one line of the rules changed**. NFR-05's coverage floor for `core/` is
+   met by tests that were written for other issues entirely.
+2. **`src/ai/` came in at 1901 lines over 12 files with 99.68 % line coverage**, which is the highest of
+   the three headless layers. It is a layer where every function is pure and takes a literal board, so
+   the coverage is cheap rather than impressive: the number to be pleased about is that a file of card
+   values is testable one card at a time.
+3. **Three files now sit at exactly 300 lines**, where two did at the last measurement, and
+   `src/ui/timers.js` is at 298 with two more at 299. `game-loop.js` joined the ceiling. **Every one of
+   the three is a file the next change has to shrink before it can grow**, and that is now a standing
+   cost rather than a one-off warning: it has been recorded at three consecutive measurements and has
+   got worse at each.
+4. **The test suites grew faster than the source again**, and by more than usual: about 3200 lines of
+   tests against about 2100 of source across the two issues. Seventeen new unit files.
+5. **Branch coverage fell from 96.07 % to 95.40 %** while line coverage rose. That is the honest cost of
+   `src/ai/`: several value functions have a guard for a board that no test reaches (a pawn that is not
+   there, a die that has not been chosen), and `card-values.js`'s boot check throws on a line no test can
+   reach without a broken catalogue. `core/trap-fire.js` has the same unreachable guard and the same
+   uncovered line, which is the precedent this follows rather than an excuse.
+
+---
+
+### Measured 2026-09-03, after design handoff 11 landed
+
+Every command in the section above was re-run after the handoff landed and before the closing commit.
+The ones below it are kept so the growth is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **11389 lines in 73 files** | 2026-09-03, after handoff 11 |
+| Stylesheet lines in `src/` | 7 | **3443 lines in 19 files** | 2026-09-03, after handoff 11 |
+| Test lines in `tests/` | 2 | **13108 lines in 75 files** | 2026-09-03, after handoff 11 |
+| Lines in `src/core/` | 3 | 4411 lines in 31 files, unchanged | 2026-09-03, after handoff 11 |
+| Lines in `src/state/` | 3 | 2016 lines in 11 files, unchanged | 2026-09-03, after handoff 11 |
+| Lines in `src/ui/` | 3 | **4625 lines in 29 files**, plus 3443 lines of CSS | 2026-09-03, after handoff 11 |
+| Unit tests | 4 | **52 test files, 704 tests**, all passing | 2026-09-03, after handoff 11 |
+| End-to-end tests | 8 | **111 tests in 20 files per browser, 333 across the three** | 2026-09-03, after handoff 11 |
+| Expected failures in the e2e suite | 8 | none | 2026-09-03, after handoff 11 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.17 % (839/846), unchanged | 2026-09-03, after handoff 11 |
+| Coverage of `src/core/`, lines | 5c | 99.47 % (565/568) over 31 files, unchanged | 2026-09-03, after handoff 11 |
+| Coverage of `src/state/`, lines | 5c | 98.56 % (274/278) over 11 files, unchanged | 2026-09-03, after handoff 11 |
+| Coverage, branches | 5a | 96.07 %, unchanged | 2026-09-03, after handoff 11 |
+| Coverage, functions | 5a | 100 %, unchanged | 2026-09-03, after handoff 11 |
+| Longest file of any kind | 6 | **300 lines, and there are now two of them**: `tests/e2e/helpers.js` and `src/state/turn-manager.js` | 2026-09-03, after handoff 11 |
+| Longest stylesheet | 7 | **294 lines, `src/ui/styles/tokens.css`** | 2026-09-03, after handoff 11 |
+
+**Six readings, and two of them are warnings.**
+
+1. **The rules layers did not move by a line and no coverage figure changed**, for the fourth
+   measurement in a row. `src/core/` and `src/state/` are byte-identical and all five coverage
+   percentages are the same. **Four consecutive deliveries have changed what the player sees without
+   touching a rule**, and this one is the strongest case yet: handoff 11 put a roll animation on screen
+   and closed half of a `must have` requirement, and the rules layer did not notice. That is the
+   layering argument in `CLAUDE.md` producing evidence rather than being asserted, and it is worth the
+   report's own paragraph.
+2. **Two files are now at exactly 300 lines and two more are at 299**, where there was one file at the
+   ceiling. `tests/e2e/helpers.js` joined `src/state/turn-manager.js` at 300, and
+   `tests/unit/state/intents-cards.test.js` and the new `tests/e2e/roll-animation.spec.js` sit one line
+   below. Nothing is over, so nothing is failing, but a file at the limit is a file where the next
+   comment is a lint error, and `helpers.js` is the one every end-to-end spec imports. **Four files
+   within one line of the limit is the reading to act on before the next handoff**, not after it. It is
+   also a fact about this project's comment density rather than about its logic: all four are mostly
+   prose, which is a deliberate trade and a cost worth naming in the report.
+3. **`tokens.css` is the longest stylesheet for the first time**, at 294, taking the title from
+   `pawn.css`. It was 265 two deliveries ago and 281 one delivery ago, so it has grown twice in a row
+   because both deliveries added motion tokens. It is 6 lines from the limit. 11-spec § 7 names the
+   seam rather than leaving it to be found: the motion tokens plus the four hold tokens plus the whole
+   `prefers-reduced-motion` block move to `motion.css`. **This is the one number in the table that
+   predicts a specific piece of work.**
+4. **`src/ui/` grew by 422 lines and two files**, to `turn-waits.js` and `roll-steps.js`. Both came out
+   of `game-loop.js` needing to stay under 300: it went in at 293 and came out at 286, so the layer got
+   bigger while its largest file got smaller. The stylesheets grew by 175 lines across one new file,
+   `roll.css` at 96, and one amendment to `message-strip.css`.
+5. **The test suites grew faster than the source**, 538 lines of tests against 437 of source, which is
+   the ratio this project has held throughout. Fifteen new unit tests in two new files, ten new
+   end-to-end tests in one new file, and one new case in `locales.test.js`.
+6. **The end-to-end suite crossed 100 tests per browser.** 111 in 20 files, 333 across the three
+   browsers, up from 101 and 19. The full run's wall clock is set by three full-match specs rather than
+   by the count, which Ch. 08 records: they take minutes each and they are the only tests that play a
+   match as a sequence rather than setting up a situation. One of them is what found the only real bug
+   in landing this handoff.
+
+---
+
+### Measured 2026-09-03, after design handoff 10 landed
+
+**Superseded by the block above on the same day**, after design handoff 11 landed. Kept because it is
+the measurement of handoff 10, and it is the one the growth in reading 3 above is measured against.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **10952 lines in 71 files** | 2026-09-03, after handoff 10 |
+| Stylesheet lines in `src/` | 7 | **3268 lines in 18 files** | 2026-09-03, after handoff 10 |
+| Test lines in `tests/` | 2 | **12570 lines in 72 files** | 2026-09-03, after handoff 10 |
+| Lines in `src/core/` | 3 | 4411 lines in 31 files, unchanged | 2026-09-03, after handoff 10 |
+| Lines in `src/state/` | 3 | 2016 lines in 11 files, unchanged | 2026-09-03, after handoff 10 |
+| Lines in `src/ui/` | 3 | **4203 lines in 27 files**, plus 3268 lines of CSS | 2026-09-03, after handoff 10 |
+| Unit tests | 4 | 50 test files, 689 tests, all passing, unchanged | 2026-09-03, after handoff 10 |
+| End-to-end tests | 8 | **101 tests in 19 files per browser, 303 across the three** | 2026-09-03, after handoff 10 |
+| Expected failures in the e2e suite | 8 | none | 2026-09-03, after handoff 10 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.17 % (839/846), unchanged | 2026-09-03, after handoff 10 |
+| Coverage of `src/core/`, lines | 5c | 99.47 % (565/568) over 31 files, unchanged | 2026-09-03, after handoff 10 |
+| Coverage of `src/state/`, lines | 5c | 98.56 % (274/278) over 11 files, unchanged | 2026-09-03, after handoff 10 |
+| Coverage, branches | 5a | 96.07 %, unchanged | 2026-09-03, after handoff 10 |
+| Coverage, functions | 5a | 100 %, unchanged | 2026-09-03, after handoff 10 |
+| Longest file of any kind | 6 | 300 lines, `src/state/turn-manager.js`, unchanged | 2026-09-03, after handoff 10 |
+| Longest stylesheet | 7 | 283 lines, `src/ui/styles/pawn.css`, unchanged | 2026-09-03, after handoff 10 |
+
+**Five readings.**
+
+1. **The rules layers did not move by a line and no coverage figure changed**, for the third measurement
+   in a row. `src/core/` and `src/state/` are byte-identical and all five coverage percentages are the
+   same. Three consecutive deliveries have now changed what the player sees without touching a rule,
+   which is the layering argument in `CLAUDE.md` producing evidence rather than being asserted.
+2. **A new stylesheet arrived and the set grew by 125 lines**, 3143 to 3268 across 17 files to 18.
+   `card-reveal.css` is 82 of those lines and the remaining 43 are net across four files, three of which
+   **shrank**: D69 deleted the sideways fan out and D65 deleted nothing but re-pointed six selectors.
+   `hand.css` went from 200 to 208 despite losing two rules, because the comment that records what was
+   deleted is longer than the rules were. That is deliberate and it is the same trade the layout fixes
+   made: a deleted rule with no note is a rule somebody re-adds.
+3. **`tokens.css` is at 281 lines and is now the file to watch**, from 265, 19 lines from NFR-02's limit
+   and second only to `pawn.css`. The two new tokens are 2 of the 16 lines; the rest is D68's reasoning
+   for the number and for why the delay stays out of the reduced-motion block. **The seam is already
+   visible if it has to be cut**: the motion block is self-contained and would split cleanly into a
+   `motion.css`. Naming it now costs nothing and naming it under pressure costs a bad cut.
+4. **The e2e suite gained 4 cases in one new file**, 97 to 101 per browser and 291 to 303 across the
+   three, for 192 test lines. That is 48 lines per case against a project average nearer 30, and the
+   reason is the same one Chapter 08 records: none of the four could assert an attribute, so each carries
+   the measurement it is built on, and two carry a helper explaining why the obvious approach does not
+   work. **There is now 1.15 lines of test JavaScript for every line of source JavaScript**, 12570
+   against 10952, up from 1.13 at the previous measurement. Counting the 3268 lines
+   of CSS on the source side turns that round, 14220 against 12570, which is the more honest comparison
+   and is why this table reports the two separately.
+5. **`src/ui/` grew by 40 JavaScript lines for two attributes**, 4163 to 4203, and 34 of those are
+   comment. The code is four `.attr` calls, two object fields and one `??`. What the comments carry is
+   the thing that would otherwise be reconstructed from a diff: why `data-face` may not be `data-active`,
+   and why the tab stop is a field on the card rather than a check inside the shared component.
+
+### Measured 2026-09-03, after the four layout fixes
+
+**Superseded by the block above on the same day**, after design handoff 10 landed. Kept because it is
+the measurement of the layout fixes, and the block above is the measurement of the handoff that came
+after them.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **10907 lines in 71 files** | 2026-09-03, after the layout fixes |
+| Stylesheet lines in `src/` | 7 | **3143 lines in 17 files** | 2026-09-03, after the layout fixes |
+| Test lines in `tests/` | 2 | **12378 lines in 71 files** | 2026-09-03, after the layout fixes |
+| Lines in `src/core/` | 3 | 4411 lines in 31 files, unchanged | 2026-09-03, after the layout fixes |
+| Lines in `src/state/` | 3 | 2016 lines in 11 files, unchanged | 2026-09-03, after the layout fixes |
+| Lines in `src/ui/` | 3 | **4163 lines in 27 files**, plus 3143 lines of CSS | 2026-09-03, after the layout fixes |
+| Unit tests | 4 | 50 test files, 689 tests, all passing, unchanged | 2026-09-03, after the layout fixes |
+| End-to-end tests | 8 | **97 tests in 18 files per browser, 291 across the three** | 2026-09-03, after the layout fixes |
+| Expected failures in the e2e suite | 8 | none | 2026-09-03, after the layout fixes |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.17 % (839/846), unchanged | 2026-09-03, after the layout fixes |
+| Coverage of `src/core/`, lines | 5c | 99.47 % (565/568) over 31 files, unchanged | 2026-09-03, after the layout fixes |
+| Coverage of `src/state/`, lines | 5c | 98.56 % (274/278) over 11 files, unchanged | 2026-09-03, after the layout fixes |
+| Coverage, branches | 5a | 96.07 %, unchanged | 2026-09-03, after the layout fixes |
+| Coverage, functions | 5a | 100 %, unchanged | 2026-09-03, after the layout fixes |
+| Longest file of any kind | 6 | 300 lines, `src/state/turn-manager.js`, unchanged | 2026-09-03, after the layout fixes |
+| Longest stylesheet | 7 | 283 lines, `src/ui/styles/pawn.css`, unchanged | 2026-09-03, after the layout fixes |
+
+**Five readings.**
+
+1. **The rules layers did not move by a line and no coverage figure changed**, for the second measurement
+   in a row. `src/core/` and `src/state/` are identical, and so are all five coverage percentages. A
+   layout defect is a stylesheet defect, and the numbers say that is all this was.
+2. **The stylesheets grew by 174 lines in no new file**, 2969 to 3143, and **almost all of it is
+   comment**. The four fixes are about a dozen declarations: one `font-size`, an `#app` block, a `width`
+   swapped for a `min-width`, a `z-index`, a `content: none` pair and a sign multiplied into four
+   `box-shadow` offsets. The comments are longer than the code because three of the four contradict a
+   numbered design decision, and the reason has to travel with the line that does it.
+3. **`tokens.css` is now the third-longest stylesheet at 265 lines**, from 237, and the two ahead of it
+   are unchanged. Three stylesheets are now within 35 lines of NFR-02's limit where handoff 07 left two.
+   The stage's own tokens are two lines of the 28; the rest is why D6's percentages now measure against
+   the stage.
+4. **The e2e suite gained 4 cases per browser and no file**, 93 to 97 and 279 to 291: one window-shape
+   case in `shell.spec.js`, one plate case in `hud.spec.js`, two in `skill-hand.spec.js`. **The suite
+   grew by 180 test lines for 4 cases**, which is 45 lines apiece against a project average nearer 30,
+   and the reason is in Chapter 08: one of the four was first written against the wrong element and
+   passed in both directions, so each of them carries the measurement it is based on.
+5. **The unit suite did not gain a single test, and that is correct rather than a gap.** Nothing in this
+   change is reachable without a browser: it is CSS plus two comment corrections in `hud-view.js`. This is
+   the layering rule paying off in the direction it is least often noticed, and it is why the coverage
+   target in `CLAUDE.md` is scoped to `core/` and `state/` with `ui/` covered end-to-end instead.
+
+### Measured 2026-09-03, after design handoff 07 landed
+
+**Superseded by the block above on the same day**, after the four layout fixes. Kept because it is the
+measurement of the handoff that landed, and the block above is the measurement of the defects the first
+test round on it found.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **10902 lines in 71 files** | 2026-09-03, after handoff 07 |
+| Stylesheet lines in `src/` | 7 | **2969 lines in 17 files** | 2026-09-03, after handoff 07 |
+| Test lines in `tests/` | 2 | **12198 lines in 71 files** | 2026-09-03, after handoff 07 |
+| Lines in `src/core/` | 3 | 4411 lines in 31 files, unchanged | 2026-09-03, after handoff 07 |
+| Lines in `src/state/` | 3 | 2016 lines in 11 files, unchanged | 2026-09-03, after handoff 07 |
+| Lines in `src/ui/` | 3 | **4158 lines in 27 files**, plus 2969 lines of CSS | 2026-09-03, after handoff 07 |
+| Unit tests | 4 | **50 test files, 689 tests, all passing** | 2026-09-03, after handoff 07 |
+| End-to-end tests | 8 | **93 tests in 18 files per browser, 279 across the three** | 2026-09-03, after handoff 07 |
+| Expected failures in the e2e suite | 8 | none | 2026-09-03, after handoff 07 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.17 % (839/846), unchanged | 2026-09-03, after handoff 07 |
+| Coverage of `src/core/`, lines | 5c | 99.47 % (565/568) over 31 files, unchanged | 2026-09-03, after handoff 07 |
+| Coverage of `src/state/`, lines | 5c | 98.56 % (274/278) over 11 files, unchanged | 2026-09-03, after handoff 07 |
+| Coverage, branches | 5a | 96.07 %, unchanged | 2026-09-03, after handoff 07 |
+| Coverage, functions | 5a | 100 %, unchanged | 2026-09-03, after handoff 07 |
+| Longest file of any kind | 6 | 300 lines, `src/state/turn-manager.js`, unchanged | 2026-09-03, after handoff 07 |
+| Longest stylesheet | 7 | **283 lines, `src/ui/styles/pawn.css`** | 2026-09-03, after handoff 07 |
+
+**Six readings.**
+
+1. **The rules layers did not move at all**, which is the number that says what kind of change this was.
+   `src/core/` and `src/state/` are identical to the measurement below, and every coverage figure with
+   them. A design handoff should be a stylesheet and not a rule, and this one measurably was.
+2. **The stylesheets grew by 302 lines and by one file**, from 2667 in 16 to 2969 in 17, which is the
+   largest single CSS change since handoff 04. `board-trap.css` is the new file, and `board.css`,
+   `pawn.css`, `refusal.css` and `tokens.css` were amended. Twelve lines came **out**, four from each of
+   `hud.css`, `chrome.css` and `overlay.css`, when the `--seat-shape` mapping was consolidated.
+3. **`prompt.css` is no longer the longest stylesheet and that is worth noticing rather than filing.**
+   `pawn.css` at 283 took the title, 17 from the limit, and design spec 07 § 7 names its next seam: the
+   status block at the foot, which is already a contiguous run. `board.css` is second at 268. Two
+   stylesheets within 32 lines of NFR-02 is the tightest the CSS has ever been.
+4. **`src/ui/` grew by 123 JavaScript lines and no new file.** All of it is comment: the `.pawn__status`
+   span is one line in `board-view.js`, and D60's hold is `holdMidTurn` plus `announcement` in
+   `timers.js` and one `carryOn` in `card-controls.js`. `game-loop.js` is now the third-longest file in
+   the project at 293 and was not touched by this handoff.
+5. **The e2e suite grew by 7 cases per browser and by two files**, 86 to 93 and 16 to 18.
+   `trap-marks.spec.js` holds the five computed-style cases and `field-keyboard.spec.js` the NFR-08 ones,
+   which came out of `traps.spec.js` when it hit 301 lines. **The first pixel assertions in the project's
+   history**: until this handoff nothing outside `greyscale.spec.js` read a computed value.
+6. **One deliberate negative assertion was retired and another was created.** The one saying the trap
+   span had no rendered box went red on the first run after the copy, alone among 86 cases, and was
+   rewritten into its opposite as its own comment asked. The new one says a focused field is drawn
+   identically to an offered one, which is D61's conflict, and is meant to go red when that is answered.
+   Chapter 08 carries both.
+
+### Measured 2026-09-03, after issue #45
+
+**Superseded by the block above on the same day**, once handoff 07 landed. Kept because it is the
+measurement of the rules work, and the block above is the measurement of the stylesheet that draws it.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **10756 lines in 71 files** | 2026-09-03, after #45 |
+| Stylesheet lines in `src/` | 7 | 2667 lines in 16 files, unchanged | 2026-09-03, after #45 |
+| Test lines in `tests/` | 2 | **11584 lines in 68 files** | 2026-09-03, after #45 |
+| Lines in `src/core/` | 3 | **4411 lines in 31 files** | 2026-09-03, after #45 |
+| Lines in `src/state/` | 3 | **2016 lines in 11 files** | 2026-09-03, after #45 |
+| Lines in `src/ui/` | 3 | **4035 lines in 27 files**, plus 2667 lines of CSS | 2026-09-03, after #45 |
+| Unit tests | 4 | **49 test files, 677 tests, all passing** | 2026-09-03, after #45 |
+| End-to-end tests | 8 | **86 tests in 16 files per browser, 258 across the three** | 2026-09-03, after #45 |
+| Expected failures in the e2e suite | 8 | none | 2026-09-03, after #45 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.17 % (839/846) | 2026-09-03, after #45 |
+| Coverage of `src/core/`, lines | 5c | 99.47 % (565/568) over 31 files | 2026-09-03, after #45 |
+| Coverage of `src/state/`, lines | 5c | 98.56 % (274/278) over 11 files | 2026-09-03, after #45 |
+| Coverage, branches | 5a | 96.07 % (612/637) | 2026-09-03, after #45 |
+| Coverage, functions | 5a | 100 % (302/302) | 2026-09-03, after #45 |
+| Longest file of any kind | 6 | 300 lines, `src/state/turn-manager.js`, unchanged | 2026-09-03, after #45 |
+| Longest stylesheet | 7 | 244 lines, `src/ui/styles/prompt.css`, unchanged | 2026-09-03, after #45 |
+
+**Five readings.**
+
+1. **The rules layers grew for the first time since 2026-08-31, and by a lot.** `src/core/` went from
+   3669 to 4411 lines and 27 to 31 files; `src/state/` from 1809 to 2016 and 10 to 11 files. The four
+   new `core/` modules are `slide.js`, `trap-fire.js`, `enter.js` and `trap-rules.js`; the new `state/`
+   module is `card-legality.js`. One function was also deleted, `displace` from `displacement.js`, and one
+   moved out of `move-rules.js` into `traps.js`. Chapters 05 and 06 carry the seams.
+2. **Every one of the 29 measured files is above 90 per cent, and the floor is 80.** Coverage of lines
+   moved from 99.20 to 99.17 per cent over 89 more measured lines, which is what "the new code arrived
+   with its tests" looks like as a number. Functions stayed at 100 per cent, which they would not have
+   if `displace` had been left in: chapter 08 records that its dead body was the only thing the report
+   flagged, at 60 per cent on a file nobody had edited.
+3. **The e2e suite grew by 13 cases per browser, and none of them looks at a pixel.** 73 to 86.
+   `traps.spec.js` and `trap-fires.spec.js` assert attributes, because design handoff 07 is unanswered
+   and nothing about a trap is styled. One of the thirteen carries a deliberate negative assertion,
+   that the trap span has no rendered box, and its comment says it is meant to start failing when the
+   spec lands.
+4. **The longest file did not move and it was the hardest constraint of the issue.** `turn-manager.js`
+   was at exactly 300 before #45 and is at exactly 300 after it, through a change to the one function
+   in it that #45 had to touch. Four files were split to keep everything else under: `move-rules.js`
+   gave up `blockedSquares`, `skill-play.js` its legality half, `game-loop.js` its after-turn hold and
+   `match-flow.js` its two action routers. `enter.test.js` and `traps.spec.js` also hit the limit
+   while being written and each split at a real seam.
+5. **Two files are one line from the limit and neither is new.** `intents-cards.test.js` at 299 and
+   `helpers.js` at 295 were already there; #45 added a test file next to the first rather than into
+   it, and put its own helpers in `trap-helpers.js` rather than into the second. The next issue that
+   needs either will have to split it first.
+
+### Measured 2026-09-02, after design handoffs 05 and 06 landed
+
+Every command in the section above was re-run after the two delivered stylesheets were copied in, the
+`data-copies` attribute was added and `greyscale.spec.js` was rewritten. Superseded by the 2026-09-03
+measurement above; kept so the growth is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **9374 lines in 64 files** | 2026-09-02, after handoffs 05 and 06 |
+| Stylesheet lines in `src/` | 7 | **2667 lines in 16 files** | 2026-09-02, after handoffs 05 and 06 |
+| Test lines in `tests/` | 2 | **9117 lines in 55 files** | 2026-09-02, after handoffs 05 and 06 |
+| Lines in `src/core/` | 3 | 3669 lines in 27 files, unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Lines in `src/state/` | 3 | 1809 lines in 10 files, unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Lines in `src/ui/` | 3 | **3625 lines in 25 files**, plus 2667 lines of CSS | 2026-09-02, after handoffs 05 and 06 |
+| Unit tests | 4 | **39 test files, 554 tests, all passing** | 2026-09-02, after handoffs 05 and 06 |
+| End-to-end tests | 8 | **73 tests in 14 files per browser, 219 across the three** | 2026-09-02, after handoffs 05 and 06 |
+| Expected failures in the e2e suite | 8 | **none.** The last one, `greyscale.spec.js`, was retired with D50 | 2026-09-02, after handoffs 05 and 06 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.20 % (751/757), unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Coverage of `src/core/`, lines | 5c | 99.59 % (491/493) over 27 files, unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Coverage of `src/state/`, lines | 5c | 98.48 % (260/264) over 10 files, unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Coverage, branches | 5a | 96.01 % (530/552), unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Coverage, functions | 5a | 100 % (273/273), unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Longest file of any kind | 6 | 300 lines, `src/state/turn-manager.js`, unchanged | 2026-09-02, after handoffs 05 and 06 |
+| Longest stylesheet | 7 | 244 lines, `src/ui/styles/prompt.css`, unchanged | 2026-09-02, after handoffs 05 and 06 |
+
+**Four readings, and the second one is what this measurement was taken for.**
+
+1. **`src/core/` and `src/state/` did not move by a single line for the second delivery running**, and
+   every coverage figure is identical to the day before. Two design deliveries in two days touched `ui/`
+   and nothing else. That is the same NFR-01 evidence the 2026-09-01 measurement produced, and a
+   repetition is worth more than a single reading: it says the layering holds under a kind of change that
+   arrives from outside the team.
+2. **The stylesheets grew by 144 lines and the longest one did not change.** `pool.css` went from 92 to
+   195 and `pawn.css` from 166 to 218, which is where the whole growth sits. Both were delivered under
+   250 unformatted lines on purpose, so `npm run format` had little left to expand: the practice the work
+   order asks for in rule 2 is now visible in the numbers three deliveries in a row.
+3. **The e2e suite gained two tests and lost its only expected failure.** 71 to 73 per browser: one case
+   for `data-copies` in `dice-pool.spec.js`, and the first case of `greyscale.spec.js` split its work
+   across colour and greyscale in one test rather than two. The row above is the more interesting one.
+   From 2026-08-30 to 2026-09-02 the suite carried a permanently red case by design, and **there is now
+   no test in this project that is expected to fail**.
+4. **`prompt.css` is still the file to watch at 244 lines**, unchanged, and it is now the third-longest
+   stylesheet by a smaller margin than before: `tokens.css` is 230 and `overlay.css` 228. Nothing is over.
+
+### Measured 2026-09-01, after design handoff 04 landed
+
+Every command in the section above was re-run after the handoff-04 stylesheets were copied in. This is the
+third measurement of that day; the one above it is current and the ones below it are kept so the growth is
+readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **9347 lines in 64 files** | 2026-09-01, after handoff 04 |
+| Stylesheet lines in `src/` | 7 | **2523 lines in 16 files** | 2026-09-01, after handoff 04 |
+| Test lines in `tests/` | 2 | **9046 lines in 55 files** | 2026-09-01, after handoff 04 |
+| Lines in `src/core/` | 3 | 3669 lines in 27 files, unchanged | 2026-09-01, after handoff 04 |
+| Lines in `src/state/` | 3 | 1809 lines in 10 files, unchanged | 2026-09-01, after handoff 04 |
+| Lines in `src/ui/` | 3 | **3598 lines in 25 files**, plus 2523 lines of CSS | 2026-09-01, after handoff 04 |
+| Unit tests | 4 | **39 test files, 554 tests, all passing** | 2026-09-01, after handoff 04 |
+| End-to-end tests | 8 | **71 tests in 14 files per browser, 213 across the three** | 2026-09-01, after handoff 04 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | 99.20 % (751/757), unchanged | 2026-09-01, after handoff 04 |
+| Coverage of `src/core/`, lines | 5c | 99.59 % (491/493) over 27 files, unchanged | 2026-09-01, after handoff 04 |
+| Coverage of `src/state/`, lines | 5c | 98.48 % (260/264) over 10 files, unchanged | 2026-09-01, after handoff 04 |
+| Coverage, branches | 5a | 96.01 % (530/552), unchanged | 2026-09-01, after handoff 04 |
+| Coverage, functions | 5a | 100 % (273/273), unchanged | 2026-09-01, after handoff 04 |
+| Longest file of any kind | 6 | 300 lines, `src/state/turn-manager.js`, unchanged | 2026-09-01, after handoff 04 |
+| Longest stylesheet | 6 | **244 lines, `src/ui/styles/prompt.css`** | 2026-09-01, after handoff 04 |
+
+**Four readings of that table, and the first is the one the report needs.**
+
+1. **`src/core/` and `src/state/` did not move by a single line, and every coverage figure is identical.**
+   That is the measurement of what NFR-01's layering buys. A delivery that replaced five stylesheets,
+   rewrote the page grid, moved two regions and added three DOM attributes touched `ui/` and nothing else.
+   The layering is asserted in chapter 05 and this row is the evidence for it.
+2. **The stylesheets grew by 285 lines and the longest one moved from `tokens.css` to `prompt.css`.** This
+   is the first measurement in which the longest stylesheet is a component rather than the token file,
+   which is what a design delivery looks like in numbers: the values were already there and what arrived
+   was rules that use them.
+3. **`prompt.css` at 244 lines is 56 lines from the NFR-02 limit and is the file to watch.** Design spec 04
+   § 1 predicted this and named the seam to cut if it goes over: the 41-line `.board[data-picking]` block
+   at the end, which is board CSS living in a prompt file. Nothing has been cut, because nothing is over.
+4. **The 300-line limit bit once, in the tests.** `tests/e2e/match-flow.spec.js` reached 331 lines and was
+   split into `handover.spec.js`, which is why the e2e file count went 13 to 14 while the test count went
+   68 to 71. The three new tests are two attribute checks and the handover ordering check.
+
+### Measured 2026-09-01, after issue #30
+
+Every command in the section above was re-run. The figures below replace the "after #39" set that follows
+them, which is kept so that the growth is readable rather than asserted. Both sets are from the same day:
+#39 landed in the morning and #30 in the evening.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **9256 lines in 64 files** | 2026-09-01, after #30 |
+| Stylesheet lines in `src/` | 7 | **2238 lines in 15 files** | 2026-09-01, after #30 |
+| Test lines in `tests/` | 2 | **8795 lines in 53 files** | 2026-09-01, after #30 |
+| Lines in `src/core/` | 3 | 3669 lines in 27 files | 2026-09-01, after #30 |
+| Lines in `src/state/` | 3 | 1809 lines in 10 files, unchanged | 2026-09-01, after #30 |
+| Lines in `src/ui/` | 3 | **3515 lines in 25 files**, plus 2238 lines of CSS | 2026-09-01, after #30 |
+| Unit tests | 4 | **38 test files, 549 tests, all passing** | 2026-09-01, after #30 |
+| End-to-end tests | 8 | **68 tests in 13 files per browser, 204 across the three** | 2026-09-01, after #30 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | **99.20 % (751/757)** | 2026-09-01, after #30 |
+| Coverage of `src/core/`, lines | 5c | **99.59 % (491/493) over 27 files** | 2026-09-01, after #30 |
+| Coverage of `src/state/`, lines | 5c | 98.48 % (260/264) over 10 files, unchanged | 2026-09-01, after #30 |
+| Coverage, branches | 5a | 96.01 % (530/552), unchanged | 2026-09-01, after #30 |
+| Coverage, functions | 5a | **100 % (273/273)** | 2026-09-01, after #30 |
+| Files below 100 % lines | 5b | 5 of 37, unchanged | 2026-09-01, after #30 |
+| Longest file of any kind | 6 | **300 lines, `src/state/turn-manager.js`**, unchanged | 2026-09-01, after #30 |
+| Longest stylesheet | 6 | 223 lines, `src/ui/styles/tokens.css`, unchanged | 2026-09-01, after #30 |
+
+**Two things in that table are worth a sentence in the report, and one of them is a correction to this
+file's own method.**
+
+1. **`src/state/` did not change at all, and that is the measurement of what this issue was.** Issue #30
+   added a screen. `core/` gained 24 lines, all of them a comment and a three-line `remaining()` on the
+   stand-in dice source; `state/` gained nothing. The 235 new lines of `ui/` and the 451 new lines of
+   tests are the whole of the work. A feature that shows the player something and changes no rule should
+   look exactly like this, and it is the second sprint in a row where the layer split is visible in the
+   line counts rather than only claimed.
+2. **The coverage figure barely moved and the test count moved a lot**: 527 tests to 549, with the line
+   percentage going from 99.21 % to 99.20 %. It went **down by one hundredth of a point** while 22 tests
+   were added, because the two new lines in `core/dice-source.js` are covered and the denominator grew.
+   The honest reading is that a percentage this close to the ceiling has stopped being informative, and
+   what the 22 new tests actually bought is written up in [08-quality.md](08-quality.md): the FR-20 test
+   went from proving that every face is reachable to proving that the distribution is uniform, which is
+   what the requirement asks and what the old test did not check.
+
+#### Correction to command 6: it silently skipped every path with a space in it
+
+Command 6 was run for this measurement and printed five `No such file or directory` errors before its
+result. The cause is that `git ls-files | xargs wc -l` splits on whitespace, and
+`01-Design/Handoff/Card artwork design planning/` has spaces in its name, so every file under it was
+passed to `wc` as three or four broken fragments.
+
+**The corrected command is null-delimited**, and it also narrows the pathspec:
+
+```bash
+# 6. Longest files: evidence for the 300-line rule. CSS counts, so it is in the pattern.
+git ls-files -z 'src/*.js' 'src/*.css' 'tests/*.js' 'scripts/*.js' '*.config.js' \
+  | xargs -0 wc -l | sort -rn | sed -n '2,7p'
+```
+
+Two changes and both are needed.
+
+- **`-z` with `xargs -0`** passes paths as null-terminated records, so a space in a directory name is
+  just a character. This is the general lesson and it applies to commands 1, 2, 3 and 7 as well, which
+  are given the same treatment from now on. Those four were never wrong, because their pathspecs are all
+  under `src/` and `tests/`, where nothing has a space in its name. They are fixed anyway, because "it
+  happens to be safe today" is not a property worth relying on.
+- **The pathspec narrows to `src/`, `tests/`, `scripts/` and the config files**, and that is a
+  scope decision rather than a bug fix. Once paths with spaces are handled, the two longest tracked
+  JavaScript files in the repository are `01-Design/Handoff/Card artwork design planning/support.js` and
+  its copy under `uploads/`, at **1911 lines each**, plus a 294-line `styles.css` beside them. They are
+  a Claude Design mockup bundle: generated, vendored, not imported by the build and not written by
+  anyone on the team. NFR-02 limits "source, tests and config", and a vendored artefact is none of the
+  three, so counting it would make the headline figure describe something the rule does not govern.
+
+**The negative finding is that this was reported as "300 lines, the limit to the line" once already,
+on the morning of the same day, from a command that was quietly dropping files.** The figure happened
+to be right, because the files it dropped are out of scope anyway, and that is exactly what makes it
+worth writing down: a command that fails loudly and a command that is correct look the same in a
+results table. The five error lines went into the terminal and never into this file. Every figure in
+this chapter is only as good as somebody reading the command's stderr, which is a cheaper lesson to
+learn here than in the report.
+
+### Measured 2026-09-01, after issue #39
+
+Every command in the section above was re-run. The figures below replace the 2026-08-31 set that follows
+them, which is kept so that the growth is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **8996 lines in 61 files** | 2026-09-01, after #39 |
+| Stylesheet lines in `src/` | 7 | **2136 lines in 14 files** | 2026-09-01, after #39 |
+| Test lines in `tests/` | 2 | **8291 lines in 50 files** | 2026-09-01, after #39 |
+| Lines in `src/core/` | 3 | 3645 lines in 27 files | 2026-09-01, after #39 |
+| Lines in `src/state/` | 3 | 1809 lines in 10 files | 2026-09-01, after #39 |
+| Lines in `src/ui/` | 3 | **3280 lines in 22 files**, plus 2136 lines of CSS | 2026-09-01, after #39 |
+| Generated card artwork in `src/ui/art/` | 3 | 582 lines in 36 `.svg` files | 2026-09-01, after #39 |
+| Unit tests | 4 | **36 test files, 527 tests, all passing** | 2026-09-01, after #39 |
+| End-to-end tests | 8 | **60 tests in 12 files per browser, 180 across the three** | 2026-09-01, after #39 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | **99.21 % (750/756)** | 2026-09-01, after #39 |
+| Coverage of `src/core/`, lines | 5c | **99.59 % (490/492) over 27 files** | 2026-09-01, after #39 |
+| Coverage of `src/state/`, lines | 5c | **98.48 % (260/264) over 10 files** | 2026-09-01, after #39 |
+| Coverage, branches | 5a | 96.01 % (530/552) | 2026-09-01, after #39 |
+| Coverage, functions | 5a | **100 % (272/272)** | 2026-09-01, after #39 |
+| Files below 100 % lines | 5b | 5 of 37, unchanged: `cards/context.js` 90, `intents-cards.js` 96.22, `skill-play.js` 97.05, `intents.js` 97.61, `move-rules.js` 97.91 | 2026-09-01, after #39 |
+| Longest file of any kind | 6 | **300 lines, `src/state/turn-manager.js`** | 2026-09-01, after #39 |
+| Longest source file | 6 | 300 lines, `src/state/turn-manager.js` | 2026-09-01, after #39 |
+| Longest stylesheet | 6 | 223 lines, `src/ui/styles/tokens.css` | 2026-09-01, after #39 |
+
+**Three things in that table are worth a sentence each in the report.**
+
+1. **`src/ui/` grew by 60 % and `src/core/` by 1 %.** Issue #39 added no rules: it added a HUD, five
+   overlay screens, a chrome row and the card artwork. `pawnProgress` and `PLAYER_COUNTS` are the whole of
+   the `core/` change, 37 lines. That split is the layering doing exactly what Chapter 05 claims for it.
+2. **The longest file in the repository is now exactly 300 lines**, which is NFR-02's limit to the line.
+   `turn-manager.js` has been at 295 since issue #38 and gained five when `nextSeat` was exported and
+   documented. It is not a comfortable margin, and the next change to that file has to split it.
+3. **Coverage went up while `ui/` grew by 1232 lines**, from 99.19 % to 99.21 %, and that is not an
+   achievement: `ui/` is outside the measured set by design, so a sprint spent almost entirely in `ui/`
+   cannot move the number much in either direction. The figure is honest and it is also close to
+   meaningless for this particular sprint, which is the sort of thing a coverage number needs an
+   interpretation for. What actually covers this sprint's work is the 18 new end-to-end tests.
+
+### Measured 2026-08-31, after issues #37 and #38
+
+Every command in the section above was re-run. The figures below replace the 2026-08-30 set that follows
+them, which is kept so that the growth over two days of work is readable rather than asserted.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **7710 lines in 51 files** | 2026-08-31, after #37 and #38 |
+| Stylesheet lines in `src/` | 7 | **1623 lines in 11 files** | 2026-08-31, after #37 and #38 |
+| Test lines in `tests/` | 2 | **7290 lines in 44 files** | 2026-08-31, after #37 and #38 |
+| Lines in `src/core/` | 3 | 3608 lines in 27 files | 2026-08-31, after #37 and #38 |
+| Lines in `src/state/` | 3 | 1778 lines in 10 files | 2026-08-31, after #37 and #38 |
+| Lines in `src/ui/` | 3 | **2048 lines in 12 files**, plus the 1623 lines of CSS | 2026-08-31, after #37 and #38 |
+| Unit tests | 4 | **34 test files, 503 tests, all passing** | 2026-08-31, after #37 and #38 |
+| End-to-end tests | 8 | **42 tests in 9 files per browser, 126 across the three** | 2026-08-31, after #37 and #38 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | **99.19 % (742/748)** | 2026-08-31, after #37 and #38 |
+| Coverage of `src/core/`, lines | 5c | **99.59 % (483/485) over 27 files** | 2026-08-31, after #37 and #38 |
+| Coverage of `src/state/`, lines | 5c | **98.48 % (259/263) over 10 files** | 2026-08-31, after #37 and #38 |
+| Coverage, branches | 5a | 96.00 % (528/550) | 2026-08-31, after #37 and #38 |
+| Coverage, functions | 5a | **100 % (266/266)** | 2026-08-31, after #37 and #38 |
+| Files below 100 % lines | 5b | 5 of 37: `move-rules.js` 97.91, `cards/context.js` 90, `intents-cards.js` 96.22, `intents.js` 97.61, `skill-play.js` 97.05 | 2026-08-31, after #37 and #38 |
+| Longest file of any kind | 6 | **299 lines, `tests/unit/state/intents-cards.test.js`** | 2026-08-31, after #37 and #38 |
+| Longest source file | 6 | 295 lines, `src/state/turn-manager.js` | 2026-08-31, after #37 and #38 |
+| Longest stylesheet | 6 | 221 lines, `src/ui/styles/card.css` | 2026-08-31, after #37 and #38 |
+
+**What the numbers say, and it is worth one paragraph in the report.** The source tripled and the
+coverage went **up**, from 99.55 % over 225 lines to 99.19 % over 748. The floor NFR-05 asks for is 80 %,
+so there is a lot of room, and the reason there is room is the layering: `core/` and `state/` hold no DOM
+and no clock, so every rule in the game is testable with literals.
+
+**Two things the table does not say and should.** The longest file in the project is now a **test**, and
+four files were split during these two issues purely to stay under 300 lines: `movement.js`,
+`turn-manager.test.js`, `board-effects.test.js` and `intents-cards.test.js`. Each was split at a seam that
+can be described in a sentence, which is recorded per split in Chapters 05, 06 and 08. And `ui/` has 2048
+lines of JavaScript with **no unit tests at all**, by the decision in `vitest.config.js`; it is covered
+by 42 Playwright cases instead.
+
+### Measured 2026-08-30, after issue #62
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **2228 lines in 17 files** | 2026-08-30, after #62 |
+| Stylesheet lines in `src/` | 7 | **821 lines in 6 files** | 2026-08-30, after #62 |
+| Test lines in `tests/` | 2 | **2810 lines in 23 files** | 2026-08-30, after #62 |
+| Lines in `src/core/` | 3 | 745 lines in 6 files | 2026-08-30, after #62 |
+| Lines in `src/state/` | 3 | 548 lines in 4 files | 2026-08-30, after #62 |
+| Lines in `src/ui/` | 3 | **748 lines in 5 files**, plus the 821 lines of CSS | 2026-08-30, after #62 |
+| Lines in `src/i18n/` | 3 | 79 lines in 1 file, plus 76 lines of locale JSON | 2026-08-30, after #62 |
+| Unit tests | 4 | **14 test files, 186 tests, all passing** | 2026-08-30, after #62 |
+| End-to-end tests | 8 | **24 tests in 7 files per browser, 72 across the three** | 2026-08-30, after #62 |
+| Coverage of `src/core/` and `src/state/`, lines | 5a | **99.55 % (224/225)** | 2026-08-30, after #62 |
+| Coverage of `src/core/`, lines | 5c | **99.27 % (136/137) over 6 files** | 2026-08-30, after #62 |
+| Coverage of `src/state/`, lines | 5c | **100 % (88/88) over 4 files** | 2026-08-30, after #62 |
+| Coverage, branches | 5a | 99.35 % (153/154) | 2026-08-30, after #62 |
+| The one file below 100 % lines | 5b | `src/core/movement.js`, 97.61 %, line 151 | 2026-08-30, after #62 |
+| Longest file of any kind | 6 | **288 lines, `src/ui/styles/board.css`** | 2026-08-30, after #62 |
+| Longest JavaScript file | 6 | 254 lines, `tests/unit/core/board.test.js` | 2026-08-30, after #62 |
+| Files measured for coverage | 5b | **10 of the 17 JavaScript files in `src/`** | 2026-08-30, after #62 |
+
+Longest-file ranking in full, from command 6, same run:
+
+| Lines | File |
+| --- | --- |
+| 288 | `src/ui/styles/board.css` |
+| 254 | `tests/unit/core/board.test.js` |
+| 224 | `src/core/board.js` |
+| 211 | `tests/unit/state/turn-manager.test.js` |
+| 208 | `src/ui/board-geometry.js` |
+| 207 | `src/core/movement.js` |
+
+Stylesheets in full, from command 7, same run:
+
+| Lines | File |
+| --- | --- |
+| 288 | `src/ui/styles/board.css` |
+| 167 | `src/ui/styles/pawn.css` |
+| 155 | `src/ui/styles/board-track.css` |
+| 138 | `src/ui/styles/tokens.css` |
+| 38 | `src/ui/styles/refusal.css` |
+| 35 | `src/ui/styles/app.css` |
+
+For comparison, the same table at three earlier points: at the bootstrap commit, 26 source lines in
+1 file, 10 test lines in 1 file, 1 test, no coverage measurable at all; after #26, 184 source lines
+in 2 files, 211 test lines in 2 files, 28 tests; after #64 on 2026-08-29, 1294 source lines in 12
+files, 1717 test lines in 14 files, 157 tests and nothing on screen. Kept as one sentence rather
+than four tables, because the rule of this chapter is that values are replaced.
 
 ## Interpretation
 
-Each figure needs one sentence saying what it tells you about the project. A distribution across
-layers, for instance, is evidence for or against the claim that rules and presentation are actually
-separated — if `core/` is tiny and `ui/` is enormous, the layering is nominal and the report should
-admit it.
+- **The game is playable, and 748 lines of `src/ui/` plus 821 of CSS is what that cost.** Every
+  earlier version of this section had to say there was nothing on screen. There now is: `npm run
+  test:e2e` plays a complete match through the browser, clicking pawns, in each of three engines.
+- **`src/ui/` is now the largest layer by line count**, 748 against 745 for `src/core/` and 548 for
+  `src/state/`, and with its stylesheets counted it is more than twice either of them. That is worth
+  stating plainly next to the coverage figure, because **none of those 1569 lines is in the coverage
+  measurement** (see below). The layer that is hardest to be sure about is the one that grew fastest.
+- **There are more test lines than source lines**, 2810 against 2228 of JavaScript. That ratio is
+  expected for this kind of code rather than a warning sign: the rules have sharp boundaries at
+  `r = 0`, `40`, `41` and `44`, and several tests are exhaustive loops over a whole domain instead of
+  one sample point. The largest single unit test is a complete scripted match, 65 turns from the
+  first draw to the win, and the largest end-to-end test plays another one through the real interface
+  in about 45 seconds per browser.
+- **99.27 % of `src/core/` and 100 % of `src/state/` against a floor of 80 % (NFR-05).**
+- **Seven of the seventeen JavaScript files in `src/` are not measured at all**, and this is the
+  sentence that has to go next to the coverage figure. `vitest.config.js` includes only `src/core/**`
+  and `src/state/**`, because those are the two directories NFR-05 names. `src/main.js`,
+  `src/i18n/index.js` and all five files of `src/ui/` are therefore outside the measurement. Two of
+  the seven **are** tested and simply do not appear in the number: `i18n/index.js` by
+  `tests/unit/i18n/locales.test.js`, and `ui/board-geometry.js` by `tests/unit/ui/board-geometry.test.js`.
+  The rest are covered by Playwright, which produces no percentage. The configuration was left alone
+  rather than widened, because widening it would quietly change what the NFR-05 figure means.
+- **One line in the measured code is uncovered, and it is unreachable by construction.**
+  `movement.js` line 151 returns the generic refusal reason when every one of a player's pawns
+  reports `ALREADY_HOME`. Since 2026-08-30 that needs all four pawns on `r = 44` at once, which the
+  four-square house forbids, so it cannot happen in any legal board state. The line stays because it
+  stops `blocked[0]` being read from an empty array, and it is recorded here rather than removed or
+  excluded from the measurement.
+- **The longest file in the project is now a stylesheet at 288 lines**, `src/ui/styles/board.css`,
+  which is **96 % of the NFR-02 limit**. It got there without anybody writing 288 lines: the file was
+  delivered at 248, and `npm run format` expanded every single-line rule into three. The 40 track
+  placements were split out into `board-track.css` to bring it back under the limit, and what is left
+  is still the closest any file has come. This is the number to watch: the next design revision that
+  adds a state to a square pushes it over.
+- **The longest JavaScript file is 254 lines**, a test. No source file is above 224.
+- **Exactly one branch in the whole of `src/` is uncovered, and it is the same unreachable line.**
+  The first measurement after #27 reported four, and the other three turned out to be real gaps
+  rather than unreachable code: the freeze path for a move that captures something, and the refusal
+  of `select-pawn` for a pawn with no move. Two tests were added and the branch figure moved from
+  97.53 % to 99.38 %. That is the coverage number doing the job it is for, which the line figure
+  alone would not have done: lines were already at 99.53 % with all three gaps still open.
 
 The longest-file figure is worth carrying because the 300-line limit is a stated project
 constraint; showing the actual maximum is the cheapest possible proof that it held.

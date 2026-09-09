@@ -1,0 +1,184 @@
+/* The accents of the seven status cards (D107, D109).
+   Depends on tokens.css, cast.css, cast-base.css and cast-parts.css, and
+   loads after them.
+   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D107, D109.
+
+   All of these have a board stage and most use cast.css's default flight for
+   part 0, the disc crossing from the card to the target. What each card adds
+   is the landing: how the part arrives, and what the other parts do at the
+   target once it has. The marks that stay on the field or the pawn are
+   board-cast.css's and are not repeated here. The family's gesture is the
+   stamp, and Ghost Mode and Ragebait replace it. */
+
+/* Rock: a stone falls onto the caster's own pawn. The part squares off,
+   which is the rock pawn's own corner (D101.3), and it is the heaviest part
+   in the game, so it comes from above rather than across. */
+.cast[data-card-id="action-rock"] .cast__part[data-part="0"],
+.cast[data-card-id="action-big-ah-rock"] .cast__part[data-part="0"] {
+  width: calc(var(--cell) * 0.6);
+  height: calc(var(--cell) * 0.6);
+  border-width: var(--border-ink);
+  border-radius: var(--radius-sm);
+  background: color-mix(in oklab, var(--cast-hue) 46%, var(--color-dormant));
+}
+
+.cast[data-cast="board"][data-card-id="action-rock"] .cast__part[data-part="0"],
+.cast[data-cast="board"][data-card-id="action-big-ah-rock"] .cast__part[data-part="0"] {
+  animation-name: cast-fall;
+}
+
+/* Big Ah Rock: the same stone, and a shard knocked backwards out of the
+   landing, the way the nearest enemy behind is. Backwards is minus --cast-dir. */
+.cast[data-card-id="action-big-ah-rock"] .cast__part[data-part="1"] {
+  --bx: calc(var(--cast-dir, 1) * var(--cell) * -2.2);
+  --by: calc(var(--cell) * -0.3);
+  width: calc(var(--cell) * 0.3);
+  height: calc(var(--cell) * 0.3);
+}
+
+.cast[data-cast="board"][data-card-id="action-big-ah-rock"] .cast__part[data-part="1"] {
+  animation-name: cast-burst;
+  animation-delay: calc(var(--motion-cast-board) * 0.13);
+}
+
+/* Hold Pawn: the flight, then two bars stand up on the pawn, the held tag's
+   own geometry one size up. */
+.cast[data-card-id="reaction-hold-pawn"] .cast__part[data-part="1"],
+.cast[data-card-id="reaction-hold-pawn"] .cast__part[data-part="2"] {
+  width: calc(var(--cell) * 0.16);
+  height: calc(var(--cell) * 0.5);
+  background: var(--color-ink);
+  border: none;
+  border-radius: var(--radius-pill);
+}
+
+.cast[data-card-id="reaction-hold-pawn"] .cast__part[data-part="1"] {
+  translate: calc(var(--cast-to-x) - 50% - var(--cell) * 0.16) calc(var(--cast-to-y) - 50%);
+}
+
+.cast[data-card-id="reaction-hold-pawn"] .cast__part[data-part="2"] {
+  translate: calc(var(--cast-to-x) - 50% + var(--cell) * 0.16) calc(var(--cast-to-y) - 50%);
+}
+
+.cast[data-cast="board"][data-card-id="reaction-hold-pawn"] .cast__part[data-part="1"],
+.cast[data-cast="board"][data-card-id="reaction-hold-pawn"] .cast__part[data-part="2"] {
+  animation-name: cast-pop-at;
+}
+
+/* Built Different and Lock In: the flight, then a ring. Built Different's
+   goes out, a shell forming; Lock In's closes, a lock fastening. The pawn
+   itself settles into the shell through data-cast-hit="shielded". */
+.cast[data-card-id="action-built-different"] .cast__part[data-part="1"],
+.cast[data-card-id="action-lock-in"] .cast__part[data-part="1"],
+.cast[data-card-id="reaction-ghost-mode"] .cast__part[data-part="0"] {
+  width: calc(var(--cell) * 0.8);
+  height: calc(var(--cell) * 0.8);
+  background: transparent;
+  border-width: var(--border-thick);
+  border-color: var(--color-ink);
+  box-shadow: none;
+}
+
+.cast[data-cast="board"][data-card-id="action-built-different"] .cast__part[data-part="1"] {
+  animation-name: cast-ring-out-at;
+}
+
+.cast[data-cast="board"][data-card-id="action-lock-in"] .cast__part[data-part="1"] {
+  animation-name: cast-ring-in-at;
+}
+
+/* Ghost Mode: nothing crosses the board, because nothing was sent. The card
+   goes half transparent and back, and a ring puffs off the pawn that was not
+   where the capture landed. */
+.cast[data-cast="card"][data-card-id="reaction-ghost-mode"] .cast__card > .card {
+  animation-name: cast-ghost;
+}
+
+@keyframes cast-ghost {
+  0%,
+  100% {
+    opacity: 1;
+    translate: 0 0;
+  }
+  50% {
+    opacity: 0.35;
+    translate: 0 -3%;
+  }
+}
+
+.cast[data-cast="board"][data-card-id="reaction-ghost-mode"] .cast__part[data-part="0"] {
+  animation-name: cast-puff;
+}
+
+@keyframes cast-puff {
+  0%,
+  43% {
+    translate: var(--at-to);
+    scale: 0.6;
+    opacity: 0;
+  }
+  60% {
+    scale: 1.4;
+    opacity: 0.7;
+  }
+  100% {
+    translate: var(--at-to);
+    scale: 2.1;
+    opacity: 0;
+  }
+}
+
+/* Ragebait: the card shakes, fast and small, and the part bounces on the
+   pawn twice before it settles. The only status that compels, so it is the
+   only cast that is rude about it. */
+.cast[data-cast="card"][data-card-id="action-ragebait"] .cast__card > .card {
+  animation-name: cast-rage;
+}
+
+@keyframes cast-rage {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  15%,
+  45%,
+  75% {
+    rotate: -3deg;
+  }
+  30%,
+  60%,
+  90% {
+    rotate: 3deg;
+  }
+}
+
+.cast[data-cast="board"][data-card-id="action-ragebait"] .cast__part[data-part="0"] {
+  animation-name: cast-fly-bounce;
+}
+
+@keyframes cast-fly-bounce {
+  0% {
+    translate: var(--at-stage);
+    scale: 0.5;
+    opacity: 1;
+    animation-timing-function: var(--ease-move);
+  }
+  43%,
+  68%,
+  88% {
+    translate: var(--at-to);
+    scale: 1;
+    opacity: 1;
+  }
+  55% {
+    translate: calc(var(--cast-to-x) - 50%) calc(var(--cast-to-y) - 50% - var(--cell) * 0.6);
+  }
+  78% {
+    translate: calc(var(--cast-to-x) - 50%) calc(var(--cast-to-y) - 50% - var(--cell) * 0.3);
+  }
+  100% {
+    translate: var(--at-to);
+    scale: 0.3;
+    opacity: 0;
+  }
+}
