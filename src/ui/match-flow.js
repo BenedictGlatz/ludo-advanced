@@ -31,21 +31,18 @@
  *
  * ## One pool per match, which is what the pool asked for
  *
- * `createDicePool`'s own header says "the closure is created once per match by the composition root, so
- * two matches never share a pool", and every match here gets a fresh one. It matters: a match that ends
- * mid-turn never returns its three drawn cards, so a second match on the same pool would start with
- * seventeen and `draw()` throws outright once four matches have leaked twelve. The RNG is deliberately
- * **not** reset, so a restart plays a different match rather than replaying the same one.
+ * Every match here is built by `match-setup.js`, which gives each one a fresh dice pool and carries the
+ * reason: a match that ends mid-turn never returns its three drawn cards. Since issue #42 there are
+ * three callers of those builders, the hot-seat start, Play Again and the online host, which is why they
+ * stopped being two pairs of lines in this file.
  */
 
-import { createDicePool } from "../core/dice-pool.js";
-import { botSeatsFor } from "../state/bots.js";
-import { matchDeps, restartMatch, startMatch } from "../state/match.js";
 import { renderChrome, updateChrome } from "./chrome-view.js";
 import { bindChromeEvents, bindOverlayEvents } from "./events.js";
 import { createGameLoop } from "./game-loop.js";
 import { turnLine } from "./hud-view.js";
 import { createLineupFlow } from "./lineup.js";
+import { freshMatchParts, restartParts } from "./match-setup.js";
 import { screenDescription } from "./overlay-screens.js";
 import { OVERLAY_SCREEN, focusOverlay, renderOverlay, updateOverlay } from "./overlay-view.js";
 import { emptyParts, matchParts, mount } from "./page.js";
@@ -171,15 +168,22 @@ export function createMatchFlow({
     openScreen(OVERLAY_SCREEN.HANDOVER, seat);
   }
 
-  /** Build a match and put it on screen, replacing whatever was there. */
-  function beginMatch(nextState) {
+  /**
+   * Build a match and put it on screen, replacing whatever was there. Returns the loop.
+   *
+   * `createLoop` and `loopOptions` are issue #42's two additions: the online guest runs a mirror loop
+   * with the same public surface, and the online host runs the ordinary loop with a broadcasting
+   * dispatcher and its own seat as the only local one. Both defaults are today's hot-seat match.
+   */
+  function beginMatch(nextState, nextDeps, { createLoop = createGameLoop, loopOptions = {} } = {}) {
     state = nextState;
+    deps = nextDeps;
 
     const parts = matchParts(state, deps.diceSource.handSize);
 
     mount($root, parts, session);
 
-    loop = createGameLoop({
+    loop = createLoop({
       initialState: state,
       deps,
       parts: { ...parts, $chrome: session.$chrome },
@@ -187,43 +191,27 @@ export function createMatchFlow({
       onCurtain,
       onMatchOver,
       skipHandover,
+      ...loopOptions,
     });
 
     openScreen(OVERLAY_SCREEN.NONE);
     loop.start();
+
+    return loop;
   }
 
-  /**
-   * A fresh pool for every match, and a fresh match with it. See the header.
-   *
-   * `undefined` rather than `null` for the skill squares, because that is what makes `startMatch` use
-   * its default. `stack` is `null` in every production boot, and `seedSkillCards` shuffles a real pool
-   * when it is not given one.
-   *
-   * **`Math.min(bots, playerCount - 1)` is not belt and braces.** `bots` is read once, off the address
-   * bar, and `playerCount` changes every time somebody picks a different count on the setup screen. So
-   * `?players=4&bots=3`, quit to the menu, start a two-player match would otherwise seat three bots at
-   * a two-seat table, and `botSeatsFor` clamps that to an all-bot match rather than throwing. One
-   * person is always left at the keyboard.
-   */
+  /** A fresh match on a fresh pool. `match-setup.js` carries the bot clamp and the stack. */
   function freshMatch(playerCount, botSeats = null) {
-    deps = matchDeps(rng, createDicePool());
-    const seats = botSeats ?? botSeatsFor(playerCount, Math.min(bots, playerCount - 1));
+    const built = freshMatchParts(rng, playerCount, { botSeats, botCount: bots, stack });
 
-    beginMatch(startMatch(playerCount, deps, undefined, stack ?? undefined, seats));
+    beginMatch(built.state, built.deps);
   }
 
-  /**
-   * A fresh match with the same players (FR-06), on a pool that is whole again.
-   *
-   * `restartMatch` rather than `startMatch(state.playerCount, ...)`, because "the same players" is a
-   * question about a match and `state/` is where a match's vocabulary lives. The **new pool** is the
-   * important half: the match being restarted from has three dice cards still out on the hand it never
-   * finished, so reusing its pool would start this one seventeen cards deep.
-   */
+  /** A fresh match with the same players (FR-06), on a pool that is whole again. */
   function playAgain() {
-    deps = matchDeps(rng, createDicePool());
-    beginMatch(restartMatch(state, deps));
+    const built = restartParts(state, rng);
+
+    beginMatch(built.state, built.deps);
   }
 
   /**
