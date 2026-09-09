@@ -11,7 +11,12 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 import { initI18n } from "../../../src/i18n/index.js";
 import { OVERLAY_ACTION, OVERLAY_SCREEN } from "../../../src/ui/overlay-vocabulary.js";
-import { STAGE, hostScreen, joinScreen, onlineScreen } from "../../../src/ui/online/lobby-screen.js";
+import {
+  STAGE,
+  hostScreen,
+  joinScreen,
+  onlineScreen,
+} from "../../../src/ui/online/lobby-screen.js";
 
 const actions = (description) => description.buttons.map((button) => button.action);
 const fields = (description) => (description.fields ?? []).map((field) => field.name);

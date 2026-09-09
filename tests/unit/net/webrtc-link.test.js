@@ -13,10 +13,16 @@ import { createGuestLink, createHostLink } from "../../../src/net/webrtc-link.js
 
 /** A channel that opens when told to. */
 function fakeChannel(label) {
-  return { label, readyState: "connecting", send() {}, close() {}, open() {
-    this.readyState = "open";
-    this.onopen?.();
-  } };
+  return {
+    label,
+    readyState: "connecting",
+    send() {},
+    close() {},
+    open() {
+      this.readyState = "open";
+      this.onopen?.();
+    },
+  };
 }
 
 /** Enough of `RTCPeerConnection` for the two links: descriptions, one channel, gathering already done. */

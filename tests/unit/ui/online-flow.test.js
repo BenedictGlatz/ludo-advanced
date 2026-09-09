@@ -150,34 +150,37 @@ describe("hosting", () => {
     expect(flow.snapshot()).toMatchObject({ playerCount: 2, seats: [0, 2], invite: "invite:1" });
   });
 
-  it.each([2, 3, 4])("seats %i players in join order and starts one match for each screen", async (count) => {
-    const { host, guests } = await table(count);
-    const seats = host.flow.snapshot().seats;
+  it.each([2, 3, 4])(
+    "seats %i players in join order and starts one match for each screen",
+    async (count) => {
+      const { host, guests } = await table(count);
+      const seats = host.flow.snapshot().seats;
 
-    expect(host.flow.snapshot().connected).toEqual(seats.slice(1));
+      expect(host.flow.snapshot().connected).toEqual(seats.slice(1));
 
-    host.flow.start();
-    await settle();
-    await settle();
+      host.flow.start();
+      await settle();
+      await settle();
 
-    // The host runs the ordinary loop with its own seat local and a broadcasting dispatcher.
-    expect(host.begun).toHaveLength(1);
-    expect(host.begun[0].loopOptions.localSeats).toEqual([seats[0]]);
-    expect(typeof host.begun[0].loopOptions.dispatcher).toBe("function");
-    expect(host.begun[0].state.playerCount).toBe(count);
-    expect(host.begun[0].state.bots).toEqual([]);
+      // The host runs the ordinary loop with its own seat local and a broadcasting dispatcher.
+      expect(host.begun).toHaveLength(1);
+      expect(host.begun[0].loopOptions.localSeats).toEqual([seats[0]]);
+      expect(typeof host.begun[0].loopOptions.dispatcher).toBe("function");
+      expect(host.begun[0].state.playerCount).toBe(count);
+      expect(host.begun[0].state.bots).toEqual([]);
 
-    // Every guest mounted the same state, with its own seat as the only local one.
-    guests.forEach((guest, index) => {
-      expect(guest.begun).toHaveLength(1);
-      expect(guest.begun[0].loopOptions.localSeats).toEqual([seats[index + 1]]);
-      expect(guest.begun[0].state).toEqual(host.begun[0].state);
-      expect(guest.begun[0].loopOptions.delays.reaction).toBe(0);
-      expect(guest.flow.active()).toBe(true);
-      expect(guest.flow.canRestart()).toBe(false);
-    });
-    expect(host.flow.canRestart()).toBe(true);
-  });
+      // Every guest mounted the same state, with its own seat as the only local one.
+      guests.forEach((guest, index) => {
+        expect(guest.begun).toHaveLength(1);
+        expect(guest.begun[0].loopOptions.localSeats).toEqual([seats[index + 1]]);
+        expect(guest.begun[0].state).toEqual(host.begun[0].state);
+        expect(guest.begun[0].loopOptions.delays.reaction).toBe(0);
+        expect(guest.flow.active()).toBe(true);
+        expect(guest.flow.canRestart()).toBe(false);
+      });
+      expect(host.flow.canRestart()).toBe(true);
+    }
+  );
 
   it("refuses a wrong reply code and stays in the lobby", async () => {
     const { flow } = browser(fakeLinks());

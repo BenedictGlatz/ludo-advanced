@@ -77,7 +77,11 @@ export function createMatchFlow({
         seat: handoverSeat,
         pool: poolCountsFor(match.getDeps()),
         lineup: lineup.snapshot(),
-        online: { role: online.role(), snapshot: online.snapshot(), canRestart: online.canRestart() },
+        online: {
+          role: online.role(),
+          snapshot: online.snapshot(),
+          canRestart: online.canRestart(),
+        },
       })
     );
     updateChrome(session.$chrome, {

@@ -40,9 +40,7 @@ describe("autoIntent", () => {
 
     expect(autoIntent(stateFor({ phase: TURN_PHASE.ROLL, reactionWindow: window }))).toBeNull();
     expect(
-      autoIntent(
-        stateFor({ phase: TURN_PHASE.ROLL, reactionWindow: { ...window, eligible: [] } })
-      )
+      autoIntent(stateFor({ phase: TURN_PHASE.ROLL, reactionWindow: { ...window, eligible: [] } }))
     ).toEqual({ type: INTENT.CLOSE_WINDOW });
   });
 

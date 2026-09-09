@@ -102,16 +102,29 @@ export function hostScreen(snapshot) {
   const buttons = [];
 
   if (snapshot.invite !== null) {
-    fields.push({ name: "invite", label: t("online.inviteLabel"), value: snapshot.invite, readonly: true });
+    fields.push({
+      name: "invite",
+      label: t("online.inviteLabel"),
+      value: snapshot.invite,
+      readonly: true,
+    });
     fields.push({ name: "reply", label: t("online.replyLabel"), value: null, readonly: false });
-    buttons.push({ action: OVERLAY_ACTION.COPY, label: t(snapshot.copied ? "online.copied" : "online.copy"), field: "invite" });
+    buttons.push({
+      action: OVERLAY_ACTION.COPY,
+      label: t(snapshot.copied ? "online.copied" : "online.copy"),
+      field: "invite",
+    });
     buttons.push({ action: OVERLAY_ACTION.CONNECT, label: t("online.connect"), field: "reply" });
   } else if (!everybodyIn) {
     buttons.push({ action: OVERLAY_ACTION.ADD_GUEST, label: t("online.addGuest") });
   }
 
   if (everybodyIn) {
-    buttons.push({ action: OVERLAY_ACTION.START_ONLINE, label: t("online.start"), variant: "primary" });
+    buttons.push({
+      action: OVERLAY_ACTION.START_ONLINE,
+      label: t("online.start"),
+      variant: "primary",
+    });
   }
   buttons.push(back());
 
@@ -132,10 +145,24 @@ export function joinScreen(snapshot) {
   const buttons = [];
 
   if (snapshot.reply === null) {
-    buttons.push({ action: OVERLAY_ACTION.CONNECT, label: t("online.connect"), field: "invite", variant: "primary" });
+    buttons.push({
+      action: OVERLAY_ACTION.CONNECT,
+      label: t("online.connect"),
+      field: "invite",
+      variant: "primary",
+    });
   } else {
-    fields.push({ name: "reply", label: t("online.replyLabel"), value: snapshot.reply, readonly: true });
-    buttons.push({ action: OVERLAY_ACTION.COPY, label: t(snapshot.copied ? "online.copied" : "online.copy"), field: "reply" });
+    fields.push({
+      name: "reply",
+      label: t("online.replyLabel"),
+      value: snapshot.reply,
+      readonly: true,
+    });
+    buttons.push({
+      action: OVERLAY_ACTION.COPY,
+      label: t(snapshot.copied ? "online.copied" : "online.copy"),
+      field: "reply",
+    });
   }
   buttons.push(back());
 

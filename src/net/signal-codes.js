@@ -43,7 +43,10 @@ function toBase64Url(bytes) {
 }
 
 function fromBase64Url(code) {
-  const padded = code.replaceAll("-", "+").replaceAll("_", "/").padEnd(Math.ceil(code.length / 4) * 4, "=");
+  const padded = code
+    .replaceAll("-", "+")
+    .replaceAll("_", "/")
+    .padEnd(Math.ceil(code.length / 4) * 4, "=");
   const binary = atob(padded);
 
   return Uint8Array.from(binary, (char) => char.charCodeAt(0));
@@ -51,7 +54,10 @@ function fromBase64Url(code) {
 
 /** `{ type, sdp }` as one line of text a chat can carry. */
 export async function encodeSignal({ type, sdp }) {
-  const bytes = await bytesThrough(JSON.stringify({ type, sdp }), new CompressionStream("deflate-raw"));
+  const bytes = await bytesThrough(
+    JSON.stringify({ type, sdp }),
+    new CompressionStream("deflate-raw")
+  );
 
   return toBase64Url(bytes);
 }

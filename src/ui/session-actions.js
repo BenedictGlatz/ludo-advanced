@@ -51,7 +51,8 @@ export function createSessionActions(session) {
     const screen = session.getScreen();
 
     if (screen === OVERLAY_SCREEN.ONLINE) return OVERLAY_SCREEN.MENU;
-    if (screen === OVERLAY_SCREEN.HOST || screen === OVERLAY_SCREEN.JOIN) return OVERLAY_SCREEN.ONLINE;
+    if (screen === OVERLAY_SCREEN.HOST || screen === OVERLAY_SCREEN.JOIN)
+      return OVERLAY_SCREEN.ONLINE;
 
     return OVERLAY_SCREEN.SETUP;
   }
@@ -66,7 +67,8 @@ export function createSessionActions(session) {
 
     // The online lobby (issue #42). `value` is a player count on the HOST door and the pasted code on
     // Connect and Copy, which `events.js` read off the textarea the button names.
-    if (action === OVERLAY_ACTION.HOST) session.online.host(value === undefined ? null : Number(value));
+    if (action === OVERLAY_ACTION.HOST)
+      session.online.host(value === undefined ? null : Number(value));
     if (action === OVERLAY_ACTION.JOIN) session.online.join();
     if (action === OVERLAY_ACTION.CONNECT) session.online.connect(value);
     if (action === OVERLAY_ACTION.COPY) session.online.copy(value);

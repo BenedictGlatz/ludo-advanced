@@ -3,7 +3,47 @@
 **From:** Claude Code
 **To:** Claude Design
 **Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, four
-times on 2026-09-04, twice on 2026-09-05 and seven times on 2026-09-06**
+times on 2026-09-04, twice on 2026-09-05, seven times on 2026-09-06 and once on 2026-09-09**
+
+---
+
+## Status on 2026-09-09: the online lobby exists and has no design, which is a brief
+
+**Owed as a brief.** Issue #42 built FR-42, online multiplayer, and with it three new contents of the one
+overlay component that `CLAUDE.md` says are Claude Design's: a door (`data-screen="online"`), the host's
+lobby (`"host"`) and the guest's lobby (`"join"`). They shipped without a handoff because four working days
+were left before the freeze, and the exception is recorded in the journal under 2026-09-09. What was built
+uses only existing patterns, so that whatever this side designs replaces a placeholder and not a decision.
+
+**What is on screen now**, in `src/ui/online/lobby-screen.js` and `src/ui/styles/lobby.css`:
+
+| Screen | Content | Borrowed from |
+| --- | --- | --- |
+| `online` | Title, one paragraph, three buttons: Join, Host (primary), Back | the pause and setup screens |
+| `host`, before a count | The same three count buttons as `setup`, plus Back | `setup` |
+| `host`, after a count | Seat rows with a status word (`data-status="host" / "waiting" / "connected"`), a readonly textarea with the invite code and a Copy button, a writable textarea for the reply code and a Connect button, Invite the next player, Start (primary) once every seat is connected, Back | the line-up's rows and 44rem panel, the button's chrome on the textarea |
+| `join` | A writable textarea for the invite code and Connect (primary); after Connect a readonly textarea with the reply code and Copy; Back | as above |
+
+**The one new element is `.overlay__field`**: a `<label>` over a `<textarea data-field>`, in `--font-num`
+because a code is one long line of base64. It carries the button's ink edge, radius and surface and the
+muted text colour when readonly. The status word is `.overlay__seat-status`, muted while waiting and ink
+once connected. **No new token, colour or size**, so the DOM contract is the only thing to design against.
+
+**What the design has to say, because the lobby's words say it now and the look could say it better:**
+
+1. **A code is a thing to copy, never to read.** It is a few hundred characters of base64. The Copy
+   button is mandatory; the textarea exists so a player sees that something long was pasted whole.
+2. **Three stages per connection**, `gathering`, `waiting`, `connecting`, `connected`, and two failures,
+   `lost` and the twenty-second NAT timeout. All are one sentence in `.overlay__text` today. Whether a
+   stage deserves a mark on the seat row, and whether the failure deserves `--color-warn`, is the design's.
+3. **Who is who.** The host is seat 0 and its row says "You (host)"; guests take seats in join order. The
+   rows are the line-up's rows, so a seat's colour arrives from `data-player` as before.
+4. **The pause screen gained one sentence online** (`pause.online.host` and `pause.online.guest`),
+   because a host's Pause stops everybody and a guest's stops only their own screen. It uses the existing
+   `.overlay__text` slot.
+
+**Not asked for, stated so it is not assumed:** a lobby chat, a player name, an avatar, a ready check.
+None exists in the code and none is in FR-42.
 
 ---
 

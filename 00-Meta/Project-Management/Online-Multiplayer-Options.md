@@ -1,7 +1,12 @@
 # Online Multiplayer Options: FR-42 / issue #42
 
 Written 2026-09-08, before any networking code exists. **This document recommends, it does not
-decide.** The decision is the Product Owner's and is not recorded yet.
+decide.**
+
+> **Decided 2026-09-08: option C**, WebRTC peer-to-peer, host-authoritative, whole state travels, with
+> manual signaling codes and no dependency. The Product Owner's answers to the five open decisions and
+> the plan that was executed are in [Online-Multiplayer-Plan.md](Online-Multiplayer-Plan.md); the
+> decision block is in the project journal under 2026-09-09. Implemented in issue #42.
 
 FR-42 reads: *"Online multiplayer with a lobby"*, acceptance criterion *"Two browsers on different
 machines play one match"*, `should have`, 13 points. Section 4.4 of

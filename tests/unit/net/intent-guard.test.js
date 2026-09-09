@@ -96,7 +96,11 @@ describe("play-card", () => {
 
 describe("decline-reaction", () => {
   it("needs the guest's own seat and an open window it is eligible in", () => {
-    const asked = stateFor({ phase: TURN_PHASE.ROLL, activePlayer: 0, reactionWindow: window([2]) });
+    const asked = stateFor({
+      phase: TURN_PHASE.ROLL,
+      activePlayer: 0,
+      reactionWindow: window([2]),
+    });
 
     expect(
       guestIntentRefusal(asked, { type: INTENT_CARD.DECLINE_REACTION, seat: 2 }, GUEST)

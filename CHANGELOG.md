@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The three dice cards are no longer offered on a turn that is not yours to play.** During a bot's
+  turn, and online during another player's, the dice cards are drawn but not clickable, where before they
+  looked clickable and the click was silently refused
 - **You can no longer see what the other players are holding.** A skill hand that is not yours is drawn
   as a stack of card backs: a computer opponent's for the whole of its turn, and another person's while
   a reaction window is waiting on them. How many cards each player holds is still shown, in the HUD as
@@ -20,6 +23,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Online multiplayer, two to four players, each at their own screen.** The menu's Online Multiplayer
+  door works: one player hosts a match and picks the player count, the game shows an invite code with a
+  Copy button, the host sends it through any chat, the other player pastes it under Join a match and
+  sends back the reply code it produces, and the host pastes that and presses Connect. For three or four
+  players the host repeats the exchange once per player. The host's browser runs the match; everybody
+  else's follows it, and each screen can only move its own seat. There is no server behind it: the two
+  browsers talk to each other directly. **Known limitations of this first version, stated rather than
+  hidden:** every browser holds the whole match, so a player who opens the developer tools can read the
+  other hands ("we trust our friends"); there is no relay server, so two players behind strict home
+  routers may fail to connect and the lobby says so after twenty seconds; a dropped connection ends the
+  match for everybody, there is no reconnect; a guest's Pause only pauses their own screen while the
+  host's Pause stops the match for everyone; Play Again is the host's button; and codes go stale after a
+  few minutes
 - **A played skill card now has a moment of its own.** The card comes out of the hand, stands large over
   the board while it does the thing its kind of card does, shows its effect landing on the field or the
   pawn it was aimed at, and then shrinks away into the last-card plate. Every one of the 29 cards has its

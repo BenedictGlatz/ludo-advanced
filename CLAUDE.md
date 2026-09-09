@@ -108,6 +108,11 @@ src/
   ai/      Rule-based bot players (FR-43). Reads state, returns intents.
            Imports core/ and state/, never ui/ or i18n/. Pure and
            deterministic: no rng, no Math.random, no Date, no clock.
+  net/     Online play (FR-42): the wire protocol, the host and guest
+           sessions, the guest intent guard, invite codes and the WebRTC
+           wrapper. Imports core/ and state/, never ui/ or i18n/. Headless
+           except webrtc-link.js, which is the one file naming a browser
+           API and is covered by Playwright instead of Vitest.
   ui/      jQuery rendering and event binding. Reads state, dispatches
            intents into state/. Contains no game rules.
   i18n/    i18next setup, locales/de.json, locales/en.json
@@ -125,6 +130,9 @@ Three rules follow from this:
 - **`ai/` never imports from `ui/` or `i18n/`, and never knows the time.** A bot is a player without a
   screen: it reads state and returns one intent, exactly as a click handler does. The pause that makes
   a bot turn readable belongs to `ui/bot-driver.js`. That is what lets a whole bot match be a unit test.
+- **`net/` never imports from `ui/` or `i18n/`, and it never dispatches on a guest.** The host owns the
+  match; a guest sends intents and receives whole states. Every session talks to a `transport`, so a
+  whole online match runs over an in-process loopback pair in Vitest.
 
 Card effects (skill and dice) live in `core/` as pure functions over game state: a card's visual presentation belongs
 in `ui/`, its rule belongs in `core/`, and the two are matched by card id.
@@ -135,7 +143,8 @@ High test coverage is a project requirement, not a nice-to-have.
 
 - Every rule change in `core/` ships with its unit test in the same commit.
 - Every player-facing flow (take a turn, pick a dice card, play a skill card, capture a pawn, win) has an E2E test.
-- Coverage target: **≥ 80 % lines in `src/core/`, `src/state/` and `src/ai/`**. `ui/` is covered through E2E instead.
+- Coverage target: **≥ 80 % lines in `src/core/`, `src/state/`, `src/ai/` and `src/net/`**. `ui/` is covered
+  through E2E instead, and so is `src/net/webrtc-link.js`.
 
 ## Documentation notes
 
@@ -154,6 +163,7 @@ chapter table, the status of each chapter, and the standing list of open questio
 | `src/core/`: rules, board, movement, capture, card pools | `notes/05-game-core-building-blocks.md` |
 | `src/state/`: transitions, turn manager, intents | `notes/06-state-and-turn-flow.md` |
 | `src/ai/`: bot policy, move scoring, dice choice | `notes/06-state-and-turn-flow.md` |
+| `src/net/`: protocol, sessions, intent guard, signal codes | `notes/06-state-and-turn-flow.md` |
 | `src/ui/`, `src/i18n/`: rendering, events, locales | `notes/04-frontend-building-blocks.md` |
 | `package.json`, ESLint, Prettier, Vite config | `notes/07-tooling.md` |
 | tests, coverage, CI workflow | `notes/08-quality.md` |

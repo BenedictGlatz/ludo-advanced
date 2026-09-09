@@ -60,7 +60,9 @@ test.describe("online multiplayer (FR-42)", () => {
     });
   }
 
-  test("two contexts connect through the lobby and play the first two turns", async ({ browser }) => {
+  test("two contexts connect through the lobby and play the first two turns", async ({
+    browser,
+  }) => {
     const hostContext = await browser.newContext();
     const guestContext = await browser.newContext();
     const host = await hostContext.newPage();

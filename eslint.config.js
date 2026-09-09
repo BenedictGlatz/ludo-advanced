@@ -126,8 +126,14 @@ const netLayerBans = {
         },
       ],
       paths: [
-        { name: "jquery", message: "src/net/ runs without a DOM. jQuery belongs in src/ui/. See NFR-01." },
-        { name: "i18next", message: "src/net/ never produces text. i18next belongs in src/ui/. See NFR-01." },
+        {
+          name: "jquery",
+          message: "src/net/ runs without a DOM. jQuery belongs in src/ui/. See NFR-01.",
+        },
+        {
+          name: "i18next",
+          message: "src/net/ never produces text. i18next belongs in src/ui/. See NFR-01.",
+        },
       ],
     },
   ],

@@ -2254,6 +2254,55 @@ the fix (dropping `reuseExistingServer`, or making the preview server rebuild) i
 **Still not covered:** `skill-hand-view.js` itself has no unit test and is not getting one. It imports
 jQuery and i18next, so it belongs to the Playwright half by the same rule that put `handover.js` in the
 Vitest half.
+### A whole online match is a unit test, and the browser half runs on Chromium only: 2026-09-09, issue #42
+
+- **The strongest new test is a game nobody plays, over a wire nobody sees.**
+  `tests/unit/net/loopback-match.test.js` is modelled on `bot-match.test.js`: a host session on a
+  headless loop (`dispatch`, `autoIntent`, `end-turn`), a guest session on the other end of
+  `createLoopbackPair()`, both seats driven by `decide` with the seat written into a `bots` view so the
+  policy answers for it. It asserts that the guest's mirror deep-equals the host's state **after every
+  echo** of a whole match to a win, that a guest `roll-die` is refused locally and a guest `choose-die` on
+  the host's turn is refused by the host with the host's state untouched, that a mid-match four-player
+  state stays under 16 KB at every one of 400 intents, and, in a second case, the same for three players
+  over two pairs. A wrong guard, a missed broadcast or a state that does not survive JSON shows up as a
+  hang, a refusal, or two boards that disagree.
+- **Why the loopback delivers one microtask late.** A synchronous loopback would let a session pass that
+  deadlocks on a real channel, where `send` never re-enters the caller. Every `settle()` in the test is a
+  macrotask turn, a few thousand per match, and under `--coverage` the instrumented rules made the two
+  match cases exceed Vitest's five seconds. They carry a 120 s timeout with the reason beside it, which
+  was the one flake found on the first coverage run and cost fifteen minutes.
+- **What else is unit tested:** every row of the guard's table (`intent-guard.test.js`), the seven
+  message kinds and `decode`'s `null` on garbage (`protocol.test.js`), both transports
+  (`transport.test.js`), the sessions one message at a time including the pause refusal and the lost seat
+  (`sessions.test.js`), the code round trip and its garbage cases and `waitForIceComplete`'s three exits
+  (`signal-codes.test.js`), the two link machines against a fake peer connection (`webrtc-link.test.js`),
+  the store and `isLocal` (`loop-store.test.js`), the auto steps (`auto-steps.test.js`), one pool per
+  match (`match-setup.test.js`), the three lobby screens (`lobby-screen.test.js`) and the whole lobby
+  with fake links for tables of 2, 3 and 4 (`online-flow.test.js`). The `ui/` files under test are the
+  ones with no jQuery in them, which is the same exception Ch. 08 already made for `handover.js`.
+- **`src/net/` joined the NFR-05 floor**, with `webrtc-link.js` excluded: `RTCPeerConnection` does not
+  exist under Node, and a state-machine test against a fake is not coverage of the browser. The figures
+  are in [09-source-code-overview.md](09-source-code-overview.md).
+- **The end-to-end spec, `online.spec.js`, opens two `browser.newContext()` pages**, which share nothing
+  and connect over a real data channel on the loopback interface with no STUN server. It reads the invite
+  textarea off the host and fills it into the guest, reads the reply back, asserts both boards show two
+  players, plays the host's turn one with `playTurn`, asserts the guest followed and that on its own turn
+  its hand is face up and its dice cards clickable while the host's are not, and picks a card that moves
+  the host's board. A second case pauses on the host, sees the guest's pause screen, quits on the host
+  and sees the guest's win screen say abandoned with no Play Again. The invite textarea gets a 10 s
+  expectation because ICE gathering is real time.
+- **Chromium only, stated as outstanding.** The spec skips on Firefox and Edge. Their ICE behaviour
+  under Playwright is unchecked, and a red run on an engine nobody has looked at would be noise rather
+  than a finding. This is the same discipline as the `test.skip` argument in Ch. 08's earlier entries:
+  a skipped engine is on the record, a silently green one is not.
+- **The first E2E run found a real defect, not a test bug.** The guest's three dice cards carried
+  `data-playable="true"` on the host's turn: the view derived playability from the phase alone and the
+  guard in `turn-controls.js` silently refused the click. The fix is `canAct` in the renderer, and it
+  changed a bot's turn too. The second run found a test bug: the spec forgot `carryOn` and the host sat
+  in the action phase holding a playable card. Both are the kind of thing the unit suite cannot see.
+- **Not run:** two real machines on two real networks. Whether STUN alone connects, and how often the NAT
+  sentence appears in practice, is unknown until somebody tries it, and the result belongs here.
+
 
 ## Decisions
 

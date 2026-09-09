@@ -53,7 +53,10 @@ function whenOpen(channel) {
 }
 
 /** The host's machine: make an offer, then accept one answer. */
-export function createHostLink({ iceServers = DEFAULT_ICE_SERVERS, createPeer = defaultPeer } = {}) {
+export function createHostLink({
+  iceServers = DEFAULT_ICE_SERVERS,
+  createPeer = defaultPeer,
+} = {}) {
   const pc = createPeer({ iceServers });
   const channel = pc.createDataChannel(CHANNEL_LABEL, { ordered: true });
 
@@ -84,7 +87,10 @@ export function createHostLink({ iceServers = DEFAULT_ICE_SERVERS, createPeer = 
 }
 
 /** The guest's machine: answer one invite. */
-export function createGuestLink({ iceServers = DEFAULT_ICE_SERVERS, createPeer = defaultPeer } = {}) {
+export function createGuestLink({
+  iceServers = DEFAULT_ICE_SERVERS,
+  createPeer = defaultPeer,
+} = {}) {
   const pc = createPeer({ iceServers });
 
   return {

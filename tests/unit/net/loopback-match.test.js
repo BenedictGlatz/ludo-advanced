@@ -29,6 +29,12 @@ import { createLoopbackPair } from "../../../src/net/transport.js";
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+/**
+ * A whole match is a few thousand macrotask turns, one per `settle`, and under `--coverage` the
+ * instrumented rules run slowly enough that Vitest's default five seconds is not enough.
+ */
+const MATCH_TIMEOUT_MS = 120_000;
+
 /** The game loop with the waiting taken out: apply, then every step the loop takes by itself. */
 function headlessLoop(start, deps, dispatcher) {
   let state = start;
@@ -87,43 +93,47 @@ function onlineTable(seed) {
 }
 
 describe("a whole match over a loopback pair (FR-42)", () => {
-  it("is played to a win by a host and a guest, and the guest's board never disagrees", async () => {
-    const table = onlineTable(3);
-    const { loop, guest } = table;
-    let steps = 0;
-
-    await settle();
-    loop.run();
-    await settle();
-
-    while (loop.getState().status === MATCH_STATUS.RUNNING) {
-      steps += 1;
-      expect(steps, "the online match did not finish within 20000 intents").toBeLessThan(20000);
-
-      // The guest acts through the wire, the host acts through its loop. Exactly one of the two seats
-      // is being asked anything at any moment, so one of these is null on every pass.
-      const guestIntent = wants(loop.getState(), 2);
-      const hostIntent = wants(loop.getState(), 0);
-
-      if (guestIntent !== null) {
-        expect(guest.apply(guestIntent), guestIntent.type).toBe(true);
-      } else if (hostIntent !== null) {
-        expect(loop.submit(hostIntent), hostIntent.type).toBe(true);
-      } else {
-        throw new Error(`nobody knows how to leave phase ${loop.getState().phase}`);
-      }
+  it(
+    "is played to a win by a host and a guest, and the guest's board never disagrees",
+    async () => {
+      const table = onlineTable(3);
+      const { loop, guest } = table;
+      let steps = 0;
 
       await settle();
+      loop.run();
+      await settle();
 
-      // The assertion the whole file exists for.
-      expect(table.mirror()).toEqual(loop.getState());
-      expect(guest.isInFlight()).toBe(false);
-    }
+      while (loop.getState().status === MATCH_STATUS.RUNNING) {
+        steps += 1;
+        expect(steps, "the online match did not finish within 20000 intents").toBeLessThan(20000);
 
-    expect(loop.getState().status).toBe(MATCH_STATUS.WON);
-    expect(table.mirror().winner).toBe(loop.getState().winner);
-    expect(table.refused).toEqual([]);
-  });
+        // The guest acts through the wire, the host acts through its loop. Exactly one of the two seats
+        // is being asked anything at any moment, so one of these is null on every pass.
+        const guestIntent = wants(loop.getState(), 2);
+        const hostIntent = wants(loop.getState(), 0);
+
+        if (guestIntent !== null) {
+          expect(guest.apply(guestIntent), guestIntent.type).toBe(true);
+        } else if (hostIntent !== null) {
+          expect(loop.submit(hostIntent), hostIntent.type).toBe(true);
+        } else {
+          throw new Error(`nobody knows how to leave phase ${loop.getState().phase}`);
+        }
+
+        await settle();
+
+        // The assertion the whole file exists for.
+        expect(table.mirror()).toEqual(loop.getState());
+        expect(guest.isInFlight()).toBe(false);
+      }
+
+      expect(loop.getState().status).toBe(MATCH_STATUS.WON);
+      expect(table.mirror().winner).toBe(loop.getState().winner);
+      expect(table.refused).toEqual([]);
+    },
+    MATCH_TIMEOUT_MS
+  );
 
   it("refuses a guest's roll and a guest's move on the host's turn, leaving the host's state alone", async () => {
     const table = onlineTable(5);
@@ -161,4 +171,65 @@ describe("a whole match over a loopback pair (FR-42)", () => {
 
     expect(largest).toBeLessThan(16 * 1024);
   });
+});
+
+describe("three players over two loopback pairs (FR-42, seats 3 and 4 add only plumbing)", () => {
+  it(
+    "is played to a win with the host on seat 0 and guests on seats 1 and 2",
+    async () => {
+      const deps = matchDeps(createSeededRng(9));
+      const start = startMatch(3, deps);
+      const guestSeats = start.seats.slice(1);
+      const pairs = guestSeats.map(() => createLoopbackPair());
+
+      const host = createHostSession({
+        guests: guestSeats.map((seat, index) => ({ seat, transport: pairs[index][0] })),
+        poolRemaining: () => deps.diceSource.remaining(),
+      });
+      const loop = headlessLoop(start, deps, host.dispatcher);
+      host.attach(loop);
+
+      const guests = guestSeats.map((seat, index) => {
+        const session = createGuestSession({ transport: pairs[index][1] });
+        const view = { seat, session, mirror: null };
+        session.onState((next) => (view.mirror = next));
+        session.onRefused((reason) => {
+          throw new Error(`seat ${seat} was refused: ${reason}`);
+        });
+        return view;
+      });
+
+      host.broadcastState(start);
+      await settle();
+      loop.run();
+      await settle();
+
+      let steps = 0;
+      while (loop.getState().status === MATCH_STATUS.RUNNING) {
+        steps += 1;
+        expect(steps, "the three-player online match did not finish").toBeLessThan(30000);
+
+        const state = loop.getState();
+        const asked = guests.find((guest) => wants(state, guest.seat) !== null);
+
+        if (asked !== undefined) {
+          expect(asked.session.apply(wants(state, asked.seat))).toBe(true);
+        } else {
+          const hostIntent = wants(state, start.seats[0]);
+          if (hostIntent === null)
+            throw new Error(`nobody knows how to leave phase ${state.phase}`);
+          expect(loop.submit(hostIntent), hostIntent.type).toBe(true);
+        }
+
+        await settle();
+
+        // Every guest's board is the host's board, whoever moved.
+        for (const guest of guests) expect(guest.mirror).toEqual(loop.getState());
+      }
+
+      expect(loop.getState().status).toBe(MATCH_STATUS.WON);
+      expect(start.seats).toContain(loop.getState().winner);
+    },
+    MATCH_TIMEOUT_MS
+  );
 });
