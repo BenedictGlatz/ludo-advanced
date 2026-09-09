@@ -40,7 +40,7 @@ git ls-files -z 'tests/*.js' | xargs -0 wc -l | tail -1
 
 # 3. Lines per architecture layer. `src/ai` joined the list on 2026-09-04 with issue #43, which is
 #    the whole reason it is a loop over a list rather than four commands.
-for d in src/core src/state src/ui src/i18n src/ai; do
+for d in src/core src/state src/ui src/i18n src/ai src/net; do
   printf '%s %s files ' "$d" "$(git ls-files "$d/*.js" | wc -l)"
   git ls-files -z "$d/*.js" | xargs -0 wc -l | tail -1
 done
@@ -60,7 +60,7 @@ for (const [k,v] of Object.entries(j))
 node -e "const j=require('./coverage/coverage-summary.json'); const a={};
 for (const [k,v] of Object.entries(j)) { if (k === 'total') continue;
   const p = k.split(String.fromCharCode(92)).join('/');
-  const d = p.includes('/core/') ? 'src/core' : p.includes('/state/') ? 'src/state' : 'src/ai';
+  const d = p.includes('/core/') ? 'src/core' : p.includes('/state/') ? 'src/state' : p.includes('/net/') ? 'src/net' : 'src/ai';
   a[d] = a[d] || {c:0,t:0,f:0}; a[d].c += v.lines.covered; a[d].t += v.lines.total; a[d].f += 1; }
 for (const [d,x] of Object.entries(a))
   console.log(d, x.f + ' files', x.c + '/' + x.t, (100*x.c/x.t).toFixed(2) + '%');"
@@ -145,6 +145,50 @@ The lesson is worth a sentence in the report on its own: a measurement taken onc
 of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
+
+### Measured 2026-09-09, after issue #42 landed
+
+Every command in the section above was re-run after online multiplayer landed. **This is the current
+measurement**; the blocks below it are kept so the growth is readable rather than asserted. Command 3
+and 5c now include `src/net`, which is the fourth layer NFR-05 measures since this change.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **19745 lines in 131 files**, up from 17371 in 110 | 2026-09-09, after issue #42 |
+| Stylesheet lines in `src/` | 7 | **6298 lines in 36 files**, up from 6166 in 32 | 2026-09-09, after issue #42 |
+| Test lines in `tests/` | 2 | **21748 lines in 134 files**, up from 19599 in 118 | 2026-09-09, after issue #42 |
+| Lines in `src/core/` | 3 | 4543 lines in 32 files, **unchanged** | 2026-09-09, after issue #42 |
+| Lines in `src/state/` | 3 | 2447 lines in 15 files, up 74 (`auto-steps.js`) | 2026-09-09, after issue #42 |
+| Lines in `src/ui/` | 3 | **8807 lines in 56 files**, plus 6298 lines of CSS | 2026-09-09, after issue #42 |
+| Lines in `src/ai/` | 3 | 2768 lines in 18 files, **unchanged** | 2026-09-09, after issue #42 |
+| Lines in `src/net/` | 3 | **756 lines in 7 files**, new | 2026-09-09, after issue #42 |
+| Unit tests | 4 | **98 test files, 1133 tests**, all passing | 2026-09-09, after issue #42 |
+| End-to-end tests | 8 | **157 tests in 31 files per browser**, all passing on Chromium; `online.spec.js`'s 2 skip on the other two | 2026-09-09, after issue #42 |
+| Coverage of the four headless layers, lines | 5c | 99.27 % (1502/1513) | 2026-09-09, after issue #42 |
+| Coverage of `src/core/`, lines | 5c | 99.66 % (581/583) over 32 files | 2026-09-09, after issue #42 |
+| Coverage of `src/state/`, lines | 5c | 99.07 % (321/324) over 15 files | 2026-09-09, after issue #42 |
+| Coverage of `src/ai/`, lines | 5c | 99.08 % (432/436) over 18 files | 2026-09-09, after issue #42 |
+| Coverage of `src/net/`, lines | 5c | 98.82 % (168/170) over 6 files, `webrtc-link.js` excluded | 2026-09-09, after issue #42 |
+| Coverage, branches | 5a | 94.89 % | 2026-09-09, after issue #42 |
+| Coverage, functions | 5a | 98.91 % | 2026-09-09, after issue #42 |
+| Longest file of any kind | 6 | 299 lines, `tests/unit/state/intents-cards.test.js`; longest source `src/state/game-state.js` at 292 | 2026-09-09, after issue #42 |
+| Longest stylesheet | 7 | 267 lines, `src/ui/styles/board.css`, unchanged | 2026-09-09, after issue #42 |
+
+**Four readings.**
+
+1. **`core/` and `ai/` are byte-identical after a networking feature.** The whole of online play is 756
+   lines of `net/`, 74 lines of `state/`, and `ui/`. That is the layering doing what the architecture
+   document said it would: a rule change is cheap because a rule lives in one place, and here the
+   reverse held, a transport change touched no rule.
+2. **`game-loop.js` is no longer at the limit.** It was the only file at 300 for three deliveries and is
+   269 after the state cell moved to `loop-store.js`. Three other files were split for the same reason
+   in this change and none is above 292.
+3. **`ui/` grew by 1543 lines and 13 files**, of which `guest-loop.js`, `guest-role.js`, `host-role.js`,
+   `online-flow.js` and `lobby-screen.js` are the feature and the other eight are splits and the
+   regions that took the lobby's fields.
+4. **The coverage floor widened and did not fall.** `src/net/` enters at 98.82 % on its first
+   measurement, with the two uncovered lines in `guest-session.js`'s `default` branch and
+   `host-session.js`'s `loop === null` refusal.
 
 ### Measured 2026-09-06, after design handoff 18 landed
 

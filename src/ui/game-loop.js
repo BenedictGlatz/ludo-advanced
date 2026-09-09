@@ -1,9 +1,9 @@
 /**
- * What the view does between the player's clicks. Issue #62, extended by issues #33 and #34.
+ * What the view does between the player's clicks. Issue #62, extended by issues #33, #34 and #42.
  *
- * This is the only stateful thing in `ui/`: it holds the current state object, hands intents to
- * `state/`, and replaces its own reference with whatever comes back. It never writes into a state
- * object, which `game-state.js` also makes impossible by freezing.
+ * Since issue #42 the state cell is one file over, in `loop-store.js`: that module holds the current
+ * state object, hands intents to a dispatcher and replaces its own reference with whatever comes back.
+ * This file decides **when** an intent is dispatched without a click, and nothing else.
  *
  * ## The four controls, and what still happens by itself
  *
@@ -12,8 +12,6 @@
  * `match-flow.js`, which owns the pause screen the button opens. What is left here is the question this
  * file is named for: what the game does when nobody is clicking.
  *
- * The loop was built on 2026-08-30 with **the pawn click as its only control**. It now has four:
- *
  * | Control | Phase it answers | Landed in |
  * | --- | --- | --- |
  * | Pick one of three dice cards | `choose` | Issue #31 |
@@ -21,48 +19,38 @@
  * | Pick a pawn, then commit it | `act` | Issue #62 |
  * | Play a Reaction, or decline | any, while a window is open | Issue #33 |
  *
- * **Since issue #43 a seat can answer all four without a person**, and that changed nothing here except
- * two lines in `advance()`. `bot-driver.js` is the fifth sibling and asks `src/ai/` the same questions
- * the four controls above answer from a click. A bot is a player without a screen.
+ * **Since issue #43 a seat can answer all four without a person**, and `bot-driver.js` is the fifth
+ * sibling. A bot is a player without a screen. **Since issue #42 a seat can answer them from another
+ * screen**, and to this loop that is the same thing: `isLocal(seat)` in the store says who may click
+ * here, and a remote person's seat is unclickable and face down exactly as a bot's is.
  *
- * Two things still happen without the player, and both for a stated reason:
+ * Three steps still happen without the player, and `state/auto-steps.js` names them: the roll rolls
+ * itself, an empty window shuts, and the action phase is skipped when the active player holds nothing
+ * playable. **The turn hands over on its own** only when nobody is watching for it: since issue #39 the
+ * pause after a move ends in the handover overlay, and `handover.js` decides whether one is needed.
  *
- * - **`roll` rolls itself.** There is nothing to decide there. The phase exists so that the on-roll
- *   reaction window has a moment to open in, and so a roll animation has something to hang off (D70).
- * - **The turn hands over on its own** only when nobody is watching for it. Since issue #39 the pause
- *   after a move ends in the handover overlay rather than in the next turn, and `handover.js` decides
- *   whether one is needed. The timer is still there and still uses the design's durations, because a
- *   move has to finish animating and a refusal has to be readable **before** anything covers the board.
- *   When no `onCurtain` is given the loop passes the turn itself, which is what keeps a match driven
- *   straight out of `createGameLoop` playable and is how `?fast=1` keeps the end-to-end suite short.
+ * ## Two doors in, since issue #42
  *
- * **Since the hand became secret the curtain also goes up mid-turn**, twice: once when a reaction window
- * is waiting on somebody who is not holding the device, and once when it shuts and the active player
- * wants their own turn back. Both are one line below and both ask the same `handover.handTo`.
- *
- * And one thing happens by itself only when there is nothing to decide: **the action phase is skipped
- * when the active player holds no playable card.** Waiting there would stall the game, which is not a
- * design choice but the difference between a working game and a hung one.
+ * A click enters through `apply` on the wiring, as it always did. An intent from another screen enters
+ * through `submit`, which is `apply` followed by `advance()`: the host's session validates it first and
+ * hands it in here, so the loop treats a remote click exactly as a local one. `submit` refuses while the
+ * match is paused, because `advance()` would restart the timers under the pause screen.
  *
  * ## The waiting is not in this file any more
  *
- * It used to be, and the durations with it. Since design spec 11's D70 the roll has a hold of its own,
- * so both of the waits the loop takes by itself live in `turn-waits.js`, the reaction window's thirty
- * seconds are `card-controls.js`'s, and the bot's pause is `bot-driver.js`'s. Design spec 18 added a
- * third moment, a played card's own, and it went to `cast-driver.js` behind the same one call. What is
- * left here is the decision to wait, never how long, and never what the waiting looks like.
- *
- * Since 2026-09-06 the five siblings are **built** one file over, in `loop-parts.js`, with the `halt`
- * that stops all of them. Which modules exist and what each is handed is the question that changes
- * every time one is added, and it is not the question this file is named for.
+ * Both of the waits the loop takes by itself live in `turn-waits.js`, the reaction window's thirty
+ * seconds are `card-controls.js`'s, and the bot's pause is `bot-driver.js`'s. The five siblings are built
+ * in `loop-parts.js`, with the `halt` that stops all of them.
  */
 
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
-import { INTENT, dispatch } from "../state/intents.js";
-import { playableCards, seatOnShow } from "../state/intents-cards.js";
+import { autoIntent } from "../state/auto-steps.js";
+import { seatOnShow } from "../state/intents-cards.js";
+import { abandonMatch } from "../state/match.js";
 import { nextSeat } from "../state/turn-resolution.js";
 import { bindMatchEvents } from "./events.js";
 import { createLoopParts } from "./loop-parts.js";
+import { createLoopStore } from "./loop-store.js";
 import { createRenderer } from "./render.js";
 import { createTimers } from "./timers.js";
 
@@ -71,8 +59,10 @@ import { createTimers } from "./timers.js";
  *
  * `parts` is every region of the page, and it is passed through to `render.js` whole rather than
  * destructured here. Only four of the seven are named below, and that is the point: the board, the two
- * hands and the prompt are the ones the loop **binds events to**. The HUD, the chrome and the message
- * strip are drawn and never clicked, so this file has no business knowing they exist.
+ * hands and the prompt are the ones the loop **binds events to**.
+ *
+ * `dispatcher` and `localSeats` are the two options online play added, and both go straight to the
+ * store. Their defaults are `dispatch` and "everybody who is not a bot", which is today's hot-seat match.
  */
 export function createGameLoop({
   initialState,
@@ -82,11 +72,14 @@ export function createGameLoop({
   onCurtain = null,
   onMatchOver = null,
   skipHandover = false,
+  dispatcher = undefined,
+  localSeats = null,
 }) {
   const { $board, $diceHand, $skillHand, $prompt } = parts;
 
-  let state = initialState;
+  const store = createLoopStore({ initialState, deps, dispatcher, localSeats });
   let finished = false;
+  let paused = false;
   const timers = createTimers();
   const draw = createRenderer(parts);
 
@@ -97,38 +90,26 @@ export function createGameLoop({
    * actually in front of the screen, which is what decides whether the hand on show is face up.
    */
   function render() {
-    draw(state, {
+    draw(store.getState(), {
       selectedSlot: cards.selectedSlot(),
       secondsLeft: cards.secondsLeft(),
       pick: cards.pick(),
       viewerSeat: handover.seat(),
+      canAct: store.isLocal(store.getState().activePlayer),
     });
   }
 
   /**
-   * Hand one intent to `state/` and keep the answer.
-   *
-   * A refused intent leaves `state` exactly as it was, and the caller is told so. Every caller here stops
-   * on a refusal rather than trying again, which is what keeps a rejected intent from turning into a loop
-   * that dispatches the same impossible thing forever.
-   */
-  function apply(intent) {
-    const result = dispatch(state, intent, deps);
-    if (result.accepted) state = result.state;
-
-    return result.accepted;
-  }
-
-  /**
    * What every sibling that can wait needs from the loop: the timer registry, the durations, the one
-   * state reference, the one dispatcher, and the two ways back in. `loop-parts.js` carries why it is
-   * one object rather than the same four arguments written out five times.
+   * state reference, the one dispatcher, the question of who may click here, and the two ways back in.
+   * `loop-parts.js` carries why it is one object rather than the same arguments written out five times.
    */
   const wiring = {
     timers,
     delays,
-    getState: () => state,
-    apply,
+    getState: store.getState,
+    apply: store.apply,
+    isLocal: store.isLocal,
     refresh: render,
     resume: () => advance(),
   };
@@ -147,6 +128,7 @@ export function createGameLoop({
    * returns, and the handover comes back round through a timer.
    */
   function advance() {
+    const state = store.getState();
     render();
 
     if (state.status !== MATCH_STATUS.RUNNING) {
@@ -164,22 +146,18 @@ export function createGameLoop({
     // **The moments the turn owes, asked before the phase and not inside a branch**, because both of
     // them arrive through more doors than one: a roll happens in `roll-die` when no card answers it
     // and in `close-window` when one did, and a card is played by a person, by a bot, into an open
-    // window, or by the window shutting. Only the first door of each comes back through the branches
-    // below. `turn-waits.js` carries the argument and what it cost to learn, and it takes the card
-    // before the roll because the card is usually what changed the roll.
+    // window, or by the window shutting. `turn-waits.js` carries the argument and what it cost to learn.
     if (waits.takeMoment(state)) return;
 
     if (state.reactionWindow !== null) {
-      // **Bots answer first**, so the clock and the prompt only ever address people. Two things
-      // follow from the order: a window with nobody but bots in it shuts at once instead of running a
-      // thirty-second countdown, and in a mixed round `seatOnShow`, which is `eligible[0]`, is a
-      // person. A decline takes no pause; a card play is scheduled and returns true, so the loop waits.
+      // **Bots answer first**, so the clock and the prompt only ever address people. A window with
+      // nobody but bots in it shuts at once instead of running a thirty-second countdown, and in a
+      // mixed round `seatOnShow`, which is `eligible[0]`, is a person.
       if (bots.answerWindow()) return;
 
       // **After the bots and before the clock.** The seat being asked may be a person who is not
       // holding the device, and their hand must not come up face down and unusable in front of the
-      // player whose turn it still is. Asking before `answerWindow` would raise a curtain for a
-      // window the bots are about to empty by declining.
+      // player whose turn it still is.
       if (handover.handTo(seatOnShow(state))) return;
 
       if (cards.handleWindow()) return;
@@ -187,42 +165,30 @@ export function createGameLoop({
       return;
     }
 
-    // Nobody can play anything, so there is nothing to wait for. A game that waited here would hang.
-    if (
-      state.phase === TURN_PHASE.ACTION &&
-      playableCards(state, state.activePlayer).length === 0
-    ) {
-      if (!apply({ type: INTENT.SKIP_ACTION })) return;
-      advance();
-      return;
-    }
-
-    if (state.phase === TURN_PHASE.ROLL) {
-      if (!apply({ type: INTENT.ROLL_DIE })) return;
-      advance();
-      return;
-    }
-
-    if (state.phase === TURN_PHASE.REACTION) {
-      if (!apply({ type: INTENT.CLOSE_WINDOW })) return;
+    // The three steps the loop takes by itself: skip an action phase with nothing playable, roll, and
+    // close the reaction phase. One list in `state/auto-steps.js`, shared with the host's guard.
+    const auto = autoIntent(state);
+    if (auto !== null) {
+      if (!store.apply(auto)) return;
       advance();
       return;
     }
 
     if (state.phase === TURN_PHASE.TURN_END) {
-      waits.afterTurn(() => handover.handTo(nextSeat(state), { endsTurn: true }));
+      // The callback reads the store when it fires, not the `state` captured above: the hold is real
+      // time, and a remote intent could in principle have moved the state on before it runs.
+      waits.afterTurn(() => handover.handTo(nextSeat(store.getState()), { endsTurn: true }));
       return;
     }
 
-    // A bot in `choose`, in `action` holding a playable card, or in `act`. It comes **after** the three
+    // A bot in `choose`, in `action` holding a playable card, or in `act`. It comes **after** the
     // self-taken steps above, so a bot with nothing playable is skipped through the action phase with no
     // pause at all, rather than appearing to think about a decision it does not have.
     if (bots.takeTurn()) return;
 
     // The three phases below wait for a person, and after a reaction window that person's device may
     // still be in somebody else's hands. This is the curtain back, and it costs nothing in every turn
-    // where the window never moved the viewer: `handTo` on the seat that already has the device is
-    // false without touching anything.
+    // where the window never moved the viewer.
     if (handover.handTo(state.activePlayer)) return;
 
     // `choose`, `action` with a card in hand, and `act` are the phases that wait for a person.
@@ -247,26 +213,19 @@ export function createGameLoop({
      * Stop every pending timer, and take the throw off the dice hand if one was running.
      *
      * The attribute matters as much as the timers: a match torn down mid-roll would otherwise leave a
-     * card frozen part way through its throw, and the next match's first render would find `data-rolling`
-     * already set. `waits.stop()` is what handles that half.
+     * card frozen part way through its throw. `waits.stop()` is what handles that half.
      */
     stop: halt,
 
     /**
      * The handover overlay's Ready button: the person named on the curtain now has the device.
      *
-     * It replaced `passTurn` at that call site when the curtain stopped being a thing that only
-     * happens between turns. A turn-end curtain still passes the turn; a mid-turn one carries the
-     * window on. Which of the two it was is `handover.js`'s to remember, not the button's.
+     * A turn-end curtain still passes the turn; a mid-turn one carries the window on. Which of the two
+     * it was is `handover.js`'s to remember, not the button's.
      */
     arrive: handover.arrive,
 
-    /**
-     * Pass the turn on without a curtain.
-     *
-     * Exposed rather than done inside the loop, because who decides that the screen has changed hands is
-     * a question about the person in front of it and not about the turn.
-     */
+    /** Pass the turn on without a curtain. Who decides the screen changed hands is the flow's question. */
     passTurn: handover.passTurn,
 
     /**
@@ -274,26 +233,49 @@ export function createGameLoop({
      *
      * The state object is untouched, because a pause is not a game event: nothing in the rulebook knows
      * about it, and putting it in the frozen state would make the rules layer hold a fact about a button.
-     *
-     * **This is also why a bot can never move under an overlay.** Both the pause screen and the pool
-     * overview go through here, and `halt()` clears the bot's pending timer with everything else.
+     * **This is also why a bot can never move under an overlay**: `halt()` clears its pending timer.
      */
-    pause: halt,
+    pause() {
+      paused = true;
+      halt();
+    },
 
     /**
      * Carry on from where the pause left off.
      *
      * `advance()` re-enters whatever phase the turn was in, which is why pausing needs to save nothing.
-     * A reaction window that was open reopens its clock at the full thirty seconds, and that is the
-     * intended reading: the players stopped, so the window did too.
+     * A reaction window that was open reopens its clock at the full thirty seconds: the players stopped,
+     * so the window did too.
      */
     resume() {
+      paused = false;
+      advance();
+    },
+
+    /**
+     * An intent from another screen (issue #42): apply it and let the turn carry on, exactly as a click
+     * does. `false` when it was refused, or when the match is paused and a step now would restart the
+     * timers under the pause screen. The host's session answers the guest from that boolean.
+     */
+    submit(intent) {
+      if (paused) return false;
+      if (!store.apply(intent)) return false;
+
+      advance();
+      return true;
+    },
+
+    /**
+     * Give the match up from outside the rules (issue #42): a guest's connection dropped and there is
+     * no reconnect. `abandonMatch` is the same transition the pause screen's Quit would reach, and
+     * `advance()` then does what it does for any finished match: halt and open the win screen.
+     */
+    abandon() {
+      store.replace(abandonMatch(store.getState()));
       advance();
     },
 
     /** The current state, for tests and for the browser console. Frozen, so it cannot be written. */
-    getState() {
-      return state;
-    },
+    getState: store.getState,
   };
 }

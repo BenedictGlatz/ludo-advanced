@@ -40,6 +40,12 @@ export const OVERLAY_SCREEN = Object.freeze({
    * The seventh screen, between the player count and the match, and the only one with rows on it.
    */
   LINEUP: "lineup",
+  /** The online door: host a match or join one (issue #42, FR-42). */
+  ONLINE: "online",
+  /** The host's lobby: player count, seat rows, invite and reply codes, Start. */
+  HOST: "host",
+  /** The guest's lobby: paste the invite code, copy the reply code, wait for the host. */
+  JOIN: "join",
 });
 
 /** What an overlay button can ask for, as the `data-action` the event handler reads. */
@@ -50,16 +56,19 @@ export const OVERLAY_ACTION = Object.freeze({
    */
   HOTSEAT: "hotseat",
   /**
-   * The two menu doors that do not work: online play (FR-42, no technology chosen) and the settings
-   * screen (S11, deliberately deleted).
-   *
-   * **Nothing handles either of them, and that is the decision rather than an omission.** D77.2 draws
-   * them with the DOM's own `disabled` attribute, and a browser fires no click on a disabled button, so
-   * there is no branch to write in `session-actions.js` and no stop for a keyboard to land on where
-   * `Enter` would do nothing. They exist here because the door still needs a `data-action` to be told
-   * apart in the stylesheet and in a test.
+   * The online door (FR-42). Disabled until issue #42 opened it on 2026-09-09; it now leads to
+   * `OVERLAY_SCREEN.ONLINE`.
    */
   ONLINE: "online",
+  /**
+   * The one menu door that does not work: the settings screen (S11, deliberately deleted).
+   *
+   * **Nothing handles it, and that is the decision rather than an omission.** D77.2 draws it with the
+   * DOM's own `disabled` attribute, and a browser fires no click on a disabled button, so there is no
+   * branch to write in `session-actions.js` and no stop for a keyboard to land on where `Enter` would do
+   * nothing. It exists here because the door still needs a `data-action` to be told apart in the
+   * stylesheet and in a test.
+   */
   SETTINGS: "settings",
   /** A player count, 2, 3 or 4. Carries `data-count` as well. */
   PLAYERS: "players",
@@ -88,6 +97,21 @@ export const OVERLAY_ACTION = Object.freeze({
   CONTROLLER: "controller",
   /** Start the match with the line-up as it stands. The line-up screen's one primary (D94.1). */
   BEGIN: "begin",
-  /** Back from the line-up to the player count. The only back button in the game (D94.2). */
+  /**
+   * Back one screen. The line-up's Back goes to the player count (D94.2); since issue #42 the three
+   * online screens have one too, and `session-actions.js` decides where each goes.
+   */
   BACK: "back",
+  /** Host an online match. Carries `data-count` once a player count is being chosen (issue #42). */
+  HOST: "host",
+  /** Join an online match. */
+  JOIN: "join",
+  /** Paste a code and connect. Carries `data-field`, the textarea whose text is the code. */
+  CONNECT: "connect",
+  /** Copy the code on screen. Carries `data-field` as well. */
+  COPY: "copy",
+  /** The host wants one more guest: open a fresh invite. */
+  ADD_GUEST: "add-guest",
+  /** The host's Start match, once every seat is connected. */
+  START_ONLINE: "start-online",
 });

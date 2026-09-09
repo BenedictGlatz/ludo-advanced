@@ -156,3 +156,34 @@ describe("a loop nobody is watching for a handover", () => {
     expect(applied).toEqual([{ type: INTENT.END_TURN }]);
   });
 });
+
+describe("a seat played from another screen (issue #42)", () => {
+  /** A four-seat match with nobody a bot, where only `localSeats` sit at this screen. */
+  function online(localSeats) {
+    const state = createGameState(4, undefined, []);
+    const raised = [];
+    const resume = vi.fn();
+
+    const handover = createHandover({
+      getState: () => state,
+      apply: () => true,
+      resume,
+      onCurtain: (seat) => raised.push(seat),
+      isLocal: (seat) => localSeats.includes(seat),
+    });
+
+    return { handover, raised, resume };
+  }
+
+  it("seeds the viewer with this screen's own seat, not the first person in the match", () => {
+    expect(online([2]).handover.seat()).toBe(2);
+  });
+
+  it("raises no curtain for a remote seat and never makes it the viewer", () => {
+    const { handover, raised } = online([0]);
+
+    expect(handover.handTo(2)).toBe(false);
+    expect(raised).toEqual([]);
+    expect(handover.seat()).toBe(0);
+  });
+});

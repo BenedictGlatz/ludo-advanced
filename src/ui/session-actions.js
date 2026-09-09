@@ -32,12 +32,13 @@ import { changeLanguage, nextLanguage } from "../i18n/index.js";
  * The two handlers, bound to one session.
  *
  * `session` is the small interface `match-flow.js` hands in: `openScreen`, `playAgain`, `quitToMenu`,
- * `drawShell`, `getLoop`, `getScreen` and `lineup`. Naming it as an argument rather than importing the
- * flow keeps the dependency pointing one way, which is what lets this file be read on its own.
+ * `drawShell`, `getLoop`, `getScreen`, `lineup` and `online`. Naming it as an argument rather than
+ * importing the flow keeps the dependency pointing one way, which is what lets this file be read on its own.
  *
- * **`session.lineup` is the one entry that is an object rather than a function**, and it is
- * `createLineupFlow`'s three operations from `lineup.js`. Three separate entries would have been three
- * names for one screen, and this file would then be the only place that knew they belonged together.
+ * **`session.lineup` and `session.online` are the two entries that are objects rather than functions.**
+ * The first is `createLineupFlow`'s three operations from `lineup.js`; the second is `online-flow.js`'s
+ * lobby and match operations (issue #42). Separate entries would have been several names for one screen
+ * each, and this file would then be the only place that knew they belonged together.
  */
 export function createSessionActions(session) {
   /** Is a match running with nothing on top of it? The guard both chrome buttons need. */
@@ -45,12 +46,34 @@ export function createSessionActions(session) {
     return session.getLoop() !== null && session.getScreen() === OVERLAY_SCREEN.NONE;
   }
 
+  /** Which screen Back leaves for. The three online screens (issue #42) each have their own answer. */
+  function backTarget() {
+    const screen = session.getScreen();
+
+    if (screen === OVERLAY_SCREEN.ONLINE) return OVERLAY_SCREEN.MENU;
+    if (screen === OVERLAY_SCREEN.HOST || screen === OVERLAY_SCREEN.JOIN)
+      return OVERLAY_SCREEN.ONLINE;
+
+    return OVERLAY_SCREEN.SETUP;
+  }
+
   function onOverlayAction(action, value, choice) {
-    // The Hotseat door, and it is the only one of the menu's three that is handled. The other two are
-    // `disabled` in the DOM (D77.2), so no click ever arrives and a filter here would be dead code.
+    // Two of the menu's three doors are handled. Settings is `disabled` in the DOM (D77.2), so no click
+    // ever arrives and a filter here would be dead code.
     if (action === OVERLAY_ACTION.HOTSEAT) session.openScreen(OVERLAY_SCREEN.SETUP);
+    if (action === OVERLAY_ACTION.ONLINE) session.online.open();
     if (action === OVERLAY_ACTION.RESTART) session.playAgain();
     if (action === OVERLAY_ACTION.QUIT) session.quitToMenu();
+
+    // The online lobby (issue #42). `value` is a player count on the HOST door and the pasted code on
+    // Connect and Copy, which `events.js` read off the textarea the button names.
+    if (action === OVERLAY_ACTION.HOST)
+      session.online.host(value === undefined ? null : Number(value));
+    if (action === OVERLAY_ACTION.JOIN) session.online.join();
+    if (action === OVERLAY_ACTION.CONNECT) session.online.connect(value);
+    if (action === OVERLAY_ACTION.COPY) session.online.copy(value);
+    if (action === OVERLAY_ACTION.ADD_GUEST) session.online.addGuest();
+    if (action === OVERLAY_ACTION.START_ONLINE) session.online.start();
 
     // **The count click stopped starting a match** (issue #76). It sizes the match and opens the
     // line-up, which asks who plays each of those seats, and BEGIN is what starts it. That is one line
@@ -64,11 +87,17 @@ export function createSessionActions(session) {
     if (action === OVERLAY_ACTION.PLAYERS) session.lineup.open(Number(value));
     if (action === OVERLAY_ACTION.CONTROLLER) session.lineup.setController(Number(value), choice);
     if (action === OVERLAY_ACTION.BEGIN) session.lineup.begin();
-    if (action === OVERLAY_ACTION.BACK) session.openScreen(OVERLAY_SCREEN.SETUP);
+    if (action === OVERLAY_ACTION.BACK) {
+      const target = backTarget();
+      // Leaving a lobby hangs up: a code that was handed out is no good once its connection is gone.
+      if (target !== OVERLAY_SCREEN.SETUP) session.online.leave();
+      session.openScreen(target);
+    }
 
     if (action === OVERLAY_ACTION.RESUME) {
       session.openScreen(OVERLAY_SCREEN.NONE);
       session.getLoop().resume();
+      session.online.pause(false);
     }
 
     // **The game moves before the curtain comes down, and that order is the whole point of the screen.**
@@ -114,6 +143,8 @@ export function createSessionActions(session) {
     if (action === CHROME_ACTION.PAUSE && inPlay()) {
       session.getLoop().pause();
       session.openScreen(OVERLAY_SCREEN.PAUSE);
+      // A host's pause is everybody's; `online.pause` is a no-op for a guest and off-line.
+      session.online.pause(true);
     }
 
     // The pool overview pauses too, and that is not politeness. The loop advances the `roll`, `reaction`
@@ -123,6 +154,7 @@ export function createSessionActions(session) {
     if (action === CHROME_ACTION.POOL && inPlay()) {
       session.getLoop().pause();
       session.openScreen(OVERLAY_SCREEN.POOL);
+      session.online.pause(true);
     }
   }
 

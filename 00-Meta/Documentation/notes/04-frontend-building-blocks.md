@@ -3637,6 +3637,70 @@ old `data-face="up"` still in the bundle, and the second one "passed" the whole 
 was not in it. `npm run build` by hand before trusting an end-to-end result is not optional on this
 setup.
 
+### The online lobby, the guest's mirror loop, and three splits: 2026-09-09, issue #42
+
+Decision block: project journal, 2026-09-09. The `net/` half is in [06-state-and-turn-flow.md](06-state-and-turn-flow.md).
+
+- **The guest runs a mirror loop**, `ui/online/guest-loop.js`, with the same public surface the flow
+  calls on a loop (`start, refresh, stop, pause, resume, arrive, passTurn, getState`) plus `receive(next)`,
+  `showRefusal(reason)` and `abandon()`. It never advances a phase, never runs a bot, never owns the
+  clock. Its store's dispatcher is `(state, intent) => ({ accepted: session.apply(intent), state })`, so
+  `apply` means "sent" and the board changes only in `receive`, which is what `advance()` is to the host:
+  replace, `syncClock`, then `waits.takeMoment(next)` or `render()`. The controls, the target picker, the
+  renderer, the waits and the event bindings are reused unchanged; the bot driver and the handover are
+  built and idle. Guest `deps` is `{ rng: null, diceSource: stub }` whose `draw` and `returnHand` throw:
+  nothing on the guest calls `startMatch`, so `assertDeps` never runs.
+- **The lobby is three screens on the one overlay component**: `ONLINE` (Join, Host as primary, Back),
+  `HOST` (the three player counts, then seat rows with a status word, the invite field with Copy, the
+  reply field with Connect, Invite the next player, Start once everybody is in, Back) and `JOIN` (the
+  invite field with Connect, then the reply field with Copy, Back). `ui/online/lobby-screen.js` is pure
+  and tested like `lineup-screen.js`. Six new actions in `overlay-vocabulary.js`: `HOST` (carries
+  `data-count` once a count is chosen), `JOIN`, `CONNECT` and `COPY` (each carrying `data-field`),
+  `ADD_GUEST`, `START_ONLINE`. `BACK` became context-aware in `session-actions.js`: `ONLINE` to the menu,
+  `HOST` and `JOIN` back to the door after `online.leave()`, the line-up to the count screen as before.
+- **The overlay grew a fourth region**, `.overlay__fields`, a `<label>` with a `<textarea data-field>`
+  per field, readonly for a code to copy and writable for one to paste. A **writable field keeps what the
+  player typed** across a redraw: the overlay is rebuilt on every stage change of the lobby and every
+  language switch, and a pasted code vanishing because the host's status line changed would be the whole
+  screen broken. `events.js`'s overlay handler passes the named textarea's text as `value` for a button
+  carrying `data-field`, so `session-actions.js` still touches no DOM.
+- **`online-flow.js`, `host-role.js`, `guest-role.js`** follow the `lineup.js` pattern: `match-flow.js`
+  hands in `openScreen`, `drawShell`, `beginMatch`, `onMatchOver`, `rng`, `delays`, and the three
+  injectables `links`, `loops` and `clipboard`. None of the three imports jQuery, so
+  `online-flow.test.js` hosts tables of 2, 3 and 4 with fake links and asserts `beginMatch` was called
+  once per screen with `localSeats` equal to that screen's own seat, and the guest's `delays.reaction`
+  equal to `hello.windowMs`. The host's `start` is `freshMatchParts(rng, playerCount, { botSeats: [] })`,
+  `createHostSession`, `beginMatch(state, deps, { loopOptions: { dispatcher, localSeats: [seat 0] } })`,
+  `attach(loop)`, `sayHello`, `broadcastState`. The guest starts its match on the first `state` after
+  `hello`, whichever of the two arrives second, so the protocol has no order to get wrong.
+- **What the lobby says, and why those sentences:** every code has a Copy button beside it; "no
+  connection after 20 seconds" names the missing TURN relay and suggests another network; "codes only
+  last a few minutes" answers the stale-code failure; the pause screen gains one sentence online, because
+  the host's Pause is everybody's and a guest's is only its own screen. All under `online.*` and
+  `pause.online.*` in both locales, parity enforced by `locales.test.js`.
+- **The win screen hides Play Again on a guest** (`canRestart` from `online.canRestart()`), because the
+  guest's next match arrives over the wire when the host presses it: a `state` for a finished guest loop
+  starts a fresh match, which is the whole of the guest's Play Again. A host whose guest dropped has no
+  Play Again either.
+- **Three files split, each at a seam that was already drawn:** `overlay-view.js` kept the shell and
+  `updateOverlay` (174 lines) while `overlay-buttons.js` took the three button shapes and
+  `overlay-regions.js` the three rebuilt regions; `match-flow.js` kept the screens (223 lines) while
+  `match-session.js` took the loop, its state and its `deps` with `beginMatch`, `freshMatch`,
+  `playAgain`, `quit`; `card-controls.js` kept the cards while `reaction-clock.js` took the thirty
+  seconds. All three were forced by the line count and each header names the sentence it was cut along.
+- **`lobby.css` is a placeholder built without a handoff**, on the `pool.css` precedent, and says so in
+  its header. It uses only existing tokens: the line-up's `44rem` panel width and seat rows, the
+  button's ink edge and radius on the textarea, `--font-num` for a code, `--color-text-muted` for a
+  status word. The brief is in `01-Design/Handoff/00-open-requests.md`.
+- **The dice hand stops offering cards it will refuse.** `updateDiceHand($hand, state, { canAct })`
+  draws `data-playable="false"` on a turn that is not this screen's, where before every card in `choose`
+  was playable-looking and `turn-controls.js` silently refused the click. Found by the first run of the
+  E2E spec, which saw three clickable cards on the guest during the host's turn; it also covers a bot's
+  turn, which had the same look. The renderer's `extras` gained `canAct` as its fifth field.
+- **`menu-screen.js`'s Online door is no longer `disabled`** and is plain rather than primary: Hotseat is
+  still the game, and the one saturated fill per screen stays on it. `menu-screen.test.js` and
+  `menu.spec.js` now assert one dead door (Settings) and two tab stops.
+
 
 ## Decisions
 

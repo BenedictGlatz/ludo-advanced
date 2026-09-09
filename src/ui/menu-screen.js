@@ -17,14 +17,15 @@
  * `menu.css` owns all of it. What belongs here is the part that is not a look:
  *
  * - **Three items rather than one**, because two of the three are the honest answer to "what else is
- *   there". Online Multiplayer is FR-42 with no technology chosen; Settings is S11, which was deleted.
- * - **They are not equals.** Hotseat is the game, so it is the `primary` one and the other two are
- *   `disabled`. Three doors dealt as equals would say the game has three modes, which is false.
+ *   there". Online Multiplayer is FR-42, built in issue #42; Settings is S11, which was deleted.
+ * - **They are not equals.** Hotseat is the game, so it is the `primary` one; Online works but is plain;
+ *   Settings is `disabled`. Three doors dealt as equals would say the game has three modes, which is
+ *   false: it has two and a deleted screen.
  * - **Every door carries a second line**, including the one that works. On Hotseat it says what the mode
  *   is; on the other two it says why they cannot be used, in two different sentences because there are
  *   two different reasons (D78).
  *
- * ## Why the two dead doors are `disabled` and not filtered
+ * ## Why the dead door is `disabled` and not filtered
  *
  * `disabled` is a DOM attribute, so a browser fires no click on them and offers no tab stop. That means
  * **no branch in `session-actions.js`**, which is what D77.2 bought, and it means a keyboard user is
@@ -57,7 +58,8 @@ import { OVERLAY_ACTION, OVERLAY_SCREEN } from "./overlay-vocabulary.js";
  */
 const DOORS = [
   { action: OVERLAY_ACTION.HOTSEAT, variant: "primary" },
-  { action: OVERLAY_ACTION.ONLINE, disabled: true },
+  // Opened on 2026-09-09 by issue #42. It was `disabled` from design handoff 12 until then.
+  { action: OVERLAY_ACTION.ONLINE },
   { action: OVERLAY_ACTION.SETTINGS, disabled: true },
 ];
 

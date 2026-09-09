@@ -531,10 +531,56 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   plan that consumes it. Both in the repository root, at the Product Owner's request; the brief belongs
   at `01-Design/Handoff/18-brief-skill-card-animations.md` when the round is actually run. No code
   changed. Sprint 3.
+- **2026-09-08**: Six architecture options for FR-42 (online multiplayer, issue #42) weighed in
+  [Online-Multiplayer-Options.md](../Project-Management/Online-Multiplayer-Options.md), using the
+  weighted-criteria method of the utility value analysis. No networking code written and no
+  dependency added: the document recommends, the Product Owner decides. Sprint 3.
+- **2026-09-09**: FR-42 built as option C on `feature/42-online-multiplayer`, issue #42: new `src/net/`
+  layer, `isLocal(seat)` through the loop's siblings, a guest mirror loop, the lobby with manual invite
+  codes over WebRTC, a whole online match as a Vitest loopback test and a two-context Playwright spec.
+  Seven commits, the last one with the notes, the changelog and this entry. Sprint 3.
+- **2026-09-09**: GitHub Pages deployment prepared for issue #42: `.github/workflows/pages.yml` plus
+  `base: "./"` in the Vite config, so the build survives being served from a repository subdirectory.
+  Verified against a static server under the `/ludo-advanced/` prefix and with the full `chromium`
+  Playwright project. Not live yet: enabling Pages needs administrator rights on the repository, and
+  this account has `write`. Sprint 3.
 
 ---
 
 ## Decisions
+
+### 2026-09-09: The playable build is published by a workflow, and its asset paths became relative
+
+- **Chosen:** a second GitHub Actions workflow, `pages.yml`, that runs `npm run build` and hands
+  `dist/` to `actions/deploy-pages`, together with `base: "./"` in `vite.config.js`. A player needs a
+  link and a browser, and nothing else.
+- **Why now, and why it is not cosmetic:** FR-42 is a connection between two browsers. The only test
+  that means anything puts them on two *different* networks, and the second network is somebody's home
+  connection, on a machine with no Node, no repository and no toolchain. Every other delivery form
+  asks that machine to install something first, which is the kind of setup step that quietly does not
+  happen. A URL asks for nothing.
+- **Rejected:** *a `gh-pages` branch holding a committed `dist/`.* It needs no Pages configuration at
+  all, which is genuinely simpler, but it puts a build artefact into version control, where it goes
+  stale the first time somebody forgets to rebuild before pushing, and it does so silently.
+- **Rejected:** *`base: "/ludo-advanced/"`.* It is the more explicit form and the one the GitHub
+  documentation shows. It also hardcodes the repository name into the build, so a rename or a fork
+  produces a blank page, and it is the wrong value for the second delivery form the same relative
+  build serves, a single file opened from disk on a machine without a toolchain.
+- **Rejected:** *repeating lint and the test suite inside `pages.yml`.* `build-check.yml` already runs
+  the five gates on every pull request. A second copy would make publishing slower without changing
+  any decision, and two copies of a gate drift.
+- **Negative finding, recorded because it is the reason the feature is not live:** the development
+  account has `write` on the repository and not `admin` (`"admin": false` from the collaborator
+  permission endpoint), and `GET /repos/.../pages` answers 404. Creating a Pages site is an
+  administrator operation, so the workflow is committed in a state where its deploy job fails until
+  the repository owner sets Settings > Pages > Source to *GitHub Actions* once. Committing it anyway
+  was deliberate: the switch is a ten second click, and the alternative was leaving the work
+  uncommitted while waiting for it.
+- **What publishing does not buy:** `https` makes the clipboard and WebRTC's secure-context
+  requirement comfortable, but the invite code still travels by hand through a chat, and whether two
+  DS-Lite endpoints find each other is decided by STUN and the routers, not by where the page was
+  served from. See the 2026-09-09 entry on what the two-context Playwright test does and does not
+  prove.
 
 ### 2026-08-09: Goals are catalogued in Project-Management, not in the chapter note
 
@@ -5252,6 +5298,115 @@ to get wrong later.
 - **Tests:** `tests/unit/ui/handover.test.js` (10 cases, node environment, the second `ui/` module in
   the project with unit tests) and `tests/e2e/hand-secrecy.spec.js` (2 cases, both without `?fast=1`).
 - → Ch. 04, Ch. 08
+
+### 2026-09-08: FR-42 is weighed in a standing analysis document, and the recommendation is to cut it
+
+- **Chosen:** one standing document,
+  [Online-Multiplayer-Options.md](../Project-Management/Online-Multiplayer-Options.md), holding six
+  architecture options for online multiplayer with the same weighted-criteria method as
+  [Utility-Value-Analysis.md](../Project-Management/Utility-Value-Analysis.md). Seven criteria at
+  100 %, scores 1 to 5, and a recommendation that FR-42 be **cut** from the release after a two-day
+  timeboxed spike on the lockstep core.
+- **Rejected:** *appending the options to
+  [03-tech-stack.md](notes/03-tech-stack.md) as facts.* The chapter notes are prose-free fact
+  collections read once when the report is written. This is a comparison the team has to read
+  **before** deciding, during sprint planning, which is the same argument the 2026-08-09 goals
+  decision already made for the goal catalogue. Also rejected: *writing an implementation plan
+  instead.* A plan presumes the decision that has not been made, and four of the six options are ruled
+  out by two questions (is there hosting, and do the hands have to be cheat-proof) that only the
+  Product Owner can answer.
+- **Why no code was written:** FR-42 is `should have`, estimated at 13 points, and
+  [Effort-Estimation.md](../Project-Management/Effort-Estimation.md) already says that 13 is "a
+  statement, not a measurement". Section 4.4 of
+  [Project-Plan.md](../Project-Management/Project-Plan.md) leaves #42 unscheduled and its Sprint 3
+  closing window (2026-09-14 to 2026-09-17) is bug fixes only. Roughly four working days of feature
+  time were available on the day this was written.
+- **The finding worth carrying into Ch. 03 and Ch. 11:** the **spread**, not the winner. The
+  2D/2.5D/3D analysis produced a winner at 4.20 with a 1.45 gap to second place. Here the top five
+  options sit inside 0.45 of each other and the best is 3.55, because the two cheapest options do not
+  close the issue and the two that close it properly do not fit the time. **No option both satisfies
+  FR-42 and fits the calendar**, which is the measured version of the requirements specification's
+  claim that FR-42 is the largest available cut.
+- **The second finding, on the tie at 3.15:** option D (a dumb WebSocket relay with a host-authoritative
+  client) and option E (a server that imports `src/core/` and `src/state/` and sends redacted per-seat
+  views) score identically for opposite reasons. E is the only design where reading an opponent's hand
+  is impossible rather than merely rude, and it is the only one that would demonstrate that the
+  `CLAUDE.md` layering rules paid off, because `core/` and `state/` run under Node unchanged. If time
+  appears after 2026-09-17, E is the option to build and D is only the compromise.
+- **The one fact the code contributed:** `dispatch(` occurs exactly **once** in all of `src/ui/`, at
+  `game-loop.js:116` inside `apply(intent)`. Every networked option replaces that single function and
+  nothing else in `ui/` learns that a network exists. Two things complicate it and are recorded in the
+  document: `deps = { rng, diceSource }` is mutable match state living outside the frozen state
+  object, so state-shipping options must serialize the dice pool and the mulberry32 counter (which is
+  also exactly FR-45's work), and the reaction window's thirty seconds need a single owner.
+- **Consequence:** no `src/net/` layer, no `ws` and no `peerjs`, and `CHANGELOG.md` is untouched
+  because nothing user-visible changed. The five open decisions at the foot of the document are the
+  input the Product Owner needs; the first two of them rule out four options on their own.
+- → Ch. 03, Ch. 06, Ch. 11
+
+### 2026-09-09: FR-42 is built as option C, WebRTC peer-to-peer with the host owning the match
+
+- **Chosen:** option C of [Online-Multiplayer-Options.md](../Project-Management/Online-Multiplayer-Options.md):
+  WebRTC data channels between the browsers, **host-authoritative**, **the whole state travels**. The
+  Product Owner decided on 2026-09-08 and answered the document's five open decisions in one go; the
+  answers and the file-by-file plan are in
+  [Online-Multiplayer-Plan.md](../Project-Management/Online-Multiplayer-Plan.md). Manual signaling
+  codes, up to four players, no bots online in v1, hands not hidden, a new `src/net/` layer, no
+  dependency.
+- **Rejected: lockstep intents (option A/B in the document).** It scored higher on report value, because
+  every browser would run the same `core/` and `state/` and only intents would travel. It needs
+  identical `deps` on every peer, which means serialising the twenty physical dice cards and the
+  mulberry32 counter, and identical intent order, which means a sequence number and a resend on every
+  message. A guest that misses one message is out of step for the rest of the match with no way to
+  notice. Host-authoritative needs none of that: only the host owns `deps`, and a guest's board is
+  whatever arrived last. A serialised four-player state measured under 16 KB at every step of a 400
+  intent match (`loopback-match.test.js`), so one message per accepted intent needs no chunking.
+- **Rejected: PeerJS or any signaling library.** A runtime dependency for something `RTCPeerConnection`
+  does on its own, and a signaling server somebody would have to host. **Rejected: a WebSocket relay
+  (option D).** Needs hosting the project does not have. **Rejected: a server importing `core/` and
+  `state/` with redacted views (option E).** The only cheat-proof design and the one the options document
+  said to build if time appeared; time did not appear, and it needs a server.
+- **Manual codes make the players the signaling server.** Each side pastes one line: the host's offer
+  and the guest's answer, each a session description with every ICE candidate in it, deflate-compressed
+  with the browser's `CompressionStream` and base64url-encoded. Non-trickle ICE, so a code is produced
+  only after gathering finished. Cost: two paste operations per guest and a code that goes stale after a
+  few minutes. Benefit: no server, no dependency, and an exchange the players can read.
+- **One external service, named rather than hidden:** `stun:stun.l.google.com:19302`, so a code carries
+  a public address and two machines on different networks can find each other. It is not a dependency:
+  nothing is installed, and without it the game still works on one network. There is **no TURN relay**,
+  so two players behind strict NATs may fail to connect; the lobby says so after twenty seconds instead of
+  spinning. Recorded in [03-tech-stack.md](notes/03-tech-stack.md).
+- **The one seam held.** `dispatch(` appeared exactly once in `src/ui/`, and the whole client-side change
+  is a `dispatcher` argument to a new `loop-store.js`: the host's broadcasts after `dispatch`, the guest's
+  sends instead of dispatching. What the seam did *not* cover is recorded in
+  [06-state-and-turn-flow.md](notes/06-state-and-turn-flow.md): every UI guard asked `isBot`, and a
+  remote human is a bot to the UI but not to the AI, so a new `isLocal(seat)` had to go through four
+  files. The rest of the plan's table of "things that fight the design" each got its fix.
+- **`src/net/` is a fourth headless layer**, with the same import rule as `ai/`: `core/` and `state/`,
+  never `ui/` or `i18n/`. ESLint enforces it, Vitest counts it toward NFR-05 with `webrtc-link.js`
+  excluded because `RTCPeerConnection` does not exist under Node. `state/auto-steps.js` exists because of
+  this rule: the host's guard needs "which intents does the loop take by itself", `ui/` had that as three
+  `if` blocks, and `net/` may not import `ui/`.
+- **Hands are not hidden online, and it is written down.** Every browser holds the whole state, so a
+  player who opens the developer tools can read the other hands. The Product Owner's ruling was "we trust
+  our friends"; the changelog says so in words. Option E is the design that would close it.
+- **The lobby was built without a design handoff**, which `CLAUDE.md` gives a new screen to. Four
+  working days were left before the 2026-09-14 freeze and a brief-and-spec round costs days. The screen
+  uses only existing patterns and tokens (the line-up's panel width and seat rows, the button's chrome
+  on a textarea, the muted text colour), a brief for its look is filed in
+  [00-open-requests.md](../../01-Design/Handoff/00-open-requests.md), and `lobby.css` says in its
+  header that it is a placeholder. This is the same exception `pool.css` was in September's first week,
+  taken knowingly for the same reason.
+- **Two decisions the plan did not make and the code did.** The dice hand stops offering cards to a seat
+  that cannot click them (`canAct` in the renderer), because the E2E spec's first run showed a guest with
+  three clickable-looking cards on the host's turn; that also covers a bot's turn, which had the same
+  look. And the reaction clock moved out of `card-controls.js` into `reaction-clock.js` when the
+  `isLocal` guards took that file to 302 lines; the seam was the header's own "the thirty seconds"
+  section.
+- **Outstanding, stated:** the Playwright spec runs on Chromium only, because Firefox's and Edge's ICE
+  behaviour under Playwright is unchecked; a real run across two machines on different networks has not
+  happened, so whether STUN alone connects is unknown; there is no reconnect; bots online are v2.
+- → Ch. 03, Ch. 04, Ch. 06, Ch. 08, Ch. 11
 
 
 ## Challenges

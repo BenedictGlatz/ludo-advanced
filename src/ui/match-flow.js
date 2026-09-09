@@ -1,54 +1,36 @@
 /**
- * The screens around a match, and the flow between them. Screens S1, S2, S3, S8, S9, the handover, and
- * issue #41's acceptance criterion for FR-38: menu to match to pause to match to win to menu, with no
- * page reload.
+ * The screens around a match, and the flow between them. Screens S1, S2, S3, S8, S9, the handover, the
+ * pool overview and, since issue #42, the three online screens. Issue #41's acceptance criterion for
+ * FR-38: menu to match to pause to match to win to menu, with no page reload.
  *
  * **A player count no longer starts a match** (issue #76). It opens the line-up screen, which asks who
- * plays each of those seats, and the Start button on that screen is what begins the match. Two gestures
- * where there used to be one, and the reason is that the computer was reachable only through `?bots=`
- * before it. The `?players=` route below is untouched and still goes straight to a match.
+ * plays each of those seats, and the Start button on that screen is what begins the match. The
+ * `?players=` route still goes straight to a match.
  *
- * `ui/` only. It owns the **view's** screen, creates a match when one is asked for, and hands every
- * rule question to `state/`.
+ * `ui/` only. It owns the **view's** screen and hands every rule question to `state/`. Since issue #42
+ * the match itself, the loop, its state and its `deps`, is held one file over in `match-session.js`,
+ * and this file is the switchboard: which screen is up, and which of the four flows (line-up, online,
+ * session actions, the match) a change goes to.
  *
  * ## The screen is view state and never enters the game state
  *
- * Which of the seven screens is up is not a fact about the game: the rules know nothing about a pause,
- * and `createGameState` has no field for one. Putting it in the frozen state object would make the
- * rules layer hold a fact about a button, which is the same reasoning `skill-hand-view.js` records for
- * a half-finished card play. **The half-made line-up is the same answer twice over** and it lives
- * beside the screen, in `lineup.js`, for the same reason.
- *
- * ## Why a new match rebuilds the page
- *
- * The board's DOM depends on the player count: a two-player match has eight pawns and a four-player one
- * has sixteen. So starting a match builds fresh regions and mounts them, and the old elements go away
- * with their jQuery handlers still attached to them, which is what keeps handlers from accumulating over
- * a session of restarts.
- *
- * **The chrome and the overlay are the exception and live for the whole session**, because they are not
- * part of a match: the language switch works on the main menu, and the overlay is what the main menu is.
- *
- * ## One pool per match, which is what the pool asked for
- *
- * `createDicePool`'s own header says "the closure is created once per match by the composition root, so
- * two matches never share a pool", and every match here gets a fresh one. It matters: a match that ends
- * mid-turn never returns its three drawn cards, so a second match on the same pool would start with
- * seventeen and `draw()` throws outright once four matches have leaked twelve. The RNG is deliberately
- * **not** reset, so a restart plays a different match rather than replaying the same one.
+ * Which screen is up is not a fact about the game: the rules know nothing about a pause, and
+ * `createGameState` has no field for one. Putting it in the frozen state object would make the rules
+ * layer hold a fact about a button, which is the same reasoning `skill-hand-view.js` records for a
+ * half-finished card play. **The half-made line-up and the half-made lobby are the same answer twice
+ * over** and live beside the screen, in `lineup.js` and `online/online-flow.js`, for the same reason.
  */
 
-import { createDicePool } from "../core/dice-pool.js";
-import { botSeatsFor } from "../state/bots.js";
-import { matchDeps, restartMatch, startMatch } from "../state/match.js";
+import { createGuestLink, createHostLink } from "../net/webrtc-link.js";
 import { renderChrome, updateChrome } from "./chrome-view.js";
 import { bindChromeEvents, bindOverlayEvents } from "./events.js";
-import { createGameLoop } from "./game-loop.js";
 import { turnLine } from "./hud-view.js";
 import { createLineupFlow } from "./lineup.js";
+import { createMatchSession } from "./match-session.js";
+import { createGuestLoop, guestDeps } from "./online/guest-loop.js";
+import { createOnlineFlow } from "./online/online-flow.js";
 import { screenDescription } from "./overlay-screens.js";
 import { OVERLAY_SCREEN, focusOverlay, renderOverlay, updateOverlay } from "./overlay-view.js";
-import { emptyParts, matchParts, mount } from "./page.js";
 import { poolCountsFor } from "./pool-screen.js";
 import { createSessionActions } from "./session-actions.js";
 
@@ -56,22 +38,12 @@ import { createSessionActions } from "./session-actions.js";
  * Drive a whole session: menus, matches and the screens in between.
  *
  * - `rng` is the injected randomness (NFR-09). One per session, so a restart is a different match.
- * - `players` starts a match immediately with that count and skips the menu. `main.js` passes it only
- *   when `?players=` is in the address bar, which is what keeps every end-to-end spec written before
- *   the menu existed working unchanged.
- * - `skipHandover` passes the turn without waiting for the Ready button. Tied to `?fast=1`, for the same
- *   reason that flag already collapses the thirty-second reaction window: the shape of the turn is
- *   identical either way and only the waiting is gone. It takes the **waiting** away and not the
- *   secrecy: `handover.js` still refuses to make a bot the viewer, so a computer's hand stays face
- *   down in a fast run too.
- * - `stack` is a list of skill card ids that becomes the top of the pool, from `?stack=`. It changes no
- *   rule: `startMatch` has accepted a stacked pool since issue #38 and nothing in production passed one,
- *   so a test can put a named card in a hand instead of hoping a seed does. `main.js` carries the reason
- *   a seed could not.
- * - `bots` is how many of the seats play themselves, from `?bots=`, and it is a **count** rather than a
- *   list of seats because which seats they are is `botSeatsFor`'s rule in `state/` (FR-43). The line-up
- *   screen hands `freshMatch` the list directly instead, because D95 lets the player put the computer
- *   on seat 0 and a count cannot say that.
+ * - `players` starts a match immediately with that count and skips the menu (`?players=`).
+ * - `skipHandover` passes the turn without waiting for the Ready button (`?fast=1`). It takes the
+ *   **waiting** away and not the secrecy: `handover.js` still refuses to make a bot the viewer.
+ * - `stack` is a list of skill card ids that becomes the top of the pool, from `?stack=`.
+ * - `bots` is how many of the seats play themselves, from `?bots=`; the line-up screen hands
+ *   `freshMatch` a list of seats instead, because D95 lets the player put the computer on seat 0.
  */
 export function createMatchFlow({
   $root,
@@ -86,27 +58,30 @@ export function createMatchFlow({
 
   let screen = OVERLAY_SCREEN.NONE;
   let handoverSeat = null;
-  let loop = null;
-  let state = null;
-  let deps = null;
 
   /**
    * Redraw the overlay and the chrome. Called whenever the screen or the language changes.
    *
-   * The turn sentence is read off the **loop's** state and not the flow's copy, because the flow only
-   * refreshes its copy at a handover or a win, and pausing mid-turn would otherwise blank the one line
-   * on the page that says whose turn it is. It is empty on the menu, where no match is running.
+   * The turn sentence is read off the **loop's** state and not the session's copy, because the session
+   * only refreshes its copy at a handover or a win, and pausing mid-turn would otherwise blank the one
+   * line on the page that says whose turn it is. It is empty on the menu, where no match is running.
    */
   function drawShell() {
+    const loop = match.getLoop();
     const live = loop?.getState() ?? null;
 
     updateOverlay(
       session.$overlay,
       screenDescription(screen, {
-        state,
+        state: match.getState(),
         seat: handoverSeat,
-        pool: poolCountsFor(deps),
+        pool: poolCountsFor(match.getDeps()),
         lineup: lineup.snapshot(),
+        online: {
+          role: online.role(),
+          snapshot: online.snapshot(),
+          canRestart: online.canRestart(),
+        },
       })
     );
     updateChrome(session.$chrome, {
@@ -137,136 +112,92 @@ export function createMatchFlow({
     if (next !== OVERLAY_SCREEN.NONE) focusOverlay(session.$overlay);
   }
 
-  /** The match is over, by a win or by being given up. Both reach the same screen (FR-05, FR-07). */
-  function onMatchOver(finalState) {
-    state = finalState;
-    openScreen(OVERLAY_SCREEN.WIN);
-  }
-
   /**
-   * The screen has to change hands: put the curtain up over whatever is behind it.
+   * The running match: the loop, its state and its `deps`, and the four ways to start or end one.
    *
-   * **Whether one is needed at all is `handover.js`'s question, not this one.** That module knows who
-   * is holding the device, and a bot, a soloist playing three bots, and the person who already has the
-   * screen all get no curtain and no call. What arrives here is the seat the overlay has to name.
-   *
-   * Since 2026-09-06 there are three moments it arrives from, not one: the end of a turn, a reaction
-   * window waiting on somebody else, and that window shutting again. The hold in `waits.afterTurn`
-   * still runs before the first of them, unchanged: a move has to finish arriving and a refusal has to
-   * be readable whoever plays next.
-   *
-   * **The match pauses under the curtain**, which the turn-end handover never had to do and a
-   * mid-turn one does: a reaction window has a thirty second clock on it and it must not run down
-   * while somebody is reading "hand the screen over". This is the pause screen's own path, so the
-   * window reopens at the full thirty seconds on the way back out.
-   *
-   * Why the flow and not the loop: the loop's own comment says that who decides the screen has changed
-   * hands is a question about the person in front of it and not about the turn, and this is that
-   * question.
+   * Three callbacks come back this way. The curtain: `handover.js` decides whether one is needed, and
+   * what arrives here is the seat the overlay has to name; the match pauses under it, because a reaction
+   * window has a thirty second clock that must not run down while somebody reads "hand the screen over".
+   * The win: a won and an abandoned match reach the same screen (FR-05, FR-07). The mount: a board has
+   * just been put on the page, so whatever screen was up comes down.
    */
-  function onCurtain(seat) {
-    state = loop.getState();
+  const match = createMatchSession({
+    $root,
+    session,
+    rng,
+    delays,
+    skipHandover,
+    stack,
+    bots,
+    onCurtain(seat) {
+      match.holdForCurtain();
+      openScreen(OVERLAY_SCREEN.HANDOVER, seat);
+    },
+    onMatchOver(finalState) {
+      match.finish(finalState);
+      openScreen(OVERLAY_SCREEN.WIN);
+    },
+    onMount: () => openScreen(OVERLAY_SCREEN.NONE),
+  });
 
-    loop.pause();
-    openScreen(OVERLAY_SCREEN.HANDOVER, seat);
-  }
-
-  /** Build a match and put it on screen, replacing whatever was there. */
-  function beginMatch(nextState) {
-    state = nextState;
-
-    const parts = matchParts(state, deps.diceSource.handSize);
-
-    mount($root, parts, session);
-
-    loop = createGameLoop({
-      initialState: state,
-      deps,
-      parts: { ...parts, $chrome: session.$chrome },
-      delays,
-      onCurtain,
-      onMatchOver,
-      skipHandover,
-    });
-
-    openScreen(OVERLAY_SCREEN.NONE);
-    loop.start();
-  }
-
-  /**
-   * A fresh pool for every match, and a fresh match with it. See the header.
-   *
-   * `undefined` rather than `null` for the skill squares, because that is what makes `startMatch` use
-   * its default. `stack` is `null` in every production boot, and `seedSkillCards` shuffles a real pool
-   * when it is not given one.
-   *
-   * **`Math.min(bots, playerCount - 1)` is not belt and braces.** `bots` is read once, off the address
-   * bar, and `playerCount` changes every time somebody picks a different count on the setup screen. So
-   * `?players=4&bots=3`, quit to the menu, start a two-player match would otherwise seat three bots at
-   * a two-seat table, and `botSeatsFor` clamps that to an all-bot match rather than throwing. One
-   * person is always left at the keyboard.
-   */
+  /** A fresh hot-seat match. Leaving the lobby first, in case one was open. */
   function freshMatch(playerCount, botSeats = null) {
-    deps = matchDeps(rng, createDicePool());
-    const seats = botSeats ?? botSeatsFor(playerCount, Math.min(bots, playerCount - 1));
-
-    beginMatch(startMatch(playerCount, deps, undefined, stack ?? undefined, seats));
+    online.leave();
+    match.freshMatch(playerCount, botSeats);
   }
 
   /**
-   * A fresh match with the same players (FR-06), on a pool that is whole again.
-   *
-   * `restartMatch` rather than `startMatch(state.playerCount, ...)`, because "the same players" is a
-   * question about a match and `state/` is where a match's vocabulary lives. The **new pool** is the
-   * important half: the match being restarted from has three dice cards still out on the hand it never
-   * finished, so reusing its pool would start this one seventeen cards deep.
+   * Play Again (FR-06). Online, the host's button keeps the guests and their connections and the guest
+   * has no button at all, because `winScreen` hides it when `online.canRestart()` says no.
    */
   function playAgain() {
-    deps = matchDeps(rng, createDicePool());
-    beginMatch(restartMatch(state, deps));
+    if (online.role() !== null) {
+      online.playAgain();
+      return;
+    }
+    match.playAgain();
   }
 
-  /**
-   * Give the match up and go back to the menu (FR-07).
-   *
-   * **The page is rebuilt empty**, and that is not cosmetic even though the menu's sheet is opaque and
-   * hides whatever is behind it. Leaving the abandoned match mounted means its board, its pawns and its
-   * HUD are still in the document, still answering every selector, for as long as the player sits on the
-   * menu. A test caught it: after quitting, `.board .pawn` still resolved to eight elements.
-   */
+  /** Give the match up and go back to the menu (FR-07). The other side is told first. */
   function quitToMenu() {
-    loop?.stop();
-    loop = null;
-    state = null;
-    // The pool goes with the match, so the overview cannot describe an abandoned one from the menu.
-    deps = null;
-
-    mount($root, emptyParts(), session);
+    online.leave();
+    match.quit();
     openScreen(OVERLAY_SCREEN.MENU);
   }
 
   /**
-   * The line-up screen, which happens before there is a session to own. `lineup.js` holds the
-   * half-made line-up and the three operations on it; this module hands it the three things it needs
-   * back. The dependency points one way, exactly as `session-actions.js` below does.
+   * The line-up screen and the online lobby happen before there is a match to own. Each holds its own
+   * half-made thing and the operations on it; this module hands each the few things it needs back, and
+   * the dependency points one way, exactly as `session-actions.js` below does.
    *
-   * `drawShell` and `freshMatch` are function declarations, so they are hoisted and this line can
-   * stand above them.
+   * The online flow is handed `beginMatch` because both roles start a match, the guest's on a mirror loop
+   * built by `createGuestLoop`; the links are the WebRTC wrappers, injected so its unit test can use fakes.
    */
   const lineup = createLineupFlow({ openScreen, drawShell, freshMatch });
+  const online = createOnlineFlow({
+    openScreen,
+    getScreen: () => screen,
+    drawShell,
+    beginMatch: match.beginMatch,
+    onMatchOver(finalState) {
+      match.finish(finalState);
+      openScreen(OVERLAY_SCREEN.WIN);
+    },
+    rng,
+    delays,
+    links: { createHostLink, createGuestLink },
+    loops: { createGuestLoop, guestDeps },
+  });
 
-  /**
-   * What each button means is in `session-actions.js`, which reached for nothing but these operations,
-   * so moving it was a move rather than a rewrite. This module owns the session; that one decides what
-   * a click asks of it.
-   */
+  /** What each button means is in `session-actions.js`. This module owns the session; that one decides. */
   const actions = createSessionActions({
     openScreen,
     lineup,
+    online,
     playAgain,
     quitToMenu,
     drawShell,
-    getLoop: () => loop,
+    getLoop: match.getLoop,
     getScreen: () => screen,
   });
 
@@ -281,16 +212,14 @@ export function createMatchFlow({
         return;
       }
 
-      mount($root, emptyParts(), session);
+      match.mountEmpty();
       openScreen(OVERLAY_SCREEN.MENU);
     },
 
     /** The running match's loop, or `null` on the menu. For tests and for the browser console. */
-    getLoop() {
-      return loop;
-    },
+    getLoop: match.getLoop,
 
-    /** Which of the six screens is up. */
+    /** Which screen is up. */
     getScreen() {
       return screen;
     },

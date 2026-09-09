@@ -949,6 +949,86 @@ header already described in those words: *the loop decides that it waits, `holds
 `timers.js` keeps the `setTimeout` registry and nothing else; `holds.js` holds every duration, every
 fallback constant, and the rule that separates a movement from a reading time.
 
+### Online play adds a fourth headless layer and one question the UI had never asked: 2026-09-09, issue #42
+
+Full decision block: project journal, 2026-09-09. Facts about the code:
+
+- **`state/auto-steps.js`** names the steps the loop takes by itself. `autoIntent(state)` answers
+  `skip-action` in an action phase with nothing playable, `roll-die` in `roll`, `close-window` in
+  `reaction` and for an emptied window, `null` while a window still has somebody in it.
+  `LOOP_OWNED_INTENTS` is `roll-die`, `close-window`, `end-turn`. It replaced three `if` blocks in
+  `ui/game-loop.js` and `mechanicalIntent` in `tests/unit/ai/bot-match.test.js`, whose comment had asked
+  for exactly this. It is in `state/` and not `ui/` because `net/` reads it and may not import `ui/`.
+- **`ui/loop-store.js`** is the state cell that used to be a closure variable in `game-loop.js`:
+  `createLoopStore({ initialState, deps, dispatcher = dispatch, localSeats = null })` returning
+  `{ getState, apply, replace, isLocal }`. `dispatcher` is the seam the options document found: the host
+  broadcasts after `dispatch`, the guest sends instead of dispatching, and the loop and its siblings see
+  neither. `replace` is used only by the guest. **`isLocal(seat)`** is the new question: does a person at
+  this screen play `seat`. Default `!isBot(state, seat)`, online `localSeats.includes(seat)`.
+- **The loop gained `submit(intent)`** (apply, then `advance()`), refused while paused because
+  `advance()` would restart timers under the pause screen, and **`abandon()`**, which replaces the state
+  with `abandonMatch` and lets `advance()` open the win screen. `submit` is the door a guest's intent
+  enters through; `abandon` is what a dropped guest causes.
+- **Why `isLocal` and not `isBot`.** Every guard in `turn-controls.js`, `card-controls.js` and
+  `handover.js` asked `isBot(state, seat)` to decide whether a click is a person's to make. Online, a
+  seat can be a person **at another screen**, and to this screen that person is exactly what a bot is:
+  unclickable, hand never face up, no curtain. To the AI they are not a bot, and `bot-driver.js` still
+  asks `decide`, which reads `state.bots`, so the AI never plays a remote human's seat. Four call sites
+  changed, each with the `!isBot` default, so `handover.test.js` and `turn-controls.test.js` pass
+  unchanged and two new cases each cover the remote seat.
+- **The table of things that fought the design, from the plan, and what each became:**
+
+  | Where | Problem | Fix |
+  | --- | --- | --- |
+  | `handover.js` seeded the viewer with `humanSeats(state)[0]` | On a guest the viewer would be the host's seat, own hand face down all match | `state.seats.find(isLocal)` |
+  | `handover.js` `needsCurtain` | The host would raise a curtain, and pause, whenever the guest is asked anything | `false` for a non-local seat |
+  | `card-controls.js` used `seatOnShow` as the acting seat for a click and for Decline | The guest's Decline would answer for the host's seat | guarded with `isLocal(seatOnShow(state))` |
+  | `turn-waits.js` only ran from `advance()` | A guest never calls `endRoll`, so `data-rolling` sticks and the dice cards stop being clickable | the guest loop calls `waits.takeMoment(next)` on every incoming state |
+  | `syncClock` only ran from `handleWindow` | No countdown on the guest; a running clock would dispatch `close-window` | the guest calls `syncClock()` per state and its session refuses loop-owned intents locally |
+  | `intents-cards.js` fills in `state.activePlayer` when `seat` is missing | A guest omitting `seat` plays as whoever's turn it is | the host guard requires an integer `seat` the guest holds |
+  | `afterTurn` closed over `state` | Breaks once the cell is in a store | the callback reads `store.getState()` when it fires |
+  | `session-actions.js` RESTART and QUIT | A guest's Play Again would build a local match on a `null` rng; Quit told nobody | host-only restart, `online.leave()` on quit |
+  | `submit()` under the host's pause overlay | `advance()` would restart timers under it | `submit` refuses while paused, the session answers `paused` |
+
+- **`src/net/`, headless, seven files:**
+
+  | File | Owns |
+  | --- | --- |
+  | `protocol.js` | `hello { seat, seats, windowMs, version }`, `state { seq, state, pool: { remaining } }`, `intent { seq, intent }`, `refused { seq, reason }`, `paused`, `resumed`, `bye`; `decode` answers `null` to garbage |
+  | `transport.js` | `{ send, onMessage, onClose, close }` over a data channel, and `createLoopbackPair()` delivering one microtask later |
+  | `signal-codes.js` | a session description as one line: deflate-raw plus base64url; `waitForIceComplete` |
+  | `webrtc-link.js` | the host's offer/accept and the guest's join machines, `RTCPeerConnection` from an injected factory |
+  | `intent-guard.js` | the table below |
+  | `host-session.js` | `dispatcher` (rules, then broadcast), `attach(loop)` routing guest intents through the guard and `loop.submit`, `sayHello`, `broadcastPause`, `onLost(seat)` |
+  | `guest-session.js` | `apply` sends and refuses loop-owned intents and a second intent in flight; one listener each for hello, state, refused, paused, close |
+
+- **The host guard**, every row a unit test in `intent-guard.test.js`:
+
+  | Intent from a guest | Allowed when | Otherwise |
+  | --- | --- | --- |
+  | `choose-die`, `select-pawn`, `commit-move` | the active player is that guest's and no window is open | `not-your-turn` |
+  | `skip-action` | as above and `autoIntent(state) === null` | `not-your-turn` / `loop-owned` |
+  | `play-card { seat, cardId, target }` | `seat` is an integer the guest holds; then `cardRefusal` | `not-your-seat` or the card's reason |
+  | `decline-reaction { seat }` | `seat` is the guest's and in `eligible` | `not-your-seat` / `not-eligible` / `no-window` |
+  | `roll-die`, `close-window`, `end-turn` | never | `loop-owned` |
+  | anything else | never | `unknown-intent` |
+
+  `dispatch` re-checks every rule anyway; the guard adds only "who sent it" and "what the loop owns".
+  Reasons are `intent.rejected.*` keys, three of them new (`not-your-seat`, `loop-owned`, `paused`), so
+  the guest's message strip prints them in both languages.
+- **Why the whole state travels.** Only the host owns `deps = { rng, diceSource }`, the twenty physical
+  dice cards and the seeded generator's counter, both outside the frozen state. A guest never rolls or
+  shuffles, so nothing outside the state has to be serialised and a guest cannot drift: whatever
+  arrived last is the truth. The state survives JSON because it is plain data throughout; the
+  `loopback-match.test.js` deep-equals the guest's mirror with the host's state after every echo of a
+  whole match, and a second case does it for three players over two pairs.
+- **The 30 seconds have one owner.** The host's `reaction-clock.js` dispatches expiry. The guest runs the
+  same clock for the ring only: its expiry is `close-window`, which `guest-session.js` refuses before
+  sending. `hello.windowMs` carries the host's duration so the two rings agree, including under `?fast=1`.
+- **`reaction-clock.js` split out of `card-controls.js`** when the `isLocal` guards took that file to
+  302 lines. The seam was the header's own "The thirty seconds" section: the clock is about time passing,
+  the rest of the file about a card being played. `REACTION_WINDOW_MS` is re-exported so no importer moved.
+
 
 ## Decisions
 
@@ -966,8 +1046,10 @@ fallback constant, and the rule that separates a movement from a reading time.
   not that a jQuery handler can satisfy it. That is issue #62.
 - **The reaction window has never had anything in it.** Its correctness as a seam is a claim about
   issue #38 and cannot be checked until skill cards exist.
-- Multiplayer is planned for Sprint 2. Whether it is local hot-seat or networked changes this
+- ~~Multiplayer is planned for Sprint 2. Whether it is local hot-seat or networked changes this
   chapter substantially: networked play makes state authority a real question. Undecided. **The MVP
   is hot-seat** (FR-03), and the architecture document states plainly that where a network layer
-  would attach is not answered, rather than guessing at it.
+  would attach is not answered, rather than guessing at it.~~ **Answered 2026-09-09, issue #42.** State
+  authority is the host's; the network layer attaches at the one `dispatch` call in `ui/`, now the
+  `dispatcher` argument of `loop-store.js`. See the fact block above and the journal.
 - No decision yet on whether a game in progress survives a page reload.

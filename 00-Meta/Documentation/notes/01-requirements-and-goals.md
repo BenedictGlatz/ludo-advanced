@@ -571,6 +571,26 @@ planning slot, with the Product Owner's sign-off, if the module's assessment ask
 Also of note for the scope chapter: this is the first rule the project **un-rejected**. GDD § 3 said no
 bonus roll and gave the D2 as the reason; the accepted version keeps the reason as a floor. The rejected
 paragraph is kept in the GDD as a quote rather than deleted.
+### FR-42 is built, and its acceptance criterion is met in one browser and untested across two machines: 2026-09-09, issue #42
+
+- **FR-42, "online multiplayer with a lobby", `should have`, 13 points, is implemented** on
+  `feature/42-online-multiplayer`. The Product Owner chose option C on 2026-09-08, one day after the
+  options document recommended cutting the requirement; the decision and its rejected alternatives are in
+  the journal under 2026-09-09. The estimate held in the sense the effort estimation warned about: 13 was
+  "a statement, not a measurement", and the work was one long day against a plan written the day before.
+- **The acceptance criterion, "two browsers on different machines play one match", is half proven.**
+  Two browser contexts on one machine play a match in `tests/e2e/online.spec.js`; two machines on two
+  networks have not been tried. Recorded as outstanding in Ch. 08.
+- **Scope decisions inside FR-42, each the Product Owner's:** up to four players; humans only, no bots
+  online in v1; hands not hidden ("we trust our friends"), so the requirement is met for friends and not
+  against cheating; no reconnect; manual invite codes rather than a lobby server, which is what "with a
+  lobby" turned out to mean in a project with no hosting.
+- **FR-03, hot-seat, is unchanged**: every new option has a default that reproduces the previous
+  behaviour, and the hot-seat suites pass without edits except the two menu assertions that said the
+  online door was dead.
+- **NFR-01 gained a fourth headless layer**, `src/net/`, with the same import rule as `ai/`; NFR-05's
+  coverage floor now includes it; NFR-10 is inside the platform reach of the two APIs used (Ch. 03).
+
 
 ## Decisions
 

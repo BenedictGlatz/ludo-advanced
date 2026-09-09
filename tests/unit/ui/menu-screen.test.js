@@ -59,11 +59,16 @@ describe("the main menu", () => {
    * doors dealt as equals would say the game has three modes, which is false, and it would say it on the
    * screen where a player has the least ability to tell.
    */
-  it("marks the two doors that do not work as disabled, and gives them no fill", () => {
-    for (const button of menuScreen().buttons.slice(1)) {
-      expect(button.disabled, button.action).toBe(true);
-      expect(button.variant, button.action).toBeUndefined();
-    }
+  it("marks the one door that does not work as disabled, and gives it no fill", () => {
+    const [, online, settings] = menuScreen().buttons;
+
+    // Online opened on 2026-09-09 (issue #42): usable, and plain rather than primary, because Hotseat
+    // is still the game and the one saturated fill per screen is spent on it.
+    expect(online.disabled).toBeUndefined();
+    expect(online.variant).toBeUndefined();
+
+    expect(settings.disabled).toBe(true);
+    expect(settings.variant).toBeUndefined();
   });
 
   /**

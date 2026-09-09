@@ -54,7 +54,7 @@
  * a pause: the players stopped, so the window did too.
  */
 
-import { handoverNeeded, humanSeats, isBot } from "../state/bots.js";
+import { handoverNeeded, isBot } from "../state/bots.js";
 import { INTENT } from "../state/intents.js";
 
 /**
@@ -73,15 +73,17 @@ export function createHandover({
   resume,
   onCurtain = null,
   skipHandover = false,
+  isLocal = (seat) => !isBot(getState(), seat),
 }) {
   /**
    * The seat whose person is in front of the screen.
    *
-   * Seeded with the first seat that has a person on it rather than with seat 0, because the line-up
-   * screen (D95) lets the computer sit on seat 0 and the first thing on screen would then be a bot's
-   * hand claimed as the viewer's own.
+   * Seeded with the first seat that has a person **at this screen** rather than with seat 0, because
+   * the line-up screen (D95) lets the computer sit on seat 0 and the first thing on screen would then
+   * be a bot's hand claimed as the viewer's own. Online (issue #42) the same line seeds a guest with
+   * its own seat rather than the host's, which would have kept the guest's hand face down all match.
    */
-  let viewerSeat = humanSeats(getState())[0] ?? null;
+  let viewerSeat = getState().seats.find(isLocal) ?? null;
 
   /** `{ seat, endsTurn }` while a curtain is standing, otherwise `null`. */
   let pending = null;
@@ -97,6 +99,9 @@ export function createHandover({
   function needsCurtain(seat) {
     if (onCurtain === null || skipHandover) return false;
     if (seat === viewerSeat) return false;
+    // A person at another screen has their own screen (issue #42). Raising a curtain here, and pausing
+    // the match under it, would stop the host's clock every time the guest is asked anything.
+    if (!isLocal(seat)) return false;
 
     return handoverNeeded(getState(), seat);
   }
@@ -137,7 +142,7 @@ export function createHandover({
         return true;
       }
 
-      if (!isBot(getState(), seat)) viewerSeat = seat;
+      if (isLocal(seat)) viewerSeat = seat;
       if (endsTurn) passTurn();
 
       return false;

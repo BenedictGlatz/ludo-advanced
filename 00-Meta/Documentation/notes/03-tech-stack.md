@@ -214,6 +214,27 @@ read from the package's own `license` field **and** its own licence file:
 - **The repository itself still has no licence.** `package.json` says `"license": "UNLICENSED"` and
   `"private": true`, which is accurate for a university project with no licence file. Choosing a
   repository licence was named as an open condition in the feasibility study and is still open.
+### WebRTC as a browser API, one STUN server, and no new dependency: 2026-09-09, issue #42
+
+- **Online play is built on `RTCPeerConnection` and `RTCDataChannel`**, browser APIs, and on
+  `CompressionStream` for the invite codes. `package.json` is unchanged: no `peerjs`, no `ws`, no
+  compression library. The dependency policy above held through the one feature most likely to break it.
+- **One external service**, named here so it does not read as none: `stun:stun.l.google.com:19302`,
+  listed in `src/net/webrtc-link.js` as `DEFAULT_ICE_SERVERS`. It lets a code carry the browser's public
+  address so two machines on different networks can find each other. Nothing is installed and nothing is
+  called by the code; the browser contacts it while gathering candidates. Without it the game works on one
+  network. There is **no TURN relay**, which is the one thing a server would buy: two players behind
+  strict NATs may fail to connect, and the lobby says so after twenty seconds.
+- **Platform reach, stated:** `CompressionStream` is Chrome 80, Firefox 113, Safari 16.4; WebRTC data
+  channels are older than any of those. NFR-10's current-and-previous of Chrome, Firefox and Edge is
+  inside that. Node 18 has both globals, which is why `signal-codes.test.js` runs under Vitest.
+- **Rejected, with reasons:** PeerJS (a runtime dependency plus a hosted signaling server for something
+  the platform does), a WebSocket relay (hosting the project does not have), a Node game server importing
+  `core/` and `state/` (the cheat-proof design, and the one to build if time appears; needs hosting).
+  Full comparison in
+  [Online-Multiplayer-Options.md](../../Project-Management/Online-Multiplayer-Options.md), decision in the
+  journal under 2026-09-09.
+
 
 ## Decisions
 
@@ -230,5 +251,8 @@ read from the package's own `license` field **and** its own licence file:
   installed. The repository's own licence is also still unchosen.
 - Why jQuery specifically, over plain DOM APIs or a component framework, is unrecorded.
 - Why Vite over other bundlers is unrecorded.
-- Multiplayer is named in the Sprint 2 plan but no networking technology has been chosen. If the
-  game ships local-only, that is a scope decision and belongs in Chapter 01 and Chapter 11.
+- ~~Multiplayer is named in the Sprint 2 plan but no networking technology has been chosen. If the
+  game ships local-only, that is a scope decision and belongs in Chapter 01 and Chapter 11.~~ **Chosen
+  2026-09-08 and built 2026-09-09: WebRTC in the browser, no server, no dependency.** See the fact block
+  above. **Still open:** whether STUN alone connects two real machines on two real networks has not been
+  tried; the result belongs in Chapter 08.
