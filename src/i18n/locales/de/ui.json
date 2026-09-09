@@ -51,7 +51,7 @@
     },
     "online": {
       "label": "Online-Mehrspieler",
-      "hint": "Noch nicht gebaut."
+      "hint": "Zwei bis vier Spieler an eigenen Bildschirmen, verbunden über einen Einladungscode."
     },
     "settings": {
       "label": "Einstellungen",
@@ -76,7 +76,11 @@
     "open": "Pause",
     "title": "Pause",
     "resume": "Weiterspielen",
-    "quit": "Partie abbrechen"
+    "quit": "Partie abbrechen",
+    "online": {
+      "host": "Du bist der Host: die Partie ist für alle angehalten.",
+      "guest": "Nur dein Bildschirm ist angehalten. Die Partie beim Host läuft weiter, und die Uhr auch."
+    }
   },
   "win": {
     "quit": "Zurück zum Menü"
@@ -156,7 +160,10 @@
       "needs-target": "Für diese Karte fehlt noch ein Ziel.",
       "bad-target": "Dieses Ziel passt nicht zu der Karte.",
       "no-window": "Gerade ist kein Reaktionsfenster offen.",
-      "not-eligible": "Du bist an diesem Reaktionsfenster nicht beteiligt."
+      "not-eligible": "Du bist an diesem Reaktionsfenster nicht beteiligt.",
+      "not-your-seat": "Das ist nicht dein Platz.",
+      "loop-owned": "Diesen Schritt macht die Partie von selbst.",
+      "paused": "Der Host hat die Partie angehalten."
     }
   },
   "reaction": {
@@ -203,6 +210,47 @@
       "multiplier": "Mal {{factor}}: {{value}}",
       "missed": "Mindestens {{needed}} gebraucht, {{rolled}} gewürfelt: 0",
       "floor": "Nicht unter 0"
+    }
+  },
+  "online": {
+    "title": "Online-Mehrspieler",
+    "text": "Zwei bis vier Spieler, jeder an seinem eigenen Bildschirm. Einer eröffnet die Partie und schickt den anderen einen Einladungscode, zum Beispiel per Chat.",
+    "host": "Partie eröffnen",
+    "join": "Partie beitreten",
+    "back": "Zurück",
+    "hostTitle": "Partie eröffnen",
+    "joinTitle": "Partie beitreten",
+    "playerCount": "Wie viele spielen mit, dich eingerechnet?",
+    "inviteLabel": "Einladungscode",
+    "replyLabel": "Antwortcode",
+    "copy": "Kopieren",
+    "copied": "Kopiert",
+    "connect": "Verbinden",
+    "addGuest": "Nächsten Spieler einladen",
+    "start": "Partie starten",
+    "seat": {
+      "host": "Du (Host)",
+      "waiting": "Wartet auf Verbindung",
+      "connected": "Verbunden"
+    },
+    "stage": {
+      "gathering": "Code wird erzeugt …",
+      "waiting": "Warte auf die Antwort der anderen Seite.",
+      "connecting": "Verbinde …",
+      "connected": "Verbunden.",
+      "lost": "Die Verbindung ist abgebrochen.",
+      "stale": "Der Code ist abgelaufen. Erzeuge einen neuen."
+    },
+    "hint": {
+      "host": "Kopiere den Einladungscode und schicke ihn dem Mitspieler. Füge dann seinen Antwortcode unten ein und drücke Verbinden.",
+      "join": "Füge den Einladungscode des Hosts ein und drücke Verbinden. Schicke dann deinen Antwortcode an den Host zurück.",
+      "nat": "Ohne Vermittlungsserver klappt die Verbindung nicht hinter jedem Router."
+    },
+    "error": {
+      "badCode": "Das ist kein gültiger Code. Kopiere ihn bitte vollständig.",
+      "failed": "Die Verbindung ist fehlgeschlagen. Codes halten nur ein paar Minuten: erzeugt einen neuen und versucht es noch einmal.",
+      "nat": "Keine Verbindung nach 20 Sekunden. Es gibt keinen Vermittlungsserver, deshalb klappt es hinter manchen Routern nicht. Versucht ein anderes Netz, zum Beispiel einen Handy-Hotspot.",
+      "version": "Die andere Seite spielt eine andere Version des Spiels."
     }
   }
 }

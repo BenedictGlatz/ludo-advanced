@@ -8,12 +8,13 @@
  *
  * ## What is actually at risk here
  *
- * Two of the three doors are `disabled` in the DOM. That is D77.2's decision, and it is what saves a
- * click filter in `session-actions.js` and saves a keyboard user two stops where `Enter` would do
- * nothing. It also means **nothing in `src/` handles `online` or `settings` at all**, so if the attribute
- * ever came off, a click would fall through the whole action table in silence and a player would find
- * two dead buttons rather than two doors that explain themselves. There is no unit test that can see
- * that, because it is a fact about the rendered element.
+ * One of the three doors is `disabled` in the DOM. That is D77.2's decision, and it is what saves a
+ * click filter in `session-actions.js` and saves a keyboard user a stop where `Enter` would do nothing.
+ * It also means **nothing in `src/` handles `settings` at all**, so if the attribute ever came off, a
+ * click would fall through the whole action table in silence and a player would find a dead button
+ * rather than a door that explains itself. There is no unit test that can see that, because it is a
+ * fact about the rendered element. The online door was the second dead one until issue #42 opened it on
+ * 2026-09-09; `online.spec.js` covers where it leads.
  *
  * The hints are the other half of the same decision: they are why not being able to focus a dead door
  * costs a keyboard user nothing, so an empty one would quietly break the reasoning D77 rests on.
@@ -59,7 +60,7 @@ test.describe("the main menu", () => {
   }) => {
     await openMenu(page);
 
-    for (const name of ["online", "settings"]) {
+    for (const name of ["settings"]) {
       await expect(door(page, name)).toBeDisabled();
 
       // `force`, because Playwright refuses to click a disabled control on its own and the point of
@@ -73,15 +74,16 @@ test.describe("the main menu", () => {
   });
 
   /**
-   * Exactly one, which is the trade D77.3 makes: a stop where `Enter` does nothing tells a keyboard
-   * user nothing, and spec 05 § 5 already took seven such stops out of the pool overview. The cost is
-   * that the other two doors are read rather than tabbed to, which is why the next case exists.
+   * Two since issue #42, one per working door, which is the trade D77.3 makes: a stop where `Enter`
+   * does nothing tells a keyboard user nothing, and spec 05 § 5 already took seven such stops out of
+   * the pool overview. The cost is that the dead door is read rather than tabbed to, which is why the
+   * next case exists.
    */
-  test("gives the sheet exactly one tab stop (D77.3)", async ({ page }) => {
+  test("gives the sheet one tab stop per working door (D77.3)", async ({ page }) => {
     const panel = await openMenu(page);
 
-    await expect(panel.locator(".overlay__button:not([disabled])")).toHaveCount(1);
-    await expect(panel.locator(".overlay__button:not([disabled])")).toHaveAttribute(
+    await expect(panel.locator(".overlay__button:not([disabled])")).toHaveCount(2);
+    await expect(panel.locator(".overlay__button:not([disabled])").first()).toHaveAttribute(
       "data-action",
       "hotseat"
     );

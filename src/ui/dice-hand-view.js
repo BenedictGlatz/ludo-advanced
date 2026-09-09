@@ -129,9 +129,13 @@ function selectedSlot(state) {
  * the plate ring in `app.css` would never mean anything. The reading here is the one that comment
  * describes: the plate that is asking for a decision is the one that stands out.
  */
-export function updateDiceHand($hand, state) {
+export function updateDiceHand($hand, state, { canAct = true } = {}) {
   const hand = state.hand;
   const choosing = state.phase === TURN_PHASE.CHOOSE;
+  // `canAct` is whether the active player sits at this screen (issue #42). A bot's cards, or a remote
+  // player's, are drawn but not offered: `turn-controls.js` would refuse the click anyway, and offering a
+  // gesture that is then refused is the worst kind of bug in a card game.
+  const playable = choosing && canAct;
   const selected = selectedSlot(state);
 
   if ($hand.data("dealtTurn") !== state.turnNumber && hand.length > 0) {
@@ -165,7 +169,7 @@ export function updateDiceHand($hand, state) {
 
     updateCard($card, {
       ...diceCardDescription(faces),
-      playable: choosing,
+      playable,
       selected: slot === selected,
       result: slot === selected ? state.roll : null,
     });

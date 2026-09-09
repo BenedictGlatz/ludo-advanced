@@ -51,7 +51,7 @@
     },
     "online": {
       "label": "Online Multiplayer",
-      "hint": "Not built yet."
+      "hint": "Two to four players at their own screens, connected with an invite code."
     },
     "settings": {
       "label": "Settings",
@@ -76,7 +76,11 @@
     "open": "Pause",
     "title": "Paused",
     "resume": "Resume",
-    "quit": "Abandon match"
+    "quit": "Abandon match",
+    "online": {
+      "host": "You are the host: the match is paused for everybody.",
+      "guest": "Only your screen is paused. The match keeps running on the host's side, and so does the clock."
+    }
   },
   "win": {
     "quit": "Back to the menu"
@@ -156,7 +160,10 @@
       "needs-target": "That card still needs a target.",
       "bad-target": "That target does not fit the card.",
       "no-window": "No reaction window is open right now.",
-      "not-eligible": "You are not part of this reaction window."
+      "not-eligible": "You are not part of this reaction window.",
+      "not-your-seat": "That is not your seat.",
+      "loop-owned": "The match takes that step by itself.",
+      "paused": "The host has paused the match."
     }
   },
   "reaction": {
@@ -203,6 +210,47 @@
       "multiplier": "Times {{factor}}: {{value}}",
       "missed": "Needed at least {{needed}}, rolled {{rolled}}: 0",
       "floor": "Never below 0"
+    }
+  },
+  "online": {
+    "title": "Online Multiplayer",
+    "text": "Two to four players, each at their own screen. One of you hosts the match and sends the others an invite code, for example through a chat.",
+    "host": "Host a match",
+    "join": "Join a match",
+    "back": "Back",
+    "hostTitle": "Host a match",
+    "joinTitle": "Join a match",
+    "playerCount": "How many are playing, yourself included?",
+    "inviteLabel": "Invite code",
+    "replyLabel": "Reply code",
+    "copy": "Copy",
+    "copied": "Copied",
+    "connect": "Connect",
+    "addGuest": "Invite the next player",
+    "start": "Start the match",
+    "seat": {
+      "host": "You (host)",
+      "waiting": "Waiting to connect",
+      "connected": "Connected"
+    },
+    "stage": {
+      "gathering": "Making the code …",
+      "waiting": "Waiting for the other side to answer.",
+      "connecting": "Connecting …",
+      "connected": "Connected.",
+      "lost": "The connection was lost.",
+      "stale": "The code has expired. Make a new one."
+    },
+    "hint": {
+      "host": "Copy the invite code and send it to the other player. Then paste their reply code below and press Connect.",
+      "join": "Paste the host's invite code and press Connect. Then send your reply code back to the host.",
+      "nat": "Without a relay server the connection does not work behind every router."
+    },
+    "error": {
+      "badCode": "That is not a valid code. Please copy all of it.",
+      "failed": "The connection failed. Codes only last a few minutes: make a new one and try again.",
+      "nat": "No connection after 20 seconds. There is no relay server, so it does not work behind some routers. Try a different network, for example a phone hotspot.",
+      "version": "The other side is playing a different version of the game."
     }
   }
 }

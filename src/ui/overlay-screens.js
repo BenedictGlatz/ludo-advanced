@@ -14,6 +14,7 @@ import { MATCH_STATUS } from "../state/game-state.js";
 import { t } from "../i18n/index.js";
 import { lineupScreen } from "./lineup-screen.js";
 import { menuScreen } from "./menu-screen.js";
+import { hostScreen, joinScreen, onlineScreen } from "./online/lobby-screen.js";
 import { OVERLAY_ACTION, OVERLAY_SCREEN } from "./overlay-vocabulary.js";
 import { seatLabel } from "./player-labels.js";
 import { poolScreen } from "./pool-screen.js";
@@ -38,11 +39,18 @@ function setupScreen() {
   };
 }
 
-/** S8. Reachable at any point in a turn (FR-07). Resume, or give the match up. */
-function pauseScreen() {
+/**
+ * S8. Reachable at any point in a turn (FR-07). Resume, or give the match up.
+ *
+ * Online (issue #42) the screen gains one sentence, because a pause means two different things: the
+ * host's Pause stops the match for everybody, and a guest's stops only their own screen while the
+ * host's clock keeps running. `online` is `"host"`, `"guest"` or `null`.
+ */
+function pauseScreen(online) {
   return {
     screen: OVERLAY_SCREEN.PAUSE,
     title: t("pause.title"),
+    text: online === null ? "" : t(`pause.online.${online}`),
     player: null,
     buttons: [
       { action: OVERLAY_ACTION.RESUME, label: t("pause.resume"), variant: "primary" },
@@ -62,8 +70,11 @@ function pauseScreen() {
  * than something the stylesheet infers from `player` being absent. D40 of design spec 04 asked for it by
  * name: a win takes the winner's colour and the game's only `--text-2xl` title, and an abandoned match
  * drops both, because the same screen in a different colour would be a small cruelty.
+ *
+ * `canRestart` is `false` on an online guest (issue #42): Play Again is the host's button, and the
+ * guest's next match arrives over the wire when the host presses it.
  */
-function winScreen(state) {
+function winScreen(state, canRestart) {
   const won = state.status === MATCH_STATUS.WON;
 
   return {
@@ -72,7 +83,9 @@ function winScreen(state) {
     player: won ? state.winner : null,
     outcome: won ? "won" : "abandoned",
     buttons: [
-      { action: OVERLAY_ACTION.RESTART, label: t("match.restart"), variant: "primary" },
+      ...(canRestart
+        ? [{ action: OVERLAY_ACTION.RESTART, label: t("match.restart"), variant: "primary" }]
+        : []),
       { action: OVERLAY_ACTION.QUIT, label: t("win.quit") },
     ],
   };
@@ -130,10 +143,14 @@ function noScreen() {
  *
  * `lineup` is handed in for the same reason and it is a **snapshot**, `{ playerCount, seats, bots }`,
  * from `lineup.js`. There is no match behind the line-up screen, so `state` is `null` there too.
+ *
+ * `online` is the third snapshot (issue #42), from `online-flow.js`: `{ role, snapshot, canRestart }`.
+ * The two lobbies are built from `snapshot`, the pause screen reads `role`, and the win screen reads
+ * `canRestart`. All three default to the hot-seat answers.
  */
 export function screenDescription(
   screen,
-  { state = null, seat = null, pool = null, lineup = null } = {}
+  { state = null, seat = null, pool = null, lineup = null, online = null } = {}
 ) {
   switch (screen) {
     case OVERLAY_SCREEN.MENU:
@@ -141,9 +158,15 @@ export function screenDescription(
     case OVERLAY_SCREEN.SETUP:
       return setupScreen();
     case OVERLAY_SCREEN.PAUSE:
-      return pauseScreen();
+      return pauseScreen(online?.role ?? null);
     case OVERLAY_SCREEN.WIN:
-      return winScreen(state);
+      return winScreen(state, online?.canRestart ?? true);
+    case OVERLAY_SCREEN.ONLINE:
+      return onlineScreen();
+    case OVERLAY_SCREEN.HOST:
+      return online?.snapshot ? hostScreen(online.snapshot) : noScreen();
+    case OVERLAY_SCREEN.JOIN:
+      return online?.snapshot ? joinScreen(online.snapshot) : noScreen();
     case OVERLAY_SCREEN.HANDOVER:
       return handoverScreen(state, seat);
     case OVERLAY_SCREEN.LINEUP:

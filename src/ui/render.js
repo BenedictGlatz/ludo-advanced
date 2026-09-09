@@ -27,10 +27,12 @@ import { updateSkillHand } from "./skill-hand-view.js";
 /**
  * Bind the regions once and get back a `render(state, extras)`.
  *
- * `extras` carries the four things that are **presentation state** and are therefore not in the frozen
+ * `extras` carries the five things that are **presentation state** and are therefore not in the frozen
  * game state: which hand slot is mid-play, how many seconds are left on the reaction clock, what the
- * target picker is currently asking for, and which seat's person is in front of the screen.
- * `card-controls.js` owns the first three and `handover.js` the fourth.
+ * target picker is currently asking for, which seat's person is in front of the screen, and whether the
+ * active player is somebody at this screen at all. `card-controls.js` owns the first three,
+ * `handover.js` the fourth, and `loop-store.js`'s `isLocal` the fifth (issue #42): a bot's or a remote
+ * player's dice cards must not be drawn as clickable, because the click would be refused.
  */
 export function createRenderer({
   $board,
@@ -43,7 +45,7 @@ export function createRenderer({
 }) {
   return function render(
     state,
-    { selectedSlot = -1, secondsLeft = null, pick = null, viewerSeat = null } = {}
+    { selectedSlot = -1, secondsLeft = null, pick = null, viewerSeat = null, canAct = true } = {}
   ) {
     updateBoard($board, state);
     applyMoveHints($board, state);
@@ -53,7 +55,7 @@ export function createRenderer({
     // anything either of them leaves out is cleared by the other: a match is running whenever this
     // renderer runs, so the seat is always the active one here, and `canPause` is left at its default.
     updateChrome($chrome, { turn: turnLine(state), player: state.activePlayer });
-    updateDiceHand($diceHand, state);
+    updateDiceHand($diceHand, state, { canAct });
     updateSkillHand($skillHand, state, selectedSlot, viewerSeat);
     updatePrompt($prompt, state, { secondsLeft, pick });
     showMessage($message, state);

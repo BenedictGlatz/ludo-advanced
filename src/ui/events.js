@@ -243,14 +243,22 @@ export function bindChromeEvents($chrome, handlers) {
  * rather than something read back out of the DOM, because the pair is two named positions and not one
  * button that flips: a click has to say **which** position it is, so that clicking the one that is
  * already chosen can do nothing. Handlers that do not need it simply do not declare it.
+ *
+ * **A button carrying `data-field` passes that textarea's text as `value`** (issue #42). The online
+ * lobby's Connect and Copy act on a code the player pasted or is about to copy, and the code lives in a
+ * `<textarea data-field>` next to the button. Reading it here keeps `session-actions.js` free of DOM
+ * access, which is the promise that file makes about itself.
  */
 export function bindOverlayEvents($overlay, handlers) {
   $overlay.on("click", "[data-action]", function onClick() {
     const $button = $(this);
+    const field = $button.attr("data-field");
+    const fieldValue =
+      field === undefined ? undefined : $overlay.find(`textarea[data-field="${field}"]`).val();
 
     handlers.onOverlayAction(
       $button.attr("data-action"),
-      $button.attr("data-count") ?? $button.attr("data-seat"),
+      fieldValue ?? $button.attr("data-count") ?? $button.attr("data-seat"),
       $button.attr("data-value")
     );
   });

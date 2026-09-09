@@ -46,6 +46,7 @@
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { autoIntent } from "../state/auto-steps.js";
 import { seatOnShow } from "../state/intents-cards.js";
+import { abandonMatch } from "../state/match.js";
 import { nextSeat } from "../state/turn-resolution.js";
 import { bindMatchEvents } from "./events.js";
 import { createLoopParts } from "./loop-parts.js";
@@ -94,6 +95,7 @@ export function createGameLoop({
       secondsLeft: cards.secondsLeft(),
       pick: cards.pick(),
       viewerSeat: handover.seat(),
+      canAct: store.isLocal(store.getState().activePlayer),
     });
   }
 
@@ -261,6 +263,16 @@ export function createGameLoop({
 
       advance();
       return true;
+    },
+
+    /**
+     * Give the match up from outside the rules (issue #42): a guest's connection dropped and there is
+     * no reconnect. `abandonMatch` is the same transition the pause screen's Quit would reach, and
+     * `advance()` then does what it does for any finished match: halt and open the win screen.
+     */
+    abandon() {
+      store.replace(abandonMatch(store.getState()));
+      advance();
     },
 
     /** The current state, for tests and for the browser console. Frozen, so it cannot be written. */

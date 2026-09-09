@@ -1,0 +1,114 @@
+/* =============================================================================
+   lobby.css -- the online lobby, issue #42, FR-42: the door, the host's
+   screen and the guest's screen, as three more contents of the one overlay
+   component. Split off on the handover.css, menu.css and lineup.css
+   precedent: one screen's own stylesheet, not a second component.
+   Depends on tokens.css, overlay.css and lineup.css (the seat rows are the
+   line-up's rows, reused). Loads after lineup.css.
+
+   Built by Claude Code WITHOUT a design handoff, which CLAUDE.md gives a new
+   screen to. The reason and the brief are on record: project-journal.md,
+   2026-09-09, and 01-Design/Handoff/00-open-requests.md. Nothing here is a
+   new colour, a new size or a new token. The textarea borrows the button's
+   chrome, the field label borrows the seat name's type, and the status word
+   borrows the muted text colour. Claude Design owns what the lobby SHOULD
+   look like; this is what lets it be used until then.
+   ========================================================================== */
+
+/* The two lobbies carry a code of a few hundred characters and up to four
+   seat rows, so they take the line-up's width. Same flex-line fix as
+   lineup.css and menu.css, for the same reason: the panel's percentage
+   width does not land inside .overlay's grid. */
+.overlay[data-screen="host"],
+.overlay[data-screen="join"] {
+  --overlay-panel-w: 44rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.overlay[data-screen="host"] .overlay__text,
+.overlay[data-screen="join"] .overlay__text,
+.overlay[data-screen="online"] .overlay__text {
+  max-width: 46ch;
+}
+
+/* --- The fields: a label over a textarea, stacked. --- */
+
+.overlay__fields {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+/* Built once and present on all screens, hidden while empty, on the
+   .overlay__cards and .overlay__seats precedent named in lineup.css. */
+.overlay__fields:empty {
+  display: none;
+}
+
+.overlay__field {
+  display: grid;
+  gap: var(--space-1);
+  text-align: start;
+}
+
+.overlay__field-label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  color: var(--color-text-muted);
+}
+
+/* The button's chrome on a text box: the ink edge, the radius, the surface,
+   the focus ring. A code is one long line of base64, so it wraps anywhere
+   and shows in the numeric face. */
+.overlay__textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 4.5rem;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-num);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+  resize: vertical;
+  background: var(--color-surface);
+  border: var(--border-card) solid var(--color-ink);
+  border-radius: var(--radius-card);
+}
+
+.overlay__textarea[readonly] {
+  color: var(--color-text-muted);
+  background: var(--color-dormant-soft);
+}
+
+.overlay__textarea:focus-visible {
+  outline: var(--border-card) solid var(--color-focus);
+  outline-offset: var(--space-1);
+}
+
+/* --- The seat rows on the host's screen: the line-up's rows with a status
+       word where the line-up has its two-position control. --- */
+
+.overlay[data-screen="host"] .overlay__seat {
+  grid-template-columns: auto 1fr auto;
+}
+
+.overlay__seat-status {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-muted);
+  text-align: end;
+}
+
+.overlay__seat[data-status="connected"] .overlay__seat-status,
+.overlay__seat[data-status="host"] .overlay__seat-status {
+  color: var(--color-text);
+}
+
+/* An empty choice group must not hold a grid track's worth of nothing. */
+.overlay[data-screen="host"] .overlay__seat-choice:empty {
+  display: none;
+}

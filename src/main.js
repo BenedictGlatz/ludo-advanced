@@ -125,6 +125,7 @@ import "./ui/styles/prompt.css";
 import "./ui/styles/overlay.css";
 import "./ui/styles/menu.css";
 import "./ui/styles/lineup.css";
+import "./ui/styles/lobby.css";
 import "./ui/styles/handover.css";
 import "./ui/styles/pool.css";
 import "./ui/styles/last-card.css";
