@@ -312,6 +312,16 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   without blocking a merge, because that needs a repository ruleset. Sprint 2, delivered out of the
   Sprint 3 plan.
 
+- **2026-09-02**: **the workflow ran for the first time and the pull request was merged.** Pull request
+  #70 into `dev`, three green checks in 4 minutes 51 seconds of wall clock: `checks` in 23 seconds,
+  `e2e (chromium)` in 3:09 and `e2e (firefox)` in 4:20, both report artifacts uploaded and **no flaky
+  test in either**. The timings are in Ch. 08. Two facts worth carrying: GitHub runs a workflow from
+  the **pull request's own branch**, so the file was tested by the pull request that added it rather
+  than after the merge, and **`Closes #68` did not fire**, because the merge went into `dev` and that
+  trailer only works on the default branch. Step 8 of the Definition of Done predicted exactly this on
+  2026-08-22, and the issue was closed by hand with a closing comment. **The one done criterion still
+  open is the red one:** the check has never been observed failing, because #70 was merged while it was
+  green. Recorded under *Open / to verify* in Ch. 08 rather than counted as done. Sprint 2.
 - **2026-09-03**: **four layout defects out of one test round on the Product Owner's own laptop**, no
   issue on the board. The page scrolled on any window that is not 900 px tall, the per-seat card count ran
   out of its plate and was painted over by the next plate, an empty skill-hand slot was drawn wearing a
