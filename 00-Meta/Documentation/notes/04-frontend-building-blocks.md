@@ -3702,6 +3702,42 @@ Decision block: project journal, 2026-09-09. The `net/` half is in [06-state-and
   `menu.spec.js` now assert one dead door (Settings) and two tab stops.
 
 
+### The host's lobby seats bots on the line-up's control: 2026-09-10, issue #101
+
+- **A free seat's row in the host's lobby carries the two-position control of the line-up screen**,
+  and a row that is a bot says "Bot 3 (Grün)" through the same `seatLabel` the line-up and the HUD use.
+  `lineup-screen.js` exports `seatChoices(seat, controller, allowed)` for it, so the control is one
+  function on two screens and cannot come apart in markup or in the `aria-pressed` / `disabled` contract
+  spec 15 defined. The line-up passes `canBeBot`; the lobby passes `canToggle` from the new
+  `lobby-seats.js`.
+- **`src/ui/online/lobby-seats.js` is a pure rule file**, sixty lines, jQuery-free: `seatStatus`
+  (`host`, `connected`, `bot`, `waiting`), `freeSeats`, `canToggle` and `everybodyIn`. It exists so the
+  rule "may this seat switch" is asked twice, by the button that goes `disabled` and by the refusal in
+  `host-role.js`, and written once. The same reason `canBeBot` sits in `state/` for the line-up.
+- **The host and a connected guest have no control.** A person who joined is not turned into a bot by the
+  host; `canToggle` says never, and the row's `choices` is `[]`, which `lobby.css` already hid for the
+  status-only rows. A bot always goes back to a person. A free seat becomes a bot only while two persons
+  would remain.
+- **The invite on offer is dropped when the last free seat becomes a bot.** Otherwise the guest who
+  redeems the code has no seat. It can only happen with a guest already connected, because the floor of
+  two persons keeps one seat free otherwise, and `online-flow-bots.test.js` asserts the fake link was
+  hung up.
+- **Guests take the free seats in join order.** `nextSeat` in `host-role.js` was `seats[guests.length
+  + 1]` and is now `freeSeats(snapshot())[0]`: the first seat that is neither the host's, nor a bot's,
+  nor taken. The snapshot became a function declaration for it, since two operations above the returned
+  object read it.
+- **`OVERLAY_ACTION.CONTROLLER` is routed by screen** in `session-actions.js`: on `HOST` to
+  `online.setController`, otherwise to `lineup.setController`. No new action, because the button is the
+  same button; which screen is up is the only thing that tells the two apart.
+- **`lineup.css`'s four rules for the control name `[data-screen="host"]` as well.** Same component,
+  second screen, no new token, colour or size; the file's own scoping comment says so. The host row's
+  grid gained a fourth track for the control after the status word. Since the lobby is a recorded
+  placeholder without a handoff, the addition is filed as a correction to its brief in
+  `01-Design/Handoff/00-open-requests.md`.
+- **Two locale keys**, `online.seat.bot` and `online.hint.hostBots`; the idle sentence of the host's
+  lobby appends the second while a seat is free or a bot, one sentence for the whole screen (D91.4).
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

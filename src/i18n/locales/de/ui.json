@@ -231,7 +231,8 @@
     "seat": {
       "host": "Du (Host)",
       "waiting": "Wartet auf Verbindung",
-      "connected": "Verbunden"
+      "connected": "Verbunden",
+      "bot": "Bot"
     },
     "stage": {
       "gathering": "Code wird erzeugt …",
@@ -244,7 +245,8 @@
     "hint": {
       "host": "Kopiere den Einladungscode und schicke ihn dem Mitspieler. Füge dann seinen Antwortcode unten ein und drücke Verbinden.",
       "join": "Füge den Einladungscode des Hosts ein und drücke Verbinden. Schicke dann deinen Antwortcode an den Host zurück.",
-      "nat": "Ohne Vermittlungsserver klappt die Verbindung nicht hinter jedem Router."
+      "nat": "Ohne Vermittlungsserver klappt die Verbindung nicht hinter jedem Router.",
+      "hostBots": "Sitze, an die niemand kommt, kannst du auf Bot stellen. Mindestens ein Mitspieler muss verbunden sein."
     },
     "error": {
       "badCode": "Das ist kein gültiger Code. Kopiere ihn bitte vollständig.",

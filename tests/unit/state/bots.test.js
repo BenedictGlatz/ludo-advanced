@@ -137,6 +137,21 @@ describe("canBeBot (FR-01)", () => {
   });
 });
 
+describe("canBeBot with a higher floor (issue #101, the online lobby)", () => {
+  it("keeps two persons when asked to, which is the host plus one guest", () => {
+    // Three seats, none a bot yet: the first switch leaves two persons and is allowed, the second would
+    // leave one and is refused. With the default floor both would go through.
+    expect(canBeBot([0, 1, 2], [], 2, 2)).toBe(true);
+    expect(canBeBot([0, 1, 2], [2], 1, 2)).toBe(false);
+    expect(canBeBot([0, 1, 2], [2], 1)).toBe(true);
+  });
+
+  it("is the same floor toggleController applies", () => {
+    expect(toggleController([0, 1, 2], [2], 1, 2)).toEqual([2]);
+    expect(toggleController([0, 1, 2, 3], [3], 2, 2)).toEqual([2, 3]);
+  });
+});
+
 describe("toggleController (FR-01)", () => {
   it("turns a person into a bot and back again", () => {
     expect(toggleController([0, 1, 2, 3], [], 2)).toEqual([2]);

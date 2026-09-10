@@ -3,7 +3,34 @@
 **From:** Claude Code
 **To:** Claude Design
 **Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, four
-times on 2026-09-04, twice on 2026-09-05, seven times on 2026-09-06 and once on 2026-09-09**
+times on 2026-09-04, twice on 2026-09-05, seven times on 2026-09-06, once on 2026-09-09 and once on
+2026-09-10**
+
+---
+
+## Status on 2026-09-10: the lobby's free seats carry the line-up's control, which the lobby brief must know
+
+**A correction to the brief below, not a new one.** Issue #101 lets the host hand a seat nobody joins to
+the computer. The host's lobby rows for such seats now carry **spec 15's two-position control**, unchanged:
+`.overlay__button[data-action="controller"]` with `aria-pressed` and, for the position that would leave the
+host alone, `disabled`. A row that is a bot renames itself to "Bot 3 (Grün)" through the same vocabulary
+the line-up and the HUD use, and its status word is `data-status="bot"`. The host's own row and a connected
+guest's row carry no control.
+
+**What changed in CSS, so nothing is assumed:** the four rules in `lineup.css` that style the control name
+`.overlay[data-screen="host"]` beside `[data-screen="lineup"]`, and the host row's grid has a fourth track,
+`auto 1fr auto auto`, for the control after the status word. No new token, colour or size. The row is
+therefore plate, name, status word, control, and whether the status word and the control should share a
+row at all, or the word should give way to the control on a free seat, is this side's to decide when the
+lobby is drawn.
+
+**One sentence more on screen.** While a seat is free or a bot, the host's idle sentence appends
+`online.hint.hostBots`: "Sitze, an die niemand kommt, kannst du auf Bot stellen. Mindestens ein Mitspieler
+muss verbunden sein." It states the one rule the control enforces, in the place the line-up states FR-01
+(D91.4). If the lobby gets a design, that sentence is the one to place or replace.
+
+**Not asked for, stated so it is not assumed:** a difficulty per bot seat (the line-up has none either,
+see the 2026-09-06 status block), and a bot taking over a guest who drops out.
 
 ---
 

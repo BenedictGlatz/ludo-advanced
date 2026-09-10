@@ -19,12 +19,21 @@
  * - Without a relay server two players behind strict NATs may fail to connect; the lobby says so when the
  *   channel does not open within twenty seconds.
  * - Codes go stale after a few minutes; the host is told to make a new one.
+ *
+ * ## Bots sit at the table since issue #101
+ *
+ * A seat nobody has joined carries the line-up's two-position control, so the host can hand it to the
+ * computer. The row then renames itself to "Bot 3 (Grün)" exactly as the line-up's does, and its status
+ * word says `bot`. Which seats may switch is `lobby-seats.js`'s answer, asked once here for the disabled
+ * position and once in `host-role.js` for the refusal.
  */
 
 import { t } from "../../i18n/index.js";
 import { OVERLAY_ACTION, OVERLAY_SCREEN } from "../overlay-vocabulary.js";
+import { seatChoices } from "../lineup-screen.js";
 import { seatLabel } from "../player-labels.js";
 import { PLAYER_COUNTS } from "../../core/board.js";
+import { canToggle, everybodyIn, freeSeats, seatStatus } from "./lobby-seats.js";
 
 /** The stages a connection goes through, as the lobby names them. */
 export const STAGE = Object.freeze({
@@ -62,16 +71,37 @@ function statusText(snapshot, hint) {
   return t(hint);
 }
 
-/** One seat row of the host's lobby: who sits there, and whether they are connected. */
-function seatRow(snapshot, seat, index) {
-  const status = index === 0 ? "host" : snapshot.connected.includes(seat) ? "connected" : "waiting";
+/**
+ * The host's idle sentence. While a seat is still free or already a bot the sentence also says what the
+ * control does, because nothing else on the screen explains it (D91.4's argument: one sentence for the
+ * whole screen, since it is a fact about bots and not about seat 3).
+ */
+function hostHint(snapshot) {
+  const explainsBots = snapshot.bots.length > 0 || freeSeats(snapshot).length > 0;
+
+  return explainsBots
+    ? `${t("online.hint.host")} ${t("online.hint.hostBots")}`
+    : t("online.hint.host");
+}
+
+/**
+ * One seat row of the host's lobby: who sits there, whether they are connected, and, on a seat nobody
+ * has taken, the control that hands it to the computer.
+ */
+function seatRow(snapshot, seat) {
+  const status = seatStatus(snapshot, seat);
+  const controller = status === "bot" ? "bot" : "human";
+  const switchable = status === "waiting" || status === "bot";
 
   return {
     player: seat,
-    controller: "human",
-    label: seatLabel({ seats: snapshot.seats, bots: [] }, seat),
+    controller,
+    label: seatLabel({ seats: snapshot.seats, bots: snapshot.bots }, seat),
     status,
     statusLabel: t(`online.seat.${status}`),
+    choices: switchable
+      ? seatChoices(seat, controller, (value) => canToggle(snapshot, seat, value))
+      : [],
   };
 }
 
@@ -97,7 +127,7 @@ export function hostScreen(snapshot) {
     };
   }
 
-  const everybodyIn = snapshot.connected.length === snapshot.playerCount - 1;
+  const ready = everybodyIn(snapshot);
   const fields = [];
   const buttons = [];
 
@@ -115,11 +145,11 @@ export function hostScreen(snapshot) {
       field: "invite",
     });
     buttons.push({ action: OVERLAY_ACTION.CONNECT, label: t("online.connect"), field: "reply" });
-  } else if (!everybodyIn) {
+  } else if (freeSeats(snapshot).length > 0) {
     buttons.push({ action: OVERLAY_ACTION.ADD_GUEST, label: t("online.addGuest") });
   }
 
-  if (everybodyIn) {
+  if (ready) {
     buttons.push({
       action: OVERLAY_ACTION.START_ONLINE,
       label: t("online.start"),
@@ -131,9 +161,12 @@ export function hostScreen(snapshot) {
   return {
     screen: OVERLAY_SCREEN.HOST,
     title: t("online.hostTitle"),
-    text: statusText(snapshot, "online.hint.host"),
+    text:
+      snapshot.error === null && snapshot.stage === STAGE.IDLE
+        ? hostHint(snapshot)
+        : statusText(snapshot, "online.hint.host"),
     player: null,
-    seats: snapshot.seats.map((seat, index) => seatRow(snapshot, seat, index)),
+    seats: snapshot.seats.map((seat) => seatRow(snapshot, seat)),
     fields,
     buttons,
   };

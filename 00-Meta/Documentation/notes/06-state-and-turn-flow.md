@@ -1030,6 +1030,42 @@ Full decision block: project journal, 2026-09-09. Facts about the code:
   the rest of the file about a card being played. `REACTION_WINDOW_MS` is re-exported so no importer moved.
 
 
+### Bots online run on the host, and the network never heard of them: 2026-09-10, issue #101
+
+- **Nothing in `src/net/` changed.** The online plan of 2026-09-08 said "bots would run on the host later
+  without touching the network", and that turned out to be literally true: the host's Start button hands
+  `freshMatchParts` a `botSeats` list instead of `[]`, and everything else already existed. `state.bots`
+  is a match field and travels in every `state` message; the host runs the ordinary `createGameLoop`,
+  which includes `bot-driver.js`; the guest's mirror loop never asked the driver anything and still does
+  not. The protocol, the guard and both sessions are byte-for-byte the files of 2026-09-09.
+- **Why this was free: `isLocal` and `isBot` were kept as two questions on 2026-09-09.** A bot seat on
+  the host is not local to any screen, so no browser can click it and every browser draws its hand face
+  down, exactly as for a remote person. It is a bot to the AI, so the host's driver asks `decide` for it
+  and dispatches through the broadcasting dispatcher, exactly as for a hot-seat bot. Had the two been
+  merged into one "who may click here", one of the two behaviours would have had to be re-derived.
+- **The guard needed no new row.** A guest sending an intent on the bot's turn is refused with
+  `not-your-turn`, because the bot's seat is not in that guest's `guestSeats`. A guest can no more play
+  the bot's seat than the host's, and `loopback-bot-match.test.js` asserts the refusal with the very
+  intent the bot itself would have played.
+- **`canBeBot` gained a fourth parameter, `minPeople = 1`.** FR-01's floor is one person; the online
+  lobby's floor is two, the host plus one guest, because a host alone against bots is a hot-seat match
+  reached by a detour. One rule with two thresholds, in `state/bots.js`, rather than a second predicate
+  beside it that would drift the day one is fixed and the other forgotten. `toggleController` passes it
+  through; every existing caller keeps the default.
+- **Rejected: a `bots` field in `hello`.** The guest would learn the bot seats a message earlier, and
+  hold a second copy of a fact the next `state` carries anyway. `guest-role.js` mounts the board on
+  whichever of `hello` and `state` arrives second, so "earlier" buys nothing, and two truths about who
+  plays is the mistake `state/bots.js`'s header already rejected for the `controllers` map.
+- **Rejected: a bot takes over a dropped guest's seat.** It would soften "no reconnect", which is the
+  first limitation the changelog lists. It needs a transition in `state/` that turns a person into a bot
+  mid-match, with the open reaction window as the hard case (the seat may be `eligible` and the clock
+  running), and a lobby word for "your friend left, the computer has their pawns". Four days before the
+  freeze that is a feature, not a fix. Recorded so that the option is visible as declined rather than
+  missed.
+- **Rejected: a bot on a guest.** Impossible by construction: the guest's `deps` has `rng: null` and a
+  dice source whose `draw` throws. The host owns randomness; a bot needs none, but the turn it plays does.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

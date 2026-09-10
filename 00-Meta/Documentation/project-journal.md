@@ -5409,6 +5409,36 @@ to get wrong later.
 - → Ch. 03, Ch. 04, Ch. 06, Ch. 08, Ch. 11
 
 
+### 2026-09-10: Bots join an online match on the host's side, and the lobby borrows the line-up's control
+
+- **Chosen:** the host's lobby hands a free seat to the host's computer with the same two-position
+  control the line-up screen has; guests take the seats left free, in join order; Start needs every seat
+  spoken for and **at least one guest** connected. The bot runs on the host through the ordinary loop and
+  `bot-driver.js`, and every guest learns which seats are bots from the state that arrives anyway. Issue
+  #101, a sub-issue of #42.
+- **Why now.** The online plan said on 2026-09-08 that bots "would run on the host later without touching
+  the network", and the 2026-09-09 journal entry ended with "bots online are v2". The claim was cheap to
+  test and turned out exact: `src/net/` did not change by a byte. The whole cost was the lobby, one
+  parameter on `canBeBot`, and tests.
+- **Rejected: the host alone against bots.** A lobby whose Start button starts a hot-seat match is a door
+  to the wrong room. The floor is the host plus one guest, which is `canBeBot(seats, bots, seat, 2)`, so
+  the rule lives where FR-01's already does, with a second threshold and no second predicate.
+- **Rejected: a bot takes over a dropped guest's seat.** It would soften the "no reconnect" limitation
+  and it is tempting for that reason. It needs a mid-match transition in `state/` that makes a person a
+  bot, with an open reaction window as the hard case, plus words for "your friend is gone, the computer
+  plays on". Four days before the freeze that is a feature; it stays in the changelog as a limitation.
+- **Rejected: a `bots` field in `hello`.** The next `state` carries `state.bots`; a copy in `hello` is a
+  second truth about who plays, the same mistake the `controllers` map was refused for on 2026-09-04.
+- **The lobby's new control went in without a handoff**, on the same exception the lobby itself took
+  on 2026-09-09: the lobby is a recorded placeholder, the control is spec 15's component unchanged, and
+  the four `lineup.css` rules only name a second screen. The brief in `00-open-requests.md` is amended
+  so that the design side draws a lobby that knows about bots.
+- **Two test files crossed 300 lines and were split, not trimmed.** Shared fakes went to
+  `tests/helpers/`, the bot cases to files of their own. Recorded because the temptation was to delete
+  a comment block instead, and `CLAUDE.md` says the seam, not the whitespace.
+- → Ch. 01, Ch. 04, Ch. 06, Ch. 08
+
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

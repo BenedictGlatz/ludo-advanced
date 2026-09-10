@@ -27,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Bots can take the empty seats of an online match.** When you host a match, each seat nobody has joined
+  yet has the same Player / Bot switch as the hot-seat line-up, and a seat you switch names itself
+  "Bot 3" for everybody. The bot plays on the host's computer; the other players see its moves exactly as
+  they see yours. Two rules, stated rather than hidden: at least one other player has to connect, because
+  a host alone against bots is simply a hot-seat match, and a bot does **not** take over for a player whose
+  connection drops. That match still ends for everybody, as before
 - **Online multiplayer, two to four players, each at their own screen.** The menu's Online Multiplayer
   door works: one player hosts a match and picks the player count, the game shows an invite code with a
   Copy button, the host sends it through any chat, the other player pastes it under Join a match and

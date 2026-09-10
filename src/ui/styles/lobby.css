@@ -90,10 +90,12 @@
 }
 
 /* --- The seat rows on the host's screen: the line-up's rows with a status
-       word where the line-up has its two-position control. --- */
+       word, and, on a seat nobody has joined, the line-up's two-position
+       control after it (issue #101). Four tracks: plate, name, status, control.
+       A row without a control leaves the last track empty at zero width. --- */
 
 .overlay[data-screen="host"] .overlay__seat {
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
 }
 
 .overlay__seat-status {

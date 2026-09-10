@@ -231,7 +231,8 @@
     "seat": {
       "host": "You (host)",
       "waiting": "Waiting to connect",
-      "connected": "Connected"
+      "connected": "Connected",
+      "bot": "Bot"
     },
     "stage": {
       "gathering": "Making the code …",
@@ -244,7 +245,8 @@
     "hint": {
       "host": "Copy the invite code and send it to the other player. Then paste their reply code below and press Connect.",
       "join": "Paste the host's invite code and press Connect. Then send your reply code back to the host.",
-      "nat": "Without a relay server the connection does not work behind every router."
+      "nat": "Without a relay server the connection does not work behind every router.",
+      "hostBots": "A seat nobody joins can be played by a bot. At least one other player has to connect."
     },
     "error": {
       "badCode": "That is not a valid code. Please copy all of it.",

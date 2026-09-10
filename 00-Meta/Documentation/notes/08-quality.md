@@ -2304,6 +2304,32 @@ Vitest half.
   sentence appears in practice, is unknown until somebody tries it, and the result belongs here.
 
 
+### A bot on the host is one more seat in the loopback match, and two test files split: 2026-09-10, issue #101
+
+- **`tests/unit/net/loopback-bot-match.test.js`** plays a three-seat match to a win over a loopback pair
+  with the host on seat 0, a **real** bot on seat 1 (in `state.bots`, driven with `decide` on the plain
+  state exactly as `bot-driver.js` does) and a guest on seat 2 driven through `session.apply`. After every
+  echo the guest's mirror deep-equals the host's state, and the mirror's `bots` is `[1]` without any
+  protocol field carrying it. A second case plays the host's first turn out and has the guest send the
+  bot's own intent on the bot's turn: refused `not-your-turn`, host state untouched.
+- **Two files went past 300 lines and were split at their seams**, not compressed. The loopback table,
+  headless loop and `wants` moved to `tests/helpers/loopback-table.js`; the online lobby's fakes (links,
+  loop, browser, table) moved to `tests/helpers/online-fakes.js`. The bot cases got their own files,
+  `loopback-bot-match.test.js` and `online-flow-bots.test.js`, so `loopback-match.test.js` and
+  `online-flow.test.js` are back to the #42 cases only. `onlineTable` gained `{ players, bots }` and
+  `table` a `guestCount`, both defaulting to the old behaviour.
+- **`lobby-seats.test.js`** asserts every row of the rule file's table; `lobby-screen.test.js` gained
+  three cases (a bot row on the control, the last free seat disabled with no guest in, Start needing one
+  guest); `bots.test.js` gained the `minPeople` floor.
+- **`online.spec.js` gained a third Chromium case**: the host picks three seats, presses Bot on seat 1's
+  row, the guest connects and lands on seat 2, both boards show three players and the guest's HUD names
+  seat 1 a bot; the host plays turn one, and the poll waits for turn **three**, because turn two is the
+  bot's and passes with nobody clicking. Seat 1 rather than seat 2 was made the bot on purpose: it keeps
+  the guest's turn out of the spec, so the case tests the bot and not the guest's turn helpers.
+- **Not tested, stated:** the E2E case runs under `?fast=1`, so the bot's 900 ms hold on the host is not
+  seen over the wire. Whether a guest experiences it as a pause or a stall is a question for a playtest.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -592,6 +592,22 @@ paragraph is kept in the GDD as a quote rather than deleted.
   coverage floor now includes it; NFR-10 is inside the platform reach of the two APIs used (Ch. 03).
 
 
+### FR-42 and FR-43 meet: bots take the free seats of an online match: 2026-09-10, issue #101
+
+- **The "no bots online in v1" scope decision of 2026-09-08 is lifted** by issue #101, a sub-issue of
+  #42. The host's lobby lets a seat nobody joins be played by the host's computer; the bot runs on the
+  host, and the network layer did not change.
+- **Two floors, one rule.** FR-01 asks for at least one person; online the lobby asks for the host plus
+  at least one guest, because a host alone against bots is FR-01's hot-seat match started from the wrong
+  door. Both are `canBeBot` in `state/bots.js`, the second through its new `minPeople` parameter.
+- **FR-43's criterion "the match uses no network" still holds as written**, for the hot-seat match it was
+  written about; online, the bot is still local and rule-based, on the host. The requirement text was not
+  changed; a note under the table says where the two requirements meet.
+- **Still declined, the Product Owner's to reopen:** a bot taking over a dropped guest's seat, which would
+  soften the "no reconnect" limitation of FR-42; a difficulty setting, which the line-up does not offer
+  either.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->
