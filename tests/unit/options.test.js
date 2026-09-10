@@ -70,6 +70,14 @@ describe("readOptions: the four settings that were already there", () => {
     expect(readOptions("").relay).toBe(false);
   });
 
+  it("reads netlog the same way, and separately from relay", () => {
+    // Two switches and not one: the log is worth having on a connection that works, to see whether it
+    // went direct or through the relay.
+    expect(readOptions("?netlog=1").netLog).toBe(true);
+    expect(readOptions("?relay=1").netLog).toBe(false);
+    expect(readOptions("?netlog=1").relay).toBe(false);
+  });
+
   it("reads fast as the exact string 1", () => {
     expect(readOptions("?fast=1").fast).toBe(true);
     expect(readOptions("?fast=true").fast).toBe(false);

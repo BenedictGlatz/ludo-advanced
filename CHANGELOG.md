@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A diagnostic mode for online play.** `?netlog=1` prints what the connection actually did to the
+  browser console: what each code carries, every state the connection passes through, which route it
+  ended up using, and the real reason a connection dropped. It changes nothing about how the game plays
+  and is off unless the address bar asks for it. Meant for two players comparing consoles after a
+  connection fails, because until now every network failure reached the screen as the same sentence
+
 ### Fixed
+
+- **The invite code is no longer produced before the connection has finished looking for routes.** The
+  game waited five seconds, which was enough before there was a relay server and is not enough now:
+  reaching the relay takes longer than that on a normal home connection, so codes went out incomplete
+  and the connection then failed for no visible reason. It now waits up to twenty seconds. In the normal
+  case nothing changes, because the code is ready as soon as the search finishes
 
 - **Online play now works between two ordinary home internet connections.** Before, the two browsers had
   to find a direct route to each other, and on many German home connections there is none: the lobby

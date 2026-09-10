@@ -13,6 +13,8 @@
  * session and the lobby both want to hear when a pipe closes.
  */
 
+import { netLog } from "./net-log.js";
+
 /** The listener lists every transport keeps, and the two ways of firing them. */
 function listeners() {
   const message = [];
@@ -39,18 +41,41 @@ function listeners() {
  *
  * The channel is taken as an argument rather than created here, so this file never names a browser API
  * and the function can be handed any object with `send`, `close` and the two `on*` properties.
+ *
+ * `who` is only for the log. **The error a channel reports used to be discarded here**, which is how
+ * every one of four quite different network failures ended up reaching the player as the same sentence,
+ * and reaching the maintainer as nothing at all. It is still not acted on: a closed pipe is a lost guest
+ * whatever closed it, and `host-session.js` decides that. It is now merely written down first.
  */
-export function channelTransport(channel) {
+export function channelTransport(channel, who = "peer") {
   const ears = listeners();
 
   channel.onmessage = (event) => ears.deliver(event.data);
-  channel.onclose = () => ears.end();
-  channel.onerror = () => ears.end();
+  channel.onclose = () => {
+    netLog(`${who}: data channel closed`, { readyState: channel.readyState });
+    ears.end();
+  };
+  channel.onerror = (event) => {
+    // `error` is an RTCError on Chromium: `errorDetail` is the useful field, e.g. "sctp-failure".
+    netLog(`${who}: data channel ERROR`, {
+      detail: event?.error?.errorDetail,
+      message: event?.error?.message ?? String(event?.error ?? event),
+      sctpCauseCode: event?.error?.sctpCauseCode,
+    });
+    ears.end();
+  };
 
   return {
     send(text) {
       if (ears.isClosed()) return;
-      channel.send(text);
+      // A send on a channel that is closing throws, and an uncaught throw here would take down the
+      // turn that produced it. The pipe is ended instead, which is the state it is already in.
+      try {
+        channel.send(text);
+      } catch (failure) {
+        netLog(`${who}: send failed on a ${channel.readyState} channel`, { failure });
+        ears.end();
+      }
     },
     onMessage: ears.onMessage,
     onClose: ears.onClose,

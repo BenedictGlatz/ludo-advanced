@@ -66,6 +66,14 @@ export const FAST_DELAYS = {
  * It belongs here rather than in a lobby button for the same reason `?seed=` does: a player has no use
  * for it, and it makes the game slower when it works. Read here and nowhere else.
  *
+ * ## `netLog` is the other half of the same diagnostic
+ *
+ * `?netlog=1` prints what the connection did to the browser console: what the codes carry, every state
+ * the connection passes through, which route won, and why a channel closed. `?relay=1` changes what the
+ * connection is allowed to do; this one only watches. They are separate switches because they answer
+ * different questions and are useful apart: the log is worth having on a connection that works, to see
+ * whether it went direct or through the relay.
+ *
  * **`players` is `null` when the address bar does not name one**, and that is load-bearing since issue
  * #41. A named count skips the main menu and starts a match at once, which is what keeps every
  * end-to-end spec written before the menu existed working without a line changed. No count means the
@@ -117,6 +125,7 @@ export function readOptions(search) {
     players: seated,
     fast: params.get("fast") === "1",
     relay: params.get("relay") === "1",
+    netLog: params.get("netlog") === "1",
     bots: seated !== null && Number.isInteger(bots) && bots >= 0 && bots < seated ? bots : 0,
     // An empty or absent value is `null` and not `[]`: an empty array is a legitimate thing to hand
     // `startMatch`, meaning "a pool with no cards in it", and that is not what a missing parameter says.

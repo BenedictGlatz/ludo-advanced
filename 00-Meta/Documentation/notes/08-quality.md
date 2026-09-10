@@ -2526,3 +2526,22 @@ Vitest half.
 - **Unit coverage of `src/net/` is unaffected in kind:** `ice-servers.js` is data and two small pure
   functions, so it is inside the 80 % floor rather than excluded like `webrtc-link.js`. The figure itself
   belongs in Chapter 09, next to the command that produces it.
+
+### Testing a diagnostic: 2026-09-10, issue #42
+
+- **`net-log.test.js` pins the counts and the silence.** `candidateSummary` is the line a failure is
+  actually read off, so its arithmetic is tested, including the empty-string case that a missing local
+  description produces. The other test is that **nothing prints while the log is off**, which matters
+  because a diagnostic that prints during an ordinary match gets switched off and is then not there when
+  it is needed. It is also the one thing that would have shown up during the assessment.
+- **The "on" case needs a fresh module instance.** Logging is module state by design, so the test calls
+  `vi.resetModules()` and re-imports rather than exporting a reset function that exists only for tests.
+- **`signal-codes.test.js` now asserts the boolean** `waitForIceComplete` answers, including `false` on
+  the timeout path, which was previously asserted as `undefined` and therefore asserted nothing.
+- **Verified in a real browser and then deleted, for the second time on this feature.** A throwaway
+  Playwright spec drove a whole two-context exchange with `?netlog=1` and read the console output back,
+  confirming the lines the team will be asked to copy actually appear. It is not in the suite for the
+  same reason as the relay spec: it asserts on live network behaviour that varies by machine and by day.
+- **What that run showed, recorded because it is a lead and not yet a finding:** the host gathered 5
+  relay candidates and the guest none, with two `701 STUN host lookup received error` lines. It may be
+  the test environment's DNS rather than the product. Left open rather than concluded.

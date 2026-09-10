@@ -75,7 +75,7 @@ describe("waiting for ICE gathering", () => {
   }
 
   it("resolves at once when gathering is already complete", async () => {
-    await expect(waitForIceComplete(gatheringPeer("complete"))).resolves.toBeUndefined();
+    await expect(waitForIceComplete(gatheringPeer("complete"))).resolves.toBe(true);
   });
 
   it("resolves when the state changes to complete, and stops listening", async () => {
@@ -84,11 +84,13 @@ describe("waiting for ICE gathering", () => {
 
     expect(pc.listening()).toBe(1);
     pc.finish();
-    await waited;
+    await expect(waited).resolves.toBe(true);
     expect(pc.listening()).toBe(0);
   });
 
-  it("gives up after the timeout rather than waiting for ever", async () => {
-    await expect(waitForIceComplete(gatheringPeer(), 5)).resolves.toBeUndefined();
+  it("gives up after the timeout rather than waiting for ever, and says that it did", async () => {
+    // `false` is what tells a half-empty invite code apart from a complete one in the log. Without it a
+    // code with no relay candidate in it looks exactly like a network that genuinely has none.
+    await expect(waitForIceComplete(gatheringPeer(), 5)).resolves.toBe(false);
   });
 });
