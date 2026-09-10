@@ -1152,11 +1152,57 @@ count is in a place somebody can look at. Rejected: `retries: 0` in CI, which tu
 blip into a red pull request and trains people to press re-run, which is the same blindness by a
 different route.
 
-#### Verification
+#### Verification: it ran, on pull request #70, 2026-09-02
 
-Written and locally verified on 2026-09-02: gates 1 to 4 green on the `dev` merge base, e2e run over
-chromium and firefox. **What the CI run itself proved is recorded below once it has actually run**, and
-until then this section claims nothing about the runner.
+The workflow triggered on `pull_request` on its own commit, which is the useful property: GitHub runs
+the workflow file **from the pull request's branch**, so a workflow can be tested by the pull request
+that adds it rather than only after it is merged. Three checks, all green, run wall clock **4 minutes
+51 seconds**.
+
+| Job | Duration | Result |
+| --- | --- | --- |
+| `checks` (gates 1 to 4) | 23 s | success |
+| `e2e (chromium)` | 3 min 9 s, of which the suite itself 2.6 min | success |
+| `e2e (firefox)` | 4 min 20 s, of which the suite itself 3.3 min | success |
+
+Test and coverage counts are not repeated here: CI ran the same suites as a local run, so the figures
+in [09-source-code-overview.md](09-source-code-overview.md) are the figures, which is exactly the
+outcome the configuration-ownership rule in [07-tooling.md](07-tooling.md) was aiming for.
+
+**Four things this first run actually established**, as opposed to things the file was written to do:
+
+- **`needs: checks` behaves as intended.** `checks` finished at 11:53:26 UTC and both `e2e` jobs
+  started at 11:53:30. Four seconds, so the dependency costs essentially nothing while it is green and
+  saves two browser downloads when it is not.
+- **The fast half is genuinely fast.** 23 seconds for lint, the unit suite, the coverage run and the
+  production build, on a cold runner including `npm ci`. The two-job split was justified in this
+  chapter on the argument that a fast answer is worth having separately; 23 seconds against 4 minutes
+  51 is that argument measured.
+- **Gates 2 and 3 cost less on the runner than they do locally.** The duplicated unit suite is inside
+  that 23-second total, so the traceability of five named steps was bought for a fraction of the run.
+- **The report upload works on success, which was the whole point of it.** Both artifacts are present,
+  roughly 370 KB each. Neither run reported a **flaky** test, so `retries: 1` hid nothing on this run,
+  and the way that was checked is the artefact rather than an assumption.
+
+#### What this run did not prove, and it is one of the two done criteria
+
+Issue #68's acceptance criteria were that a pull request shows the check, that **a deliberately broken
+lint rule turns it red**, and that this chapter records which gates run in CI. The first and third are
+done. **The second was not carried out:** pull request #70 was merged while all three checks were
+green, so every observation above is of the workflow passing, and nothing has yet observed it failing.
+
+That is a real gap and not a formality. A gate is a control because it *stops* something, and a
+workflow whose steps have only ever succeeded has not demonstrated the part that matters. The failure
+mode it leaves open is specific and has happened to other projects: a step that swallows its exit code,
+so the job goes green whatever the command finds.
+
+Two things reduce it without closing it. The coverage floor and the layering rules were each verified by
+deliberately breaking them on 2026-08-29, before CI existed, so `npm run test:coverage` and `npm run
+lint` are known to exit non-zero on a violation. And a workflow step with no `continue-on-error` and no
+`|| true` fails the job by default. **Neither is the same as having seen it happen.** The cheapest way
+to close it is a throwaway pull request carrying one violating import in `src/core/`, which also
+re-checks the `no-restricted-imports` layering rule at the same time. It is listed under *Open / to
+verify*.
 
 ### A rule change destroyed a test that had nothing wrong with it: 2026-09-02, issue #45
 
@@ -2431,6 +2477,13 @@ Vitest half.
   row moved from M/M/3 to L/M/2. **This is the entry the report should quote**, because a register
   that names its own trigger in advance and then honours it is a different artefact from one that
   gets adjusted in hindsight, and the two are indistinguishable once the project is finished.
+- **The `build-check` workflow has never been seen to fail.** Its first run, on pull request #70 on
+  2026-09-02, was green on all three checks and the pull request was merged, so the second of issue
+  #68's three done criteria, that a deliberately broken lint rule turns the check red, was not carried
+  out. The reasoning is in the facts section above. **Response: a throwaway pull request with one
+  violating import in `src/core/`**, which turns the check red, proves the gate stops something, and
+  re-checks the `no-restricted-imports` layering rule in the same run. Until that exists this chapter
+  says the workflow runs, not that it gates.
 - **The `build-check` check is not a required status check yet.** It reports on a pull request and it
   does not block a merge: making it blocking is a repository ruleset, which needs a token with
   `admin` scope and is not part of issue #68. Section 7 of the test plan already records that no

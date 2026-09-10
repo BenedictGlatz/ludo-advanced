@@ -312,6 +312,16 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   without blocking a merge, because that needs a repository ruleset. Sprint 2, delivered out of the
   Sprint 3 plan.
 
+- **2026-09-02**: **the workflow ran for the first time and the pull request was merged.** Pull request
+  #70 into `dev`, three green checks in 4 minutes 51 seconds of wall clock: `checks` in 23 seconds,
+  `e2e (chromium)` in 3:09 and `e2e (firefox)` in 4:20, both report artifacts uploaded and **no flaky
+  test in either**. The timings are in Ch. 08. Two facts worth carrying: GitHub runs a workflow from
+  the **pull request's own branch**, so the file was tested by the pull request that added it rather
+  than after the merge, and **`Closes #68` did not fire**, because the merge went into `dev` and that
+  trailer only works on the default branch. Step 8 of the Definition of Done predicted exactly this on
+  2026-08-22, and the issue was closed by hand with a closing comment. **The one done criterion still
+  open is the red one:** the check has never been observed failing, because #70 was merged while it was
+  green. Recorded under *Open / to verify* in Ch. 08 rather than counted as done. Sprint 2.
 - **2026-09-03**: **four layout defects out of one test round on the Product Owner's own laptop**, no
   issue on the board. The page scrolled on any window that is not 900 px tall, the per-seat card count ran
   out of its plate and was painted over by the next plate, an empty skill-hand slot was drawn wearing a
@@ -544,11 +554,22 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   Verified against a static server under the `/ludo-advanced/` prefix and with the full `chromium`
   Playwright project. Not live yet: enabling Pages needs administrator rights on the repository, and
   this account has `write`. Sprint 3.
+- **2026-09-09**: Pages enabled by the repository owner and tested: the site is reachable and
+  **broken**, because it was enabled in *Deploy from a branch* mode and therefore serves the
+  un-built `dev` branch, whose `index.html` still points at `/src/main.js`. Also found that
+  `workflow_dispatch` cannot be used at all, since the default branch carries no workflows.
+  `pages.yml` now publishes on a push to `main` or `dev`. Yesterday's claim that one switch would be
+  enough corrected in Ch. 07. Sprint 3.
 - **2026-09-10**: Design handoff 19 landed on `feature/101-online-bots`, issues #42 and #101: the online
   lobby has a look (`lobby.css` replaced whole, D116 to D122), and the six contract changes the spec asked
   for are built: Copy and Connect beside their field, `data-tone` on a failure, the stage on the seat
   row, autofocus on Copy and Connect, a fresh code after a failed exchange, and the abandoned screen
   naming the guest who dropped. Sprint 3.
+
+- **2026-08-09** — Appendix started: the board's Kanban view captured as *Figure 1* and registered in
+  Ch. 12. Two negative findings from 2026-08-06 resolved (`Status` and `Sprint` back-filled), three
+  new board facts recorded, including a WIP limit of 5 on `In Progress` that appears in no planning
+  document. Sprint 0.
 
 ---
 
@@ -586,6 +607,52 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   real-network `gathering`) were not run in a browser this turn and are listed as outstanding in
   Chapter 08 and `00-open-requests.md`.
 
+### 2026-09-09: The published site follows `dev`, because the manual trigger does not exist
+
+- **Corrects the entry below**, written the same day, which assumed a feature branch could be
+  published by hand with `workflow_dispatch` and that enabling Pages was a single click. Both were
+  wrong, and both were found by loading the live site instead of reasoning about it.
+- **Chosen:** `pages.yml` triggers on a push to `main` or `dev`. The published site is therefore
+  whatever the team last integrated.
+- **Why the original plan could not work:** GitHub only offers a manual run for a workflow that is
+  present on the **default branch**. `gh workflow run pages.yml` answers `HTTP 404: workflow
+  pages.yml not found on the default branch`, and the default branch turns out to have no
+  `.github/workflows/` directory at all. `build-check.yml` carries the same latent problem: its
+  header has promised manual runs since 2026-09-02, and they have never been available.
+- **Rejected:** *putting `pages.yml` on `main` first, so the dispatch button appears.* It reverses the
+  order that matters. A change reaches `main` after it has been tested, and this workflow exists in
+  order to test something.
+- **Rejected, again:** *keeping the mode Pages was actually enabled in.* It was set to *Deploy from a
+  branch* with `dev` as the source, which serves the branch as committed. The site came up with an
+  empty `<div id="app">` and a 404 for `benedictglatz.github.io/src/main.js`, without the repository
+  name in the path, because the un-built `index.html` asks the domain root. Making that mode work
+  needs a committed `dist/`, which was rejected yesterday for reasons that have not changed.
+- **What the accident is worth keeping for:** the 404 was the exact failure `base: "./"` was added to
+  prevent, arriving by a different route. It is a decent argument that a base path is not a detail of
+  the bundler configuration but a property of where a build is allowed to live.
+- **Still open, and not checkable from here:** the `github-pages` deployment environment can restrict
+  which branches deploy to it. `GET /repos/.../actions/permissions` answers 403 without
+  administrator rights, so whether `dev` is allowed will be visible only when the job runs.
+
+### 2026-08-09 — Board evidence is captured as dated screenshots, not described from memory
+
+- **Chosen:** capture the board as a dated image in the appendix and cite it by figure number from
+  Ch. 02.
+- **Rejected:** *describing the board's state in prose only*, which is what the notes did until now.
+  It works until the board changes — and the board is live, overwrites its own history and keeps no
+  audit trail, so a prose description of it becomes unfalsifiable the moment someone drags a card.
+  Also rejected: *regenerating board state from the API at report time*, which cannot work — the API
+  returns the board as it is then, not as it was during Sprint 0, and the Projects v2 endpoint still
+  has no stable read path from this environment anyway.
+- **Why:** this module is graded on how the project was run, so the evidence has to show the process
+  *while it was running*. A screenshot from week 1 is worth more than a perfect description written
+  in week 8, because it is the only artefact that can still contradict the report.
+- **Consequence:** each significant board change is captured as a numbered figure with the date it
+  was taken and the fact that it was read from an image rather than the API. Figures are stated as
+  partial observations where only part of the board is visible.
+- → Ch. 02, Ch. 12
+
+### 2026-08-06 — 2D web build instead of Unity 3D or Pygame
 ### 2026-09-09: The playable build is published by a workflow, and its asset paths became relative
 
 - **Chosen:** a second GitHub Actions workflow, `pages.yml`, that runs `npm run build` and hands

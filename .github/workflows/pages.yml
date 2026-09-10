@@ -8,8 +8,12 @@
 #   * The site is built by this workflow, not served from a `gh-pages` branch. A branch would mean a
 #     committed `dist/`, which is a build artefact in version control and goes stale the moment
 #     somebody forgets to rebuild.
-#   * `workflow_dispatch` accepts any branch on purpose. Online play has to be tried before it is
-#     merged, and a feature branch is exactly what needs publishing then.
+#   * The site follows `dev`, not only `main`. `dev` is the integration branch and is meant to be a
+#     working build, so the published site is whatever the team has last integrated. Publishing only
+#     from `main` would mean the site shows nothing until a release.
+#   * `workflow_dispatch` is kept, but it is useless until this file reaches the default branch:
+#     GitHub only offers a manual run for workflows that exist on the default branch. Measured, see
+#     notes/07-tooling.md.
 #   * Relative asset paths come from `base: "./"` in `vite.config.js`. Without it the page loads and
 #     stays blank, because a project site lives under /ludo-advanced/ and not at the domain root.
 
@@ -17,8 +21,9 @@ name: pages
 
 on:
   push:
-    branches: [main]
-  # Publish any branch by hand, from the Actions tab. Used to test a feature before it is merged.
+    branches: [main, dev]
+  # Publish a branch by hand, from the Actions tab. Only offered once this file is on the default
+  # branch, which is why the push trigger above and not this one is what actually publishes today.
   workflow_dispatch:
 
 # `pages` and `id-token` are what actions/deploy-pages needs. `contents: read` is everything else.
