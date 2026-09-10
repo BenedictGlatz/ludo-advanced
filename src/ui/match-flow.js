@@ -60,15 +60,21 @@ export function createMatchFlow({
   let handoverSeat = null;
 
   /**
-   * Redraw the overlay and the chrome. Called whenever the screen or the language changes.
+   * Redraw the overlay and the chrome. Called whenever the screen, the language or the lobby changes.
    *
    * The turn sentence is read off the **loop's** state and not the session's copy, because the session
    * only refreshes its copy at a handover or a win, and pausing mid-turn would otherwise blank the one
    * line on the page that says whose turn it is. It is empty on the menu, where no match is running.
+   *
+   * **A redraw rebuilds every button, and the one the keyboard was on goes with it.** The lobby redraws
+   * on every stage of the exchange (issue #42), so without the check at the end the keyboard fell to the
+   * page body the moment the invite code appeared. If the focus left the open overlay, it is put back
+   * with the same rule `openScreen` uses; if the player is somewhere on the overlay still, nothing moves.
    */
   function drawShell() {
     const loop = match.getLoop();
     const live = loop?.getState() ?? null;
+    const $overlay = session.$overlay;
 
     updateOverlay(
       session.$overlay,
@@ -95,6 +101,9 @@ export function createMatchFlow({
     // countdown can stop: the ring is a CSS animation off `data-mode`, and an animation cannot pause
     // itself. Every screen except none means the game has stopped, which is what FR-07 pauses.
     session.$app?.attr("data-paused", String(loop !== null && screen !== OVERLAY_SCREEN.NONE));
+
+    const active = $overlay[0]?.ownerDocument?.activeElement ?? null;
+    if (screen !== OVERLAY_SCREEN.NONE && !$overlay[0].contains(active)) focusOverlay($overlay);
   }
 
   /**

@@ -268,10 +268,11 @@ export function createGameLoop({
     /**
      * Give the match up from outside the rules (issue #42): a guest's connection dropped and there is
      * no reconnect. `abandonMatch` is the same transition the pause screen's Quit would reach, and
-     * `advance()` then does what it does for any finished match: halt and open the win screen.
+     * `advance()` then does what it does for any finished match: halt and open the win screen. `by` is
+     * the seat that dropped, when the caller knows it, so the win screen can name it (D121.3).
      */
-    abandon() {
-      store.replace(abandonMatch(store.getState()));
+    abandon(by = null) {
+      store.replace(abandonMatch(store.getState(), by));
       advance();
     },
 

@@ -14,6 +14,10 @@ import $ from "jquery";
  * Every field is optional and is written only when it is there, so a screen that does not use one is
  * not left carrying an empty attribute. `count` is the setup screen's; `seat`, `value` and `pressed`
  * belong to the line-up's two positions; `field` is the lobby's, naming the textarea a button acts on.
+ * `autofocus` marks the button the keyboard should land on when the screen is drawn, where that is not
+ * the first one: the lobby's Copy while an invite is out, its Connect on the guest's screen (spec 19,
+ * D119.2). `focusOverlay` reads `data-autofocus`; the browser attribute of the same name is not used,
+ * because it fires once per page load and the overlay is drawn many times.
  *
  * **`aria-pressed` is the line-up's only record of which position is chosen**, so what the stylesheet
  * draws and what a screen reader announces cannot drift apart: they read one attribute.
@@ -34,6 +38,7 @@ export function buttonShell(button) {
   if (button.value !== undefined) $button.attr("data-value", button.value);
   if (button.field !== undefined) $button.attr("data-field", button.field);
   if (button.pressed !== undefined) $button.attr("aria-pressed", String(button.pressed));
+  if (button.autofocus === true) $button.attr("data-autofocus", "true");
   if (button.disabled === true) $button.prop("disabled", true);
 
   return $button;

@@ -55,6 +55,9 @@ test.describe("online multiplayer (FR-42)", () => {
 
     // Gathering candidates takes a moment, so the invite field gets a longer wait than the default.
     await expect(field(host, "invite")).toHaveValue(/.+/, { timeout: 10_000 });
+    // Since design spec 19 the code's button sits inside its field (D119.2). Same attributes as before.
+    await expect(host.locator('.overlay__field-action [data-action="copy"]')).toHaveCount(1);
+    await expect(host.locator('.overlay__actions [data-action="copy"]')).toHaveCount(0);
     const invite = await field(host, "invite").inputValue();
 
     await openOnline(guest);
@@ -177,6 +180,37 @@ test.describe("online multiplayer (FR-42)", () => {
     await expect(overlay(guest)).toHaveAttribute("data-outcome", "abandoned");
     // Play Again is the host's button; the guest only gets the way back to the menu.
     await expect(button(guest, "restart")).toHaveCount(0);
+
+    await hostContext.close();
+    await guestContext.close();
+  });
+
+  /**
+   * The other way round: the guest goes away. The host's abandoned screen names the seat that left
+   * (design spec 19, D121.3), which the abandoned title alone never said.
+   *
+   * The guest leaves through its own Pause and Quit, which says `bye` on the channel. Closing the
+   * guest's context instead was tried first and the host did not see the channel close within ten
+   * seconds: Chromium tears the page down without a graceful shutdown, and the host learns of the loss
+   * only when the connection's own consent checks give up. Both routes reach the same `onLost`.
+   */
+  test("a guest that leaves is named on the host's abandoned screen", async ({ browser }) => {
+    const hostContext = await browser.newContext();
+    const guestContext = await browser.newContext();
+    const host = await hostContext.newPage();
+    const guest = await guestContext.newPage();
+
+    await connect(host, guest);
+    await button(host, "start-online").click();
+    await expect(guest.locator(".board")).toHaveAttribute("data-players", "2", { timeout: 10_000 });
+
+    await guest.locator('[data-action="pause"]').click();
+    await expect(overlay(guest)).toHaveAttribute("data-screen", "pause");
+    await button(guest, "quit").click();
+
+    await expect(overlay(host)).toHaveAttribute("data-outcome", "abandoned", { timeout: 10_000 });
+    await expect(host.locator(".overlay__text")).toContainText("Spieler 2");
+    await expect(button(host, "restart")).toHaveCount(0);
 
     await hostContext.close();
     await guestContext.close();

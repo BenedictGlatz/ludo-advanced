@@ -1,10 +1,11 @@
 /**
- * What the three online screens say. Issue #42.
+ * What the three online screens say. Issues #42 and #101, design spec 19.
  *
  * Pure descriptions, tested the way `lineup-screen.test.js` and `menu-screen.test.js` are: by asking what
  * a screen offers in a given lobby state rather than by looking at the DOM. The cases are the ones a
  * player would notice: is there a Copy button beside every code, does Start appear only when everybody
- * is in, does the guest get a reply code to copy only after Connect.
+ * is in, does the guest get a reply code to copy only after Connect, and, since spec 19, does the stage
+ * stand on the seat row it belongs to and does a failure offer a fresh code.
  */
 
 import { beforeAll, describe, expect, it } from "vitest";
@@ -20,6 +21,8 @@ import {
 
 const actions = (description) => description.buttons.map((button) => button.action);
 const fields = (description) => (description.fields ?? []).map((field) => field.name);
+const fieldButton = (description, name) =>
+  description.fields.find((field) => field.name === name).button;
 
 /** A host lobby snapshot with `fields` written over the idle defaults. */
 function hosting(fields = {}) {
@@ -66,18 +69,23 @@ describe("the host's lobby", () => {
     expect(fields(description)).toEqual([]);
   });
 
-  it("shows the invite to copy and the reply to paste while a guest is being invited", () => {
-    const description = hostScreen(hosting({ invite: "abc", stage: STAGE.WAITING }));
+  it("puts Copy beside the invite and Connect beside the reply, not in the actions row (D119.2)", () => {
+    const description = hostScreen(hosting({ invite: "abc", stage: STAGE.WAITING, pending: true }));
 
     expect(fields(description)).toEqual(["invite", "reply"]);
     expect(description.fields[0]).toMatchObject({ value: "abc", readonly: true });
     expect(description.fields[1]).toMatchObject({ value: null, readonly: false });
 
-    const copy = description.buttons.find((b) => b.action === OVERLAY_ACTION.COPY);
-    const connect = description.buttons.find((b) => b.action === OVERLAY_ACTION.CONNECT);
-    expect(copy.field).toBe("invite");
-    expect(connect.field).toBe("reply");
-    expect(actions(description)).not.toContain(OVERLAY_ACTION.START_ONLINE);
+    expect(fieldButton(description, "invite")).toMatchObject({
+      action: OVERLAY_ACTION.COPY,
+      field: "invite",
+      autofocus: true,
+    });
+    expect(fieldButton(description, "reply")).toMatchObject({
+      action: OVERLAY_ACTION.CONNECT,
+      field: "reply",
+    });
+    expect(actions(description)).toEqual([OVERLAY_ACTION.BACK]);
   });
 
   it("names every seat with its status, the host first", () => {
@@ -136,34 +144,89 @@ describe("the host's lobby", () => {
     expect(withFreeSeat.text.startsWith(full.text)).toBe(true);
   });
 
-  it("puts an error before the stage, and the stage before the hint", () => {
-    const hint = hostScreen(hosting());
-    const stage = hostScreen(hosting({ stage: STAGE.CONNECTING }));
-    const error = hostScreen(hosting({ stage: STAGE.CONNECTING, error: "nat" }));
+  /**
+   * D118.1: the stage is a fact about one seat, so it stands on that seat's row. The sentence under the
+   * title keeps the hint, and the row being connected carries no control while the browser works on it.
+   */
+  it("puts gathering and connecting on the seat the invite is for, and keeps the hint (D118.1)", () => {
+    const idle = hostScreen(hosting({ connected: [1] }));
+    const gathering = hostScreen(
+      hosting({ connected: [1], stage: STAGE.GATHERING, pending: true })
+    );
+    const connecting = hostScreen(
+      hosting({ connected: [1], stage: STAGE.CONNECTING, pending: true, invite: "abc" })
+    );
 
-    expect(new Set([hint.text, stage.text, error.text]).size).toBe(3);
-    expect(error.text).toContain("20");
+    expect(gathering.seats.map((seat) => seat.status)).toEqual(["host", "connected", "gathering"]);
+    expect(connecting.seats.map((seat) => seat.status)).toEqual([
+      "host",
+      "connected",
+      "connecting",
+    ]);
+    expect(gathering.seats[2].statusLabel).not.toBe(idle.seats[2].statusLabel);
+    expect(gathering.seats[2].choices).toEqual([]);
+    expect(gathering.text).toBe(idle.text);
+    expect(gathering.tone).toBeNull();
+  });
+
+  it("marks a failure as warn, and after nat or failed offers a fresh code where Connect was (D121.2)", () => {
+    const nat = hostScreen(hosting({ connected: [1], error: "nat" }));
+    const failed = hostScreen(hosting({ error: "failed" }));
+    const badCode = hostScreen(
+      hosting({ error: "badCode", invite: "abc", stage: STAGE.WAITING, pending: true })
+    );
+    const plain = hostScreen(hosting({ connected: [1] }));
+
+    expect(nat.tone).toBe("warn");
+    expect(nat.text).toContain("20");
+    expect(actions(nat)).toEqual([OVERLAY_ACTION.ADD_GUEST, OVERLAY_ACTION.BACK]);
+    expect(nat.buttons[0].label).not.toBe(plain.buttons[0].label);
+    expect(failed.buttons[0].label).toBe(nat.buttons[0].label);
+
+    // A bad paste keeps the invite: the player only has to copy it again.
+    expect(badCode.tone).toBe("warn");
+    expect(fields(badCode)).toEqual(["invite", "reply"]);
+    expect(plain.tone).toBeNull();
   });
 });
 
 describe("the guest's lobby", () => {
-  it("starts with the invite field and Connect, and Back", () => {
+  it("starts with the invite field and Connect beside it, then Back", () => {
     const description = joinScreen(hosting({ role: "guest", playerCount: null, seats: [] }));
 
     expect(description.screen).toBe(OVERLAY_SCREEN.JOIN);
     expect(fields(description)).toEqual(["invite"]);
-    expect(actions(description)).toEqual([OVERLAY_ACTION.CONNECT, OVERLAY_ACTION.BACK]);
-    expect(description.buttons[0].field).toBe("invite");
+    expect(fieldButton(description, "invite")).toMatchObject({
+      action: OVERLAY_ACTION.CONNECT,
+      field: "invite",
+      variant: "primary",
+      autofocus: true,
+    });
+    expect(actions(description)).toEqual([OVERLAY_ACTION.BACK]);
   });
 
-  it("shows the reply code with a Copy button once the invite was answered", () => {
+  it("shows the reply code with a Copy button beside it once the invite was answered", () => {
     const description = joinScreen(
       hosting({ role: "guest", reply: "xyz", stage: STAGE.WAITING, copied: true })
     );
 
     expect(fields(description)).toEqual(["invite", "reply"]);
     expect(description.fields[1]).toMatchObject({ value: "xyz", readonly: true });
-    expect(actions(description)).toEqual([OVERLAY_ACTION.COPY, OVERLAY_ACTION.BACK]);
-    expect(description.buttons[0].field).toBe("reply");
+    expect(fieldButton(description, "invite")).toBeUndefined();
+    expect(fieldButton(description, "reply")).toMatchObject({
+      action: OVERLAY_ACTION.COPY,
+      field: "reply",
+    });
+    expect(actions(description)).toEqual([OVERLAY_ACTION.BACK]);
+  });
+
+  it("keeps the stage in its sentence, since it has no seat rows, and warns on a failure", () => {
+    const waiting = joinScreen(hosting({ role: "guest", reply: "xyz", stage: STAGE.WAITING }));
+    const failed = joinScreen(hosting({ role: "guest", error: "nat", stage: STAGE.WAITING }));
+    const hint = joinScreen(hosting({ role: "guest" }));
+
+    expect(new Set([waiting.text, failed.text, hint.text]).size).toBe(3);
+    expect(waiting.tone).toBeNull();
+    expect(failed.tone).toBe("warn");
   });
 });

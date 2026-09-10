@@ -109,14 +109,20 @@ export function createHostRole({
       invite = await pending.invite();
       stage = STAGE.WAITING;
     } catch {
+      dropInvite();
       error = "failed";
-      stage = STAGE.IDLE;
-      pending = null;
     }
     refresh();
   }
 
-  /** The guest's reply code has arrived: finish the handshake and seat them when the channel opens. */
+  /**
+   * The guest's reply code has arrived: finish the handshake and seat them when the channel opens.
+   *
+   * Two of the three failures end the exchange (design spec 19, D121.2): after twenty seconds without a
+   * channel, and when the handshake itself fails, the invite is dropped and the lobby offers a fresh
+   * code in place of Connect, because a code that failed once is not going to work the second time. A
+   * bad paste is the third failure and keeps the invite: the player only has to copy it again.
+   */
   async function connect(replyCode) {
     if (pending === null) return;
 
@@ -127,6 +133,7 @@ export function createHostRole({
 
     const timeout = wait(() => {
       if (stage === STAGE.CONNECTING && pending === link) {
+        dropInvite();
         error = "nat";
         refresh();
       }
@@ -134,13 +141,23 @@ export function createHostRole({
 
     try {
       const transport = await link.accept(replyCode);
+      // The twenty seconds ran out first: the seat was offered again, so this late arrival goes home.
+      if (pending !== link) {
+        transport.close();
+        return;
+      }
       guests = [...guests, { seat: nextSeat(), transport }];
       stage = STAGE.CONNECTED;
       invite = null;
       pending = null;
     } catch (failure) {
-      error = failure?.message === "bad-code" ? "badCode" : "failed";
-      stage = STAGE.WAITING;
+      if (failure?.message === "bad-code") {
+        error = "badCode";
+        stage = STAGE.WAITING;
+      } else {
+        dropInvite();
+        error = "failed";
+      }
     }
     clearTimeout(timeout);
     refresh();
@@ -151,9 +168,14 @@ export function createHostRole({
     session = createHostSession({
       guests,
       poolRemaining: () => built.deps.diceSource.remaining(),
-      onLost: () => {
+      onLost: (seat) => {
+        // Closing the pipes below reports every other guest as lost too; the first one is the answer.
+        if (lost) return;
         lost = true;
-        loop?.abandon();
+        loop?.abandon(seat);
+        // The abandoned state goes out before the pipes close, so the other guests learn who left
+        // rather than only that the host went quiet (D121.3).
+        if (loop !== null) session?.broadcastState(loop.getState());
         session?.close();
       },
     });

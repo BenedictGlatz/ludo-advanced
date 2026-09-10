@@ -3754,6 +3754,65 @@ Decision block: project journal, 2026-09-09. The `net/` half is in [06-state-and
   code or a version mismatch; the `failed` sentence covers the first and nothing covers the second.
 
 
+### Handoff 19 landed: the lobby has a design, and six things were asked of this side: 2026-09-10, issues #42 and #101
+
+Decision block: project journal, 2026-09-10. The state half (`abandonedBy`) is in [06-state-and-turn-flow.md](06-state-and-turn-flow.md).
+
+- **`src/ui/styles/lobby.css` is the delivered file, taken whole**, 283 lines after Prettier, and the
+  spec is `01-Design/Handoff/19-spec-online-lobby.md`; `handoff-19/` is deleted as its README asks. No
+  other stylesheet changed: D120 keeps the two-position control identical on the host's rows, so the
+  four `lineup.css` rules that name both screens since #101 stay, and the failure tone is a rule on
+  `.overlay__text[data-tone]` in `lobby.css` itself. The one idea of the file: a seat somebody sits at
+  (`host`, `connected`, `bot`) is raised with the ink edge and the card shadow; a free seat (`waiting`,
+  `gathering`, `connecting`) is a dashed outline on its own wash. The status word moved under the name,
+  so the row is `auto 1fr auto` with two rows and the control has the third column to itself (D117.3).
+- **Copy and Connect sit beside their field** (D119.2). A field description may carry `button`, and
+  `overlayField` in `overlay-regions.js` draws it in `.overlay__field-action` after the textarea, through
+  the same `buttonShell`, so `data-action` and `data-field` are unchanged and `events.js` reads nothing
+  new. `lobby-screen.js` puts the button on the field and no longer in `buttons`; the host's actions row
+  is `Invite the next player` or `Start` plus `Back`, the guest's is `Back` alone.
+- **The field became a `<div>` with a `<label for>`**, where it was a `<label>` around the textarea. A
+  label may not contain a second labelable element and a button is one, so the delivered contract could
+  not be met inside a `<label>`. The textarea gets `id="overlay-field-<name>"`; names are unique per
+  screen. Not in the spec, recorded in `00-open-requests.md` so the design side knows the DOM.
+- **The stage moved onto the seat row it belongs to** (D118.1): `rowStatus` in `lobby-screen.js`
+  returns `gathering` or `connecting` for the first free seat while `snapshot.pending` is set and the
+  stage is one of the two, and `seatStatus` in `lobby-seats.js` still knows only four words, because the
+  rule "may this seat switch" does not care what the browser is doing. Two locale words,
+  `online.seat.gathering` and `online.seat.connecting`. The host's sentence is `hostText`: the error, or
+  the hint with the bot rule appended (D118.4); never the stage. The guest's sentence keeps the stage,
+  because the guest has no rows. **A row in `gathering` or `connecting` carries no control** for those
+  seconds: the seat is being taken, and a switch mid-handshake would drop the invite from under the
+  guest. This side's call, stated.
+- **`tone: "warn"` on every failure** (D118.2): the three lobby descriptions carry `tone`, and
+  `updateOverlay` writes `data-tone` on `.overlay__text` the way it writes `data-player` and
+  `data-outcome`, absent rather than empty.
+- **The keyboard lands on Copy while an invite is out, on Connect on the guest's screen, and on Copy
+  once the guest has a reply** (D119.2). A button description may carry `autofocus`; `buttonShell`
+  writes `data-autofocus`, and `focusOverlay` prefers it over Start and over the first button. The
+  browser's own `autofocus` attribute was not used, because it fires once per page load and the overlay
+  is drawn many times.
+- **A redraw that removed the focused button re-homes the keyboard.** `drawShell` in `match-flow.js`
+  calls `focusOverlay` when the overlay is open and the document's active element is no longer inside
+  it. Before this the keyboard fell to the page body the moment the invite code appeared, because the
+  count button it was on had been rebuilt away, and `openScreen` is not what draws the lobby's stages.
+  A player who is on a button the redraw kept, or in a textarea, is left alone.
+- **After `nat` or `failed` the host is offered a fresh code where Connect was** (D121.2): `host-role.js`
+  drops the invite (`dropInvite`: close the link, clear the code, stage idle) on the twenty-second
+  timeout and on a failed handshake, and `lobby-screen.js` labels `add-guest` with `online.retry`,
+  "Neuen Code erzeugen", while the error is one of those two. A bad paste keeps the invite: the player
+  only has to copy the reply again. A link whose gathering fails is now closed too, where before it was
+  only forgotten. A handshake that completes after the timeout already dropped its seat closes the
+  transport it got, rather than seating a guest on a seat that was offered again.
+- **The abandoned screen names who left** (D121.3): `winScreen` in `overlay-screens.js` sets `text` to
+  `match.abandonedBy`, "{{player}} hat die Verbindung verloren", when `state.abandonedBy` is a seat, and
+  leaves it empty for a match given up on purpose. How the seat gets into the state is Chapter 06's.
+- **The `online` locale block gained `seat.gathering`, `seat.connecting` and `retry`; `match` gained
+  `abandonedBy`.** Parity is enforced by `locales.test.js` as before.
+- **D122 built as decided: the lobby says nothing about hands or reconnects.** Nothing was removed,
+  because nothing had been added; the changelog carries both limitations.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

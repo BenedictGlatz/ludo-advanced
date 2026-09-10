@@ -70,6 +70,15 @@ export function fakeLinks() {
 /** A headless loop with the surface the roles call, recording what it was built with. */
 export function fakeLoop(options) {
   let state = options.initialState;
+  let finished = false;
+
+  /** Told to the flow once, as the real loops do; a second ending changes nothing. */
+  function finish(next) {
+    if (finished) return;
+    finished = true;
+    options.onMatchOver?.(next);
+  }
+
   return {
     options,
     start() {},
@@ -79,10 +88,12 @@ export function fakeLoop(options) {
     },
     receive(next) {
       state = next;
+      if (next.status !== MATCH_STATUS.RUNNING) finish(next);
     },
-    abandon() {
-      state = { ...state, status: MATCH_STATUS.ABANDONED };
-      options.onMatchOver?.(state);
+    abandon(by = null) {
+      if (finished) return;
+      state = { ...state, status: MATCH_STATUS.ABANDONED, abandonedBy: by };
+      finish(state);
     },
     showRefusal() {},
     pause() {},

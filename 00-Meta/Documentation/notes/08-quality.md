@@ -2330,6 +2330,38 @@ Vitest half.
   seen over the wire. Whether a guest experiences it as a pause or a stall is a question for a playtest.
 
 
+### Handoff 19: the lobby's contract changes are unit cases, the look is a landing check: 2026-09-10, issues #42 and #101
+
+- **`lobby-screen.test.js`** rewritten around the new contract: Copy and Connect are found on the field
+  (`fields[n].button`) and asserted absent from `buttons`; `gathering` and `connecting` land on the first
+  free seat's row with no control and the hint unchanged under the title; `nat` and `failed` carry
+  `tone: "warn"` and relabel `add-guest`, `badCode` keeps both fields; the guest's sentence still carries
+  the stage. The old "error before stage before hint" case is gone, because on the host the stage is no
+  longer in the sentence.
+- **`online-flow-failures.test.js`, new**, drives `createHostRole` directly with links that hang or
+  fail on purpose and a `wait` that hands the timeout callback back: the twenty seconds drop the invite,
+  hang up the link and leave `error: "nat"` with a clean next invite; a failed handshake does the same;
+  a bad paste keeps the invite and the link; a link whose gathering fails is closed. The fourth case is a
+  three-seat table on the fakes where seat 1 leaves mid-match and seat 2's mirror ends with
+  `abandonedBy: 1`. `fakeLoop` in `online-fakes.js` learned to finish once, as the real loops do, so the
+  guest's later `onClose` does not overwrite the state the host sent.
+- **`match.test.js`** asserts `abandonedBy` null by default and the seat when given; **`overlay-screens
+  .test.js`** asserts the abandoned screen names "Spieler 2" from `abandonedBy` and says nothing without
+  it.
+- **`online.spec.js` gained a fourth Chromium case**: the guest leaves mid-match through its own Pause
+  and Quit, and the host's abandoned screen names seat 2 in its sentence, without Play Again. The first
+  version closed the guest's browser context instead and failed: the host did not see the channel close
+  within ten seconds, because Chromium tears a page down without a graceful shutdown and the host learns
+  of the loss only when the connection's consent checks give up. Quit says `bye` and reaches the same
+  `onLost`; a real dropped connection is therefore covered by the unit case and not by the browser. The
+  first case also asserts that Copy sits in `.overlay__field-action` and not in `.overlay__actions`,
+  checked while the invite is out. Every `data-*` the specs locate by is unchanged, as the delivery said.
+- **Not tested, stated:** the breathing plate on `gathering` and `connecting`, the warn wash, the dark
+  skin, greyscale and reduced motion are landing checks 3 to 5 of the delivery's README and were not
+  run in a browser this turn; check 6, a `gathering` watched on a real network, needs two networks. The
+  `data-autofocus` rule and the refocus after a redraw have no end-to-end assertion either.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

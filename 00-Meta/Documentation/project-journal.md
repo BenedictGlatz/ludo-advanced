@@ -544,10 +544,47 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   Verified against a static server under the `/ludo-advanced/` prefix and with the full `chromium`
   Playwright project. Not live yet: enabling Pages needs administrator rights on the repository, and
   this account has `write`. Sprint 3.
+- **2026-09-10**: Design handoff 19 landed on `feature/101-online-bots`, issues #42 and #101: the online
+  lobby has a look (`lobby.css` replaced whole, D116 to D122), and the six contract changes the spec asked
+  for are built: Copy and Connect beside their field, `data-tone` on a failure, the stage on the seat
+  row, autofocus on Copy and Connect, a fresh code after a failed exchange, and the abandoned screen
+  naming the guest who dropped. Sprint 3.
 
 ---
 
 ## Decisions
+
+### 2026-09-10: Handoff 19 landed whole, and five small decisions were this side's
+
+- **Chosen:** the delivered `lobby.css` unchanged, the spec's six contract items built as written, and
+  five things the spec left to this side decided here rather than sent back: the field element, the
+  control during a handshake, the keyboard after a redraw, which failures drop the invite, and the first
+  loss winning.
+- **The field is a `<div>` with a `<label for>`, not a `<label>` around everything.** The spec puts the
+  button inside `.overlay__field`, and a `<label>` may not contain a second labelable element. The
+  alternative, keeping the `<label>` and putting `.overlay__field-action` after it as a sibling, would
+  have needed a wrapper the spec did not name and the CSS grid did not expect. *Rejected* for that
+  reason.
+- **A seat in `gathering` or `connecting` carries no control.** The spec draws the two as flat rows and
+  says nothing about the Bot switch on them. Leaving it there would let the host switch the seat the
+  browser is connecting a guest to, which drops the invite from under that guest with no warning.
+  *Rejected: keeping the control and refusing the switch in `canToggle`.* A disabled control on a row
+  that will have one again in five seconds is a flicker for a rule the row's word already states.
+- **A redraw re-homes the keyboard.** Before this, the keyboard fell to the page body when the invite
+  appeared, because the count button it was on had been rebuilt away and only `openScreen` moved focus.
+  `drawShell` now calls `focusOverlay` when the active element is no longer inside the open overlay.
+  *Rejected: moving focus on every redraw.* A language switch would then steal the keyboard from a
+  textarea the player is pasting into, which is the case the header of `overlay-view.js` warns about.
+- **`nat` and `failed` drop the invite; `badCode` keeps it.** D121.2 asks for a fresh code after the
+  twenty seconds and after a failed handshake; a bad paste is the player's and the same code will work
+  when copied whole. *Rejected: dropping on every error.* It would make one mispaste cost a new round of
+  chat messages.
+- **The first loss is the answer.** Closing the pipes on a lost guest reports the other guests as lost
+  too, and `onLost` used to abandon again for each, overwriting `abandonedBy` with an innocent seat. A
+  guard on the flag that already gated Play Again. Found by the new unit test, not by reasoning.
+- **What was not done:** the delivery's landing checks 3 to 6 (dark skin, greyscale, reduced motion, a
+  real-network `gathering`) were not run in a browser this turn and are listed as outstanding in
+  Chapter 08 and `00-open-requests.md`.
 
 ### 2026-09-09: The playable build is published by a workflow, and its asset paths became relative
 

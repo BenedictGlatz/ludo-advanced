@@ -97,11 +97,16 @@ export function restartMatch(state, deps) {
 /**
  * Give up a match in progress (FR-07). The pawns are left where they stand, because the record of
  * how far the match got is the only thing an abandoned match still has to say.
+ *
+ * `by` is the seat whose connection ended an online match, or `null` when the match was given up on
+ * purpose (design spec 19, D121.3). Three players look at the same abandoned screen and two of them did
+ * nothing, so the state carries who left and the screen can name them.
  */
-export function abandonMatch(state) {
+export function abandonMatch(state, by = null) {
   return nextState(state, {
     status: MATCH_STATUS.ABANDONED,
     phase: TURN_PHASE.MATCH_OVER,
+    abandonedBy: by,
   });
 }
 

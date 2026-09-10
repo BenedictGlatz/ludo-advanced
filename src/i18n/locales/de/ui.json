@@ -24,6 +24,7 @@
   "match": {
     "won": "{{player}} hat gewonnen",
     "abandoned": "Die Partie wurde abgebrochen",
+    "abandonedBy": "{{player}} hat die Verbindung verloren",
     "restart": "Neue Partie"
   },
   "hud": {
@@ -228,11 +229,14 @@
     "connect": "Verbinden",
     "addGuest": "Nächsten Spieler einladen",
     "start": "Partie starten",
+    "retry": "Neuen Code erzeugen",
     "seat": {
       "host": "Du (Host)",
       "waiting": "Wartet auf Verbindung",
       "connected": "Verbunden",
-      "bot": "Bot"
+      "bot": "Bot",
+      "gathering": "Code wird erzeugt …",
+      "connecting": "Verbindet …"
     },
     "stage": {
       "gathering": "Code wird erzeugt …",

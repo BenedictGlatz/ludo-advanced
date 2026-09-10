@@ -1,24 +1,39 @@
 /* =============================================================================
-   lobby.css -- the online lobby, issue #42, FR-42: the door, the host's
-   screen and the guest's screen, as three more contents of the one overlay
-   component. Split off on the handover.css, menu.css and lineup.css
-   precedent: one screen's own stylesheet, not a second component.
-   Depends on tokens.css, overlay.css and lineup.css (the seat rows are the
-   line-up's rows, reused). Loads after lineup.css.
+   lobby.css -- the online lobby, issue #42 (FR-42) and issue #101 (FR-43):
+   the door, the host's table and the guest's screen, as three more contents
+   of the one overlay component (D38). Replaces the placeholder of 2026-09-09.
+   Split off on the handover.css, menu.css and lineup.css precedent: one
+   screen's own stylesheet, not a second component.
+   Depends on tokens.css, motion.css, overlay.css and lineup.css: the seat
+   rows are the line-up's rows and the two-position control is spec 15's,
+   unchanged (D120). Loads after lineup.css.
+   Reasoning: 19-spec-online-lobby.md, D116 to D122.
 
-   Built by Claude Code WITHOUT a design handoff, which CLAUDE.md gives a new
-   screen to. The reason and the brief are on record: project-journal.md,
-   2026-09-09, and 01-Design/Handoff/00-open-requests.md. Nothing here is a
-   new colour, a new size or a new token. The textarea borrows the button's
-   chrome, the field label borrows the seat name's type, and the status word
-   borrows the muted text colour. Claude Design owns what the lobby SHOULD
-   look like; this is what lets it be used until then.
+   The one idea, in a sentence: a seat somebody sits at is a raised object
+   and a seat nobody sits at lies flat. The host, a connected guest and a bot
+   are spoken for, so their rows carry the ink edge and the hard shadow that
+   every raised thing in this game has. A free seat is an outline in dashed
+   ink on its own wash, which is how this project spells "nothing here yet"
+   (hand.css, menu.css). Two cues without colour, plus the status word, so
+   the table survives greyscale (NFR-12).
+
+   Scoping rule, as in lineup.css: an element that exists only on these
+   screens is matched by its own class; an element the other screens share is
+   matched through [data-screen]. No string in a content: property (NFR-03).
+   No new token: the one duration used is --motion-pulse.
    ========================================================================== */
 
-/* The two lobbies carry a code of a few hundred characters and up to four
-   seat rows, so they take the line-up's width. Same flex-line fix as
-   lineup.css and menu.css, for the same reason: the panel's percentage
-   width does not land inside .overlay's grid. */
+/* --- The door (D116). It stays, and it looks like the setup screen it
+       precedes and not like the menu's dealt doors: it is the first
+       pre-match question and takes setup's 34rem panel, so the paragraph
+       about codes and chats has a column to sit in. --- */
+.overlay[data-screen="online"] .overlay__panel {
+  --overlay-panel-w: 34rem;
+}
+
+/* The two lobbies carry up to four seat rows and two codes, so they take the
+   line-up's width. Same flex-line fix as lineup.css and menu.css, for the
+   same reason: the panel's percentage width does not land in .overlay's grid. */
 .overlay[data-screen="host"],
 .overlay[data-screen="join"] {
   --overlay-panel-w: 44rem;
@@ -27,13 +42,132 @@
   justify-content: center;
 }
 
+/* The sentence under the title carries a hint of two sentences, so it gets
+   the line-up's 46ch rather than overlay.css's 34ch. */
+.overlay[data-screen="online"] .overlay__text,
 .overlay[data-screen="host"] .overlay__text,
-.overlay[data-screen="join"] .overlay__text,
-.overlay[data-screen="online"] .overlay__text {
+.overlay[data-screen="join"] .overlay__text {
   max-width: 46ch;
 }
 
-/* --- The fields: a label over a textarea, stacked. --- */
+/* --- A failure (D118.2). One tone for all of them: the words say whose
+       fault it is, the wash says only that something went wrong. Ink text on
+       the warn wash rather than warn-coloured text, because orange body text
+       on cream is below 4.5:1 and a failure is the one sentence a player has
+       to read to the end. data-tone is the one attribute this file asks the
+       contract to add (spec section 5). --- */
+.overlay__text[data-tone="warn"] {
+  box-sizing: border-box;
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text);
+  background: var(--color-warn-soft);
+  border: var(--border-card) solid var(--color-warn);
+  border-radius: var(--radius-card);
+}
+
+/* --- The host's table (D117). One row, one seat, three columns and two
+       lines: plate, then the name over the status word, then the control.
+       The word gives up the end of the row to the control and moves under
+       the name, so a free seat says "Spieler 2 (Gelb) / Wartet auf
+       Verbindung" and offers Spieler or Bot beside it without the row
+       becoming four things wide (D117.3). The line-up's row is a grid
+       already; this only adds the second line. --- */
+.overlay[data-screen="host"] .overlay__seat {
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  row-gap: var(--space-1);
+  min-height: 4.25rem;
+  padding: var(--space-2) var(--space-3);
+}
+
+.overlay[data-screen="host"] .overlay__seat::before {
+  grid-row: 1 / span 2;
+}
+
+.overlay[data-screen="host"] .overlay__seat-name {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: end;
+}
+
+.overlay__seat-status {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  color: var(--color-text-muted);
+  text-align: start;
+}
+
+.overlay[data-screen="host"] .overlay__seat-choice {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+/* An empty choice group must not hold a grid track's worth of nothing. */
+.overlay[data-screen="host"] .overlay__seat-choice:empty {
+  display: none;
+}
+
+/* --- The four kinds of row (D117.1, D117.2). --- */
+
+/* Spoken for: the host, a connected guest, a bot. The row is a raised
+   object, with the ink edge and the hard shadow of every card and pill. */
+.overlay__seat[data-status="host"],
+.overlay__seat[data-status="connected"],
+.overlay__seat[data-status="bot"] {
+  border: var(--border-card) solid var(--color-ink);
+  box-shadow: var(--shadow-card);
+}
+
+.overlay__seat[data-status="host"] .overlay__seat-status,
+.overlay__seat[data-status="connected"] .overlay__seat-status,
+.overlay__seat[data-status="bot"] .overlay__seat-status {
+  color: var(--color-text);
+}
+
+/* Free: nobody sits here yet. The seat's own wash stays, so the table still
+   reads as four seats, and the edge is the dashed low-weight ink of an empty
+   slot. Three stages of the exchange land on this row (D118.1): waiting for
+   a code or a reply, gathering, connecting. All three are the same outline;
+   the word and the plate tell them apart. */
+.overlay__seat[data-status="waiting"],
+.overlay__seat[data-status="gathering"],
+.overlay__seat[data-status="connecting"] {
+  border: var(--border-card) dashed color-mix(in srgb, var(--color-ink) 32%, transparent);
+  box-shadow: none;
+}
+
+/* The two stages that are the browser's work and not the player's wait
+   (D118.3): up to five seconds of gathering and up to twenty of connecting.
+   The plate breathes on --motion-pulse, which is 0ms under reduced motion,
+   so the animation collapses to its first frame there and the word carries
+   the stage alone. Nothing else on the lobby moves: waiting for a friend in
+   a chat window may take minutes, and a thing that pulses for minutes reads
+   as broken (D121.1). */
+.overlay__seat[data-status="gathering"]::before,
+.overlay__seat[data-status="connecting"]::before {
+  animation: lobby-breathe var(--motion-pulse) ease-in-out infinite alternate;
+}
+
+@keyframes lobby-breathe {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.35;
+  }
+}
+
+/* --- The fields (D119). A label, a textarea, and the one button that acts
+       on it, beside the field rather than in the actions row at the foot.
+       .overlay__field-action is the second element this file asks the
+       contract to add: the field's own button moves into it and keeps its
+       data-action and data-field, so the tests and events.js read the same
+       attributes. --- */
 
 .overlay__fields {
   display: grid;
@@ -42,46 +176,55 @@
 }
 
 /* Built once and present on all screens, hidden while empty, on the
-   .overlay__cards and .overlay__seats precedent named in lineup.css. */
+   .overlay__cards and .overlay__seats precedent. */
 .overlay__fields:empty {
   display: none;
 }
 
 .overlay__field {
   display: grid;
-  gap: var(--space-1);
+  grid-template-columns: 1fr auto;
+  gap: var(--space-1) var(--space-3);
+  align-items: end;
   text-align: start;
 }
 
 .overlay__field-label {
+  grid-column: 1 / -1;
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   line-height: var(--leading-tight);
   color: var(--color-text-muted);
 }
 
-/* The button's chrome on a text box: the ink edge, the radius, the surface,
-   the focus ring. A code is one long line of base64, so it wraps anywhere
-   and shows in the numeric face. */
+/* The code is a thing to copy and never to read, so the textarea is kept
+   for the one job it does well: a player sees that something long arrived
+   or was pasted whole. Two lines is enough to see that. The button's
+   chrome, the numeric face, wraps anywhere. */
 .overlay__textarea {
   box-sizing: border-box;
   width: 100%;
-  min-height: 4.5rem;
+  min-height: 3.5rem;
+  max-height: 6rem;
   padding: var(--space-2) var(--space-3);
   font-family: var(--font-num);
   font-size: var(--text-sm);
   line-height: var(--leading-body);
   color: var(--color-text);
   overflow-wrap: anywhere;
-  resize: vertical;
+  resize: none;
   background: var(--color-surface);
   border: var(--border-card) solid var(--color-ink);
   border-radius: var(--radius-card);
 }
 
+/* The code that is ready to copy is a record, not a question: dormant wash,
+   muted text, and no ink edge, so the writable field beside it is the one
+   that looks like it wants something. */
 .overlay__textarea[readonly] {
   color: var(--color-text-muted);
   background: var(--color-dormant-soft);
+  border-color: var(--color-dormant);
 }
 
 .overlay__textarea:focus-visible {
@@ -89,28 +232,52 @@
   outline-offset: var(--space-1);
 }
 
-/* --- The seat rows on the host's screen: the line-up's rows with a status
-       word, and, on a seat nobody has joined, the line-up's two-position
-       control after it (issue #101). Four tracks: plate, name, status, control.
-       A row without a control leaves the last track empty at zero width. --- */
-
-.overlay[data-screen="host"] .overlay__seat {
-  grid-template-columns: auto 1fr auto auto;
+/* The guest's paste field is the whole screen for a moment (D119.4), so it
+   is taller than the host's, and the Connect beside it is the screen's one
+   primary. */
+.overlay[data-screen="join"] .overlay__textarea:not([readonly]) {
+  min-height: 6rem;
+  max-height: 9rem;
 }
 
-.overlay__seat-status {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--color-text-muted);
-  text-align: end;
+.overlay__field-action {
+  display: flex;
+  align-items: end;
 }
 
-.overlay__seat[data-status="connected"] .overlay__seat-status,
-.overlay__seat[data-status="host"] .overlay__seat-status {
-  color: var(--color-text);
+/* --- Below the design resolution the control goes under the name as on the
+       line-up, and a field's button goes under its textarea. --- */
+@media (max-width: 84rem), (orientation: portrait) {
+  .overlay[data-screen="host"],
+  .overlay[data-screen="join"] {
+    --overlay-panel-w: 26rem;
+    align-items: start;
+  }
+
+  .overlay[data-screen="host"] .overlay__seat {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto auto;
+    padding: var(--space-3);
+  }
+
+  .overlay[data-screen="host"] .overlay__seat-choice {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+
+  .overlay__field {
+    grid-template-columns: 1fr;
+  }
+
+  .overlay__field-action {
+    justify-content: end;
+  }
 }
 
-/* An empty choice group must not hold a grid track's worth of nothing. */
-.overlay[data-screen="host"] .overlay__seat-choice:empty {
-  display: none;
+/* The plate stops breathing. --motion-pulse is already 0ms here, so this is
+   belt and braces for a browser that keeps a 0ms loop alive. */
+@media (prefers-reduced-motion: reduce) {
+  .overlay__seat::before {
+    animation: none;
+  }
 }

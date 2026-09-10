@@ -1066,6 +1066,28 @@ Full decision block: project journal, 2026-09-09. Facts about the code:
   dice source whose `draw` throws. The host owns randomness; a bot needs none, but the turn it plays does.
 
 
+### The state remembers who dropped, and the host says so before hanging up: 2026-09-10, issue #42, design spec 19
+
+- **`abandonedBy` is a match field**, `null` from `startMatch` and set by `abandonMatch(state, by = null)`.
+  The pause screen's Quit and the guest's "host went away" pass nothing and the field stays `null`; the
+  host's `onLost(seat)` passes the seat. It lives in the state rather than in the flow because three
+  screens show the abandoned match and only the host knows which pipe closed: the state is the one thing
+  every screen gets, so the fact travels with it (D121.3 of spec 19).
+- **The host broadcasts the abandoned state before it closes the pipes.** `host-role.js`'s `onLost` is
+  now `loop.abandon(seat)`, `session.broadcastState(loop.getState())`, `session.close()`. Before, the
+  other guests learned only that the host had gone quiet and abandoned on their own `onClose`, with
+  nobody named. `guest-loop.js`'s `receive` already finishes a match whose status is not `running`, so
+  the abandoned state arriving on the wire is the guest's ending and the `onClose` that follows is a
+  no-op through `finished`.
+- **`onLost` answers the first loss only.** Closing the pipes in `onLost` reports every other guest as
+  lost too, and the second call used to abandon again, overwriting `abandonedBy` with an innocent seat.
+  The `lost` flag that already gated Play Again now gates the callback. Found by the first run of
+  `online-flow-failures.test.js`, which asserted seat 1 and got seat 2.
+- **`game-loop.js`'s `abandon(by = null)`** passes the seat through to `abandonMatch`; `guest-loop.js`'s
+  `abandon()` still passes nothing, because a guest never knows who left. No protocol change: the field is
+  part of the state, and the state travels whole.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

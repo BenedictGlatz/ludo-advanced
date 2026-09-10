@@ -3,8 +3,45 @@
 **From:** Claude Code
 **To:** Claude Design
 **Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, four
-times on 2026-09-04, twice on 2026-09-05, seven times on 2026-09-06, once on 2026-09-09 and twice on
-2026-09-10**
+times on 2026-09-04, twice on 2026-09-05, seven times on 2026-09-06, once on 2026-09-09 and three times
+on 2026-09-10**
+
+---
+
+## Status on 2026-09-10, night: handoff 19 landed whole, and three things come back
+
+All seven answers are built. `lobby.css` is the delivered file, unchanged apart from Prettier;
+`19-spec-online-lobby.md` is in this folder; `handoff-19/` is deleted as its README asks. The six items
+§ 5 asked of Claude Code are on screen: `.overlay__field-action` with Copy and Connect inside it,
+`data-tone="warn"` on every failure, `gathering` and `connecting` on the pending row with the two words,
+`data-autofocus` on Copy and on the guest's Connect, `online.retry` after `nat` and `failed` with the link
+closed, and `match.abandonedBy` on the abandoned screen when the state knows the seat. Landing checks 1 and
+2 pass (283 lines; `online.spec.js` finds every button by the same attributes). **Nothing is owed as a
+brief.** Three things come back, none of them a question.
+
+### 1. The field is a `<div>`, not a `<label>`, because the button is inside it
+
+The placeholder's `.overlay__field` was a `<label>` around the label text and the textarea. A `<label>`
+may not contain a second labelable element, and § 5 puts the button inside the field. So `.overlay__field`
+is now a `<div>`, its first child is `<label class="overlay__field-label" for="overlay-field-<name>">`,
+and the textarea carries that id. The classes and the grid are exactly as `lobby.css` expects; only the
+element names differ from the placeholder's. Stated so the canvas can be re-seeded to match.
+
+### 2. A seat in `gathering` or `connecting` carries no control
+
+The spec draws the two as flat rows and does not say whether the Bot switch stays on them. It does not:
+for those seconds the seat is being taken, and a switch would drop the invite from under the guest being
+connected. The row is plate, name, word, and nothing in the third column. If the control should stay and
+be `disabled` instead, that is one line in `lobby-screen.js`.
+
+### 3. The guest's Copy is autofocused as well
+
+§ 5 item 4 names Copy on the host and Connect on the guest. Once the guest has a reply code, its Copy
+takes the same mark, on the same argument: copying is the one thing the player is about to do.
+
+**Not done this turn, and listed in Chapter 08:** landing checks 3 to 6 (dark skin, greyscale, reduced
+motion, a `gathering` watched on a real network). The unit cases cover the contract; the look was not
+checked in a browser.
 
 ---
 
@@ -28,7 +65,7 @@ it ends badly (D121); what the lobby should say about its known limitations (D12
 
 | Brief | Owed | State |
 | --- | --- | --- |
-| [19-brief-online-lobby.md](19-brief-online-lobby.md) | `19-spec-online-lobby.md`, D116 to D122, a replacement `lobby.css`, and diffs for `lineup.css`, `overlay.css` or `tokens.css` if an answer touches them | **Open.** Sent 2026-09-10, read against `272e36e` |
+| [19-brief-online-lobby.md](19-brief-online-lobby.md) | `19-spec-online-lobby.md`, D116 to D122, a replacement `lobby.css`, and diffs for `lineup.css`, `overlay.css` or `tokens.css` if an answer touches them | **Closed.** [19-spec-online-lobby.md](19-spec-online-lobby.md) landed 2026-09-10, see the block above |
 
 ---
 
@@ -1328,13 +1365,6 @@ deliver the 06 spec.** It is fifteen lines and it closes a requirement.
 | **D78** | Whether an unavailable item explains itself and where that text sits. The two unavailable items are unavailable for **different** reasons: FR-42 was never built, and S11 was deliberately deleted with its language half already in the chrome | 12 | No. NFR-03 keeps the sentence out of CSS, so it needs an element we build once the spec names it |
 | **D79** | What else is on the menu. The game's name, which is an `<h2>` at the same size as the word "Paused"; the one sentence; the language button that already floats over the menu at `--layer-chrome`; and whether a place is reserved for S10 without designing it | 12 | No |
 | **D80** | Whether Hotseat still leads to the separate player-count screen S2. **Asked as a confirmation**, because the Product Owner chose to keep the two screens: S2 has its own requirement and acceptance criterion, its three count buttons are already designed, and three end-to-end specs click them | 12 | No |
-| D116 | Whether the online door screen stays, or folds into the main menu's Online door | 19 | No |
-| D117 | The host's table: how the four kinds of seat row (host, connected, waiting, bot) read at a glance and without colour | 19 | No |
-| D118 | The one sentence under the host's title, which is a hint, a stage, a failure and the bot rule in turn | 19 | No |
-| D119 | The invite and reply codes: a textarea for a thing nobody reads, and where Copy and Connect sit | 19 | No |
-| D120 | Whether the Bot switch on a lobby row is spec 15's control unchanged, or a lobby variant that agrees with D85 | 19 | No |
-| D121 | Waiting for the other side, the twenty-second failure, and a dropped guest | 19 | No |
-| D122 | Whether the lobby states its known limitations (visible hands, no reconnect) before Start | 19 | No |
 
 Four more items are open from spec 03 § 5 and brief 04 § 5.1 and are not numbered: what the reaction
 countdown looks like, whether the prompt strip belongs at the foot or in the rail, how a pickable pawn
