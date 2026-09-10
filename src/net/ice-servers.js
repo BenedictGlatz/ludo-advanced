@@ -54,10 +54,13 @@ const TURN_CREDENTIAL = "JqwnBZIRiYGpTzhDgn8pEoYTEpare24/+XJ5HaAiaBw=";
  *
  * `urls` and not Twilio's `url`: the API answers with both spellings, and `url` is the one the standard
  * dropped years ago. Copying the wrong key produces a connection that silently never uses the relay.
+ *
+ * **Four entries, not five.** Twilio's STUN server was dropped on 2026-09-10: Firefox prints "Using five
+ * or more STUN/TURN servers slows down discovery" at five, and the team reads that console when a match
+ * fails. One STUN server is all a code needs, and in relay-only mode STUN is not consulted at all.
  */
 export const ICE_SERVERS = Object.freeze([
   Object.freeze({ urls: "stun:stun.l.google.com:19302" }),
-  Object.freeze({ urls: "stun:global.stun.twilio.com:3478" }),
   Object.freeze({
     urls: "turn:global.turn.twilio.com:3478?transport=udp",
     username: TURN_USERNAME,

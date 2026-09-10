@@ -5625,6 +5625,55 @@ to get wrong later.
 - → Ch. 03, Ch. 06, Ch. 08
 
 
+### 2026-09-10: The online failure is Firefox's ICE timer, reproduced to the second, and it has no code fix
+
+- **What the two logs said.** Both players ran `?relay=1&netlog=1` in Firefox. Both gathered
+  `{host: 0, srflx: 0, relay: 3}`, so the relay was reachable and the credentials were good (a 401 would
+  have blocked the allocation). The guest's ICE went `checking` the moment its reply code existed and
+  `failed` **11.2 s** later. The host pasted the reply about 39 s after its own code was ready, went
+  `checking`, and failed **11.4 s** after that, with "data channel closed BEFORE it ever opened".
+- **The mechanism.** With manual codes the guest has both descriptions as soon as it produces its answer,
+  so its connectivity checks start then, while the reply code is still travelling through a chat. Over a
+  relay those checks are dropped silently: the host's TURN allocation has no permission for the guest's
+  relay address until the host has pasted the reply and learned it. Firefox sees total silence and declares
+  ICE failed after roughly eleven seconds. When the host finally starts, the guest is already dead, so the
+  host's own checks go unanswered and it fails eleven seconds later. The gap is the transit time of the
+  reply code, and it is inherent to two-paste signaling.
+- **Reproduced on purpose before believing it.** A throwaway Playwright spec ran the exchange over the
+  real Twilio relay with a 25 s pause before the host pasted. Firefox: guest failed at 11.3 s, host at
+  11.4 s, same closing line. Chromium under identical conditions: the guest went `disconnected` at 17 s,
+  woke up when the host's checks arrived, and **connected after 25 s and again after 60 s**. Firefox with no
+  pause connected over the relay, so the relay path itself is sound in both browsers. The spec was deleted
+  for the usual reason: it asserts on a live relay whose credentials expire.
+- **Rejected: stripping `a=end-of-candidates` from the offer before the guest applies it.** The WebRTC
+  specification says a transport that has not received end-of-candidates must not reach `failed`, so this
+  looked like a one-line fix. Tested in Firefox with a 25 s and a 60 s pause, with the log confirming one
+  line and 21 characters removed: failed at 12.2 s and 12.1 s. Firefox does not honour it. Recorded so
+  nobody spends the same hour.
+- **Rejected: holding the host's candidates back on the guest until a second click.** It would work: the
+  guest would apply them only when the host says "pasted", and the two clicks would need to fall within
+  eleven seconds of each other instead of a whole chat round trip. It is also a new lobby step and a new
+  component, which is Claude Design's call and not a fix, and it trades a browser limit for a coordination
+  step every guest pays on every join, in every browser. Parked, not refused; noted for the design side.
+- **Rejected: a signaling server.** Would remove the transit gap entirely and is the reason such servers
+  exist. Still needs hosting the project decided against on 2026-09-09, and the deadline is a week out.
+- **Chosen: name the limit and route around it.** Online play is documented as needing Chrome or Edge on
+  both sides, with the Firefox figure stated and dated. No code changes behaviour for Chrome users, and
+  none could have helped Firefox users. The README carries the rule, the changelog does not, because the
+  game did not change.
+- **Two smaller things the logs also showed, both fixed.** The guest role kept its dead link after a failed
+  handshake, and `connect` refuses while a link exists, so **every retry in the lobby did nothing** and
+  the guest had to leave to try again: that is the "no second lobby" half of the report. And Firefox
+  warned "Using five or more STUN/TURN servers slows down discovery" at five entries; Twilio's STUN
+  server was redundant next to Google's and is gone, so the console the team reads has one line less.
+- **An earlier guess corrected in the open.** The five-to-twenty second gathering limit raised on
+  2026-09-10 was reasonable and stays, but it was not what hit the team: both logs show gathering
+  finishing in 0.2 s with relay candidates present. The 701 "STUN host lookup received error" lines beside
+  three successful relay candidates are almost certainly Firefox's IPv6 lookup of a host that only has
+  IPv4 addresses, and are noise. Not verified, so stated as a reading rather than a fact.
+- → Ch. 03, Ch. 06, Ch. 08, Ch. 11
+
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first
@@ -5837,3 +5886,16 @@ to get wrong later.
 Log anything that cost more than roughly 30 minutes of unplanned work: what happened, what it cost,
 how it was resolved. These become the running prose of Chapter 11, so a sentence of context is worth
 more than a terse label.
+
+- **2026-09-10: Three attempts, two deploys and one wrong theory before the online failure had a cause.**
+  The first theory was payload size; measured at 2.2 KB and dropped in ten minutes. The second was the
+  five-second gathering limit, which was a real weakness and got fixed, but was not what the team hit:
+  their gathering took 0.2 s. Neither theory could be told from the other by looking at the screen,
+  because the lobby reports every failure as "connection lost", so the `?netlog=1` mode had to be built,
+  merged and republished before a single fact came back. The facts then took twenty minutes: identical
+  eleven-second timers on both sides pointed at the browser, and a Playwright spec pausing the exchange
+  over the real relay reproduced the numbers to a tenth of a second in Firefox and not in Chromium. An
+  hour more went into a specification-backed fix that Firefox turned out to ignore. Cost: most of a
+  working day, two people's evening, and two Pages deployments. The lesson for Chapter 11 is the order of
+  operations: **build the instrument before the second guess.** The first guess is free; every guess
+  after it costs a deploy and other people's time, and the instrument would have cost one deploy total.

@@ -101,6 +101,13 @@ route, so a connection that still works proves the relay itself is fine. Use it 
 fails: if `?relay=1` also fails, the relay credentials have expired and somebody needs to run
 `npm run net:turn`.
 
+**Online play: use Chrome or Edge, and paste the reply code promptly.** The two browsers have to find
+each other, and the guest's browser starts trying the moment its reply code appears, before the host has
+even seen it. Chrome and Edge keep trying for well over a minute, so an ordinary chat exchange is fine.
+**Firefox gives up after about eleven seconds**, measured on 2026-09-10, so with Firefox on the guest's
+side the host has to paste the reply within ten seconds of it being produced, which a chat round trip
+rarely manages. This is a browser limit, not a setting the game can change.
+
 **`?netlog=1` is what you turn on before reporting a broken online match.** It prints to the browser
 console (F12): what each code carries, every state the connection goes through, which route it ended up
 using, and the real reason it dropped. Both players turn it on, both copy their console, and the two

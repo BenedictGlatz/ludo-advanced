@@ -2545,3 +2545,21 @@ Vitest half.
 - **What that run showed, recorded because it is a lead and not yet a finding:** the host gathered 5
   relay candidates and the guest none, with two `701 STUN host lookup received error` lines. It may be
   the test environment's DNS rather than the product. Left open rather than concluded.
+
+### The experiment that found the cause, and why it is not a test: 2026-09-10, issue #42
+
+- **A pause between the guest producing its reply and the host pasting it** is the variable the failure
+  depends on, and it is a variable no existing spec had: every online spec pastes within a second. A
+  throwaway Playwright spec took the pause from an environment variable and ran the exchange over the real
+  Twilio relay (`?relay=1`) in Firefox and Chromium at 0, 25 and 60 seconds. Firefox: connected at 0,
+  failed at 25 and 60 with the guest giving up at 11.3 s and the host 11.4 s after paste. Chromium:
+  connected at all three. These match the team's logs to a tenth of a second.
+- **Not kept in the suite, for two reasons.** It depends on relay credentials that expire daily, and its
+  meaningful runs take 40 to 120 seconds each; a suite that takes two minutes to tell you Firefox still
+  behaves like Firefox is a suite people stop running. The result is recorded in Chapter 03 with its date.
+- **`online-flow.test.js` gained the failed-handshake retry.** A guest link whose `ready` rejects, then a
+  second Connect: the first link is closed and a second one is created. This is the unit test the guest
+  role should have had alongside the host's failure tests in `online-flow-failures.test.js`.
+- **The end-of-candidates experiment is recorded as a negative result.** One line stripped, confirmed by
+  the log, no change in Firefox's timing. A negative result written down is worth an hour to the next
+  person; one not written down costs them the same hour.
