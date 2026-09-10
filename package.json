@@ -23,7 +23,8 @@
     "test:seeds": "node scripts/find-seeds.js",
     "docs:dice-balance": "node scripts/dice-balance.js",
     "bots:arena": "node scripts/bot-arena.js",
-    "assets:card-art": "node scripts/extract-card-art.js"
+    "assets:card-art": "node scripts/extract-card-art.js",
+    "net:turn": "node scripts/turn-credentials.js"
   },
   "dependencies": {
     "i18next": "^26.4.0",

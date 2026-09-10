@@ -110,3 +110,37 @@ describe("host and guest links", () => {
     await expect(guest.join(answer)).rejects.toThrow("bad-code");
   });
 });
+
+describe("the connection configuration", () => {
+  /** Capture what `RTCPeerConnection` would have been constructed with. */
+  function configFor(make, options) {
+    let seen = null;
+    make({
+      ...options,
+      createPeer(config) {
+        seen = config;
+        return fakePeer([]);
+      },
+    });
+
+    return seen;
+  }
+
+  it("hands the servers over and leaves every route open by default", () => {
+    for (const make of [createHostLink, createGuestLink]) {
+      const config = configFor(make, {});
+
+      expect(config.iceServers.length).toBeGreaterThan(0);
+      // Absent rather than "all": the browser's default, and the value a player gets.
+      expect(config).not.toHaveProperty("iceTransportPolicy");
+    }
+  });
+
+  it("forbids every direct route when relayOnly is set", () => {
+    // What `?relay=1` buys: a connection that succeeds proves the relay works, because nothing else
+    // was allowed to carry it.
+    for (const make of [createHostLink, createGuestLink]) {
+      expect(configFor(make, { relayOnly: true }).iceTransportPolicy).toBe("relay");
+    }
+  });
+});

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Online play now works between two ordinary home internet connections.** Before, the two browsers had
+  to find a direct route to each other, and on many German home connections there is none: the lobby
+  waited twenty seconds and then said so. The game now also offers a relay server that both browsers can
+  reach, and passes the match through it when a direct route cannot be found. Nothing changes for a
+  player, the invite and reply codes work exactly as before, and a match that could go direct still does
+
 ### Changed
 
 - **The game can be published as a link.** The build now uses relative paths to its own files, so it

@@ -64,6 +64,12 @@ describe("readOptions: the four settings that were already there", () => {
     expect(readOptions("").players).toBeNull();
   });
 
+  it("reads relay as the exact string 1, like fast", () => {
+    expect(readOptions("?relay=1").relay).toBe(true);
+    expect(readOptions("?relay=true").relay).toBe(false);
+    expect(readOptions("").relay).toBe(false);
+  });
+
   it("reads fast as the exact string 1", () => {
     expect(readOptions("?fast=1").fast).toBe(true);
     expect(readOptions("?fast=true").fast).toBe(false);

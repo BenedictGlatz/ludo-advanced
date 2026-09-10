@@ -1111,3 +1111,23 @@ Full decision block: project journal, 2026-09-09. Facts about the code:
   authority is the host's; the network layer attaches at the one `dispatch` call in `ui/`, now the
   `dispatcher` argument of `loop-store.js`. See the fact block above and the journal.
 - No decision yet on whether a game in progress survives a page reload.
+
+### The TURN relay, and what it did not change in this layer: 2026-09-10, issue #42
+
+- **`src/net/ice-servers.js` is a new file in `net/` and imports nothing**, like `signal-codes.js`. It
+  holds the list of STUN and TURN servers a peer connection may use, plus `relayServers()` and
+  `hasWorkingRelay()` for a diagnostic to ask with. The import rule is unchanged and still enforced by
+  ESLint: no `ui/`, no `i18n/`.
+- **The relay changes nothing about the protocol, the sessions or the intent guard.** It changes only how
+  the two browsers find each other. `host-session.js`, `guest-session.js`, `protocol.js` and
+  `transport.js` are untouched, and the loopback match test that stands in for a whole online game did
+  not need a line changed. That is the seam `transport.js` was built for doing its job: the sessions
+  never knew they were on WebRTC, so they equally do not know a relay is now carrying it.
+- **`relayOnly` is the one new argument on the two links**, and it sets `iceTransportPolicy: "relay"` on
+  the peer connection. `?relay=1` reaches it from `options.js` through `main.js` and `match-flow.js`,
+  which wraps the two link factories so neither lobby role has to learn about a setting it cannot act on.
+  The roles' snapshots, stages and error strings are unchanged.
+- **What is still not covered by the twenty-second NAT message.** It now means "no direct route *and* the
+  relay did not answer", which in practice means the credentials have expired. The message still names
+  the NAT, because that is the cause a player can act on, and the expiry is the maintainer's problem
+  rather than the player's.

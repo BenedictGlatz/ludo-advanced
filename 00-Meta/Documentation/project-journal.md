@@ -570,6 +570,11 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   the repository root. One dispatched `pages.yml` run replaced it, and the two online specs pass
   against `https://benedictglatz.github.io/ludo-advanced/`. Hosting confirmed, NAT traversal still
   not, because both browsers sat on one machine. Sprint 3.
+- **2026-09-10**: NAT traversal confirmed *not* working, and then fixed, issue #42. The three of us
+  exchanged codes from three home connections and no channel ever opened, which is the failure the
+  2026-09-09 decision predicted in writing. A TURN relay was added: `src/net/ice-servers.js`,
+  Twilio's Network Traversal Service, `?relay=1` to force it, `npm run net:turn` to renew the
+  credentials it issues for 24 hours at a time. Verified with every direct route forbidden. Sprint 3.
 
 - **2026-08-09** — Appendix started: the board's Kanban view captured as *Figure 1* and registered in
   Ch. 12. Two negative findings from 2026-08-06 resolved (`Status` and `Sprint` back-filled), three
@@ -5546,6 +5551,45 @@ to get wrong later.
   `tests/helpers/`, the bot cases to files of their own. Recorded because the temptation was to delete
   a comment block instead, and `CLAUDE.md` says the seam, not the whitespace.
 - → Ch. 01, Ch. 04, Ch. 06, Ch. 08
+
+### 2026-09-10: A TURN relay is added, and the serverless design pays for it in 24 hour credentials
+
+- **Chosen:** Twilio's Network Traversal Service as a TURN relay, in a new `src/net/ice-servers.js`,
+  alongside the STUN servers that were already there. Both browsers open an ordinary outgoing connection
+  to the relay and it passes the data between them. Outgoing connections are what every router allows,
+  which is why this works where direct connection cannot.
+- **The reason is a measurement, not a preference.** The 2026-09-09 entry above named this exact failure
+  as the accepted risk of shipping without a relay. On 2026-09-10 three team members on three German home
+  connections hit it: codes exchanged fine, no channel ever opened, and the lobby's twenty-second NAT
+  sentence appeared as designed. STUN alone is not enough behind symmetric NAT or DS-Lite, and DS-Lite is
+  what most German cable and mobile contracts hand out.
+- **Still no dependency.** Three more entries in an array, `package.json` untouched. That is now twice
+  that this feature was expected to break the dependency policy and did not.
+- **Rejected: Cloudflare Realtime TURN.** Cheaper per gigabyte, but its free tier is conditional on also
+  using their SFU, a video-conference product with nothing to offer a board game that sends 16 KB per
+  move. Both providers issue credentials only through an authenticated API call, so the expiry problem
+  below is not Twilio's alone.
+- **Rejected: a self-hosted coturn.** Worth more in the report and worth one to two days of work on
+  infrastructure nobody here has run, seven days before the deadline. It lost to the calendar, which is
+  the honest reason and the one worth writing down.
+- **Rejected: telling players to use a VPN.** Tailscale makes two home networks into one and fixes this
+  for free with no code at all. It also makes the published build not actually playable by a stranger
+  with a link, which is what FR-42 asks for. Kept as the fallback if the credentials lapse mid-demo.
+- **The price of having no server, made concrete.** Twilio's credentials live 24 hours, and a static
+  GitHub Pages build has nowhere to fetch fresh ones from: the only thing that could hold the account
+  secret is a server, and not having one is the whole 2026-09-09 decision. So online play on the
+  published build works a day at a time and `npm run net:turn` renews it. The alternative was giving up
+  the serverless architecture entirely, which is a larger change than the problem justifies.
+- **The credentials are committed on purpose**, with the exposure written into the file's header: they
+  ship in the public build regardless, the account is a trial with no payment method, so the worst case
+  is a stranger burning free credit until the relay stops, which returns the game to where it was
+  yesterday. The auth token that *issues* them is a different secret and is not in the repository; the
+  renewal script reads it from the environment for exactly that reason.
+- **`?relay=1` exists because success proves nothing otherwise.** It sets `iceTransportPolicy: "relay"`,
+  forbidding every direct route, so a connection that succeeds can only have gone through the relay. With
+  it, an invite code carried 5 relay candidates on Twilio's Frankfurt addresses and two browser contexts
+  connected. Without it, a working connection says nothing about whether the credentials are any good.
+- → Ch. 03, Ch. 06, Ch. 07, Ch. 08
 
 
 ## Challenges

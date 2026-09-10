@@ -20,19 +20,30 @@
  * produce a code (`signal-codes.js` says why), and both hand back a `transport` from `transport.js` once
  * the channel opens, so nothing downstream knows it is on WebRTC at all.
  *
- * ## STUN, and the NAT that can still fail
+ * ## STUN, TURN, and the NAT that used to fail
  *
- * `DEFAULT_ICE_SERVERS` names one public STUN server, so a code carries the browser's public address and
- * two machines on different networks can find each other. It is an external service, not a dependency:
- * nothing is installed, and without it the game still works on one network. There is no TURN relay, so
- * two players behind strict NATs may fail to connect; the lobby says so after twenty seconds.
+ * Which servers a connection may use is `ice-servers.js`, together with why there is now a relay among
+ * them. This file only passes the list on. They are external services, not dependencies: nothing is
+ * installed, and without any of them the game still works on one network.
+ *
+ * `relayOnly` forces every connection through the relay by refusing every direct route. It is a
+ * **diagnostic and not a mode of play**: a connection that works with it on proves the TURN credentials
+ * are good, which is otherwise very hard to tell apart from a route that happened to work directly.
+ * `?relay=1` in the address bar is how a player reaches it, through `options.js` like every other switch.
  */
 
+import { ICE_SERVERS } from "./ice-servers.js";
 import { decodeSignal, encodeSignal, waitForIceComplete } from "./signal-codes.js";
 import { channelTransport } from "./transport.js";
 
-/** Google's public STUN server. Named in the journal as the one external service the feature touches. */
-export const DEFAULT_ICE_SERVERS = Object.freeze([{ urls: "stun:stun.l.google.com:19302" }]);
+/** Re-exported under the name the two links already used, so nothing downstream had to change. */
+export const DEFAULT_ICE_SERVERS = ICE_SERVERS;
+
+/** What `RTCPeerConnection` is handed. `relay` is the browser's own name for "no direct route". */
+const peerConfig = (iceServers, relayOnly) => ({
+  iceServers,
+  ...(relayOnly ? { iceTransportPolicy: "relay" } : {}),
+});
 
 /** The one channel a match runs on. Ordered, because a `state` must never overtake the one before it. */
 const CHANNEL_LABEL = "ludo";
@@ -55,9 +66,10 @@ function whenOpen(channel) {
 /** The host's machine: make an offer, then accept one answer. */
 export function createHostLink({
   iceServers = DEFAULT_ICE_SERVERS,
+  relayOnly = false,
   createPeer = defaultPeer,
 } = {}) {
-  const pc = createPeer({ iceServers });
+  const pc = createPeer(peerConfig(iceServers, relayOnly));
   const channel = pc.createDataChannel(CHANNEL_LABEL, { ordered: true });
 
   return {
@@ -89,9 +101,10 @@ export function createHostLink({
 /** The guest's machine: answer one invite. */
 export function createGuestLink({
   iceServers = DEFAULT_ICE_SERVERS,
+  relayOnly = false,
   createPeer = defaultPeer,
 } = {}) {
-  const pc = createPeer({ iceServers });
+  const pc = createPeer(peerConfig(iceServers, relayOnly));
 
   return {
     /** Paste the invite, get back the reply code to send and a promise for the open channel. */
