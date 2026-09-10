@@ -5592,6 +5592,39 @@ to get wrong later.
 - → Ch. 03, Ch. 06, Ch. 07, Ch. 08
 
 
+### 2026-09-10: The relay reached the build and the match still failed, so the next change is a diagnostic
+
+- **What happened:** with TURN live on the published build, two players connected once, the guest dropped
+  within seconds, and further attempts did not produce a working lobby at all. The lobby said "connection
+  lost", which is all it can say.
+- **Ruled out by measurement, not by argument:** the first `state` message was the obvious suspect,
+  because it is the first real payload and the match had only just started. It is **2219 bytes for two
+  players and 2462 for four**, far too small to trouble any relay. Recorded because the next person to
+  read this file would otherwise suspect the same thing.
+- **Chosen: `?netlog=1` before any further fix.** At least four different failures produce the identical
+  symptom (no relay candidate in a code, a handshake that never completes, a route that works and then
+  stops answering, and a channel closed by an error nobody looked at), and each needs a different fix.
+  Guessing between them, deploying, and asking two other people to test again is an evening per guess.
+- **`transport.js` was discarding the answer.** `channel.onerror = () => ears.end()` threw the error away
+  and ended the pipe, so the one place that knew why a match ended kept it to itself. It is now logged
+  first and still not acted on: a closed pipe is a lost guest whatever closed it.
+- **Rejected: sending the log to a collector.** Two consoles compared side by side is enough for a team of
+  three, and collecting it would need the server this whole feature exists to avoid. **Rejected: logging
+  unconditionally**, which trains people to ignore console noise and would print during the assessment.
+- **The five-second ICE gathering limit was raised to twenty, and that is a fix rather than a diagnostic.**
+  It was set when STUN alone was in the list, where gathering is one round trip. A relay must be
+  *allocated* over three transports, and on a home connection that regularly takes longer than five
+  seconds. The old limit cut gathering short and produced an invite code with no relay candidate in it,
+  which cannot work and gives no sign of why. It failed intermittently, which matches the report exactly:
+  it worked once and then did not.
+- **Seen while verifying, and worth knowing before reading a real log:** in a two-context Chromium run the
+  host gathered `{host: 2, srflx: 2, relay: 5}` and the guest `{host: 2, srflx: 0, relay: 0}` with two
+  `701 STUN host lookup received error` lines. Whether that is an artefact of the test environment's DNS
+  or a real asymmetry is not yet known. One side with a relay candidate is enough for a relayed
+  connection, so this is not automatically fatal.
+- → Ch. 03, Ch. 06, Ch. 08
+
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

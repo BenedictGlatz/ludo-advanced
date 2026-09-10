@@ -99,6 +99,7 @@ import $ from "jquery";
 
 import { createSeededRng } from "./core/dice-source.js";
 import { initI18n } from "./i18n/index.js";
+import { enableNetLog } from "./net/net-log.js";
 import { FAST_DELAYS, readOptions } from "./options.js";
 import { createMatchFlow } from "./ui/match-flow.js";
 
@@ -147,6 +148,10 @@ import "./ui/styles/cast-fx-area.css";
  */
 export async function boot(root = "#app", search = window.location.search) {
   const options = readOptions(search);
+
+  // Before anything else that could connect, so the first line in the console is the first thing that
+  // happened. `net-log.js` is a switch and not a dependency: off, nothing in `net/` behaves differently.
+  if (options.netLog) enableNetLog();
 
   await initI18n();
 

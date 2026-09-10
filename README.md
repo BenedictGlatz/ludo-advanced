@@ -86,6 +86,7 @@ failing, so a malformed URL starts a normal game.
 | `?bots=3`    | Hands the last seats to the computer. Needs `?players=`, and always leaves one person in    |
 | `?fast=1`    | Shortens the pauses in the turn loop and passes the handover screen without waiting for it  |
 | `?relay=1`   | Online play only: forces the connection through the relay server, to check it works        |
+| `?netlog=1`  | Online play only: prints what the connection did to the browser console                    |
 
 **`?bots=` is how you play alone today.** `/?players=4&bots=3` seats you first and lets the computer
 play the other three: they pick their dice card, roll it, move a pawn, and play a skill card whenever
@@ -99,6 +100,11 @@ other directly first and fall back to the relay server only when they cannot. Th
 route, so a connection that still works proves the relay itself is fine. Use it when an online match
 fails: if `?relay=1` also fails, the relay credentials have expired and somebody needs to run
 `npm run net:turn`.
+
+**`?netlog=1` is what you turn on before reporting a broken online match.** It prints to the browser
+console (F12): what each code carries, every state the connection goes through, which route it ended up
+using, and the real reason it dropped. Both players turn it on, both copy their console, and the two
+side by side usually say which side stopped first and why. It changes nothing about how the game plays.
 
 `?players=` and `?fast=1` exist for the end-to-end suite. They are what let every spec written before
 the main menu and the handover screen existed keep running unchanged, and they change the waiting rather

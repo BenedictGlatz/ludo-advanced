@@ -26,8 +26,22 @@
  * gathering has finished. That is the "gathering" stage the lobby shows.
  */
 
-/** How long to wait for ICE gathering before the code is produced with what has been gathered so far. */
-export const ICE_GATHER_TIMEOUT_MS = 5000;
+/**
+ * How long to wait for ICE gathering before the code is produced with what has been gathered so far.
+ *
+ * **Raised from 5 to 20 seconds on 2026-09-10, and the reason is the TURN relay.** With STUN alone,
+ * gathering is one round trip to one server and five seconds was generous. A relay has to be *allocated*,
+ * over three transports (UDP, TCP, TCP on 443), each with its own handshake, and on a home connection
+ * that regularly takes longer than five seconds. The old limit therefore cut gathering short and produced
+ * an invite code with no relay candidate in it, which is a code that cannot work and gives no sign of why.
+ * Intermittently, because it depended on how fast the network was that minute.
+ *
+ * The cost is the worst case: a lobby that waits longer before showing a code on a network where one
+ * interface never answers. That is why the timeout still exists at all. A code with most of the
+ * candidates beats no code, but a code produced too early beats nothing, and 20 seconds is the point
+ * where waiting has clearly stopped helping.
+ */
+export const ICE_GATHER_TIMEOUT_MS = 20_000;
 
 async function bytesThrough(text, stream) {
   const compressed = new Response(text).body.pipeThrough(stream);
@@ -90,20 +104,24 @@ export async function decodeSignal(code) {
  * Takes anything with `iceGatheringState` and `addEventListener`, so a fake can stand in for the real
  * connection in a test. The timeout is a safety net for networks where one interface never answers: a
  * code with most of the candidates beats no code at all.
+ *
+ * **Answers `true` when gathering actually finished and `false` when the timeout cut it short.** The
+ * caller does nothing differently either way, and it is not a failure: it is the one fact that tells a
+ * half-empty invite code apart from a complete one, and without it the log cannot say which happened.
  */
 export function waitForIceComplete(pc, timeoutMs = ICE_GATHER_TIMEOUT_MS) {
-  if (pc.iceGatheringState === "complete") return Promise.resolve();
+  if (pc.iceGatheringState === "complete") return Promise.resolve(true);
 
   return new Promise((resolve) => {
-    const done = () => {
+    const done = (completed) => {
       clearTimeout(timer);
       pc.removeEventListener("icegatheringstatechange", check);
-      resolve();
+      resolve(completed);
     };
     const check = () => {
-      if (pc.iceGatheringState === "complete") done();
+      if (pc.iceGatheringState === "complete") done(true);
     };
-    const timer = setTimeout(done, timeoutMs);
+    const timer = setTimeout(() => done(false), timeoutMs);
 
     pc.addEventListener("icegatheringstatechange", check);
   });

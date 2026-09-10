@@ -1131,3 +1131,21 @@ Full decision block: project journal, 2026-09-09. Facts about the code:
   relay did not answer", which in practice means the credentials have expired. The message still names
   the NAT, because that is the cause a player can act on, and the expiry is the maintainer's problem
   rather than the player's.
+
+### `net-log.js`, a fifth file in `net/` that only watches: 2026-09-10, issue #42
+
+- **It imports nothing and is imported by three files**, `webrtc-link.js`, `transport.js` and `main.js`.
+  The layer rule holds: no `ui/`, no `i18n/`. `console` was already in the layer's allowed globals.
+- **On is module state, set once by `main.js`.** The alternative was threading a logger through
+  `match-flow.js`, both lobby roles and both links, which is five files changed so that a diagnostic can
+  be handed down. A switch a composition root flips once is the smaller change, and it is why
+  `net-log.test.js` re-imports the module to test the "on" case.
+- **It reads and never decides.** No retry, no close, no branch anywhere else in `net/` asks whether
+  logging is on. A diagnostic that changes what it measures is worse than none, and this one has to be
+  trustworthy precisely when something is already going wrong.
+- **`waitForIceComplete` now answers a boolean**, `true` for finished and `false` for cut short by the
+  timeout. Nothing acts on it. It exists because a half-empty invite code and a network that genuinely
+  has no relay produce the same code, and only the caller knows which happened.
+- **`channelTransport` takes a `who` label and wraps `send` in a try.** A send on a closing channel
+  throws, and an uncaught throw there would have taken down the turn that produced it rather than the
+  pipe that caused it.
