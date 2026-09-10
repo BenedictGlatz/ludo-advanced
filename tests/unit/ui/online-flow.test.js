@@ -124,6 +124,38 @@ describe("joining", () => {
 
     expect(flow.snapshot().stage).toBe("idle");
   });
+
+  it("hangs up a handshake that failed and lets the next code start fresh", async () => {
+    // What a Firefox guest hits when the host pastes the reply too late: the channel never opens and
+    // `ready` rejects. Until 2026-09-10 the dead link was kept, `connect` refused while one existed, and
+    // every retry in the lobby did nothing.
+    const guestLinks = [];
+    const links = {
+      ...fakeLinks(),
+      createGuestLink() {
+        const link = {
+          closed: false,
+          join: async () => ({ replyCode: "reply:1", ready: Promise.reject(new Error("closed")) }),
+          close() {
+            link.closed = true;
+          },
+        };
+        guestLinks.push(link);
+        return link;
+      },
+    };
+    const { flow } = browser(links);
+    flow.join();
+
+    flow.connect("invite:1");
+    await settle();
+    expect(flow.snapshot()).toMatchObject({ error: "failed", stage: "idle", reply: null });
+    expect(guestLinks[0].closed).toBe(true);
+
+    flow.connect("invite:1");
+    await settle();
+    expect(guestLinks).toHaveLength(2);
+  });
 });
 
 describe("leaving", () => {

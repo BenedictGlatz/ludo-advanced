@@ -1149,3 +1149,14 @@ Full decision block: project journal, 2026-09-09. Facts about the code:
 - **`channelTransport` takes a `who` label and wraps `send` in a try.** A send on a closing channel
   throws, and an uncaught throw there would have taken down the turn that produced it rather than the
   pipe that caused it.
+
+### The guest role forgets a failed handshake: 2026-09-10, issue #42
+
+- **`guest-role.js` closes and drops its link when `ready` rejects.** Before, the catch set the error and
+  stage but kept `link`, and `connect` refuses while a link exists, so after one failed handshake every
+  further Connect in the lobby was a no-op. The host side had the matching behaviour since design spec 19
+  (`dropInvite` on failure); the guest side did not, and the asymmetry went unnoticed because the E2E
+  suite never fails a handshake. Found from the report "no second lobby", confirmed by reading the two
+  branches side by side. `reply` is cleared too, so a stale code is not left on screen.
+- **Nothing in `net/` changed for the Firefox finding**, because nothing there can. The timer is the
+  browser's, and the two links already do the least possible before ICE starts.

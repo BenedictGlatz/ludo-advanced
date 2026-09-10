@@ -146,6 +146,13 @@ export function createGuestRole({
         stage = STAGE.CONNECTED;
         error = null;
       } catch {
+        // The channel never opened: ICE gave up, or the host hung up first. Hang up this side too and
+        // forget it, so the next invite pasted starts a fresh connection. Until 2026-09-10 `link` was
+        // kept here, and `connect` above refuses while one exists, so every retry after a failed
+        // handshake did nothing at all and the guest had to leave the lobby to try again.
+        link.close();
+        link = null;
+        reply = null;
         error = "failed";
         stage = STAGE.IDLE;
       }

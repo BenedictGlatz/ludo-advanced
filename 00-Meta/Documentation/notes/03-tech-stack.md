@@ -292,3 +292,19 @@ read from the package's own `license` field **and** its own licence file:
   2026-09-08 and built 2026-09-09: WebRTC in the browser, no server, no dependency.** See the fact block
   above. **Still open:** whether STUN alone connects two real machines on two real networks has not been
   tried; the result belongs in Chapter 08.
+
+### Browser support for online play is narrower than NFR-10, and the reason is measured: 2026-09-10, issue #42
+
+- **Chrome and Edge connect; Firefox connects only if the reply code is pasted within about eleven
+  seconds.** Not a bug in the game: Firefox's ICE implementation declares failure after roughly eleven
+  seconds of unanswered connectivity checks, and with two-paste signaling the guest's checks start before
+  the host has the reply code and are dropped at the relay until it does. Chromium keeps the attempt alive
+  and recovers when the host starts; measured connecting after a 25 s and a 60 s pause over the real relay.
+- **Consequence for NFR-10.** The requirement names current and previous Chrome, Firefox and Edge. Hot-seat
+  play meets it. Online play meets it for Chrome and Edge and does not for Firefox, and no change on this
+  side of the browser fixes that: the specification-backed workaround (withholding end-of-candidates) was
+  tested and Firefox ignores it. Recorded here as a known gap with a date and a number, not as a defect
+  list item, because it will still be true after the deadline.
+- **Server list is four entries.** Twilio's STUN server was removed as redundant next to Google's, which
+  also silences Firefox's "five or more STUN/TURN servers" warning in the console the team reads. In
+  relay-only mode STUN is not consulted at all.

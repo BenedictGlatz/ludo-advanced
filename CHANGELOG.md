@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A guest whose connection attempt failed can try again without leaving the lobby.** Before, after
+  the handshake failed once, pasting a new invite code and pressing Connect silently did nothing; the
+  only way out was Leave and starting over. The failed attempt is now hung up and forgotten, so the next
+  code starts fresh
+- **Firefox no longer warns about the number of relay servers** in the console. One redundant address
+  server was removed from the list, which changes nothing about how a connection is found
 - **The invite code is no longer produced before the connection has finished looking for routes.** The
   game waited five seconds, which was enough before there was a relay server and is not enough now:
   reaching the relay takes longer than that on a normal home connection, so codes went out incomplete
