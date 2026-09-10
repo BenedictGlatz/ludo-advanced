@@ -3738,6 +3738,22 @@ Decision block: project journal, 2026-09-09. The `net/` half is in [06-state-and
   lobby appends the second while a seat is free or a bot, one sentence for the whole screen (D91.4).
 
 
+### Brief 19 sent: the online lobby gets the brief it was owed since 2026-09-09: 2026-09-10, issues #42 and #101
+
+- **`01-Design/Handoff/19-brief-online-lobby.md`, D116 to D122**, read against `272e36e`. The 2026-09-09
+  status block in `00-open-requests.md` said the lobby's brief was owed and no numbered file followed;
+  the #101 correction of 2026-09-10 then amended a brief that only existed as that block. Both are now one
+  file, so the design side draws a lobby that knows about bot seats from the start.
+- **The brief is descriptive first, like brief 13**, because the thing it commissions exists: three
+  `data-screen` values, the seat rows with four statuses, the two textareas, every locale key of the
+  `online` block, and the connection stages with their real durations (five seconds of gathering, twenty
+  of NAT timeout). The reason is recorded in its § 0: what is being replaced has words that carry meaning
+  today, and the look has to carry it after.
+- **Negative finding, stated in the brief rather than hidden:** `online.stage.stale`, `online.hint.nat`
+  and `online.error.version` exist in both languages and no code sets them. Nothing detects an expired
+  code or a version mismatch; the `failed` sentence covers the first and nothing covers the second.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -3,8 +3,32 @@
 **From:** Claude Code
 **To:** Claude Design
 **Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, four
-times on 2026-09-04, twice on 2026-09-05, seven times on 2026-09-06, once on 2026-09-09 and once on
+times on 2026-09-04, twice on 2026-09-05, seven times on 2026-09-06, once on 2026-09-09 and twice on
 2026-09-10**
+
+---
+
+## Status on 2026-09-10, later: the lobby brief exists, as handoff 19
+
+**[19-brief-online-lobby.md](19-brief-online-lobby.md) is sent. D116 to D122.** The status block of
+2026-09-09 below said a brief was owed for the three online screens and never wrote it; the block right
+after this one then corrected a brief that did not exist. Both are now folded into one file, read against
+`272e36e`, which is the tree with the bot rows of issue #101 on it.
+
+**Like brief 13, it is the wrong way round on purpose:** the lobby is shipped, tested and a recorded
+placeholder, so the commission is "replace a placeholder that works" and the file spends its early sections
+describing what will be thrown away, so that the words the screens carry today are known before the look
+replaces them.
+
+**The seven decisions, in one line each:** whether the door screen stays or folds into the main menu's
+Online door (D116); how the four kinds of seat row read (D117); the one sentence that is a hint, a stage,
+a failure and a rule in turn (D118); the code as a thing to copy and never to read (D119); whether the Bot
+switch on a lobby row is spec 15's control unchanged or a lobby variant (D120); waiting, and the two ways
+it ends badly (D121); what the lobby should say about its known limitations (D122).
+
+| Brief | Owed | State |
+| --- | --- | --- |
+| [19-brief-online-lobby.md](19-brief-online-lobby.md) | `19-spec-online-lobby.md`, D116 to D122, a replacement `lobby.css`, and diffs for `lineup.css`, `overlay.css` or `tokens.css` if an answer touches them | **Open.** Sent 2026-09-10, read against `272e36e` |
 
 ---
 
@@ -1304,6 +1328,13 @@ deliver the 06 spec.** It is fifteen lines and it closes a requirement.
 | **D78** | Whether an unavailable item explains itself and where that text sits. The two unavailable items are unavailable for **different** reasons: FR-42 was never built, and S11 was deliberately deleted with its language half already in the chrome | 12 | No. NFR-03 keeps the sentence out of CSS, so it needs an element we build once the spec names it |
 | **D79** | What else is on the menu. The game's name, which is an `<h2>` at the same size as the word "Paused"; the one sentence; the language button that already floats over the menu at `--layer-chrome`; and whether a place is reserved for S10 without designing it | 12 | No |
 | **D80** | Whether Hotseat still leads to the separate player-count screen S2. **Asked as a confirmation**, because the Product Owner chose to keep the two screens: S2 has its own requirement and acceptance criterion, its three count buttons are already designed, and three end-to-end specs click them | 12 | No |
+| D116 | Whether the online door screen stays, or folds into the main menu's Online door | 19 | No |
+| D117 | The host's table: how the four kinds of seat row (host, connected, waiting, bot) read at a glance and without colour | 19 | No |
+| D118 | The one sentence under the host's title, which is a hint, a stage, a failure and the bot rule in turn | 19 | No |
+| D119 | The invite and reply codes: a textarea for a thing nobody reads, and where Copy and Connect sit | 19 | No |
+| D120 | Whether the Bot switch on a lobby row is spec 15's control unchanged, or a lobby variant that agrees with D85 | 19 | No |
+| D121 | Waiting for the other side, the twenty-second failure, and a dropped guest | 19 | No |
+| D122 | Whether the lobby states its known limitations (visible hands, no reconnect) before Start | 19 | No |
 
 Four more items are open from spec 03 § 5 and brief 04 § 5.1 and are not numbered: what the reaction
 countdown looks like, whether the prompt strip belongs at the foot or in the rail, how a pickable pawn
