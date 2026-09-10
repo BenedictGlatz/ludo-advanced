@@ -44,6 +44,8 @@ import { createSessionActions } from "./session-actions.js";
  * - `stack` is a list of skill card ids that becomes the top of the pool, from `?stack=`.
  * - `bots` is how many of the seats play themselves, from `?bots=`; the line-up screen hands
  *   `freshMatch` a list of seats instead, because D95 lets the player put the computer on seat 0.
+ * - `relayOnly` forces every online connection through the TURN relay (`?relay=1`), which is the
+ *   diagnostic `options.js` explains. It reaches the links and nothing else.
  */
 export function createMatchFlow({
   $root,
@@ -53,6 +55,7 @@ export function createMatchFlow({
   skipHandover = false,
   stack = null,
   bots = 0,
+  relayOnly = false,
 }) {
   const session = { $chrome: renderChrome(), $overlay: renderOverlay() };
 
@@ -194,7 +197,12 @@ export function createMatchFlow({
     },
     rng,
     delays,
-    links: { createHostLink, createGuestLink },
+    // Wrapped rather than passed straight through, so `relayOnly` reaches both links from the one place
+    // that knows it and neither role has to learn about a connection setting it cannot act on.
+    links: {
+      createHostLink: () => createHostLink({ relayOnly }),
+      createGuestLink: () => createGuestLink({ relayOnly }),
+    },
     loops: { createGuestLoop, guestDeps },
   });
 

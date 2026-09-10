@@ -54,7 +54,17 @@ export const FAST_DELAYS = {
 };
 
 /**
- * The five settings the address bar may carry.
+ * The settings the address bar may carry.
+ *
+ * ## `relay` is from issue #42's TURN follow-up, and it is a diagnostic
+ *
+ * `?relay=1` forbids every direct route and forces the connection through the TURN relay. It answers the
+ * one question a failed online match cannot otherwise answer: are the relay credentials good? Without it
+ * a successful connection proves nothing about the relay, because it may simply have gone direct, and a
+ * failed one does not say which of the two halves broke.
+ *
+ * It belongs here rather than in a lobby button for the same reason `?seed=` does: a player has no use
+ * for it, and it makes the game slower when it works. Read here and nowhere else.
  *
  * **`players` is `null` when the address bar does not name one**, and that is load-bearing since issue
  * #41. A named count skips the main menu and starts a match at once, which is what keeps every
@@ -106,6 +116,7 @@ export function readOptions(search) {
     seed: Number.isInteger(seed) ? seed : Math.floor(Math.random() * 2 ** 31),
     players: seated,
     fast: params.get("fast") === "1",
+    relay: params.get("relay") === "1",
     bots: seated !== null && Number.isInteger(bots) && bots >= 0 && bots < seated ? bots : 0,
     // An empty or absent value is `null` and not `[]`: an empty array is a legitimate thing to hand
     // `startMatch`, meaning "a pool with no cards in it", and that is not what a missing parameter says.

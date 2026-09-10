@@ -235,6 +235,42 @@ read from the package's own `license` field **and** its own licence file:
   [Online-Multiplayer-Options.md](../../Project-Management/Online-Multiplayer-Options.md), decision in the
   journal under 2026-09-09.
 
+### A TURN relay was added after all, one day later: 2026-09-10, issue #42
+
+- **The prediction above came true within a day.** Three team members on three German home connections
+  exchanged codes and no channel ever opened. The lobby said what it was built to say after twenty
+  seconds, and it was right: STUN alone was not enough. The entry above is left standing rather than
+  corrected, because the interesting fact is that the risk was named in advance and still cost a day.
+- **Why STUN is not enough, concretely.** STUN tells a browser its own public address. That address is
+  only usable if the router will accept a return packet at it from anybody. Two common German setups
+  break that: **symmetric NAT**, where the router picks a different port per destination, so the address
+  in the code is already wrong; and **DS-Lite / CGNAT**, standard on most cable and mobile contracts,
+  where the customer has no public IPv4 at all.
+- **Chosen: Twilio's Network Traversal Service** as the TURN relay, listed in the new
+  `src/net/ice-servers.js`. Still **no dependency**: it is three more entries in the ICE server list, and
+  `package.json` is unchanged for the second time on this feature. Three entries for one relay, because
+  transport is what survives a hostile network: UDP, TCP on 3478, and TCP on 443, the port outgoing HTTPS
+  uses.
+- **Rejected: Cloudflare Realtime TURN.** Cheaper per gigabyte, and its free tier is tied to also using
+  their SFU, which is a video-conference product this game has no use for. Both providers require an API
+  call with an account secret to issue credentials, so neither avoids the expiry problem below; Twilio
+  was already set up and the price difference is fractions of a cent at this project's data volume.
+- **Rejected: a self-hosted coturn.** The better answer for the report and a one-to-two day job on
+  infrastructure nobody on the team has run, with a hard deadline one week out. Recorded as the option
+  that lost to the calendar rather than to the argument.
+- **Rejected: leaving TURN out and telling players to use a VPN** (Tailscale makes two home networks look
+  like one, and does fix this). It works and needs no code, but it moves the setup cost onto every player
+  and makes the published build not actually playable, which FR-42 asks for.
+- **The cost, stated plainly: the credentials expire after 24 hours.** Twilio issues nothing permanent,
+  and a static GitHub Pages build has no server to fetch fresh ones with. So the published build's online
+  play works for a day at a time and is renewed with `npm run net:turn`. This is a real limitation of the
+  serverless architecture, not an oversight, and it is the price of the 2026-09-09 decision to have no
+  server at all.
+- **Measured, not assumed:** with `?relay=1` forcing every connection through the relay, an invite code
+  carried 5 relay candidates on Twilio's Frankfurt addresses and two browser contexts connected and
+  seated a guest. Verified by a throwaway Playwright spec on 2026-09-10, which was deleted again because
+  it depends on credentials that expire; see Chapter 08 for why it is not part of the suite.
+
 
 ## Decisions
 

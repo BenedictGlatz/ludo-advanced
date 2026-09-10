@@ -2504,3 +2504,25 @@ Vitest half.
   system Edge, so that project needs Edge installed on the machine running the suite.
 - Lighthouse or comparable audits: not considered yet. Likely of limited value for a single-screen
   board game, but the report should say that rather than skip it.
+
+### The relay is verified by a test that was deleted on purpose: 2026-09-10, issue #42
+
+- **`ice-servers.test.js` pins the shape of the server list, not that a relay works.** Four assertions,
+  each on a mistake that fails *silently*: a list with no relay in it, Twilio's obsolete `url` spelling
+  in place of `urls`, a relay entry missing its credentials, and losing the TCP-on-443 entry that is the
+  one a restrictive network is least likely to block. Every one of those still produces a working-looking
+  connection that simply never uses the relay, and the symptom is identical to the NAT failure the relay
+  was added to fix. That is why they are worth four tests.
+- **`webrtc-link.test.js` gained a `describe` for the connection configuration**, asserting that
+  `iceTransportPolicy` is absent by default and `"relay"` under `relayOnly`. Absent rather than `"all"`,
+  because absent is what a player's browser actually gets.
+- **The real proof was a throwaway Playwright spec, and it is not in the suite.** On 2026-09-10 a
+  temporary spec opened two browser contexts with `?relay=1`, decoded the invite code in the page, found
+  5 relay candidates on Twilio's Frankfurt addresses, and connected with every direct route forbidden.
+  It was then deleted. **Negative finding, recorded rather than hidden:** the relay has no automated
+  coverage, because a spec asserting it would fail 24 hours later when the credentials expire, and a
+  suite that goes red on a clock teaches the team to ignore red. The check is a manual step instead,
+  named in Chapter 03 next to the command that renews the credentials.
+- **Unit coverage of `src/net/` is unaffected in kind:** `ice-servers.js` is data and two small pure
+  functions, so it is inside the 80 % floor rather than excluded like `webrtc-link.js`. The figure itself
+  belongs in Chapter 09, next to the command that produces it.

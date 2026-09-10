@@ -570,3 +570,17 @@ Three facts came out of verifying it:
   to a committed `.mcp.json` makes it work for all three members at once rather than per machine.
 - Before submission, `npm run lint` and the formatter check must be demonstrably green, and the run
   commands in the README must actually work. Record the evidence here when that is verified.
+
+- **`npm run net:turn` renews the TURN credentials** (2026-09-10, issue #42). Twilio issues them for at
+  most 24 hours, so somebody has to re-run this before a session. It rewrites three values in
+  `src/net/ice-servers.js` in place rather than generating the file, because everything else in that file
+  is prose explaining a decision, and prose a script regenerates is prose nobody edits.
+  **The account's auth token is read from the environment and never written anywhere.** Rejected: a
+  config file, which gets committed eventually; and a command-line argument, which lands in the shell
+  history. The credentials the script *writes* are public by design; the token that issues them is not,
+  and keeping those two apart is the whole point of the arrangement.
+- **Two names were added to the ESLint `nodeGlobals` list**, `fetch` and `URLSearchParams`. Both are web
+  standards that Node has had as globals since 18. The alternative was importing them under `node:`
+  names in the one script that calls an HTTP API, which would give the same thing two spellings across
+  the browser and script layers. The hand-maintained globals list from 2026-08-20 held: adding two names
+  to it was a two-line change, and the `globals` package is still not a dependency.

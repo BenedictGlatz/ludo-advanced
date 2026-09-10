@@ -158,6 +158,7 @@ export async function boot(root = "#app", search = window.location.search) {
     delays: options.fast ? FAST_DELAYS : {},
     skipHandover: options.fast,
     stack: options.stack,
+    relayOnly: options.relay,
   });
 
   flow.start();

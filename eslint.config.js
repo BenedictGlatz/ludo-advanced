@@ -28,6 +28,11 @@ const nodeGlobals = {
   console: "readonly",
   URL: "readonly",
   Buffer: "readonly",
+  // Web standards that Node has had as globals since 18, and `scripts/turn-credentials.js` calls an
+  // HTTP API with. Listed here rather than reached for through `node:` imports, because these are the
+  // spellings the browser layers already use and two names for one thing is the worse arrangement.
+  fetch: "readonly",
+  URLSearchParams: "readonly",
 };
 
 // The import bans alone would still allow a bare `document.querySelector`, since no import is needed
