@@ -22,8 +22,9 @@ name: pages
 on:
   push:
     branches: [main, dev]
-  # Publish a branch by hand, from the Actions tab. Only offered once this file is on the default
-  # branch, which is why the push trigger above and not this one is what actually publishes today.
+  # Publish any branch by hand, from the Actions tab. This works: it was used on 2026-09-10 to
+  # republish `dev` after the Pages source was switched to GitHub Actions. The default-branch
+  # requirement noted here before applies to a workflow GitHub has never seen run, not to this one.
   workflow_dispatch:
 
 # `pages` and `id-token` are what actions/deploy-pages needs. `contents: read` is everything else.

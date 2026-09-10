@@ -565,6 +565,11 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   for are built: Copy and Connect beside their field, `data-tone` on a failure, the stage on the seat
   row, autofocus on Copy and Connect, a fresh code after a failed exchange, and the abandoned screen
   naming the guest who dropped. Sprint 3.
+- **2026-09-10**: Pages verified live, issue #42. The owner switched the source to *GitHub Actions*,
+  which by itself republished nothing: for a day the site was still the legacy branch deployment of
+  the repository root. One dispatched `pages.yml` run replaced it, and the two online specs pass
+  against `https://benedictglatz.github.io/ludo-advanced/`. Hosting confirmed, NAT traversal still
+  not, because both browsers sat on one machine. Sprint 3.
 
 - **2026-08-09** — Appendix started: the board's Kanban view captured as *Figure 1* and registered in
   Ch. 12. Two negative findings from 2026-08-06 resolved (`Status` and `Sprint` back-filled), three
