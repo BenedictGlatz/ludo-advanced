@@ -118,12 +118,33 @@ describe("every other screen", () => {
       OVERLAY_SCREEN.NONE,
       OVERLAY_SCREEN.MENU,
       OVERLAY_SCREEN.SETUP,
+      OVERLAY_SCREEN.SETTINGS,
       OVERLAY_SCREEN.PAUSE,
     ];
 
     for (const screen of screens) {
       expect(screenDescription(screen).outcome ?? null, screen).toBeNull();
     }
+  });
+
+  /**
+   * The pause screen says how long the match has run (issue #77). The number arrives as milliseconds
+   * and is printed as `mm:ss`; without a match there is nothing to say and the sentence stays empty.
+   */
+  it("tells the pause screen how long the match has run, and says nothing without a match", () => {
+    const paused = screenDescription(OVERLAY_SCREEN.PAUSE, { elapsed: 65_000 });
+
+    expect(paused.text).toBe("Spielzeit: 01:05");
+    expect(screenDescription(OVERLAY_SCREEN.PAUSE).text).toBe("");
+  });
+
+  it("keeps the online sentence in front of the match time on a host's pause screen", () => {
+    const paused = screenDescription(OVERLAY_SCREEN.PAUSE, {
+      elapsed: 5_000,
+      online: { role: "host" },
+    });
+
+    expect(paused.text).toMatch(/^Du bist der Host.*Spielzeit: 00:05$/);
   });
 
   it("names the arriving seat on the handover, because the curtain is that seat's colour", () => {

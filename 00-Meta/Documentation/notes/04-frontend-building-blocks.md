@@ -3812,6 +3812,96 @@ Decision block: project journal, 2026-09-10. The state half (`abandonedBy`) is i
 - **D122 built as decided: the lobby says nothing about hands or reconnects.** Nothing was removed,
   because nothing had been added; the changelog carries both limitations.
 
+### Three polish items from the Product Owner: the Decline that was not yours, a match clock, a settings door that opens: 2026-09-10, issue #77
+
+- **The reaction strip drew "Ablehnen" for whoever was looking at the screen.** `prompt-view.js` keyed
+  its reaction branch on `state.reactionWindow !== null` and nothing else, and `render.js` handed it no
+  information about who was at the screen. `openWindow` only guarantees that *somebody* at the table
+  holds a matching Reaction card. Two cases put a person in front of a Decline that was not theirs: a
+  match against bots during the bot's 900 ms card hold, because the loop renders before `bot-driver.js`
+  answers and `eligible[0]` is the bot; and an online guest who holds no Reaction card, whose Decline
+  `onDecline` silently dropped because `seatOnShow` was not local. The report was "when I hold no
+  reaction card I still get an Ablehnen prompt", and that is exactly the first case.
+- **Fixed in the view, not in the rules.** `canReact` was checked against `checkPlayable` and found
+  complete: the only card with a minimum-die condition is an Action card, so a seat in `eligible` always
+  has something clickable. The rule "a window nobody can use does not open" already held; the strip was
+  the one thing that did not read `eligible`.
+- **`reaction-prompt.js` is a new pure module, and the reason it is a file** is the same one
+  `overlay-screens.js` records against `overlay-view.js`: `prompt-view.js` imports jQuery, so nothing in
+  it can be unit tested under `environment: "node"`. The one decision the strip makes, whether to offer
+  Decline, is now `reactionPrompt(state, canAnswer)` returning `{ line, decline }`, and `windowLine`
+  moved with it unchanged. `prompt-view.js` draws what it is handed.
+- **`canAnswer` is the sixth piece of presentation state through `render.js`**, computed in both loops
+  as `store.isLocal(seatOnShow(state))`. `game-loop.js` and `online/guest-loop.js` each gained one
+  line; `card-controls.js`'s `onDecline` guard is unchanged and now agrees with what is on screen.
+- **`reaction.waiting` finally has a reader.** When nobody at this screen is being asked, the strip
+  appends "Warte auf {{name}}" with the seat being asked and offers no button. The key existed in both
+  languages since issue #38 and was referenced nowhere in `src/`; `reaction.declined` still is not.
+- **The pause screen says how long the match has run.** `match-clock.js` is new: `formatElapsed(ms)`
+  prints `mm:ss` or `h:mm:ss`, and `createMatchClock({ now, timers })` counts from `start()` and re-arms
+  a `match-tick` redraw once a second under `watch(redraw)`. The clock lives in `match-session.js`,
+  started in `beginMatch`, so a fresh match, Play Again and the online guest's mirror all count from the
+  moment their board appeared. `match-flow.js`'s `drawShell` passes `elapsed` to `screenDescription`
+  and watches or unwatches by whether the pause screen is the one up. **It keeps counting while
+  paused**, on purpose; the journal carries why.
+- **The time goes into `.overlay__text`, joined to the online sentence with a space.** No new element:
+  the pause screen has no spec beyond D38's veil, and a new element on it would be a design decision.
+  `pause.elapsed` is "Spielzeit: {{time}}" / "Match time: {{time}}", with digits and colons carried in
+  the interpolation so the string is the same in both languages.
+- **The menu's third door opens.** `OVERLAY_SCREEN.SETTINGS` and `OVERLAY_ACTION.LANGUAGE` are new in
+  `overlay-vocabulary.js`; `settings-screen.js` is a pure description on the `menu-screen.js` pattern:
+  one position per key of `LOCALES`, `aria-pressed` on the current one, labelled in its own language
+  from `language.name.<code>`, then Back. `session-actions.js` gained the `SETTINGS` door, the
+  `LANGUAGE` click (a no-op on the position already chosen, as the line-up's control is) and
+  `SETTINGS` as a third source for Back to the menu; the chrome button and the screen share one
+  `switchLanguage`. The `disabled` flag came off the door in `menu-screen.js`, and
+  `menu.settings.hint` stopped saying the switch is in the bar above.
+- **The screen's whole styling is one added selector in `lineup.css`**: `[data-screen="settings"]` on
+  the `aria-pressed="false"` rule, so the unchosen language lies flat as an unchosen seat position
+  does. It is a placeholder built from existing patterns on the lobby's precedent and is filed in
+  `00-open-requests.md`. `menu.css`'s three `:disabled` door rules stay, because a door can go dead again.
+- **Back from the settings screen does not hang up anything.** `ONLINE_SCREENS` in
+  `session-actions.js` names the three lobby screens, and `online.leave()` runs only when Back leaves
+  one of them; the old test `target !== SETUP` would have called it from the settings screen too.
+- **What is deliberately not there:** the settings screen is not reachable from the pause screen, only
+  from the menu, because the chrome's language button is already on every screen including the pause;
+  no setting is remembered across a reload (FR-45, `localStorage` is a lint error); and no sound
+  control, which waits on issue #40 and is what the screen's sentence says.
+
+### Only the first yard pawn could be dragged out, because the drop asked the square and not the pawn: 2026-09-10, issue #91 follow-up
+
+**The bug.** With a roll that lets a pawn leave the yard, dragging any pawn but the top-left one onto
+the lit entry square snapped it back and moved nothing. Clicking worked for every pawn, and dragging
+worked for every pawn already on the track. Reported by the Product Owner while playtesting the issue
+#77 fixes.
+
+**The cause.** `onDragEnded` in `turn-controls.js` checked the drop with `moveReaching(state, target)`,
+which answers "which legal move ends on this square" and returns the *first* one. That is the right
+question for a click on a square, where no pawn is known yet. It is the wrong question for a drop,
+where the pawn is already in hand: the four yard pawns all end on the same entry square, so the answer
+was pawn 0 whichever pawn was carried, the `?.pawn !== pawn` guard failed for pawns 1 to 3, and the
+drop was treated as a change of mind. Track pawns never collide this way because one roll is one
+distance and two pawns on different squares cannot share a target, which is why the bug hid behind
+`SEEDS.advancesEarly`, the only seed the drag tests used.
+
+**The fix.**
+- `move-targets.js` gained `moveOfPawnReaching(state, pawn, target)`: the legal move of *this* pawn that
+  ends on the target, or `null`. `moveReaching` is unchanged and still serves the square click.
+- `onDragEnded` checks with the new function and then calls `onPawnActivated(pawn)` instead of
+  `onTargetActivated(target)`. The second change matters as much as the first: `onTargetActivated`
+  would have re-derived the pawn from the square and got pawn 0 again, and since pawn 0 was not the
+  selected one it would have *selected* it rather than committed. Going through the pawn commits the
+  one `onDragStarted` selected.
+
+**Rejected.** Making `moveReaching` prefer the selected pawn was considered and dropped: it would make
+a square click's meaning depend on hidden state, and the pawn is known at the drop anyway, so the
+honest fix is to ask with it.
+
+**Tests.** `move-targets.test.js` covers the new function with four yard pawns sharing the entry square;
+`turn-controls.test.js` drags pawn 2 out of a full yard and expects `COMMIT_MOVE` for pawn 2;
+`pawn-moves.spec.js` opens `SEEDS.leavesStartAtOnce`, drags the *last* movable pawn onto the entry
+square and checks that it, and not pawn 0, left. The E2E case was run once without the fix and failed.
+
 
 ## Decisions
 

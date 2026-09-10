@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The pause screen shows how long the match has been running**, as minutes and seconds, ticking
+  while the screen is up. It counts from the moment the board appeared and keeps counting while the
+  game is paused
+- **The main menu's Settings door opens.** Behind it the language can be chosen by name, Deutsch or
+  English, with the current one marked. The language button in the bar above still works the same way
 - **A diagnostic mode for online play.** `?netlog=1` prints what the connection actually did to the
   browser console: what each code carries, every state the connection passes through, which route it
   ended up using, and the real reason a connection dropped. It changes nothing about how the game plays
@@ -17,6 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Every pawn in the start area can be dragged onto the board, not only the top-left one.** When the
+  roll allowed a pawn to leave, dragging pawn 2, 3 or 4 out of the yard snapped it back and nothing
+  moved; only the first pawn could be dragged. All four pawns share the same entry square, and the drop
+  asked "which pawn goes there" instead of "does the pawn in my hand go there". Clicking was never
+  affected.
+- **No more "Ablehnen" for a player who holds no Reaction card.** The reaction strip offered Decline
+  to whoever was looking at the screen whenever a window was open, including during a bot's pause and
+  to an online guest who could not answer. It now offers the button only to the seat being asked, and
+  tells everybody else who the game is waiting for
 - **A guest whose connection attempt failed can try again without leaving the lobby.** Before, after
   the handshake failed once, pasting a new invite code and pressing Connect silently did nothing; the
   only way out was Leave and starting over. The failed attempt is now hung up and forgotten, so the next

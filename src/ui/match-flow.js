@@ -91,8 +91,16 @@ export function createMatchFlow({
           snapshot: online.snapshot(),
           canRestart: online.canRestart(),
         },
+        elapsed: loop === null ? null : match.clock.elapsedMs(),
       })
     );
+
+    // The pause screen shows how long the match has run (issue #77), and a number that does not move
+    // reads as a mistake, so the screen is redrawn once a second for as long as it is up. `watch` is
+    // idempotent, so calling it from the redraw it schedules is what keeps it going; any other screen
+    // stops it. The clock itself keeps counting either way, see `match-clock.js`.
+    if (screen === OVERLAY_SCREEN.PAUSE) match.clock.watch(drawShell);
+    else match.clock.unwatch();
     updateChrome(session.$chrome, {
       canPause: loop !== null && screen === OVERLAY_SCREEN.NONE,
       turn: live === null ? "" : turnLine(live),

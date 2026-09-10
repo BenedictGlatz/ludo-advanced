@@ -105,8 +105,13 @@ test.describe("the match flow", () => {
     await expect(overlay(page)).toHaveAttribute("data-screen", "pause");
     await expect(overlay(page).locator(".overlay__title")).toHaveText(de.pause.title);
 
+    // The screen says how long the match has run (issue #77), and the number moves while it is up.
+    const elapsed = overlay(page).locator(".overlay__text");
+    await expect(elapsed).toHaveText(/^Spielzeit: \d\d:\d\d$/);
+    const shown = await elapsed.textContent();
+    await expect(elapsed).not.toHaveText(shown, { timeout: 3_000 });
+
     // The game really is stopped: nothing moves on while the screen is up.
-    await page.waitForTimeout(600);
     expect(await boardState(board)).toEqual(before);
 
     await action(page, "resume").click();

@@ -46,6 +46,8 @@ export const OVERLAY_SCREEN = Object.freeze({
   HOST: "host",
   /** The guest's lobby: paste the invite code, copy the reply code, wait for the host. */
   JOIN: "join",
+  /** S11, the settings screen: the language choice (issue #77). Reached from the menu's third door. */
+  SETTINGS: "settings",
 });
 
 /** What an overlay button can ask for, as the `data-action` the event handler reads. */
@@ -61,15 +63,19 @@ export const OVERLAY_ACTION = Object.freeze({
    */
   ONLINE: "online",
   /**
-   * The one menu door that does not work: the settings screen (S11, deliberately deleted).
+   * The settings door (S11). It leads to `OVERLAY_SCREEN.SETTINGS` since issue #77 on 2026-09-10.
    *
-   * **Nothing handles it, and that is the decision rather than an omission.** D77.2 draws it with the
-   * DOM's own `disabled` attribute, and a browser fires no click on a disabled button, so there is no
-   * branch to write in `session-actions.js` and no stop for a keyboard to land on where `Enter` would do
-   * nothing. It exists here because the door still needs a `data-action` to be told apart in the
-   * stylesheet and in a test.
+   * It was the one door that did not work from design handoff 12 until then: S11 had been deleted,
+   * and D77.2 drew the door with the DOM's own `disabled` attribute so that no click arrived and no
+   * keyboard stop landed where `Enter` would do nothing. That rule still stands for any door that is
+   * dead; this one no longer is.
    */
   SETTINGS: "settings",
+  /**
+   * One language on the settings screen (issue #77). Carries `data-value`, the locale code, the same
+   * way the line-up's two positions carry which position they are, and `aria-pressed` on the chosen one.
+   */
+  LANGUAGE: "language",
   /** A player count, 2, 3 or 4. Carries `data-count` as well. */
   PLAYERS: "players",
   /**

@@ -17,24 +17,25 @@
  * `menu.css` owns all of it. What belongs here is the part that is not a look:
  *
  * - **Three items rather than one**, because two of the three are the honest answer to "what else is
- *   there". Online Multiplayer is FR-42, built in issue #42; Settings is S11, which was deleted.
- * - **They are not equals.** Hotseat is the game, so it is the `primary` one; Online works but is plain;
- *   Settings is `disabled`. Three doors dealt as equals would say the game has three modes, which is
- *   false: it has two and a deleted screen.
- * - **Every door carries a second line**, including the one that works. On Hotseat it says what the mode
- *   is; on the other two it says why they cannot be used, in two different sentences because there are
- *   two different reasons (D78).
+ *   there". Online Multiplayer is FR-42, built in issue #42; Settings is S11, deleted on 2026-09-01
+ *   and reopened by issue #77 on 2026-09-10 as the second place the language can be changed.
+ * - **They are not equals.** Hotseat is the game, so it is the `primary` one; the other two are plain.
+ *   Three doors dealt as equals would say the game has three modes, which is false: it has two and a
+ *   settings screen.
+ * - **Every door carries a second line**, including the ones that work. On Hotseat and Online it says
+ *   what the mode is; on Settings it says what is behind the door (D78).
  *
- * ## Why the dead door is `disabled` and not filtered
+ * ## Why a dead door is `disabled` and not filtered
  *
- * `disabled` is a DOM attribute, so a browser fires no click on them and offers no tab stop. That means
- * **no branch in `session-actions.js`**, which is what D77.2 bought, and it means a keyboard user is
- * never dropped on a control where `Enter` does nothing: the same trade spec 05 § 5 made when it took
- * seven tab stops out of the pool overview.
+ * All three doors open today. The rule is kept here because two of them were dead when the menu was
+ * designed and a door can go dead again: `disabled` is a DOM attribute, so a browser fires no click on
+ * it and offers no tab stop. That means **no branch in `session-actions.js`**, which is what D77.2
+ * bought, and it means a keyboard user is never dropped on a control where `Enter` does nothing: the
+ * same trade spec 05 § 5 made when it took seven tab stops out of the pool overview.
  *
- * The cost is stated rather than hidden: a keyboard-only player tabs to Hotseat and to nothing else, so
- * they learn the other two doors exist by reading the screen. That only works because `hint` is
- * permanent text in the DOM on all three doors, which is why the test asserts it is never empty.
+ * The cost was stated rather than hidden: a keyboard-only player tabbed past a dead door and learned it
+ * existed by reading the screen. That only works because `hint` is permanent text in the DOM on all
+ * three doors, which is why the test asserts it is never empty.
  *
  * **Rejected: `aria-disabled="true"` with the click filtered.** It keeps the item reachable and lets it
  * announce itself as unavailable, and it costs a filter in `session-actions.js`. It buys that only if
@@ -60,7 +61,8 @@ const DOORS = [
   { action: OVERLAY_ACTION.HOTSEAT, variant: "primary" },
   // Opened on 2026-09-09 by issue #42. It was `disabled` from design handoff 12 until then.
   { action: OVERLAY_ACTION.ONLINE },
-  { action: OVERLAY_ACTION.SETTINGS, disabled: true },
+  // Opened on 2026-09-10 by issue #77, onto the language choice. `disabled` from handoff 12 until then.
+  { action: OVERLAY_ACTION.SETTINGS },
 ];
 
 /**

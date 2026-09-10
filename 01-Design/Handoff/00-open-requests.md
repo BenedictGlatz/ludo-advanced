@@ -3,8 +3,48 @@
 **From:** Claude Code
 **To:** Claude Design
 **Date:** 2026-09-01, **updated the same evening, twice on 2026-09-02, six times on 2026-09-03, four
-times on 2026-09-04, twice on 2026-09-05, seven times on 2026-09-06, once on 2026-09-09 and three times
+times on 2026-09-04, twice on 2026-09-05, seven times on 2026-09-06, once on 2026-09-09 and four times
 on 2026-09-10**
+
+---
+
+## Status on 2026-09-10, late night: two surfaces exist without a spec, and one strip says a new sentence
+
+**Nothing is owed as a brief unless this side wants one. Three things the Product Owner asked for on
+2026-09-10 (issue #77) are built from existing patterns only, and the design side should know what
+is on screen so it is not working from a picture the code no longer matches.**
+
+### 1. The settings door opens, onto a placeholder screen
+
+S11 was deleted on 2026-09-01 and the menu's third door has been `disabled` since handoff 12 (D77.2).
+It now opens `data-screen="settings"`: title, one sentence in `.overlay__text`, and in
+`.overlay__actions` one `.overlay__button[data-action="language"][data-value="<code>"]` per language
+with `aria-pressed` on the current one, then Back. The positions are labelled `Deutsch` and `English`
+in both languages, for the reason the chrome button names the target language: a player who cannot
+read the page needs a word they can read.
+
+**Its whole styling is one selector added to `lineup.css`**: `[data-screen="settings"]` joined to the
+`aria-pressed="false"` rule, so the unchosen language lies flat the way an unchosen seat position
+does. No token, colour or size. The `menu.css` rules for a `:disabled` door still exist and match
+nothing. The door's hint now reads "Sprache umstellen. Ton ist noch nicht gebaut." If the screen gets
+a design, the description above is the DOM contract, and the open question is whether the language
+belongs in the actions row at all or wants a row of its own like the line-up's seats.
+
+### 2. The pause screen carries the match time, in the text slot
+
+"Spielzeit: 12:34" is appended to `.overlay__text` on the pause screen, after the online sentence
+where there is one, redrawn once a second. It is `mm:ss`, or `h:mm:ss` past an hour, and it keeps
+counting while paused. **Not a new element**, deliberately: the pause screen has no spec beyond D38's
+veil, and an element is a design decision. If the number deserves a place of its own, `--font-num` is
+the obvious face for it and the code can put it in any element the spec names.
+
+### 3. The reaction strip says "Warte auf {{name}}" and drops its button
+
+While a window is open and the seat being asked is not a person at this screen, the strip shows the
+trigger sentence, then "Warte auf Bot 3", and **no Decline button**. The countdown ring is unchanged.
+This is the bug fix behind the report "I get an Ablehnen prompt without a reaction card": the button
+was drawn for whoever was looking. The plate therefore has a second state, one line and a ring with no
+button under it, and the strip has still never been designed (see the 2026-09-06 entry on its tokens).
 
 ---
 

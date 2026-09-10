@@ -96,6 +96,9 @@ export function createGameLoop({
       pick: cards.pick(),
       viewerSeat: handover.seat(),
       canAct: store.isLocal(store.getState().activePlayer),
+      // The seat a window asks is `eligible[0]`, and it is a bot for the 900 ms a bot's card play
+      // waits out. Decline is drawn only when it is a person here (issue #77).
+      canAnswer: store.isLocal(seatOnShow(store.getState())),
     });
   }
 

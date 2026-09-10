@@ -32,6 +32,7 @@ import $ from "jquery";
 import { cardById } from "../core/cards/catalogue.js";
 import { t } from "../i18n/index.js";
 import { seatName } from "./player-labels.js";
+import { reactionPrompt } from "./reaction-prompt.js";
 
 /** What the strip is currently for. `prompt.css` keys its layout off this. */
 export const PROMPT_MODE = {
@@ -68,37 +69,6 @@ function button(label, action, value) {
   );
 
   return value === undefined ? $button : $button.attr("data-prompt-value", value);
-}
-
-/**
- * The one-line description of an open reaction window: who is doing what to whom.
- *
- * `match` is `{ seats, bots }`, and a state object is one. The seat list is needed because the players
- * are numbered by position in the match rather than by seat index: a two-player match otherwise reads
- * "Spieler 3 würfelt" and has no Spieler 2. See `player-labels.js`.
- *
- * **The bot list is needed because it used to say "Spieler" for a bot** (issue #82). Every one of these
- * three sentences named a number and the locale wrote the word "Spieler" in front of it, so a window
- * opened by a bot in a match where the HUD says "Bot 3" read "Spieler 3 will eine Figur schlagen".
- * That was recorded as a negative finding when the bots landed and left unfixed, because nothing else
- * in the window was the bots' business yet. Now a bot can play a card **into** a window, so the line
- * has to be able to name one, and the three keys interpolate `{{name}}` instead of `{{number}}`.
- */
-function windowLine(match, window) {
-  const played = window.played
-    .map((entry) =>
-      t("reaction.played", {
-        name: seatName(match, entry.seat),
-        card: t(`card.skill.${entry.cardId}.title`),
-      })
-    )
-    .join(" · ");
-
-  const trigger = t(`reaction.trigger.${window.trigger}`, {
-    name: seatName(match, window.actor),
-  });
-
-  return played === "" ? trigger : `${trigger} · ${played}`;
 }
 
 /**
@@ -155,8 +125,19 @@ function setClock($clock, secondsLeft) {
     .attr("aria-label", t("reaction.prompt", { seconds: secondsLeft }));
 }
 
-/** Redraw the strip for whatever the game is waiting on. `pick` is the target picker's state, or `null`. */
-export function updatePrompt($prompt, state, { secondsLeft = null, pick = null } = {}) {
+/**
+ * Redraw the strip for whatever the game is waiting on. `pick` is the target picker's state, or `null`.
+ *
+ * `canAnswer` is whether the seat a reaction window is asking is a person at this screen (issue #77).
+ * The window's sentence and the decision to offer Decline are `reaction-prompt.js`'s, which is pure and
+ * unit tested; this function only draws what it returns. It used to draw Decline for any open window,
+ * which put the button in front of players who held no Reaction card at all.
+ */
+export function updatePrompt(
+  $prompt,
+  state,
+  { secondsLeft = null, pick = null, canAnswer = true } = {}
+) {
   const $line = $prompt.find(".prompt__line");
   const $clock = $prompt.find(".prompt__clock");
   const $buttons = $prompt.find(".prompt__buttons").empty();
@@ -173,10 +154,12 @@ export function updatePrompt($prompt, state, { secondsLeft = null, pick = null }
   }
 
   if (state.reactionWindow !== null) {
+    const { line, decline } = reactionPrompt(state, canAnswer);
+
     $prompt.attr("data-mode", PROMPT_MODE.REACTION);
-    $line.text(windowLine(state, state.reactionWindow));
+    $line.text(line);
     setClock($clock, secondsLeft);
-    $buttons.append(button(t("reaction.decline"), PROMPT_ACTION.DECLINE));
+    if (decline) $buttons.append(button(t("reaction.decline"), PROMPT_ACTION.DECLINE));
     return $prompt;
   }
 

@@ -19,6 +19,7 @@
  */
 
 import { createGameLoop } from "./game-loop.js";
+import { createMatchClock } from "./match-clock.js";
 import { freshMatchParts, restartParts } from "./match-setup.js";
 import { emptyParts, matchParts, mount } from "./page.js";
 
@@ -44,6 +45,13 @@ export function createMatchSession({
   let loop = null;
   let state = null;
   let deps = null;
+
+  /**
+   * How long the match on screen has been running (issue #77). Started in `beginMatch` and nowhere
+   * else, so every route into a match, fresh, Play Again and the online guest's mirror, counts from the
+   * moment its board appeared. The pause screen reads it; `match-clock.js` says why it never stops.
+   */
+  const clock = createMatchClock();
 
   /**
    * Build a match and put it on screen, replacing whatever was there. Returns the loop.
@@ -72,6 +80,7 @@ export function createMatchSession({
     });
 
     onMount();
+    clock.start();
     loop.start();
 
     return loop;
@@ -79,6 +88,7 @@ export function createMatchSession({
 
   return {
     beginMatch,
+    clock,
 
     /** A fresh match on a fresh pool. `match-setup.js` carries the bot clamp and the stack. */
     freshMatch(playerCount, botSeats = null) {

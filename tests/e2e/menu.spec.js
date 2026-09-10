@@ -8,13 +8,12 @@
  *
  * ## What is actually at risk here
  *
- * One of the three doors is `disabled` in the DOM. That is D77.2's decision, and it is what saves a
- * click filter in `session-actions.js` and saves a keyboard user a stop where `Enter` would do nothing.
- * It also means **nothing in `src/` handles `settings` at all**, so if the attribute ever came off, a
- * click would fall through the whole action table in silence and a player would find a dead button
- * rather than a door that explains itself. There is no unit test that can see that, because it is a
- * fact about the rendered element. The online door was the second dead one until issue #42 opened it on
- * 2026-09-09; `online.spec.js` covers where it leads.
+ * All three doors open. Two of them were `disabled` in the DOM when the menu was designed, which is
+ * D77.2's decision: it saves a click filter in `session-actions.js` and saves a keyboard user a stop
+ * where `Enter` would do nothing. The online door opened with issue #42 on 2026-09-09 and
+ * `online.spec.js` covers where it leads; the settings door opened with issue #77 on 2026-09-10 and
+ * the case below covers it, because a door that is enabled and handled by nothing would fall through
+ * the whole action table in silence, and no unit test can see that.
  *
  * The hints are the other half of the same decision: they are why not being able to focus a dead door
  * costs a keyboard user nothing, so an empty one would quietly break the reasoning D77 rests on.
@@ -25,6 +24,7 @@
 import { expect, test } from "@playwright/test";
 
 import de from "../../src/i18n/locales/de/ui.json" with { type: "json" };
+import en from "../../src/i18n/locales/en/ui.json" with { type: "json" };
 
 const overlay = (page) => page.locator(".overlay");
 const door = (page, name) => page.locator(`.overlay__button[data-action="${name}"]`);
@@ -55,34 +55,48 @@ test.describe("the main menu", () => {
     );
   });
 
-  test("shows a door you cannot open as disabled, and starts nothing when it is clicked", async ({
+  /**
+   * The settings door leads to the language choice (issue #77). The same language switch as the
+   * chrome button, offered by name: the pressed position is the page's language, clicking the other
+   * one changes every string on the sheet, and Back returns to the menu in the new language. `en` is
+   * imported for the check, because after the switch nothing on screen may still be German.
+   */
+  test("opens the settings screen from Settings, and switches the language there", async ({
     page,
   }) => {
     await openMenu(page);
 
-    for (const name of ["settings"]) {
-      await expect(door(page, name)).toBeDisabled();
+    await door(page, "settings").click();
+    await expect(overlay(page)).toHaveAttribute("data-screen", "settings");
+    await expect(overlay(page).locator(".overlay__title")).toHaveText(de.settings.title);
 
-      // `force`, because Playwright refuses to click a disabled control on its own and the point of
-      // the case is what happens when a player tries anyway. A browser fires no click on a disabled
-      // button, so the screen has to be unmoved afterwards.
-      await door(page, name).click({ force: true });
-      await expect(overlay(page)).toHaveAttribute("data-screen", "menu");
-    }
+    const language = (code) => page.locator(`.overlay__button[data-value="${code}"]`);
+    await expect(language("de")).toHaveAttribute("aria-pressed", "true");
+    await expect(language("en")).toHaveAttribute("aria-pressed", "false");
 
-    await expect(page.locator(".board .pawn")).toHaveCount(0);
+    await language("en").click();
+    await expect(language("en")).toHaveAttribute("aria-pressed", "true");
+    await expect(overlay(page).locator(".overlay__title")).toHaveText(en.settings.title);
+    await expect(page.locator('.chrome__button[data-action="language"]')).toHaveText(
+      en.language.switch
+    );
+
+    await page.locator('.overlay__button[data-action="back"]').click();
+    await expect(overlay(page)).toHaveAttribute("data-screen", "menu");
+    await expect(door(page, "settings").locator(".overlay__label")).toHaveText(
+      en.menu.settings.label
+    );
   });
 
   /**
-   * Two since issue #42, one per working door, which is the trade D77.3 makes: a stop where `Enter`
-   * does nothing tells a keyboard user nothing, and spec 05 § 5 already took seven such stops out of
-   * the pool overview. The cost is that the dead door is read rather than tabbed to, which is why the
-   * next case exists.
+   * Three since issue #77, one per door, all of them working. D77.3's trade still holds for any door
+   * that goes dead again: a stop where `Enter` does nothing tells a keyboard user nothing, and spec 05
+   * § 5 already took seven such stops out of the pool overview.
    */
   test("gives the sheet one tab stop per working door (D77.3)", async ({ page }) => {
     const panel = await openMenu(page);
 
-    await expect(panel.locator(".overlay__button:not([disabled])")).toHaveCount(2);
+    await expect(panel.locator(".overlay__button:not([disabled])")).toHaveCount(3);
     await expect(panel.locator(".overlay__button:not([disabled])").first()).toHaveAttribute(
       "data-action",
       "hotseat"

@@ -5673,6 +5673,85 @@ to get wrong later.
   IPv4 addresses, and are noise. Not verified, so stated as a reading rather than a fact.
 - → Ch. 03, Ch. 06, Ch. 08, Ch. 11
 
+### 2026-09-10: The Decline button is fixed where it was wrong, in the view, and the rules are left alone
+
+- **Chosen:** the reaction strip offers Decline only when the seat being asked, `seatOnShow`, is a
+  person at this screen (`isLocal`). Everybody else reads who did what and "Warte auf {{name}}". The
+  decision is a pure function in a new `ui/reaction-prompt.js`, and `prompt-view.js` draws its answer.
+- **Rejected:** *tightening `canReact` in `state/reaction-window.js`.* The exploration found that
+  `canReact` skips `checkPlayable`, which `cardRefusal` applies, so a seat could in theory be eligible
+  with nothing clickable. Checked against the catalogue: the only card with such a condition is an
+  Action card, so the gap is not reachable, and a rules change for an unreachable case would have cost a
+  test that cannot be made to fail.
+- **Rejected:** *hiding the whole strip when nobody here is asked.* A player who cannot answer still
+  needs to know why the game has stopped and who it is waiting for, and the clock is theirs to watch
+  too. Online that is the guest's only view of a window.
+- **Rejected:** *asking `handover.js` to curtain a bot's window.* The curtain exists to hide a hand
+  from the wrong eyes, and a bot's window has no hand to hide; a curtain that appeared for 900 ms and
+  vanished would be worse than the button it replaced.
+- **Why the module and not three lines in `prompt-view.js`:** that file imports jQuery, so nothing in it
+  can be unit tested under `environment: "node"`. The one decision that was ever wrong in the strip is
+  now a Vitest case, which is the same trade `overlay-screens.js` made against `overlay-view.js`.
+- → Ch. 04, Ch. 08
+
+### 2026-09-10: The match clock keeps running while the game is paused
+
+- **Chosen:** the pause screen shows wall-clock time since the match was put on screen, from a
+  `ui/match-clock.js` started in `match-session.js`'s `beginMatch`, and it does not stop under the
+  pause screen. It is redrawn once a second while the pause screen is up.
+- **Rejected:** *a clock that stops while paused.* The loop is paused by the pause screen, the pool
+  overview, the handover curtain and the win screen alike, so "time not paused" would have to exclude
+  or include each of those and the number would mean something nobody asked for. The question the
+  Product Owner asked was how long the round has been going, and a round that sat under a pause screen
+  for ten minutes has been going for ten minutes.
+- **Rejected:** *a `startedAt` field in the game state.* `state/` measures no time by design, so that a
+  match can be replayed in a test, and a timestamp in the frozen state would be the first field a
+  replay could not reproduce. It would also have made the online guest's number the host's, which is
+  more honest but needs a wire change for a second on a pause screen.
+- **Rejected:** *a new element for the time.* The pause screen has no design spec beyond D38's veil, and
+  a new element on it would be a design decision. The time joins the online sentence in
+  `.overlay__text`, and the design side is told in `00-open-requests.md`.
+- **Why "Spielzeit" and not "Runde":** the request said Runde, and in the team's usage that is the
+  match. The rules layer's word for a round of turns is `turnNumber`, and a label that said Runde would
+  be read by the report's reader as that. The time is the match's.
+- → Ch. 04, Ch. 08
+
+### 2026-09-10: The settings door opens onto the language choice, and the chrome button stays
+
+- **Chosen:** the menu's third door leads to a settings screen (S11, deleted on 2026-09-01 and
+  reopened) with one position per language, `aria-pressed` on the current one, each named in its own
+  tongue, and Back. The chrome's language button is unchanged; both go through one `switchLanguage`.
+- **Rejected:** *removing the chrome button now that a settings screen exists.* FR-34 says the language
+  is switchable at runtime, and during a match the chrome button is the only control on screen that
+  does it without pausing. Two ways to the same switch cost one line.
+- **Rejected:** *putting the language on the pause screen too.* The chrome button is already visible
+  above the pause screen, so a third control for the same switch would say the game has three settings
+  when it has one.
+- **Rejected:** *waiting for a design brief before building the screen.* It is the Product Owner's
+  request with four working days left before the freeze, and the online lobby set the precedent on
+  2026-09-09: build from existing patterns only, so that what the design replaces is a placeholder and
+  not a decision. The screen adds one selector to `lineup.css` and no token, colour or size. Filed for
+  Claude Design in `00-open-requests.md`.
+- **Why the positions are built from `LOCALES` and not listed:** `nextLanguage` already promises that a
+  third language makes the chrome button right in the same file that gained it; the screen keeps that
+  promise, so the two cannot disagree about which languages exist.
+- **What it does not do, on purpose:** remember the choice (FR-45 defers persistence, `localStorage` is
+  a lint error) or offer sound (issue #40). The screen's one sentence says the second.
+- → Ch. 04, Ch. 08
+
+
+### 2026-09-10: A drag asks with the pawn in hand, and the square click keeps asking with the square
+
+**Decision.** `onDragEnded` checks a drop with `moveOfPawnReaching(state, pawn, target)` and commits
+through `onPawnActivated(pawn)`. `moveReaching(state, target)` stays as it is for the square click.
+
+**Why.** Only the first yard pawn could be dragged out: four pawns share one entry square, and asking
+"which move ends here" always named pawn 0. A click on a square knows no pawn and needs that question;
+a drop already knows the pawn and asking anything else loses that knowledge.
+
+**Rejected.** Teaching `moveReaching` to prefer `state.selectedPawn`. It would have fixed the drag, but a
+square click would then mean different things depending on invisible state, and two callers with two
+questions is clearer than one function that guesses. Details in `notes/04-frontend-building-blocks.md`.
 
 ## Challenges
 

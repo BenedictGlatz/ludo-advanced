@@ -56,8 +56,13 @@
     },
     "settings": {
       "label": "Settings",
-      "hint": "The language switch is in the bar above. Sound is not built yet."
+      "hint": "Switch the language. Sound is not built yet."
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "text": "The language applies at once to everything on screen. Sound is not built yet.",
+    "back": "Back"
   },
   "setup": {
     "title": "How many players?",
@@ -78,6 +83,7 @@
     "title": "Paused",
     "resume": "Resume",
     "quit": "Abandon match",
+    "elapsed": "Match time: {{time}}",
     "online": {
       "host": "You are the host: the match is paused for everybody.",
       "guest": "Only your screen is paused. The match keeps running on the host's side, and so does the clock."
@@ -100,7 +106,11 @@
   },
   "language": {
     "label": "Switch language",
-    "switch": "Deutsch"
+    "switch": "Deutsch",
+    "name": {
+      "de": "Deutsch",
+      "en": "English"
+    }
   },
   "move": {
     "refused": {

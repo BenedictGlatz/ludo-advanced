@@ -230,6 +230,23 @@ describe("dragging a pawn (issue #91)", () => {
 
     expect(applied).toEqual([]);
   });
+
+  /** Four yard pawns share the entry square; the one in hand is the one that leaves, not pawn 0. */
+  it("commits the carried yard pawn, not the first pawn that reaches the entry square", () => {
+    const leaving = [0, 1, 2, 3].map((pawn) => ({
+      player: 0,
+      pawn,
+      kind: "leave-start",
+      from: 0,
+      to: 1,
+    }));
+    const { board, applied, advance } = controls(acting({ legalMoves: leaving, selectedPawn: 2 }));
+
+    board.onDragEnded(2, { square: 0 });
+
+    expect(applied).toEqual([{ type: INTENT.COMMIT_MOVE, pawn: 2 }]);
+    expect(advance).toHaveBeenCalled();
+  });
 });
 
 describe("a seat played from another screen (issue #42)", () => {

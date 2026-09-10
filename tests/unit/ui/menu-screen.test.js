@@ -5,14 +5,14 @@
  * same reason `pool-screen.js` is. What it can be asked is exactly the part of the menu that is not a
  * look: how many doors there are, which of them work, and whether each one carries its second line.
  *
- * **The hint assertions are the load-bearing ones.** D77 draws the two dead doors with the DOM's own
- * `disabled` attribute rather than with `aria-disabled` and a click filter, and the reason that is
- * acceptable is D78: why a door cannot be opened is permanent text inside it, so nothing is lost by a
- * keyboard never reaching it. An empty hint would take a keyboard user's only explanation away and no
- * other test in the project would notice, because `locales.test.js` checks that a key is not empty and
- * cannot check that the screen asks for it.
+ * **The hint assertions are the load-bearing ones.** D77 drew a dead door with the DOM's own `disabled`
+ * attribute rather than with `aria-disabled` and a click filter, and the reason that was acceptable is
+ * D78: why a door cannot be opened is permanent text inside it, so nothing is lost by a keyboard never
+ * reaching it. All three doors open since issue #77, and the hints stay: an empty one would take a
+ * keyboard user's only explanation of a door away and no other test in the project would notice,
+ * because `locales.test.js` checks that a key is not empty and cannot check that the screen asks for it.
  *
- * That the doors are actually on screen and that Hotseat opens the count screen is `tests/e2e/menu.spec.js`.
+ * That the doors are actually on screen and where each one leads is `tests/e2e/menu.spec.js`.
  */
 
 import { beforeAll, describe, expect, it } from "vitest";
@@ -55,19 +55,18 @@ describe("the main menu", () => {
   });
 
   /**
-   * Online Multiplayer is FR-42 with no technology chosen and Settings is S11, which was deleted. Three
-   * doors dealt as equals would say the game has three modes, which is false, and it would say it on the
-   * screen where a player has the least ability to tell.
+   * Both were dead doors once: Online until issue #42 opened it on 2026-09-09, Settings until issue #77
+   * opened it on 2026-09-10. Both are usable now and both stay plain rather than primary, because
+   * Hotseat is still the game and the one saturated fill per screen is spent on it. Three doors dealt as
+   * equals would say the game has three modes, which is false.
    */
-  it("marks the one door that does not work as disabled, and gives it no fill", () => {
+  it("leaves the other two doors usable, and gives neither a fill", () => {
     const [, online, settings] = menuScreen().buttons;
 
-    // Online opened on 2026-09-09 (issue #42): usable, and plain rather than primary, because Hotseat
-    // is still the game and the one saturated fill per screen is spent on it.
     expect(online.disabled).toBeUndefined();
     expect(online.variant).toBeUndefined();
 
-    expect(settings.disabled).toBe(true);
+    expect(settings.disabled).toBeUndefined();
     expect(settings.variant).toBeUndefined();
   });
 

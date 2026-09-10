@@ -18,7 +18,7 @@
 import { MATCH_STATUS, TURN_PHASE } from "../state/game-state.js";
 import { INTENT } from "../state/intents.js";
 import { isBot } from "../state/bots.js";
-import { moveReaching } from "./move-targets.js";
+import { moveOfPawnReaching, moveReaching } from "./move-targets.js";
 
 /** The hot-seat answer to "may a person here click for `seat`": anybody who is not a bot. */
 const notABot = (getState) => (seat) => !isBot(getState(), seat);
@@ -150,6 +150,11 @@ export function createTurnControls({
    * On the pawn's target this is the second half of the gesture and commits; anywhere else the pawn
    * snaps back to where the state says it is, which a plain `render()` does because the drag never
    * changed the state. The selection stays, so the player can still finish with a click.
+   *
+   * **The pawn in hand is what is checked and committed, not the first pawn that reaches the square.**
+   * Four yard pawns share one entry square; `moveReaching` would name pawn 0 for all of them, so a drag
+   * of pawn 1, 2 or 3 was refused (only the top-left pawn could leave the yard by drag). Going through
+   * `onPawnActivated` with the carried pawn commits it, because `onDragStarted` selected exactly that one.
    */
   function onDragEnded(pawn, target) {
     if (target === null) {
@@ -158,12 +163,12 @@ export function createTurnControls({
     }
 
     const state = getState();
-    if (moveReaching(state, target)?.pawn !== pawn) {
+    if (moveOfPawnReaching(state, pawn, target) === null) {
       render();
       return;
     }
 
-    onTargetActivated(target);
+    onPawnActivated(pawn);
   }
 
   return { onDiceCardActivated, onPawnActivated, onTargetActivated, onDragStarted, onDragEnded };

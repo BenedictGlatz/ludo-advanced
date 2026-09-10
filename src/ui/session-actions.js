@@ -26,7 +26,10 @@
 
 import { CHROME_ACTION } from "./chrome-view.js";
 import { OVERLAY_ACTION, OVERLAY_SCREEN } from "./overlay-view.js";
-import { changeLanguage, nextLanguage } from "../i18n/index.js";
+import { changeLanguage, currentLanguage, nextLanguage } from "../i18n/index.js";
+
+/** The three lobby screens. Leaving any of them by Back hangs up the connection behind it. */
+const ONLINE_SCREENS = [OVERLAY_SCREEN.ONLINE, OVERLAY_SCREEN.HOST, OVERLAY_SCREEN.JOIN];
 
 /**
  * The two handlers, bound to one session.
@@ -46,24 +49,47 @@ export function createSessionActions(session) {
     return session.getLoop() !== null && session.getScreen() === OVERLAY_SCREEN.NONE;
   }
 
-  /** Which screen Back leaves for. The three online screens (issue #42) each have their own answer. */
+  /**
+   * Which screen Back leaves for. The three online screens (issue #42) each have their own answer, and
+   * the settings screen (issue #77) goes back to the menu it was opened from.
+   */
   function backTarget() {
     const screen = session.getScreen();
 
-    if (screen === OVERLAY_SCREEN.ONLINE) return OVERLAY_SCREEN.MENU;
+    if (screen === OVERLAY_SCREEN.ONLINE || screen === OVERLAY_SCREEN.SETTINGS)
+      return OVERLAY_SCREEN.MENU;
     if (screen === OVERLAY_SCREEN.HOST || screen === OVERLAY_SCREEN.JOIN)
       return OVERLAY_SCREEN.ONLINE;
 
     return OVERLAY_SCREEN.SETUP;
   }
 
+  /**
+   * Switch language and redraw. Both the chrome button and the settings screen end here.
+   *
+   * Switching needs nothing but a redraw, because no view caches a translated string: every one of them
+   * rewrites its own text from `t()` on every update. That is what makes FR-34's criterion, "no string
+   * remains in the previous language", true by construction rather than by a list of things to
+   * remember to refresh. Both the shell and the match have to be redrawn, because they are two renders.
+   */
+  function switchLanguage(locale) {
+    changeLanguage(locale).then(() => {
+      session.drawShell();
+      session.getLoop()?.refresh();
+    });
+  }
+
   function onOverlayAction(action, value, choice) {
-    // Two of the menu's three doors are handled. Settings is `disabled` in the DOM (D77.2), so no click
-    // ever arrives and a filter here would be dead code.
+    // The menu's three doors. Settings opened on 2026-09-10 (issue #77); it was `disabled` before.
     if (action === OVERLAY_ACTION.HOTSEAT) session.openScreen(OVERLAY_SCREEN.SETUP);
     if (action === OVERLAY_ACTION.ONLINE) session.online.open();
+    if (action === OVERLAY_ACTION.SETTINGS) session.openScreen(OVERLAY_SCREEN.SETTINGS);
     if (action === OVERLAY_ACTION.RESTART) session.playAgain();
     if (action === OVERLAY_ACTION.QUIT) session.quitToMenu();
+
+    // The settings screen's language control. `choice` is the locale code off `data-value`, and a
+    // click on the position that is already chosen does nothing, the same as the line-up's control.
+    if (action === OVERLAY_ACTION.LANGUAGE && choice !== currentLanguage()) switchLanguage(choice);
 
     // The online lobby (issue #42). `value` is a player count on the HOST door and the pasted code on
     // Connect and Copy, which `events.js` read off the textarea the button names.
@@ -93,10 +119,9 @@ export function createSessionActions(session) {
     }
     if (action === OVERLAY_ACTION.BEGIN) session.lineup.begin();
     if (action === OVERLAY_ACTION.BACK) {
-      const target = backTarget();
       // Leaving a lobby hangs up: a code that was handed out is no good once its connection is gone.
-      if (target !== OVERLAY_SCREEN.SETUP) session.online.leave();
-      session.openScreen(target);
+      if (ONLINE_SCREENS.includes(session.getScreen())) session.online.leave();
+      session.openScreen(backTarget());
     }
 
     if (action === OVERLAY_ACTION.RESUME) {
@@ -131,17 +156,12 @@ export function createSessionActions(session) {
   /**
    * A click on one of the always-present controls.
    *
-   * Switching language needs nothing but a redraw, because no view caches a translated string: every one
-   * of them rewrites its own text from `t()` on every update. That is what makes FR-34's criterion, "no
-   * string remains in the previous language", true by construction rather than by a list of things to
-   * remember to refresh. Both the shell and the match have to be redrawn, because they are two renders.
+   * The language button toggles to the other language; the settings screen offers the same choice by
+   * name (issue #77), and both go through `switchLanguage` above.
    */
   function onChromeAction(action) {
     if (action === CHROME_ACTION.LANGUAGE) {
-      changeLanguage(nextLanguage()).then(() => {
-        session.drawShell();
-        session.getLoop()?.refresh();
-      });
+      switchLanguage(nextLanguage());
       return;
     }
 
