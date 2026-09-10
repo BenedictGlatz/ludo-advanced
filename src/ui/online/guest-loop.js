@@ -28,6 +28,7 @@
 
 import { abandonMatch } from "../../state/match.js";
 import { MATCH_STATUS } from "../../state/game-state.js";
+import { seatOnShow } from "../../state/intents-cards.js";
 import { HAND_SIZE } from "../../core/dice-pool.js";
 import { t } from "../../i18n/index.js";
 import { bindMatchEvents } from "../events.js";
@@ -91,6 +92,9 @@ export function createGuestLoop({
       pick: cards.pick(),
       viewerSeat: handover.seat(),
       canAct: store.isLocal(store.getState().activePlayer),
+      // A guest who holds no Reaction card is not in `eligible`, so the strip tells them who the
+      // window is waiting for instead of offering a Decline that `onDecline` would drop (issue #77).
+      canAnswer: store.isLocal(seatOnShow(store.getState())),
     });
   }
 

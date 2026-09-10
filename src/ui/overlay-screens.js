@@ -13,11 +13,13 @@ import { PLAYER_COUNTS } from "../core/board.js";
 import { MATCH_STATUS } from "../state/game-state.js";
 import { t } from "../i18n/index.js";
 import { lineupScreen } from "./lineup-screen.js";
+import { formatElapsed } from "./match-clock.js";
 import { menuScreen } from "./menu-screen.js";
 import { hostScreen, joinScreen, onlineScreen } from "./online/lobby-screen.js";
 import { OVERLAY_ACTION, OVERLAY_SCREEN } from "./overlay-vocabulary.js";
 import { seatLabel } from "./player-labels.js";
 import { poolScreen } from "./pool-screen.js";
+import { settingsScreen } from "./settings-screen.js";
 
 /**
  * S2. Choose 2, 3 or 4 players (FR-01).
@@ -45,12 +47,23 @@ function setupScreen() {
  * Online (issue #42) the screen gains one sentence, because a pause means two different things: the
  * host's Pause stops the match for everybody, and a guest's stops only their own screen while the
  * host's clock keeps running. `online` is `"host"`, `"guest"` or `null`.
+ *
+ * **Since issue #77 it also says how long the match has been running**, from `elapsed`, milliseconds
+ * or `null`. It goes into the same `.overlay__text` slot as the online sentence rather than into an
+ * element of its own, because the pause screen has no design spec beyond D38's veil and a new element
+ * on it would be a design decision. The flow redraws the screen once a second while it is up, which is
+ * what makes the number move; `match-clock.js` carries what the number means.
  */
-function pauseScreen(online) {
+function pauseScreen(online, elapsed) {
+  const sentences = [
+    online === null ? null : t(`pause.online.${online}`),
+    elapsed === null ? null : t("pause.elapsed", { time: formatElapsed(elapsed) }),
+  ].filter((sentence) => sentence !== null);
+
   return {
     screen: OVERLAY_SCREEN.PAUSE,
     title: t("pause.title"),
-    text: online === null ? "" : t(`pause.online.${online}`),
+    text: sentences.join(" "),
     player: null,
     buttons: [
       { action: OVERLAY_ACTION.RESUME, label: t("pause.resume"), variant: "primary" },
@@ -156,18 +169,25 @@ function noScreen() {
  * `online` is the third snapshot (issue #42), from `online-flow.js`: `{ role, snapshot, canRestart }`.
  * The two lobbies are built from `snapshot`, the pause screen reads `role`, and the win screen reads
  * `canRestart`. All three default to the hot-seat answers.
+ *
+ * `elapsed` is how long the match has run, in milliseconds, or `null` when there is no match
+ * (issue #77). Only the pause screen reads it. Handed in rather than read from a clock, for the same
+ * reason `pool` is: this file is pure, and a screen that read `Date.now()` could not be tested by
+ * asking it what it says.
  */
 export function screenDescription(
   screen,
-  { state = null, seat = null, pool = null, lineup = null, online = null } = {}
+  { state = null, seat = null, pool = null, lineup = null, online = null, elapsed = null } = {}
 ) {
   switch (screen) {
     case OVERLAY_SCREEN.MENU:
       return menuScreen();
     case OVERLAY_SCREEN.SETUP:
       return setupScreen();
+    case OVERLAY_SCREEN.SETTINGS:
+      return settingsScreen();
     case OVERLAY_SCREEN.PAUSE:
-      return pauseScreen(online?.role ?? null);
+      return pauseScreen(online?.role ?? null, elapsed);
     case OVERLAY_SCREEN.WIN:
       return winScreen(state, online?.canRestart ?? true);
     case OVERLAY_SCREEN.ONLINE:

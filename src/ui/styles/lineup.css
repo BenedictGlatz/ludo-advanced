@@ -155,9 +155,16 @@
 
    The state is read off aria-pressed and not off the row's data-controller,
    so what the screen shows and what a screen reader announces cannot drift
-   apart: they are one attribute. */
+   apart: they are one attribute.
+
+   Added by Claude Code, not delivered with a spec: the settings screen
+   (issue #77) picks the language with this same control, one position per
+   language, and has no stylesheet of its own. The third selector is the
+   whole of its styling, so the screen is a placeholder built from this rule
+   and nothing else. Recorded in 00-open-requests.md. */
 .overlay[data-screen="lineup"] .overlay__button[aria-pressed="false"],
-.overlay[data-screen="host"] .overlay__button[aria-pressed="false"] {
+.overlay[data-screen="host"] .overlay__button[aria-pressed="false"],
+.overlay[data-screen="settings"] .overlay__button[aria-pressed="false"] {
   background: none;
   box-shadow: none;
 }

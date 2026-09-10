@@ -27,12 +27,14 @@ import { updateSkillHand } from "./skill-hand-view.js";
 /**
  * Bind the regions once and get back a `render(state, extras)`.
  *
- * `extras` carries the five things that are **presentation state** and are therefore not in the frozen
+ * `extras` carries the six things that are **presentation state** and are therefore not in the frozen
  * game state: which hand slot is mid-play, how many seconds are left on the reaction clock, what the
- * target picker is currently asking for, which seat's person is in front of the screen, and whether the
- * active player is somebody at this screen at all. `card-controls.js` owns the first three,
- * `handover.js` the fourth, and `loop-store.js`'s `isLocal` the fifth (issue #42): a bot's or a remote
- * player's dice cards must not be drawn as clickable, because the click would be refused.
+ * target picker is currently asking for, which seat's person is in front of the screen, whether the
+ * active player is somebody at this screen at all, and whether the seat a reaction window is asking is.
+ * `card-controls.js` owns the first three, `handover.js` the fourth, and `loop-store.js`'s `isLocal`
+ * the last two (issues #42 and #77): a bot's or a remote player's dice cards must not be drawn as
+ * clickable, because the click would be refused, and a Decline must not be offered to a seat that was
+ * never asked.
  */
 export function createRenderer({
   $board,
@@ -45,7 +47,14 @@ export function createRenderer({
 }) {
   return function render(
     state,
-    { selectedSlot = -1, secondsLeft = null, pick = null, viewerSeat = null, canAct = true } = {}
+    {
+      selectedSlot = -1,
+      secondsLeft = null,
+      pick = null,
+      viewerSeat = null,
+      canAct = true,
+      canAnswer = true,
+    } = {}
   ) {
     updateBoard($board, state);
     applyMoveHints($board, state);
@@ -57,7 +66,9 @@ export function createRenderer({
     updateChrome($chrome, { turn: turnLine(state), player: state.activePlayer });
     updateDiceHand($diceHand, state, { canAct });
     updateSkillHand($skillHand, state, selectedSlot, viewerSeat);
-    updatePrompt($prompt, state, { secondsLeft, pick });
+    // `canAnswer` is the sixth piece of presentation state (issue #77): whether the seat a reaction
+    // window is asking is a person at this screen. Without it the strip offered Decline to everybody.
+    updatePrompt($prompt, state, { secondsLeft, pick, canAnswer });
     showMessage($message, state);
   };
 }

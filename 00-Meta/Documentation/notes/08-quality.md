@@ -2563,3 +2563,34 @@ Vitest half.
 - **The end-of-candidates experiment is recorded as a negative result.** One line stripped, confirmed by
   the log, no change in Firefox's timing. A negative result written down is worth an hour to the next
   person; one not written down costs them the same hour.
+
+### Three polish items, and the two that got a unit test by being made pure first: 2026-09-10, issue #77
+
+- **`reaction-prompt.test.js` is the regression test for the Decline that was not yours.** The strip
+  had no unit test because `prompt-view.js` imports jQuery; the decision was moved into a pure module
+  so that the one case that matters, `canAnswer === false` gives no Decline and names the seat being
+  asked, could be a Vitest case rather than a screenshot. The end-to-end coverage of the *right* case,
+  Decline in front of the seat being asked, is `hand-secrecy.spec.js` and `reaction-prompt.spec.js`,
+  both unchanged and both still green.
+- **No end-to-end case asserts the *absence* of the Decline button, and the reason is stated rather
+  than hidden.** The bug shows in hot-seat play only during a bot's 900 ms card hold, which needs the
+  bot to hold a Reaction card that fits the person's roll *and* to decide to play it, and the arena's
+  card pricing makes that a probability rather than a construction. Online it needs two contexts and a
+  guest without a Reaction card. Either spec would be slow and probabilistic, so the coverage is the
+  unit case plus the two specs that show the button when it should be there.
+- **`match-clock.test.js` injects `now` and a fake `timers` registry**, the same arrangement
+  `reaction-clock.js` is tested under, so a one-second tick is asserted in a millisecond and no case
+  waits on a real clock. It also pins the ordering that keeps the redraw from arming twice: the tick
+  re-arms itself *before* it redraws, and the redraw calls `watch` again and must find it armed.
+- **`settings-screen.test.js` asks the four questions that are not a look**: one position per
+  `LOCALES` key, exactly the current one pressed, the pressed one following a switch, and every language
+  named in its own tongue whatever the page is in.
+- **`menu.spec.js` traded its dead-door case for a live one.** The `force: true` click on a disabled
+  Settings door, which asserted that nothing happened, is gone; in its place the spec opens the screen,
+  switches to English on it, checks the chrome button and the menu door follow, and comes Back. The tab
+  stop count went from two to three. `match-flow.spec.js`'s pause case now also asserts the match time is
+  on screen in `mm:ss` and that the number changes within three seconds.
+- **`overlay-screens.test.js` gained two pause cases**, hot-seat and host, because the online sentence
+  and the time share one `.overlay__text` and the order they are joined in is a fact the test should
+  pin. `menu-screen.test.js`'s "one disabled door" case became "two plain doors", which is what the menu
+  says now.
