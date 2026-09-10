@@ -519,6 +519,17 @@ Three facts came out of verifying it:
   open a data channel, play the first two turns, and the guest sees the abandoned screen when the host
   quits. This confirms hosting and the `base: "./"` decision. It does not confirm NAT traversal, for the
   reason in the bullet above: both contexts sat on one machine.
+- **The README points at the published URL, 2026-09-10.** A `## Play it` section directly under the
+  badges, above `## About`, naming the link and the workflow that produces it. The reason it sits at
+  the top rather than inside *Getting started* is who reads it: a tutor, a team mate or a play tester
+  wants the link, not a clone and an `npm install`, and a link found after the tech-stack table has
+  already lost most of them. Placing it there also makes the deployment falsifiable from outside the
+  repository, which no note in `00-Meta/` can be.
+- **The merge of PR #102 republished the site on its own**, run 34463866521, and the check that it
+  really did is the bundle name: `assets/index-Bjm_fLUC.js` before, `assets/index-BopalRky.js` after,
+  with `controller` and `abandonedBy` present in the new file. Those two strings are the seat control
+  from issue #101 and the abandoned screen from design spec 19, so the published build is the merged
+  `dev` and not a cached older one. A green workflow run does not show that; a changed hash does.
 
 ## Decisions
 
