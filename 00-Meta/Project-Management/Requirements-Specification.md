@@ -98,7 +98,7 @@ labels currently prioritise titles.
 
 | ID | Requirement | Acceptance criterion | MoSCoW | Traces to |
 | --- | --- | --- | --- | --- |
-| FR-42 | Online multiplayer with a lobby. | Two browsers on different machines play one match. | S | FG-17, #42 |
+| FR-42 | Online multiplayer with a lobby. | Two browsers on different machines play one match. | S | FG-17, #42, #101 |
 | FR-43 | **Local, rule-based** bot opponents take the seats no person fills. | A bot takes a legal turn without human input, plays a skill card only when a rule-based value model says it is worth more than holding it, and answers every reaction window; the match uses no network. | S | FG-18, #43, #82 |
 | FR-44 | Classic-vs-custom game modes as rule toggles. | Toggling a rule changes behaviour without a rebuild. | C | FG-21, #46 |
 | FR-45 † | A match in progress survives a page reload. | Reloading mid-match restores the board, hands and active player. | C | none |
@@ -114,8 +114,16 @@ of that date:
   a bot is the only way that bound can be met. A requirement another requirement depends on cannot stay
   a `could have`.
 
-What is **not** built is choosing bots from a screen: today they come from `?bots=` in the address bar.
-That is a separate issue, waiting on a design for the setup screen (D86 of design brief 13).
+~~What is **not** built is choosing bots from a screen: today they come from `?bots=` in the address bar.
+That is a separate issue, waiting on a design for the setup screen (D86 of design brief 13).~~ **Built on
+2026-09-05 as the line-up screen, issue #76.**
+
+**FR-42 and FR-43 meet since 2026-09-10, issue #101.** A seat nobody joins in an online lobby can be
+played by the host's computer. The bot is still local and rule-based, on the host, so FR-43's "the match
+uses no network" holds for the hot-seat match it describes and FR-42's match is the one that uses the
+network. Online the floor is the host **plus one guest**: a host alone against bots is FR-01's hot-seat
+match and is refused from that door. A bot does not take over a dropped guest's seat; that stays under
+FR-42's "no reconnect" limitation.
 
 **The criterion changed once more on 2026-09-04, and the change is the opposite of a relaxation.** It
 read "plays no skill card and declines every reaction window", which was the scope decision taken with

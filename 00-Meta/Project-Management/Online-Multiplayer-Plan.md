@@ -16,7 +16,7 @@ state travels**, and answered the document's open decisions:
 | --- | --- |
 | Signaling | **Manual codes.** No server, no new dependency. Host and guest swap two text blobs via any chat. |
 | Seats | **Up to 4 players.** Star topology: the host holds one connection per guest. Two players is the first milestone, 3 and 4 add only lobby plumbing. |
-| Bots online | **No bots in v1.** Humans only. Bots would run on the host later without touching the network. |
+| Bots online | **No bots in v1.** Humans only. Bots would run on the host later without touching the network. **Done on 2026-09-10, issue #101, exactly that way:** the lobby seats them, `src/net/` did not change. |
 | Hidden hands | **"We trust our friends."** Every browser holds the full state. Written into CHANGELOG as a known limitation. |
 | New layer | `src/net/` is added. It may import `core/` and `state/`, never `ui/` or `i18n/`. Decision block in the journal, CLAUDE.md architecture block updated. |
 | Dependency | **None.** `RTCPeerConnection` is a browser API. One public STUN server (`stun:stun.l.google.com:19302`) is listed so codes carry public addresses; without it only the same network works. That is an external service, not a dependency, and is named in the journal. |

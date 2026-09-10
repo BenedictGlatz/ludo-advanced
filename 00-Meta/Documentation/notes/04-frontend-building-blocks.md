@@ -3702,6 +3702,117 @@ Decision block: project journal, 2026-09-09. The `net/` half is in [06-state-and
   `menu.spec.js` now assert one dead door (Settings) and two tab stops.
 
 
+### The host's lobby seats bots on the line-up's control: 2026-09-10, issue #101
+
+- **A free seat's row in the host's lobby carries the two-position control of the line-up screen**,
+  and a row that is a bot says "Bot 3 (Grün)" through the same `seatLabel` the line-up and the HUD use.
+  `lineup-screen.js` exports `seatChoices(seat, controller, allowed)` for it, so the control is one
+  function on two screens and cannot come apart in markup or in the `aria-pressed` / `disabled` contract
+  spec 15 defined. The line-up passes `canBeBot`; the lobby passes `canToggle` from the new
+  `lobby-seats.js`.
+- **`src/ui/online/lobby-seats.js` is a pure rule file**, sixty lines, jQuery-free: `seatStatus`
+  (`host`, `connected`, `bot`, `waiting`), `freeSeats`, `canToggle` and `everybodyIn`. It exists so the
+  rule "may this seat switch" is asked twice, by the button that goes `disabled` and by the refusal in
+  `host-role.js`, and written once. The same reason `canBeBot` sits in `state/` for the line-up.
+- **The host and a connected guest have no control.** A person who joined is not turned into a bot by the
+  host; `canToggle` says never, and the row's `choices` is `[]`, which `lobby.css` already hid for the
+  status-only rows. A bot always goes back to a person. A free seat becomes a bot only while two persons
+  would remain.
+- **The invite on offer is dropped when the last free seat becomes a bot.** Otherwise the guest who
+  redeems the code has no seat. It can only happen with a guest already connected, because the floor of
+  two persons keeps one seat free otherwise, and `online-flow-bots.test.js` asserts the fake link was
+  hung up.
+- **Guests take the free seats in join order.** `nextSeat` in `host-role.js` was `seats[guests.length
+  + 1]` and is now `freeSeats(snapshot())[0]`: the first seat that is neither the host's, nor a bot's,
+  nor taken. The snapshot became a function declaration for it, since two operations above the returned
+  object read it.
+- **`OVERLAY_ACTION.CONTROLLER` is routed by screen** in `session-actions.js`: on `HOST` to
+  `online.setController`, otherwise to `lineup.setController`. No new action, because the button is the
+  same button; which screen is up is the only thing that tells the two apart.
+- **`lineup.css`'s four rules for the control name `[data-screen="host"]` as well.** Same component,
+  second screen, no new token, colour or size; the file's own scoping comment says so. The host row's
+  grid gained a fourth track for the control after the status word. Since the lobby is a recorded
+  placeholder without a handoff, the addition is filed as a correction to its brief in
+  `01-Design/Handoff/00-open-requests.md`.
+- **Two locale keys**, `online.seat.bot` and `online.hint.hostBots`; the idle sentence of the host's
+  lobby appends the second while a seat is free or a bot, one sentence for the whole screen (D91.4).
+
+
+### Brief 19 sent: the online lobby gets the brief it was owed since 2026-09-09: 2026-09-10, issues #42 and #101
+
+- **`01-Design/Handoff/19-brief-online-lobby.md`, D116 to D122**, read against `272e36e`. The 2026-09-09
+  status block in `00-open-requests.md` said the lobby's brief was owed and no numbered file followed;
+  the #101 correction of 2026-09-10 then amended a brief that only existed as that block. Both are now one
+  file, so the design side draws a lobby that knows about bot seats from the start.
+- **The brief is descriptive first, like brief 13**, because the thing it commissions exists: three
+  `data-screen` values, the seat rows with four statuses, the two textareas, every locale key of the
+  `online` block, and the connection stages with their real durations (five seconds of gathering, twenty
+  of NAT timeout). The reason is recorded in its § 0: what is being replaced has words that carry meaning
+  today, and the look has to carry it after.
+- **Negative finding, stated in the brief rather than hidden:** `online.stage.stale`, `online.hint.nat`
+  and `online.error.version` exist in both languages and no code sets them. Nothing detects an expired
+  code or a version mismatch; the `failed` sentence covers the first and nothing covers the second.
+
+
+### Handoff 19 landed: the lobby has a design, and six things were asked of this side: 2026-09-10, issues #42 and #101
+
+Decision block: project journal, 2026-09-10. The state half (`abandonedBy`) is in [06-state-and-turn-flow.md](06-state-and-turn-flow.md).
+
+- **`src/ui/styles/lobby.css` is the delivered file, taken whole**, 283 lines after Prettier, and the
+  spec is `01-Design/Handoff/19-spec-online-lobby.md`; `handoff-19/` is deleted as its README asks. No
+  other stylesheet changed: D120 keeps the two-position control identical on the host's rows, so the
+  four `lineup.css` rules that name both screens since #101 stay, and the failure tone is a rule on
+  `.overlay__text[data-tone]` in `lobby.css` itself. The one idea of the file: a seat somebody sits at
+  (`host`, `connected`, `bot`) is raised with the ink edge and the card shadow; a free seat (`waiting`,
+  `gathering`, `connecting`) is a dashed outline on its own wash. The status word moved under the name,
+  so the row is `auto 1fr auto` with two rows and the control has the third column to itself (D117.3).
+- **Copy and Connect sit beside their field** (D119.2). A field description may carry `button`, and
+  `overlayField` in `overlay-regions.js` draws it in `.overlay__field-action` after the textarea, through
+  the same `buttonShell`, so `data-action` and `data-field` are unchanged and `events.js` reads nothing
+  new. `lobby-screen.js` puts the button on the field and no longer in `buttons`; the host's actions row
+  is `Invite the next player` or `Start` plus `Back`, the guest's is `Back` alone.
+- **The field became a `<div>` with a `<label for>`**, where it was a `<label>` around the textarea. A
+  label may not contain a second labelable element and a button is one, so the delivered contract could
+  not be met inside a `<label>`. The textarea gets `id="overlay-field-<name>"`; names are unique per
+  screen. Not in the spec, recorded in `00-open-requests.md` so the design side knows the DOM.
+- **The stage moved onto the seat row it belongs to** (D118.1): `rowStatus` in `lobby-screen.js`
+  returns `gathering` or `connecting` for the first free seat while `snapshot.pending` is set and the
+  stage is one of the two, and `seatStatus` in `lobby-seats.js` still knows only four words, because the
+  rule "may this seat switch" does not care what the browser is doing. Two locale words,
+  `online.seat.gathering` and `online.seat.connecting`. The host's sentence is `hostText`: the error, or
+  the hint with the bot rule appended (D118.4); never the stage. The guest's sentence keeps the stage,
+  because the guest has no rows. **A row in `gathering` or `connecting` carries no control** for those
+  seconds: the seat is being taken, and a switch mid-handshake would drop the invite from under the
+  guest. This side's call, stated.
+- **`tone: "warn"` on every failure** (D118.2): the three lobby descriptions carry `tone`, and
+  `updateOverlay` writes `data-tone` on `.overlay__text` the way it writes `data-player` and
+  `data-outcome`, absent rather than empty.
+- **The keyboard lands on Copy while an invite is out, on Connect on the guest's screen, and on Copy
+  once the guest has a reply** (D119.2). A button description may carry `autofocus`; `buttonShell`
+  writes `data-autofocus`, and `focusOverlay` prefers it over Start and over the first button. The
+  browser's own `autofocus` attribute was not used, because it fires once per page load and the overlay
+  is drawn many times.
+- **A redraw that removed the focused button re-homes the keyboard.** `drawShell` in `match-flow.js`
+  calls `focusOverlay` when the overlay is open and the document's active element is no longer inside
+  it. Before this the keyboard fell to the page body the moment the invite code appeared, because the
+  count button it was on had been rebuilt away, and `openScreen` is not what draws the lobby's stages.
+  A player who is on a button the redraw kept, or in a textarea, is left alone.
+- **After `nat` or `failed` the host is offered a fresh code where Connect was** (D121.2): `host-role.js`
+  drops the invite (`dropInvite`: close the link, clear the code, stage idle) on the twenty-second
+  timeout and on a failed handshake, and `lobby-screen.js` labels `add-guest` with `online.retry`,
+  "Neuen Code erzeugen", while the error is one of those two. A bad paste keeps the invite: the player
+  only has to copy the reply again. A link whose gathering fails is now closed too, where before it was
+  only forgotten. A handshake that completes after the timeout already dropped its seat closes the
+  transport it got, rather than seating a guest on a seat that was offered again.
+- **The abandoned screen names who left** (D121.3): `winScreen` in `overlay-screens.js` sets `text` to
+  `match.abandonedBy`, "{{player}} hat die Verbindung verloren", when `state.abandonedBy` is a seat, and
+  leaves it empty for a match given up on purpose. How the seat gets into the state is Chapter 06's.
+- **The `online` locale block gained `seat.gathering`, `seat.connecting` and `retry`; `match` gained
+  `abandonedBy`.** Parity is enforced by `locales.test.js` as before.
+- **D122 built as decided: the lobby says nothing about hands or reconnects.** Nothing was removed,
+  because nothing had been added; the changelog carries both limitations.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

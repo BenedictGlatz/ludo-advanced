@@ -170,6 +170,11 @@ export function createGameState(playerCount, skillSquares = INITIAL_SKILL_SQUARE
     ...clearedTurnFields(),
 
     winner: null,
+
+    // The seat whose connection ended an online match (issue #42, design spec 19, D121.3), or null:
+    // a match given up on purpose names nobody. Travels with the state, so every screen at the table
+    // can say who left.
+    abandonedBy: null,
   });
 }
 

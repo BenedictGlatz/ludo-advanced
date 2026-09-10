@@ -91,12 +91,15 @@ export function renderOverlay() {
  * ```js
  * { screen,          // one of OVERLAY_SCREEN
  *   title, text,     // already translated: this file calls no t()
+ *   tone,            // "warn" when the text is a failure (design spec 19, D118.2), null otherwise
  *   player,          // the seat the panel is about, or null
  *   outcome,         // "won" or "abandoned" on the win screen, null everywhere else
  *   cards: [],       // dice or skill card descriptions, only the pool overview has any
  *   seats: [],       // seat rows, the line-up screen and the online lobby have them
- *   fields: [],      // text fields, only the two online lobbies have any (issue #42)
- *   buttons: [{ action, label, variant, count, seat, value, field, pressed, art, hint, disabled }] }
+ *   fields: [],      // text fields, only the two online lobbies have any (issue #42); a field may
+ *                    // carry its own `button`, drawn beside it (spec 19, D119.2)
+ *   buttons: [{ action, label, variant, count, seat, value, field, pressed, art, hint, disabled,
+ *               autofocus }] }
  * ```
  *
  * The last three fields on a button are the main menu's, from design handoff 12. **A button carrying a
@@ -129,7 +132,11 @@ export function updateOverlay($overlay, description) {
   }
 
   $overlay.find(".overlay__title").text(description.title ?? "");
-  $overlay.find(".overlay__text").text(description.text ?? "");
+  const $text = $overlay.find(".overlay__text").text(description.text ?? "");
+
+  // Absent rather than empty, like the two attributes above: `lobby.css` matches on it existing.
+  if (description.tone === null || description.tone === undefined) $text.removeAttr("data-tone");
+  else $text.attr("data-tone", String(description.tone));
 
   setCards($overlay, description.cards ?? []);
   setSeats($overlay, description.seats ?? []);
@@ -144,11 +151,18 @@ export function updateOverlay($overlay, description) {
 }
 
 /**
- * Move the keyboard onto the overlay's first button, or onto its Start button when it has one.
+ * Move the keyboard onto the overlay's first button, or onto its Start button when it has one, or onto
+ * the one button a screen marked `autofocus`.
  *
- * Called by the flow after opening a screen. It is here rather than in `updateOverlay` because focus is
- * a thing that happens **once**, when a screen opens, and `updateOverlay` also runs on a language
- * change, where stealing focus back would be wrong.
+ * Called by the flow after opening a screen, and again after a redraw that took the focused element
+ * away. It is here rather than in `updateOverlay` because focus is a thing that happens **once**, when a
+ * screen opens, and `updateOverlay` also runs on a language change, where stealing focus back would be
+ * wrong.
+ *
+ * **`data-autofocus` wins over both rules** (design spec 19, D119.2). The lobby's Copy sits inside its
+ * field, after the seat rows, so "the first button" would be a free seat's Bot switch while the one
+ * thing the host is about to do is copy the code. The screen says which button that is; this file only
+ * reads the attribute.
  *
  * **The one exception is the line-up screen, and D94.3 asks for it by name.** The first button there is
  * seat 0's `human` position, which is already the chosen one, so `Enter` on arrival would do nothing at
@@ -163,6 +177,13 @@ export function updateOverlay($overlay, description) {
  * renders a description and knows nothing about screens.
  */
 export function focusOverlay($overlay) {
+  const $marked = $overlay.find(".overlay__button[data-autofocus]");
+
+  if ($marked.length > 0) {
+    $marked.first().trigger("focus");
+    return;
+  }
+
   const $begin = $overlay.find(`.overlay__button[data-action="${OVERLAY_ACTION.BEGIN}"]`);
 
   if ($begin.length > 0) {

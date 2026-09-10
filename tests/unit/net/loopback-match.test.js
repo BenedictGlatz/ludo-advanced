@@ -7,12 +7,8 @@
  * host's after every echo?** A wrong guard, a missed broadcast or a state that does not survive JSON all
  * show up here as a hang, a refusal, or two boards that disagree.
  *
- * ## How the two seats are driven
- *
- * Neither side has a screen, so both are driven by `decide` from `src/ai/`, each with its own seat
- * written into a `bots` view of the state so the policy answers for it. The host drives seat 0 through
- * its loop directly; the guest drives seat 2 through `session.apply`, exactly as a click would. The host
- * loop is the game loop with the waiting taken out: `autoIntent` and `end-turn`, as in the bot match.
+ * The table, the headless loop and `wants` live in `tests/helpers/loopback-table.js` since issue #101,
+ * shared with `loopback-bot-match.test.js`, where a bot on the host takes the third seat.
  */
 
 import { describe, expect, it } from "vitest";
@@ -26,71 +22,13 @@ import { matchDeps, startMatch } from "../../../src/state/match.js";
 import { createGuestSession } from "../../../src/net/guest-session.js";
 import { createHostSession } from "../../../src/net/host-session.js";
 import { createLoopbackPair } from "../../../src/net/transport.js";
-
-const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
-
-/**
- * A whole match is a few thousand macrotask turns, one per `settle`, and under `--coverage` the
- * instrumented rules run slowly enough that Vitest's default five seconds is not enough.
- */
-const MATCH_TIMEOUT_MS = 120_000;
-
-/** The game loop with the waiting taken out: apply, then every step the loop takes by itself. */
-function headlessLoop(start, deps, dispatcher) {
-  let state = start;
-
-  function run() {
-    for (;;) {
-      const auto =
-        autoIntent(state) ??
-        (state.phase === TURN_PHASE.TURN_END ? { type: INTENT.END_TURN } : null);
-      if (auto === null) return;
-
-      const result = dispatcher(state, auto, deps);
-      if (!result.accepted) throw new Error(`${auto.type} refused in phase ${state.phase}`);
-      state = result.state;
-    }
-  }
-
-  return {
-    getState: () => state,
-    submit(intent) {
-      const result = dispatcher(state, intent, deps);
-      if (!result.accepted) return false;
-      state = result.state;
-      run();
-      return true;
-    },
-    run,
-  };
-}
-
-/** What `seat` would do now, asked of the policy as though that seat were a bot. */
-const wants = (state, seat) => decide({ ...state, bots: [seat] });
-
-/** A two-player online table: host on seat 0, guest on seat 2, both human as far as the state knows. */
-function onlineTable(seed) {
-  const deps = matchDeps(createSeededRng(seed));
-  const start = startMatch(2, deps);
-  const [hostEnd, guestEnd] = createLoopbackPair();
-
-  const host = createHostSession({
-    guests: [{ seat: 2, transport: hostEnd }],
-    poolRemaining: () => deps.diceSource.remaining(),
-  });
-  const loop = headlessLoop(start, deps, host.dispatcher);
-  host.attach(loop);
-
-  const guest = createGuestSession({ transport: guestEnd });
-  let mirror = null;
-  const refused = [];
-  guest.onState((next) => (mirror = next));
-  guest.onRefused((reason) => refused.push(reason));
-
-  host.broadcastState(start);
-
-  return { deps, loop, host, guest, mirror: () => mirror, refused };
-}
+import {
+  MATCH_TIMEOUT_MS,
+  headlessLoop,
+  onlineTable,
+  settle,
+  wants,
+} from "../../helpers/loopback-table.js";
 
 describe("a whole match over a loopback pair (FR-42)", () => {
   it(

@@ -560,6 +560,16 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   `workflow_dispatch` cannot be used at all, since the default branch carries no workflows.
   `pages.yml` now publishes on a push to `main` or `dev`. Yesterday's claim that one switch would be
   enough corrected in Ch. 07. Sprint 3.
+- **2026-09-10**: Design handoff 19 landed on `feature/101-online-bots`, issues #42 and #101: the online
+  lobby has a look (`lobby.css` replaced whole, D116 to D122), and the six contract changes the spec asked
+  for are built: Copy and Connect beside their field, `data-tone` on a failure, the stage on the seat
+  row, autofocus on Copy and Connect, a fresh code after a failed exchange, and the abandoned screen
+  naming the guest who dropped. Sprint 3.
+- **2026-09-10**: Pages verified live, issue #42. The owner switched the source to *GitHub Actions*,
+  which by itself republished nothing: for a day the site was still the legacy branch deployment of
+  the repository root. One dispatched `pages.yml` run replaced it, and the two online specs pass
+  against `https://benedictglatz.github.io/ludo-advanced/`. Hosting confirmed, NAT traversal still
+  not, because both browsers sat on one machine. Sprint 3.
 
 - **2026-08-09** — Appendix started: the board's Kanban view captured as *Figure 1* and registered in
   Ch. 12. Two negative findings from 2026-08-06 resolved (`Status` and `Sprint` back-filled), three
@@ -569,6 +579,38 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
 ---
 
 ## Decisions
+
+### 2026-09-10: Handoff 19 landed whole, and five small decisions were this side's
+
+- **Chosen:** the delivered `lobby.css` unchanged, the spec's six contract items built as written, and
+  five things the spec left to this side decided here rather than sent back: the field element, the
+  control during a handshake, the keyboard after a redraw, which failures drop the invite, and the first
+  loss winning.
+- **The field is a `<div>` with a `<label for>`, not a `<label>` around everything.** The spec puts the
+  button inside `.overlay__field`, and a `<label>` may not contain a second labelable element. The
+  alternative, keeping the `<label>` and putting `.overlay__field-action` after it as a sibling, would
+  have needed a wrapper the spec did not name and the CSS grid did not expect. *Rejected* for that
+  reason.
+- **A seat in `gathering` or `connecting` carries no control.** The spec draws the two as flat rows and
+  says nothing about the Bot switch on them. Leaving it there would let the host switch the seat the
+  browser is connecting a guest to, which drops the invite from under that guest with no warning.
+  *Rejected: keeping the control and refusing the switch in `canToggle`.* A disabled control on a row
+  that will have one again in five seconds is a flicker for a rule the row's word already states.
+- **A redraw re-homes the keyboard.** Before this, the keyboard fell to the page body when the invite
+  appeared, because the count button it was on had been rebuilt away and only `openScreen` moved focus.
+  `drawShell` now calls `focusOverlay` when the active element is no longer inside the open overlay.
+  *Rejected: moving focus on every redraw.* A language switch would then steal the keyboard from a
+  textarea the player is pasting into, which is the case the header of `overlay-view.js` warns about.
+- **`nat` and `failed` drop the invite; `badCode` keeps it.** D121.2 asks for a fresh code after the
+  twenty seconds and after a failed handshake; a bad paste is the player's and the same code will work
+  when copied whole. *Rejected: dropping on every error.* It would make one mispaste cost a new round of
+  chat messages.
+- **The first loss is the answer.** Closing the pipes on a lost guest reports the other guests as lost
+  too, and `onLost` used to abandon again for each, overwriting `abandonedBy` with an innocent seat. A
+  guard on the flag that already gated Play Again. Found by the new unit test, not by reasoning.
+- **What was not done:** the delivery's landing checks 3 to 6 (dark skin, greyscale, reduced motion, a
+  real-network `gathering`) were not run in a browser this turn and are listed as outstanding in
+  Chapter 08 and `00-open-requests.md`.
 
 ### 2026-09-09: The published site follows `dev`, because the manual trigger does not exist
 
@@ -5474,6 +5516,36 @@ to get wrong later.
   behaviour under Playwright is unchecked; a real run across two machines on different networks has not
   happened, so whether STUN alone connects is unknown; there is no reconnect; bots online are v2.
 - → Ch. 03, Ch. 04, Ch. 06, Ch. 08, Ch. 11
+
+
+### 2026-09-10: Bots join an online match on the host's side, and the lobby borrows the line-up's control
+
+- **Chosen:** the host's lobby hands a free seat to the host's computer with the same two-position
+  control the line-up screen has; guests take the seats left free, in join order; Start needs every seat
+  spoken for and **at least one guest** connected. The bot runs on the host through the ordinary loop and
+  `bot-driver.js`, and every guest learns which seats are bots from the state that arrives anyway. Issue
+  #101, a sub-issue of #42.
+- **Why now.** The online plan said on 2026-09-08 that bots "would run on the host later without touching
+  the network", and the 2026-09-09 journal entry ended with "bots online are v2". The claim was cheap to
+  test and turned out exact: `src/net/` did not change by a byte. The whole cost was the lobby, one
+  parameter on `canBeBot`, and tests.
+- **Rejected: the host alone against bots.** A lobby whose Start button starts a hot-seat match is a door
+  to the wrong room. The floor is the host plus one guest, which is `canBeBot(seats, bots, seat, 2)`, so
+  the rule lives where FR-01's already does, with a second threshold and no second predicate.
+- **Rejected: a bot takes over a dropped guest's seat.** It would soften the "no reconnect" limitation
+  and it is tempting for that reason. It needs a mid-match transition in `state/` that makes a person a
+  bot, with an open reaction window as the hard case, plus words for "your friend is gone, the computer
+  plays on". Four days before the freeze that is a feature; it stays in the changelog as a limitation.
+- **Rejected: a `bots` field in `hello`.** The next `state` carries `state.bots`; a copy in `hello` is a
+  second truth about who plays, the same mistake the `controllers` map was refused for on 2026-09-04.
+- **The lobby's new control went in without a handoff**, on the same exception the lobby itself took
+  on 2026-09-09: the lobby is a recorded placeholder, the control is spec 15's component unchanged, and
+  the four `lineup.css` rules only name a second screen. The brief in `00-open-requests.md` is amended
+  so that the design side draws a lobby that knows about bots.
+- **Two test files crossed 300 lines and were split, not trimmed.** Shared fakes went to
+  `tests/helpers/`, the bot cases to files of their own. Recorded because the temptation was to delete
+  a comment block instead, and `CLAUDE.md` says the seam, not the whitespace.
+- → Ch. 01, Ch. 04, Ch. 06, Ch. 08
 
 
 ## Challenges

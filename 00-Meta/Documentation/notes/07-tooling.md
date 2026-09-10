@@ -496,6 +496,30 @@ it. Whether it will accept a deployment from `dev` is not readable from here, be
 `GET /repos/.../actions/permissions` answers 403 without administrator rights. If the deploy job
 fails on the environment rather than on the build, that restriction is the reason.
 
+### Resolved 2026-09-10: Pages is live and the published build was played
+
+The last open switch above was thrown. The repository owner set
+Settings > Pages > Source to **GitHub Actions**, and `GET /repos/BenedictGlatz/ludo-advanced/pages`
+now answers `"build_type": "workflow"` with `"html_url": "https://benedictglatz.github.io/ludo-advanced/"`.
+Three facts came out of verifying it:
+
+- **Switching the source does not republish anything by itself.** For a day after the switch the live
+  site was still the last deployment made by the legacy `pages-build-deployment` workflow, which serves
+  the repository root rather than `dist/`: `index.html` still carried `<script src="/src/main.js">` and
+  `/package.json` answered 200. Only a run of `pages.yml` after the switch replaced it. Anyone who
+  changes the Pages source has to dispatch the workflow once, or the change looks like it did nothing.
+- **The two mechanisms both ran on 2026-09-09 and the legacy one won.** Runs 34349871378 (`pages`) and
+  34349870478 (`pages-build-deployment`) started one second apart on the same `dev` commit and produced
+  two deployments, at 12:14:43 and 12:15:24. The later one decides what is served, and it was the legacy
+  build. That is the reason a green `pages` run was not evidence that the built site was online.
+- **The published build is playable and online play works on it.** After a `workflow_dispatch` run of
+  `pages.yml` on `dev`, `index.html` references `./assets/index-*.js`, the former repository-root paths
+  answer 404, and the two online specs from `dev` (`tests/e2e/online.spec.js`) pass against
+  `https://benedictglatz.github.io/ludo-advanced/`: two browser contexts swap invite and reply codes,
+  open a data channel, play the first two turns, and the guest sees the abandoned screen when the host
+  quits. This confirms hosting and the `base: "./"` decision. It does not confirm NAT traversal, for the
+  reason in the bullet above: both contexts sat on one machine.
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

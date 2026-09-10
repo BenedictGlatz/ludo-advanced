@@ -19,13 +19,23 @@
  * never connect. Nothing in the browser says so; the channel simply never opens. Twenty seconds after the
  * reply code is accepted the lobby stops saying "connecting" and says the NAT sentence instead, so the
  * players learn to try a different network rather than waiting on a spinner.
+ *
+ * ## Bots, since issue #101
+ *
+ * `bots` is a sorted list of seat numbers, the same shape as `state.bots`, and it is handed to
+ * `freshMatchParts` on Start. Nothing else changes: the host runs the ordinary loop, `bot-driver.js` is
+ * part of it, and every guest learns which seats are bots from the state itself. Guests take the seats
+ * that are neither the host's nor a bot's, in join order. Which seats may switch is `lobby-seats.js`'s
+ * rule, so the button and the refusal here cannot disagree.
  */
 
 import { seatsFor } from "../../core/board.js";
 import { createHostSession } from "../../net/host-session.js";
 import { freshMatchParts, restartParts } from "../match-setup.js";
+import { toggleController } from "../../state/bots.js";
 import { REACTION_WINDOW_MS } from "../reaction-clock.js";
 import { STAGE } from "./lobby-screen.js";
+import { MIN_PEOPLE_ONLINE, canToggle, everybodyIn, freeSeats } from "./lobby-seats.js";
 
 /** How long the lobby waits for a channel to open before it names the NAT problem. */
 export const CONNECT_TIMEOUT_MS = 20_000;
@@ -48,6 +58,7 @@ export function createHostRole({
   let playerCount = null;
   let seats = [];
   let guests = [];
+  let bots = [];
   let pending = null;
   let stage = STAGE.IDLE;
   let error = null;
@@ -57,11 +68,36 @@ export function createHostRole({
   let loop = null;
   let lost = false;
 
-  const nextSeat = () => seats[guests.length + 1];
+  /** The next guest takes the first seat that is neither the host's, nor a bot's, nor taken. */
+  const nextSeat = () => freeSeats(snapshot())[0];
+
+  /** Drop the invite on offer, if any. A code whose seat is gone must not be redeemed. */
+  function dropInvite() {
+    pending?.close();
+    pending = null;
+    invite = null;
+    stage = STAGE.IDLE;
+  }
+
+  /**
+   * The host switched a seat between a person and the computer. Refused switches change nothing, like
+   * every refused click on a menu; `canToggle` is the same rule the screen disables the position with.
+   *
+   * When the last free seat becomes a bot while an invite is out, the invite is dropped: the guest who
+   * would redeem it has no seat left. That can only happen with a guest already connected, because the
+   * floor of two persons keeps one seat free otherwise.
+   */
+  function setController(seat, value) {
+    if (playerCount === null || !canToggle(snapshot(), seat, value)) return;
+
+    bots = toggleController(seats, bots, seat, MIN_PEOPLE_ONLINE);
+    if (pending !== null && freeSeats(snapshot()).length === 0) dropInvite();
+    refresh();
+  }
 
   /** One more guest: a fresh connection and an invite code for it. */
   async function addGuest() {
-    if (pending !== null || playerCount === null || guests.length >= playerCount - 1) return;
+    if (pending !== null || playerCount === null || freeSeats(snapshot()).length === 0) return;
 
     pending = links.createHostLink();
     stage = STAGE.GATHERING;
@@ -73,14 +109,20 @@ export function createHostRole({
       invite = await pending.invite();
       stage = STAGE.WAITING;
     } catch {
+      dropInvite();
       error = "failed";
-      stage = STAGE.IDLE;
-      pending = null;
     }
     refresh();
   }
 
-  /** The guest's reply code has arrived: finish the handshake and seat them when the channel opens. */
+  /**
+   * The guest's reply code has arrived: finish the handshake and seat them when the channel opens.
+   *
+   * Two of the three failures end the exchange (design spec 19, D121.2): after twenty seconds without a
+   * channel, and when the handshake itself fails, the invite is dropped and the lobby offers a fresh
+   * code in place of Connect, because a code that failed once is not going to work the second time. A
+   * bad paste is the third failure and keeps the invite: the player only has to copy it again.
+   */
   async function connect(replyCode) {
     if (pending === null) return;
 
@@ -91,6 +133,7 @@ export function createHostRole({
 
     const timeout = wait(() => {
       if (stage === STAGE.CONNECTING && pending === link) {
+        dropInvite();
         error = "nat";
         refresh();
       }
@@ -98,13 +141,23 @@ export function createHostRole({
 
     try {
       const transport = await link.accept(replyCode);
+      // The twenty seconds ran out first: the seat was offered again, so this late arrival goes home.
+      if (pending !== link) {
+        transport.close();
+        return;
+      }
       guests = [...guests, { seat: nextSeat(), transport }];
       stage = STAGE.CONNECTED;
       invite = null;
       pending = null;
     } catch (failure) {
-      error = failure?.message === "bad-code" ? "badCode" : "failed";
-      stage = STAGE.WAITING;
+      if (failure?.message === "bad-code") {
+        error = "badCode";
+        stage = STAGE.WAITING;
+      } else {
+        dropInvite();
+        error = "failed";
+      }
     }
     clearTimeout(timeout);
     refresh();
@@ -115,9 +168,14 @@ export function createHostRole({
     session = createHostSession({
       guests,
       poolRemaining: () => built.deps.diceSource.remaining(),
-      onLost: () => {
+      onLost: (seat) => {
+        // Closing the pipes below reports every other guest as lost too; the first one is the answer.
+        if (lost) return;
         lost = true;
-        loop?.abandon();
+        loop?.abandon(seat);
+        // The abandoned state goes out before the pipes close, so the other guests learn who left
+        // rather than only that the host went quiet (D121.3).
+        if (loop !== null) session?.broadcastState(loop.getState());
         session?.close();
       },
     });
@@ -140,12 +198,14 @@ export function createHostRole({
       playerCount = count;
       seats = seatsFor(count);
       guests = [];
+      bots = [];
       lost = false;
       addGuest();
     },
 
     addGuest,
     connect,
+    setController,
 
     /** Copy was pressed. The label flips to "copied" until the next redraw of the stage. */
     markCopied() {
@@ -153,10 +213,10 @@ export function createHostRole({
       refresh();
     },
 
-    /** Everybody is in: a fresh match on a fresh pool, no bots. */
+    /** Everybody is in, and at least one of them is a guest: a fresh match on a fresh pool. */
     start() {
-      if (playerCount === null || guests.length !== playerCount - 1) return;
-      startWith(freshMatchParts(rng, playerCount, { botSeats: [] }));
+      if (playerCount === null || !everybodyIn(snapshot())) return;
+      startWith(freshMatchParts(rng, playerCount, { botSeats: bots }));
     },
 
     /** Play Again is the host's alone: the same guests, a new match, a new pool. */
@@ -183,6 +243,7 @@ export function createHostRole({
       playerCount = null;
       seats = [];
       guests = [];
+      bots = [];
       pending = null;
       session = null;
       loop = null;
@@ -191,18 +252,23 @@ export function createHostRole({
       error = null;
     },
 
-    snapshot() {
-      return {
-        role: "host",
-        playerCount,
-        seats: [...seats],
-        connected: guests.map((guest) => guest.seat),
-        invite,
-        reply: null,
-        stage,
-        error,
-        copied,
-      };
-    },
+    snapshot,
   };
+
+  /** A function declaration, not a method: `nextSeat` and `setController` above read it too. */
+  function snapshot() {
+    return {
+      role: "host",
+      playerCount,
+      seats: [...seats],
+      connected: guests.map((guest) => guest.seat),
+      bots: [...bots],
+      pending: pending !== null,
+      invite,
+      reply: null,
+      stage,
+      error,
+      copied,
+    };
+  }
 }

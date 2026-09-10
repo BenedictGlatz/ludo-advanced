@@ -73,13 +73,22 @@ function pauseScreen(online) {
  *
  * `canRestart` is `false` on an online guest (issue #42): Play Again is the host's button, and the
  * guest's next match arrives over the wire when the host presses it.
+ *
+ * **An online match that ended because one player's connection dropped names that player** under the
+ * title (design spec 19, D121.3). The state carries the seat in `abandonedBy`; a match given up on
+ * purpose carries `null` and the sentence stays empty, so the title says everything it did before.
  */
 function winScreen(state, canRestart) {
   const won = state.status === MATCH_STATUS.WON;
+  const dropped = state.abandonedBy ?? null;
 
   return {
     screen: OVERLAY_SCREEN.WIN,
     title: won ? t("match.won", { player: seatLabel(state, state.winner) }) : t("match.abandoned"),
+    text:
+      !won && dropped !== null
+        ? t("match.abandonedBy", { player: seatLabel(state, dropped) })
+        : undefined,
     player: won ? state.winner : null,
     outcome: won ? "won" : "abandoned",
     buttons: [

@@ -20,7 +20,10 @@
    Scoping rule in this file, and it is deliberate after menu.css declared
    .overlay__label and .overlay__hint unscoped: an element that exists only on
    this screen is matched by its own class, and an element the other six
-   screens share is always matched through [data-screen="lineup"].
+   screens share is always matched through [data-screen="lineup"]. Since
+   issue #101 the host's online lobby seats bots on this same control, so
+   the four rules for the control name [data-screen="host"] as well: same
+   component, second screen, no new value.
    ========================================================================== */
 
 /* The sheet. The curtain stays opaque and stays --color-app-bg: behind a
@@ -137,7 +140,8 @@
    the radius, the hover lift, the press and the focus ring. What they give up
    is the word shaped horizontal padding, because two of them share a row
    with a name. */
-.overlay[data-screen="lineup"] .overlay__button[data-action="controller"] {
+.overlay[data-screen="lineup"] .overlay__button[data-action="controller"],
+.overlay[data-screen="host"] .overlay__button[data-action="controller"] {
   padding: var(--space-2) var(--space-3);
 }
 
@@ -152,7 +156,8 @@
    The state is read off aria-pressed and not off the row's data-controller,
    so what the screen shows and what a screen reader announces cannot drift
    apart: they are one attribute. */
-.overlay[data-screen="lineup"] .overlay__button[aria-pressed="false"] {
+.overlay[data-screen="lineup"] .overlay__button[aria-pressed="false"],
+.overlay[data-screen="host"] .overlay__button[aria-pressed="false"] {
   background: none;
   box-shadow: none;
 }
@@ -174,7 +179,8 @@
        whichever row is still a person, so a control never goes disabled
        under the hand that is on it. --- */
 
-.overlay[data-screen="lineup"] .overlay__button[data-action="controller"]:disabled {
+.overlay[data-screen="lineup"] .overlay__button[data-action="controller"]:disabled,
+.overlay[data-screen="host"] .overlay__button[data-action="controller"]:disabled {
   color: var(--color-text-muted);
   cursor: default;
   background: none;
@@ -183,7 +189,8 @@
 }
 
 /* A hover that lifts and then refuses is worse than no hover at all. */
-.overlay[data-screen="lineup"] .overlay__button:disabled:hover {
+.overlay[data-screen="lineup"] .overlay__button:disabled:hover,
+.overlay[data-screen="host"] .overlay__button:disabled:hover {
   translate: none;
 }
 

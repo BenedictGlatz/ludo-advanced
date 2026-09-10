@@ -125,7 +125,17 @@ describe("abandonMatch (FR-07)", () => {
     expect(abandoned.status).toBe(MATCH_STATUS.ABANDONED);
     expect(abandoned.phase).toBe(TURN_PHASE.MATCH_OVER);
     expect(abandoned.winner).toBeNull();
+    expect(abandoned.abandonedBy).toBeNull();
     expect(findPawn(abandoned.pawns, { player: 0, pawn: 0 }).r).toBe(1);
+  });
+
+  it("names the seat whose connection ended an online match, when told (design spec 19, D121.3)", () => {
+    const deps = scripted([6]);
+    const start = startPlainMatch(2, deps);
+
+    expect(start.abandonedBy).toBeNull();
+    expect(abandonMatch(start, 2).abandonedBy).toBe(2);
+    expect(abandonMatch(start).abandonedBy).toBeNull();
   });
 });
 

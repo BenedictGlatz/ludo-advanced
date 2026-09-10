@@ -85,7 +85,12 @@ export function createSessionActions(session) {
     // count: a player who comes back and picks a smaller number must not carry bots into seats that do
     // not exist.
     if (action === OVERLAY_ACTION.PLAYERS) session.lineup.open(Number(value));
-    if (action === OVERLAY_ACTION.CONTROLLER) session.lineup.setController(Number(value), choice);
+    // The same control sits on two screens since issue #101: the line-up's rows and the host's lobby
+    // rows. Which of the two owns the click is which screen is up, and nothing else tells them apart.
+    if (action === OVERLAY_ACTION.CONTROLLER) {
+      const owner = session.getScreen() === OVERLAY_SCREEN.HOST ? session.online : session.lineup;
+      owner.setController(Number(value), choice);
+    }
     if (action === OVERLAY_ACTION.BEGIN) session.lineup.begin();
     if (action === OVERLAY_ACTION.BACK) {
       const target = backTarget();

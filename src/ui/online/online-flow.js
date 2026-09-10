@@ -87,6 +87,11 @@ export function createOnlineFlow(session) {
       role?.addGuest?.();
     },
 
+    /** The host switched a free seat between a person and the computer (issue #101). */
+    setController(seat, value) {
+      role?.setController?.(seat, value);
+    },
+
     /** Copy the code on screen. */
     copy(text) {
       clipboard.write(text ?? "");

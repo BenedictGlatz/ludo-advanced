@@ -58,12 +58,20 @@ export function botSeatsFor(playerCount, count) {
 }
 
 /**
- * May this seat be turned into a bot? `false` only for the last seat that still has a person on it.
+ * May this seat be turned into a bot? `false` when doing so would leave fewer than `minPeople` persons.
  *
  * FR-01: at least one person plays. `options.js` already refuses `bots >= players` before a match is
  * built, silently and behind the player's back, which is the right answer for something typed into an
  * address bar. The line-up screen (issue #76) asks the same question **in front of** the player, one
  * click at a time, so the rule needs a shape a button can be disabled from.
+ *
+ * ## Why `minPeople` is a parameter and not a second function
+ *
+ * The online lobby (issue #101) asks the same question with a higher floor: the host plus **at least one
+ * guest**, because a host alone against bots is a hot-seat match reached by a detour. One rule with two
+ * thresholds is one place to get it wrong; a `canBeBotOnline` beside this would be a copy that drifts
+ * the day somebody fixes one and forgets the other. The default of 1 keeps every existing caller as it
+ * was.
  *
  * ## Why these two take arrays and `isBot` above them takes a state
  *
@@ -73,13 +81,13 @@ export function botSeatsFor(playerCount, count) {
  * `isBot` and `humanSeats` one function above is deliberate and should not be tidied away: those two
  * are asked during a match and these two are asked before there is one.
  */
-export function canBeBot(seats, bots, seat) {
+export function canBeBot(seats, bots, seat, minPeople = 1) {
   if (!seats.includes(seat)) return false;
   if (bots.includes(seat)) return false;
 
   // The seat is a person today, so turning it into a bot removes one person. That is allowed exactly
-  // as long as somebody else is still a person.
-  return seats.filter((other) => !bots.includes(other)).length > 1;
+  // as long as at least `minPeople` others are still persons.
+  return seats.filter((other) => !bots.includes(other)).length > minPeople;
 }
 
 /**
@@ -93,9 +101,9 @@ export function canBeBot(seats, bots, seat) {
  * The result is sorted, so a line-up's bot list and `botSeatsFor`'s are the same shape and `state.bots`
  * is in seat order whichever of the two routes into a match was taken.
  */
-export function toggleController(seats, bots, seat) {
+export function toggleController(seats, bots, seat, minPeople = 1) {
   if (bots.includes(seat)) return bots.filter((other) => other !== seat);
-  if (!canBeBot(seats, bots, seat)) return bots;
+  if (!canBeBot(seats, bots, seat, minPeople)) return bots;
 
   return [...bots, seat].sort((a, b) => a - b);
 }

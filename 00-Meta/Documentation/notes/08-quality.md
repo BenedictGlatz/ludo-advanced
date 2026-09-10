@@ -2350,6 +2350,83 @@ Vitest half.
   sentence appears in practice, is unknown until somebody tries it, and the result belongs here.
 
 
+### A bot on the host is one more seat in the loopback match, and two test files split: 2026-09-10, issue #101
+
+- **`tests/unit/net/loopback-bot-match.test.js`** plays a three-seat match to a win over a loopback pair
+  with the host on seat 0, a **real** bot on seat 1 (in `state.bots`, driven with `decide` on the plain
+  state exactly as `bot-driver.js` does) and a guest on seat 2 driven through `session.apply`. After every
+  echo the guest's mirror deep-equals the host's state, and the mirror's `bots` is `[1]` without any
+  protocol field carrying it. A second case plays the host's first turn out and has the guest send the
+  bot's own intent on the bot's turn: refused `not-your-turn`, host state untouched.
+- **Two files went past 300 lines and were split at their seams**, not compressed. The loopback table,
+  headless loop and `wants` moved to `tests/helpers/loopback-table.js`; the online lobby's fakes (links,
+  loop, browser, table) moved to `tests/helpers/online-fakes.js`. The bot cases got their own files,
+  `loopback-bot-match.test.js` and `online-flow-bots.test.js`, so `loopback-match.test.js` and
+  `online-flow.test.js` are back to the #42 cases only. `onlineTable` gained `{ players, bots }` and
+  `table` a `guestCount`, both defaulting to the old behaviour.
+- **`lobby-seats.test.js`** asserts every row of the rule file's table; `lobby-screen.test.js` gained
+  three cases (a bot row on the control, the last free seat disabled with no guest in, Start needing one
+  guest); `bots.test.js` gained the `minPeople` floor.
+- **`online.spec.js` gained a third Chromium case**: the host picks three seats, presses Bot on seat 1's
+  row, the guest connects and lands on seat 2, both boards show three players and the guest's HUD names
+  seat 1 a bot; the host plays turn one, and the poll waits for turn **three**, because turn two is the
+  bot's and passes with nobody clicking. Seat 1 rather than seat 2 was made the bot on purpose: it keeps
+  the guest's turn out of the spec, so the case tests the bot and not the guest's turn helpers.
+- **Not tested, stated:** the E2E case runs under `?fast=1`, so the bot's 900 ms hold on the host is not
+  seen over the wire. Whether a guest experiences it as a pause or a stall is a question for a playtest.
+
+
+### Handoff 19: the lobby's contract changes are unit cases, the look is a landing check: 2026-09-10, issues #42 and #101
+
+- **`lobby-screen.test.js`** rewritten around the new contract: Copy and Connect are found on the field
+  (`fields[n].button`) and asserted absent from `buttons`; `gathering` and `connecting` land on the first
+  free seat's row with no control and the hint unchanged under the title; `nat` and `failed` carry
+  `tone: "warn"` and relabel `add-guest`, `badCode` keeps both fields; the guest's sentence still carries
+  the stage. The old "error before stage before hint" case is gone, because on the host the stage is no
+  longer in the sentence.
+- **`online-flow-failures.test.js`, new**, drives `createHostRole` directly with links that hang or
+  fail on purpose and a `wait` that hands the timeout callback back: the twenty seconds drop the invite,
+  hang up the link and leave `error: "nat"` with a clean next invite; a failed handshake does the same;
+  a bad paste keeps the invite and the link; a link whose gathering fails is closed. The fourth case is a
+  three-seat table on the fakes where seat 1 leaves mid-match and seat 2's mirror ends with
+  `abandonedBy: 1`. `fakeLoop` in `online-fakes.js` learned to finish once, as the real loops do, so the
+  guest's later `onClose` does not overwrite the state the host sent.
+- **`match.test.js`** asserts `abandonedBy` null by default and the seat when given; **`overlay-screens
+  .test.js`** asserts the abandoned screen names "Spieler 2" from `abandonedBy` and says nothing without
+  it.
+- **`online.spec.js` gained a fourth Chromium case**: the guest leaves mid-match through its own Pause
+  and Quit, and the host's abandoned screen names seat 2 in its sentence, without Play Again. The first
+  version closed the guest's browser context instead and failed: the host did not see the channel close
+  within ten seconds, because Chromium tears a page down without a graceful shutdown and the host learns
+  of the loss only when the connection's consent checks give up. Quit says `bye` and reaches the same
+  `onLost`; a real dropped connection is therefore covered by the unit case and not by the browser. The
+  first case also asserts that Copy sits in `.overlay__field-action` and not in `.overlay__actions`,
+  checked while the invite is out. Every `data-*` the specs locate by is unchanged, as the delivery said.
+- **Not tested, stated:** the breathing plate on `gathering` and `connecting`, the warn wash, the dark
+  skin, greyscale and reduced motion are landing checks 3 to 5 of the delivery's README and were not
+  run in a browser this turn; check 6, a `gathering` watched on a real network, needs two networks. The
+  `data-autofocus` rule and the refocus after a redraw have no end-to-end assertion either.
+
+### The end-to-end suite run against the published site, 2026-09-10
+
+- **Why it was done at all:** after the repository owner switched Pages to GitHub Actions, a green
+  `pages` workflow run said nothing about whether the published page actually plays. The two online
+  specs were pointed at `https://benedictglatz.github.io/ludo-advanced/` instead of the local preview,
+  through a throwaway config, and both passed. The details of the deployment itself are in
+  `notes/07-tooling.md`.
+- **The suite cannot be aimed at a project site as it stands.** `playwright.config.js` sets
+  `baseURL` to `http://localhost:4173`, where the game sits at the domain root, so the specs navigate
+  with an absolute path: `page.goto("/?seed=1&fast=1")` in `online.spec.js` and
+  the templated `page.goto` in `helpers.js`. Playwright resolves a leading `/` against the *origin*,
+  so with a `baseURL` of `.../ludo-advanced/` both land on `https://benedictglatz.github.io/` and the
+  app never boots. Changing the two calls to `./` makes them work under both. This is a test-harness
+  defect, not a hosting one: the shipped `dist/` already uses relative paths, from `base: "./"`.
+- **Outstanding:** the change to `./` was made only in the throwaway copy and is not in the suite.
+  Until it is, nobody can run the end-to-end tests against the published build without repeating the
+  edit. Aiming the suite at a deployed URL is also not wired up: it needs a `baseURL` override, which
+  the current config hardcodes.
+
+
 ## Decisions
 
 <!-- Promote decision blocks here from project-journal.md when this chapter is written. -->

@@ -35,14 +35,29 @@ test.describe("online multiplayer (FR-42)", () => {
     await expect(overlay(page)).toHaveAttribute("data-screen", "online");
   }
 
-  /** Host and guest swap their two codes through the lobby, as two people would through a chat. */
-  async function connect(host, guest) {
+  /** One position of one lobby row: the line-up's control, on the host's screen (issue #101). */
+  const position = (page, seat, value) =>
+    page.locator(
+      `.overlay__button[data-action="controller"][data-seat="${seat}"][data-value="${value}"]`
+    );
+
+  /**
+   * Host and guest swap their two codes through the lobby, as two people would through a chat. `bots`
+   * are the seats the host hands to the computer before the guest joins (issue #101).
+   */
+  async function connect(host, guest, { count = 2, bots = [] } = {}) {
     await openOnline(host);
     await button(host, "host").click();
-    await button(host, "host").and(host.locator('[data-count="2"]')).click();
+    await button(host, "host")
+      .and(host.locator(`[data-count="${count}"]`))
+      .click();
+    for (const seat of bots) await position(host, seat, "bot").click();
 
     // Gathering candidates takes a moment, so the invite field gets a longer wait than the default.
     await expect(field(host, "invite")).toHaveValue(/.+/, { timeout: 10_000 });
+    // Since design spec 19 the code's button sits inside its field (D119.2). Same attributes as before.
+    await expect(host.locator('.overlay__field-action [data-action="copy"]')).toHaveCount(1);
+    await expect(host.locator('.overlay__actions [data-action="copy"]')).toHaveCount(0);
     const invite = await field(host, "invite").inputValue();
 
     await openOnline(guest);
@@ -102,6 +117,51 @@ test.describe("online multiplayer (FR-42)", () => {
     await guestContext.close();
   });
 
+  test("a bot on the host fills a seat and plays its turn on both screens without a click", async ({
+    browser,
+  }) => {
+    const hostContext = await browser.newContext();
+    const guestContext = await browser.newContext();
+    const host = await hostContext.newPage();
+    const guest = await guestContext.newPage();
+
+    // Three seats: the host, the computer on seat 1, and the guest on the seat left free, seat 2.
+    await connect(host, guest, { count: 3, bots: [1] });
+    await expect(host.locator('.overlay__seat[data-player="1"]')).toHaveAttribute(
+      "data-controller",
+      "bot"
+    );
+    await expect(host.locator('.overlay__seat[data-player="2"]')).toHaveAttribute(
+      "data-status",
+      "connected"
+    );
+    await button(host, "start-online").click();
+
+    const hostBoard = host.locator(".board");
+    const guestBoard = guest.locator(".board");
+    await expect(hostBoard).toHaveAttribute("data-players", "3");
+    await expect(guestBoard).toHaveAttribute("data-players", "3", { timeout: 10_000 });
+    // The guest learns who the bot is from the state: its HUD names seat 1 a bot.
+    await expect(guest.locator('.hud__seat[data-player="1"]')).toHaveAttribute(
+      "data-controller",
+      "bot"
+    );
+
+    // Turn one is the host's. Turn two is the bot's and passes on its own; turn three is the guest's.
+    await playTurn(hostBoard);
+    await expect
+      .poll(async () => (await boardState(hostBoard)).turnNumber, { timeout: 30_000 })
+      .toBe(3);
+    expect((await boardState(hostBoard)).activePlayer).toBe(2);
+    await expect
+      .poll(async () => (await boardState(guestBoard)).turnNumber, { timeout: 15_000 })
+      .toBe(3);
+    await expect(guest.locator('.hand--dice .card[data-playable="true"]')).toHaveCount(3);
+
+    await hostContext.close();
+    await guestContext.close();
+  });
+
   test("a host that quits ends the guest's match as abandoned", async ({ browser }) => {
     const hostContext = await browser.newContext();
     const guestContext = await browser.newContext();
@@ -120,6 +180,37 @@ test.describe("online multiplayer (FR-42)", () => {
     await expect(overlay(guest)).toHaveAttribute("data-outcome", "abandoned");
     // Play Again is the host's button; the guest only gets the way back to the menu.
     await expect(button(guest, "restart")).toHaveCount(0);
+
+    await hostContext.close();
+    await guestContext.close();
+  });
+
+  /**
+   * The other way round: the guest goes away. The host's abandoned screen names the seat that left
+   * (design spec 19, D121.3), which the abandoned title alone never said.
+   *
+   * The guest leaves through its own Pause and Quit, which says `bye` on the channel. Closing the
+   * guest's context instead was tried first and the host did not see the channel close within ten
+   * seconds: Chromium tears the page down without a graceful shutdown, and the host learns of the loss
+   * only when the connection's own consent checks give up. Both routes reach the same `onLost`.
+   */
+  test("a guest that leaves is named on the host's abandoned screen", async ({ browser }) => {
+    const hostContext = await browser.newContext();
+    const guestContext = await browser.newContext();
+    const host = await hostContext.newPage();
+    const guest = await guestContext.newPage();
+
+    await connect(host, guest);
+    await button(host, "start-online").click();
+    await expect(guest.locator(".board")).toHaveAttribute("data-players", "2", { timeout: 10_000 });
+
+    await guest.locator('[data-action="pause"]').click();
+    await expect(overlay(guest)).toHaveAttribute("data-screen", "pause");
+    await button(guest, "quit").click();
+
+    await expect(overlay(host)).toHaveAttribute("data-outcome", "abandoned", { timeout: 10_000 });
+    await expect(host.locator(".overlay__text")).toContainText("Spieler 2");
+    await expect(button(host, "restart")).toHaveCount(0);
 
     await hostContext.close();
     await guestContext.close();

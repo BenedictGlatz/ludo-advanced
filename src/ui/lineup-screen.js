@@ -47,28 +47,41 @@ const CONTROLLERS = ["human", "bot"];
  * as well. One word for one thing in three places. The gap between that and `data-controller="human"`
  * is deliberate: the attribute is the code's word and no player reads it.
  */
-function position(seats, bots, seat, controller, value) {
+function position(seat, controller, value, allowed) {
   return {
     action: OVERLAY_ACTION.CONTROLLER,
     seat,
     value,
     label: t(`lineup.${value}`),
     pressed: controller === value,
-    // Only the `bot` position of a seat that is still a person can be refused. A row that is already a
-    // bot has nothing to protect, and `canBeBot` answers `false` for it as well, hence the first half.
-    disabled: value === "bot" && controller === "human" && !canBeBot(seats, bots, seat),
+    // The chosen position is never disabled: it says what the row is. Only the other one can be refused.
+    disabled: controller !== value && !allowed(value),
   };
+}
+
+/**
+ * The two positions of one row, for this screen and for the host's online lobby (issue #101), which
+ * seats bots on the same control. `allowed(value)` is the screen's rule: here `canBeBot`, there
+ * `canToggle` from `lobby-seats.js`, because the online floor is two persons rather than one. The
+ * control itself is one function, so the two screens cannot come apart in look or in markup.
+ */
+export function seatChoices(seat, controller, allowed) {
+  return CONTROLLERS.map((value) => position(seat, controller, value, allowed));
 }
 
 /** One seat: the plate and the wash come from `player`, the name from the two vocabularies. */
 function seatRow(seats, bots, seat) {
   const controller = bots.includes(seat) ? "bot" : "human";
 
+  // Only the `bot` position of a seat that is still a person can be refused. A row that is already a
+  // bot has nothing to protect, and `canBeBot` answers `false` for it as well.
+  const allowed = (value) => value === "human" || canBeBot(seats, bots, seat);
+
   return {
     player: seat,
     controller,
     label: seatLabel({ seats, bots }, seat),
-    choices: CONTROLLERS.map((value) => position(seats, bots, seat, controller, value)),
+    choices: seatChoices(seat, controller, allowed),
   };
 }
 

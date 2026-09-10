@@ -74,6 +74,21 @@ describe("the win screen", () => {
     expect(description.outcome).toBe("abandoned");
     expect(description.player).toBeNull();
     expect(description.title).not.toContain("Spieler");
+    expect(description.text).toBeUndefined();
+  });
+
+  /**
+   * Online, a match ends when one player's connection drops, and three people look at the same screen.
+   * Design spec 19 (D121.3) asks that the one who left is named under the title, from `abandonedBy`.
+   */
+  it("names the player whose connection was lost, under the title (spec 19, D121.3)", () => {
+    const description = screenDescription(OVERLAY_SCREEN.WIN, {
+      state: { ...finishedMatch(MATCH_STATUS.ABANDONED, null), abandonedBy: 2 },
+    });
+
+    expect(description.outcome).toBe("abandoned");
+    expect(description.text).toContain("Spieler 2");
+    expect(description.title).not.toContain("Spieler");
   });
 
   it("offers a restart and a way back to the menu, either way", () => {

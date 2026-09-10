@@ -25,8 +25,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for them, and again to give the screen back when the window has closed, and the thirty second clock
   stops while it is up
 
+- **The online lobby has a designed look.** A seat somebody sits at, you, a connected player or a bot, is
+  a raised card; a seat nobody has taken yet is a dashed outline, so you can see at a glance how many
+  are still missing, in colour or not. Copy sits next to the invite code and Connect next to the reply
+  field instead of at the foot of the screen. "Making the code" and "Connecting" now stand on the seat
+  they are for rather than under the title, and the sentence under the title keeps the instructions.
+  A failure gets an orange box you cannot miss, and after one you are offered "Make a new code" in place
+  of Connect, because a code that failed once will not work the second time. The keyboard lands on Copy
+  as soon as a code is ready, and on Connect when you are the one joining
+
 ### Added
 
+- **When an online match ends because somebody's connection dropped, the screen says who.** "Player 3
+  lost the connection" under the title, on every player's screen, instead of only "The match was
+  abandoned" with no hint which of your friends it was
+- **Bots can take the empty seats of an online match.** When you host a match, each seat nobody has joined
+  yet has the same Player / Bot switch as the hot-seat line-up, and a seat you switch names itself
+  "Bot 3" for everybody. The bot plays on the host's computer; the other players see its moves exactly as
+  they see yours. Two rules, stated rather than hidden: at least one other player has to connect, because
+  a host alone against bots is simply a hot-seat match, and a bot does **not** take over for a player whose
+  connection drops. That match still ends for everybody, as before
 - **Online multiplayer, two to four players, each at their own screen.** The menu's Online Multiplayer
   door works: one player hosts a match and picks the player count, the game shows an invite code with a
   Copy button, the host sends it through any chat, the other player pastes it under Join a match and
