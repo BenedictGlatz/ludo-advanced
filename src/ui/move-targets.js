@@ -50,3 +50,16 @@ function reaches(move, target) {
 export function moveReaching(state, target) {
   return state.legalMoves.find((move) => reaches(move, target)) ?? null;
 }
+
+/**
+ * The legal move of *this* pawn that ends on `target`, or `null`. Issue #77 follow-up.
+ *
+ * `moveReaching` answers "which pawn goes there" and is the right question for a click on a square.
+ * A drag already knows the pawn, and asking `moveReaching` instead made only the first yard pawn
+ * draggable: all four share the entry square, so the answer was pawn 0 whichever pawn was carried,
+ * and the drop was refused for the other three. This asks the question the drop actually has: "does
+ * the pawn in hand reach this square".
+ */
+export function moveOfPawnReaching(state, pawn, target) {
+  return state.legalMoves.find((move) => move.pawn === pawn && reaches(move, target)) ?? null;
+}

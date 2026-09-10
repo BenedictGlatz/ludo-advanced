@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { moveReaching, targetOfElement } from "../../../src/ui/move-targets.js";
+import { moveOfPawnReaching, moveReaching, targetOfElement } from "../../../src/ui/move-targets.js";
 
 const el = (dataset) => ({ dataset });
 
@@ -57,5 +57,27 @@ describe("moveReaching", () => {
     };
 
     expect(moveReaching(leaving, { square: 0 }).pawn).toBe(0);
+  });
+});
+
+describe("moveOfPawnReaching", () => {
+  const leaving = {
+    legalMoves: [
+      ...[0, 1, 2, 3].map((pawn) => ({ player: 0, pawn, kind: "leave-start", from: 0, to: 1 })),
+      { player: 0, pawn: 3, kind: "advance", from: 2, to: 5, captures: null },
+    ],
+  };
+
+  /** The drag bug: any of the four yard pawns dropped on the entry square is its own move. */
+  it("finds the carried pawn's own move even when other pawns share the target", () => {
+    for (const pawn of [0, 1, 2, 3]) {
+      expect(moveOfPawnReaching(leaving, pawn, { square: 0 }).pawn).toBe(pawn);
+    }
+  });
+
+  it("is null when the carried pawn does not reach the square, whoever else does", () => {
+    expect(moveOfPawnReaching(leaving, 1, { square: 4 })).toBeNull();
+    expect(moveOfPawnReaching(leaving, 3, { square: 4 }).pawn).toBe(3);
+    expect(moveOfPawnReaching(leaving, 0, { square: 24 })).toBeNull();
   });
 });

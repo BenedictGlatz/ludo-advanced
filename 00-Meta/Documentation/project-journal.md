@@ -5740,6 +5740,19 @@ to get wrong later.
 - → Ch. 04, Ch. 08
 
 
+### 2026-09-10: A drag asks with the pawn in hand, and the square click keeps asking with the square
+
+**Decision.** `onDragEnded` checks a drop with `moveOfPawnReaching(state, pawn, target)` and commits
+through `onPawnActivated(pawn)`. `moveReaching(state, target)` stays as it is for the square click.
+
+**Why.** Only the first yard pawn could be dragged out: four pawns share one entry square, and asking
+"which move ends here" always named pawn 0. A click on a square knows no pawn and needs that question;
+a drop already knows the pawn and asking anything else loses that knowledge.
+
+**Rejected.** Teaching `moveReaching` to prefer `state.selectedPawn`. It would have fixed the drag, but a
+square click would then mean different things depending on invisible state, and two callers with two
+questions is clearer than one function that guesses. Details in `notes/04-frontend-building-blocks.md`.
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

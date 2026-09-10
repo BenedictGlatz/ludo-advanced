@@ -3868,6 +3868,40 @@ Decision block: project journal, 2026-09-10. The state half (`abandonedBy`) is i
   no setting is remembered across a reload (FR-45, `localStorage` is a lint error); and no sound
   control, which waits on issue #40 and is what the screen's sentence says.
 
+### Only the first yard pawn could be dragged out, because the drop asked the square and not the pawn: 2026-09-10, issue #91 follow-up
+
+**The bug.** With a roll that lets a pawn leave the yard, dragging any pawn but the top-left one onto
+the lit entry square snapped it back and moved nothing. Clicking worked for every pawn, and dragging
+worked for every pawn already on the track. Reported by the Product Owner while playtesting the issue
+#77 fixes.
+
+**The cause.** `onDragEnded` in `turn-controls.js` checked the drop with `moveReaching(state, target)`,
+which answers "which legal move ends on this square" and returns the *first* one. That is the right
+question for a click on a square, where no pawn is known yet. It is the wrong question for a drop,
+where the pawn is already in hand: the four yard pawns all end on the same entry square, so the answer
+was pawn 0 whichever pawn was carried, the `?.pawn !== pawn` guard failed for pawns 1 to 3, and the
+drop was treated as a change of mind. Track pawns never collide this way because one roll is one
+distance and two pawns on different squares cannot share a target, which is why the bug hid behind
+`SEEDS.advancesEarly`, the only seed the drag tests used.
+
+**The fix.**
+- `move-targets.js` gained `moveOfPawnReaching(state, pawn, target)`: the legal move of *this* pawn that
+  ends on the target, or `null`. `moveReaching` is unchanged and still serves the square click.
+- `onDragEnded` checks with the new function and then calls `onPawnActivated(pawn)` instead of
+  `onTargetActivated(target)`. The second change matters as much as the first: `onTargetActivated`
+  would have re-derived the pawn from the square and got pawn 0 again, and since pawn 0 was not the
+  selected one it would have *selected* it rather than committed. Going through the pawn commits the
+  one `onDragStarted` selected.
+
+**Rejected.** Making `moveReaching` prefer the selected pawn was considered and dropped: it would make
+a square click's meaning depend on hidden state, and the pawn is known at the drop anyway, so the
+honest fix is to ask with it.
+
+**Tests.** `move-targets.test.js` covers the new function with four yard pawns sharing the entry square;
+`turn-controls.test.js` drags pawn 2 out of a full yard and expects `COMMIT_MOVE` for pawn 2;
+`pawn-moves.spec.js` opens `SEEDS.leavesStartAtOnce`, drags the *last* movable pawn onto the entry
+square and checks that it, and not pawn 0, left. The E2E case was run once without the fix and failed.
+
 
 ## Decisions
 

@@ -10,6 +10,7 @@ import { expect, test } from "@playwright/test";
 import {
   SEEDS,
   boardState,
+  chooseAndCarryOn,
   firstMovablePawn,
   openMatch,
   pawnPositions,
@@ -197,6 +198,34 @@ test.describe("a pawn moves by pointing at its target (issue #91)", () => {
 
     // The mark belongs to the gesture, so it goes with it.
     await expect(board.locator('[data-drop="true"]')).toHaveCount(0);
+  });
+
+  test("any yard pawn, not only the first, can be dragged onto the entry square", async ({
+    page,
+  }) => {
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    await chooseAndCarryOn(board);
+
+    const { activePlayer } = await boardState(board);
+    const movable = board.locator('.pawn[data-movable="true"]');
+    await expect(movable).toHaveCount(4);
+    const pawn = movable.last();
+    const index = await pawn.getAttribute("data-pawn");
+    expect(index).not.toBe("0");
+
+    const from = await centre(pawn);
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await page.mouse.move(from.x + 12, from.y + 12, { steps: 3 });
+    await expect(pawn).toHaveAttribute("data-dragging", "true");
+
+    const to = await centre(board.locator('.square[data-legal-target="true"]'));
+    await page.mouse.move(to.x, to.y, { steps: 8 });
+    await page.mouse.up();
+
+    // The carried pawn is the one that left the yard; the top-left one is still at home.
+    await expect.poll(async () => (await pawnPositions(board))[`${activePlayer}.${index}`]).toBe(1);
+    expect((await pawnPositions(board))[`${activePlayer}.0`]).toBe(0);
   });
 
   test("a lit square can be reached and activated from the keyboard (NFR-08)", async ({ page }) => {

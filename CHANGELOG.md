@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Every pawn in the start area can be dragged onto the board, not only the top-left one.** When the
+  roll allowed a pawn to leave, dragging pawn 2, 3 or 4 out of the yard snapped it back and nothing
+  moved; only the first pawn could be dragged. All four pawns share the same entry square, and the drop
+  asked "which pawn goes there" instead of "does the pawn in my hand go there". Clicking was never
+  affected.
 - **No more "Ablehnen" for a player who holds no Reaction card.** The reaction strip offered Decline
   to whoever was looking at the screen whenever a window was open, including during a bot's pause and
   to an online guest who could not answer. It now offers the button only to the seat being asked, and
