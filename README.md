@@ -5,6 +5,16 @@ A 2D web remake of Ludo where the single die is replaced by two card pools: draw
 ![Status](https://img.shields.io/badge/status-in%20development-orange)
 ![License](https://img.shields.io/badge/license-TBD-lightgrey)
 
+## Play it
+
+**[benedictglatz.github.io/ludo-advanced](https://benedictglatz.github.io/ludo-advanced/)**
+
+The playable build of the `dev` branch, published by [`.github/workflows/pages.yml`](.github/workflows/pages.yml)
+on every push. No install, no clone, no toolchain: a browser and the link are enough.
+
+Online play works from there too. The host opens **Online**, copies the invite code into a chat, and the guest
+pastes it back. The connection is browser to browser over WebRTC, so there is no server holding the match.
+
 ## About
 
 Classic Ludo gives you one die and one decision: which pawn to move. Ludo Advanced adds two layers of choice on top of
