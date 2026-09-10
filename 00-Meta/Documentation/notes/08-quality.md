@@ -2361,6 +2361,25 @@ Vitest half.
   run in a browser this turn; check 6, a `gathering` watched on a real network, needs two networks. The
   `data-autofocus` rule and the refocus after a redraw have no end-to-end assertion either.
 
+### The end-to-end suite run against the published site, 2026-09-10
+
+- **Why it was done at all:** after the repository owner switched Pages to GitHub Actions, a green
+  `pages` workflow run said nothing about whether the published page actually plays. The two online
+  specs were pointed at `https://benedictglatz.github.io/ludo-advanced/` instead of the local preview,
+  through a throwaway config, and both passed. The details of the deployment itself are in
+  `notes/07-tooling.md`.
+- **The suite cannot be aimed at a project site as it stands.** `playwright.config.js` sets
+  `baseURL` to `http://localhost:4173`, where the game sits at the domain root, so the specs navigate
+  with an absolute path: `page.goto("/?seed=1&fast=1")` in `online.spec.js` and
+  the templated `page.goto` in `helpers.js`. Playwright resolves a leading `/` against the *origin*,
+  so with a `baseURL` of `.../ludo-advanced/` both land on `https://benedictglatz.github.io/` and the
+  app never boots. Changing the two calls to `./` makes them work under both. This is a test-harness
+  defect, not a hosting one: the shipped `dist/` already uses relative paths, from `base: "./"`.
+- **Outstanding:** the change to `./` was made only in the throwaway copy and is not in the suite.
+  Until it is, nobody can run the end-to-end tests against the published build without repeating the
+  edit. Aiming the suite at a deployed URL is also not wired up: it needs a `baseURL` override, which
+  the current config hardcodes.
+
 
 ## Decisions
 
