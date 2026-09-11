@@ -1,6 +1,6 @@
 /* The last card played (D100). A fifth plate at the end of the HUD row.
    Depends on tokens.css, hud.css and card.css, and loads after all three.
-   Reasoning: 01-Design/Handoff/17-spec-last-card-and-pawn-status.md, D100.
+   Reasoning: design/handoff/17-spec-last-card-and-pawn-status.md, D100.
 
    Where it is, and why it is not in the rail. The rail has no room: at 1440
    by 900 on the fitted stage its three plates stand about 723 px in a column

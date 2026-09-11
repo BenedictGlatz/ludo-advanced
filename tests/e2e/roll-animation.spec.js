@@ -125,10 +125,9 @@ test.describe("a roll a card was allowed to answer (the on-roll window)", () => 
   test("leaves the dice hand clickable on every turn after the window opened", async ({ page }) => {
     test.slow();
 
-    // Four copies, because `?stack=` replaces the pool and the draw is random among eligible cards, so
-    // copies are what make it certain rather than likely. Same reasoning as `traps.spec.js`. Two players
-    // means seat 0 draws on turn 1 and seat 2 on turn 2, so from turn 2 there is always an opponent
-    // holding a Reaction that answers the roll, and every roll from then on takes the second door.
+    // Four copies, dealt one per seat in turn order by `?stack=`, so both seats start with two and
+    // there is always an opponent holding a Reaction that answers the roll: every roll takes the second
+    // door. `fast` declines each window at once, which is all this case needs from it.
     const board = await openMatch(page, SEEDS.advancesEarly, {
       fast: true,
       stack: [
@@ -166,9 +165,8 @@ test.describe("a roll that cards changed explains itself (D73, NFR-08)", () => {
    * The case NFR-08 had been failing since the trap epic. An Angel Die adds a D8, so the chain is `base`
    * plus `add-die` and the number on the card is one no die in the game can produce on its own.
    *
-   * **Two copies of the same card, and that is not laziness.** `?stack=` replaces the pool rather than
-   * prepending to it and the draw picks a random eligible card, so a stack of two different ids makes the
-   * first draw a coin flip while two copies of one id make it certain. Same reasoning as `traps.spec.js`.
+   * **Two copies of the same card.** `?stack=` deals one card per seat in turn order, so seat 0 starts
+   * with one and so does seat 2.
    *
    * Angel Die takes no target, which is why it is the card used here: clicking it plays it, with no
    * picker to drive and no field to point at.

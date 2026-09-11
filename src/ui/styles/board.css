@@ -1,5 +1,5 @@
 /* Board: the 11 by 11 grid and the fields on it. Depends on tokens.css.
-   Geometry is derived in 01-Design/Handoff/01-spec-foundations-and-board.md (D3).
+   Geometry is derived in design/handoff/01-spec-foundations-and-board.md (D3).
    The skill square is D27 of 03-spec-cards-and-hands.md.
 
    Three files were split off this one, all for NFR-02 and all at a real seam:

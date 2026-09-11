@@ -9,7 +9,7 @@
  *
  * `src/ui/card-view.js` rendered `.card__art` as an empty framed window for two sprints, and its
  * header said why: the drawings live as inline SVG inside
- * `01-Design/Handoff/Card artwork design planning/Card Art.dc.html`, and getting them out is its own
+ * `design/handoff/card-art-canvas/Card Art.dc.html`, and getting them out is its own
  * piece of work. This is that piece of work.
  *
  * Doing it by hand once would produce the same files. It would also mean that the next time Claude
@@ -19,7 +19,7 @@
  * window we are replacing.
  *
  * It is deliberately **not** a build step. The artboard is a design source, not a runtime input, and a
- * build that parsed HTML out of `01-Design/` would make every `npm run build` depend on a file the
+ * build that parsed HTML out of `design/` would make every `npm run build` depend on a file the
  * production bundle has no business reading.
  *
  * ## How a drawing is matched to a card
@@ -57,13 +57,7 @@ import { POOL_COMPOSITION } from "../src/core/dice-pool.js";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..");
 
-const ARTBOARD = join(
-  ROOT,
-  "01-Design",
-  "Handoff",
-  "Card artwork design planning",
-  "Card Art.dc.html"
-);
+const ARTBOARD = join(ROOT, "design", "handoff", "card-art-canvas", "Card Art.dc.html");
 const LOCALE = join(ROOT, "src", "i18n", "locales", "en", "cards.json");
 const OUT_DIR = join(ROOT, "src", "ui", "art");
 

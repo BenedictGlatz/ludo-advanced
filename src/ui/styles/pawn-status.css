@@ -1,6 +1,6 @@
 /* What a card did to a pawn: the nine statuses of core/statuses.js, drawn on
    the piece. Depends on tokens.css and pawn.css, and loads after pawn.css.
-   Reasoning: 01-Design/Handoff/17-spec-last-card-and-pawn-status.md, D101.
+   Reasoning: design/handoff/17-spec-last-card-and-pawn-status.md, D101.
 
    Split off pawn.css on 2026-09-06, at a real seam and for NFR-02: pawn.css
    draws the piece and the five interactive states the player puts it in, this

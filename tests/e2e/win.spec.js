@@ -1,6 +1,6 @@
 /**
  * A full match, played from the start area to a filled house. Requirement FR-05, and the second half
- * of acceptance criterion SG1 in `SMART-Analysis.md`.
+ * of acceptance criterion SG1 in `smart-analysis.md`.
  *
  * This is the test that makes the slice a vertical one rather than a demo. It plays a complete
  * two-player match through the real interface, clicking pawns, and stops when somebody has won.

@@ -28,10 +28,10 @@
  * 2. Issue #38's skill squares draw from it again, to decide where a used-up square reappears.
  * 3. Issue #38's skill cards draw from it twice more: 57 times to shuffle the pool when the match
  *    starts, and once at the start of every turn.
+ * 4. On 2026-09-11 the start-of-turn skill draw was removed (FR-22), so every turn spends one draw less.
  *
  * Every time, every previous seed played a different match from the same number. Every time the fix
- * was one command, which is the whole reason `scripts/find-seeds.js` was written down. The first two
- * seeds below survived all three changes by coincidence and the other three did not.
+ * was one command, which is the whole reason `scripts/find-seeds.js` was written down.
  *
  * `?fast=1` collapses **six** waits in the turn loop to zero: the pause after a move, the pause after a
  * refusal, the thirty-second reaction window (issue #38), the two-second hold on a trap a card fired
@@ -53,18 +53,15 @@ import { expect } from "@playwright/test";
  */
 export const SEEDS = {
   /** 4 players. A pawn leaves the start area on turn 1. */
-  leavesStartAtOnce: { seed: 1, players: 4 },
-  /**
-   * 2 players. Leaves on turn 1 and, since issue #89's bonus roll, makes its first ordinary advance on
-   * the second roll of that same turn 1 (it was turn 3 before).
-   */
+  leavesStartAtOnce: { seed: 2, players: 4 },
+  /** 2 players. First ordinary advance on turn 3, by the replay's count. */
   advancesEarly: { seed: 1, players: 2 },
-  /** 2 players. First capture on turn 4. Seed 83 until issue #89 re-timed every match. */
-  capturesEarly: { seed: 166, players: 2 },
+  /** 2 players. First capture on turn 5. Seed 166 until the skill draw was removed on 2026-09-11. */
+  capturesEarly: { seed: 393, players: 2 },
   /** 4 players. Turn 1 has no legal move at all, so the first thing on screen is a refusal. */
-  passesOnTurnOne: { seed: 2, players: 4 },
-  /** 2 players. Seat 2 fills its house and wins on turn 56. Seed 238 (seat 0, turn 77) until issue #89. */
-  winsQuickest: { seed: 74, players: 2 },
+  passesOnTurnOne: { seed: 1, players: 4 },
+  /** 2 players. Seat 0 fills its house and wins on turn 61. Seed 74 until 2026-09-11. */
+  winsQuickest: { seed: 79, players: 2 },
 };
 
 /**

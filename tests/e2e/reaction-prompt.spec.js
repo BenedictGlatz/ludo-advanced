@@ -17,17 +17,15 @@
  *
  * No `?fast=1`: the fast run collapses the window to nothing, and the window is the subject here. Two
  * seats with the second one a bot, and a pool stacked with Devil Die, which is a Reaction to a roll.
- * Seat 0 draws on turn 1 and the bot rolls on turn 2, so the first bot roll opens a window that seat 0,
- * the person, is being asked about. Same construction as the on-roll case in `roll-animation.spec.js`,
- * and the four copies are for the same reason: `?stack=` replaces the pool and the draw among eligible
- * cards is random, so copies make the card certain rather than likely.
+ * `?stack=` deals one card per seat in turn order, so a single copy reaches only seat 0, the person.
+ * The bot rolls on turn 2, and that roll opens a window that the person is being asked about.
  */
 
 import { expect, test } from "@playwright/test";
 
 import { playPersonTurn } from "./bot-helpers.js";
 
-const STACK = ["reaction-devil-die", "reaction-devil-die", "reaction-devil-die"].join(",");
+const STACK = "reaction-devil-die";
 
 test.describe("the reaction countdown", () => {
   test("shows a bare number that stays inside its ring", async ({ page }) => {

@@ -2,7 +2,7 @@
    once.
    Depends on tokens.css, cast.css, cast-base.css and cast-parts.css, and
    loads after them.
-   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D107, D109.
+   Reasoning: design/handoff/18-spec-skill-card-animations.md, D107, D109.
 
    These are the loud casts, and they are loud in one way: more than one part
    leaves the target. Where the parts go is --bx and --by on the element, in

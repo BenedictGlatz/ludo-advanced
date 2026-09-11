@@ -34,7 +34,7 @@
  * there without any rule being written for it.
  *
  * Decided 2026-08-30 together with the 40-square track. See the decision block of that date in
- * `00-Meta/Documentation/project-journal.md`.
+ * `docs/documentation/project-journal.md`.
  */
 
 /** Squares on the shared track, indexed 0 to 39, closing on itself (FR-08). */

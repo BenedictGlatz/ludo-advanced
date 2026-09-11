@@ -1,6 +1,6 @@
 /* Card: the one component behind every dice card, Action card and Reaction
    card, in both authored sizes. Depends on tokens.css.
-   Reasoning is in 01-Design/Handoff/03-spec-cards-and-hands.md, D25 to D29
+   Reasoning is in design/handoff/03-spec-cards-and-hands.md, D25 to D29
    and D32.
 
    Size is one knob (D26). --card-u is a factor on the artboard, which is

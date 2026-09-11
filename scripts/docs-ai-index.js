@@ -1,7 +1,7 @@
 /**
- * Generates 00-Meta/Documentation/notes/13-ai-index.md from the AI prompt log.
+ * Generates docs/documentation/notes/13-ai-index.md from the AI prompt log.
  *
- * Reads every 00-Meta/AI-Prompts/<github-username>/YYYY-MM-DD.json, sorts the entries by timestamp,
+ * Reads every docs/ai-prompts/<github-username>/YYYY-MM-DD.json, sorts the entries by timestamp,
  * groups them by `topic` into the six subsections Chapter 13 defines, and writes the file.
  *
  * The prompt log is gitignored and kept per machine (decision of 2026-08-10), so a fresh clone has
@@ -15,8 +15,8 @@
 import { readdirSync, readFileSync, writeFileSync, existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-const LOG_ROOT = join("00-Meta", "AI-Prompts");
-const OUTPUT = join("00-Meta", "Documentation", "notes", "13-ai-index.md");
+const LOG_ROOT = join("docs", "ai-prompts");
+const OUTPUT = join("docs", "documentation", "notes", "13-ai-index.md");
 
 const TOPICS = [
   ["concept-architecture", "13.1 Concept and architecture decisions"],
@@ -88,7 +88,7 @@ function render(entries, contributors) {
     "",
     "> **Generated. Do not edit by hand.**",
     ">",
-    "> Source: `00-Meta/AI-Prompts/<github-username>/YYYY-MM-DD.json`",
+    "> Source: `docs/ai-prompts/<github-username>/YYYY-MM-DD.json`",
     "> Command: `npm run docs:ai-index`",
     "",
     `Every prompt sent to an AI system during this project: **${sorted.length} entries** from ` +

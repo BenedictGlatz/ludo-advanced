@@ -27,7 +27,7 @@
  * player who cannot read the current language needs is a word they can read. That is the reason the
  * chrome button already names the *target* language. If Claude Design gives the screen a look, the
  * description here is the DOM contract to design against, and it is filed in
- * `01-Design/Handoff/00-open-requests.md`.
+ * `design/handoff/00-open-requests.md`.
  *
  * The language positions are built from `LOCALES` rather than listed, so a third language lands here
  * without a change to this file, which is the same promise `nextLanguage` makes for the chrome button.

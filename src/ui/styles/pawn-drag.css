@@ -2,7 +2,7 @@
    Depends on tokens.css, pawn.css and board.css, and loads after all three
    and after pawn-status.css, so a pawn being carried looks the same whatever
    it is carrying.
-   Reasoning: 01-Design/Handoff/17-spec-last-card-and-pawn-status.md, D103.
+   Reasoning: design/handoff/17-spec-last-card-and-pawn-status.md, D103.
 
    Its own file rather than eight more lines in pawn.css, for the reason
    brief 17 section 1 gives: pawn.css is at the NFR-02 ceiling. It also owns

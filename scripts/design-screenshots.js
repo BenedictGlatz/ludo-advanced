@@ -9,8 +9,8 @@
  * node scripts/design-screenshots.js
  * ```
  *
- * The images land in `01-Design/assets/` and are committed, because the handoff brief in
- * `01-Design/Handoff/` refers to them and a brief whose pictures are missing is not a brief.
+ * The images land in `design/assets/` and are committed, because the handoff brief in
+ * `design/handoff/` refers to them and a brief whose pictures are missing is not a brief.
  *
  * **Why this is a script and not a Playwright spec.** A screenshot is evidence, not an assertion. A
  * spec that writes files into the repository makes `npm run test:e2e` change the working tree, which
@@ -28,7 +28,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
 
 const BASE_URL = process.env.LUDO_PREVIEW_URL ?? "http://localhost:4173";
-const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "01-Design", "assets");
+const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "design", "assets");
 
 /** The board is a single fluid object (D6), so the viewport is what decides how big it comes out. */
 const VIEWPORT = { width: 1440, height: 900 };

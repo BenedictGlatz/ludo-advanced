@@ -53,7 +53,6 @@ import { resolveRoll } from "../core/roll.js";
 import { expireStatuses } from "../core/statuses.js";
 import { expireTraps } from "../core/traps.js";
 import { TURN_PHASE, boardOf, nextState } from "./game-state.js";
-import { drawFor } from "./skill-turn.js";
 import { closeOrRollAgain } from "./turn-resolution.js";
 
 /**
@@ -70,20 +69,20 @@ function assertPhase(state, expected) {
 }
 
 /**
- * Steps 1 and 2: the turn starts and the active player draws.
+ * Steps 1 and 2: the turn starts and three dice cards are drawn.
  *
- * Three things happen in one transition, and the order inside it matters:
+ * Two things happen in one transition, and the order inside it matters:
  *
  * 1. **Statuses and traps expire first**, before anything reads either list. A status added on turn 14
  *    with a deadline of 16 applies on 14 and 15 and is gone on 16, whatever order the rest of the turn
  *    does things in.
- * 2. **One skill card is drawn** for the active player (FR-23). It can come back empty, when the hand
- *    is already at its limit of five, and that is an ordinary situation rather than a failure.
- * 3. **Three dice cards are drawn** (FR-18).
+ * 2. **Three dice cards are drawn** (FR-18).
  *
- * The skill draw comes before the dice draw so that a card which could change what the dice hand is
- * worth is in the player's hand before they see it. Nothing exploits that yet, and reversing it later
- * would be a rule change rather than a tidy-up, so it is settled now.
+ * **No skill card is drawn here**, since 2026-09-11 (FR-22). A player gets skill cards only by landing a
+ * pawn exactly on a skill square, which is `skillSquareChanges` in `skill-turn.js`. The draw at the start
+ * of every turn filled hands faster than a budget of one card per turn could empty them: players held
+ * more cards than they read, and a card stopped being an event. The reasoning and the rejected
+ * alternatives are in section 6.5 of the game design document.
  */
 export function drawHand(state, deps) {
   assertPhase(state, TURN_PHASE.DRAW);
@@ -92,14 +91,13 @@ export function drawHand(state, deps) {
     statuses: expireStatuses(state.statuses, state.turnNumber),
     traps: expireTraps(state.traps, state.turnNumber),
   };
-  const drawn = drawFor({ ...state, ...started }, state.activePlayer, deps);
 
   const hand = deps.diceSource.draw(deps.rng);
   if (!Array.isArray(hand) || hand.length === 0) {
     throw new Error("the dice source drew an empty hand");
   }
 
-  return nextState(state, { ...started, ...drawn, hand, phase: TURN_PHASE.CHOOSE });
+  return nextState(state, { ...started, hand, phase: TURN_PHASE.CHOOSE });
 }
 
 /**

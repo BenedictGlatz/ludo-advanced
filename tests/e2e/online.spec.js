@@ -108,10 +108,19 @@ test.describe("online multiplayer (FR-42)", () => {
     await expect(guest.locator('.hand--dice .card[data-playable="true"]')).toHaveCount(3);
     await expect(host.locator('.hand--dice .card[data-playable="true"]')).toHaveCount(0);
 
+    // The host follows the guest's choice out of turn 2's choose phase. With no skill card in hand the
+    // guest's turn can run straight through and hand back, so the check is "no longer 2:choose" rather
+    // than "no longer choose", which turn 3 would be again.
     await chooseDiceCard(guestBoard);
     await expect
-      .poll(async () => (await boardState(hostBoard)).phase, { timeout: 15_000 })
-      .not.toBe("choose");
+      .poll(
+        async () => {
+          const { turnNumber, phase } = await boardState(hostBoard);
+          return `${turnNumber}:${phase}`;
+        },
+        { timeout: 15_000 }
+      )
+      .not.toBe("2:choose");
 
     await hostContext.close();
     await guestContext.close();

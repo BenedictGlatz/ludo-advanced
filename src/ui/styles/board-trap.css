@@ -16,7 +16,7 @@
    grammar and happens with no trap in play.
    Load after board.css and before pawn.css.
 
-   Reasoning: 01-Design/Handoff/07-spec-trap-marker.md, D51 to D55 and D58.
+   Reasoning: design/handoff/07-spec-trap-marker.md, D51 to D55 and D58.
    No user-facing string here: the object's name and its owner are in the
    span's aria-label, which i18next writes (NFR-03). */
 

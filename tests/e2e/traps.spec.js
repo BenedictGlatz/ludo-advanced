@@ -125,10 +125,9 @@ test.describe("laying a trap", () => {
   test("does not offer a field that already holds an object", async ({ page }) => {
     test.slow();
 
-    // **Two copies of the same card, and that is not laziness.** `?stack=` replaces the pool rather
-    // than prepending to it, and `drawSkillCard` picks a **random** eligible card out of what is there.
-    // So a stack of two different ids makes the first draw a coin flip, while two copies of one id make
-    // it certain. Two copies is also what the real pool holds of every card (`COPIES_PER_CARD`).
+    // **Two copies of the same card.** `?stack=` deals one card per seat in turn order, so the first
+    // copy goes to seat 0, which lays the first trap, and the second to the next seat, which tries to
+    // lay its trap on the same field.
     const board = await openMatch(
       page,
       SEEDS.leavesStartAtOnce,

@@ -1,7 +1,7 @@
 /**
  * The ten cards of artboard `6a`. Issue #38, requirement FR-28.
  *
- * Transcribed from `01-Design/Handoff/Card artwork design planning/Card Art.dc.html`, artboard `6a`.
+ * Transcribed from `design/handoff/card-art-canvas/Card Art.dc.html`, artboard `6a`.
  *
  * ## Why these ten are a file of their own
  *

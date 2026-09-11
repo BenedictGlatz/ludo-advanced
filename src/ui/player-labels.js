@@ -34,7 +34,7 @@
  * **The colour word is keyed on the seat, not on the display number**, because the colour belongs to
  * the seat: seat 2 is green whether it is the second player of two or the third of four.
  *
- * The words themselves come from `01-Design/Handoff/01-spec-foundations-and-board.md` § D1, which is
+ * The words themselves come from `design/handoff/01-spec-foundations-and-board.md` § D1, which is
  * the table that also fixes the hex values. If a word is wrong for the colour, the spec is where it
  * gets corrected, not here.
  */

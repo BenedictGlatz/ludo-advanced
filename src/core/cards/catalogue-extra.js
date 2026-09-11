@@ -1,7 +1,7 @@
 /**
  * The nineteen cards of artboard `4a`. Issue #38, requirement FR-28.
  *
- * Transcribed from `01-Design/Handoff/Card artwork design planning/Card Art.dc.html`, artboard `4a`.
+ * Transcribed from `design/handoff/card-art-canvas/Card Art.dc.html`, artboard `4a`.
  *
  * These are the cards that needed mechanics the game did not have: traps on squares, blockers that stop
  * a pawn passing through, backward movement, statuses with a duration, and effects over several
