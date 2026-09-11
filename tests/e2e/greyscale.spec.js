@@ -28,7 +28,7 @@
  * as well as in hue. That is a Product Owner decision, not a stylesheet one.
  *
  * The 1.30 luminance case stays retired, as D50 decided. The 1.146 figure and the derivation of the 1.30
- * threshold live in `00-Meta/Documentation/notes/01-requirements-and-goals.md` next to NFR-12 and in
+ * threshold live in `docs/documentation/notes/01-requirements-and-goals.md` next to NFR-12 and in
  * `notes/08-quality.md`, where the next person who proposes moving a seat colour will find them. What is
  * kept below is the floor of four different greys: two seats reducing to the same grey is the regression
  * worth catching, and it passes today.

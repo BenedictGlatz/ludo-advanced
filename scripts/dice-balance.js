@@ -182,7 +182,7 @@ function printMeasurement() {
   }
 }
 
-console.log("Dice pool balance. Feeds section 5 of Game-Design-Document.md.");
+console.log("Dice pool balance. Feeds section 5 of game-design-document.md.");
 printTheory(HOME_R, "current");
 printTheory(OLD_HOME_R, "superseded, for comparison");
 printMeasurement();

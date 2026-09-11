@@ -1,7 +1,7 @@
 /* The base movement per family (D105, D106): what every card of a family does
    the same way once it stands on the stage, so 29 casts look like one game.
    Depends on tokens.css and cast.css and loads after both.
-   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D105, D106.
+   Reasoning: design/handoff/18-spec-skill-card-animations.md, D105, D106.
 
    The family is the mechanic, not the category (D105). data-card-category
    covers 19 of 29 cards and is already drawn on the pill; data-card-type is

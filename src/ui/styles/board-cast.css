@@ -1,7 +1,7 @@
 /* The board stage of a cast (D109): what a field, a pawn and the board itself
    do while a card's effect lands on them. Depends on tokens.css, board.css,
    board-trap.css and pawn.css, and loads after all four and before cast.css.
-   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D109, D112.
+   Reasoning: design/handoff/18-spec-skill-card-animations.md, D109, D112.
 
    Everything in this file is an attribute state and not a finite animation,
    with three exceptions that are movement only. data-cast-hit goes on when the

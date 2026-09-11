@@ -20,7 +20,7 @@
  * stylesheet and compares the two, which is the only reason writing it twice is acceptable.
  *
  * Both come from D3 of
- * [01-spec-foundations-and-board.md](../../01-Design/Handoff/01-spec-foundations-and-board.md).
+ * [01-spec-foundations-and-board.md](../../design/handoff/01-spec-foundations-and-board.md).
  */
 
 import { MAX_PLAYERS, REGION, absoluteSquare, homeColumnStep, region } from "../core/board.js";

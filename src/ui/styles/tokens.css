@@ -1,7 +1,7 @@
 /* Ludo Advanced design tokens.
    Every value the UI layer is allowed to use lives here, on :root, so that
    core/ and state/ never see a colour, a size or a font (NFR-01).
-   Reasoning is in 01-Design/Handoff/01-spec-foundations-and-board.md and
+   Reasoning is in design/handoff/01-spec-foundations-and-board.md and
    03-spec-cards-and-hands.md; the 2026-09-01 additions are 04-spec.
 
    Tone (D14): friend-slop party game. Flat fills, a 3px ink outline on every

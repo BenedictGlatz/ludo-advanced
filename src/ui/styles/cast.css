@@ -3,7 +3,7 @@
    tokens.css and card.css and loads after both; app.css makes .app its
    containing block. Family gestures are in cast-base.css, the 29 accents in
    cast-fx-*.css, the marks on the board in board-cast.css.
-   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D104, D108,
+   Reasoning: design/handoff/18-spec-skill-card-animations.md, D104, D108,
    D110 to D115.
 
    Where it plays (D104). Over the board, centred on the board's centre, and

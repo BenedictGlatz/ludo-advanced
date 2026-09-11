@@ -51,6 +51,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Every file and folder name in the repository is now lowercase with dashes.** `00-Meta/` is now
+  `docs/` and `01-Design/` is now `design/`, and the names below them lost their capitals, spaces and
+  stray numbers, for example `docs/project-management/feasibility-study.md`. All links inside the
+  repository point to the new names. Links to the old names from outside, such as in GitHub issues or
+  the printed report, no longer work. The rule is in `CLAUDE.md` under File naming
 - **The game can be published as a link.** The build now uses relative paths to its own files, so it
   works when it is served from a subdirectory instead of the root of a domain, which is how GitHub
   Pages serves a project site. Nothing changes for a player: the same build, in the same place, looks
@@ -152,67 +157,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CLAUDE.md` defining the tech stack, architecture layering, testing, Git and AI prompt log conventions
 - `README.md` with project overview, setup instructions, scripts and contribution guidelines
 - This changelog
-- AI prompt log under `00-Meta/AI-Prompts/<github-username>/YYYY-MM-DD.json`
-- Living documentation notes under `00-Meta/Documentation/`: a steering index, 13 chapter notes for the final
+- AI prompt log under `docs/ai-prompts/<github-username>/YYYY-MM-DD.json`
+- Living documentation notes under `docs/documentation/`: a steering index, 13 chapter notes for the final
   project report, a project journal for decisions and challenges, a sprint log for planned versus delivered
   scope, an abbreviation list, and two adapted reference documents on report structure and writing style
 - Mandatory per-change steps in `CLAUDE.md`, making the prompt log, documentation notes, changelog and tests part
   of the same commit as the change itself
-- SMART analysis of the project goals in `00-Meta/Project-Management/SMART-Analysis.md`: one overall goal plus one
+- SMART analysis of the project goals in `docs/project-management/smart-analysis.md`: one overall goal plus one
   sub-goal per must-have epic (#36–#39), each with a deadline taken from the board's sprint markers and measurable
   criteria stated as checks against artefacts, plus a section naming what still has to exist before those criteria
   can be read
-- Feasibility study in `00-Meta/Project-Management/Feasibility-Study.md`: technical, schedule,
+- Feasibility study in `docs/project-management/feasibility-study.md`: technical, schedule,
   personnel/organisational, economic and legal feasibility, each with its own verdict, and a conditional Go whose
   conditions and precondition (the AI toolchain) are named explicitly
-- `00-Meta/Project-Management/Functional-and-Non-Functional-Goals.md`: the project's goal catalogue, 21 functional
+- `docs/project-management/functional-and-non-functional-goals.md`: the project's goal catalogue, 21 functional
   goals traced to the backlog epics and 8 non-functional goals derived from the hard constraints, each with its
   source, its reason and how it is verified
-- `00-Meta/Project-Management/System-Architecture.md`: the layer diagram and the turn sequence diagram as Mermaid
+- `docs/project-management/system-architecture.md`: the layer diagram and the turn sequence diagram as Mermaid
   figures, a module inventory for `core/`, `state/` and `ui/` with the requirement ids each module owns, the data
   flow from DOM event to re-render, and the reasons for the layering with the rejected alternatives named
-- `00-Meta/Project-Management/Game-Design-Document.md`: the rulebook of Ludo Advanced. Board topology as exact
+- `docs/project-management/game-design-document.md`: the rulebook of Ludo Advanced. Board topology as exact
   numbers (52 shared track squares, 5 home column squares, 58 steps from start area to home), the turn sequence as
   an 8-step state machine, the Dice Card Pool composition with its probability arithmetic, an 8-card MVP skill card
   catalogue with ids, the eight open gameplay rules written out with their rejected alternatives and a Product Owner
   sign-off table, and 13 win-condition and movement edge cases resolved
-- `00-Meta/Project-Management/Effort-Estimation.md`: the open work sized in story points on a Fibonacci scale
+- `docs/project-management/effort-estimation.md`: the open work sized in story points on a Fibonacci scale
   anchored on one named issue, covering the four implementation epics, the five extended features, the open
   documentation issues and three work items that carry no board issue at all, with totals per epic and per MoSCoW
   class, a capacity check against the weekdays left in Sprints 2 and 3, and the finding that the must-have set does
   not fit as scoped
-- `00-Meta/Project-Management/Test-Plan-and-Quality-Strategy.md`: the test strategy across four levels with what
+- `docs/project-management/test-plan-and-quality-strategy.md`: the test strategy across four levels with what
   each level cannot catch, the coverage floor and the reason it excludes `ui/`, 12 end-to-end flows mapped to
   requirement ids, one unit test case per rule edge case settled in the game design document, the injectable RNG as
   a testability requirement, the CI gates that do not exist yet, and **the project's first written Definition of
   Done** at issue, sprint and release level
-- `00-Meta/Project-Management/Obligations-Book.md`: what will be built to satisfy the requirements. The system
+- `docs/project-management/obligations-book.md`: what will be built to satisfy the requirements. The system
   architecture cited rather than redrawn, a GUI inventory of nine screens plus two should-have ones with the
   requirement ids and backlog issue of each, the technology stack with its dependency policy and an empty version
   column until `package.json` exists, the platform committed from NFR-06 and NFR-10, and five known gaps including
   two screens that carry no backlog issue
-- `00-Meta/Project-Management/Roadmap-and-Gantt.md`: the project schedule as a Mermaid Gantt chart, with
+- `docs/project-management/roadmap-and-gantt.md`: the project schedule as a Mermaid Gantt chart, with
   the measured configuration of the board's Roadmap view, the three of its properties the GitHub API does
   not expose, and the finding that dates are set on 11 of 64 board items so the view renders 4 bars and 7
   dots. Registered as Figure 5, with Figure 6 reserved for the board screenshot
-- `00-Meta/Project-Management/Project-Plan.md`: the project plan for time, resources and risks. Five
+- `docs/project-management/project-plan.md`: the project plan for time, resources and risks. Five
   checkable milestones, the decision that no buffer sprint is created and that the closing work is a dated
   window inside Sprint 3 behind a 2026-09-11 feature freeze, the decision that there is no dedicated Scrum
   Master, a work package dependency graph taken from the architecture, the critical path with the finding
   that only 32 points of work exist off it, a sprint assignment for the 27 previously unscheduled
   implementation issues, and the required rate corrected upward to 4.9 points per weekday
-- Five risks created by the project plan added to `00-Meta/Project-Management/03-Risk-Analysis.md` as their
+- Five risks created by the project plan added to `docs/project-management/risk-analysis.md` as their
   own block, including the missed-feature-freeze row, which is the highest-rated risk in the register
-- `00-Meta/Project-Management/Project-Structure-Plan.md`: the project structure plan (issue #17, pulled into
+- `docs/project-management/project-structure-plan.md`: the project structure plan (issue #17, pulled into
   Sprint 1 on 2026-08-22). Eight subprojects and the complete work package inventory, adopting the board's epic
   and sub-issue graph, placing all 47 board issues exactly once plus the three packages that have no issue, and
   carrying structure only: points, dates and owners stay in the documents that own them. The tree is registered
   as Figure 7
-- `00-Meta/Project-Management/Requirements-Specification.md`: 45 functional and 12 non-functional requirements,
+- `docs/project-management/requirements-specification.md`: 45 functional and 12 non-functional requirements,
   each with an acceptance criterion and a MoSCoW priority, plus the MoSCoW analysis with a drop order agreed in
   advance and the eight gameplay decisions still owed by the Product Owner
 - A **`Story Points`** number field on the GitHub Projects board, back-filled on the 25 open issues that
-  `00-Meta/Project-Management/Effort-Estimation.md` sizes, 134 points in all. It was outstanding action 1 of that
+  `docs/project-management/effort-estimation.md` sizes, 134 points in all. It was outstanding action 1 of that
   document and had been blocked since 2026-08-22 by the missing `project` token scope. Story-point velocity
   becomes producible from Sprint 2 onward; closed issues were deliberately left blank so that no sprint gets a
   retroactive estimate
@@ -228,7 +233,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   module that reaches for `state/`, `ui/`, jQuery, i18next or the DOM fails `npm run lint` rather than a code
   review. Both were verified by deliberately breaking them
 - `scripts/docs-ai-index.js`, the generator behind `npm run docs:ai-index`. It reads every
-  `00-Meta/AI-Prompts/*/*.json`, groups the entries into the six subsections of the AI index chapter, and
+  `docs/ai-prompts/*/*.json`, groups the entries into the six subsections of the AI index chapter, and
   fails loudly on an unknown `topic` or `use` instead of dropping the entry. It has not been run, because the
   prompt log is per machine and a run here would produce an incomplete chapter
 - A toolchain smoke test, `tests/unit/smoke.test.js`, asserting `1 + 1 === 2`. It proves the runner works and
@@ -242,11 +247,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/unit/core/board.test.js`, mirroring the `src/` layout. Boundary cases at every region edge, plus
   three properties asserted exhaustively over their whole domain rather than at a sample point, because a
   claim about a board's topology is a claim about every position on it
-- **`01-Design/`, the design handoff folder** (issue #3). A `README.md` describing the loop between Claude
-  Code and Claude Design with both document templates, a `Handoff/` directory for numbered brief and spec
+- **`design/`, the design handoff folder** (issue #3). A `README.md` describing the loop between Claude
+  Code and Claude Design with both document templates, a `handoff/` directory for numbered brief and spec
   pairs, and `assets/`. The reasoning lives here; the CSS itself lands in `src/ui/styles/`, because it is
   production code and every translation step from a design document into a stylesheet is a chance to drift
-- **`01-Design/Handoff/01-brief-foundations-and-board.md`, the first design brief.** Screens S3 (board) and
+- **`design/handoff/01-brief-foundations-and-board.md`, the first design brief.** Screens S3 (board) and
   S6 (move hints and refusal) plus the colour, spacing and typography foundations; eight hard constraints
   each with its reason; the full DOM contract `ui/board-view.js` will produce, including the five states
   driven by data attributes; the board facts taken from the rulebook; **nine numbered open decisions D1 to
@@ -299,7 +304,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `board.css` and `board-track.css` for the 11 by 11 grid and the 40 track fields, `pawn.css` for the pawn and its
   five states, and `refusal.css` for the move-refusal strip. Two skins, Picnic and Night In, follow the operating
   system or a `data-theme` attribute on `<html>`
-- The reasoning behind the design system in `01-Design/Handoff/01-spec-foundations-and-board.md`: sixteen numbered
+- The reasoning behind the design system in `design/handoff/01-spec-foundations-and-board.md`: sixteen numbered
   decisions covering colour, the player identifier, board geometry, spacing, typography, board size, the five pawn
   and square states, motion, the refusal region, pawn positioning, keyboard focus, reduced motion, contrast and
   dark mode, each with its reason and at least one named rejected alternative
@@ -318,7 +323,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   no legal move, a complete match ending in a win, and the NFR-12 greyscale check. They run against the
   production build in Chromium, Firefox and Edge
 - `scripts/design-screenshots.js`, which captures the board at 2, 3 and 4 players, in the dark skin and in
-  greyscale, into `01-Design/assets/` for the design handoff briefs
+  greyscale, into `design/assets/` for the design handoff briefs
 - **The real Dice Card Pool** (issue #30): twenty cards over seven denominations, two D2, three D4, four D6,
   four D8, three D10, two D12 and two D20. Three are drawn per turn without replacement, one is kept, and all
   three go back and are reshuffled at the end of the turn. There is no discard pile, so the pool is stationary.
@@ -333,10 +338,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `npm run docs:dice-balance`, which derives how many turns a pawn needs per die, exactly, and then measures
   1200 real matches through the shipped rules to check the derivation. Section 5.2 of the game design document
   is now this command's output rather than arithmetic done by hand
-- **Design handoff 03** (`01-Design/Handoff/03-brief-cards-and-hands.md`), asking for the card component, the
+- **Design handoff 03** (`design/handoff/03-brief-cards-and-hands.md`), asking for the card component, the
   dice hand (S4), the skill hand at rest (S5), the skill square on the board and the page shell that holds
   them all without scrolling (FR-31). Nine open decisions, D25 to D33
-- The card artwork handoff, `01-Design/Handoff/Card artwork design planning/`. It is the only record of what
+- The card artwork handoff, `design/handoff/card-art-canvas/`. It is the only record of what
   the 29 cards are, the Product Owner picked the set out of it, and design handoff 03 references it by path
 - **The eight skill fields** (issue #38, FR-22): four, seven, fourteen, seventeen, twenty-four, twenty-seven,
   thirty-four and thirty-seven of the forty shared track fields. A pawn that **lands** on one earns its owner
@@ -373,7 +378,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in a rail on the right, refusal strip across the foot, all visible at 1440 by 900 without scrolling. Below
   1344 px the regions stack and the page may scroll. The skill hand region is mounted and empty until issue #38
   draws a card into it
-- Design specification 03 as `01-Design/Handoff/03-spec-cards-and-hands.md`, with `src/ui/styles/card.css`,
+- Design specification 03 as `design/handoff/03-spec-cards-and-hands.md`, with `src/ui/styles/card.css`,
   `card-state.css` and `hand.css`, a real `app.css` replacing the placeholder Claude Code wrote, 32 new tokens,
   and the skill square finally visible as a teal diamond rather than as an attribute nothing styled
 - Names for all seven dice denominations in both locales, plus the two tags every dice card carries: its range,
@@ -452,11 +457,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Claude Design artboard, so the window had been a framed empty box on every card since it was built.
   `npm run assets:card-art` extracts them into `src/ui/art/`, matches each drawing to its card by title,
   and refuses to write anything at all if a drawing matches no card or a card has no drawing
-- **Design handoff 04** (`01-Design/Handoff/04-brief-hud-menus-and-handover.md`), asking for the HUD
+- **Design handoff 04** (`design/handoff/04-brief-hud-menus-and-handover.md`), asking for the HUD
   (S7), the main menu (S1), match setup (S2), pause (S8), win (S9) and a new handover screen for the
   moment between two turns at a shared screen. Eight open decisions, D35 to D42, plus the eleven items
   that were left open by handoffs 02 and 03 and had been drifting since
-- **Design handoff 06** (`01-Design/Handoff/06-brief-pawn-mark.md`), asking for the seat's shape on the
+- **Design handoff 06** (`design/handoff/06-brief-pawn-mark.md`), asking for the seat's shape on the
   pawn itself, which is where NFR-12 is measured and the one place the shape is not yet. Three open
   decisions, D48 to D50. Every pawn now carries an empty mark element for the stylesheet to fill, so
   nothing is visible until the spec lands. The work order to Claude Design puts this brief ahead of
@@ -751,48 +756,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `--cell` is derived from it, so any rule overriding one has to re-derive the other
 - A turn no longer advances by itself from drawing to rolling. It waits in the `choose` phase for the player, the
   way it already waited in `act` for a pawn click
-- Section 5 of `00-Meta/Project-Management/Obligations-Book.md` no longer says "No design specification exists",
-  and points at `01-Design/` and `src/ui/styles/` instead. Screens S4, S5, S7 and the menus still have no design
+- Section 5 of `docs/project-management/obligations-book.md` no longer says "No design specification exists",
+  and points at `design/` and `src/ui/styles/` instead. Screens S4, S5, S7 and the menus still have no design
 - Prettier now uses `"quoteProps": "preserve"`, so an object key written with quotes keeps them. The default
   stripped the quotes from test fixture keys such as `"0.1"` while keeping them on `"0.0"`, which made
   coordinate keys read inconsistently
 
 - AI prompt log entries now carry a `topic` and a `use` field, so the report's AI index chapter can be generated
   from the log rather than sorted by hand
-- The truncated `## Documentation` section in `00-Meta/Project-Management/01-Github-Project.md` now points at the
+- The truncated `## Documentation` section in `docs/project-management/github-project.md` now points at the
   project journal instead of ending mid-sentence
-- `00-Meta/AI-Prompts/` is now gitignored and kept locally per contributor instead of being committed; `CLAUDE.md`
+- `docs/ai-prompts/` is now gitignored and kept locally per contributor instead of being committed; `CLAUDE.md`
   updated so the AI prompt log step is no longer part of the same commit as documentation notes, changelog and
   tests
-- `00-Meta/Project-Management/00-One-Pager.md` rewritten as a one-page overview: the swallowed `TURN` heading and
+- `docs/project-management/one-pager.md` rewritten as a one-page overview: the swallowed `TURN` heading and
   the typographic bullet characters fixed, the MVP boundary stated in one sentence, the board's sprint calendar and
   a question-to-document pointer table added, and the rules detail moved to the game design document so that only
   one document holds the rules
 - The GitHub Projects board is now the single source of truth for sprint membership: `sprint-log.md` takes its
-  planned scope from the board's `Sprint` field instead of the prose plan in `01-Github-Project.md`, and the
+  planned scope from the board's `Sprint` field instead of the prose plan in `github-project.md`, and the
   Sprint 1 entry records the 13 documentation issues actually assigned to it, with the previously listed gameplay
   scope kept as superseded and unstarted
-- Two risk rows in `00-Meta/Project-Management/03-Risk-Analysis.md` updated: *No velocity/burn-down data
+- Two risk rows in `docs/project-management/risk-analysis.md` updated: *No velocity/burn-down data
   producible* re-rated from priority 4 to 3 now that story point estimates exist, with velocity and burn-down split
   apart because points fix only the first; *Test coverage discipline slips* deliberately left at 3 with only its
   mitigation extended, because a written test plan without CI does not lower the likelihood
-- The Definition of Done condition in `Feasibility-Study.md` and its row in `SMART-Analysis.md` marked as met and
+- The Definition of Done condition in `feasibility-study.md` and its row in `smart-analysis.md` marked as met and
   annotated rather than deleted, so the sequence stays readable, with the adoption still named as outstanding
 - Three contradictions carried across four documents resolved and recorded rather than left open: the buffer
-  sprint and Sprint 3's length in `sprint-log.md`, the two disagreeing role tables in `00-index.md` and
+  sprint and Sprint 3's length in `sprint-log.md`, the two disagreeing role tables in `docs/documentation/README.md` and
   `notes/02-project-management.md`, and the sprint assignment of the implementation backlog. The superseded
-  role table and prose sprint plan in `00-Meta/Project-Management/01-Github-Project.md` are annotated in
+  role table and prose sprint plan in `docs/project-management/github-project.md` are annotated in
   place instead of deleted, and its malformed roles table now renders
 - The *Sprint-plan vs. board-date contradiction* risk row re-rated from priority 4 to 3, its mitigation
   having been carried out, with the residual named as adoption rather than as decision
-- Section 5.2 of `00-Meta/Project-Management/Effort-Estimation.md` revised: implementation has 15 weekdays
+- Section 5.2 of `docs/project-management/effort-estimation.md` revised: implementation has 15 weekdays
   rather than 19 once the closing window is in the calendar, printed next to the original figure
 - Two negative findings from 2026-08-06 corrected in `notes/02-project-management.md` after the first full board
   read: `Status` is populated on all 64 items and `Sprint` on 20 of them. Story points and an Iteration field are
   still missing, so burn-down charts remain impossible and only an issue-count velocity is available
 - `Start Date` and `End Date` back-filled on the 14 closed board items that carried none (the 13 Sprint 1 issues
   plus #17), each set to the day its delivering commit was authored rather than to the issue's close date, so the
-  Roadmap view now renders 4 bars and 21 dots instead of 4 bars and 7 dots. `00-Meta/Project-Management/Roadmap-and-Gantt.md`
+  Roadmap view now renders 4 bars and 21 dots instead of 4 bars and 7 dots. `docs/project-management/roadmap-and-gantt.md`
   section 2.1 records the measurement and the per-issue dates; the `project` token scope that blocked this, the
   `Story Points` field and the `Sprint` assignment was granted on the same day
 - `CLAUDE.md` now opens with three sections on how answers and documentation are written: *Communication*, which
@@ -801,16 +806,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ban. A typo in the *Communication* paragraph was fixed in the same commit
 - Board issue **#28** split into **#28 *Pawn Movement Rules*** (5 points, the legal-move set in `core/`) and the
   new **#62 *Pawn Rendering & Movement Animation*** (3 points, the view half). The split is point-neutral and
-  was outstanding action 3 of `00-Meta/Project-Management/Effort-Estimation.md`: the rule half blocks four other
+  was outstanding action 3 of `docs/project-management/effort-estimation.md`: the rule half blocks four other
   issues and the animation half blocks nothing, so holding them together put the animation on the critical path
 - `Sprint 2` set on **#26, #27, #28, #29** and on the three issues created the same day, so the epic #36 tree is
   the first one whose children are all in the same sprint as their epic. Sprint 2 now reads 17 issues and 72
   story points on the board
 - **How the board is drawn is decided: real DOM elements laid out by CSS Grid**, with SVG and `<canvas>` as the
-  named rejected alternatives. Section 6 of `System-Architecture.md` and section 2.4 of `Obligations-Book.md`
+  named rejected alternatives. Section 6 of `system-architecture.md` and section 2.4 of `obligations-book.md`
   had both deferred this to Claude Design as a design rule; the deferral is corrected in place rather than
   deleted, because a rendering technology decides what a stylesheet can address, not what anything looks like
-- The version column of the technology table in `00-Meta/Project-Management/Obligations-Book.md` section 3.1 is
+- The version column of the technology table in `docs/project-management/obligations-book.md` section 3.1 is
   filled from the real `package.json`, having been deliberately empty since it was written
 - **A match now runs on the twenty-card Dice Card Pool instead of one fixed six-sided die** (issue #30). The
   swap was one default argument in `state/match.js` and one call in `src/main.js`, because every rule was
@@ -823,9 +828,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Two end-to-end specs stopped asserting the stand-in and started asserting the rule. `pawn-leaves-start.spec.js`
   checked `roll === 6`, which was only true while the die was always a D6, and now checks that the roll equals
   the chosen die's maximum. `win.spec.js` assumed seat 0 wins, which was a property of the old seed
-- ESLint ignores `01-Design/`. Claude Design delivers a generated canvas runtime with every handoff, marked
+- ESLint ignores `design/`. Claude Design delivers a generated canvas runtime with every handoff, marked
   "do not edit" by the tool that wrote it, and the card artwork handoff took `npm run lint` from clean to 306
-  errors none of which were in project code. Nothing under `01-Design/` is built or shipped
+  errors none of which were in project code. Nothing under `design/` is built or shipped
 - **Section 5.2 of the game design document is re-derived against the 44-step journey** and no longer carries
   its "out of date, knowingly left standing" banner. The composition did not change. What changed is one
   conclusion, that the cheapest die for crossing the track is the D8 rather than the D10, and one omission that

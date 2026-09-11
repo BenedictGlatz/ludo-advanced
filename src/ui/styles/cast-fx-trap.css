@@ -1,7 +1,7 @@
 /* The accents of the three trap cards (D107, D109).
    Depends on tokens.css, cast.css, cast-base.css and cast-parts.css, and
    loads after them.
-   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D107, D109.
+   Reasoning: design/handoff/18-spec-skill-card-animations.md, D107, D109.
 
    All of these have a board stage and most use cast.css's default flight for
    part 0, the disc crossing from the card to the target. What each card adds

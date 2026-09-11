@@ -19,7 +19,7 @@ the familiar board:
 Everything else stays true to Ludo: 2–4 players, four pawns each, leave the start area on the highest roll, capture by
 landing exactly on an opponent, first player home wins.
 
-The full rules are in [00-One-Pager.md](00-Meta/Project-Management/00-One-Pager.md).
+The full rules are in [one-pager.md](docs/project-management/one-pager.md).
 
 ## Tech stack
 
@@ -129,10 +129,13 @@ src/
 tests/
   unit/    Vitest
   e2e/     Playwright
-00-Meta/
-  Project-Management/  Rulebook, sprint plan and meeting notes
-  Documentation/       Living notes for the final project report
-  AI-Prompts/          The AI prompt log
+docs/
+  project-management/  Rulebook, sprint plan and meeting notes
+  documentation/       Living notes for the final project report
+  ai-prompts/          The AI prompt log
+design/
+  handoff/             Design briefs and specs exchanged with Claude Design
+  assets/              Screenshots the briefs refer to
 ```
 
 Game rules live in `core/` and never touch the DOM, which keeps them testable without a browser.
@@ -167,7 +170,7 @@ and register the locale in the i18next setup in `src/i18n/`.
 - Pull requests need at least one review approval and are merged with **Squash and Merge**.
 - Record user-visible changes under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md) in the same commit.
 - Append the facts your change produced to the matching chapter note in
-  [00-Meta/Documentation/](00-Meta/Documentation/00-index.md), also in the same commit. The project report is
+  [docs/documentation/](docs/documentation/README.md), also in the same commit. The project report is
   written alongside development, not at the end.
 
 Full conventions, including the architecture rules and the AI prompt log, are documented in [CLAUDE.md](CLAUDE.md).
@@ -182,7 +185,7 @@ Full conventions, including the architecture rules and the AI prompt log, are do
 | Sprint 3 | 6–7   | Art, audio, menus, polish and fixes                       |
 | Buffer   | 8     | Playtesting and presentation                              |
 
-Details: [01-Github-Project.md](00-Meta/Project-Management/01-Github-Project.md).
+Details: [github-project.md](docs/project-management/github-project.md).
 
 ## Team
 

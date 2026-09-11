@@ -85,7 +85,7 @@
  * dims every field that is not offered, which handoff 04 delivered; `board.css` now styles the same
  * field violet with nothing dimmed, which handoff 07's D59 delivered. `prompt.css` loads later and wins,
  * so the D59 block is inert. Two specs answered one question in opposite directions, the loop had no way
- * to notice, and reconciling them is D61. See `01-Design/Handoff/08-brief-pickable-field.md`.
+ * to notice, and reconciling them is D61. See `design/handoff/08-brief-pickable-field.md`.
  *
  * **Moving `board-trap.css` later would not fix that and must not be tried.** The collision is between
  * `prompt.css` and `board.css`, on `box-shadow` and `background`, at equal specificity, and it swallows

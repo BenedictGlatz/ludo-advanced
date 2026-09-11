@@ -2,7 +2,7 @@
    Depends on tokens.css and card.css.
    Split off card.css at 322 lines, at the seam NFR-02 wants: card.css draws
    the structure the DOM contract describes, this file draws what happens to
-   it. Reasoning is in 01-Design/Handoff/03-spec-cards-and-hands.md, D29,
+   it. Reasoning is in design/handoff/03-spec-cards-and-hands.md, D29,
    D32 and D33. */
 
 /* --- The roll, on the card that produced it (D32). The view writes the

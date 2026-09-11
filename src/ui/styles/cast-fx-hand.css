@@ -1,7 +1,7 @@
 /* The accents of the five hand cards (D107, D109, D113).
    Depends on tokens.css, cast.css, cast-base.css and cast-parts.css, and
    loads after them.
-   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D107, D109.
+   Reasoning: design/handoff/18-spec-skill-card-animations.md, D107, D109.
 
    None of these cards has a board stage, and the answer to "what do they do
    instead" is: they end on the card stage, and the thing they changed says

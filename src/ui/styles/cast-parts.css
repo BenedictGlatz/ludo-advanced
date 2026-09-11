@@ -2,7 +2,7 @@
    and the eleven movements more than one card uses. Depends on tokens.css and
    cast.css and loads after both, before the six cast-fx-*.css family files,
    which only ever name a keyframe from here or add one of their own.
-   Reasoning: 01-Design/Handoff/18-spec-skill-card-animations.md, D107, D110.
+   Reasoning: design/handoff/18-spec-skill-card-animations.md, D107, D110.
 
    Two timings. A part in the card stage plays beside the family gesture, in
    the 400 ms after the card has arrived, and starts and ends invisible with

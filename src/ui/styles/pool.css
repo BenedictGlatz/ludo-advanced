@@ -1,7 +1,7 @@
 /* =============================================================================
    pool.css -- the dice card pool overview, the sixth content of the overlay.
    Depends on tokens.css, card.css and overlay.css.
-   Reasoning is in 01-Design/Handoff/05-spec-dice-pool-overlay.md, D43 to D47.
+   Reasoning is in design/handoff/05-spec-dice-pool-overlay.md, D43 to D47.
 
    Replaces the placeholder Claude Code wrote for issue #30. Two things change
    and one is kept. The card factor is 0.68 and not 0.62, because 04-spec D35

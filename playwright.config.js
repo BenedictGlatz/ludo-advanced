@@ -14,7 +14,7 @@ const BASE_URL = `http://localhost:${PREVIEW_PORT}`;
  */
 const DESIGN_VIEWPORT = { width: 1440, height: 900 };
 
-// Decided here, because section 8 of Test-Plan-and-Quality-Strategy.md left it open and said it
+// Decided here, because section 8 of test-plan-and-quality-strategy.md left it open and said it
 // would be settled in this file: **the end-to-end suite runs against the production build**, not
 // against the Vite dev server. The dev server serves modules straight off disk and hides exactly
 // the class of defect a build introduces, such as an asset the build forgets to copy or a path
