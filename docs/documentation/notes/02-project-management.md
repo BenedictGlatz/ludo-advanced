@@ -57,6 +57,16 @@ than they do in the sample report, where the same material was compressed into a
   sharing all three layers, **split per issue at sprint planning rather than per layer**, because the
   critical path runs through all three layers and a layer split would put one person on it and the
   other waiting.
+- **Roles as practised, stated by Benedict Glatz on 2026-09-11 for the report.** No Scrum Master was ever
+  appointed, and that is what the team told the module's reviewer. In practice Benedict Glatz carried most
+  of the Scrum Master work: the repository and Git setup, the conventions in `CLAUDE.md` and keeping the
+  team to them, the board and the backlog order within the Product Owner's priorities. His developer work
+  was the game rules, the dice and skill card design, and the assets. Lars Bolender implemented the game
+  across all layers, which the commit history confirms: nearly every commit under `src/` and `tests/` is
+  his. Fabian Gemming kept final authority over mechanics, balancing and acceptance criteria as Product
+  Owner, and also carried the design system and black-box regression testing. **This refines rather than
+  contradicts the 2026-08-22 resolution above:** the role was never formal, but the work was not unowned
+  after Sprint 1.
 
 ### Board
 
