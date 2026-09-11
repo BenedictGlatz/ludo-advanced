@@ -45,7 +45,7 @@ Status values: `empty` → `partial` → `ready`. Update the row when a chapter'
   feasibility dimensions with a verdict each, and the conditional Go that rests on the AI toolchain
   (issue #12). Feeds Ch. 03 and Ch. 10; its conditions feed Ch. 11.
 - [project-management/functional-and-non-functional-goals.md](../project-management/functional-and-non-functional-goals.md): the goal catalogue (FG-01 to FG-21, NFG-01 to NFG-08) feeding Chapter 01, with a traceability table to the backlog epics.
-- [project-management/requirements-specification.md](../project-management/requirements-specification.md): 45 functional and 12 non-functional requirements with acceptance criteria, the MoSCoW analysis, and the open Product Owner decisions.
+- [project-management/requirements-specification.md](../project-management/requirements-specification.md): 46 functional and 12 non-functional requirements with acceptance criteria, the MoSCoW analysis, and the open Product Owner decisions.
 - [sprint-log.md](sprint-log.md): planned scope vs delivered scope, per sprint.
 - [abbreviations.md](abbreviations.md): feeds the report's abbreviation list.
 

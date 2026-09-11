@@ -102,6 +102,7 @@ labels currently prioritise titles.
 | FR-43 | **Local, rule-based** bot opponents take the seats no person fills. | A bot takes a legal turn without human input, plays a skill card only when a rule-based value model says it is worth more than holding it, and answers every reaction window; the match uses no network. | S | FG-18, #43, #82 |
 | FR-44 | Classic-vs-custom game modes as rule toggles. | Toggling a rule changes behaviour without a rebuild. | C | FG-21, #46 |
 | FR-45 † | A match in progress survives a page reload. | Reloading mid-match restores the board, hands and active player. | C | none |
+| FR-46 | LLM-powered bot opponents: a bot that decides its turn by querying a large language model. | No bot in the build calls a language model or any other network service; every bot seat is played by FR-43's local, rule-based bot. | W | FG-18, #43 |
 
 **FR-43 was rewritten on 2026-09-04 and is the one row in this table that is built.** It read
 "LLM-powered bot opponents" at `C`. Two things changed it, and both are recorded in the project journal
@@ -113,6 +114,13 @@ of that date:
 - **It rose to `S`.** US-01, written on 2026-09-04, gives the match a lower bound of **one** person, and
   a bot is the only way that bound can be met. A requirement another requirement depends on cannot stay
   a `could have`.
+
+**FR-46 was added on 2026-09-11 and records the LLM bot as `won't have`.** It is what FR-43 said before
+2026-09-04. The rewrite above dropped the LLM idea from the table without a row saying so, which left a
+rejected alternative visible only in this paragraph and in the journal. The Product Owner agreed to give
+it its own row, so the MoSCoW analysis shows what was deliberately not built, for the reason already
+stated: an LLM bot needs a network call, and FR-03 asks for a match without one. IDs are permanent, so
+it takes the next free number rather than FR-43's old place.
 
 ~~What is **not** built is choosing bots from a screen: today they come from `?bots=` in the address bar.
 That is a separate issue, waiting on a design for the setup screen (D86 of design brief 13).~~ **Built on
@@ -161,10 +169,13 @@ played, and each refusal is a recorded finding with its reason in Ch. 06.
 | Priority | Functional | Non-functional | Total |
 | --- | --- | --- | --- |
 | Must have | 30 | 9 | 39 |
-| Should have | 7 | 3 | 10 |
-| Could have | 7 | 0 | 7 |
-| Won't have (this time) | 1 | 0 | 1 |
-| **Total** | **45** | **12** | **57** |
+| Should have | 8 | 3 | 11 |
+| Could have | 6 | 0 | 6 |
+| Won't have (this time) | 2 | 0 | 2 |
+| **Total** | **46** | **12** | **58** |
+
+Recounted from the tables above on 2026-09-11, when FR-46 was added. The previous version still counted
+FR-43 as a `could have` (7 should, 7 could), which it has not been since 2026-09-04.
 
 ### 3.2 What the distribution says
 
@@ -223,7 +234,7 @@ to supply a die in Sprint 1 avoids that.
 | #37 Enhanced Dice Pool System | FR-16 – FR-21 |
 | #38 Skill Cards Mechanics | FR-22 – FR-30 |
 | #39 UI / UX & Game State | FR-31 – FR-38 (FR-39 to FR-41 deferred with #40 on 2026-09-01) |
-| #42 – #46 (extended) | FR-42 – FR-45 |
+| #42 – #46 (extended) | FR-42 – FR-46 |
 | No epic: applies to all work | NFR-01 – NFR-12 |
 
 ---

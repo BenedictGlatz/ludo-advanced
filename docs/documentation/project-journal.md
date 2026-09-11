@@ -5784,6 +5784,21 @@ questions is clearer than one function that guesses. Details in `notes/04-fronte
   because git does not move ignored files.
 - → Ch. 07, Ch. 09
 
+### 2026-09-11: The rejected LLM bot becomes FR-46, a won't have, rather than staying a note under FR-43
+
+- **Chosen:** a new requirement FR-46, "LLM-powered bot opponents", at `W`. Agreed by the Product Owner on
+  2026-09-11.
+- **Why:** on 2026-09-04 FR-43 was rewritten in place from the LLM bot to local, rule-based bots, so the
+  LLM idea lost its ID. The report's Table 10 still showed it as a Won't Have row with the old number, which
+  pointed at a different requirement in the specification. A rejected alternative that only lives in a
+  paragraph is easy to lose, and MoSCoW's "won't have this time" is exactly the category for it.
+- **Rejected:** *showing FR-37 (energy display) as the only won't have.* Accurate, but it drops the bot
+  decision from the table, and that decision is the one with a reason worth reading: an LLM bot needs a
+  network call, and FR-03 requires a match without one.
+- **Rejected:** *giving FR-46 the old FR-43 number back.* IDs in the specification are permanent, and
+  FR-43 is the built, tested requirement that code comments and tests refer to.
+- → Ch. 01
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first
