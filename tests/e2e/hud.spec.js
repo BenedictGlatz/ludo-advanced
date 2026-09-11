@@ -170,16 +170,16 @@ test.describe("the HUD", () => {
   });
 
   test("counts the skill cards each seat holds (D33)", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce, { stack: ["action-angel-die"] });
 
-    // A card is drawn at the start of every turn (FR-23), so the active seat holds at least one and
-    // the count is public for everybody. That the number is on screen at all is decision D33.
+    // Hands start empty and fill only from the skill squares (FR-22). The stacked card is handed to the
+    // first player, so exactly one seat holds one, and the count is public for everybody (D33).
     const { activePlayer } = await boardState(board);
     const counts = await hudCounts(page);
 
-    expect(counts[activePlayer].cards).toBeGreaterThanOrEqual(1);
-    for (const { cards } of Object.values(counts)) {
-      expect(cards).toBeGreaterThanOrEqual(0);
+    expect(counts[activePlayer].cards).toBe(1);
+    for (const [seat, { cards }] of Object.entries(counts)) {
+      if (Number(seat) !== activePlayer) expect(cards).toBe(0);
     }
   });
 });

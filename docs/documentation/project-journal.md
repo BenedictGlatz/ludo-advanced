@@ -5799,6 +5799,25 @@ questions is clearer than one function that guesses. Details in `notes/04-fronte
   FR-43 is the built, tested requirement that code comments and tests refer to.
 - → Ch. 01
 
+### 2026-09-11: Skill cards come only from the skill squares, and the start-of-turn draw is removed
+
+- **Chosen:** a player draws a skill card only when one of their pawns lands exactly on a skill
+  square. The draw at the start of every turn is gone, and every hand starts the match empty (FR-22,
+  section 6.5 of the game design document). Decided by the team after playing the game, reported by
+  Benedict Glatz.
+- **Why:** a player may play one card per turn, and there are only seven Reaction cards to spend
+  outside one's own turn. Hands filled faster than they emptied: players held more cards than they
+  read, and played them because they had them. A rarer draw makes each card an event, leaves time to
+  read it, and turns "steer for the skill square" into a real choice.
+- **Rejected:** *keeping the draw and lowering the hand limit to 3.* It caps the pile but not the flow,
+  so a player would sit at a full hand and waste every further draw. **Rejected:** *drawing every
+  second turn.* It halves the flow, but card income would still depend on how long the match has run
+  rather than on anything the player did.
+- **Not re-tuned with it:** the hand limit stays at 5, and the bots' card values and the bot arena were
+  not re-run. Both are named here so the report does not imply a balance pass that did not happen.
+- **It came after the 2026-09-10 code freeze**, and the cost is in the challenges below.
+- → Ch. 05, Ch. 06, Ch. 08, Ch. 11
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first
@@ -6024,3 +6043,12 @@ more than a terse label.
   working day, two people's evening, and two Pages deployments. The lesson for Chapter 11 is the order of
   operations: **build the instrument before the second guess.** The first guess is free; every guess
   after it costs a deploy and other people's time, and the instrument would have cost one deploy total.
+- **2026-09-11: A ten-line rule change after the code freeze turned 55 end-to-end tests red.** Removing
+  the start-of-turn skill draw took about ten lines in `state/`. The end-to-end suite then failed 55 of
+  160 cases, and none of them found a defect in the game. Two causes, both in the test setup: the removed
+  draw had spent one random number per turn, so every pinned seed played a different match, and the
+  test-only `?stack=` hook had relied on that same draw to put a card into a hand. New seeds came from
+  `npm run test:seeds` in one command; the hook was changed to deal the stack at the start, one card per
+  seat, without randomness; two cases that tested the old rule were rewritten. Three full runs later the
+  suite was green again. The lesson for Chapter 11: **a rule that spends randomness is load-bearing for
+  every seeded test**, so the cost of changing it is measured in the test suite, not in the diff.

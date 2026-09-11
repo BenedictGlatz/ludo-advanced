@@ -10,7 +10,7 @@
  * are all bookkeeping around the edges of a turn rather than steps of it:
  *
  * - the pool being shuffled once, at the start of the match
- * - a card being drawn at the start of every turn, and another when a pawn lands on a skill square
+ * - a card being drawn when a pawn lands on a skill square, which since 2026-09-11 is the only draw
  * - the card budget: how many cards a seat may still play this turn
  *
  * None of them is a phase, none of them is something the player triggers, and all of them are called
@@ -20,14 +20,14 @@
  * ## Every function returns a changes object, never a state
  *
  * `{ skillPool, skillDiscard, skillHands }` and nothing else, ready to spread into `nextState`. The
- * caller decides what else changes in the same transition, so a turn start that both expires statuses
- * and draws a card is one new state object rather than three.
+ * caller decides what else changes in the same transition, so a move that both lands a pawn and uses up
+ * a skill square is one new state object rather than three.
  */
 
 import { enterSquares } from "../core/enter.js";
-import { createSkillPool, drawSkillCard } from "../core/skill-pool.js";
+import { SKILL_HAND_LIMIT, createSkillPool, drawSkillCard } from "../core/skill-pool.js";
 import { consumeSkillSquare, skillSquareLandedOn } from "../core/skill-squares.js";
-import { STATUS, expireStatuses, hasStatus } from "../core/statuses.js";
+import { STATUS, hasStatus } from "../core/statuses.js";
 
 /** How many cards a seat may play in one turn unless a card says otherwise (FR-23). */
 export const DEFAULT_CARD_BUDGET = 1;
@@ -48,25 +48,12 @@ export function seedSkillCards(state, deps, cards) {
 }
 
 /**
- * Steps 1 and 2 of the turn: statuses expire, then the active player draws a card.
- *
- * **Expiry runs before the draw and before anything else reads a status.** A status added on turn 14
- * with a deadline of 16 is in force on 14 and 15 and gone on 16, and doing the filter at the start of
- * the turn is what makes that true no matter what order the turn does things in.
- *
- * The draw can come back empty, when the hand is already at its limit of five. That is a normal
- * situation and not a failure: `drawSkillCard` refuses and the card stays in the pool, which is the
- * decision recorded in `core/skill-pool.js`.
- */
-export function turnStartChanges(state, deps) {
-  return {
-    statuses: expireStatuses(state.statuses, state.turnNumber),
-    ...drawFor(state, state.activePlayer, deps),
-  };
-}
-
-/**
  * One card drawn into one seat's hand, as a changes object.
+ *
+ * Since 2026-09-11 the only caller is `skillSquareChanges` below: a skill square is the one way a
+ * player gets a card (FR-22). The draw can come back empty when the hand is already at its limit of
+ * five. That is a normal situation and not a failure: `drawSkillCard` refuses and the card stays in the
+ * pool, which is the decision recorded in `core/skill-pool.js`.
  *
  * Takes the seat rather than assuming the active player, because a skill square pays out to whoever
  * owns the pawn that landed on it, and in the middle of a capture that is not always the mover. It is
@@ -81,6 +68,38 @@ export function drawFor(state, seat, deps) {
     skillDiscard: result.discard,
     skillHands: { ...state.skillHands, [seat]: result.hand },
   };
+}
+
+/**
+ * The whole pool dealt into the hands, one card per seat in turn order, as a changes object. For
+ * `?stack=` only.
+ *
+ * Until 2026-09-11 every turn drew a card, so a stacked pool reached the hands on its own: the first
+ * seat drew from it on turn 1, the next seat on turn 2, and so on. Since cards come only from the skill
+ * squares (FR-22), a stacked card would sit in the pool until somebody happened to land on one. This
+ * deals the stack once, at the start, in the same order those draws came in: a one-card stack reaches
+ * only the first player, a two-card stack the first two seats.
+ *
+ * It deals in order rather than at random, so it spends no randomness and a seeded match rolls the same
+ * dice with or without a stack. A card that would go over the hand limit stays in the pool. No
+ * production caller uses it.
+ */
+export function dealStack(state) {
+  if (state.skillPool.length === 0) return {};
+
+  const hands = { ...state.skillHands };
+  const pool = [];
+  const first = state.seats.indexOf(state.activePlayer);
+
+  state.skillPool.forEach((id, index) => {
+    const seat = state.seats[(first + index) % state.seats.length];
+    const hand = hands[seat] ?? [];
+
+    if (hand.length < SKILL_HAND_LIMIT) hands[seat] = [...hand, id];
+    else pool.push(id);
+  });
+
+  return { skillPool: pool, skillHands: hands };
 }
 
 /**

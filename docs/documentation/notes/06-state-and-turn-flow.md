@@ -1160,3 +1160,23 @@ Full decision block: project journal, 2026-09-09. Facts about the code:
   branches side by side. `reply` is cleared too, so a stale code is not left on screen.
 - **Nothing in `net/` changed for the Firefox finding**, because nothing there can. The timer is the
   browser's, and the two links already do the least possible before ICE starts.
+
+### The turn no longer draws a skill card: 2026-09-11, issue #38
+
+- **`drawHand` in `turn-manager.js` draws three dice cards and no skill card.** The only remaining
+  draw is `skillSquareChanges` in `skill-turn.js`, when a pawn lands exactly on a skill square (FR-22).
+  Every hand starts the match empty. The reason and the rejected alternatives are in the journal entry
+  of the same date and in section 6.5 of the game design document.
+- **`turnStartChanges` is deleted.** Nothing in `src/` called it; only its own unit test did, and that
+  test described the removed rule.
+- **The removed draw spent one random number per turn**, so every pinned end-to-end seed played a
+  different match. `npm run test:seeds` found new ones; this is the fourth time, and still one command.
+- **`?stack=` is now dealt at the start**, one card per seat in turn order, by `dealStack` in
+  `skill-turn.js` through `startStackedMatch` in `match.js`. Before, it relied on the turn-start draw to
+  put a stacked card into a hand. It deals in order rather than at random, so it spends no randomness
+  and a seeded match rolls the same dice with or without a stack. Kept out of `startMatch`, so a real
+  match cannot get it.
+- **Tests:** `turn-manager.test.js` pins that a turn draws no skill card even from a full pool;
+  `skill-turn.test.js` covers `dealStack`, including the hand limit; `match-setup.test.js` checks that
+  every hand starts empty without a stack. Two E2E cases that asserted the old rule were rewritten for
+  the new one, and specs that need a card in hand now stack it.

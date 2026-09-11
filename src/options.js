@@ -81,8 +81,10 @@ export const FAST_DELAYS = {
  *
  * ## `stack` is from issue #45, and it exists because a seed could not do the job
  *
- * A comma-separated list of skill card ids that becomes the top of the skill pool, so a test can be
- * sure the hand it is about to play from holds the card it is testing.
+ * A comma-separated list of skill card ids that becomes the skill pool, so a test can be sure the hand
+ * it is about to play from holds the card it is testing. Since 2026-09-11 no turn draws a card, so the
+ * list is dealt when the match starts, one card per seat in turn order (`startStackedMatch` in
+ * `state/match.js`): one id reaches only the first player, two ids the first two seats.
  *
  * The trap flows are what forced it. A trap card is 4 ids out of 29, and the flow needs **two** turns
  * to line up: one to lay the trap, and another for a foreign pawn to walk over it. The existing answer

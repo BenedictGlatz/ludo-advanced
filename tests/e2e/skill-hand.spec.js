@@ -4,16 +4,12 @@
  * The flows a unit test cannot reach: a card being clicked, a target being pointed at on the board, and
  * the prompt strip asking the questions in between.
  *
- * ## Why these specs do not pin a seed to get a particular card
+ * ## Why these specs stack the card they play
  *
- * Every other end-to-end spec plays a pinned seed and asserts an exact situation. That does not work
- * here. A hand is drawn one card per turn out of 58, so "seed 83 has Hyperbeam in hand on turn 4" would
- * be a fact about the shuffle that breaks every time anything else spends a draw from the RNG, and the
- * seeds have already had to be repinned three times for exactly that reason.
- *
- * So these specs assert the **mechanism** instead, whatever card comes up: a card is offered or it is
- * not, clicking one either plays it or asks for a target, and the card leaves the hand. That is what
- * FR-23 to FR-26 actually require, and it does not go stale.
+ * Since 2026-09-11 a hand only gets a card from a skill square (FR-22), so the first hand of a match is
+ * empty. A spec that needs a card therefore stacks one with `?stack=`, which hands it to the first
+ * player at the start and spends no randomness. Angel Die is the default: it needs no target and is
+ * playable in every action phase. Banana Peel is used where a target has to be asked for.
  */
 
 import { expect, test } from "@playwright/test";
@@ -33,9 +29,14 @@ function skillHand(board) {
   return board.page().locator(".hand--skill");
 }
 
-/** Open a match and get as far as the action phase, with the dice card chosen. */
-async function openAtActionPhase(page) {
-  const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+/** A match whose first player holds `card` from the start, via `?stack=`. */
+function openWithCard(page, card = "action-angel-die") {
+  return openMatch(page, SEEDS.leavesStartAtOnce, { stack: [card] });
+}
+
+/** Open a match with `card` in hand and get as far as the action phase, with the dice card chosen. */
+async function openAtActionPhase(page, card) {
+  const board = await openWithCard(page, card);
   await chooseDiceCard(board);
 
   return board;
@@ -43,15 +44,15 @@ async function openAtActionPhase(page) {
 
 test.describe("the skill hand", () => {
   /**
-   * FR-23's draw. One card at the start of every turn, so the very first hand on screen holds exactly
-   * one, and that is the cheapest possible check that the pool is wired into the turn at all.
+   * FR-22 since 2026-09-11: cards come only from the skill squares, so no turn draws one and the very
+   * first hand on screen is empty. The cheapest check that the removed draw stays removed.
    */
-  test("holds the card the turn drew", async ({ page }) => {
+  test("starts empty, because cards come only from the skill squares", async ({ page }) => {
     const board = await openMatch(page, SEEDS.leavesStartAtOnce);
     const hand = skillHand(board);
 
-    await expect(hand).toHaveAttribute("data-count", "1");
-    await expect(hand.locator(".card[data-card-id]")).toHaveCount(1);
+    await expect(hand).toHaveAttribute("data-count", "0");
+    await expect(hand.locator(".card[data-card-id]")).toHaveCount(0);
   });
 
   /**
@@ -69,7 +70,7 @@ test.describe("the skill hand", () => {
    * this case is what keeps it honest.
    */
   test("draws an empty slot as an outline and not as a card back", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    const board = await openWithCard(page);
     const hand = skillHand(board);
 
     await expect(hand.locator(".card:not([data-card-id])")).toHaveCount(4);
@@ -111,7 +112,7 @@ test.describe("the skill hand", () => {
    * keep the shadow on the right, which is what makes this two assertions instead of one.
    */
   test("casts the fan's shadow to the left and the dice row's to the right", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    const board = await openWithCard(page);
 
     // The first offset in a computed box-shadow is the horizontal one. Read off a card that is
     // neither selected nor hovered, because both of those declare a shadow list of their own.
@@ -127,11 +128,11 @@ test.describe("the skill hand", () => {
 
   /**
    * Every card carries a name and a rules sentence. Written as "not empty" rather than as an exact
-   * string, because which card is drawn depends on the shuffle: what matters is that no card can reach
+   * string, because the wording belongs to the locale files: what matters is that no card can reach
    * the table as a bare id or with a blank body.
    */
   test("names the card and says what it does", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    const board = await openWithCard(page);
     const card = skillHand(board).locator(".card[data-card-id]").first();
 
     await expect(card.locator(".card__title")).not.toBeEmpty();
@@ -207,7 +208,7 @@ test.describe("the skill hand", () => {
    * half-finished card play. Nothing was sent, so the card is still in hand and the budget is unspent.
    */
   test("gives the card back when the player cancels a target", async ({ page }) => {
-    const board = await openAtActionPhase(page);
+    const board = await openAtActionPhase(page, "action-banana-peel");
     test.skip((await boardState(board)).phase !== "action", "this hand held no playable card");
 
     const card = skillHand(board).locator('.card[data-playable="true"]').first();
@@ -262,8 +263,7 @@ test.describe("the skill hand", () => {
  */
 test.describe("the prompt strip and the one-screen layout", () => {
   test("does not make the page scroll while it is asking something", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
-    await chooseDiceCard(board);
+    const board = await openAtActionPhase(page);
 
     const mode = await prompt(board).getAttribute("data-mode");
     test.skip(mode !== "action", "this hand held no playable card, so nothing was asked");

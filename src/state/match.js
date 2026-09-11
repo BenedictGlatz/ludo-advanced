@@ -13,7 +13,7 @@
 
 import { createDicePool } from "../core/dice-pool.js";
 import { MATCH_STATUS, TURN_PHASE, createGameState, nextState } from "./game-state.js";
-import { seedSkillCards } from "./skill-turn.js";
+import { dealStack, seedSkillCards } from "./skill-turn.js";
 import { drawHand } from "./turn-manager.js";
 
 /**
@@ -44,12 +44,12 @@ function assertDeps(deps) {
  *
  * **The skill card pool is shuffled here and not in `createGameState`**, because a shuffle needs the
  * injected RNG and keeping `createGameState` free of randomness is what lets about half the unit tests
- * build a starting board with no `deps` at all. The seats start with **empty** hands: a card is drawn
- * at the start of every turn (FR-23), so the first turn's draw is the first card anybody holds.
+ * build a starting board with no `deps` at all. The seats start with **empty** hands, and since
+ * 2026-09-11 the only way to get a card is to land on a skill square (FR-22).
  *
  * **`skillPool` exists for the same reason `skillSquares` does, and it is the stronger case of the
- * two.** Shuffling 58 cards spends 57 draws from `deps.rng`, and drawing one at the start of every turn
- * spends another. A test that scripts a sequence of rolls has no chance against that: it would be
+ * two.** Shuffling 58 cards spends 57 draws from `deps.rng`, and every skill square landed on spends
+ * another. A test that scripts a sequence of rolls has no chance against that: it would be
  * exhausted before the first die was thrown. Passing `[]` starts a match with no skill cards in it, and
  * a draw from an empty pool spends no randomness at all, so a scripted roll sequence stays exact.
  *
@@ -74,6 +74,20 @@ export function startMatch(playerCount, deps, skillSquares, skillPool, bots = []
   const seeded = nextState(fresh, seedSkillCards(fresh, deps, skillPool));
 
   return drawHand(seeded, deps);
+}
+
+/**
+ * `startMatch` on a stacked pool, with the stack already dealt into the hands, one card per seat in
+ * turn order.
+ *
+ * Only `?stack=` calls this, so that a test can be sure the hand it plays from holds the card it tests.
+ * `skill-turn.js` has the reason in `dealStack`: no turn draws a card any more, so without this a
+ * stacked card would never reach a hand. Kept out of `startMatch` so that a real match cannot get it.
+ */
+export function startStackedMatch(playerCount, deps, skillPool, bots = []) {
+  const started = startMatch(playerCount, deps, undefined, skillPool, bots);
+
+  return nextState(started, dealStack(started));
 }
 
 /**

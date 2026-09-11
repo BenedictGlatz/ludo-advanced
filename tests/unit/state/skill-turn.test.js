@@ -3,7 +3,7 @@
  *
  * Every function under test returns a **changes object** rather than a state, so most of these tests
  * read a plain object out and never build a state at all. That is the shape on purpose: the caller
- * decides what else changes in the same transition, so a turn start that expires statuses and draws a
+ * decides what else changes in the same transition, so a move that lands on a skill square and draws a
  * card is one new frozen state rather than three.
  */
 
@@ -17,11 +17,11 @@ import {
   canPlayCard,
   cardBudget,
   cardsPlayedBy,
+  dealStack,
   drawFor,
   seedSkillCards,
   skillSquareChanges,
   spendCard,
-  turnStartChanges,
 } from "../../../src/state/skill-turn.js";
 import { rngForRolls } from "../../helpers/fixtures.js";
 
@@ -95,25 +95,27 @@ function withHands(state) {
   return { pool: state.skillPool, discard: state.skillDiscard, hands: state.skillHands };
 }
 
-describe("turnStartChanges", () => {
-  /**
-   * Expiry runs **before** the draw, and before anything else in the turn reads a status. That is what
-   * makes a deadline mean the same thing however the rest of the turn is ordered.
-   */
-  it("expires what is due and then draws one card", () => {
-    const state = stateWith({
-      turnNumber: 10,
-      skillPool: ["action-angel-die"],
-      statuses: [
-        { kind: STATUS.HELD, player: 1, pawn: 0, until: 10 },
-        { kind: STATUS.ROCK, player: 2, pawn: 0, until: 14 },
-      ],
-    });
-    const changes = turnStartChanges(state, { rng: steadyRng });
+describe("dealStack, for `?stack=` only", () => {
+  it("deals one card per seat in turn order, starting with the active player", () => {
+    const state = stateWith({ skillPool: ["action-lock-in", "action-angel-die", "action-rock"] });
+    const changes = dealStack(state);
 
-    expect(changes.statuses).toHaveLength(1);
-    expect(changes.statuses[0].kind).toBe(STATUS.ROCK);
-    expect(changes.skillHands[state.activePlayer]).toHaveLength(1);
+    expect(changes.skillHands[0]).toEqual(["action-lock-in"]);
+    expect(changes.skillHands[1]).toEqual(["action-angel-die"]);
+    expect(changes.skillHands[2]).toEqual(["action-rock"]);
+    expect(changes.skillHands[3]).toEqual([]);
+    expect(changes.skillPool).toEqual([]);
+  });
+
+  it("leaves a card in the pool rather than go over the hand limit", () => {
+    const full = Array.from({ length: SKILL_HAND_LIMIT }, () => "action-angel-die");
+    const state = stateWith({ skillPool: ["action-rock"], skillHands: { 0: full } });
+
+    expect(dealStack(state).skillPool).toEqual(["action-rock"]);
+  });
+
+  it("changes nothing when the pool is empty", () => {
+    expect(dealStack(stateWith({ skillPool: [] }))).toEqual({});
   });
 });
 
