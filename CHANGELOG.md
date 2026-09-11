@@ -51,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Skill cards are now drawn only when a pawn lands exactly on a skill square.** A turn no longer
+  starts with a skill card, and every hand starts the match empty. With one card to play per turn,
+  players were holding more cards than they could use; a rarer draw makes each card count and leaves
+  time to read it
 - **Every file and folder name in the repository is now lowercase with dashes.** `00-Meta/` is now
   `docs/` and `01-Design/` is now `design/`, and the names below them lost their capitals, spaces and
   stray numbers, for example `docs/project-management/feasibility-study.md`. All links inside the

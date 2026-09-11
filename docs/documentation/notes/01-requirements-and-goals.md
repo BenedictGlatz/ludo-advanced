@@ -607,6 +607,25 @@ paragraph is kept in the GDD as a quote rather than deleted.
   soften the "no reconnect" limitation of FR-42; a difficulty setting, which the line-up does not offer
   either.
 
+### The rejected LLM bot gets its own requirement, FR-46, as won't have: 2026-09-11, issue #43
+
+- **FR-46 "LLM-powered bot opponents" is added at `W`** in
+  `docs/project-management/requirements-specification.md`, tracing to FG-18 and #43. Its acceptance
+  criterion is negative on purpose: no bot calls a language model or any network service.
+- **Why a new row and not a note:** FR-43 was rewritten in place on 2026-09-04, from "LLM-powered bot
+  opponents" at `C` to local, rule-based bots at `S`. That left the rejected LLM idea without an ID, while
+  the report's requirement table (Table 10) listed it as its own Won't Have row. The report and its
+  digital appendix could only agree if one of them changed. The Product Owner, Fabian Gemming, agreed on
+  2026-09-11 to record it in the specification.
+- **Rejected:** keeping FR-43 only and showing FR-37 (energy display) as the report's one won't have. It
+  is accurate, but it hides the one scope decision about bots that has a stated reason: an LLM bot needs a
+  network call, and FR-03 asks for a match without one.
+- **Side finding, corrected in the same change:** the MoSCoW distribution table had been stale since
+  2026-09-04. It still counted FR-43 as a could-have (7 should, 7 could; the tables say 8 and 6). After
+  FR-46 the functional requirements are 30 must, 8 should, 6 could, 2 won't: 46 in total, 58 with the
+  non-functional ones.
+- → report Ch. 3.2 and Table 10.
+
 
 ## Decisions
 

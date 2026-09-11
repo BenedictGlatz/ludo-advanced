@@ -146,6 +146,72 @@ of one, produced a confident and wrong conclusion about a tool.
 
 ## Results
 
+### Measured 2026-09-11, after the start-of-turn skill draw was removed (issue #38)
+
+A rule change after the 2026-09-10 code freeze, so the figures the report quotes move with it. **This is
+the current measurement** for every row it has; commands 2, 3 and 7 were not re-run.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **20819 lines in 137 files**, up 37 | 2026-09-11 |
+| Unit tests | 4 (via 5a) | **107 test files, 1198 tests**, all passing, up 4 | 2026-09-11 |
+| End-to-end tests | 8 | 160 tests in 31 files per browser, unchanged | 2026-09-11 |
+| End-to-end result | 8, run in installed Google Chrome | **160 of 160 passed in 1.5 minutes**; Firefox and Edge not run on this machine | 2026-09-11 |
+| Coverage of the four headless layers, lines | 5c | **97.41 % (1542/1583)**, up from 97.39 % | 2026-09-11 |
+| Coverage of `src/core/`, lines | 5c | 99.66 % (581/583) over 32 files, unchanged | 2026-09-11 |
+| Coverage of `src/state/`, lines | 5c | **99.10 % (331/334)** over 15 files, up from 99.07 % | 2026-09-11 |
+| Coverage of `src/ai/`, lines | 5c | 99.08 % (432/436) over 18 files, unchanged | 2026-09-11 |
+| Coverage of `src/net/`, lines | 5c | 86.09 % (198/230) over 8 files, unchanged | 2026-09-11 |
+| Coverage, branches | 5a | 92.77 % | 2026-09-11 |
+| Coverage, functions | 5a | 97.90 % | 2026-09-11 |
+| Longest file of any kind | 6 | 299 lines, `tests/unit/state/intents-cards.test.js`; then `tests/e2e/roll-animation.spec.js` and `src/state/game-state.js` at 297 | 2026-09-11 |
+
+**Two readings.**
+
+1. **The rule change is small in `src/` and large in the tests.** Thirty-seven lines of source moved,
+   most of them comments and the test-only `dealStack`. The suites needed new seeds, a changed `?stack=`
+   hook and two rewritten cases before 160 of 160 passed again; the journal's challenge entry of the same
+   date has the account.
+2. **Coverage went up rather than down**, because the removed `turnStartChanges` was covered only by its
+   own test and the new `dealStack` arrived with three.
+
+### Measured 2026-09-10, after the TURN relay and the connection log (issue #42)
+
+Taken while checking the report draft against the repository. **This is the current measurement** for
+every row it has; commands 2, 3 and 7 were not re-run, so their values are still the ones in the
+2026-09-09 block below.
+
+| Metric | Command | Value | Taken on |
+| --- | --- | --- | --- |
+| JavaScript lines in `src/` | 1 | **20782 lines in 137 files**, up from 19745 in 131 | 2026-09-10 |
+| Unit tests | 4 (via 5a) | **107 test files, 1194 tests**, all passing | 2026-09-10 |
+| End-to-end tests | 8 | **160 tests in 31 files per browser**, counted with `--list` | 2026-09-10 |
+| End-to-end result | 8, run in installed Google Chrome (see reading 2) | **160 of 160 passed in 1.5 minutes**; Firefox and Edge not run on this machine | 2026-09-10 |
+| Coverage of the four headless layers, lines | 5c | **97.39 % (1532/1573)**, down from 99.27 % | 2026-09-10 |
+| Coverage of `src/core/`, lines | 5c | 99.66 % (581/583) over 32 files, unchanged | 2026-09-10 |
+| Coverage of `src/state/`, lines | 5c | 99.07 % (321/324) over 15 files, unchanged | 2026-09-10 |
+| Coverage of `src/ai/`, lines | 5c | 99.08 % (432/436) over 18 files, unchanged | 2026-09-10 |
+| Coverage of `src/net/`, lines | 5c | **86.09 % (198/230) over 8 files**, down from 98.82 % | 2026-09-10 |
+| Coverage, branches | 5a | 92.81 % | 2026-09-10 |
+| Coverage, functions | 5a | 97.89 % | 2026-09-10 |
+| Longest file of any kind | 6 | 299 lines, `tests/unit/state/intents-cards.test.js` and `tests/e2e/roll-animation.spec.js`; longest source `src/state/game-state.js` at 297 | 2026-09-10 |
+
+**Three readings.**
+
+1. **The coverage drop has one cause.** `src/net/net-log.js`, the connection log added after the TURN
+   relay, is at 38.29 % (18/47) per command 5b. Every other `net/` file is at 94 % or above. The layer
+   is still above NFR-05's 80 % floor, but it is the first measurement in the project where a layer fell
+   by more than one point, and the report states the figure rather than the rounder one before it.
+2. **A failed run is not a failed suite.** The first run with `--project=chromium` failed all 160 tests
+   with the same launch error and none reached the game: the Chromium build Playwright 1.62 expects was
+   never downloaded on the measuring machine, and Edge is not installed there either. The suite was then
+   run in the installed Google Chrome through a throwaway config that spread `playwright.config.js` and
+   set `channel: "chrome"`, deleted after the run. **That is the Chromium engine, so it stands in for the
+   `chromium` project, but it is one of NFR-10's three browsers, not three.** Firefox and Edge stay
+   unmeasured until the next run on a machine with `npx playwright install` done.
+3. **The longest source file grew by five lines to 297**, three from the limit. `game-state.js` is the
+   file the next state change has to split before it can grow.
+
 ### Measured 2026-09-09, after issue #42 landed
 
 Every command in the section above was re-run after online multiplayer landed. **This is the current

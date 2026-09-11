@@ -35,8 +35,15 @@ const skillHand = (page) => page.locator(".hand--skill");
 const overlay = (page) => page.locator(".overlay");
 const action = (page, name) => page.locator(`.overlay__button[data-action="${name}"]`);
 
-/** Devil Die is a Reaction to a roll, so a stacked pool makes an on-roll window certain (FR-24). */
-const DEVIL_DICE = Array(4).fill("reaction-devil-die").join(",");
+/**
+ * Devil Die is a Reaction to a roll, so a stacked card makes an on-roll window certain (FR-24). One
+ * copy: `?stack=` deals one card per seat in turn order, so only seat 0 holds it, and the first window
+ * opens on seat 2's roll, when seat 0 is the one asked.
+ */
+const DEVIL_DICE = "reaction-devil-die";
+
+/** Ghost Mode answers only a capture, so neither holder can play it on their own turn (FR-24). */
+const GHOST_FOR_BOTH = "reaction-ghost-mode,reaction-ghost-mode";
 
 test.describe("a bot's hand", () => {
   test("lies face down for the whole of the bot's turn, and the count stays public", async ({
@@ -44,7 +51,8 @@ test.describe("a bot's hand", () => {
   }) => {
     test.slow();
 
-    await page.goto("/?seed=1&players=2&bots=1");
+    // Hands fill only from the skill squares (FR-22), so the stack is what gives the bot a card to hide.
+    await page.goto(`/?seed=1&players=2&bots=1&stack=${GHOST_FOR_BOTH}`);
     const board = page.locator(".board");
     await expect(board).toHaveAttribute("data-players", "2");
 

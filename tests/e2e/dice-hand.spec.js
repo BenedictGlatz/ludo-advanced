@@ -62,7 +62,13 @@ test.describe("the dice hand", () => {
   });
 
   test("rolls the card the player picked, and no other", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    // An Action card in hand, so the turn waits in the action phase between choosing and rolling. With
+    // an empty hand the loop carries straight through to the roll, and the split below is not visible.
+    // Real pauses, because a roll with no legal move would otherwise pass the turn before it is read.
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce, {
+      fast: false,
+      stack: ["action-angel-die"],
+    });
     const hand = diceHand(board);
 
     // The middle card, deliberately not slot 0: picking the first one would pass even if the click
@@ -80,8 +86,8 @@ test.describe("the dice hand", () => {
 
     // FR-20: the roll is between 1 and that card's face count, and it belongs to the card that
     // produced it, which is what the badge on the card says (D32).
+    await expect.poll(async () => (await boardState(board)).roll).toBeGreaterThanOrEqual(1);
     const { roll } = await boardState(board);
-    expect(roll).toBeGreaterThanOrEqual(1);
     expect(roll).toBeLessThanOrEqual(faces);
     await expect(middle.locator(".card__result")).toHaveText(String(roll));
   });

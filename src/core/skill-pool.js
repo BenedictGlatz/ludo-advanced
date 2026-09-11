@@ -39,10 +39,10 @@ import { cardIds } from "./cards/catalogue.js";
 /**
  * The most cards one player may hold.
  *
- * **This is an assumption, not a decision that has been playtested.** The game design document says 3.
- * It was written for a game that drew cards far more rarely: with a draw at the start of every turn
- * plus the skill squares, a limit of 3 means a player is at the limit almost always and the extra draws
- * do nothing. 5 is a guess at "enough room that a draw is usually worth something".
+ * **This is an assumption, not a decision that has been playtested.** It was set when every turn also
+ * drew a card, and 5 was then a guess at "enough room that a draw is usually worth something". Since
+ * 2026-09-11 cards come only from the skill squares (FR-22), so a hand fills far more slowly and the
+ * limit is now a ceiling a player rarely reaches rather than a constraint that bites every few turns.
  *
  * It is one constant, and changing it after the first playtest is a one-line change. Recorded as open
  * in the plan and in section 4.2 of design handoff 03.

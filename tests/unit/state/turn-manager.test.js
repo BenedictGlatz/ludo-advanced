@@ -38,8 +38,9 @@ function afterRoll(pawns, rolls, playerCount = 2) {
 describe("the nine-step sequence (section 3 of the game design document)", () => {
   /**
    * Every test in this file builds its state from `createGameState`, which starts with an **empty**
-   * skill card pool. That is what keeps the scripted roll sequences below exact: `drawHand` now draws
-   * a skill card as well, and a draw from an empty pool spends no randomness at all.
+   * skill card pool. That is what keeps the scripted roll sequences below exact: a skill square's draw
+   * from an empty pool spends no randomness at all. `drawHand` itself draws no skill card since
+   * 2026-09-11, which the next case pins.
    *
    * `match.test.js` covers the other half, a match started through `startMatch` with the pool
    * shuffled, and it deliberately does not script individual rolls.
@@ -66,6 +67,15 @@ describe("the nine-step sequence (section 3 of the game design document)", () =>
     expect(rolled.roll).toBe(6);
     expect(rolled.legalMoves).toHaveLength(4);
     expect(rolled.refusalReason).toBeNull();
+  });
+
+  /** FR-22 since 2026-09-11: a skill card comes only from a skill square, never from the turn start. */
+  it("draws no skill card at the start of a turn, even from a full pool", () => {
+    const start = nextState(createGameState(2), { skillPool: ["action-angel-die", "action-rock"] });
+    const drawn = drawHand(start, deps([6]));
+
+    expect(drawn.skillHands[drawn.activePlayer]).toEqual([]);
+    expect(drawn.skillPool).toEqual(["action-angel-die", "action-rock"]);
   });
 
   /**
