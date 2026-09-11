@@ -28,7 +28,18 @@ directly.
 
 ### Plan versus actual
 
-Source: [sprint-log.md](../sprint-log.md). Nothing to report yet: no sprint has closed.
+Source: [sprint-log.md](../sprint-log.md).
+
+- **The team's own reading, stated by Benedict Glatz on 2026-09-11 for report section 4.3.**
+  AI-assisted development was planned from the start, so it was not what moved the schedule. What took
+  longer than planned was the project documentation of Sprints 0 and 1, which is why implementation only
+  began in Sprint 2 (first code commit 2026-08-29). Lars Bolender then put a large amount of time into
+  the implementation, and that is why the delivered scope goes beyond the MVP: bot opponents (FR-43) and
+  online multiplayer (FR-42), both `should have`.
+- **A different reading is on record** in the Sprint 2 divergence section of the sprint log, written on
+  2026-09-01 and 2026-09-02, which attributes the early finish to estimates "built for people writing the
+  code by hand". Both are kept: the sprint log's is an observation made at the time, this one is the
+  team's explanation afterwards, and the report uses the team's.
 
 ### Challenges
 
