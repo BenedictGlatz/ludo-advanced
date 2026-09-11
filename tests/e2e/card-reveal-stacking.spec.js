@@ -132,7 +132,8 @@ test.describe("a card being read is the top thing in the rail", () => {
    * revealed card was at `--layer-card-raised`, 2.
    */
   test("paints the card being read above the dice card the player chose", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    // Hands fill only from the skill squares (FR-22), so the card to read is stacked.
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce, { stack: ["action-angel-die"] });
     await chooseDiceCard(board);
 
     await expect(diceHand(board).locator('.card[data-selected="true"]')).toHaveCount(1);
@@ -162,9 +163,8 @@ test.describe("a card being read is the top thing in the rail", () => {
    * **An Angel Die is what puts a message on screen and leaves it there.** The roll breakdown (D73) is
    * the only one of the strip's three voices that stays up through the whole `act` phase, because the
    * player reads it while deciding which pawn to move. A refusal passes the turn a few seconds later and
-   * a trap announcement holds the turn, so both would race the 280 ms the reveal takes. Two copies of
-   * the same card for the reason `roll-animation.spec.js` gives: `?stack=` replaces the pool and the
-   * draw is random, so one id twice is the only certain hand.
+   * a trap announcement holds the turn, so both would race the 280 ms the reveal takes. Eight copies,
+   * because `?stack=` deals one card per seat in turn order, so each of the two seats starts with four.
    */
   test("paints the card being read above the message strip", async ({ page }) => {
     const board = await openMatch(page, SEEDS.advancesEarly, {
@@ -172,9 +172,8 @@ test.describe("a card being read is the top thing in the rail", () => {
     });
     const strip = page.locator(".message-strip");
 
-    // Two turns played without a card, so the seat that comes back on turn 3 holds two of them: one to
-    // play and one left in the fan to read. A seat draws one card per turn (FR-23), so a hand that still
-    // has a card in it after playing one cannot be reached on turn 1 at all.
+    // Two turns played without a card, so the seat that comes back on turn 3 still holds several: one to
+    // play and the rest left in the fan to read.
     await playTurn(board);
     await playTurn(board);
 

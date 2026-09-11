@@ -38,6 +38,9 @@
  * 58-card skill pool. Both spend the injected RNG, so every seed produced a different match from the
  * same number. The first two times this happened the replay had to be rebuilt from nothing; this time
  * it was one command.
+ *
+ * **2026-09-11 made them stale a fourth time.** The start-of-turn skill draw was removed (FR-22), so
+ * every turn spends one draw fewer. One command again.
  */
 
 import { createSeededRng } from "../src/core/dice-source.js";

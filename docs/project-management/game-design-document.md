@@ -147,8 +147,8 @@ centre corner fields, and deleting those breaks the ring into four unconnected a
 
 ### 2.5 Skill squares
 
-**Added 2026-08-31.** Eight of the forty shared track squares hand out an extra skill card. Section 6.5
-covers the card economy; this section covers the board.
+**Added 2026-08-31.** Eight of the forty shared track squares hand out a skill card, and since 2026-09-11
+they are the only way to get one. Section 6.5 covers the card economy; this section covers the board.
 
 - **Where they start.** Absolute squares 4, 7, 14, 17, 24, 27, 34 and 37. Built as `entry + 4` and
   `entry + 7` per player quarter, so **every player meets a skill square at the same points of their own
@@ -202,8 +202,9 @@ interrupt. This is the sequence the turn manager in `state/` implements and the 
    legal move. Playing a card opens a reaction window (step 7) before the card resolves.
 7. **Resolve.** The move is applied. A capture opens a reaction window before it takes effect. When
    the window closes, the action resolves with every accepted reaction applied.
-8. **End of turn.** The 3 drawn dice cards are returned to the pool and reshuffled (FR-21). The active
-   player draws Skill Cards up to the hand limit (section 6.5). Then the active player advances.
+8. **End of turn.** The 3 drawn dice cards are returned to the pool and reshuffled (FR-21). Then the
+   active player advances. No skill card is drawn at the start or at the end of a turn: skill cards come
+   only from the skill squares (section 6.5).
 
 **A natural maximum on a die of six or more faces rolls that die again**, at most three rolls a turn
 (issue #89, decided 2026-09-06 after a playtest). Steps 5 to 7 repeat with the same dice card; no new card
@@ -494,7 +495,7 @@ section 6.3 covers the case where it blocks the whole turn.
 **Rule.** If the legal-move set is empty, the turn ends immediately. The game states why on screen,
 naming the reason (no maximum rolled and no pawn on the track, every target square blocked by an own
 pawn, or every move overshooting home), and the active player advances. The end-of-turn steps still
-run: the dice cards return to the pool and the player draws skill cards up to the hand limit.
+run: the dice cards return to the pool.
 
 **Why.** Nothing in the sources covered this, and it is not rare: with a D20 in hand and pawns close
 to home it happens regularly. Stating the reason on screen is required by NFR-08, and this is the one
@@ -521,32 +522,38 @@ card, so the Skill Card Pool had no defined behaviour at all.
 > to say" at the end of the section, because the reasons it gave are still the reasons the new rule has
 > to answer.
 
+> **Revised again 2026-09-11, by the team after playing the game.** The draw at the start of every turn
+> is removed: skill cards now come **only** from the skill squares. The acquisition rule of 2026-08-31
+> is quoted under "What this section said on 2026-08-31" at the end of the section.
+
 **Rule.**
 
 - **Pool.** 2 copies of each of the 29 cards in section 7, so **58 cards**.
 - **Hand limit.** **5 cards.** A player at the limit draws nothing and the card stays in the pool.
-- **Acquisition.** A player draws one card **at the start of their own turn**, and one more **whenever
-  one of their pawns lands exactly on a skill square** (section 2.5). Both draws are skipped if the
-  hand is at the limit.
+- **Acquisition.** A player draws one card **whenever one of their pawns lands exactly on a skill
+  square** (section 2.5), and at no other time. The draw is skipped if the hand is at the limit. Every
+  hand starts the match empty. Card effects that draw, such as Pot of Greed, are unaffected.
 - **After playing.** A played card goes to a face-up discard pile. When the pool is empty and a draw
   is due, the discard pile is shuffled and becomes the new pool.
 - **Accounting.** Every card is in exactly one of pool, hand or discard at all times, which is the
   invariant FR-27 asks for and the one a unit test asserts.
 
-**Why the start of the turn and not the end.** A card drawn at the start is a card the player can
-actually use this turn, so the draw is a decision and not bookkeeping. Drawing at the end means every
-card sits unused for a full lap of the table before its owner can do anything with it, which makes the
-whole mechanic feel like it is happening to somebody else.
+**Why only the skill squares.** A player may play one card per turn, and there are only seven Reaction
+cards to spend outside their own turn. With a draw at the start of every turn on top of the skill
+squares, hands filled faster than they could be emptied: players held more cards than they read, and
+played them because they had them rather than because the moment was right. Drawing only on a skill
+square makes every card an event. It is earned by a move, the player has time to read it, and "steer
+for that square" becomes a real choice, which also gives the choice of dice card more weight.
 
-**Why a second draw on the skill squares.** It puts card income partly under the player's control. With
-one draw per turn and nothing else, a player's card count is a function of how long the match has run
-and nothing they did; the skill squares make "steer for that square" a real move, and they are the
-reason the choice of dice card matters in the second half of a match, once every pawn is out.
+**Rejected: keeping the start-of-turn draw and lowering the hand limit to 3.** It caps the pile but not
+the flow: a player would sit at a full hand almost all the time, and every further draw would be
+wasted. **Rejected: drawing every second turn.** It halves the flow, but card income would still depend
+only on how long the match has run and not on anything the player did.
 
-**Why 5 and not 3.** With a draw at the start of every turn plus the skill squares, a limit of 3 means a
-player is at the limit almost always and the extra draws do nothing at all. **This number is an
-assumption and has not been playtested.** It is one constant in `core/skill-pool.js` and it is expected
-to move after the first play session.
+**Why 5 and not 3.** The limit was set when every turn also drew a card. With draws only on the skill
+squares a hand fills slowly, so 5 is now a ceiling a player rarely reaches. **This number is an
+assumption and has not been playtested against the new rule.** It is one constant in
+`core/skill-pool.js`.
 
 **Rejected: keeping the old end-of-turn draw plus a draw on capture.** The reasoning behind it is still
 sound and is quoted below. It lost to the Product Owner's decision, and the compensation half was lost
@@ -560,6 +567,14 @@ simpler to account for, and removal means the pool empties during a long match, 
 mechanic quietly stops existing. **Rejected: buying cards with a resource**, which is the energy system
 of FR-37: it is prioritised `W` because no rule for it exists, and inventing one here would decide an
 open question by accident.
+
+**What this section said on 2026-08-31**, before the start-of-turn draw was removed:
+
+> **Acquisition.** A player draws one card at the start of their own turn, and one more whenever one
+> of their pawns lands exactly on a skill square. Both draws are skipped if the hand is at the limit.
+>
+> **Why the start of the turn and not the end.** A card drawn at the start is a card the player can
+> actually use this turn, so the draw is a decision and not bookkeeping.
 
 **What this section used to say**, kept because its reasons still have to be answered:
 

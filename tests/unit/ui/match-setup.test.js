@@ -44,13 +44,22 @@ describe("freshMatchParts", () => {
     expect(freshMatchParts(createSeededRng(1), 3, {}).state.bots).toEqual([]);
   });
 
-  it("puts a stacked card on top of the skill pool", () => {
+  it("deals a stack into the hands, one card per seat in turn order", () => {
     const { state } = freshMatchParts(createSeededRng(1), 2, {
-      stack: ["action-double-dip"],
+      stack: ["action-double-dip", "action-angel-die"],
     });
 
-    // The first turn's draw has already happened, so the stacked card is in the first hand.
-    expect(state.skillHands[0]).toContain("action-double-dip");
+    // No turn draws a card any more (FR-22), so the stack is dealt when the match starts. Two players
+    // sit on seats 0 and 2.
+    expect(state.skillHands[0]).toEqual(["action-double-dip"]);
+    expect(state.skillHands[2]).toEqual(["action-angel-die"]);
+    expect(state.skillPool).toEqual([]);
+  });
+
+  it("starts every hand empty without a stack, because cards come only from skill squares", () => {
+    const { state } = freshMatchParts(createSeededRng(1), 4, {});
+
+    for (const seat of state.seats) expect(state.skillHands[seat]).toEqual([]);
   });
 });
 

@@ -88,7 +88,7 @@ test.describe("reading a card in your own hand", () => {
   test("shows the rules paragraph at a readable size when the pointer rests on a card", async ({
     page,
   }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce, { stack: ["action-angel-die"] });
     const card = skillHand(board).locator(".card[data-card-id]").first();
 
     // Hidden before the pointer arrives. This is the state the request was made about.
@@ -139,7 +139,7 @@ test.describe("reading a card in your own hand", () => {
    * dim in `app.css` is what says the region is dormant.
    */
   test("keeps the player's own hand face up during the dice card phase", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce, { stack: ["action-angel-die"] });
     const hand = skillHand(board);
 
     expect((await boardState(board)).phase).toBe("choose");
@@ -169,7 +169,7 @@ test.describe("reading a card in your own hand", () => {
    * has to match, and the same case is what proves nothing in the app writes it.
    */
   test("pins the same state with .card--reading, which the app never writes", async ({ page }) => {
-    const board = await openMatch(page, SEEDS.leavesStartAtOnce);
+    const board = await openMatch(page, SEEDS.leavesStartAtOnce, { stack: ["action-angel-die"] });
     await chooseDiceCard(board);
 
     const card = skillHand(board).locator(".card[data-card-id]").first();

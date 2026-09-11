@@ -24,7 +24,7 @@
 
 import { createDicePool } from "../core/dice-pool.js";
 import { botSeatsFor } from "../state/bots.js";
-import { matchDeps, restartMatch, startMatch } from "../state/match.js";
+import { matchDeps, restartMatch, startMatch, startStackedMatch } from "../state/match.js";
 
 /**
  * A fresh match for `playerCount` players on a fresh pool.
@@ -36,14 +36,18 @@ import { matchDeps, restartMatch, startMatch } from "../state/match.js";
  *   somebody picks a different count on the setup screen, so `?players=4&bots=3`, quit, start a
  *   two-player match would otherwise seat three bots at a two-seat table. One person is always left at
  *   the keyboard.
- * - `stack` is a list of skill card ids that becomes the top of the pool, from `?stack=`, or `null`.
- *   `undefined` rather than `null` reaches `startMatch`, because that is what makes it use its default.
+ * - `stack` is a list of skill card ids from `?stack=`, or `null`. It is dealt into the hands at the start,
+ *   one card per seat in turn order, because no turn draws a card any more (FR-22).
  */
 export function freshMatchParts(rng, playerCount, { botSeats = null, botCount = 0, stack = null }) {
   const deps = matchDeps(rng, createDicePool());
   const seats = botSeats ?? botSeatsFor(playerCount, Math.min(botCount, playerCount - 1));
+  const state =
+    stack === null
+      ? startMatch(playerCount, deps, undefined, undefined, seats)
+      : startStackedMatch(playerCount, deps, stack, seats);
 
-  return { state: startMatch(playerCount, deps, undefined, stack ?? undefined, seats), deps };
+  return { state, deps };
 }
 
 /**
