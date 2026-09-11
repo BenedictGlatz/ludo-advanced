@@ -2,7 +2,7 @@
 
 A 2D web remake of Ludo where the single die is replaced by two card pools: draw your dice, play your skills.
 
-![Status](https://img.shields.io/badge/status-in%20development-orange)
+![Status](<https://img.shields.io/badge/status-in%20development-orange>)
 ![License](https://img.shields.io/badge/license-TBD-lightgrey)
 
 ## About
@@ -23,15 +23,15 @@ The full rules are in [one-pager.md](docs/project-management/one-pager.md).
 
 ## Tech stack
 
-| Area          | Choice                            |
-| ------------- | --------------------------------- |
+| Area          | Choice                                 |
+| ------------- | -------------------------------------- |
 | Language      | JavaScript (ES modules): no TypeScript |
-| DOM / UI      | jQuery                            |
-| Build         | Vite                              |
-| Localization  | i18next (`de`, `en`)              |
-| Unit tests    | Vitest                            |
-| E2E tests     | Playwright                        |
-| Lint / Format | ESLint + Prettier                 |
+| DOM / UI      | jQuery                                 |
+| Build         | Vite                                   |
+| Localization  | i18next (`de`, `en`)               |
+| Unit tests    | Vitest                                 |
+| E2E tests     | Playwright                             |
+| Lint / Format | ESLint + Prettier                      |
 
 ## Getting started
 
@@ -51,13 +51,13 @@ The dev server prints a local URL: open it in your browser to play.
 
 ## Scripts
 
-| Command                 | Description                        |
-| ----------------------- | ---------------------------------- |
+| Command                   | Description                        |
+| ------------------------- | ---------------------------------- |
 | `npm run dev`           | Start the Vite dev server          |
-| `npm run build`         | Production build into `dist/`      |
+| `npm run build`         | Production build into`dist/`     |
 | `npm run preview`       | Serve the production build locally |
 | `npm run lint`          | Run ESLint                         |
-| `npm run lint:fix`      | Run ESLint with `--fix`            |
+| `npm run lint:fix`      | Run ESLint with`--fix`           |
 | `npm run format`        | Format the codebase with Prettier  |
 | `npm test`              | Run unit tests once                |
 | `npm run test:watch`    | Run unit tests in watch mode       |
@@ -67,24 +67,24 @@ The dev server prints a local URL: open it in your browser to play.
 Four more exist and are not part of the everyday loop. They generate things rather than check them, so
 each is run by hand when its input changes:
 
-| Command                   | Description                                                                    |
-| ------------------------- | ------------------------------------------------------------------------------ |
-| `npm run assets:card-art` | Extract the 36 card illustrations out of the Claude Design artboard into `src/ui/art/` |
-| `npm run docs:ai-index`   | Generate the AI index chapter from the local AI prompt logs                    |
-| `npm run docs:dice-balance` | Derive and measure the dice pool balance quoted in the game design document  |
-| `npm run test:seeds`      | Search for the fixed RNG seeds the end-to-end suite pins                       |
+| Command                       | Description                                                                             |
+| ----------------------------- | --------------------------------------------------------------------------------------- |
+| `npm run assets:card-art`   | Extract the 36 card illustrations out of the Claude Design artboard into`src/ui/art/` |
+| `npm run docs:ai-index`     | Generate the AI index chapter from the local AI prompt logs                             |
+| `npm run docs:dice-balance` | Derive and measure the dice pool balance quoted in the game design document             |
+| `npm run test:seeds`        | Search for the fixed RNG seeds the end-to-end suite pins                                |
 
 ## The address bar
 
 Read once, by `src/options.js`, on behalf of `src/main.js`. Every one of them falls back rather than
 failing, so a malformed URL starts a normal game.
 
-| Parameter    | Effect                                                                                      |
-| ------------ | ------------------------------------------------------------------------------------------- |
-| `?seed=42`   | Fixes the RNG, so the same match plays out the same way every time (NFR-09)                 |
-| `?players=4` | Starts a match with that many players at once, **skipping the main menu**. 2, 3 or 4        |
-| `?bots=3`    | Hands the last seats to the computer. Needs `?players=`, and always leaves one person in    |
-| `?fast=1`    | Shortens the pauses in the turn loop and passes the handover screen without waiting for it  |
+| Parameter      | Effect                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------ |
+| `?seed=42`   | Fixes the RNG, so the same match plays out the same way every time (NFR-09)                |
+| `?players=4` | Starts a match with that many players at once,**skipping the main menu**. 2, 3 or 4  |
+| `?bots=3`    | Hands the last seats to the computer. Needs`?players=`, and always leaves one person in  |
+| `?fast=1`    | Shortens the pauses in the turn loop and passes the handover screen without waiting for it |
 | `?relay=1`   | Online play only: forces the connection through the relay server, to check it works        |
 | `?netlog=1`  | Online play only: prints what the connection did to the browser console                    |
 
@@ -177,23 +177,23 @@ Full conventions, including the architecture rules and the AI prompt log, are do
 
 ## Roadmap
 
-| Sprint   | Weeks | Focus                                                    |
-| -------- | ----- | -------------------------------------------------------- |
-| Sprint 0 | 1     | Planning, rulebook, prototyping, repository setup         |
-| Sprint 1 | 2–3   | Core gameplay: board, movement, turn manager, capture     |
-| Sprint 2 | 4–5   | Dice pool, skill cards, multiplayer                       |
-| Sprint 3 | 6–7   | Art, audio, menus, polish and fixes                       |
-| Buffer   | 8     | Playtesting and presentation                              |
+| Sprint   | Weeks | Focus                                                 |
+| -------- | ----- | ----------------------------------------------------- |
+| Sprint 0 | 1     | Planning, rulebook, prototyping, repository setup     |
+| Sprint 1 | 2–3  | Core gameplay: board, movement, turn manager, capture |
+| Sprint 2 | 4–5  | Dice pool, skill cards, multiplayer                   |
+| Sprint 3 | 6–7  | Art, audio, menus, polish and fixes                   |
+| Buffer   | 8     | Playtesting and presentation                          |
 
 Details: [github-project.md](docs/project-management/github-project.md).
 
 ## Team
 
-| Name            | Role                              |
-| --------------- | --------------------------------- |
-| Fabian Gemming  | Product Owner                     |
-| Lars Bolender   | Scrum Member: implementation     |
-| Benedict Glatz  | Scrum Member: implementation     |
+| Name           | Role                         |
+| -------------- | ---------------------------- |
+| Fabian Gemming | Product Owner                |
+| Lars Bolender  | Scrum Member: implementation |
+| Benedict Glatz | Scrum Member: implementation |
 
 ## License
 
