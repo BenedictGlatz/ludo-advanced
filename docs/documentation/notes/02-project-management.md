@@ -60,11 +60,13 @@ than they do in the sample report, where the same material was compressed into a
 - **Roles as practised, stated by Benedict Glatz on 2026-09-11 for the report.** No Scrum Master was ever
   appointed, and that is what the team told the module's reviewer. In practice Benedict Glatz carried most
   of the Scrum Master work: the repository and Git setup, the conventions in `CLAUDE.md` and keeping the
-  team to them, the board and the backlog order within the Product Owner's priorities. His developer work
+  team to them, the board and the backlog prioritization. His developer work
   was the game rules, the dice and skill card design, and the assets. Lars Bolender implemented the game
   across all layers, which the commit history confirms: nearly every commit under `src/` and `tests/` is
-  his. Fabian Gemming kept final authority over mechanics, balancing and acceptance criteria as Product
-  Owner, and also carried the design system and black-box regression testing. **This refines rather than
+  his. Fabian Gemming, as Product Owner, validated the requirements and their acceptance criteria and
+  handled stakeholder communication, and also carried the design system and black-box regression testing.
+  Corrected the same day: an earlier version of this entry gave backlog prioritization to the Product
+  Owner, which Table 4 of the report and Benedict Glatz both contradict. **This refines rather than
   contradicts the 2026-08-22 resolution above:** the role was never formal, but the work was not unowned
   after Sprint 1.
 
