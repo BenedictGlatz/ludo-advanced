@@ -72,7 +72,7 @@ export function createBotDriver({
    * on it, and a three-bot table would put nearly three seconds in front of every capture a person
    * made. What the window is *for* is giving a person the chance to answer, and the bots dropping out
    * immediately is what leaves that window to the people who can use it. It also means a window with
-   * only bots in it shuts at once instead of running a thirty-second clock nobody is watching.
+   * only bots in it shuts at once instead of running a ten-second clock nobody is watching.
    *
    * **A card played into the window is different and does wait** (issue #82). It changes the board and
    * it has to be announced, so it gets `holdBot` before the dispatch, exactly as a bot's own turn does,

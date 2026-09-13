@@ -20,7 +20,7 @@
  * in the moment they can play one, and during a reaction window the first seat still eligible.
  *
  * **That is an input-order decision, not a change to the shared window.** Two people cannot both be
- * holding the mouse, and four hands on one screen would show every hand to everybody. The thirty seconds
+ * holding the mouse, and four hands on one screen would show every hand to everybody. The ten seconds
  * still cover the whole window.
  *
  * ## And whether the hand on screen may be looked at

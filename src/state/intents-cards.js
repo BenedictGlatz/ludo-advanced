@@ -119,7 +119,7 @@ export function playableCards(state, seat) {
  * question that `playableCards` answers. Conflating the two would blank the hand in every phase but one,
  * which is exactly the bug the end-to-end spec caught.
  *
- * **The window is still one shared thirty-second window** and this does not change that. What it settles
+ * **The window is still one shared ten-second window** and this does not change that. What it settles
  * is the *input order*: eligible seats are asked in seat order, because two people cannot both be holding
  * the mouse, and four hands on one screen would show every hand to everybody. The countdown covers the
  * whole window rather than restarting per seat.

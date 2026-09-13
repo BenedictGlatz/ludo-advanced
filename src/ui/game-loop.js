@@ -38,7 +38,7 @@
  *
  * ## The waiting is not in this file any more
  *
- * Both of the waits the loop takes by itself live in `turn-waits.js`, the reaction window's thirty
+ * Both of the waits the loop takes by itself live in `turn-waits.js`, the reaction window's ten
  * seconds are `card-controls.js`'s, and the bot's pause is `bot-driver.js`'s. The five siblings are built
  * in `loop-parts.js`, with the `halt` that stops all of them.
  */
@@ -154,7 +154,7 @@ export function createGameLoop({
 
     if (state.reactionWindow !== null) {
       // **Bots answer first**, so the clock and the prompt only ever address people. A window with
-      // nobody but bots in it shuts at once instead of running a thirty-second countdown, and in a
+      // nobody but bots in it shuts at once instead of running a ten-second countdown, and in a
       // mixed round `seatOnShow`, which is `eligible[0]`, is a person.
       if (bots.answerWindow()) return;
 
@@ -247,7 +247,7 @@ export function createGameLoop({
      * Carry on from where the pause left off.
      *
      * `advance()` re-enters whatever phase the turn was in, which is why pausing needs to save nothing.
-     * A reaction window that was open reopens its clock at the full thirty seconds: the players stopped,
+     * A reaction window that was open reopens its clock at the full ten seconds: the players stopped,
      * so the window did too.
      */
     resume() {

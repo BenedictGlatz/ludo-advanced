@@ -5818,6 +5818,29 @@ questions is clearer than one function that guesses. Details in `notes/04-fronte
 - **It came after the 2026-09-10 code freeze**, and the cost is in the challenges below.
 - → Ch. 05, Ch. 06, Ch. 08, Ch. 11
 
+### 2026-09-13: The reaction window is shortened from 30 seconds to 10
+
+- **Chosen:** `REACTION_WINDOW_MS` in `src/ui/reaction-clock.js` goes from `30_000` to `10_000`, and
+  `--clock-window` in `src/ui/styles/motion.css` from `30s` to `10s`, so the ring still empties at the
+  moment the window shuts. Requested by Benedict Glatz after playing the game. It overrides the
+  Product Owner's 30 seconds from 2026-08-31 (game design document, decision row 6).
+- **Why:** since the 2026-09-11 decision above, cards come only from skill squares, so hands are small
+  and a window usually asks about one card or none. Thirty seconds was mostly spent waiting, and the
+  window opens in the middle of somebody else's turn, so every idle second holds up the whole table.
+- **Rejected:** *15 or 20 seconds.* Nobody argued for a middle value, and the constant is one line if a
+  playtest shows ten is too short. **Rejected:** *a clock that scales with the size of the hand.* More
+  rule for a problem nobody has observed.
+- **Unchanged:** the window still shuts at once when every eligible seat has declined, `?fast=1` still
+  sets it to zero, an online guest still takes the host's value from the `hello` message, and a
+  handover curtain still restarts it at the full length (now ten seconds).
+- **Left alone:** `--clock-urgent: 8s` in `motion.css` is defined and read by nothing in `src/`. With a
+  ten-second window it would mean "urgent after two seconds", so if it is ever wired up it needs a new
+  value from Claude Design, not from this side.
+- **Tests:** `tests/unit/ui/reaction-clock.test.js` is new (5 cases); it pins the ten seconds and checks
+  that the CSS ring and the JS timer name the same duration.
+- **It came after the 2026-09-10 code freeze**, like the decision above.
+- → Ch. 04, Ch. 06, Ch. 08
+
 ## Challenges
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first

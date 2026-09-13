@@ -600,6 +600,10 @@ open question by accident.
 > section is rewritten when the window is implemented, which is the commit after the card catalogue.
 > Left standing until then rather than deleted, because the reasoning it gives against a timed window
 > is the argument the new rule has to beat, and it should be answered in writing rather than dropped.
+>
+> **Shortened 2026-09-13 to 10 seconds** (`REACTION_WINDOW_MS` in `src/ui/reaction-clock.js`). Since
+> 2026-09-11 skill cards come only from skill squares, so hands are smaller and a window has less to
+> decide; the rest of the rule above is unchanged.
 
 **Rule.** A reaction window opens at exactly two points, both named in section 3: when a capture is
 about to take effect, and when an Action card is played.
@@ -811,7 +815,7 @@ never spoke to.
 | 3 | FR-14 | A roll with no legal move passes the turn, with the reason shown | | |
 | 4 | FR-17 | 20 cards over 7 denominations, weighted toward D6 and D8 (section 5.1) | | |
 | 5 | FR-22, FR-27 | **Overridden 2026-08-31 by the Product Owner.** Hand limit **5**; one card at the **start** of the own turn; one card on landing on a skill square; no card on being captured; discard and reshuffle | Overridden | 2026-08-31 |
-| 6 | FR-25 | **Overridden 2026-08-31 by the Product Owner.** One shared **30-second** window; one card per player per **turn**; a Reaction may be answered | Overridden | 2026-08-31 |
+| 6 | FR-25 | **Overridden 2026-08-31 by the Product Owner.** One shared **30-second** window; one card per player per **turn**; a Reaction may be answered. **Window shortened to 10 seconds on 2026-09-13** | Overridden | 2026-08-31 |
 | 9 | FR-28 | **Overridden 2026-08-31 by the Product Owner.** The MVP card set is all **29** cards of the artwork, not the 8 invented in section 7 | Overridden | 2026-08-31 |
 | 10 | FR-09 | Leaving the start area becomes `roll >= dieMax`, because Angel Die can push a roll above the die's maximum | | |
 | 11 | FR-11 | Backward movement from a card stops at the first track square and never returns a pawn to its start area | | |

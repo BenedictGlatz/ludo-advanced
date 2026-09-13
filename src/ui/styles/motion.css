@@ -81,7 +81,7 @@
   --motion-cast-hold: 1500ms;
 
   /* The reaction window, and the point at which it starts shouting. */
-  --clock-window: 30s;
+  --clock-window: 10s;
   --clock-urgent: 8s;
 }
 

@@ -137,7 +137,7 @@ export function createMatchFlow({
    *
    * Three callbacks come back this way. The curtain: `handover.js` decides whether one is needed, and
    * what arrives here is the seat the overlay has to name; the match pauses under it, because a reaction
-   * window has a thirty second clock that must not run down while somebody reads "hand the screen over".
+   * window has a ten second clock that must not run down while somebody reads "hand the screen over".
    * The win: a won and an abandoned match reach the same screen (FR-05, FR-07). The mount: a board has
    * just been put on the page, so whatever screen was up comes down.
    */

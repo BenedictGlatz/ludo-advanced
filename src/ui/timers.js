@@ -2,7 +2,7 @@
  * More than one thing waiting at a time. Issue #38.
  *
  * `ui/` only, because `setTimeout` is a browser global and ESLint forbids it under `core/` and `state/`.
- * That ban is the reason this file exists at all: the thirty-second reaction window (FR-25) is a real
+ * That ban is the reason this file exists at all: the ten-second reaction window (FR-25) is a real
  * rule with a real number in it, and the rules layer is not allowed to read a clock. So the clock lives
  * here and expiry becomes an ordinary intent.
  *

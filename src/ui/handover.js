@@ -47,10 +47,10 @@
  *
  * ## Why the curtain pauses the match
  *
- * A reaction window has a thirty second clock on it, and it must not run down while somebody is reading
+ * A reaction window has a ten second clock on it, and it must not run down while somebody is reading
  * "hand the screen over". `match-flow.js` answers `onCurtain` with `loop.pause()`, which is the pause
  * screen's own path: every timer stops, and `advance()` re-enters the phase on the way back out. The
- * window reopens its clock at the full thirty seconds, which is the reading `game-loop.js` already gave
+ * window reopens its clock at the full ten seconds, which is the reading `game-loop.js` already gave
  * a pause: the players stopped, so the window did too.
  */
 

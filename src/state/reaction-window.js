@@ -29,7 +29,7 @@
  * Reaction card whose triggers include this moment, and does that card have a rule yet. If no seat
  * answers yes to all three, `openWindow` returns `null` and the turn simply carries on.
  *
- * That is not an optimisation. A window that opened every time would put a thirty-second countdown in
+ * That is not an optimisation. A window that opened every time would put a ten-second countdown in
  * front of every roll of a game whose ordinary turn is two clicks, and it would show a prompt to players
  * who have nothing to press.
  *
@@ -43,7 +43,7 @@
  * So Nühü does not reverse anything. The window resolves the played cards first, in the order they were
  * played, and **then** the card that opened it, unless one of the reactions said not to.
  *
- * ## Where the thirty seconds are, and why they are not here
+ * ## Where the ten seconds are, and why they are not here
  *
  * ESLint forbids `window` and `setTimeout` in `state/`, and the reason is not tidiness: a rules layer
  * that reads a clock cannot be tested. So the countdown runs in `ui/timers.js`, and when it runs out the

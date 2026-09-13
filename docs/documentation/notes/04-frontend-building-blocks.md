@@ -3902,6 +3902,25 @@ honest fix is to ask with it.
 `pawn-moves.spec.js` opens `SEEDS.leavesStartAtOnce`, drags the *last* movable pawn onto the entry
 square and checks that it, and not pawn 0, left. The E2E case was run once without the fix and failed.
 
+### The reaction window is ten seconds, not thirty: 2026-09-13, no issue
+
+- **What changed:** `REACTION_WINDOW_MS` in `reaction-clock.js` is `10_000` (was `30_000`) and
+  `--clock-window` in `motion.css` is `10s` (was `30s`). Comments across `src/` that named "thirty
+  seconds" now say ten. Everything before this section that says thirty is history and stays as written.
+- **Why:** with skill cards only from skill squares (2026-09-11), hands are small and a window has
+  little to decide. The full reasoning and the rejected alternatives are in the project journal,
+  2026-09-13.
+- **Two numbers, one duration.** The timer that shuts the window is JS, the ring that shows it draining
+  is a CSS animation, and nothing ties them together. The new unit test reads `motion.css` and fails if
+  the two disagree, which is cheaper than finding a ring that empties twenty seconds early in a playtest.
+- **The ring still fits.** The number inside it was two digits at thirty and is two digits at ten, so
+  the 2026-09-06 overflow fix is not affected; `reaction-prompt.spec.js` still checks it.
+- **`--clock-urgent: 8s` is unused.** Nothing in `src/` reads it. At ten seconds it would turn the ring
+  urgent after two, so it was left alone rather than guessed at: a value for it is a design decision.
+- **Tests:** `tests/unit/ui/reaction-clock.test.js`, 5 cases, node environment: the window length, the
+  countdown in whole seconds, expiry dispatching `close-window`, the `delays.reaction` override, and the
+  CSS check above. `reaction-clock.js` had no unit test before this.
+
 
 ## Decisions
 

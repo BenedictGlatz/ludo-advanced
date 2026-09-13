@@ -11,7 +11,7 @@
  * state to every guest. And each guest's transport is listened to, so **an intent arriving from a guest
  * enters the loop through `loop.submit`**, after `intent-guard.js` has said who may ask for what.
  *
- * Everything else about the match is the ordinary loop: the roll, the handover hold, the thirty-second
+ * Everything else about the match is the ordinary loop: the roll, the handover hold, the ten-second
  * clock and, later, the bots all run on the host exactly as they do in hot-seat play. That is the whole
  * argument for host-authoritative play: one place owns time and randomness, and the guests watch.
  *

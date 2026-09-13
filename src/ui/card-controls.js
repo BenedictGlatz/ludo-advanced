@@ -1,5 +1,5 @@
 /**
- * Everything the player does with a card, and the thirty-second clock. Issues #33 and #34.
+ * Everything the player does with a card, and the ten-second clock. Issues #33 and #34.
  *
  * `ui/` only. Split out of `game-loop.js` when that file would have passed 300 lines, and the seam is a
  * real one: the loop drives the **phases** of a turn, and this drives the **cards**. The loop asks three
@@ -10,7 +10,7 @@
  * 300 lines again on 2026-09-03, when the roll got a hold of its own. It was the branch of the loop that
  * read a window this module already owned end to end, so it came here rather than to a new file.
  *
- * ## The thirty seconds (FR-25) live next door since 2026-09-09
+ * ## The ten seconds (FR-25) live next door since 2026-09-09
  *
  * The countdown is `reaction-clock.js`, split out when issue #42's `isLocal` guards took this file past
  * 300 lines. The seam was already drawn in this header: the clock is about time passing, and everything
@@ -58,7 +58,7 @@ export function createCardControls({
   /** Durations belong to `tokens.css`, so they are read off the board rather than written here. */
   const readToken = (token, fallback) => motionMs($board, token, fallback);
 
-  /** The thirty seconds. `carryOn` is a function declaration below, so it is hoisted and safe here. */
+  /** The ten seconds. `carryOn` is a function declaration below, so it is hoisted and safe here. */
   const clock = createReactionClock({
     timers,
     getState,

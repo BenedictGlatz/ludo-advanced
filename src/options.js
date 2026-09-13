@@ -21,7 +21,7 @@ import { PLAYER_COUNTS } from "./core/board.js";
 /**
  * How long a Playwright run waits, in milliseconds, when `?fast=1` is set.
  *
- * `reaction` is the thirty-second window collapsed to nothing, which is the difference between a suite
+ * `reaction` is the ten-second window collapsed to nothing, which is the difference between a suite
  * that takes a minute and one that takes half an hour. It changes the waiting and nothing else: the window
  * still opens, and a run with `?fast=1` behaves exactly as though every eligible player declined at once.
  *

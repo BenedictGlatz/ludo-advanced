@@ -1,7 +1,7 @@
 /**
- * The thirty-second clock on a reaction window (FR-25). Split out of `card-controls.js` on 2026-09-09.
+ * The ten-second clock on a reaction window (FR-25). Split out of `card-controls.js` on 2026-09-09.
  *
- * `ui/` only, and without jQuery. The seam is the one that file's own header drew under "The thirty
+ * `ui/` only, and without jQuery. The seam is the one that file's own header drew under "The ten
  * seconds": the rules layer is not allowed to read a clock, so the countdown lives in `ui/` and expiry is
  * an ordinary intent. Everything else in `card-controls.js` is about a card being played; this is about
  * time passing, and the two were in one file only because both had started there.
@@ -26,7 +26,7 @@
 import { INTENT } from "../state/intents.js";
 
 /** How long a reaction window stays open (FR-25). The Product Owner's number. */
-export const REACTION_WINDOW_MS = 30_000;
+export const REACTION_WINDOW_MS = 10_000;
 
 /** How often the countdown on screen is redrawn. One second, because it is displayed in seconds. */
 const TICK_MS = 1000;
@@ -67,7 +67,7 @@ export function createReactionClock({ timers, getState, apply, refresh, delays =
    * Start, keep or stop the clock, to match whether a window is open.
    *
    * Called by the loop on every advance. It is idempotent on purpose: a window that is still open keeps
-   * the deadline it already had, so the thirty seconds cover **the whole window** rather than restarting
+   * the deadline it already had, so the ten seconds cover **the whole window** rather than restarting
    * every time a seat plays or declines. That is what makes it one shared window and not one per player.
    */
   function syncClock() {

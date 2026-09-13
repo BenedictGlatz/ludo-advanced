@@ -2,7 +2,7 @@
  * The reaction window. Issue #38, requirements FR-24 and FR-25.
  *
  * Nothing here measures time, because nothing in `state/` does. A timeout is the same thing as every
- * eligible seat declining, and the view is what turns thirty seconds into that dispatch. So the cases
+ * eligible seat declining, and the view is what turns ten seconds into that dispatch. So the cases
  * below cover **who may act, in what order effects run, and what shuts the window** and never a clock.
  */
 
@@ -82,7 +82,7 @@ describe("who may react", () => {
 
 describe("opening a window", () => {
   /**
-   * The rule that keeps the game playable. A window that opened every time would put a thirty-second
+   * The rule that keeps the game playable. A window that opened every time would put a ten-second
    * countdown in front of every roll of a game whose ordinary turn is two clicks.
    */
   it("does not open at all when nobody could use it", () => {
