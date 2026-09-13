@@ -1,0 +1,89 @@
+/* =============================================================================
+   handover.css -- the moment between two turns at a shared screen. Split out
+   of overlay.css along a real seam: it is the only one of the five contents
+   with a rule rather than a preference behind it (brief 04 § 2, constraint 8)
+   and it is the most-repeated screen in the game.
+   Depends on tokens.css and overlay.css. Reasoning: 04-spec, D39.
+
+   The one thing this file must get right: the sheet is opaque in the first
+   frame it exists. Nothing about the concealment is animated, in either
+   motion preference, because an animated curtain is a curtain that is briefly
+   open. What moves is the panel, and only the panel.
+   ========================================================================== */
+
+.overlay[data-screen="handover"] {
+  --overlay-panel-w: 36rem;
+  background: var(--color-app-bg);
+  transition: none;
+}
+
+/* The sheet takes a wash of the arriving seat's colour, so the player who is
+   about to pick the screen up recognises it before reading anything. */
+.overlay[data-screen="handover"][data-player="0"] {
+  --seat-color: var(--color-p0);
+}
+.overlay[data-screen="handover"][data-player="1"] {
+  --seat-color: var(--color-p1);
+}
+.overlay[data-screen="handover"][data-player="2"] {
+  --seat-color: var(--color-p2);
+}
+.overlay[data-screen="handover"][data-player="3"] {
+  --seat-color: var(--color-p3);
+}
+
+.overlay[data-screen="handover"][data-player] {
+  background: color-mix(in srgb, var(--seat-color) 22%, var(--color-app-bg));
+}
+
+/* The panel arrives. It travels a short distance and it is the only thing
+   that does. --motion-curtain becomes 1 ms under reduced motion, which
+   removes the travel and leaves the concealment untouched. */
+@keyframes handover-panel {
+  from {
+    opacity: 0;
+    translate: 0 var(--space-6);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.overlay[data-screen="handover"] .overlay__panel {
+  gap: var(--space-5);
+  padding: var(--space-7) var(--space-6);
+  animation: handover-panel var(--motion-curtain) var(--ease-curtain) backwards;
+}
+
+/* Bigger than a win panel's mark: at arm's length across a table this is the
+   part that is read, and the shape is what carries it in greyscale (D16). */
+.overlay[data-screen="handover"] .overlay__panel::before {
+  width: var(--space-8);
+  height: var(--space-8);
+}
+
+.overlay[data-screen="handover"] .overlay__title {
+  font-size: var(--text-2xl);
+}
+
+/* There is no timer. The screen leaves when the arriving player says so, and
+   that button is the only way out, so it is the loudest thing on the sheet. */
+.overlay[data-screen="handover"] .overlay__button[data-action="ready"] {
+  min-height: 3.25rem;
+  padding: var(--space-3) var(--space-7);
+  font-size: var(--text-lg);
+}
+
+/* --- What is deliberately not here.
+
+       No blur, no frosted sheet and no scaled-down board behind it. Every one
+       of those is a picture of the rail rather than an absence of it, and at
+       a shared screen the next player is close enough to read a blurred five
+       cards. The sheet is opaque, and that is the whole mechanism. --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay[data-screen="handover"] .overlay__panel {
+    animation-duration: 1ms;
+  }
+}

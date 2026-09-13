@@ -1,0 +1,155 @@
+/* Board track: which grid cell holds which of the 40 track fields.
+
+   Split out of board.css on 2026-08-30. The delivered file was 248 lines and
+   fitted NFR-02; running it through the project's own Prettier expanded every
+   single-line rule and took it to 407. Section 1 of the spec named this block
+   as the alternative seam and rejected it, so that reasoning is answered here:
+   the geometry it has to be read next to is the table below, and the table
+   moved with it.
+
+   Index to grid cell, row / column, 1 based. Travel is clockwise and index 0
+   is player 0's entry field. Indices 4, 14, 24 and 34 are the four corners of
+   the centre 3 by 3: they are ordinary track fields, and they are what joins
+   one arm's outer row to the next, so the ring is continuous (D3a).
+
+   | Index    | Cells, row / column      |
+   | -------- | ------------------------ |
+   | 0 to 3   | row 5, columns 1 to 4    |
+   | 4        | row 5, column 5, corner  |
+   | 5 to 8   | column 5, rows 4 up to 1 |
+   | 9        | row 1, column 6          |
+   | 10 to 13 | column 7, rows 1 to 4    |
+   | 14       | row 5, column 7, corner  |
+   | 15 to 18 | row 5, columns 8 to 11   |
+   | 19       | row 6, column 11         |
+   | 20 to 23 | row 7, columns 11 to 8   |
+   | 24       | row 7, column 7, corner  |
+   | 25 to 28 | column 7, rows 8 to 11   |
+   | 29       | row 11, column 6         |
+   | 30 to 33 | column 5, rows 11 to 8   |
+   | 34       | row 7, column 5, corner  |
+   | 35 to 38 | row 7, columns 4 to 1    |
+   | 39       | row 6, column 1          |
+
+   Depends on board.css for the .square base. Load it after board.css. */
+
+.square[data-square="0"] {
+  grid-area: 5 / 1;
+}
+.square[data-square="1"] {
+  grid-area: 5 / 2;
+}
+.square[data-square="2"] {
+  grid-area: 5 / 3;
+}
+.square[data-square="3"] {
+  grid-area: 5 / 4;
+}
+.square[data-square="4"] {
+  grid-area: 5 / 5;
+}
+.square[data-square="5"] {
+  grid-area: 4 / 5;
+}
+.square[data-square="6"] {
+  grid-area: 3 / 5;
+}
+.square[data-square="7"] {
+  grid-area: 2 / 5;
+}
+.square[data-square="8"] {
+  grid-area: 1 / 5;
+}
+.square[data-square="9"] {
+  grid-area: 1 / 6;
+}
+.square[data-square="10"] {
+  grid-area: 1 / 7;
+}
+.square[data-square="11"] {
+  grid-area: 2 / 7;
+}
+.square[data-square="12"] {
+  grid-area: 3 / 7;
+}
+.square[data-square="13"] {
+  grid-area: 4 / 7;
+}
+.square[data-square="14"] {
+  grid-area: 5 / 7;
+}
+.square[data-square="15"] {
+  grid-area: 5 / 8;
+}
+.square[data-square="16"] {
+  grid-area: 5 / 9;
+}
+.square[data-square="17"] {
+  grid-area: 5 / 10;
+}
+.square[data-square="18"] {
+  grid-area: 5 / 11;
+}
+.square[data-square="19"] {
+  grid-area: 6 / 11;
+}
+.square[data-square="20"] {
+  grid-area: 7 / 11;
+}
+.square[data-square="21"] {
+  grid-area: 7 / 10;
+}
+.square[data-square="22"] {
+  grid-area: 7 / 9;
+}
+.square[data-square="23"] {
+  grid-area: 7 / 8;
+}
+.square[data-square="24"] {
+  grid-area: 7 / 7;
+}
+.square[data-square="25"] {
+  grid-area: 8 / 7;
+}
+.square[data-square="26"] {
+  grid-area: 9 / 7;
+}
+.square[data-square="27"] {
+  grid-area: 10 / 7;
+}
+.square[data-square="28"] {
+  grid-area: 11 / 7;
+}
+.square[data-square="29"] {
+  grid-area: 11 / 6;
+}
+.square[data-square="30"] {
+  grid-area: 11 / 5;
+}
+.square[data-square="31"] {
+  grid-area: 10 / 5;
+}
+.square[data-square="32"] {
+  grid-area: 9 / 5;
+}
+.square[data-square="33"] {
+  grid-area: 8 / 5;
+}
+.square[data-square="34"] {
+  grid-area: 7 / 5;
+}
+.square[data-square="35"] {
+  grid-area: 7 / 4;
+}
+.square[data-square="36"] {
+  grid-area: 7 / 3;
+}
+.square[data-square="37"] {
+  grid-area: 7 / 2;
+}
+.square[data-square="38"] {
+  grid-area: 7 / 1;
+}
+.square[data-square="39"] {
+  grid-area: 6 / 1;
+}

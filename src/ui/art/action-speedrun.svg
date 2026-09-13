@@ -1,0 +1,19 @@
+<svg viewBox="0 0 232 128" aria-hidden="true" focusable="false">
+          <g stroke="#2B1A3D" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" fill="none">
+            <g stroke="#8FB2F0" stroke-width="5"><path d="M8 46 L74 46"></path><path d="M-4 70 L62 70"></path><path d="M14 94 L70 94"></path></g>
+            <g transform="translate(132 106) skewX(-12)">
+              <ellipse cx="0" cy="4" rx="38" ry="9" fill="#E0492F"></ellipse>
+              <path d="M-34,4 C-34,-4 -25,-7 -18,-13 C-12,-18 -10,-25 -10,-31 L10,-31 C10,-25 12,-18 18,-13 C25,-7 34,-4 34,4 Z" fill="#E0492F"></path>
+              <circle cx="0" cy="-48" r="23" fill="#FF8A5C"></circle>
+              <path d="M-16,-56 Q-10,-62 -3,-55" stroke-width="4"></path>
+              <path d="M4,-55 Q10,-62 17,-56" stroke-width="4"></path>
+              <path d="M-8,-36 Q0,-44 9,-36 Q0,-28 -8,-36 Z" fill="#FFF3E2"></path>
+            </g>
+            <g transform="translate(190 40)">
+              <circle cx="0" cy="0" r="24" fill="#FFF8EC"></circle>
+              <path d="M0,-14 L0,0 L10,8" stroke-width="4.5"></path>
+              <path d="M-8,-26 L-2,-32 M8,-26 L2,-32" stroke-width="4"></path>
+            </g>
+            <g stroke="#2B1A3D" stroke-width="4"><path d="M78 24 L96 34 M84 116 L100 106"></path></g>
+          </g>
+        </svg>

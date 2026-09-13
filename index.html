@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- The one string in this file that a player reads. It is the product name, so it is the same
+         in both locales and does not go through i18next. Every other user-facing string does. -->
+    <title>Ludo Advanced</title>
+  </head>
+  <body>
+    <!-- The single mount point. S3 to S7 of the obligations book are five regions inside this one
+         element, not five screens, because FR-31 requires all of them visible at once. -->
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

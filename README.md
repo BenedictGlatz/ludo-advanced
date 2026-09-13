@@ -1,42 +1,39 @@
 # Ludo Advanced
 
-A 2D web remake of Ludo where the single die is replaced by two card pools — draw your dice, play your skills.
+A 2D web remake of Ludo where the single die is replaced by two card pools: draw your dice, play your skills.
 
-![Status](https://img.shields.io/badge/status-in%20development-orange)
-![License](https://img.shields.io/badge/license-TBD-lightgrey)
+![Status](https://img.shields.io/badge/status-v1.0.0-brightgreen)
+![License](https://img.shields.io/badge/license-UNLICENSED-lightgrey)
 
 ## About
 
 Classic Ludo gives you one die and one decision: which pawn to move. Ludo Advanced adds two layers of choice on top of
 the familiar board:
 
-- **Dice Card Pool** — cards ranging from **D2 to D20**. At the start of your turn you draw 3 cards, pick the die you
-  want to roll, and the 3 cards are shuffled back into the pool. A D20 can carry a pawn across the board — or overshoot
+- **Dice Card Pool**: cards ranging from **D2 to D20**. At the start of your turn you draw 3 cards, pick the die you
+  want to roll, and the 3 cards are shuffled back into the pool. A D20 can carry a pawn across the board: or overshoot
   the goal.
-- **Skill Card Pool** — **Action** cards you play on your own turn and **Reaction** cards you play in response to
+- **Skill Card Pool**: **Action** cards you play on your own turn and **Reaction** cards you play in response to
   another player's move (shield a pawn, swap positions, force a reroll).
 
 Everything else stays true to Ludo: 2–4 players, four pawns each, leave the start area on the highest roll, capture by
 landing exactly on an opponent, first player home wins.
 
-The full rules are in [00-One-Pager.md](00-Meta/Project-Management/00-One-Pager.md).
+The full rules are in [one-pager.md](docs/project-management/one-pager.md).
 
 ## Tech stack
 
-| Area          | Choice                            |
-| ------------- | --------------------------------- |
-| Language      | JavaScript (ES modules) — no TypeScript |
-| DOM / UI      | jQuery                            |
-| Build         | Vite                              |
-| Localization  | i18next (`de`, `en`)              |
-| Unit tests    | Vitest                            |
-| E2E tests     | Playwright                        |
-| Lint / Format | ESLint + Prettier                 |
+| Area          | Choice                                 |
+| ------------- | -------------------------------------- |
+| Language      | JavaScript (ES modules): no TypeScript |
+| DOM / UI      | jQuery                                 |
+| Build         | Vite                                   |
+| Localization  | i18next (`de`, `en`)               |
+| Unit tests    | Vitest                                 |
+| E2E tests     | Playwright                             |
+| Lint / Format | ESLint + Prettier                      |
 
 ## Getting started
-
-> **Setup pending.** The repository currently contains project documentation only. The commands below describe the
-> intended workflow and become available once the npm project is bootstrapped.
 
 **Prerequisites:** Node.js LTS (20 or newer) and npm.
 
@@ -47,38 +44,93 @@ npm install
 npm run dev
 ```
 
-The dev server prints a local URL — open it in your browser to play.
+The dev server prints a local URL: open it in your browser to play.
 
 ## Scripts
 
-| Command                 | Description                        |
-| ----------------------- | ---------------------------------- |
+| Command                   | Description                        |
+| ------------------------- | ---------------------------------- |
 | `npm run dev`           | Start the Vite dev server          |
-| `npm run build`         | Production build into `dist/`      |
+| `npm run build`         | Production build into `dist/`     |
 | `npm run preview`       | Serve the production build locally |
 | `npm run lint`          | Run ESLint                         |
-| `npm run lint:fix`      | Run ESLint with `--fix`            |
+| `npm run lint:fix`      | Run ESLint with `--fix`           |
 | `npm run format`        | Format the codebase with Prettier  |
 | `npm test`              | Run unit tests once                |
 | `npm run test:watch`    | Run unit tests in watch mode       |
 | `npm run test:coverage` | Unit tests with a coverage report  |
 | `npm run test:e2e`      | Run Playwright end-to-end tests    |
 
+Three more exist and are not part of the everyday loop. They generate things rather than check them, so
+each is run by hand when its input changes:
+
+| Command                       | Description                                                                             |
+| ----------------------------- | --------------------------------------------------------------------------------------- |
+| `npm run assets:card-art`   | Extract the 36 card illustrations out of the Claude Design artboard into `src/ui/art/` |
+| `npm run docs:dice-balance` | Derive and measure the dice pool balance quoted in the game design document             |
+| `npm run test:seeds`        | Search for the fixed RNG seeds the end-to-end suite pins                                |
+
+## The address bar
+
+Read once, by `src/options.js`, on behalf of `src/main.js`. Every one of them falls back rather than
+failing, so a malformed URL starts a normal game.
+
+| Parameter      | Effect                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------ |
+| `?seed=42`   | Fixes the RNG, so the same match plays out the same way every time (NFR-09)                |
+| `?players=4` | Starts a match with that many players at once,**skipping the main menu**. 2, 3 or 4  |
+| `?bots=3`    | Hands the last seats to the computer. Needs `?players=`, and always leaves one person in  |
+| `?fast=1`    | Shortens the pauses in the turn loop and passes the handover screen without waiting for it |
+| `?relay=1`   | Online play only: forces the connection through the relay server, to check it works        |
+| `?netlog=1`  | Online play only: prints what the connection did to the browser console                    |
+
+**`?bots=` is how you play alone today.** `/?players=4&bots=3` seats you first and lets the computer
+play the other three: they pick their dice card, roll it, move a pawn, and play a skill card whenever
+one is worth more to them than keeping it. When a bot plays a card, the strip under the board says so
+for two seconds, naming the seat and the card. The hand-over screen stays away, because there is nobody
+to hand the keyboard to. Choosing bots from the menu instead of the address bar is a separate issue,
+waiting on a design for the setup screen.
+
+**`?relay=1` is for diagnosing a failed online match.** Normally the two browsers try to reach each
+other directly first and fall back to the relay server only when they cannot. This forbids the direct
+route, so a connection that still works proves the relay itself is fine. Use it when an online match
+fails: if `?relay=1` also fails, the relay credentials have expired and somebody needs to run
+`npm run net:turn`.
+
+**Online play: use Chrome or Edge, and paste the reply code promptly.** The two browsers have to find
+each other, and the guest's browser starts trying the moment its reply code appears, before the host has
+even seen it. Chrome and Edge keep trying for well over a minute, so an ordinary chat exchange is fine.
+**Firefox gives up after about eleven seconds**, measured on 2026-09-10, so with Firefox on the guest's
+side the host has to paste the reply within ten seconds of it being produced, which a chat round trip
+rarely manages. This is a browser limit, not a setting the game can change.
+
+**`?netlog=1` is what you turn on before reporting a broken online match.** It prints to the browser
+console (F12): what each code carries, every state the connection goes through, which route it ended up
+using, and the real reason it dropped. Both players turn it on, both copy their console, and the two
+side by side usually say which side stopped first and why. It changes nothing about how the game plays.
+
+`?players=` and `?fast=1` exist for the end-to-end suite. They are what let every spec written before
+the main menu and the handover screen existed keep running unchanged, and they change the waiting rather
+than the rules: a run with `?fast=1` plays exactly the same turn, only quicker.
+
 ## Project structure
 
 ```
 src/
-  core/    Pure game rules — board, movement, capture, turn manager, card pools
+  core/    Pure game rules: board, movement, capture, turn manager, card pools
   state/   Game state and its transitions
+  ai/      Rule-based bot players: reads state, returns intents
   ui/      jQuery rendering and input handling
   i18n/    i18next setup and locale files
 tests/
   unit/    Vitest
   e2e/     Playwright
-00-Meta/
-  Project-Management/  Rulebook, sprint plan and meeting notes
-  Documentation/       Living notes for the final project report
-  AI-Prompts/          The AI prompt log
+docs/
+  project-management/  Rulebook, sprint plan and meeting notes
+  documentation/       Living notes for the final project report
+design/
+  handoff/             Design briefs and specs exchanged with Claude Design
+  assets/              Screenshots the briefs refer to
 ```
 
 Game rules live in `core/` and never touch the DOM, which keeps them testable without a browser.
@@ -98,7 +150,7 @@ Target coverage is at least 80 % of lines in `src/core/` and `src/state/`; the U
 
 ## Localization
 
-The interface ships in **German (`de`)** and **English (`en`)**. No user-facing string is hardcoded — every one of them
+The interface ships in **German (`de`)** and **English (`en`)**. No user-facing string is hardcoded: every one of them
 is an i18next key.
 
 To add a language, copy `src/i18n/locales/en.json` to `<code>.json`, translate the values (leave the keys untouched),
@@ -113,31 +165,35 @@ and register the locale in the i18next setup in `src/i18n/`.
 - Pull requests need at least one review approval and are merged with **Squash and Merge**.
 - Record user-visible changes under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md) in the same commit.
 - Append the facts your change produced to the matching chapter note in
-  [00-Meta/Documentation/](00-Meta/Documentation/00-index.md), also in the same commit. The project report is
+  [docs/documentation/](docs/documentation/README.md), also in the same commit. The project report is
   written alongside development, not at the end.
 
-Full conventions, including the architecture rules and the AI prompt log, are documented in [CLAUDE.md](CLAUDE.md).
+Full conventions, including the architecture rules, are documented in [CLAUDE.md](CLAUDE.md).
 
 ## Roadmap
 
-| Sprint   | Weeks | Focus                                                    |
-| -------- | ----- | -------------------------------------------------------- |
-| Sprint 0 | 1     | Planning, rulebook, prototyping, repository setup         |
-| Sprint 1 | 2–3   | Core gameplay: board, movement, turn manager, capture     |
-| Sprint 2 | 4–5   | Dice pool, skill cards, multiplayer                       |
-| Sprint 3 | 6–7   | Art, audio, menus, polish and fixes                       |
-| Buffer   | 8     | Playtesting and presentation                              |
+| Sprint   | Weeks | Focus                                                 |
+| -------- | ----- | ----------------------------------------------------- |
+| Sprint 0 | 1     | Planning, rulebook, prototyping, repository setup     |
+| Sprint 1 | 2–3  | Core gameplay: board, movement, turn manager, capture |
+| Sprint 2 | 4–5  | Dice pool, skill cards, multiplayer                   |
+| Sprint 3 | 6–7  | Art, audio, menus, polish and fixes                   |
 
-Details: [01-Github-Project.md](00-Meta/Project-Management/01-Github-Project.md).
+No buffer sprint was created. The decision of 2026-08-22 (section 3.1 of
+[project-plan.md](docs/project-management/project-plan.md)) turned the closing work into a dated
+window inside Sprint 3, behind a feature freeze, instead.
+
+Details: [github-project.md](docs/project-management/github-project.md).
 
 ## Team
 
-| Name            | Role                              |
-| --------------- | --------------------------------- |
-| Fabian Gemming  | Product Owner                     |
-| Lars Bolender   | Scrum Member — implementation     |
-| Benedict Glatz  | Scrum Member — implementation     |
+| Name           | Role                         |
+| -------------- | ---------------------------- |
+| Fabian Gemming | Product Owner                |
+| Lars Bolender  | Scrum Member: implementation |
+| Benedict Glatz | Scrum Member: implementation |
 
 ## License
 
-To be determined.
+Unlicensed. This is coursework: the repository is public so it can be read and graded, but no licence
+is granted for reuse.
