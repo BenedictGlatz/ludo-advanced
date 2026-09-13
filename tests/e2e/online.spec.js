@@ -5,9 +5,19 @@
  *
  * ## Chromium only, and why
  *
- * The two contexts connect over 127.0.0.1 with no STUN server, which Chromium does out of the box.
- * Firefox's and Edge's ICE behaviour under Playwright has not been checked, so the spec skips there and
- * the gap is recorded as outstanding in Chapter 08 rather than hidden behind a green run.
+ * The two contexts connect over 127.0.0.1, which Chromium does out of the box. Firefox's and Edge's ICE
+ * behaviour under Playwright has not been checked, so the spec skips there and the gap is recorded as
+ * outstanding in Chapter 08 rather than hidden behind a green run.
+ *
+ * ## Why the code waits are as long as the lobby's own
+ *
+ * The lobby uses the real server list in `ice-servers.js`, a STUN server and a TURN relay, even here.
+ * It holds an invite or reply code back until gathering has finished or `ICE_GATHER_TIMEOUT_MS` has run
+ * out, which has been 20 seconds since 2026-09-10. This spec waited 10, so on a CI runner where the
+ * relay is slow to answer (or its credentials have expired) three of the four cases failed on every run
+ * from 2026-09-10 to 2026-09-13. The waits are now derived from that constant, so the next change to it
+ * cannot silently break the spec again, and every case is marked slow because two such waits plus the
+ * connection itself no longer fit in Playwright's default thirty seconds.
  *
  * ## What is asserted
  *
@@ -18,10 +28,16 @@
 
 import { expect, test } from "@playwright/test";
 
+import { ICE_GATHER_TIMEOUT_MS } from "../../src/net/signal-codes.js";
+
 import { boardState, chooseDiceCard, playTurn } from "./helpers.js";
+
+/** How long a code may take to appear: the lobby's own limit, plus slack for encoding and rendering. */
+const CODE_WAIT_MS = ICE_GATHER_TIMEOUT_MS + 5_000;
 
 test.describe("online multiplayer (FR-42)", () => {
   test.skip(({ browserName }) => browserName !== "chromium", "chromium only, see the header");
+  test.slow();
 
   const overlay = (page) => page.locator(".overlay");
   const button = (page, action) => page.locator(`.overlay__button[data-action="${action}"]`);
@@ -54,7 +70,7 @@ test.describe("online multiplayer (FR-42)", () => {
     for (const seat of bots) await position(host, seat, "bot").click();
 
     // Gathering candidates takes a moment, so the invite field gets a longer wait than the default.
-    await expect(field(host, "invite")).toHaveValue(/.+/, { timeout: 10_000 });
+    await expect(field(host, "invite")).toHaveValue(/.+/, { timeout: CODE_WAIT_MS });
     // Since design spec 19 the code's button sits inside its field (D119.2). Same attributes as before.
     await expect(host.locator('.overlay__field-action [data-action="copy"]')).toHaveCount(1);
     await expect(host.locator('.overlay__actions [data-action="copy"]')).toHaveCount(0);
@@ -64,7 +80,7 @@ test.describe("online multiplayer (FR-42)", () => {
     await button(guest, "join").click();
     await field(guest, "invite").fill(invite);
     await button(guest, "connect").click();
-    await expect(field(guest, "reply")).toHaveValue(/.+/, { timeout: 10_000 });
+    await expect(field(guest, "reply")).toHaveValue(/.+/, { timeout: CODE_WAIT_MS });
     const reply = await field(guest, "reply").inputValue();
 
     await field(host, "reply").fill(reply);
