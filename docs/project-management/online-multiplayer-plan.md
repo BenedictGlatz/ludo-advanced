@@ -292,7 +292,8 @@ calls `startMatch`, so `assertDeps` never runs.
 
 ## Documentation and process (mandatory steps)
 
-- AI prompt log entry in `docs/ai-prompts/lbolender/2026-09-08.json` first thing in
+- AI prompt log entry in `docs/ai-prompts/lbolender/2026-09-08.json` (log removed at hand-in on
+  2026-09-13) first thing in
   implementation (not writable in plan mode).
 - Notes: `06-state-and-turn-flow.md` (auto-steps, loop-store, `submit`, `isLocal`, guard rules),
   `04-frontend-building-blocks.md` (guest loop, lobby, online flow, the three splits),

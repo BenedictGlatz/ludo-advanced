@@ -75,7 +75,7 @@ than they do in the sample report, where the same material was compressed into a
 - GitHub Projects v2, board named *Ludo Advanced*, with Roadmap, Backlog and Kanban views.
 - Phase labels: `2-definition`, `3-planning`, `4-implementation`, `5-completion`.
 - MoSCoW labels: `must have`, `should have`, `could have`.
-- Planned custom fields (from [brainstorming.md](../../../brainstorming.md)): Iteration (2-week
+- Planned custom fields (from the initial brainstorming document of 2026-08-04): Iteration (2-week
   sprints), Story Points (Fibonacci 1/2/3/5/8), Category (Gameplay, UI, Art/Audio, Bug, Mechanics).
 - Planned columns: Backlog → Ready for Sprint → In Progress → In Review → Done.
 
@@ -101,7 +101,7 @@ project, not repository-level). 50 items: the 46 issues plus 4 draft issues used
   2. **`Sprint` is unset on all 50 items.** Sprint membership exists only as the 4 draft-issue
      markers and the per-item date fields, not as a queryable field value.
   3. **No `Story Points` field exists**, and no estimation field of any kind. The Fibonacci
-     estimation planned in [brainstorming.md](../../../brainstorming.md) was never configured.
+     estimation planned in the initial brainstorming document of 2026-08-04 was never configured.
   4. **No `Category` field exists.** Its role is filled by free labels (`gameplay`, `ui`, `audio`,
      `documentation`) instead.
 - **No milestones are defined** in the repository (`/milestones` returns an empty list).
@@ -150,7 +150,7 @@ the API — the Projects v2 board still has no stable read path (see *Board acce
 **Negative finding, new:** the board and the repository disagree at this date. #10 shows
 `In Progress` and #13 shows `Todo`, while pull requests #49 and #50 for exactly those two issues were
 already open. Status is being maintained by hand and lags the actual work — which is the failure mode
-the `In Review` column, planned in [brainstorming.md](../../../brainstorming.md) and never created,
+the `In Review` column, planned in the initial brainstorming document of 2026-08-04 and never created,
 exists to prevent. Worth stating in the report: a WIP limit is enforced on a column whose values are
 updated manually, so the limit constrains the board rather than the work.
 
@@ -876,7 +876,7 @@ two rules.
 
 ### The last must-have work with no card got one: 2026-09-02, issue #68
 
-The CI build-check workflow was named in `brainstorming.md`, sized at 2 points in `effort-estimation.md`,
+The CI build-check workflow was named in the initial brainstorming document of 2026-08-04, sized at 2 points in `effort-estimation.md`,
 scheduled into the Sprint 3 implementation half by `project-plan.md` section 2.2, and given its five gates
 in section 6 of the test plan. **It appeared on the board in none of those forms**, so the last piece of
 unscheduled must-have work in the project was visible in four documents and invisible in the one artefact
@@ -1004,7 +1004,7 @@ for everything the repository keeps, and the split held for four weeks by habit 
   the default branch and that moving a board card is manual while the `gh` token lacks the `project`
   scope. What is still open is not the definition but its **adoption**: no sprint has been closed
   against it, and the three of us have not confirmed it in a planning slot.
-- Whether a CI build-validation workflow (`build-check.yml`, planned in `brainstorming.md`) gets
+- Whether a CI build-validation workflow (`build-check.yml`, planned on 2026-08-04) gets
   implemented. If not, say so in Chapter 08 with a reason. **2026-09-02: it now has an issue, #68**, 2
   points, Sprint 3, so the decision is at least on the board. Whether it lands before the 2026-09-11
   feature freeze is still open.

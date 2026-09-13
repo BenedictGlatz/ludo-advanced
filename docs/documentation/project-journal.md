@@ -94,7 +94,8 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   occurrences removed from 10 files, `CLAUDE.md` included, each rewritten into an ordinary sentence, a
   colon, a comma or a bracketed aside rather than replaced mechanically with a hyphen. Two files are
   exempt and keep theirs: `reference/style-reference.md`, which quotes a German transcript verbatim, and
-  `reference/report-checklist.md`, which quotes "ENTWURF" from the source it is adapted from. The rule
+  `reference/report-checklist.md`, which quotes "ENTWURF" from the source it is adapted from (both files
+  removed at hand-in on 2026-09-13). The rule
   itself predates the sweep and is in `CLAUDE.md`; what this cleared is the backlog of text written
   before it was enforced. Sprint 1.
 
@@ -581,9 +582,40 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   new board facts recorded, including a WIP limit of 5 on `In Progress` that appears in no planning
   document. Sprint 0.
 
+- **2026-09-13**: Repository prepared for hand-in. The AI prompt log removed from disk and from the
+  index, with Chapter 13 and its generator. Three internal working aids removed
+  (`style-reference.md`, `report-checklist.md`, `bot-tactics-plan.md`) plus `brainstorming.md`; all
+  32 citations of those files rewritten so the statements survive without the link.
+  `docs/documentation/README.md` de-duplicated. README, `CLAUDE.md` and `GEMINI.md` corrected, all
+  three still claimed the repository held documentation only. Released as 1.0.0. Sprint 3.
+
 ---
 
 ## Decisions
+
+### 2026-09-13: The AI prompt log and Chapter 13 are removed rather than completed
+
+- **Chosen:** delete `docs/ai-prompts/` (17 files, 142 entries), `scripts/docs-ai-index.js`, the
+  `docs:ai-index` npm script and `notes/13-ai-index.md`. How AI was used stays in Chapter 10 as a
+  summary. Every note that cited a removed file keeps its statement and loses its link, with the date
+  written out instead.
+- **Rejected, option A:** run `npm run docs:ai-index` once and ship the generated Chapter 13. It
+  would have been a chapter built from one of three contributors' logs, presented as the project's
+  complete AI record. The chapter's own rule was completeness, and an incomplete verbatim index is
+  worth less than an honest summary, because the reader cannot tell what is missing.
+- **Rejected, option B:** purge the log from the git history with `git filter-repo`. It rewrites
+  every commit and forces both teammates to re-clone, days before hand-in, to hide files that were
+  never secret.
+- **Rejected, option C:** keep the log and submit it. It is a working aid: it was written to make
+  Chapter 10 writable, and that chapter is now written.
+- **Why:** the log cost one step per prompt for six weeks and produced exactly one thing, Chapter 10.
+  Shipping the raw material alongside the finished chapter adds no information and invites the reader
+  to grade the transcript instead of the work.
+- **Consequence:** the per-prompt AI declaration is no longer possible. If the module turns out to
+  require one, Chapter 10 is the answer and it is a summary, not a transcript. The 2026-08-10 decision
+  that gitignored the log is superseded: the collect-out-of-band step it created never had to be
+  performed.
+- → Ch. 07, Ch. 10, Ch. 11
 
 ### 2026-09-10: Handoff 19 landed whole, and five small decisions were this side's
 
@@ -795,17 +827,21 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   chapter has to collect the other contributors' `docs/ai-prompts/<github-username>/` folders out
   of band first (chat, shared drive) and place them locally. This is a real loss of the
   "one `git pull` has everything" property the log used to have, traded for not blocking other work.
-- → Ch. 07, Ch. 13
+- **Superseded 2026-09-13:** the prompt log, the generator and Chapter 13 were all removed for
+  hand-in. The log was a working aid for Chapter 10, not a deliverable, so the collect-out-of-band
+  step never had to be performed.
+- → Ch. 07, Ch. 10
 
 ### 2026-08-06: Branching model is main/dev/feature, not GitHub Flow
 
 - **Chosen:** `main` (always playable, no direct pushes) ← `dev` (integration) ← `feature/<issue>-<slug>`.
 - **Rejected:** the GitHub Flow variant originally proposed in
-  [brainstorming.md](../../brainstorming.md), with feature branches off `main` and no `dev`.
+  the initial brainstorming document of 2026-08-04 (removed at hand-in on 2026-09-13), with feature
+  branches off `main` and no `dev`.
 - **Why:** `main` is required to hold a working, playable build at all times. Merging feature
   branches straight into it makes that guarantee depend on every single PR being complete, whereas
   an integration branch absorbs partial work.
-- **Consequence:** one extra merge step per release. The rest of the `brainstorming.md` policy
+- **Consequence:** one extra merge step per release. The rest of that policy
   (no direct pushes to `main`, one review approval minimum, squash and merge, `Closes #<n>`) still
   applies.
 - → Ch. 02
@@ -856,7 +892,7 @@ is tracked as scope and dates in [sprint-log.md](sprint-log.md).
   visibility does not unlock it.
 - **Why:** the immediate need was one read of the board to get sprint dates and the backlog into the
   notes. Public visibility is also independently useful: the deployment candidates in
-  `brainstorming.md` (GitHub Pages, itch.io) assume a public repository anyway, and a university
+  the initial brainstorming document (GitHub Pages, itch.io) assume a public repository anyway, and a university
   project has no confidentiality requirement.
 - **Consequence, and the part to state honestly in the report:** the working route parses GitHub's
   internal `memex-*` page payloads, which is **not a stable interface** and will break without
@@ -5077,7 +5113,8 @@ to get wrong later.
 ### 2026-09-06: The smarter bot starts with a scoreboard, not with a smarter bot
 
 - **Chosen:** the work to make the bots play tactically is planned in four phases in
-  `docs/project-management/bot-tactics-plan.md`, and the first phase builds a measuring tool
+  `docs/project-management/bot-tactics-plan.md` (removed at hand-in on 2026-09-13), and the first
+  phase builds a measuring tool
   (`scripts/bot-arena.js`, seeded bot-against-bot matches with per-seat tuning profiles) before any
   value in `ai/` changes. Danger and capture opportunity in the move choice come second, sharper card
   targeting third, tuning of the guessed constants last.
@@ -5842,6 +5879,23 @@ questions is clearer than one function that guesses. Details in `notes/04-fronte
 - → Ch. 04, Ch. 06, Ch. 08
 
 ## Challenges
+
+### 2026-09-13: The hand-in cleanup was built on a layout that had already been replaced
+
+- **What happened:** the cleanup was written against `00-Meta/` and `01-Design/` while the 2026-09-11
+  rename to `docs/` and `design/` was being pushed in parallel. The first `git push` was rejected;
+  `origin/dev` had 16 new commits, one of which renamed every file the cleanup had edited.
+- **Cost:** the whole cleanup, redone. A trial merge reported 26 conflicting paths, most of them
+  rename-versus-delete.
+- **What was done instead of merging:** the two cleanup commits were dropped and the work repeated on
+  top of `origin/dev`. Resolving 26 conflicts by hand would have produced the same files through a
+  merge commit nobody could read afterwards, and the second pass took less time than the first because
+  the decisions were already made. The old work is kept on the branch
+  `backup/cleanup-old-layout` rather than deleted.
+- **The finding for Chapter 11:** two people restructuring and cleaning the same repository in the
+  same week, without saying so to each other, is a coordination failure and not a git problem. A
+  repository-wide rename is the one change that cannot merge cleanly with anything, so it is the one
+  change that has to be announced before it starts.
 
 - **2026-08-06: Reading the GitHub board took three attempts and two false leads.** The first
   attempt failed on four independent barriers at once (no MCP server visible to Claude Code, no `gh`

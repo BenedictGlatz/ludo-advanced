@@ -38,7 +38,6 @@ Declared in [CLAUDE.md](../../../CLAUDE.md) as the binding specification for `pa
 | `npm run test:watch` | Vitest, watch mode |
 | `npm run test:coverage` | Vitest with v8 coverage |
 | `npm run test:e2e` | Playwright, all browsers |
-| `npm run docs:ai-index` | Generate Chapter 13 from the AI prompt log |
 
 One script exists that this list does not name, added 2026-08-30 with issue #30:
 
@@ -76,7 +75,6 @@ yet. Their real implementations:
 | `test:watch` | `vitest` |
 | `test:coverage` | `vitest run --coverage` |
 | `test:e2e` | `playwright test` |
-| `docs:ai-index` | `node scripts/docs-ai-index.js` |
 
 **Versions actually installed** (read from `node_modules/<pkg>/package.json`, not from memory):
 
@@ -170,14 +168,14 @@ constraints into machine-checked ones.
 
 Both are recorded because a deviation nobody wrote down is indistinguishable from a mistake.
 
-- **`scripts/docs-ai-index.js` was written.** `CLAUDE.md` requires `package.json` to provide
+- **`scripts/docs-ai-index.js` was written.** `CLAUDE.md` required `package.json` to provide
   `docs:ai-index`, and a script pointing at a file that does not exist is a broken script. The
-  generator reads every `docs/ai-prompts/*/*.json`, sorts by timestamp, groups by `topic` into the
-  six subsections Chapter 13 defines, and fails loudly on an unknown `topic` or `use` instead of
-  dropping the entry. **It has not been run**, because the prompt log is gitignored and per machine,
-  so running it here would generate Chapter 13 from one contributor's folder and overwrite the
-  chapter's own instructions with an incomplete table. It prints a warning when it sees fewer than two
-  contributor folders.
+  generator read every `docs/ai-prompts/*/*.json`, sorted by timestamp, grouped by `topic` into the
+  six subsections Chapter 13 defined, and failed loudly on an unknown `topic` or `use` instead of
+  dropping the entry. **It was never run**, because the prompt log was gitignored and per machine, so
+  running it would have generated Chapter 13 from one contributor's folder. **Removed at hand-in on
+  2026-09-13** together with the prompt log and Chapter 13: the log was a documentation aid, not a
+  deliverable, so the chapter it fed was dropped rather than shipped half-filled.
 - **`.gitattributes` was added**, for the line-ending reason above.
 
 #### Dependencies installed beyond the five approved dev tools
@@ -527,11 +525,12 @@ Three facts came out of verifying it:
   alternatives in `project-journal.md`, 2026-09-11.
 - **What moved:** `00-Meta/` became `docs/`, `01-Design/` became `design/`, and everything below them
   that used capitals or spaces was renamed. `docs/documentation/00-index.md` became
-  `docs/documentation/README.md`. `Brainstorming.md` at the root became `brainstorming.md`.
+  `docs/documentation/README.md`. `Brainstorming.md` at the root became `brainstorming.md`, and was removed
+  at hand-in on 2026-09-13.
 - **Why a rename on Windows needs two steps:** `core.ignorecase` is `true` on the development machine,
   so `git mv Handoff handoff` is refused as a move onto itself. Each case-only rename went through a
   temporary name (`Handoff` → `Handoff.tmp-rename` → `handoff`).
-- **Tooling that named the old paths and was updated:** `.gitignore` (the prompt log is now
+- **Tooling that named the old paths and was updated:** `.gitignore` (the prompt log was then at
   `docs/ai-prompts/`), `.prettierignore`, `eslint.config.js`, `scripts/docs-ai-index.js`,
   `scripts/extract-card-art.js` and `scripts/design-screenshots.js`. The two `join(...)` calls in the
   scripts were missed by the text replacement, because they spell a path as separate strings, and were
@@ -550,7 +549,7 @@ Three facts came out of verifying it:
 - ~~No `package.json`, no ESLint config, no Prettier config and no Vite config exist yet. Everything
   above is target state, not observation.~~ **Resolved 2026-08-29, issue #63.** All of them exist and
   every script except `test:e2e` has been run. See *Toolchain bootstrapped* above.
-- No deployment target has been chosen. `brainstorming.md` floats GitHub Pages or itch.io for
+- No deployment target has been chosen. The initial brainstorming document of 2026-08-04 floats GitHub Pages or itch.io for
   playable build artifacts; nothing is decided. **Unchanged by the bootstrap**, and it stays cheap to
   defer: `npm run build` produces a plain static `dist/`, which any static host serves.
 - **Whether JSDoc is enforced through ESLint is undecided, and the bootstrap deliberately did not
@@ -562,8 +561,9 @@ Three facts came out of verifying it:
 - **`npm run test:e2e` has never been run.** There is no spec in `tests/e2e/` yet, so the command
   would report "no tests found", and the Playwright browsers have not been downloaded
   (`npx playwright install`). Both land with the board view.
-- **`npm run docs:ai-index` has never been run either**, for the reason in *Two things added* above:
-  the prompt log is per machine, so a run here would generate an incomplete Chapter 13.
+- **`npm run docs:ai-index` was never run**, for the reason in *Two things added* above: the prompt
+  log was per machine, so a run would have generated an incomplete Chapter 13. The script, the log and
+  the chapter were all removed at hand-in on 2026-09-13.
 - ~~The `gh` CLI is not installed on the development machine and no GitHub token is configured, so no
   *authenticated* GitHub automation can run locally.~~ **Half of this was wrong: corrected
   2026-08-06.** The `gh` CLI is indeed absent, but a token was already present and neither
@@ -605,3 +605,24 @@ Three facts came out of verifying it:
   names in the one script that calls an HTTP API, which would give the same thing two spellings across
   the browser and script layers. The hand-maintained globals list from 2026-08-20 held: adding two names
   to it was a two-line change, and the `globals` package is still not a dependency.
+
+### Hand-in cleanup: 2026-09-13
+
+- **`docs:ai-index` removed from `package.json`**, together with `scripts/docs-ai-index.js`. It was
+  the only script in the repository that read a gitignored input, so it was also the only one that
+  could not run from a fresh clone. Fifteen npm scripts remain, and every one of them points at a file
+  that exists, checked by hand.
+- **`docs/ai-prompts/` removed from `.gitignore` and from `eslint.config.js`'s ignore list.** Both
+  entries existed to keep a directory out of the way; with the directory gone they were two rules
+  describing nothing.
+- **Three tracked files had survived the 2026-08-10 gitignore rule.** `.gitignore` does not untrack
+  what is already in the index, so `BenedictGlatz/2026-08-09.json`, `BenedictGlatz/2026-08-10.json`
+  and `lbolender/2026-08-09.json` were still committed and still shipping in every clone, for five
+  weeks, while the rule above them said they were not. They even survived the 2026-09-11 rename, which
+  moved them into `docs/ai-prompts/` without anyone noticing they were tracked. Removed with
+  `git rm --cached`. **The general finding for the report:** an ignore rule added after the fact is
+  silent about what it failed to catch, and nothing in the toolchain reports the mismatch.
+  `git ls-files -i -c --exclude-standard` lists exactly these files and was never run until hand-in.
+- **Version set to 1.0.0** and `CHANGELOG.md`'s `[Unreleased]` section closed as `[1.0.0] - 2026-09-13`.
+  Everything the project ever shipped sat under `[Unreleased]` until that day, because no release was
+  ever cut.

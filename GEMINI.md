@@ -38,25 +38,21 @@ The decision for a 2D web build (over Unity 3D or Pygame) was made for scope rea
 
 ## Status
 
-The repository contains documentation only: no source code, no `package.json`, no tooling config yet. The stack,
-commands and directory layout below are the **binding target state**. Whoever bootstraps the npm project implements
-exactly this; do not substitute alternatives.
+The game is built and playable: `npm install && npm run dev` starts it. The stack, commands and directory layout
+below describe what is actually in the repository and stay **binding** for further work; do not substitute
+alternatives.
 
 ## Mandatory per-change steps
 
-Every change carries these five, in this order. They are not optional and not "when there is time": step 1 is
-local-only and not part of the commit (see [AI prompt log](#ai-prompt-log)); step 2 is the one that cannot be
-reconstructed afterwards, which is exactly why it comes first among the committed steps.
+Every change carries these four, in this order. They are not optional and not "when there is time": step 1 is the
+one that cannot be reconstructed afterwards, which is exactly why it comes first.
 
-1. **AI prompt log**: append the prompt to `docs/ai-prompts/<github-username>/YYYY-MM-DD.json` **before
-   replying**. This directory is gitignored and kept locally per machine, not committed. See
-   [AI prompt log](#ai-prompt-log).
-2. **Documentation notes**: append facts to the chapter note the change belongs to, add a decision block to
+1. **Documentation notes**: append facts to the chapter note the change belongs to, add a decision block to
    `docs/documentation/project-journal.md` for any non-obvious decision, and a challenge bullet for anything
    that cost more than ~30 min of unplanned work. See [Documentation notes](#documentation-notes).
-3. **Changelog**: user-visible changes under `## [Unreleased]` in `CHANGELOG.md`.
-4. **Tests**: write them, or state plainly which coverage is still outstanding. Do not skip silently.
-5. **Commit**: Conventional Commits, with steps 2–4 in the *same* commit. Push only when explicitly asked.
+2. **Changelog**: user-visible changes under `## [Unreleased]` in `CHANGELOG.md`.
+3. **Tests**: write them, or state plainly which coverage is still outstanding. Do not skip silently.
+4. **Commit**: Conventional Commits, with steps 1–3 in the *same* commit. Push only when explicitly asked.
 
 ## Tech stack and hard constraints
 
@@ -83,7 +79,6 @@ npm test               # Vitest, single run
 npm run test:watch     # Vitest, watch mode
 npm run test:coverage  # Vitest with v8 coverage
 npm run test:e2e       # Playwright, all browsers
-npm run docs:ai-index  # Generate the AI index chapter from the AI prompt log
 ```
 
 Running a single test:
@@ -147,10 +142,10 @@ Every file and folder name is **lowercase kebab-case**: `turn-manager.js`, `proj
 - **Numbers only where order means something**: report chapters (`notes/05-game-core-building-blocks.md`),
   design handoff rounds (`design/handoff/12-spec-main-menu.md`) and figures (`figure-01-...png`). A
   document with no reading order gets no number.
-- **Dates are ISO**: `meeting-notes/2026-08-06.md`, `ai-prompts/<github-username>/2026-09-11.json`.
+- **Dates are ISO**: `meeting-notes/2026-08-06.md`.
 - **A folder's index is its `README.md`**, because GitHub shows that file when the folder is opened.
-- **Exceptions:** `README.md`, `CHANGELOG.md` and `CLAUDE.md` keep their conventional uppercase names,
-  because tools look for exactly those. GitHub usernames under `docs/ai-prompts/` are kept as they are.
+- **Exceptions:** `README.md`, `CHANGELOG.md`, `CLAUDE.md` and `GEMINI.md` keep their conventional uppercase
+  names, because tools look for exactly those.
   `design/handoff/card-art-canvas/` is a Claude Design export: its contents keep the names that tool gave
   them, and only the folder itself follows this rule.
 
@@ -202,13 +197,11 @@ Five rules apply at commit time:
 - **The 300-line limit does not apply under `docs/documentation/`.** A chapter note may be long and must not be
   split into fragments.
 
-Before writing any report *prose*, read [reference/style-reference.md](docs/documentation/reference/style-reference.md).
 
 > The module's actual requirements are unknown: no chapter catalogue, page count or deadline exists anywhere in
-> this repository. The 13-chapter structure is adapted from a sample report for a **different module with a
+> this repository. The chapter structure is adapted from a sample report for a **different module with a
 > different professor**, weighted toward project management because that is this module's focus. Keeping the notes
-> prose-free is what makes a later re-map a re-sort rather than a rewrite. See
-> [reference/report-checklist.md](docs/documentation/reference/report-checklist.md), which is explicitly
+> prose-free is what makes a later re-map a re-sort rather than a rewrite.
 > non-binding.
 
 ## Design and UI
@@ -251,8 +244,8 @@ Branches:
 - `dev`: integration branch. Feature branches merge here; `dev` merges into `main` for releases.
 - `feature/<issue>-<slug>` / `fix/<issue>-<slug>`: branched off `dev`, e.g. `feature/37-dice-pool-ui`.
 
-> This supersedes the GitHub Flow description in [brainstorming.md](brainstorming.md) (feature branches off `main`,
-> no `dev`). The rest of that file still applies: no direct pushes to `main`, minimum 1 review approval,
+> This supersedes the GitHub Flow described in the initial brainstorming document of 2026-08-04 (feature branches
+> off `main`, no `dev`). The rest of that policy still applies: no direct pushes to `main`, minimum 1 review approval,
 > **Squash and Merge**, `Closes #<n>` to auto-close issues.
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/): `feat:`, `fix:`, `docs:`,
@@ -275,51 +268,6 @@ Closes #37
 `CHANGELOG.md` follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and Semantic Versioning. Every
 user-visible change is added to `## [Unreleased]` under the right heading (Added / Changed / Deprecated / Removed /
 Fixed / Security) **in the same commit that makes the change**.
-
-## AI prompt log
-
-Every prompt is recorded under:
-
-```
-docs/ai-prompts/<github-username>/YYYY-MM-DD.json
-```
-
-**This directory is gitignored: it is not committed and not pushed.** It is kept locally per machine so that
-work-in-progress never has to be committed just to satisfy the logging step. Before running
-`npm run docs:ai-index`, whoever generates the AI index chapter must first collect the other contributors'
-`docs/ai-prompts/<github-username>/` folders out of band (e.g. a zip shared in chat) and place them locally
-alongside their own, since git no longer does that collection automatically. See the 2026-08-10 decision in
-[project-journal.md](docs/documentation/project-journal.md) for why.
-
-One file per user **per day**, containing a JSON array. Append new entries; never rewrite existing ones. Entry schema:
-
-```json
-{
-  "timestamp": "2026-08-06T17:03:00+02:00",
-  "model": "claude-opus-5",
-  "prompt": "<verbatim user prompt>",
-  "issue": 37,
-  "topic": "game-logic",
-  "use": "implementation",
-  "summary": "Short description of what was produced"
-}
-```
-
-- `issue`: the GitHub issue number the prompt relates to, or `null` when there is no identifiable issue.
-- `prompt`: verbatim. Pasted material and attachments are marked in square brackets rather than inlined, e.g.
-  `[CLAUDE.md of another project, pasted as reference]`. Long multi-turn exchanges may be condensed with `…`,
-  keeping the decisive turns.
-- `topic`: one of `concept-architecture`, `game-logic`, `frontend-ui`, `debugging`, `tooling-tests`,
-  `process-docs`. These are the six subsections of the AI index chapter.
-- `use`: one of `informational`, `research`, `implementation`, `adopted`, `revised`. Omitted means
-  `implementation`. Mark the two informational values explicitly; they are the minority, and they are what shows
-  an answer was weighed rather than simply accepted.
-
-The AI index chapter (`docs/documentation/notes/13-ai-index.md`) is **generated** from these files by
-`npm run docs:ai-index` and is never hand-maintained. Log every prompt, including trivial ones: completeness is
-the point, and a curated selection is worth less because the reader cannot tell what was left out.
-
-Commit the log entry together with the work it produced, or as `chore(ai-log): ...` when there is no other change.
 
 ## Writing style
 

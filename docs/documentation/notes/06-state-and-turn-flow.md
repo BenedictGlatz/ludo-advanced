@@ -806,7 +806,8 @@ testable without it: `last-card-played.test.js` covers the four outcomes and the
 
 ### The bot gets a scoreboard, then a danger model: 2026-09-06, the bot tactics plan
 
-Four phases, planned in `docs/project-management/bot-tactics-plan.md` and built in that order.
+Four phases, planned in the bot tactics working plan of 2026-09-04 and built in that order. The plan
+said in its own header that it was to be deleted once built, and it was, at hand-in on 2026-09-13.
 Everything below is still one currency: a point is one step of one pawn (`SCORE` in `src/ai/score.js`).
 
 **Phase 0, the arena.** `npm run bots:arena` plays seeded bot-against-bot matches through the real

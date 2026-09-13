@@ -53,6 +53,11 @@ design/
   assets/                                exported images or SVG, only if genuinely needed
 ```
 
+The tree above shows the naming convention, not the actual state. **Not every brief got a spec.** By
+the end of the project, briefs 02, 08, 09, 13 and 14 were still unanswered, and spec 16 was delivered
+without a brief ahead of it. What each of those asked for, and what happened to it instead, is in
+[handoff/00-open-requests.md](handoff/00-open-requests.md).
+
 ## Where the CSS lives, and why not here
 
 **The CSS does not live in `design/`. It lands directly in `src/ui/styles/`**, because it is

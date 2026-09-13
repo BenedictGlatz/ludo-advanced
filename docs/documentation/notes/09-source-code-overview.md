@@ -341,7 +341,7 @@ Three things have to be said with it rather than after it:
 ### Measured 2026-09-06, after the bot tactics plan
 
 Every command in the section above was re-run after the four phases of
-`docs/project-management/bot-tactics-plan.md` landed and before the closing commit. **This is the
+the bot tactics working plan landed and before the closing commit. **This is the
 current measurement**; the blocks below it are kept so the growth is readable rather than asserted.
 
 | Metric | Command | Value | Taken on |

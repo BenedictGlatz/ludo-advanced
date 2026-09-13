@@ -178,7 +178,8 @@ levels, because "done" means something different for an issue, a sprint and a re
 6. The documentation notes for the chapter the change belongs to carry its facts, any non-obvious
    decision has a block in [project-journal.md](../documentation/project-journal.md), and any
    user-visible change is in `CHANGELOG.md` under `## [Unreleased]`.
-7. The prompt log entry exists locally under `docs/ai-prompts/<github-username>/`.
+7. ~~The prompt log entry exists locally under `docs/ai-prompts/<github-username>/`.~~ Dropped
+   from the Definition of Done at hand-in on 2026-09-13, when the prompt log was removed.
 8. The issue is closed explicitly and its board card is moved to `Done`. Neither happens on its own:
    `Closes #<n>` fires only on a merge into the default branch, and moving the card is a manual step
    for as long as the token lacks the `project` scope.
@@ -232,7 +233,7 @@ skipped under pressure, which is why it is numbered rather than implied.
 
 **None exists.** No workflow file, no pipeline, no automated run of anything.
 
-The intent on record is in [brainstorming.md](../../brainstorming.md): a build-validation workflow at
+The intent on record is in the initial brainstorming document of 2026-08-04: a build-validation workflow at
 `.github/workflows/build-check.yml`, triggered on every pull request, compiling the project so that a
 broken build cannot be merged, plus optional playable build artifacts per merge. Translated into this
 stack, the gates a workflow would run on a pull request into `dev` or `main` are:

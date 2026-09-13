@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-13
+
+The hand-in release. Everything below was built between 2026-08-04 and 2026-09-13.
+
+### Removed
+
+- The AI prompt log (`docs/ai-prompts/`) and everything that fed on it: the `npm run docs:ai-index`
+  script, its generator `scripts/docs-ai-index.js`, and the Chapter 13 note
+  `docs/documentation/notes/13-ai-index.md`. The log was a working aid for writing Chapter 10, not a
+  deliverable, and the chapter it would have generated was never filled. How AI was used in this
+  project is recorded in `docs/documentation/notes/10-ai-driven-engineering.md` instead
+- The internal writing aids `docs/documentation/reference/style-reference.md` (an analysis of a
+  sample report from a different module) and `docs/documentation/reference/report-checklist.md`
+  (explicitly marked non-binding)
+- `brainstorming.md`, the first planning sketch of 2026-08-04. Its branching proposal was superseded
+  by the main/dev/feature model and its board and CI plans were either built or recorded in the
+  chapter notes. Every note that cited it now carries the date instead of a link
+- `docs/project-management/bot-tactics-plan.md`, which said in its own header that it was to be
+  deleted once the work it planned was built. It was
+
+### Fixed
+
+- `docs/documentation/README.md` had a duplicated chapter table and two overlapping generations of
+  the open-questions list, so the same question appeared once as open and once as resolved
+- The README no longer claims the repository "contains project documentation only", and four inline
+  code spans that lost their surrounding spaces in a formatting pass read correctly again
+- The licence is stated consistently: `UNLICENSED` in `package.json`, in the README badge and in words
+- Four broken links in the design handoff documents, noted during the 2026-09-11 rename and left for
+  a separate fix
+
 ### Added
 
 - **The pause screen shows how long the match has been running**, as minutes and seconds, ticking

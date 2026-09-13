@@ -2473,7 +2473,7 @@ Vitest half.
   not happened.
 - ~~**No CI/CD pipeline exists.**~~ **Closed 2026-09-02, issue #68.** The history of this entry is
   worth keeping intact, because it is a three-step record rather than a single fact.
-  **2026-08-04:** `brainstorming.md` proposes a `build-check.yml` build-validation workflow on every
+  **2026-08-04:** the initial brainstorming document proposes a `build-check.yml` build-validation workflow on every
   PR, plus optional playable build artifacts. Nothing is implemented. **2026-08-22:** the five gates
   such a workflow would run are named in section 6 of the test plan, and so is the sentence the report
   uses if it never lands, that the gates were enforced by discipline rather than by a machine, which
@@ -2608,3 +2608,30 @@ Vitest half.
   and the time share one `.overlay__text` and the order they are joined in is a fact the test should
   pin. `menu-screen.test.js`'s "one disabled door" case became "two plain doors", which is what the menu
   says now.
+
+### Hand-in verification: 2026-09-13
+
+- **The full gate was run after the hand-in cleanup**, in this order: `npm run lint`,
+  `npx prettier --check .`, `npm test`, `npm run build` and `npm run test:e2e`.
+- **A markdown link check was written for the cleanup and is not part of the gate.** Removing four
+  documents meant 32 citations had to be repaired, and neither ESLint nor Prettier looks at a link.
+  The check resolves every relative markdown link in the repository against the filesystem. It found
+  four broken links, **none of them caused by the cleanup**, and all four were the ones the 2026-09-11
+  rename had already found and left for a separate fix: `12-spec-main-menu.md` pointed into an
+  `uploads/` folder that does not exist, and `18-brief-skill-card-animations.md` carried two
+  repo-root paths that do not resolve from inside `design/handoff/` plus one link to a plan file that
+  was never written. All four repaired.
+- **The finding worth reporting:** a broken link in a document has no failing test and no lint error,
+  so it survives indefinitely. Three of these four had been wrong since the day they were written, and
+  a rename three weeks later found them without being able to fix them, because a link check that runs
+  once by hand is not a gate.
+- **A fresh clone was tested, and it found a Windows path-length limit.** Cloning into a deep
+  directory fails with `Filename too long` before a single test can run, because the longest tracked
+  path is inside the Claude Design working folder, whose subdirectory is named after a generated UUID.
+  Windows refuses a full path over 260 characters unless `core.longpaths` is on, which it is not by
+  default. The repository clones fine into a normal location, and `npm ci` plus `npm run build` then
+  pass from scratch. Worth stating in the report as a cost of committing a tool's working directory:
+  the repository inherits that tool's naming, including limits it never agreed to. The folder cannot
+  simply be deleted, since `npm run assets:card-art` reads the card artwork out of it.
+- **Definition of Done item 7 (the prompt log entry) was dropped**, since the prompt log was removed.
+  See `test-plan-and-quality-strategy.md` section 5.1, item 7.

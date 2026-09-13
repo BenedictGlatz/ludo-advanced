@@ -11,8 +11,6 @@ The reason for working this way is in the sample report the team is modelling on
 weakness: it produced avoidable time pressure at the end, and the presentation suffered for it.
 Reversing that is worth a paragraph in Chapter 11 on its own.
 
-Read [reference/style-reference.md](reference/style-reference.md) before writing any report prose.
-
 ---
 
 ## Chapters
@@ -30,10 +28,7 @@ Read [reference/style-reference.md](reference/style-reference.md) before writing
 | 09 | [09-source-code-overview.md](notes/09-source-code-overview.md) | Size and metrics: **the only chapter where numbers live** | ready: measured 2026-09-03, next to the commands that produced it |
 | 10 | [10-ai-driven-engineering.md](notes/10-ai-driven-engineering.md) | How AI was used in the workflow, what it was good and bad at | conventions, tool split and the precondition finding recorded; the honest assessment waits for real experience |
 | 11 | [11-project-report.md](notes/11-project-report.md) | Plan vs actual, challenges, lessons learned | empty |
-| 12 | [12-appendix.md](notes/12-appendix.md) | Tables, figures and code excerpts moved out of the running text | partial — Figure 1 registered |
-| 13 | [13-ai-index.md](notes/13-ai-index.md) | The AI index — **generated**, never hand-maintained | empty |
 | 12 | [12-appendix.md](notes/12-appendix.md) | Tables, figures and code excerpts moved out of the running text | partial: figures 2 to 12 registered, 1 and 6 reserved |
-| 13 | [13-ai-index.md](notes/13-ai-index.md) | The AI index: **generated**, never hand-maintained | empty |
 
 Status values: `empty` → `partial` → `ready`. Update the row when a chapter's note becomes usable.
 
@@ -139,27 +134,6 @@ Standing list. Resolve and delete, or move into the chapter that answers it.
 - **The module's actual requirements are unknown.** No chapter catalogue, page count, deadline,
   required front matter or grading breakdown exists in this repository. The chapter list above is
   adapted from a sample report for a *different module with a different professor*, weighted toward
-  project management because that is this module's focus. Re-map once the real requirements arrive
-  — the notes are facts, so a different catalogue is a re-sort, not a rewrite.
-- **The two role tables contradict each other.** [one-pager.md](../project-management/one-pager.md)
-  names Fabian Gemming as Product Owner and Lars Bolender and Benedict Glatz as Scrum Members with
-  no dedicated Scrum Master. [github-project.md](../project-management/github-project.md) has
-  an unnamed Developer A/B/C table that *does* include a Scrum Master. Which one holds needs
-  deciding, and the outcome belongs in Chapter 02.
-- ~~**No calendar dates exist for the sprints.**~~ **Resolved 2026-08-06** — recovered from the
-  board's sprint markers and filled into [sprint-log.md](sprint-log.md). Two contradictions came with
-  them and are open: the board has no buffer sprint, and its Sprint 0 is 2½ weeks against the planned
-  1 week.
-- **Velocity and burn-down charts cannot currently be produced.** The board has no story point field
-  and no Iteration field. (`Status` and `Sprint` *were* also unset on all 50 items; both were
-  back-filled by 2026-08-09 — see *Figure 1* in Ch. 02 — which does not change the conclusion,
-  because the missing part is the measurable one.) Both charts are named
-  as buffer-sprint presentation content. Add and back-fill the fields before Sprint 1 closes, or drop
-  the slides and explain why in Chapter 11 — see
-  [02-project-management.md](notes/02-project-management.md#board).
-- **No CI/CD pipeline and no deployment target** have been decided. Both are normal report chapters;
-  if they stay absent, Chapter 08 says so and explains why rather than omitting the topic.
-- **Licence is undetermined** (`README.md` says "To be determined").
   project management because that is this module's focus. Re-map once the real requirements arrive:
   the notes are facts, so a different catalogue is a re-sort, not a rewrite.
 - ~~**The two role tables contradict each other.**~~ **Resolved 2026-08-22, issue #15**, in section 3.1
@@ -195,9 +169,14 @@ Standing list. Resolve and delete, or move into the chapter that answers it.
   without blocking a merge until a branch-protection ruleset exists. **No deployment target has been
   decided** and that half of this entry stands: it is a normal report chapter, and if it stays absent
   Chapter 07 says so and explains why rather than omitting the topic.
-- **Licence is undetermined** (`README.md` says "To be determined"). Since 2026-08-09 this is a named
-  condition of the feasibility verdict rather than a loose end: the repository is already public and
-  the deployment candidates assume it stays that way.
-- **Whether the module requires an explicit declaration of AI use** beyond the prompt log is unknown.
-  Part of the same gap as the unknown module requirements above; raised in
-  [feasibility-study.md](../project-management/feasibility-study.md).
+- ~~**Licence is undetermined.**~~ **Resolved 2026-09-13 at hand-in:** the project ships unlicensed.
+  `package.json` says `"UNLICENSED"` and the README now says the same in words. The repository stays
+  public so it can be read and graded; no reuse licence is granted. Since 2026-08-09 this had been a
+  named condition of the feasibility verdict rather than a loose end, because the deployment
+  candidates assume a public repository.
+- **Whether the module requires an explicit declaration of AI use is unknown.** Part of the same gap
+  as the unknown module requirements above; raised in
+  [feasibility-study.md](../project-management/feasibility-study.md). What exists is
+  [10-ai-driven-engineering.md](notes/10-ai-driven-engineering.md). The verbatim prompt log that
+  would have backed a per-prompt declaration was removed at hand-in on 2026-09-13, so if the module
+  does require one, Chapter 10 is the answer and it is a summary, not a transcript.

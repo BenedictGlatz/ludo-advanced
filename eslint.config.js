@@ -169,7 +169,6 @@ export default [
       "coverage/**",
       "playwright-report/**",
       "test-results/**",
-      "docs/ai-prompts/**",
       // Design deliverables, not project source. Claude Design drops a generated canvas runtime
       // (`support.js`, `_ds_bundle.js`) next to every `.dc.html` board, several thousand lines of
       // it, and those files are marked "do not edit" by the tool that wrote them. Nothing here is

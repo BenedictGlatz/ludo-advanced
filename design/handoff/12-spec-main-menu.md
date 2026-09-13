@@ -3,7 +3,7 @@
 **From:** Claude Design
 **To:** Claude Code
 **Date:** 2026-09-03
-**Answers:** [12-brief-main-menu.md](../../uploads/12-brief-main-menu.md), D75 to D80.
+**Answers:** [12-brief-main-menu.md](12-brief-main-menu.md), D75 to D80.
 **Read against:** `3a8c8bc`, on branch `fix/layout-stage-and-fan`, as constraint 9 asks. One
 qualification on that, in § 1, and it is the reason this delivery touches neither `tokens.css` nor
 `app.css`.

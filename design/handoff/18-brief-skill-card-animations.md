@@ -11,7 +11,7 @@ and nothing this brief names
 
 > **Where this file lives.** It was written to the repository root because that is where it was asked
 > for. When it goes into the loop it belongs at `design/handoff/18-brief-skill-card-animations.md`,
-> next to the spec that answers it, per [design/README.md](design/README.md).
+> next to the spec that answers it, per [design/README.md](../README.md).
 
 ---
 
@@ -48,7 +48,7 @@ to build and section 8 says what will be there when the spec arrives.
 
 ## 1 What to design
 
-Screen ids are from [obligations-book.md](docs/project-management/obligations-book.md) § 2.2.
+Screen ids are from [obligations-book.md](../../docs/project-management/obligations-book.md) § 2.2.
 
 | Screen | What this handoff adds to it |
 | --- | --- |
@@ -447,7 +447,7 @@ CSS that depends on DOM order.
 ## 8 What Claude Code builds regardless of the answers
 
 So that the spec can assume it. None of it is a design question, all of it is missing today, and it is
-laid out phase by phase in [Skill-Card-Animations-Plan.md](Skill-Card-Animations-Plan.md).
+laid out phase by phase below.
 
 1. **The target in the state.** `lastCardPlayed` grows a `target` field, so the view can know which square
    a Banana Peel went on and which pawn a Yeet pushed. This is the one change outside `ui/` and it is why

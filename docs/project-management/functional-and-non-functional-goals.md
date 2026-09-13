@@ -22,7 +22,8 @@ so that the goal list and the board decompose the same way.
   D2 to D20, the probability of leaving the start area is no longer a constant 1/6 but 1/n for the
   chosen die, which makes die choice a real decision instead of a preference. This is the mechanic
   the report's probability section is built on (see
-  [reference/style-reference.md](../documentation/reference/style-reference.md), *What to copy from
+  the sample-report analysis in `docs/documentation/reference/style-reference.md` (removed at
+  hand-in on 2026-09-13), *What to copy from
   the sample directly*).
 
 ### 1.2 Dice Card Pool: epic #37
@@ -118,7 +119,7 @@ is split along a real seam rather than compressed.
 
 - **Source:** [CLAUDE.md](../../CLAUDE.md) *Tech stack and hard constraints*.
 - **Why:** the review policy requires at least one approval per pull request
-  ([brainstorming.md](../../brainstorming.md)). A limit that keeps a file readable in one sitting is
+  (the initial brainstorming document of 2026-08-04). A limit that keeps a file readable in one sitting is
   what makes that approval a real review rather than a rubber stamp, in a three-person team where
   every reviewer is also implementing.
 - **Explicit exception:** the limit does **not** apply under `docs/documentation/`, where
@@ -155,7 +156,8 @@ Playwright. **JavaScript only, no TypeScript.**
 - **Rejected alternative, recorded honestly:** TypeScript was excluded by decision, not by oversight.
   The sample report the team models on made the same call and named it in its text with a reason,
   which is the treatment it gets here: see
-  [reference/style-reference.md](../documentation/reference/style-reference.md), section 4.
+  the sample-report analysis in `docs/documentation/reference/style-reference.md` (removed at
+  hand-in on 2026-09-13), section 4.
 
 ### NFG-05 Test coverage on the logic layers
 
@@ -180,7 +182,7 @@ player-facing flow has an E2E test.
 `dist/`), with no installation and no backend.
 
 - **Source:** [README.md](../../README.md) *Tech stack* and *Scripts*; deployment candidates
-  (GitHub Pages, itch.io) named in [brainstorming.md](../../brainstorming.md).
+  (GitHub Pages, itch.io) named in the initial brainstorming document of 2026-08-04.
 - **Why:** this is the payoff that justified the 2D web decision. The buffer-sprint plan requires
   playtesting with **3–5 external people without instructions**
   ([github-project.md](github-project.md)); a build that needs installing loses most of those

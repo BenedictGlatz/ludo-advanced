@@ -22,9 +22,13 @@
 - `CLAUDE.md` is the binding conventions file for AI-assisted work in this repository. It fixes the
   stack, the architecture layering, the file-length limit, the dependency policy, the commit format
   and the documentation obligations. Generated code is constrained by it rather than free-form.
-- Every prompt is recorded in `docs/ai-prompts/<github-username>/YYYY-MM-DD.json`, one file per
-  person per day, append-only. Each entry carries the model, the verbatim prompt, the issue it
-  relates to, a `topic`, a `use` classification and a summary of what it produced.
+- **Every prompt was recorded** in `docs/ai-prompts/<github-username>/YYYY-MM-DD.json`, one file per
+  person per day, append-only. Each entry carried the model, the verbatim prompt, the issue it
+  related to, a `topic`, a `use` classification and a summary of what it produced. 142 entries across
+  16 files by 2026-09-13.
+- **The log was removed at hand-in on 2026-09-13**, along with the Chapter 13 AI index it fed. It was
+  a working aid for writing this chapter, not a deliverable of the project. What it produced is this
+  chapter; what it cost was one logging step per prompt for six weeks.
 - The `use` field distinguishes prompts whose answers were merely informational from those that
   produced code that shipped. This is the field that shows whether an answer was weighed or simply
   accepted.
@@ -80,7 +84,10 @@ it carries its own section because the study's overall verdict is conditional on
 
 ## Open / to verify
 
-- No generation script for Chapter 13 exists yet (`npm run docs:ai-index`).
+- **Chapter 13 (the verbatim AI index) was dropped, not filled.** The generator existed by
+  2026-08-29 but was never run, and on 2026-09-13 the chapter, the generator and the log were all
+  removed for hand-in. The reason to state in the report is the next bullet: the record was never
+  complete enough to publish.
 - Only one team member's prompt log exists so far. If the other two use AI assistance and do not log
   it, the record is incomplete and the report has to say so.
 - The honest assessment section cannot be written until there is real experience to report. Feed it

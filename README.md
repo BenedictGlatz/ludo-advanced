@@ -2,8 +2,8 @@
 
 A 2D web remake of Ludo where the single die is replaced by two card pools: draw your dice, play your skills.
 
-![Status](<https://img.shields.io/badge/status-in%20development-orange>)
-![License](https://img.shields.io/badge/license-TBD-lightgrey)
+![Status](https://img.shields.io/badge/status-v1.0.0-brightgreen)
+![License](https://img.shields.io/badge/license-UNLICENSED-lightgrey)
 
 ## About
 
@@ -35,9 +35,6 @@ The full rules are in [one-pager.md](docs/project-management/one-pager.md).
 
 ## Getting started
 
-> **Setup pending.** The repository currently contains project documentation only. The commands below describe the
-> intended workflow and become available once the npm project is bootstrapped.
-
 **Prerequisites:** Node.js LTS (20 or newer) and npm.
 
 ```bash
@@ -54,23 +51,22 @@ The dev server prints a local URL: open it in your browser to play.
 | Command                   | Description                        |
 | ------------------------- | ---------------------------------- |
 | `npm run dev`           | Start the Vite dev server          |
-| `npm run build`         | Production build into`dist/`     |
+| `npm run build`         | Production build into `dist/`     |
 | `npm run preview`       | Serve the production build locally |
 | `npm run lint`          | Run ESLint                         |
-| `npm run lint:fix`      | Run ESLint with`--fix`           |
+| `npm run lint:fix`      | Run ESLint with `--fix`           |
 | `npm run format`        | Format the codebase with Prettier  |
 | `npm test`              | Run unit tests once                |
 | `npm run test:watch`    | Run unit tests in watch mode       |
 | `npm run test:coverage` | Unit tests with a coverage report  |
 | `npm run test:e2e`      | Run Playwright end-to-end tests    |
 
-Four more exist and are not part of the everyday loop. They generate things rather than check them, so
+Three more exist and are not part of the everyday loop. They generate things rather than check them, so
 each is run by hand when its input changes:
 
 | Command                       | Description                                                                             |
 | ----------------------------- | --------------------------------------------------------------------------------------- |
-| `npm run assets:card-art`   | Extract the 36 card illustrations out of the Claude Design artboard into`src/ui/art/` |
-| `npm run docs:ai-index`     | Generate the AI index chapter from the local AI prompt logs                             |
+| `npm run assets:card-art`   | Extract the 36 card illustrations out of the Claude Design artboard into `src/ui/art/` |
 | `npm run docs:dice-balance` | Derive and measure the dice pool balance quoted in the game design document             |
 | `npm run test:seeds`        | Search for the fixed RNG seeds the end-to-end suite pins                                |
 
@@ -83,7 +79,7 @@ failing, so a malformed URL starts a normal game.
 | -------------- | ------------------------------------------------------------------------------------------ |
 | `?seed=42`   | Fixes the RNG, so the same match plays out the same way every time (NFR-09)                |
 | `?players=4` | Starts a match with that many players at once,**skipping the main menu**. 2, 3 or 4  |
-| `?bots=3`    | Hands the last seats to the computer. Needs`?players=`, and always leaves one person in  |
+| `?bots=3`    | Hands the last seats to the computer. Needs `?players=`, and always leaves one person in  |
 | `?fast=1`    | Shortens the pauses in the turn loop and passes the handover screen without waiting for it |
 | `?relay=1`   | Online play only: forces the connection through the relay server, to check it works        |
 | `?netlog=1`  | Online play only: prints what the connection did to the browser console                    |
@@ -132,7 +128,6 @@ tests/
 docs/
   project-management/  Rulebook, sprint plan and meeting notes
   documentation/       Living notes for the final project report
-  ai-prompts/          The AI prompt log
 design/
   handoff/             Design briefs and specs exchanged with Claude Design
   assets/              Screenshots the briefs refer to
@@ -173,7 +168,7 @@ and register the locale in the i18next setup in `src/i18n/`.
   [docs/documentation/](docs/documentation/README.md), also in the same commit. The project report is
   written alongside development, not at the end.
 
-Full conventions, including the architecture rules and the AI prompt log, are documented in [CLAUDE.md](CLAUDE.md).
+Full conventions, including the architecture rules, are documented in [CLAUDE.md](CLAUDE.md).
 
 ## Roadmap
 
@@ -183,7 +178,10 @@ Full conventions, including the architecture rules and the AI prompt log, are do
 | Sprint 1 | 2–3  | Core gameplay: board, movement, turn manager, capture |
 | Sprint 2 | 4–5  | Dice pool, skill cards, multiplayer                   |
 | Sprint 3 | 6–7  | Art, audio, menus, polish and fixes                   |
-| Buffer   | 8     | Playtesting and presentation                          |
+
+No buffer sprint was created. The decision of 2026-08-22 (section 3.1 of
+[project-plan.md](docs/project-management/project-plan.md)) turned the closing work into a dated
+window inside Sprint 3, behind a feature freeze, instead.
 
 Details: [github-project.md](docs/project-management/github-project.md).
 
@@ -197,4 +195,5 @@ Details: [github-project.md](docs/project-management/github-project.md).
 
 ## License
 
-To be determined.
+Unlicensed. This is coursework: the repository is public so it can be read and graded, but no licence
+is granted for reuse.

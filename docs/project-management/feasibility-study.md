@@ -64,7 +64,7 @@ true for `Action` cards, and true for `Reaction` cards once their resolution ord
 the first point named below. Neither pool needs physics, a real-time loop, a server or networking:
 multiplayer is outside the MVP, so the MVP is a local hot-seat game with no backend at all. Deployment
 is correspondingly small: Vite produces a static `dist/`, and the candidates named in
-[brainstorming.md](../../brainstorming.md) are GitHub Pages and itch.io, so there is nothing to
+the initial brainstorming document of 2026-08-04 are GitHub Pages and itch.io, so there is nothing to
 operate. Asset production is 2D only (sprites, board, card faces, UI skins), which is the pipeline the
 option choice bought: no modelling, rigging, lighting or camera work, and no engine ramp-up.
 
@@ -192,7 +192,8 @@ feasibility verdict of this study is therefore conditional on the toolchain, and
 **What the team keeps.** Review and ownership of every generated artefact, and the mechanisms for it
 already exist rather than being promised: `CLAUDE.md` as a binding constraint set (stack, layering,
 300-line limit, dependency policy, no hardcoded strings), the one-approval pull-request policy, and
-the append-only prompt log under `docs/ai-prompts/`. Generated code is reviewed and merged by
+the append-only prompt log under `docs/ai-prompts/` (kept until hand-in on 2026-09-13, then
+removed as a working aid). Generated code is reviewed and merged by
 people, and the coverage and lint gates apply to it unchanged.
 
 **The downside, stated rather than glossed.** Two consequences follow from the same decision:
