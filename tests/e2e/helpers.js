@@ -34,7 +34,7 @@
  * was one command, which is the whole reason `scripts/find-seeds.js` was written down.
  *
  * `?fast=1` collapses **six** waits in the turn loop to zero: the pause after a move, the pause after a
- * refusal, the thirty-second reaction window (issue #38), the two-second hold on a trap a card fired
+ * refusal, the ten-second reaction window (issue #38), the two-second hold on a trap a card fired
  * (issue #45), the roll's own 900 ms (D70), and the bot's thinking pause (issue #43). It changes the
  * waiting and nothing else: the same intents run in the same order, and a window still opens. A run
  * with `?fast=1` behaves as though every eligible player declined at once, which the rules already have.

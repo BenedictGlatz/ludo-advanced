@@ -241,7 +241,7 @@
   }
 }
 
-/* --- Reduced motion. The ring keeps draining, because thirty seconds of
+/* --- Reduced motion. The ring keeps draining, because ten seconds of
        linear progress is information and not decoration, and it is the only
        way the deadline is visible at all. The button transitions go. --- */
 

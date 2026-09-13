@@ -36,7 +36,7 @@
  *
  * The dice source is the real twenty-card pool (issue #30) and the player picks which of the three drawn
  * cards gets rolled (issue #31), so issue #37 is complete. The skill hand holds real cards, all 29 of them
- * have their rule, and the reaction window and its thirty-second clock are wired up, so issue #38 is
+ * have their rule, and the reaction window and its ten-second clock are wired up, so issue #38 is
  * complete too.
  *
  * ## Every region on screen has a design behind it

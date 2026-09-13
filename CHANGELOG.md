@@ -51,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A reaction window now stays open for 10 seconds instead of 30.** With skill cards drawn only on
+  skill squares, players hold fewer cards and have less to weigh when a window opens, so thirty seconds
+  mostly meant waiting. The countdown ring drains over the new ten seconds, and a window still shuts at
+  once when everybody asked has declined
 - **Skill cards are now drawn only when a pawn lands exactly on a skill square.** A turn no longer
   starts with a skill card, and every hand starts the match empty. With one card to play per turn,
   players were holding more cards than they could use; a rarer draw makes each card count and leaves

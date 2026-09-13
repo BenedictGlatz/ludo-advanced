@@ -12,7 +12,7 @@
  * Online play (FR-42) is the third caller and the one that made the duplication a bug rather than a
  * smell. The host has to refuse a guest who sends one of these intents, because the host's loop and
  * clock own them: a guest `roll-die` would roll a second time, and a guest `close-window` would shut a
- * window whose thirty seconds are the host's to count. "Which intents does the loop take by itself" has
+ * window whose ten seconds are the host's to count. "Which intents does the loop take by itself" has
  * to be one list, in one place, that `ui/` and `net/` both read. It lives in `state/` because `net/` may
  * not import `ui/`.
  *
