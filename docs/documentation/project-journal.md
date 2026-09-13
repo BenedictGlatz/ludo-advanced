@@ -6075,3 +6075,13 @@ more than a terse label.
   seat, without randomness; two cases that tested the old rule were rewritten. Three full runs later the
   suite was green again. The lesson for Chapter 11: **a rule that spends randomness is load-bearing for
   every seeded test**, so the cost of changing it is measured in the test suite, not in the diff.
+- **2026-09-13: The Chromium end-to-end check had been red for three days before anybody asked why.**
+  It surfaced on PR #111, a one-constant change to the reaction window, and was blamed on that change.
+  The CI history showed otherwise: the same three `online.spec.js` cases had failed on every run since
+  `fix/42-net-diagnostics` on 2026-09-10, all at the same line, a 10 s wait for an invite code that the
+  lobby had just been allowed to hold back for 20 s. At least three PRs were merged over the red check
+  in between, because a failing check does not block a merge on this repository and the failure was
+  always in a spec nobody was working on. Cost: roughly an hour, most of it proving the new change
+  innocent. Fix and rejected alternative in Ch. 08. The lesson for Chapter 11: **a red check that is
+  merged over once becomes background noise**, and the next real failure hides behind it; a timeout in a
+  test that copies a timeout in `src/` should import it instead.

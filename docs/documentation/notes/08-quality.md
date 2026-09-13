@@ -2337,6 +2337,20 @@ Vitest half.
   the host's board. A second case pauses on the host, sees the guest's pause screen, quits on the host
   and sees the guest's win screen say abandoned with no Play Again. The invite textarea gets a 10 s
   expectation because ICE gathering is real time.
+- **2026-09-13: that 10 s wait was red on CI for three days, and nobody looked.** The TURN relay
+  (2026-09-10) put a STUN and a TURN server into every peer connection, the spec's included, so "no STUN
+  server" above stopped being true that day. The same afternoon `ICE_GATHER_TIMEOUT_MS` went from 5 s to
+  20 s. From then on the lobby could hold a code back for up to 20 s and the spec waited 10: the three
+  cases without a bot failed on every CI run from `fix/42-net-diagnostics` (2026-09-10) to
+  `refactor/reaction-window-balancing` (2026-09-13), always at the invite wait, and PRs were merged over
+  the red check. The relay's credentials also expired on 2026-09-11, which makes gathering on CI slower
+  still but is not the cause: the first failing run was before the expiry. **Fix:** the invite and reply
+  waits are `ICE_GATHER_TIMEOUT_MS + 5_000`, imported from `src/net/signal-codes.js`, so the spec follows
+  the constant instead of copying it; the whole describe block is `test.slow()`, because two 20 s waits
+  plus the connection do not fit in 30 s. **Rejected:** a test-only address-bar option that empties the
+  server list. It would make the spec fast and independent of Twilio, but it adds a switch to `src/`
+  whose only reader is a test, and the spec would then no longer exercise the server list the players
+  actually get.
 - **Chromium only, stated as outstanding.** The spec skips on Firefox and Edge. Their ICE behaviour
   under Playwright is unchecked, and a red run on an engine nobody has looked at would be noise rather
   than a finding. This is the same discipline as the `test.skip` argument in Ch. 08's earlier entries:
