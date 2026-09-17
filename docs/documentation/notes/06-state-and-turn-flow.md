@@ -1181,3 +1181,26 @@ Full decision block: project journal, 2026-09-09. Facts about the code:
   `skill-turn.test.js` covers `dealStack`, including the hand limit; `match-setup.test.js` checks that
   every hand starts empty without a stack. Two E2E cases that asserted the old rule were rewritten for
   the new one, and specs that need a card in hand now stack it.
+
+### Renewing the TURN credentials, and the expiry nobody noticed: 2026-09-17, issue #42
+
+- **The credentials in `ice-servers.js` were renewed for the 2026-09-17 presentation** of the relay
+  feature. The set before them had expired on 2026-09-11T12:29:43Z and was six days stale, so relay-only
+  play had been broken for that whole time. Renewal is one command, `npm run net:turn`, and it rewrote
+  exactly the three generated lines (`TOKEN_EXPIRES_AT`, `TURN_USERNAME`, `TURN_CREDENTIAL`). The
+  twenty-four-hour lifetime is Twilio's maximum and not a setting the project chose.
+- **Nothing in `src/` calls `hasWorkingRelay()`**, which is why the expiry went unnoticed. The function
+  was written on 2026-09-10 "for a diagnostic to ask with" and no diagnostic ever asked: its only callers
+  are its own unit tests. An expired set therefore looks exactly like a strict NAT to a player, the
+  twenty-second message names the NAT, and the real cause is visible only in the console as a 401 from
+  `net-log.js`. Recorded rather than fixed, because a lobby that refuses to start on an expired set is a
+  UI decision and not a credential renewal.
+- **A renewal has to be redeployed, not just committed.** The credentials are compiled into the static
+  build, so a fresh set in the repository changes nothing about the published site until `pages.yml` runs
+  again. This renewal therefore went to `dev` and to `main`: publishing from `dev` alone would have made
+  the presented site a different build from the 1.0.0 hand-in, which is a difference nobody wants to
+  explain live.
+- **The auth token stayed out of the repository**, as `scripts/turn-credentials.js` was built for. It
+  does land in the shell's own history when it is set with `$env:` on one line, which is the cost of the
+  environment-variable approach and an argument for rotating the account token after a session rather
+  than trusting the shell.

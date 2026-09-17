@@ -5878,6 +5878,31 @@ questions is clearer than one function that guesses. Details in `notes/04-fronte
 - **It came after the 2026-09-10 code freeze**, like the decision above.
 - → Ch. 04, Ch. 06, Ch. 08
 
+### 2026-09-17: The renewed TURN credentials go to `main` as well as `dev`, not to `dev` alone
+
+- **Chosen:** the renewal from `npm run net:turn` was committed on `fix/42-turn-credentials` off `dev`
+  and merged into both `dev` and `main`, so the published site and the 1.0.0 hand-in build are the same
+  code again. Requested by Lars Bolender for the relay presentation on the afternoon of 2026-09-17.
+- **Why:** `pages.yml` publishes on a push to `main` or `dev`, and the site shows whichever was pushed
+  last. Merging into `dev` alone would have put a build on the presented URL that is not the build that
+  was handed in, and the difference is exactly the kind of thing that has to be explained live in front
+  of the examiner. Since `dev` and `main` were identical in content before this change, the second merge
+  costs one more pull request and nothing else.
+- **Rejected:** *publishing from `dev` only.* Cheaper by one pull request, and it makes the presented
+  site a fork of the hand-in for no gain. **Rejected:** *presenting from a local `npm run preview`.* A
+  relay is only proved by two machines on two different networks, which is what the published site is
+  for. **Rejected:** *leaving the expired set in place and presenting without the relay.* That is the
+  feature being presented.
+- **Unchanged:** no source file other than `src/net/ice-servers.js` was touched, and only its three
+  generated lines. The commit is a `fix:` and not a release, so `1.0.0` stays as the version.
+- **Left alone:** the six-day silent expiry itself. Facts in Ch. 06: `hasWorkingRelay()` has no caller in
+  `src/`, so an expired set is indistinguishable from a strict NAT for a player. Wiring it into the lobby
+  is a UI decision, and a presentation morning is the wrong time for one.
+- **Tests:** none added. `tests/unit/net/ice-servers.test.js` computes its bounds from
+  `TOKEN_EXPIRES_AT`, so it covers a renewed set without a change. What no test can cover is whether the
+  credentials are accepted by Twilio, which is what the `?relay=1` check with two browsers is for.
+- → Ch. 06, Ch. 07
+
 ## Challenges
 
 ### 2026-09-13: The hand-in cleanup was built on a layout that had already been replaced
