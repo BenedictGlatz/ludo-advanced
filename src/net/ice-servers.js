@@ -39,10 +39,10 @@
  */
 
 /** When `TURN_CREDENTIAL` stops being accepted. ISO 8601, UTC. Written by `scripts/turn-credentials.js`. */
-export const TOKEN_EXPIRES_AT = "2026-09-11T12:29:43Z";
+export const TOKEN_EXPIRES_AT = "2026-09-18T07:20:34Z";
 
-const TURN_USERNAME = "92d683fbdf5d196e7536265b28f247b25e906f503a5a9a38faa8f77f91003e04";
-const TURN_CREDENTIAL = "JqwnBZIRiYGpTzhDgn8pEoYTEpare24/+XJ5HaAiaBw=";
+const TURN_USERNAME = "7bdf8e0b486655319aa9fa4523a46560be8937e7456f9846879e51fbd72a0067";
+const TURN_CREDENTIAL = "q6vN6zF5rQHGJi0j/YQFMICHIch0d+4h/jsWO9yOlWM=";
 
 /**
  * The servers, most direct first.
