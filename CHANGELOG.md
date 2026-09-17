@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Online matches can use the TURN relay again. The Twilio credentials in `src/net/ice-servers.js` had
+  expired on 2026-09-11, so two players behind strict NATs (DS-Lite, most German cable and mobile
+  contracts) could not connect at all and the lobby blamed the NAT after twenty seconds. A fresh set was
+  written by `npm run net:turn`; it is valid until 2026-09-18T07:20:34Z, because that is the longest
+  lifetime Twilio issues.
+
 ## [1.0.0] - 2026-09-13
 
 The hand-in release. Everything below was built between 2026-08-04 and 2026-09-13.
